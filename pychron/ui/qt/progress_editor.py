@@ -1,0 +1,47 @@
+#===============================================================================
+# Copyright 2013 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#===============================================================================
+
+#============= enthought library imports =======================
+from traits.api import HasTraits, Int
+from traitsui.api import View, Item
+from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.qt4.editor import Editor
+#============= standard library imports ========================
+from PySide.QtGui import QProgressBar
+#============= local library imports  ==========================
+
+class _ProgressEditor(Editor):
+    def init(self, parent):
+        self.control = self._create_control()
+        self.control.setMaximum(self.factory.max)
+        self.control.setMinimum(self.factory.min)
+
+    def _create_control(self):
+        pb = QProgressBar()
+        return pb
+
+    def update_editor(self):
+        self.control.setValue(self.value)
+
+
+
+class ProgressEditor(BasicEditorFactory):
+    klass = _ProgressEditor
+    min = Int
+    max = Int
+
+
+#============= EOF =============================================

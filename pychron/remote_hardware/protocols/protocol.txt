@@ -1,0 +1,143 @@
+Copyright 2011 Jake Ross
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+==ErrorCodes== (expect future expansion)
+codes from 01-09 are debugging errors
+codes from 10-19 are communication errors
+
+ID	Class    	Command    	Note
+
+see system_errors.py for now
+
+Error ==> <ID> : <error message>
+     eg. command==SetX 1,1  error== 3 : invalid arguments: SetX invalid literal for float(): 1,1
+
+OK == command successfully executed
+* == modified from original syntax
+
+==System Protocol==
+Command Name    	Parameters    	Ex.    	Returns    	Note
+GetValveState    	ValveName    	GetValveState A    	True,False,Error    	True=open, False=closed
+GetManualState    	ValveName    	GetManualState A    True,False,Error    	True=manual, False=auto
+Close    	ValveName    	Close A   	OK,Error
+Open    	ValveName    	Open A    	OK,Error
+GetValveStates    	--    	GetValveStates    	A0B0C1D0E1    
+Set    	DeviceName Value    	Set Foo 10.0    	OK,Error
+Read    	DeviceName    	Read Foo    	<value>,Error
+
+#implemented in pychron for future use
+================================================================================
+
+StartMultRuns    	MultRunsID    	StartMultRuns 1254    	OK,Error
+CompleteMultRuns    	MultRunsID    	CompleteMultRuns 1254    OK,Error
+StartRun	RunID	StartRun 20114-3	OK,Error
+CompleteRun	RunID	CompleteRun 20114-3	OK,Error
+RemoteLaunch    	--    	RemoteLaunch    	OK,Error    	Launches an instance of pychron
+PychronReady    	--    	PychronReady    	True,False,Error    	sends a test query to pychron.True=pychron communication, False=pychron not running
+================================================================================
+
+==Laser Protocol==
+ReadLaserPower    	--	ReadLaserPower	OK,Error
+GetLaserStatus    	--	GetLaserStatus	True,False,Error	True=enabled, False=disabled
+Enable    	--	Enable	OK,Error
+Disable    	--	Disable	OK,Error
+SetXY    	X,Y	SetXY 1,1	OK,Error
+SetX    	V	SetX 1	OK,Error
+SetY    	V	SetY 1	OK,Error
+SetZ    	V	SetZ 1	OK,Error
+GetPosition    	--	GetPosition	Xpos,Ypos,Zpos
+GetXMoving    	--	GetXMoving	True,False,Error	True=drive  moving, False= drive stopped
+GetYMoving    	--	GetYMoving	True,False,Error
+GetZMoving    --	GetZMoving	True,False,Error
+GetDriveMoving	--	GetDriveMoving	True,False,Error	Return True if any drive in motion
+StopDrive	--	StopDrive	OK,Error
+SetDriveHome	--	SetDriveHome	OK,Error	Sets current position to 0.0 for x and y
+SetHomeX	--	SetHomeX	OK,Error	Sets current position to 0.0
+SetHomeY	--	SetHomeY	OK,Error	"	"
+SetHomeZ	--	SetHomeZ	OK,Error	"	"
+GoToHole	HoleNum	GotoHole 111	OK,Error
+GetJogProcedures	--	GetJogProcedures	PatternA,PatternB
+*DoJog	--	DoJog PatternA	OK,Error	
+AbortJog	--	AbortJog	OK,Error
+SetBeamDiameter	Diam.	SetBeamDiameter 1.0	OK,Error
+GetBeamDiameter	--	GetBeamDiameter	1.0
+SetZoom	Zoom	SetZoom 50	OK,Error
+GetZoom	--	GetZoom	50
+*SetSampleHolder	SampleHolderName	SetSampleHolder 221-hole	OK,Error
+GetSampleHolder	--	GetSampleHolder	221-hole
+SetLaserPower	Power	SetLaserPower 12.5	OK,Error
+
+
+==Argus protocol==
+Commands are case sensitive and in CamelCase
+Error Responses:
+    Error: Invalid Command   - the command is poorly formated or does not exist. 
+    Error: could not set <name> to <value>
+
+
+GetData			1,2,3,4,5[,6]	comma separated string of 5 or 6 values. Sorted high to low mass H2,H1,AX,L1,L2[,CDD]
+SetIntegrationTime     			seconds    
+BlankBeam     	True or False         		OK,Error    	if true set y-symmetry to -50 else return to previous value
+    
+===========Cup/SubCup Configurations==============================
+GetCupConfigurationList
+GetSubCupConfigurationList
+GetActiveCupConfiguration
+GetActiveSubCupConfiguration
+GetSubCupParameters                 			list of Deflection voltages and the Ion Counter supply voltage
+SetSubCupConfiguration    SubCupName
+
+===========Ion Counter============================================
+ActivateIonCounter           		OK,Error    	turn on ion counter. makes qtegra report CDD counts. turning off kill voltage is not enough
+DeactivateIonCounter            		OK,Error
+
+===========Ion Pump Valve=========================================
+Open              			OK,Error    	open the Ion pump to the mass spec
+Close             			OK,Error    	closes the Ion pump to the mass spec
+GetValveState             		True,False,Error    	True=open, False=closed
+
+===========Magnet=================================================
+GetMagnetDAC            			5.0
+SetMagnetDAC     	value 0-10V        		OK,Error
+    
+===========Source=================================================
+GetHighVoltage			4500
+GetExtractionLens			1.0
+GetTrapVoltage           		1.0
+GetElectronEnergy        		1.0
+GetYSymmetry			1.0
+GetZSymmetry           			1.0
+GetZFocus           			1.0
+GetIonRepeller           		1.0
+SetHighVoltage     	kV        		OK,Error
+SetTrapVoltage     	value        		OK,Error
+SetElectronEnergy     	value        		OK,Error
+SetYSymmetry     	value        		OK,Error
+SetZSymmetry     	value        		OK,Error
+SetZFocus     	value        		OK,Error
+SetIonRepeller     	value        		OK,Error
+SetExtractionLens     	value        		OK,Error
+    
+==========Detectors===============================================
+GetDeflection     	name        		100
+SetDeflection     	name,value        		OK,Error
+GetIonCounterVoltage            		1730
+SetIonCounterVoltage     value        		OK,Error
+==================================================================
+
+==========Hiden Protocol==
+Scan	Mass or MassList	Scan 40,39,36	OK,Error
+GetData 			
+
+=======================EOF========================================

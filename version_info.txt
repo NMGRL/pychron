@@ -1,0 +1,121 @@
+Pychron 
+major=0
+minor=7.0
+#0.7.0
+<ul>
+	<li>Major change to mercurial scm</li>
+	<li>added Apache 2.0 license</li>
+	<li>added commandline toolset apptools</li>
+	<li>standalone bakeout application</li>
+	<li>added social plugins</li>
+</ul>
+
+#0.6.0
+<ul>
+	<li>Major upgrade to ETS 4.0. Install >EPD7.1.1, "enthought" namespace removed</li>
+	<li>added CameraCalibrationManager use to calculate px per mm value and drive_ratios</li>
+	<li>added drive_ratio to axis config. defines request/actual displacement ratio. </li>
+</ul>
+
+#0.5.1
+<ul>
+	<li>added hysteresis correction for kerr motors. hystersis value set in config file </li>
+	<li>added a context filter to the RemoteHardwareManager. Frequency filter is currently static 
+	but in the future will adjust based on previous responses</li>
+	<li></li>
+	<li></li>
+</ul>
+
+#0.5.0
+<ul>
+	<li>significant work on laser motion and calibration</li>
+	<li><font color="red">camera.cfg now uses xcamera_coefficients and ycamera_coefficients. 
+		Appears the camera is not true 640x480 pixels</font></li>
+	<li>added bitmap generator for making laser tray bitmaps</li>
+	<li>major code reformatting and clean up</li>
+</ul>
+
+#0.4.4
+<ul>
+	<li>added choice of stage calibrations. MassSpec (actual/actual) or pychron (actual/virtual). Pychron calibration requires accurate px to cm mapping and camera orthogonal to stage motion</li>
+	<li>fixed motion parameter calculation</li>
+	<li>added ability to delete individual hole tweaks. Place cursor over hole  when calibrating and hit delete (Backspace). only applicable to pychron calibration</li>
+	<li>added stop button to laser manager. Stops axes motion'</li>
+	<li>added manual jog. use arrows to move x-y</li>
+</ul>
+
+#0.4.3
+<ul>
+	<li><font color="red">changed camera.txt to config file (camera.cfg)</font></li>
+	<li>added mirror option to camera config file</li>
+</ul>
+
+#0.4.2 
+<ul>
+	<li>added stage calibration routine</li>
+	<li>added fast scan for power mapping</li> 
+	<li>added version info display</li>
+</ul>
+
+#0.4.1
+ 
+fixed open issues as of 6/20/2011 updated hardware manager updated laser manager
+and stage managers added a step heat manager
+
+#0.4.0 
+started incorporating database support. added experimentmanager, experiment,
+analysis, and measurementscript use experimentmanager to create an "experiment", a
+series of analyses. Each analysis is an extraction line script and a measurement
+script. The measurement script saves its data in memory and on file then the analysis
+saves it to the database. analysis extraction premeasurement measurement precycle cycle
+postcycle postmeasurement
+
+#0.3.0 
+added spectrometer manager and plugin updated graph manager, use to open and
+display graphs updated ethernet communicator. now can use UDP added hardware plugin
+views. Examine current state of hardware devices
+started addig sphinx documentation
+
+#0.2.0 
+added synrad laser control fixed the RemoteHardwareServer.start_server function.
+Was not handling commands
+
+#0.1.9 
+misc changes cleaned up scene_graph and interaction canvas. added pan to
+interaction canvas. Hold down spacebar and drag cleaned up remote hardware and
+messaging added error retrieval for agilent gp actuator hardware server can be started
+and stopped from preferences
+
+added featurator - a developer tool that should be run as a unittest before version
+commits should be populated over time with new and legacy testcases purpose is to
+automate bug detection
+
+added links feature to remote hardware server Links use the select module to maintain
+an TCP connection. This allows multiple commands to be sequentially issued over one
+socket connection currently links are always on once they have been started
+
+misc remote hardware server changes doesnt use server_forever anymore caused problems
+for start and stop a thread calls start_server. uses loop and select
+
+#0.1.8 
+added misc timeseries funcs autocorr func seasonal subseries func smooth func
+changed ploteditor to use tableeditor for series editors instead of
+ListEditor(use_notebook=True) changed colornames to the standard named colors black,
+red, maroon, yellow, olive, lime, gray, green, aqua, teal, blue, silver, navy, fuchsia,
+purple
+
+#0.1.7 
+Explanation now displays Open/Close or On/Off instead of True/False Removed
+stage window width an height preferences Minor canvas3D fixes added ability to auto
+determine if beta version looks at __file__ and beta if directory name is pychron_beta
+
+#0.1.6
+added device streamer to extraction line manager added auto serial handle finder
+
+#0.1.5
+added setup.py to create a dist tarball
+
+#0.1.4
+added installer.py to build Mac OSX app changed application_launcher.py to
+pychron.py added server_launcher icon
+

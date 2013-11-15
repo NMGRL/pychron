@@ -1,0 +1,10 @@
+add lab_identifier column to meas_AnalysisTable
+
+ALTER TABLE meas_AnalysisTable ADD lab_identifier VARCHAR(40)
+
+update meas_AnalysisTable MT
+left join gen_LabTable GT on
+    mt.lab_id=gt.id
+set MT.`lab_identifier`=GT.`identifier`
+
+

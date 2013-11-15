@@ -1,0 +1,10 @@
+# Change application name in menubar from "Python" to <your app name>
+    1. app_maker constructs an info.plist file and places it in Resources.
+    2. Canopy1.0 python however has a info.plist that trumps the app_maker info.plist.
+        Remove canopy's info.plist located at
+        $HOME/Library/Enthought/Canopy_64bit/User/Resources/Python.app/Contents/Info.plist
+        backup the file by changing to
+        $HOME/Library/Enthought/Canopy_64bit/User/Resources/Python.app/Contents/~Info.plist
+        
+        now the Info.plist at
+        <pychron_app>/Contents/Info.plist is used. 

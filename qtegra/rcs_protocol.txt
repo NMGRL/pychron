@@ -1,0 +1,56 @@
+==RCS protocol==
+Commands are case sensitive and in CamelCase
+Error Responses:
+    Error: Invalid Command   - the command is poorly formated or does not exist. 
+    Error: could not set <name> to <value>
+
+
+GetData 			1,2,3,4,5[,6]	comma separated string of 5 or 6 values. Sorted high to low mass H2,H1,AX,L1,L2[,CDD]
+SetIntegrationTime 	seconds	
+BlankBeam 	True or False 		OK,Error	if true set y-symmetry to -50 else return to previous value
+    
+===========Cup/SubCup Configurations==============================
+GetCupConfigurationList
+GetSubCupConfigurationList
+GetActiveCupConfiguration
+GetActiveSubCupConfiguration
+GetSubCupParameters 				list of Deflection voltages and the Ion Counter supply voltage
+SetSubCupConfiguration	SubCupName
+
+===========Ion Counter============================================
+ActivateIonCounter			OK,Error	turn on ion counter. makes qtegra report CDD counts. turning off kill voltage is not enough
+DeactivateIonCounter			OK,Error
+
+===========Ion Pump Valve=========================================
+Open  			OK,Error	open the Ion pump to the mass spec
+Close 			OK,Error	closes the Ion pump to the mass spec
+GetValveState 			True,False,Error	True=open, False=closed
+
+===========Magnet=================================================
+GetMagnetDAC			5.0
+SetMagnetDAC 	value 0-10V		OK,Error
+	
+===========Source=================================================
+GetHighVoltage			4500
+GetExtractionLens			1.0
+GetTrapVoltage			1.0
+GetElectronEnergy			1.0
+GetYSymmetry			1.0
+GetZSymmetry			1.0
+GetZFocus			1.0
+GetIonRepeller			1.0
+SetHighVoltage 	kV		OK,Error
+SetTrapVoltage 	value		OK,Error
+SetElectronEnergy 	value		OK,Error
+SetYSymmetry 	value		OK,Error
+SetZSymmetry 	value		OK,Error
+SetZFocus 	value		OK,Error
+SetIonRepeller 	value		OK,Error
+SetExtractionLens 	value		OK,Error
+    
+==========Detectors===============================================
+GetDeflection 	name		100
+SetDeflection 	name,value		OK,Error
+GetIonCounterVoltage			1730
+SetIonCounterVoltage 	value		OK,Error
+==================================================================

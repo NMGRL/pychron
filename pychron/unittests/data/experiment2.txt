@@ -1,0 +1,20 @@
+
+username: a
+date: 2013-06-06 16:50:44.152073
+mass_spectrometer: Jan
+delay_before_analyses: 5
+delay_between_analyses: 20
+extract_device: Fusions Diode
+tray: --- 
+actions:
+        - ('blank_unknown', 'Ar40', '>', 20, 'repeat',3)
+        - ('blank_unknown', 'Ar40', '>', 20, 'repeat')
+#================================================================================
+labnumber	sample	position	e_value	e_units	duration	cleanup	beam_diameter	pattern	e_group	extraction	measurement	post_eq	post_meas	dis_btw_pos	weight	comment	overlap	autocenter
+ba-01-j                                                                                                                                                                                                 pause
+61312	NM-779				2.0	3.54			1	pause	unknown							
+61312	NM-779				5.0	3.54			1	pause								
+61312-45	NM-779				5.0	3.54			1	pause								
+61312	NM-779				5.0	3.54			1	pause								
+61312	NM-779				5.0	3.54			1	pause								
+ba-01-j                                                                                                                                                                                                 pause

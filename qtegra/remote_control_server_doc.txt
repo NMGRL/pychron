@@ -1,0 +1,90 @@
+================================================================================
+Copyright 2011 Jake Ross
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ this file except in compliance with the License. You may obtain a copy of the
+ License at
+	http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+================================================================================
+
+Remote Control Server Documentation
+
+====Intro====
+RemoteControlServer.cs is a Qtegra-specific C# implementation of
+inter-process communication (IPC) for Qtegra, Thermo's software suite for
+control of Argus VI and other Thermo mass spectrometers. RemoteControlServer.cs
+was developed by Jake Ross at New Mexico Geochronology Research Laboratory to
+enable independent client applications, such as Mass Spec and Pychron to control
+Thermo mass spectrometers running the Qtegra software suite. The script uses the
+TCP or UDP protocols to listen for incoming ASCII messages from a client
+application. When a message is received and parsed, the appropriate action is
+executed by Qtegra, then the result or a descriptive error is returned to the
+client.
+
+===Basic configuration====
+The remote control server listens for incoming commands using either TCP or UDP.
+By default the server is setup to use UDP. To listen for TCP commands, in the
+RemoteControlServer.cs set use_udp to false
+    line 42
+        use_udp=false;
+
+To configure the communication port set m_port to an open port on your network
+(default is 1069).
+    line 38
+        m_port=1069;
+        
+For MassSpec 7.868 GetData should return non tagged data string
+    line 43
+        tag_data=false;
+        
+For MassSpec 7.873+ GetData should return a tagged data string
+    line 43
+        tag_data=true;
+
+For the remainder of this document we will assume you are using UDP to
+communicate. Otherwise substitute TCP for UDP.
+
+===General API description===
+
+Conventions used in this document:
+
+[MethodName]
+<variablename>
+
+The [Main] method starts the server thread, [UDPListen].
+
+[UDPListen] accepts incoming socket connections, reads in the data passed from
+the client and passes the data string to [ParseAndExecuteCommand]
+
+[ParseAndExecuteCommand] parses the data string into a command, (and value if
+applicable), uses the Qtegra core to execute the request and returns the result.
+
+The result is then sent to the client using the currently open socket,
+<udp_sock>
+
+To add commands to the Remote Control Protocol, add an additional case to the
+switch statement in [ParseAndExecuteCommand] and an appropriate handler
+function. See in-code documentation for commands included in the current
+protocol
+
+The variable <Instrument> is the entry point into the Qtegra core. For example
+to read hardware parameters use
+
+    Instrument.GetParameter(<param_name>,out <rawValue>);
+
+where <param_name> is the name of the parameter (e.g. Field Set) and <rawValue>
+is the data container for the result
+
+To set a hardware parameter use
+    Instrument.SetParameter(<param_name>, <value>);
+
+To use RemoteControlServer.cs simply open and run it from within Qtegra (Status
+Panel-Script List).
+
+===Notes===
+SetIntegrationTime is currently disabled. Qtegra 1.0.597.6 behaved
+unexpectedly when the integration time was changed by Mass Spec. Issue may have
+been resolved in future builds

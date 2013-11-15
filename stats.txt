@@ -1,0 +1,104 @@
+====== 2010-11-13 23:18:48 ======
+number files: 240
+number lines code: 17976
+number total lines: 33675
+====== 2010-11-17 23:26:29 ======
+number files: 246
+number lines code: 18199
+number total lines: 33998
+====== 2010-11-26 15:18:16 ======
+number files: 250
+number lines code: 18576
+number total lines: 34499
+====== 2010-11-26 19:47:04 ======
+number files: 250
+number lines code: 18575
+number total lines: 34499
+====== 2010-11-28 18:29:00 ======
+number files: 251
+number lines code: 18829
+number total lines: 34838
+====== 2010-12-02 16:46:24 ======
+number files: 258
+number lines code: 19104
+number total lines: 35228
+====== 2010-12-03 10:54:41 ======
+number files: 259
+number lines code: 19184
+number total lines: 35341
+====== 2010-12-03 15:53:22 ======
+number files: 259
+number lines code: 18627
+number total lines: 35108
+====== 2010-12-03 15:55:45 ======
+number files: 259
+number lines code: 18627
+number total lines: 35108
+====== 2010-12-16 13:56:14 ======
+number files: 294
+number lines code: 20321
+number total lines: 37795
+====== 2010-12-20 21:57:45 ======
+number files: 323
+number lines code: 21147
+number total lines: 38979
+====== 2010-12-22 21:34:33 ======
+number files: 328
+number lines code: 23420
+number total lines: 47102
+====== 2010-12-22 21:36:59 ======
+number files: 328
+number lines code: 23418
+number total lines: 47087
+====== 2010-12-23 22:04:01 ======
+number files: 331
+number lines code: 23537
+number total lines: 47275
+====== 2010-12-26 20:40:08 ======
+number files: 323
+number lines code: 22931
+number total lines: 47284
+====== 2011-01-16 23:34:12 ======
+number files: 335
+number lines code: 23701
+number total lines: 48578
+====== 2011-02-23 23:16:59 ======
+number files: 351
+number lines code: 24752
+number total lines: 50552
+====== 2011-02-24 14:56:37 ======
+number files: 351
+number lines code: 24780
+number total lines: 50601
+====== 2011-03-17 02:24:29 ======
+number files: 373
+number lines code: 26629
+number total lines: 53600
+====== 2011-04-17 21:20:43 ======
+number files: 384
+number lines code: 27420
+number total lines: 55227
+====== 2011-04-29 23:03:26 ======
+number files: 390
+number lines code: 27961
+number total lines: 56059
+====== 2011-05-09 14:55:03 ======
+number files: 395
+number lines code: 28345
+number total lines: 56058
+====== 2011-05-09 15:00:23 ======
+number files: 395
+number lines code: 28345
+number total lines: 56058
+====== 2011-05-13 13:03:37 ======
+number files: 394
+number lines code: 28491
+number total lines: 55788
+====== 2011-06-19 12:18:09 ======
+number files: 459
+number lines code: 31686
+number total lines: 60804
+====== 2011-06-19 12:32:06 ======
+number files: 459
+number lines code: 31688
+number total lines: 60804
