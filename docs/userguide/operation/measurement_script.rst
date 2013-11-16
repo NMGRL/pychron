@@ -140,6 +140,9 @@ Multicollect
 
 Peak Hop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a detailed description of a Peak Hop sequence see :doc:`hops`.
+
 ::
 
     #!Measurement
@@ -206,14 +209,6 @@ Peak Hop
           #('Ar38:CDD',                                5, 1),
           ('Ar37:CDD',                                5, 1),
           ]
-
-    BASELINE_HOPS=[('Ar40:H1,     Ar39:AX,     Ar36:CDD',      5, 1),
-           #        ('Ar40:L2,     Ar39:CDD',                   10, 1),
-            #       ('Ar38:CDD',                                10, 1),
-                   ('Ar37:CDD',                                5, 1),
-                   ]
-
-
 
     #Detectors
     ACTIVE_DETECTORS         = ('H2','H1','AX','L1','L2','CDD')
