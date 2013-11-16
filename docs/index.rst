@@ -1,13 +1,23 @@
 Welcome to Pychron's documentation!
 ===================================
 
-Contents:
+.. image:: images/NMGRL_logo.png
+   :scale: 33%
+   :width: 50%
+
+.. image:: images/RossLabs_logo.png
+   :width: 33%
+   :scale: 70%
+
+.. image:: images/NMT_logo.png
+   :width: 33%
+
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    intro
-   userguide
+   userguide/index
 
 
 Indices and tables
