@@ -9,9 +9,8 @@ Welcome to Pychron's documentation!
 Contents:
 
 .. toctree::
-:maxdepth: 2
-
-       intro
+  :maxdepth: 2
+   intro
 
 
 
