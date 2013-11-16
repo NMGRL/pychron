@@ -3,8 +3,8 @@ Plugins
 
 Plugins are enabled/disabled in the ``setupfiles/initialization.xml`` file.
 
-Plugins
-~~~~~~~~~~
+List of Plugins
+~~~~~~~~~~~~~~~~~~
 * **General**
 
   * **Database** - Access to MySQL, SQLite, PostgreSQL, etc. All database dialects supported by SQLAlchemy.
