@@ -120,7 +120,7 @@ class BasePDFWriter(Loggable):
             dn = max([len(di) for di in rows])
             #             dn = len(data[0])
             if cn < dn:
-                cs.extend([40 for _ in range(dn - cn)])
+                cs.extend([30 for _ in range(dn - cn)])
 
             t._argW = cs
 

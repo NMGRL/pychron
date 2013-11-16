@@ -31,7 +31,7 @@ class StepHeatTableEditor(ArArTableEditor):
     xls_writer_klass = StepHeatTableXLSWriter
     csv_writer_klass = StepHeatTableCSVWriter
 
-    extract_label='Temp'
+    extract_label = 'Temp.'
     extract_units='C'
 
     analysis_group_klass=StepHeatAnalysisGroup

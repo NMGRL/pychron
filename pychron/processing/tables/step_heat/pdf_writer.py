@@ -15,15 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import izip
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.helpers.formatting import floatfmt
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.pdf.items import Row, Subscript, Superscript, NamedParameter, \
-    FootNoteRow, FooterRow
+from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import TablePDFWriter
@@ -34,6 +31,26 @@ def DefaultInt(value=40):
 
 
 class StepHeatTablePDFWriter(TablePDFWriter):
+    def _calculate_col_widths(self, *rows):
+        def get_width(pa):
+            if pa.frags:
+                f = pa.frags[0]
+                w = stringWidth(pa.text, fontName=f.fontName,
+                                fontSize=f.fontSize) / 6. #points to inches
+            else:
+                w = 15
+
+            return w
+
+        wcols = []
+        for cols in zip(*rows):
+            ws = max([get_width(ci) for ci in cols])
+            #self.debug('max {}'.format(ws))
+            #self.debug(' ')
+            wcols.append(ws)
+            #aaa
+        self.col_widths = wcols
+
     def _make_table(self, group,
                     double_first_line=True,
                     include_footnotes=False):
@@ -58,8 +75,12 @@ class StepHeatTablePDFWriter(TablePDFWriter):
         data.extend(meta)
 
         # make header
-        header = self._make_header(style)
-        data.extend(header)
+        headers = self._make_header(style)
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(*headers)
+
+        data.extend(headers)
 
         cnt = len(data)
 
@@ -405,7 +426,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
 
             row = FooterRow(fontsize=df, height=0.15)
             row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
-            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=2)
+            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=3)
             row.add_item(value=r, span=-1)
             rows.append(row)
 

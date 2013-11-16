@@ -52,7 +52,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
         ans = self._clean_items()
         t = self._writer_factory(self.pdf_writer_klass,
-                                 orientation='landscape',
+                                 #orientation='landscape',
                                  use_alternating_background=self.use_alternating_background)
 
         t.col_widths = self._get_column_widths()
