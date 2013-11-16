@@ -5,3 +5,4 @@ Pychron User Guide
    
    configuration/index
    operation/index
+   processing/index
