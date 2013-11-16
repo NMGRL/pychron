@@ -18,7 +18,7 @@
 
 import unittest
 from pychron.processing.entry.labnumber_entry import LabnumberEntry
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

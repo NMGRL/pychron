@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 import unittest
 from pychron.processing.importer.mass_spec_binary_extractor import MassSpecBinaryExtractor
 #============= standard library imports ========================

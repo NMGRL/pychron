@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Int
-from traitsui.api import View, Item
 import unittest
 from pychron.hardware.linear_mapper import LinearMapper
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler

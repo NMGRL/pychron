@@ -18,7 +18,7 @@
 import unittest
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.condition import TruncationCondition
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

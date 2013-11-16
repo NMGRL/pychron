@@ -4,7 +4,7 @@ __author__ = 'ross'
 
 import unittest
 
-from pychron.unittests.processing.standard_data import pearson
+from test.processing.standard_data import pearson
 
 
 class IsochronTestCase(unittest.TestCase):

@@ -1,6 +1,4 @@
-import math
 import os
-import string
 import subprocess
 
 __author__ = 'ross'
@@ -10,7 +8,7 @@ import unittest
 from pychron.ui import set_toolkit
 set_toolkit('qt4')
 
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 from pychron.processing.tasks.tables.editors.step_heat_table_editor import StepHeatTableEditor
 
 from logging import getLogger

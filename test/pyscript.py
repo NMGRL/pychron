@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 import unittest
-import time
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 #============= standard library imports ========================

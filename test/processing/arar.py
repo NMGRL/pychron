@@ -11,7 +11,7 @@ from pychron.helpers.logger_setup import logging_setup
 
 logging_setup('arar')
 
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 
 __author__ = 'ross'
 

@@ -17,11 +17,8 @@ from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
 from pychron.database.records.isotope_record import IsotopeRecord
-from pychron.unittests.database import isotope_manager_factory
-from pychron.processing.analysis import Analysis
+from test.database import isotope_manager_factory
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
 @profile

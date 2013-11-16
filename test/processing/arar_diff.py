@@ -10,7 +10,7 @@ from pychron.ui import set_toolkit
 set_toolkit('qt4')
 
 from pychron.processing.autoupdate_parser import AutoupdateParser
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 
 from logging import getLogger
 
