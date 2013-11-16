@@ -32,9 +32,9 @@ DEBUG = True
 build_version(version_id, debug=DEBUG)
 
 def main():
-    '''
+    """
         entry point
-    '''
+    """
 
     from pychron.envisage.pychron_run import launch
     from pychron.helpers.logger_setup import logging_setup
