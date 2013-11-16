@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import unittest
 from pychron.loading.load_task import LoadingTask
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 from pychron.loading.loading_manager import LoadingManager
 #============= standard library imports ========================
 #============= local library imports  ==========================

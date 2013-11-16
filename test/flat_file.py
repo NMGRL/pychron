@@ -15,25 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
-
+import unittest
+from pychron.processing.importer.mass_spec_binary_extractor import MassSpecBinaryExtractor
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.analysis_group import StepHeatAnalysisGroup
-from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
-from pychron.processing.tables.step_heat.pdf_writer import StepHeatTablePDFWriter
-from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
-from pychron.processing.tasks.tables.editors.arar_table_editor import ArArTableEditor
+
+class FlatFileTest(unittest.TestCase):
+    def setUp(self):
+        self._p = './data/MS Data File'
+        self._ext = MassSpecBinaryExtractor()
+
+    def testA(self):
+        self._ext.import_file(self._p)
 
 
-class StepHeatTableEditor(ArArTableEditor):
-    pdf_writer_klass = StepHeatTablePDFWriter
-    xls_writer_klass = StepHeatTableXLSWriter
-    csv_writer_klass = StepHeatTableCSVWriter
-
-    extract_label='Temp'
-    extract_units='C'
-
-    analysis_group_klass=StepHeatAnalysisGroup
-
-    #============= EOF =============================================
+#============= EOF =============================================

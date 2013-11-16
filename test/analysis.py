@@ -18,7 +18,7 @@
 #============= standard library imports ========================
 import unittest
 #============= local library imports  ==========================
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 from pychron.codetools.simple_timeit import timethis
 
 

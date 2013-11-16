@@ -15,10 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import izip
 from reportlab.lib import colors
-from traits.api import HasTraits, Str
-from traitsui.api import View, Item
+from traits.api import Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -29,28 +27,27 @@ from pychron.pdf.items import Superscript, Subscript, Row, NamedParameter
 class TablePDFWriter(BasePDFWriter):
     extract_label = Str
     extract_units = Str
-    def _build(self, doc, ans, groups, title):
 
+    def _build(self, doc, ans, groups, title):
+        self.debug('build table {}'.format(title))
         title_para = self._new_paragraph(title)
+
+        templates = None
         flowables = [title_para, self._vspacer(0.1)]
 
-        #include_footnotes = True
-        #         print ans
-        #i = 0
-        #for (_, ais), group in izip(ans, groups):
-            #aa = list(ais)
-            #group = groups[i]
-            #i += 1
-        n=len(groups)-1
-        for i,group in enumerate(groups):
+        n = len(groups) - 1
+        for i, group in enumerate(groups):
 
-            include_footnotes=i==n
+            include_footnotes = i == n
             fs = self._make_table(group, include_footnotes=include_footnotes)
             for fi in fs:
                 flowables.append(fi)
                 flowables.append(self._vspacer(0.1))
 
-        return flowables, None
+            if i < n:
+                flowables.append(self._vspacer(0.25))
+
+        return flowables, templates
 
     #def _make_footnotes(self, ref, row):
     #    ics=self._get_ic_factor(ref)
@@ -64,7 +61,7 @@ class TablePDFWriter(BasePDFWriter):
     #
 
     def _get_ic_factor(self, ref):
-        ic=(1,0)
+        ic = (1, 0)
         if not isinstance(ic, tuple):
             ic = ic.nominal_value, ic.std_dev
         return u'{:0.3f} \u00b1{:0.4f}'.format(ic[0], ic[1])
@@ -89,18 +86,18 @@ class TablePDFWriter(BasePDFWriter):
         line1.add_item(value=NamedParameter('Lab #', labnumber), span=2)
 
         js = u'{:0.2E} \u00b1{:0.2E}'.format(j[0], j[1])
-        line1.add_item(value=NamedParameter('J', js), span=3)
+        line1.add_item(value=NamedParameter('J', js), span=4)
 
-        ics=self._get_ic_factor(ref)
+        ics = self._get_ic_factor(ref)
 
         if include_footnotes:
             foot = self._make_footnote('IC',
-                                    'IC Factor',
-                                    'H1/CDD intercalibration',
-                                    '<b>IC</b>',
-                                    link_extra=u': {}'.format(ics))
+                                       'IC Factor',
+                                       'H1/CDD intercalibration',
+                                       '<b>IC</b>',
+                                       link_extra=u': {}'.format(ics))
         else:
-            ics=self._get_ic_factor(ref)
+            ics = self._get_ic_factor(ref)
             foot = NamedParameter('IC', ics)
 
         line1.add_item(value=foot, span=3)
@@ -144,11 +141,12 @@ class TablePDFWriter(BasePDFWriter):
             (super_ar(38), ''), (sigma, ''),
             (super_ar(37), ''), (sigma, ''),
             (super_ar(36), ''), (sigma, minus_102fa),
+            ('Age', '(Ma)'), (sigma, ''),
             ('%{}*'.format(super_ar(40)), ''),
             ('{}*/{}{}'.format(super_ar(40),
                                super_ar(39),
                                Subscript('K')), ''),
-            ('Age', '(Ma)'), (sigma, ''),
+
             ('K/Ca', ''),
             (sigma, ''),
             #                 (blank, 'type'),
@@ -185,4 +183,5 @@ class TablePDFWriter(BasePDFWriter):
             nrow,
             urow
         ]
-#============= EOF =============================================
+
+    #============= EOF =============================================

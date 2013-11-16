@@ -19,7 +19,7 @@ import unittest
 from itertools import groupby
 from pychron.processing.selection.data_selector import FileSelector
 from pychron.processing.processor import Processor
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

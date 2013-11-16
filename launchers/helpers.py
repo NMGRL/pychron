@@ -22,10 +22,10 @@ import sys
 
 def build_version(ver, debug=False):
     root = os.path.dirname(__file__)
-#    if debug_path:
-# #       insert pychron pychron dir into sys.path
-#        build_sys_path(ver, root)
-#    else:
+    #    if debug_path:
+    # #       insert pychron pychron dir into sys.path
+    #        build_sys_path(ver, root)
+    #    else:
 
     if not debug:
         add_eggs(root)
@@ -34,6 +34,7 @@ def build_version(ver, debug=False):
 
     # can now use pychron.
     from pychron.paths import paths
+
     paths.bundle_root = root
     if '-' in ver:
         ver = ver.split('-')[0]
@@ -42,13 +43,15 @@ def build_version(ver, debug=False):
     # build globals
     build_globals(debug)
 
+
 def build_sys_path(ver, root):
     merc = os.path.join(os.path.expanduser('~'),
-                       'Programming',
-                       'mercurial')
+                        'Programming',
+                        'git')
     src = os.path.join(merc, 'pychron{}'.format(ver))
 
     sys.path.insert(0, src)
+
 
 def add_eggs(root):
     egg_path = os.path.join(root, 'pychron.pth')
@@ -64,12 +67,15 @@ def add_eggs(root):
 
 def build_globals(debug):
     from pychron.initialization_parser import InitializationParser
+
     ip = InitializationParser()
 
     from pychron.globals import globalv
+
     globalv.build(ip)
 
     globalv.debug = debug
+
 # #    use_ipc = ip.get_global('use_ipc')
 #    boolfunc = lambda x:True if x in ['True', 'true', 'T', 't'] else False
 #    for attr, func in [('use_ipc', boolfunc),

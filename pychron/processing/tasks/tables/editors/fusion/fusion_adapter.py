@@ -13,39 +13,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from traits.etsconfig.etsconfig import ETSConfig
-ETSConfig.toolkit = 'qt4'
 
-from pychron.database.records.isotope_record import IsotopeRecord
-from test.database import isotope_manager_factory
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
-@profile
-def main(db):
-    labn = db.get_labnumber('61311',
-#                             options='analyses'
-                            )
+from pychron.processing.tasks.tables.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
 
-    print '------------------------- got labnunmber'
-    an = labn.analyses[0]
-    print '------------------------- got analysis'
-    a = IsotopeRecord(_dbrecord=an)
-    load(a)
-    print '------------------------- loaded'
 
-# @profile
-def load(a):
-    a.load_isotopes()
-    print '------------------------- isotopes loaded'
-    a.calculate_age()
+class FusionTableAdapter(BaseAdapter):
+    columns = [
+        ('Identifier', 'labnumber'),
+        ('N', 'aliquot_step_str'),
+        ('Power', 'extract_value'),
+        ('Mol. Ar40', 'moles_Ar40'),
+        ('Ar40', 'ar40'),
+        (PM, 'ar40_err'),
 
-if __name__ == '__main__':
-    man = isotope_manager_factory()
-    db = man.db
-    db.connect()
+        ('Ar39', 'ar39'),
+        (PM, 'ar39_err'),
 
-#     db.sess.bind.echo = True
+        ('Ar38', 'ar38'),
+        (PM, 'ar38_err'),
 
-    main(db)
+        ('Ar37', 'ar37'),
+        (PM, 'ar37_err'),
+
+        ('Ar36', 'ar36'),
+        (PM, 'ar36_err'),
+        ('%40Ar*', 'rad40_percent'),
+
+        ('40Ar*/39ArK', 'R'),
+        ('Age', 'age'),
+        (PM, 'age_error'),
+        ('K/Ca', 'kca'),
+        (PM, 'kca_error'),
+        ('', 'blank_column')
+    ]
+
+
+class FusionGroupTableAdapter(BaseGroupAdapter):
+    pass
+
 #============= EOF =============================================

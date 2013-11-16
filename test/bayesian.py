@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 import unittest
 from pychron.processing.bayesian_modeler import BayesianModeler
 #============= standard library imports ========================

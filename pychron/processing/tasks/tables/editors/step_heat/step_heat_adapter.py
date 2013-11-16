@@ -15,20 +15,44 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
-import unittest
-from pychron.processing.importer.mass_spec_binary_extractor import MassSpecBinaryExtractor
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.tables.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
 
-class FlatFileTest(unittest.TestCase):
-    def setUp(self):
-        self._p = './data/MS Data File'
-        self._ext = MassSpecBinaryExtractor()
 
-    def testA(self):
-        self._ext.import_file(self._p)
+class StepHeatTableAdapter(BaseAdapter):
+    columns = [
+        ('Identifier', 'labnumber'),
+        ('N', 'aliquot_step_str'),
+        ('Temp', 'extract_value'),
+        ('Mol. Ar40', 'moles_Ar40'),
+        ('Ar40', 'ar40'),
+        (PM, 'ar40_err'),
 
+        ('Ar39', 'ar39'),
+        (PM, 'ar39_err'),
+
+        ('Ar38', 'ar38'),
+        (PM, 'ar38_err'),
+
+        ('Ar37', 'ar37'),
+        (PM, 'ar37_err'),
+
+        ('Ar36', 'ar36'),
+        (PM, 'ar36_err'),
+        ('%40Ar*', 'rad40_percent'),
+
+        ('40Ar*/39ArK', 'R'),
+        ('Age', 'age'),
+        (PM, 'age_error'),
+        ('K/Ca', 'kca'),
+        (PM, 'kca_error'),
+        ('', 'blank_column')
+    ]
+
+
+class StepHeatGroupTableAdapter(BaseGroupAdapter):
+    pass
 
 #============= EOF =============================================

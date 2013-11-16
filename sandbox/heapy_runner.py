@@ -14,7 +14,7 @@
 # limitations under the License.
 #===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
-from pychron.unittests.database import isotope_manager_factory
+from test.database import isotope_manager_factory
 # from pychron.helpers import logger_setup
 from pychron.helpers.logger_setup import logging_setup
 from pychron.spectrometer.spectrometer_manager import SpectrometerManager
@@ -25,15 +25,11 @@ ETSConfig.toolkit = 'qt4'
 
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-import os
 from pychron.paths import paths
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from guppy import hpy
-from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
 from pychron.experiment.experiment_executor import ExperimentExecutor
 def run():
     hp = hpy()

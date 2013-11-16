@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 from traits.api import Instance
 from pyface.tasks.action.schema import SToolBar, SGroup
 # from pyface.action.action import Action
@@ -25,15 +26,16 @@ from pyface.tasks.action.schema import SToolBar, SGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.tables.editors.base_adapter import TableSeparator
+from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 from pychron.processing.tasks.tables.table_actions import ToggleStatusAction, \
     SummaryTableAction, AppendSummaryTableAction, MakePDFTableAction, \
-    AppendLaserTableAction, MakeXLSTableAction, MakeCSVTableAction
+    AppendTableAction, MakeXLSTableAction, MakeCSVTableAction
 # from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.tables.panes import TableEditorPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
-from pychron.processing.tasks.tables.editors.fusion_table_editor import FusionTableEditor
+from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.processing.tasks.tables.table_task_editor import TableTaskEditor
-from pychron.processing.tasks.tables.editors.adapters import TableSeparator
 from pychron.processing.tasks.tables.editors.summary_table_editor import SummaryTableEditor
 
 from traits.api import Str, List
@@ -85,7 +87,7 @@ class TableTask(BaseBrowserTask):
                 AppendSummaryTableAction()
             ),
             SGroup(
-                AppendLaserTableAction()
+                AppendTableAction()
             ),
             image_size=(16, 16)
         )
@@ -107,18 +109,17 @@ class TableTask(BaseBrowserTask):
 
 
     def activated(self):
-        editor = FusionTableEditor()
-        self._open_editor(editor)
+        #editor = FusionTableEditor()
+        #self._open_editor(editor)
         self.load_projects()
+        #self.selected_project = self.projects[1]
 
-        self.selected_project = self.projects[1]
+        editor = StepHeatTableEditor()
+        self._open_editor(editor)
 
-    #         self._dclicked_sample_changed('')
 
-    #         super(TableTask, self).activated()
-    #         self.make_laser_table()
     def _dclicked_sample_changed(self, new):
-        self._append_laser_table()
+        self._append_table()
         #         man = self.manager
         #         ans = [ai for ai in self.analyses
         # #                 if not ai.step
@@ -132,7 +133,7 @@ class TableTask(BaseBrowserTask):
         #         self.active_editor.items = aa
         #         self.active_editor.refresh_blanks()
 
-        self.active_editor.name = self.selected_samples[0].name
+        #self.active_editor.name = self.selected_samples[0].name
 
     #===============================================================================
     # task actions
@@ -184,50 +185,63 @@ class TableTask(BaseBrowserTask):
         #             do_later(self._append_summary_table)
             self._append_summary_table()
 
-    def append_laser_table(self):
-        if isinstance(self.active_editor, FusionTableEditor):
-        #             do_later(self._append_summary_table)
-            self._append_laser_table()
+    def append_table(self):
+        if isinstance(self.active_editor, FusionTableEditor) or \
+                isinstance(self.active_editor, StepHeatTableEditor):
+            self._append_table()
 
     def open_summary_table(self):
         do_later(self._open_summary_table)
 
-    def _append_laser_table(self):
+    def _append_table(self):
+        find = lambda x: next((si for si in self.active_editor.items
+                               if si.sample == x), None)
 
-        for sa in self.selected_samples:
-            sam = next((si
-                        for si in self.active_editor.items
-                        if si.sample == sa.name), None)
-            if sam is None:
-                man = self.manager
-                ans = self._get_sample_analyses(sa)
-                ans = man.make_analyses(ans)
+        ss = [sa for sa in self.selected_samples if not find(sa.name)]
+        man = self.manager
+        ans = self._get_sample_analyses(ss)
+        ans = man.make_analyses(ans)
 
-                aa = ans
-                #                 aa = [r for ai in ans
-                #                         for r in (ai, TableBlank(analysis=(ai)))]
+        items = self.active_editor.items
+        if items:
+            items.extend((TableSeparator(),))
 
-                if self.active_editor.oitems:
-                    aa.insert(0, TableSeparator())
+        for ln, ais in groupby(ans, key=lambda x: x.labnumber):
+            #print ln, ais
+            items.extend(list(ais))
+            items.extend((TableSeparator(),))
 
-                self.active_editor.oitems.extend(aa)
-                self.active_editor.items.extend(aa)
+        items.pop(-1)
 
-                #         self.active_editor.refresh_blanks()
+
+        #for sa in self.selected_samples:
+        #    sam = next((si
+        #                for si in self.active_editor.items
+        #                if si.sample == sa.name), None)
+        #
+        #    if sam is None:
+        #        man = self.manager
+        #        ans = self._get_sample_analyses((sa,))
+        #        ans = man.make_analyses(ans)
+        #
+        #        aa = ans
+        #
+        #        if self.active_editor.items:
+        #            aa.insert(0, TableSeparator())
+        #
+        #        self.active_editor.items.extend(aa)
 
     def _append_summary_table(self):
         ss = self.active_editor.items
         items = self._make_summary_table(ss)
         self.active_editor.items.extend(items)
 
-
     def _open_summary_table(self):
         items = self._make_summary_table()
         uab = self.editor.use_alternating_background
         editor = SummaryTableEditor(items=items,
                                     name='Summary',
-                                    use_alternating_background=uab
-        )
+                                    use_alternating_background=uab)
         self._open_editor(editor)
 
     def _make_summary_table(self, pitems=None):

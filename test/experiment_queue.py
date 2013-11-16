@@ -17,8 +17,11 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 import unittest
-from pychron.experiment.queue.experiment_queue import ExperimentQueue
+
 from uncertainties import ufloat
+
+from pychron.experiment.queue.experiment_queue import ExperimentQueue
+
 #============= local library imports  ==========================
 
 class MockRun(object):

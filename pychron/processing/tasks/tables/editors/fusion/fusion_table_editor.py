@@ -23,8 +23,7 @@ from pychron.processing.tables.fusion.csv_writer import FusionTableCSVWriter
 from pychron.processing.tables.fusion.pdf_writer import FusionTablePDFWriter
 from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 from pychron.processing.tasks.tables.editors.arar_table_editor import ArArTableEditor
-from pychron.processing.tasks.tables.editors.adapters import FusionTableAdapter, \
-    FusionTableMeanAdapter
+from pychron.processing.tasks.tables.editors.fusion.fusion_adapter import FusionTableAdapter, FusionGroupTableAdapter
 
 
 class FusionTableEditor(ArArTableEditor):
@@ -32,7 +31,7 @@ class FusionTableEditor(ArArTableEditor):
     xls_writer_klass = FusionTableXLSWriter
     csv_writer_klass = FusionTableCSVWriter
     adapter_klass = FusionTableAdapter
-    analysis_groups_adapter_klass = FusionTableMeanAdapter
+    analysis_groups_adapter_klass = FusionGroupTableAdapter
     extract_label = 'Power'
     extract_units = 'W'
 
