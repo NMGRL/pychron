@@ -1,6 +1,11 @@
 Pychron and the Spectrometer
 =============================
 
+.. toctree::
+   :maxdepth: 2
+
+   measurement_script
+
 Source Parameters
 -----------------------------
 
