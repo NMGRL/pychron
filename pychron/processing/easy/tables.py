@@ -21,8 +21,8 @@
 from pychron.experiment.easy_parser import EasyParser
 from pychron.helpers.filetools import unique_path
 from pychron.processing.easy.base_easy import BaseEasy
-from pychron.processing.tasks.tables.editors.fusion_table_editor import FusionTableEditor
-from pychron.processing.tasks.tables.editors.step_heat_table_editor import StepHeatTableEditor
+from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
+from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 
 
 class EasyTables(BaseEasy):
@@ -32,7 +32,7 @@ class EasyTables(BaseEasy):
     def _save_step_heat(self, editor, root, ident):
         self._save_table(editor, root, ident, 'stepheat')
 
-    def _save_table(self, editor, root,ident, tag):
+    def _save_table(self, editor, root, ident, tag):
         ft = ('pdf', 'xls', 'csv')
         sft = ', '.join(ft[:-1])
         sft = '{} or {}'.format(sft, ft[-1])
@@ -41,7 +41,7 @@ class EasyTables(BaseEasy):
             if ext not in ft:
                 self.warning('Invalid file type "{}". Use "{}"'.format(ext, sft))
             p, _ = unique_path(root, '{}_{}_table'.format(tag, ident), extension='.{}'.format(ext))
-            editor.save_file(p)
+            editor.save_file(p, title='Ar/Ar Step heat data')
 
     def make_tables(self):
         ep = EasyParser()

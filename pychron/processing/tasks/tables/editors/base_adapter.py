@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Int, Str, Property, Any
 from traitsui.tabular_adapter import TabularAdapter
+from uncertainties import std_dev, nominal_value
 from pychron.helpers.formatting import floatfmt
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -47,64 +48,6 @@ PM = u'\u00b1 1\u03c3'
 
 class BaseAdapter(TabularAdapter):
     blank_column_text = Str('')
-
-    def _get_value(self, attr, n=3, **kw):
-        v = ''
-        if isinstance(self.item, TableBlank):
-            if self.item.isotopes.has_key(attr):
-                v = self.item.isotopes.get(attr).blank.value
-                v = floatfmt(v, n=n, **kw)
-        else:
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(v.nominal_value, n=n, **kw)
-
-        return v
-
-    def _get_error(self, attr, n=4, **kw):
-        v = ''
-        if isinstance(self.item, TableBlank):
-            if self.item.isotopes.has_key(attr):
-                v = self.item.isotopes.get(attr).blank.error
-                v = floatfmt(v, n=n)
-        else:
-            v = getattr(self.item, attr)
-            if v:
-                v = floatfmt(v.std_dev, n=n)
-
-        return v
-
-
-class FusionTableAdapter(BaseAdapter):
-    columns = [
-        ('Lab#', 'labnumber'),
-        ('N', 'aliquot_step_str'),
-        ('Power', 'extract_value'),
-        ('Mol. Ar40', 'moles_Ar40'),
-        ('Ar40', 'ar40'),
-        (PM, 'ar40_err'),
-
-        ('Ar39', 'ar39'),
-        (PM, 'ar39_err'),
-
-        ('Ar38', 'ar38'),
-        (PM, 'ar38_err'),
-
-        ('Ar37', 'ar37'),
-        (PM, 'ar37_err'),
-
-        ('Ar36', 'ar36'),
-        (PM, 'ar36_err'),
-        ('%40Ar*', 'rad40_percent'),
-
-        ('40Ar*/39ArK', 'R'),
-        ('Age', 'age'),
-        (PM, 'age_error'),
-        ('K/Ca', 'kca'),
-        (PM, 'kca_error'),
-        ('', 'blank_column')
-    ]
-
     aliquot_step_str_text = Property
     extract_value_text = Property
     moles_Ar40_text = Property
@@ -152,6 +95,34 @@ class FusionTableAdapter(BaseAdapter):
 
     font = 'Arial 10'
 
+    def _get_value(self, attr, n=3, **kw):
+        v = ''
+        item = self.item
+        if hasattr(item, attr):
+            v = getattr(self.item, attr)
+            if v:
+                v = floatfmt(nominal_value(v), n=n, **kw)
+        elif hasattr(item, 'isotopes'):
+            if attr in item.isotopes:
+                v = item.isotopes[attr].get_intensity()
+                v = floatfmt(nominal_value(v), n=n, **kw)
+
+        return v
+
+    def _get_error(self, attr, n=3, **kw):
+        v = ''
+        item = self.item
+        if hasattr(item, attr):
+            v = getattr(self.item, attr)
+            if v:
+                v = floatfmt(std_dev(v), n=n, **kw)
+        elif hasattr(item, 'isotopes'):
+            if attr in item.isotopes:
+                v = item.isotopes[attr].get_intensity()
+                v = floatfmt(std_dev(v), n=n, **kw)
+
+        return v
+
     def get_bg_color(self, obj, trait, row, column):
         c = 'white'
         if not isinstance(self.item, TableSeparator):
@@ -174,12 +145,6 @@ class FusionTableAdapter(BaseAdapter):
             v = '{:n}'.format(v)
 
         return v
-
-    #         if self.item.extract_units == 'W':
-    #             f = '{:0.2f}'.format(v)
-    #         else:
-    #         f =
-    #         return f.format(v)
 
     def _get_moles_Ar40_text(self):
         return self._get_text_value('moles_Ar40')
@@ -231,12 +196,8 @@ class FusionTableAdapter(BaseAdapter):
         return self._get_value('age')
 
     def _get_age_error_text(self):
-        v = self._get_text_value('age_error')
-        if v is not None:
-            v = floatfmt(v)
-        else:
-            v = ''
-        return v
+        return self._get_value('age_err_wo_j')
+
 
     def _get_kca_text(self):
         return self._get_value('kca', n=2)
@@ -245,7 +206,7 @@ class FusionTableAdapter(BaseAdapter):
         return self._get_error('kca', n=3)
 
 
-class FusionTableMeanAdapter(BaseAdapter):
+class BaseGroupAdapter(BaseAdapter):
     columns = [
         ('Sample', 'sample'),
         ('N', 'nanalyses'),
@@ -279,6 +240,8 @@ class FusionTableMeanAdapter(BaseAdapter):
     #age_sd_width = Int(75)
     #arith_age_text = Property
     #age_sd_text = Property
+    def get_bg_color(self, obj, trait, row, column):
+        return 'white'
 
     def _get_weighted_age_text(self):
         return self._get_value('weighted_age')

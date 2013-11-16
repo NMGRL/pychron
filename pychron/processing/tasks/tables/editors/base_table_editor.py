@@ -19,7 +19,7 @@ from traits.api import List, Any, Event, Bool
 from pyface.file_dialog import FileDialog
 
 from pychron.processing.tasks.editor import BaseUnknownsEditor
-from pychron.processing.tasks.tables.editors.adapters import TableBlank, \
+from pychron.processing.tasks.tables.editors.base_adapter import TableBlank, \
     TableSeparator
 from pychron.helpers.filetools import add_extension
 from pychron.paths import paths
@@ -73,7 +73,8 @@ class BaseTableEditor(BaseUnknownsEditor):
         if path is None:
             dlg = FileDialog(action='save as', default_directory=paths.processed_dir)
             if dlg.open():
-                path = add_extension(dlg.path, ext)
+                if dlg.path:
+                    path = add_extension(dlg.path, ext)
 
         return path
 

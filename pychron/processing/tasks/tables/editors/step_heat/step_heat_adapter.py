@@ -16,24 +16,43 @@
 
 #============= enthought library imports =======================
 
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.analysis_group import StepHeatAnalysisGroup
-from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
-from pychron.processing.tables.step_heat.pdf_writer import StepHeatTablePDFWriter
-from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
-from pychron.processing.tasks.tables.editors.arar_table_editor import ArArTableEditor
+from pychron.processing.tasks.tables.editors.base_adapter import BaseAdapter, PM, BaseGroupAdapter
 
 
-class StepHeatTableEditor(ArArTableEditor):
-    pdf_writer_klass = StepHeatTablePDFWriter
-    xls_writer_klass = StepHeatTableXLSWriter
-    csv_writer_klass = StepHeatTableCSVWriter
+class StepHeatTableAdapter(BaseAdapter):
+    columns = [
+        ('Identifier', 'labnumber'),
+        ('N', 'aliquot_step_str'),
+        ('Temp', 'extract_value'),
+        ('Mol. Ar40', 'moles_Ar40'),
+        ('Ar40', 'ar40'),
+        (PM, 'ar40_err'),
 
-    extract_label = 'Temp.'
-    extract_units='C'
+        ('Ar39', 'ar39'),
+        (PM, 'ar39_err'),
 
-    analysis_group_klass=StepHeatAnalysisGroup
+        ('Ar38', 'ar38'),
+        (PM, 'ar38_err'),
 
-    #============= EOF =============================================
+        ('Ar37', 'ar37'),
+        (PM, 'ar37_err'),
+
+        ('Ar36', 'ar36'),
+        (PM, 'ar36_err'),
+        ('%40Ar*', 'rad40_percent'),
+
+        ('40Ar*/39ArK', 'R'),
+        ('Age', 'age'),
+        (PM, 'age_error'),
+        ('K/Ca', 'kca'),
+        (PM, 'kca_error'),
+        ('', 'blank_column')
+    ]
+
+
+class StepHeatGroupTableAdapter(BaseGroupAdapter):
+    pass
+
+#============= EOF =============================================

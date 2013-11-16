@@ -6,10 +6,11 @@ __author__ = 'ross'
 import unittest
 
 from pychron.ui import set_toolkit
+
 set_toolkit('qt4')
 
 from test.database import isotope_manager_factory
-from pychron.processing.tasks.tables.editors.step_heat_table_editor import StepHeatTableEditor
+from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor
 
 from logging import getLogger
 
@@ -29,15 +30,15 @@ class TableWriterTestCase(unittest.TestCase):
 
         with db.session_ctx():
             ans, tc = db.get_sample_analyses([sid, ], ['Minna Bluff'])
-            cls.analyses=man.make_analyses(ans)
+            cls.analyses = man.make_analyses(ans)
 
             #an = man.make_analysis(ans[aid])
 
             #cls.analysis = an
 
-        #p = '../data/autoupdate_AF_72_1'
-        #cls.parser = AutoupdateParser()
-        #cls.parser.parse(p)
+            #p = '../data/autoupdate_AF_72_1'
+            #cls.parser = AutoupdateParser()
+            #cls.parser.parse(p)
 
     def setUp(self):
         pass
@@ -46,11 +47,11 @@ class TableWriterTestCase(unittest.TestCase):
         self.assertEqual(len(self.analyses), 10)
 
     def test_write(self):
-        writer=StepHeatTableEditor()
+        writer = StepHeatTableEditor()
         writer.set_items(self.analyses)
 
-        p='/Users/ross/Sandbox/step_heat.pdf'
-        writer.save_file(p)
+        p = '/Users/ross/Sandbox/step_heat.pdf'
+        writer.save_file(p, title='Table 1. Ar/Ar Step heat data.')
         self._view_file(p)
 
     def _view_file(self, p, application='Preview'):

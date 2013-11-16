@@ -232,10 +232,10 @@ class ArArAge(Loggable):
         return self.non_ar_isotopes.get(key, ufloat(0, 0))
 
     def get_computed_value(self, key):
-        return self.computed.get(key, ufloat(0,0))
+        return self.computed.get(key, ufloat(0, 0))
 
     def _calculate_kca(self):
-        self.debug('calculated kca')
+        #self.debug('calculated kca')
 
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')
@@ -269,7 +269,7 @@ class ArArAge(Loggable):
         self.kcl = k / cl * k_cl_pr
 
     def _calculate_age(self, include_decay_error=None):
-        self.debug('calculate age')
+        #self.debug('calculate age')
 
         isos = []
         for ik in ARGON_KEYS:
@@ -297,7 +297,7 @@ class ArArAge(Loggable):
                                                                               arar_constants=self.arar_constants)
 
         self.non_ar_isotopes = non_ar
-        self.computed=computed
+        self.computed = computed
         self.rad40_percent = computed['rad40_percent']
         for k, v in interference_corrected.iteritems():
             self.isotopes[k].interference_corrected_value = v

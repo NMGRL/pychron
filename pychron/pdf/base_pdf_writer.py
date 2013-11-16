@@ -62,8 +62,8 @@ class BasePDFWriter(Loggable):
     _footnotes = None
     orientation = 'portrait'
     col_widths = None
-    left_margin = 1
-    right_margin = 0.5
+    left_margin = 0.25
+    right_margin = 0.25
     top_margin = 1
     bottom_margin = 0.25
 
@@ -160,7 +160,7 @@ class BasePDFWriter(Loggable):
 
         ts = TableStyle()
         if debug_grid:
-            ts.add('GRID', (0, 0), (-1, -1), 1.5, colors.red)
+            ts.add('GRID', (0, 0), (-1, -1), 1, colors.red)
 
         if isinstance(header_line_color, str):
             try:
