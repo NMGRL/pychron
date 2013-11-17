@@ -13,8 +13,11 @@ A peak hop sequence,``HOPS``, is a list of peak hops (e.i. magnet moves).
           ]
 
 
-a peak hop is a list of ``iso:detector`` pairs plus two configuration values,
-1.) the number of counts at this position 2). the settling time (s) after magnet positioning and before measurement starts
+A ``peak hop`` is a list of ``iso:detector`` pairs plus two configuration values,
+
+#. the number of counts at the current position 
+#. the settling time (s) after magnet positioning and before measurement starts.
+
 The first ``iso:detector`` pair of each hop is used for positioning.
 
 To specify a non-nominal deflection value for a detector use ``iso:detector:deflection``
