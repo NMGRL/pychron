@@ -36,10 +36,10 @@ class WebAction(Action):
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
     def perform(self, event):
-        '''
+        """
             goto issues page add an request or report bug
-        '''
-        url = 'http://code.google.com/p/arlab/issues/list'
+        """
+        url = 'https://github.com/jirhiker/pychron/issues'
         self._open_url(url)
 
 
