@@ -48,7 +48,6 @@ class Monitor(ConfigLoadable):
             self._invalid_checks = []
             return self._load_hook(config)
 
-
     def _load_hook(self, *args):
         return True
 

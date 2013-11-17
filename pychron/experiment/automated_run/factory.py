@@ -58,7 +58,7 @@ def EKlass(klass):
     return klass(enter_set=True, auto_set=False)
 
 
-def increment_value(self, m, increment=1):
+def increment_value(m, increment=1):
     s = ','
     if s not in m:
         m = (m,)
@@ -143,7 +143,7 @@ class AutomatedRunFactory(Loggable):
 
     duration = EKlass(Float)
     cleanup = EKlass(Float)
-    beam_diameter = Property(EKlass(Str), depends_on='beam_diameter')
+    beam_diameter = Property(EKlass(Str), depends_on='_beam_diameter')
     _beam_diameter = Any
 
     pattern = String('Pattern')
@@ -206,6 +206,8 @@ class AutomatedRunFactory(Loggable):
 
     mass_spectrometer = String
     extract_device = Str
+    def set_end_after(self, v):
+        self._update_run_values('end_after', v)
 
     def update_selected_ctx(self):
         return UpdateSelectedCTX(self)
@@ -390,6 +392,9 @@ class AutomatedRunFactory(Loggable):
             self.irrad_hole = str(hole)
             self.irrad_level = str(level.name)
 
+            self.selected_level=self.irrad_level
+            self.selected_irradiation=irrad.name
+
             il = '{} {}:{}'.format(irrad.name, level.name, hole)
         return il
 
@@ -461,7 +466,7 @@ class AutomatedRunFactory(Loggable):
             setattr(arv, name, s.name)
 
     def _clone_run(self, run, excludes=None, set_labnumber=True):
-
+        self.debug('cloning run {}'.format(run))
         if excludes is None:
             excludes = []
 
@@ -474,7 +479,8 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'weight', 'comment',
-        ):
+                     ):
+
             if attr in excludes:
                 continue
 
@@ -950,8 +956,7 @@ weight, comment, skip, extract_group''')
 
     #        self.clear_end_after = True
 
-    def set_end_after(self, v):
-        self._update_run_values('end_after', v)
+
 
     @on_trait_change('''measurement_script:name, 
 extraction_script:name, 
@@ -1065,6 +1070,7 @@ post_equilibration_script:name
                     self._aliquot = a
 
                     self.irradiation = self._make_irrad_level(ln)
+
                     if self.auto_fill_comment:
                         self.set_auto_comment()
 
