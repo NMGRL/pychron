@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any
+    Date, Any, Either
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -98,12 +98,24 @@ class DBAnalysis(Analysis):
     project = Str
     comment = Str
     mass_spectrometer = Str
+
+    #extraction
     extract_device = Str
     position = Str
     extract_value = Float
     extract_units = Str
     cleanup_duration = Float
     extract_duration = Float
+
+    beam_diameter=Either(Float,Str)
+    pattern=Str
+    mask_position=Either(Float,Str)
+    mask_name=Str
+    attenuator=Either(Float,Str)
+    ramp_duration=Either(Float,Str)
+    ramp_rate=Either(Float,Str)
+    reprate=Either(Float,Str)
+
     analysis_type = Str
     tag = Str
     timestamp = Float
@@ -339,6 +351,21 @@ class DBAnalysis(Analysis):
             self.cleanup = extraction.cleanup_duration
             self.duration = extraction.extract_duration
             self.position = self._get_position(extraction)
+
+            for attr in ('beam_diameter','pattern',
+                         'ramp_rate','ramp_duration'):
+                v=getattr(extraction, attr)
+                if v is None:
+                    v=''
+                setattr(self, attr, v)
+
+            #uv
+            for attr in ('reprate','mask_position', 'mask_name','attenuator'):
+                v=getattr(extraction, attr)
+                if v is None:
+                    v=''
+                setattr(self, attr, v)
+
 
     def _sync_view(self, av=None):
         if av is None:

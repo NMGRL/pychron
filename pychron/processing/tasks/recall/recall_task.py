@@ -48,6 +48,8 @@ class RecallTask(AnalysisEditTask):
             db.selector.limit = 100
             db.selector.load_recent()
 
+            super(RecallTask, self).activated()
+
     def new_editor(self):
         editor = RecallEditor()
         self._open_editor(editor)

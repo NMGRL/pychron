@@ -87,9 +87,13 @@ class UVAutomatedRun(AutomatedRun):
         obj = super(UVAutomatedRun, self)._extraction_script_factory(ec, key)
         obj.setup_context(reprate=self.reprate,
                           mask=self.mask,
-                          attenuator=self.attenuator
-        )
+                          attenuator=self.attenuator)
         return obj
+
+    def _assemble_extraction_parameters(self, edict):
+        edict.update(reprate=self.reprate,
+                     mask_name=self.mask,
+                     attenuator=self.attenuator)
 
 #    def _image_browser_factory(self):
 #        b = self.application.get_service('pychron.media_server.browser.MediaBrowser')

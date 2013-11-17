@@ -15,6 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+import pickle
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance
@@ -26,6 +28,7 @@ from pychron.database.orms.isotope.gen import gen_MassSpectrometerTable, gen_Lab
 from pychron.database.orms.isotope.meas import meas_MeasurementTable, meas_AnalysisTable, meas_ExtractionTable
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.experiment.tasks.browser.browser_mixin import BrowserMixin
+from pychron.paths import paths
 from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -84,6 +87,50 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #    self.samples = s
     #    self.osamples = s
     #    self.trait_set(selected_sample=sel)
+    def load_browser_selection(self):
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
+        p=os.path.join(paths.hidden_dir, 'browser_selection')
+        if os.path.isfile(p):
+            try:
+                with open(p, 'rb') as fp:
+                    sel=pickle.load(fp)
+            except (pickle.PickleError, EOFError, OSError),e:
+                self.debug('Failed loaded previous browser selection. {}'.format(e))
+                return
+
+            self._load_browser_selection(sel)
+
+    def _load_browser_selection(self, selection):
+        def load(attr, values):
+            def get(n):
+                return next((p for p in values if p.name==n), None)
+            try:
+                sel=selection[attr]
+            except KeyError:
+                return
+
+            vs=[get(pp) for pp in sel]
+            vs=[pp for pp in vs if pp is not None]
+            setattr(self, 'selected_{}'.format(attr), vs)
+
+        load('projects', self.projects)
+        load('samples', self.samples)
+
+    def dump_browser_selection(self):
+        self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
+        obj=dict(projects=[p.name for p in self.selected_projects],
+                 samples=[p.name for p in self.selected_samples])
+
+        p=os.path.join(paths.hidden_dir, 'browser_selection')
+        try:
+            with open(p, 'wb') as fp:
+                pickle.dump(obj, fp)
+        except (pickle.PickleError, EOFError, OSError),e:
+            self.debug('Failed dumping previous browser selection. {}'.format(e))
+            return
+
+    def prepare_destroy(self):
+        self.dump_browser_selection()
 
     def activated(self):
         self.load_projects()
@@ -95,8 +142,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_extraction_devices()
         self._set_db()
 
-        self.debug('BROWSER TASK BIND PREFERENCES')
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
+        self.load_browser_selection()
 
     def _set_db(self):
         #self.analysis_table.db = self.manager.db

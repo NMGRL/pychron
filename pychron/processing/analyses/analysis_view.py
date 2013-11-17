@@ -268,21 +268,40 @@ class AnalysisView(HasTraits):
             ExtractionValue(name='Device',
                             value=an.extract_device),
             ExtractionValue(name='Position',
-                            value=an.position,
-            ),
+                            value=an.position, ),
             ExtractionValue(name='Extract Value',
                             value=an.extract_value,
-                            units=an.extract_units,
-            ),
+                            units=an.extract_units, ),
             ExtractionValue(name='Duration',
                             value=an.duration,
-                            units='s'
-            ),
+                            units='s'),
             ExtractionValue(name='Cleanup',
                             value=an.cleanup,
-                            units='s'
-            ),
-        ]
+                            units='s')]
+
+        if 'UV' in an.extract_device:
+            extra = [ExtractionValue(name='Mask Pos.',
+                                     value=an.mask_position,
+                                     units='steps'),
+                     ExtractionValue(name='Mask Name',
+                                     value=an.mask_name),
+                     ExtractionValue(name='Reprate',
+                                     value=an.reprate,
+                                     units='1/s')]
+        else:
+            extra = [ExtractionValue(name='Beam Diam.',
+                                     value=an.beam_diameter,
+                                     units='mm'),
+                     ExtractionValue(name='Pattern',
+                                     value=an.pattern),
+                     ExtractionValue(name='Ramp Dur.',
+                                     value=an.ramp_duration,
+                                     units='s'),
+                     ExtractionValue(name='Ramp Rate',
+                                     value=an.ramp_rate,
+                                     units='1/s')]
+
+        ev.extend(extra)
 
         self.extraction_values = ev
 
@@ -300,22 +319,11 @@ class AnalysisView(HasTraits):
     def _make_ratios(self, an, ratios):
         cv = []
         for name, nd, ref in ratios:
-        #            n, d = nd.split('/')
-        #            r = self._get_non_corrected_ratio(nd)
-        #            if r is not None:
-        #            d_iso = self._get_isotope(d)
-        #            n_iso = self._get_isotope(n)
-        #            ic = d_iso.ic_factor / n_iso.ic_factor
-        #                try:
-        #                    rr = n_iso.ic_corrected_value() / d_iso.ic_corrected_value()
-        #                except ZeroDivisionError:
-        #                    rr=ufloat(0,1e-20)
-
             dr = DetectorRatio(name=name,
-                               value='', #floatfmt(rr.nominal_value),
-                               error='', #floatfmt(rr.std_dev),
-                               noncorrected_value=0, #floatfmt(r.nominal_value),
-                               noncorrected_error=0, #floatfmt(r.std_dev),
+                               value='',
+                               error='',
+                               noncorrected_value=0,
+                               noncorrected_error=0,
                                ic_factor='',
                                ref_ratio=ref,
                                detectors=nd)
@@ -426,8 +434,7 @@ class AnalysisView(HasTraits):
                                   refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
-                                  editable=False,
-        )
+                                  editable=False, )
         meditor = myTabularEditor(adapter=MeasurementTabularAdapter(),
                                   editable=False)
 
