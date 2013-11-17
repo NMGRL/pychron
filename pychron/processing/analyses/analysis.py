@@ -618,8 +618,8 @@ class DBAnalysis(Analysis):
 
     def _get_age_string(self):
 
-        a = self.age.nominal_value
-        e = self.age.std_dev
+        a = self.age
+        e = self.age_err_wo_j
 
         pe = calc_percent_error(a, e)
 
