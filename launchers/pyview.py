@@ -29,7 +29,7 @@ from helpers import build_version
     necessary if you are launching from commandline or eclipse(?). 
     Use false (default) if your are launching from a standalone bundle. 
 '''
-DEBUG = True
+DEBUG = False
 build_version(version_id, debug=DEBUG)
 
 def main():

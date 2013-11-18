@@ -140,21 +140,21 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
 
     def _add_sample_button_fired(self):
         sam = SampleEntry(db=self.manager.db)
-        sam.add_sample(self.selected_project)
+        sam.add_sample(self.selected_projects)
 
     def _add_material_button_fired(self):
         self.manager.add_material()
 
     def _edit_project_button_fired(self):
         pr = ProjectEntry(db=self.manager.db)
-        pr.edit_project(self.selected_project)
+        pr.edit_project(self.selected_projects)
 
     def _edit_sample_button_fired(self):
         se = SampleEntry(db=self.manager.db)
         sam = self.selected_samples
 
         se.edit_sample(sam.name,
-                       self.selected_project,
+                       self.selected_projects,
                        sam.material)
 
     #===========================================================================

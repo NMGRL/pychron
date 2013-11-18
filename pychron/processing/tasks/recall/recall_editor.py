@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Property, Instance, Any
+from traits.api import Property, Instance
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -32,8 +32,7 @@ class RecallEditor(BaseTraitsEditor):
     def traits_view(self):
         v = View(UItem('analysis_view',
                        style='custom',
-                       editor=InstanceEditor()
-        ))
+                       editor=InstanceEditor()))
         return v
 
     def _get_name(self):

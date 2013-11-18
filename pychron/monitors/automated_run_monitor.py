@@ -72,7 +72,7 @@ class AutomatedRunMonitor(Monitor):
                     continue
 
                 else:
-                    r = self.config_get(config, section, 'rule')
+                    r = self.config_get(config, section, 'rule', default='')
                     if 'x' not in r:
                         self.warning_dialog('Invalid rule. Include "x" variable. e.g "x>10"')
                         ok = False

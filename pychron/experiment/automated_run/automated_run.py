@@ -38,7 +38,7 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
-from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
+from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
@@ -1783,20 +1783,20 @@ anaylsis_type={}
 
             self.debug('Saving extraction device {}'.format(spec.extract_device))
 
-            ext = db.add_extraction(analysis,
-                                    extract_device=spec.extract_device,
-                                    extract_value=spec.extract_value,
-                                    extract_duration=spec.duration,
-                                    cleanup_duration=spec.cleanup,
-                                    weight=spec.weight,
-                                    sensitivity_multiplier=sens,
-                                    is_degas=spec.labnumber == 'dg',
+            d = dict(extract_device=spec.extract_device,
+                     extract_value=spec.extract_value,
+                     extract_duration=spec.duration,
+                     cleanup_duration=spec.cleanup,
+                     weight=spec.weight,
+                     sensitivity_multiplier=sens,
+                     is_degas=spec.labnumber == 'dg')
 
-            )
+            self._assemble_extraction_parameters(d)
+
+            ext = db.add_extraction(analysis, **d)
 
             exp = db.add_script(self.experiment_executor.experiment_queue.name,
-                                self.experiment_executor.experiment_blob(),
-            )
+                                self.experiment_executor.experiment_blob())
             self.debug('Script id {}'.format(exp.id))
             ext.experiment_blob_id = exp.id
 
@@ -2009,6 +2009,15 @@ anaylsis_type={}
                          is_peak_hop=self.save_as_peak_hop)
         exp.load_record(self)
         return exp
+
+    def _assemble_extraction_parameters(self, edict):
+        spec = self.spec
+
+        edict.update(beam_diameter=spec.beam_diameter,
+                     pattern=spec.pattern,
+                     ramp_duration=spec.ramp_duration,
+                     ramp_rate=spec.ramp_rate)
+
 
     def _assemble_extraction_blob(self):
         _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))

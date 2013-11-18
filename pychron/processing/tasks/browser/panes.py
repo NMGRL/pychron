@@ -72,7 +72,7 @@ class BrowserPane(TraitsDockPane):
             ),
             UItem('projects',
                   editor=TabularEditor(editable=False,
-                                       selected='selected_project',
+                                       selected='selected_projects',
                                        adapter=ProjectAdapter(),
                                        multi_select=True
                   ),

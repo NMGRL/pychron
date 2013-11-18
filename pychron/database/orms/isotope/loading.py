@@ -15,18 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 #============= standard library imports ========================
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-     ForeignKey, BLOB, Float, Time, Boolean, DateTime
+     ForeignKey, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
 #============= local library imports  ==========================
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
-from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.database.core.base_orm import BaseMixin
 from util import Base
 
 class loading_LoadTable(Base):
@@ -43,7 +40,7 @@ class loading_LoadTable(Base):
 
 class loading_PositionsTable(Base, BaseMixin):
     load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))
-    lab_identifier = Column(String(80), ForeignKey('gen_LabTable.identifier'))
+    lab_identifier = Column(Integer, ForeignKey('gen_LabTable.id'))
     position = Column(Integer)
     weight = Column(Float)
     note = Column(BLOB)

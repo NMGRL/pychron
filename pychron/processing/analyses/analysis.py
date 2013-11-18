@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any
+    Date, Any, Either
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -26,8 +26,8 @@ from collections import namedtuple
 from pychron.helpers.isotope_utils import extract_mass
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
 from pychron.processing.arar_age import ArArAge
-from pychron.processing.analyses.summary import AnalysisSummary
-from pychron.processing.analyses.db_summary import DBAnalysisSummary
+#from pychron.processing.analyses.summary import AnalysisSummary
+#from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
 from pychron.pychron_constants import ARGON_KEYS
@@ -37,8 +37,8 @@ Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_ou
 
 
 class Analysis(ArArAge):
-    analysis_summary_klass = AnalysisSummary
-    analysis_summary = Instance(AnalysisSummary)
+    #analysis_summary_klass = AnalysisSummary
+    #analysis_summary = Instance(AnalysisSummary)
     analysis_view_klass = AnalysisView
     analysis_view = Instance(AnalysisView)
 
@@ -84,7 +84,7 @@ class Analysis(ArArAge):
 
 
 class DBAnalysis(Analysis):
-    analysis_summary_klass = DBAnalysisSummary
+    #analysis_summary_klass = DBAnalysisSummary
     analysis_view_klass = DBAnalysisView
     #     status = Int
     temp_status = Int
@@ -98,12 +98,26 @@ class DBAnalysis(Analysis):
     project = Str
     comment = Str
     mass_spectrometer = Str
+
+    experiment_txt = Str
+
+    #extraction
     extract_device = Str
     position = Str
     extract_value = Float
     extract_units = Str
     cleanup_duration = Float
     extract_duration = Float
+
+    beam_diameter = Either(Float, Str)
+    pattern = Str
+    mask_position = Either(Float, Str)
+    mask_name = Str
+    attenuator = Either(Float, Str)
+    ramp_duration = Either(Float, Str)
+    ramp_rate = Either(Float, Str)
+    reprate = Either(Float, Str)
+
     analysis_type = Str
     tag = Str
     timestamp = Float
@@ -240,7 +254,8 @@ class DBAnalysis(Analysis):
         #    self.temp_status = 1
 
         # copy related table attrs
-        self._sync_irradiation(meas_analysis.labnumber)
+        self._sync_experiment(meas_analysis)
+        self._sync_irradiation(meas_analysis)
         self._sync_isotopes(meas_analysis, unpack)
         self._sync_detector_info(meas_analysis)
         self._sync_extraction(meas_analysis)
@@ -248,10 +263,16 @@ class DBAnalysis(Analysis):
 
         self.analysis_type = self._get_analysis_type(meas_analysis)
 
-    def _sync_irradiation(self, ln):
+    def _sync_experiment(self, meas_analysis):
+        ext = meas_analysis.extraction
+        exp = ext.experiment
+        self.experiment_txt = exp.blob
+
+    def _sync_irradiation(self, meas_analysis):
         """
             copy irradiation info starting with a labnumber dbrecord
         """
+        ln = meas_analysis.labnumber
         self._sync_j(ln)
         pos = ln.irradiation_position
         if pos:
@@ -340,12 +361,24 @@ class DBAnalysis(Analysis):
             self.duration = extraction.extract_duration
             self.position = self._get_position(extraction)
 
+            for attr in ('beam_diameter', 'pattern',
+                         'ramp_rate', 'ramp_duration'):
+                v = getattr(extraction, attr)
+                if v is None:
+                    v = ''
+                setattr(self, attr, v)
+
+            #uv
+            for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
+                v = getattr(extraction, attr)
+                if v is None:
+                    v = ''
+                setattr(self, attr, v)
+
+
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
-
-        av.analysis_type = self.analysis_type
-        av.analysis_id = self.record_id
         av.load(self)
 
     def _sync_analysis_info(self, meas_analysis):
@@ -618,8 +651,8 @@ class DBAnalysis(Analysis):
 
     def _get_age_string(self):
 
-        a = self.age.nominal_value
-        e = self.age.std_dev
+        a = self.age
+        e = self.age_err_wo_j
 
         pe = calc_percent_error(a, e)
 

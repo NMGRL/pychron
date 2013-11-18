@@ -35,13 +35,13 @@ class RepositoryTask(AnalysisEditTask):
     igsn_enabled = DelegatesTo('igsn', prefix='enabled')
     repo_enabled = DelegatesTo('repository', prefix='enabled')
 
-    def _selected_project_changed(self, new):
+    def _selected_projects_changed(self, new):
         project = ''
         if new:
             project = new.name
 
         self.igsn.project = project
-        BaseBrowserTask._selected_project_changed(self, new)
+        BaseBrowserTask._selected_projects_changed(self, new)
 
     def _selected_sample_changed(self, new):
         sample = ''
@@ -71,7 +71,7 @@ class RepositoryTask(AnalysisEditTask):
         db = self.manager.db
         with db.session_ctx():
             s = self.selected_samples
-            p = self.selected_project
+            p = self.selected_projects
             dbsample = db.get_sample(s.name, project=p.name)
             if dbsample is not None:
                 dbsample.igsn = s.igsn

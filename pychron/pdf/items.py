@@ -42,8 +42,8 @@ class Row(HasTraits):
         ss = len(self.items) - 1
         if span > 1:
             se = ss + span
-            self.spans.append((ss, se-1))
-            self.add_blank_item(span-1)
+            self.spans.append((ss, se - 1))
+            self.add_blank_item(span - 1)
         elif span == -1:
             self.spans.append((ss, -1))
 
@@ -89,7 +89,7 @@ class BaseItem(HasTraits):
                 else:
                     frag.fontSize = size
         else:
-            v = self._new_paragraph(u'<font size={} name="{}">{}</font>'.format(size, name, v))
+            v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
 
         return v
 

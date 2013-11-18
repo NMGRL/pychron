@@ -665,7 +665,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if not dbpos:
                 dbpos = irrad_PositionTable(position=pos, **kw)
 
-                dbpos.level_id = level.id
+                dbpos.level=level
                 self._add_item(dbpos)
 
             labnumber.irradiation_position = dbpos
@@ -703,6 +703,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 #holder.levels.append(level)
 
                 self._add_item(level)
+
             return level
         else:
             self.info('no irradiation to add to as this level. irradiation={}'.format(irradiation))
@@ -830,6 +831,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 material = self.get_material(material)
                 q = q.filter(gen_SampleTable.material == material)
                 #q=q.join(gen_MaterialTable)
+
             q = q.filter(gen_SampleTable.name == name)
             #if project:
             #    q=q.filter()
@@ -972,7 +974,7 @@ class IsotopeAdapter(DatabaseAdapter):
             #    sname = ''
 
             self.info('adding labnumber={} sample={}'.format(labnumber, sname))
-            self._add_item(ln, )
+            self._add_item(ln)
 
         return ln
 
@@ -986,7 +988,7 @@ class IsotopeAdapter(DatabaseAdapter):
             #anal.lab_id = labnumber.id
             #             labnumber.analyses.append(anal)
 
-        self._add_item(anal, )
+        self._add_item(anal)
         return anal
 
     def add_analysis_type(self, name):

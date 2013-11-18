@@ -192,9 +192,7 @@ class AnalysisEditTask(BaseBrowserTask):
     def prepare_destroy(self):
         if self.unknowns_pane:
             self.unknowns_pane.dump()
-
-            #         if self.manager:
-            #             self.manager.db.close()
+        super(AnalysisEditTask, self).prepare_destroy()
 
     def create_dock_panes(self):
 
@@ -401,7 +399,7 @@ class AnalysisEditTask(BaseBrowserTask):
         task.load_projects()
 
         #print self.selected_project, 'ffff'
-        task.set_projects(self.oprojects, self.selected_project)
+        task.set_projects(self.oprojects, self.selected_projects)
         task.set_samples(self.osamples, self.selected_samples)
 
     @on_trait_change('unknowns_pane:previous_selection')

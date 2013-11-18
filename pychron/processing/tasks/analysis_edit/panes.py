@@ -92,7 +92,10 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         self.load_previous_selections()
 
     def dump(self):
-        self.dump_selection()
+        try:
+            self.dump_selection()
+        except ImportError:
+            pass
 
     #===============================================================================
     # previous selections

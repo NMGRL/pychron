@@ -15,15 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import izip
+import re
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.helpers.formatting import floatfmt
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.pdf.items import Row, Subscript, Superscript, NamedParameter, \
-    FootNoteRow, FooterRow
+from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import TablePDFWriter
@@ -33,18 +31,58 @@ def DefaultInt(value=40):
     return Int(value)
 
 
+regex = re.compile(r'>[\w\.\(\)\/]+<')
+
+
+def extract_text(txt):
+    t = 0
+    for e in regex.finditer(txt):
+        t += len(e.group(0)[1:-1])
+
+    return 'X' * t
+
+
 class StepHeatTablePDFWriter(TablePDFWriter):
+    def _calculate_col_widths(self, *rows):
+        def get_width(pa):
+            if pa.frags:
+                ft = ''
+                fs = 0
+                for f in pa.frags:
+                    ft += f.text
+                    fs = max(fs, f.fontSize)
+
+                w = stringWidth(ft, fontName=f.fontName,
+                                fontSize=fs) + 6
+            else:
+                w = 8
+
+            return w
+
+        wcols = []
+        for cols in zip(*rows):
+            ws = max([get_width(ci) for ci in cols])
+            #self.debug('max {}'.format(ws))
+            #self.debug('-------------------')
+            wcols.append(ws)
+            #aaa
+        self.col_widths = wcols
+
     def _make_table(self, group,
                     double_first_line=True,
                     include_footnotes=False):
 
-        analyses=group.analyses
+        analyses = group.analyses
         self._ref = analyses[0]
 
-        style = self._new_style(debug_grid=True)
+        style = self._new_style(debug_grid=False)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
+        style.add('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
+        style.add('BOTTOMPADDING', (0, 0), (-1, -1), 1)
+        #style.add('RIGHTPADDING', (0, 0), (-1, -1), 5)
+
         if double_first_line:
             self._new_line(style, 0, weight=2.5, cmd='LINEABOVE')
         else:
@@ -58,21 +96,22 @@ class StepHeatTablePDFWriter(TablePDFWriter):
         data.extend(meta)
 
         # make header
-        header = self._make_header(style)
-        data.extend(header)
+        headers = self._make_header(style)
+
+        data.extend(headers)
 
         cnt = len(data)
 
         group.calculate_plateau()
-        plateau_bounds=group.plateau_steps
+        plateau_bounds = group.plateau_steps
         if plateau_bounds:
-            lb,hb=plateau_bounds
+            lb, hb = plateau_bounds
 
         for i, ai in enumerate(analyses):
 
-            is_plat_step=False
+            is_plat_step = False
             if plateau_bounds:
-                is_plat_step= i>=lb and i<=hb
+                is_plat_step = i >= lb and i <= hb
 
             r, b = self._make_analysis_row(ai, is_plat_step)
             data.append(r)
@@ -83,12 +122,15 @@ class StepHeatTablePDFWriter(TablePDFWriter):
                 if idx % 2 == 0:
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               colors.lightgrey,
-                              )
+                    )
                     #         data.extend([self._make_analysis_row(ai)
                     #                      for ai in analyses])
 
                     #         data.extend(header)
                     #         data.extend([self._make_blank_row(ai) for ai in analyses])
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(*data[2:])
 
         idx = len(data) - 1
         self._new_line(style, idx)
@@ -99,22 +141,27 @@ class StepHeatTablePDFWriter(TablePDFWriter):
 
         fdata = []
 
-        style = self._new_style(debug_grid=True)
+        style = self._new_style(debug_grid=False)
         style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
-        style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
+        style.add('LEFTPADDING', (0, 0), (-1, -1), 2)
+        style.add('RIGHTPADDING', (0, 0), (-1, -1), 0)
 
-        self._make_footnote_rows(fdata, style)
-        self._make_footer_rows(fdata, style)
-        ft = self._new_table(style, fdata, extend_last=True)
+        if include_footnotes:
+            self._make_footnote_rows(fdata, style)
+            self._make_footer_rows(fdata, style)
 
-        return t, ft
+            ft = self._new_table(style, fdata, extend_last=True)
+            return t, ft
+        else:
+            return t,
+
 
     def _make_analysis_row(self, analysis, is_plateau_step):
         value = self._value
         error = self._error
 
-        analysis.is_plateau_step=is_plateau_step
+        analysis.is_plateau_step = is_plateau_step
         attrs = (
             #('temp_status', lambda x: '' if x == 0 else 'X'),
             ('is_plateau_step', lambda x: '<b>P</b>' if x else ''),
@@ -139,10 +186,10 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             #==============================================================
             # computed
             #==============================================================
-            ('rad40_percent', value(n=1)),
-            ('R', value(n=5)),
             ('uage', value(n=2)),
             ('age_err_wo_j', error(n=4)),
+            ('rad40_percent', value(n=1)),
+            ('R', value(n=5)),
             ('kca', value(n=1)),
             ('kca', error(n=1)),
 
@@ -217,42 +264,51 @@ class StepHeatTablePDFWriter(TablePDFWriter):
                 #===============================================================================
 
     def _make_summary_rows(self, agroup, idx, style):
-        wtd_mean_row = Row(fontsize=7, height=0.25)
-        wtd_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=16)
+        span = 14
+        wtd_mean_row = Row(fontsize=7, height=0.2)
+        wtd_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=span)
         #wtd_mean_row.add_blank_item(n=10)
 
         wa = agroup.weighted_age
-        wtd_mean_row.add_item(value=self._value()(wa))
-        wtd_mean_row.add_item(value=u' \u00b1{}'.format(self._error()(wa)))
+        s = u'{} \u00b1{}'.format(self._value()(wa), self._error()(wa))
+        wtd_mean_row.add_item(value=s, span=-1)
 
-        inta=agroup.integrated_age
-        int_row=Row(fontsize=7, height=0.15)
-        int_row.add_item(value='<b>Integrated</b>', span=16)
-        int_row.add_item(value=self._value()(inta))
-        int_row.add_item(value=u' \u00b1{}'.format(self._error()(inta)))
+        inta = agroup.integrated_age
+        int_row = Row(fontsize=7, height=0.2)
+        int_row.add_item(value='<b>Integrated</b>', span=span)
 
-        plat_row=Row(fontsize=7, height=0.15)
-        plat_row.add_item(value='<b>Plateau</b>', span=14)
+        s = u'{} \u00b1{}'.format(self._value()(inta), self._error()(inta))
+        int_row.add_item(value=s, span=-1)
+        #int_row.add_item(value=self._value()(inta))
+        #int_row.add_item(value=u' \u00b1{}'.format(self._error()(inta)))
 
-        pv,pe='',''
-        pa=agroup.plateau_age
+        plat_row = Row(fontsize=7, height=0.2)
+        plat_row.add_item(value='<b>Plateau</b>', span=span - 2)
+
+        s = ''
+        pa = agroup.plateau_age
 
         plat_row.add_item(value='<b>Steps</b>')
         plat_row.add_item(value=agroup.plateau_steps_str)
 
         if agroup.plateau_steps:
-            pv=self._value()(pa)
-            pe=u' \u00b1{}'.format(self._error()(pa))
+            s = u'{} \u00b1{}'.format(self._value()(pa), self._error()(pa))
+            #pv=self._value()(pa)
+            #pe=u' \u00b1{}'.format(self._error()(pa))
 
         #wtd_mean_row.add_blank_item(n=10)
-        plat_row.add_item(value=pv)
-        plat_row.add_item(value=pe)
+        plat_row.add_item(value=s, span=-1)
+        #plat_row.add_item(value=pv)
+        #plat_row.add_item(value=pe)
 
-        iso_row=Row(fontsize=7, height=0.15)
-        iso_row.add_item(value='<b>Isochron</b>', span=16)
-        iso_row.add_item(value=self._value()(wa))
-        iso_row.add_item(value=u' \u00b1{}'.format(self._error()(wa)))
+        iso_row = Row(fontsize=7, height=0.2)
+        iso_row.add_item(value='<b>Isochron</b>', span=span)
 
+        isoa = agroup.isochron_age
+        s = u'{} \u00b1{}'.format(self._value()(isoa), self._error()(isoa))
+        iso_row.add_item(value=s, span=-1)
+        #iso_row.add_item(value=self._value()(wa))
+        #iso_row.add_item(value=u' \u00b1{}'.format(self._error()(wa)))
 
         return [wtd_mean_row, int_row, plat_row, iso_row]
 
@@ -267,33 +323,33 @@ class StepHeatTablePDFWriter(TablePDFWriter):
         """
             determine number of columns required
         """
-        cs=self.col_widths[start:]
+        cs = self.col_widths[start:]
         if fontName is None:
-            fontName=p.frags[0].fontName
+            fontName = p.frags[0].fontName
 
         if fontSize is None:
-            fontSize=p.frags[0].fontSize
+            fontSize = p.frags[0].fontSize
 
-        txt_w = stringWidth(p.text,fontName, fontSize)
+        txt_w = stringWidth(p.text, fontName, fontSize)
 
-        cols_w=0
-        for i,ci in enumerate(cs):
-            cols_w+= ci
+        cols_w = 0
+        for i, ci in enumerate(cs):
+            cols_w += ci
             self.debug((i, ci, txt_w, fontSize))
-            if cols_w> txt_w:
+            if cols_w > txt_w:
                 break
 
-        return i+1
+        return i + 1
 
 
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
 
-        fr=FootNoteRow(fontsize=6)
+        fr = FootNoteRow(fontsize=6)
         #start=0
 
         self._footnotes.append(self._new_paragraph('P: plateau step'))
-        txt=', '.join([fi.text for fi in self._footnotes])
+        txt = ', '.join([fi.text for fi in self._footnotes])
         #span=self._calculate_span(fi, start, fontSize=3)
         fr.add_item(value=txt, span=-1)
 
@@ -340,7 +396,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             for i in range(19):
                 row.add_item(value='')
 
-        ref=self._ref
+        ref = self._ref
         arar_constants = ref.arar_constants
         for n, d, key in ((40, 36, 'atm4036'),
                           (40, 38, 'atm4038')):
@@ -352,7 +408,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
                          span=3)
 
             vv = getattr(arar_constants, key)
-            v,e=floatfmt(vv.nominal_value, n=1), floatfmt(vv.std_dev, n=1)
+            v, e = floatfmt(vv.nominal_value, n=1), floatfmt(vv.std_dev, n=1)
 
             cite_key = '{}_citation'.format(key)
             r = getattr(arar_constants, cite_key)
@@ -373,16 +429,15 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             (39, 37, 'Ca', 'ca3937'),
             (38, 37, 'Ca', 'ca3837'),
             (36, 37, 'Ca', 'ca3637')):
-
-            row = FooterRow(fontsize=df,height=0.15)
+            row = FooterRow(fontsize=df, height=0.15)
             row.add_item(value='({}Ar/{}Ar){}'.format(
                 Superscript(n),
                 Superscript(d),
                 Subscript(s)),
                          span=3)
 
-            vv=ref.interference_corrections[key]
-            v,e=floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+            vv = ref.interference_corrections[key]
+            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
             row.add_item(value=u'{} \u00b1{}'.format(v, e),
                          span=2)
             rows.append(row)
@@ -396,16 +451,15 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             (40, 'K', u'\u03BB\u03B2', 'lambda_e'),
             (39, 'Ar', '', 'lambda_Ar39'),
             (37, 'Ar', '', 'lambda_Ar37')):
-
-            vv=getattr(arar_constants, key)
-            v,e=floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+            vv = getattr(arar_constants, key)
+            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
 
             cite_key = '{}_citation'.format(key)
             r = getattr(arar_constants, cite_key)
 
             row = FooterRow(fontsize=df, height=0.15)
             row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
-            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=2)
+            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=3)
             row.add_item(value=r, span=-1)
             rows.append(row)
 

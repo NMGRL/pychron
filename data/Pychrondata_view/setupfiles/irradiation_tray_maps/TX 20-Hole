@@ -1,0 +1,28 @@
+20,2.35
+0,1
+0.3,0.9
+0.6,0.8
+0.8,0.6
+0.9,.3
+1,0
+0.9,-0.3
+0.8,-0.6
+0.6,-0.8
+0.3,-0.9
+0,-1
+-0.3,-0.9
+-0.6,-0.8
+-0.8,-0.6
+-0.9,-0.3
+-1,0
+-0.9,0.3
+-0.8,0.6
+-0.6,0.8
+-0.3,0.9
+Note that the first number in this file is the number of holes or positions;
+the second number is the diameter of the disk in mm or whatever units the x,y are expressed in.
+The following pairs of numbers are the x,y positions of each hole, given in millimeters or an arbitrary unit,
+and expressed relative to the center of the disk.
+Normal cartesian coordinates are used for the sign of x and y.
+Commas between x and y are required. 
+The number of pairs must be equal to the number of holes, of course.

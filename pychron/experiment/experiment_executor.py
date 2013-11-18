@@ -293,9 +293,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
 
-        with self.db.session_ctx() as sess:
+        with self.db.session_ctx():
             dbexp = self.db.add_experiment(exp.path)
-            sess.flush()
             exp.database_identifier = int(dbexp.id)
 
         exp.executed = True

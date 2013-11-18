@@ -63,6 +63,8 @@ class SystemMonitorTask(FigureTask):
             if isinstance(e, SystemMonitorEditor):
                 e.stop()
 
+        super(FigureTask,self).prepare_destroy()
+
     def add_system_monitor(self):
         return self._editor_factory()
 

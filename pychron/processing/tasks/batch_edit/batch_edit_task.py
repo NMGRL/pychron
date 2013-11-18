@@ -72,6 +72,8 @@ class BatchEditTask(AnalysisEditTask):
         d['blanks'] = self.central_pane.blanks
 
         d.close()
+        BaseBrowserTask.prepare_destroy()
+
 
     def activated(self):
         p = os.path.join(paths.hidden_dir, self.id)

@@ -1,18 +1,23 @@
-.. Pychron documentation master file, created by
-sphinx-quickstart on Fri Nov 15 19:00:56 2013.
-You can adapt this file completely to your liking, but it should at least
-contain the root `toctree` directive.
-
 Welcome to Pychron's documentation!
 ===================================
 
-Contents:
+.. image:: images/NMGRL_logo.png
+   :scale: 33%
+   :width: 50%
+
+.. image:: images/RossLabs_logo.png
+   :width: 33%
+   :scale: 70%
+
+.. image:: images/NMT_logo.png
+   :width: 33%
+
 
 .. toctree::
-:maxdepth: 2
+   :maxdepth: 1
 
-       intro
-
+   intro
+   userguide/index
 
 
 Indices and tables

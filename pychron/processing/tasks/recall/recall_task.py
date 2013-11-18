@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed
+from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
 
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction
@@ -48,6 +48,8 @@ class RecallTask(AnalysisEditTask):
             db.selector.limit = 100
             db.selector.load_recent()
 
+            super(RecallTask, self).activated()
+
     def new_editor(self):
         editor = RecallEditor()
         self._open_editor(editor)
@@ -62,7 +64,8 @@ class RecallTask(AnalysisEditTask):
             #             an.load_isotopes(refit=False)
             #self.active_editor.analysis_summary = an.analysis_summary
             self.active_editor.analysis_view = an.analysis_view
-            self.active_editor.model = an
+            self.controls_pane.tool = an.analysis_view.selection_tool
+            #self.active_editor.model = an
 
     def create_dock_panes(self):
         return [self._create_browser_pane(multi_select=False)]
@@ -73,9 +76,11 @@ class RecallTask(AnalysisEditTask):
     def _default_layout_default(self):
         return TaskLayout(
             id='pychron.recall',
-            left=Tabbed(
+            left=HSplitter(Tabbed(
                 PaneItem('pychron.browser'),
                 PaneItem('pychron.search.query'),
+            ),
+                           PaneItem('pychron.analysis_edit.controls')
             ))
 
     def create_dock_panes(self):

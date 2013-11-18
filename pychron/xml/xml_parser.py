@@ -25,8 +25,23 @@ import os
 
 from lxml.etree import ElementTree, Element, ParseError, XML
 from pyface.message_dialog import warning
-
 #============= local library imports  ==========================
+
+
+def extract_xml_text(txt):
+    """
+        return an xml root object
+    """
+    elem = XML(txt)
+    ntxt = elem.text
+    if ntxt is None:
+        ntxt = ''
+        for ei in elem.iter():
+            if ei.text is not None:
+                ntxt += ei.text
+
+    return ntxt
+
 
 class XMLParser(object):
     _root = None
@@ -139,20 +154,20 @@ class XMLParser2(object):
         #        self.indent(self._tree.getroot())
             self._tree.write(p, pretty_print=True)
 
-        #    def indent(self, elem, level=0):
-        #        i = '\n' + level * '  '
-        #        if len(elem):
-        #            if not elem.text or not elem.text.strip():
-        #                elem.text = i + '  '
-        #            if not elem.tail or not elem.tail.strip():
-        #                elem.tail = i
-        #            for elem in elem:
-        #                self.indent(elem, level + 1)
-        #            if not elem.tail or not elem.tail.strip():
-        #                elem.tail = i
-        #        else:
-        #            if level and (not elem.tail or not elem.tail.strip()):
-        #                elem.tail = i
+            #    def indent(self, elem, level=0):
+            #        i = '\n' + level * '  '
+            #        if len(elem):
+            #            if not elem.text or not elem.text.strip():
+            #                elem.text = i + '  '
+            #            if not elem.tail or not elem.tail.strip():
+            #                elem.tail = i
+            #            for elem in elem:
+            #                self.indent(elem, level + 1)
+            #            if not elem.tail or not elem.tail.strip():
+            #                elem.tail = i
+            #        else:
+            #            if level and (not elem.tail or not elem.tail.strip()):
+            #                elem.tail = i
 
     def add_element(self, tag, value, root, **kw):
         if root is None:
@@ -167,4 +182,4 @@ class XMLParser2(object):
         #            e.text = value
         return e
 
-    #============= EOF ====================================
+        #============= EOF ====================================

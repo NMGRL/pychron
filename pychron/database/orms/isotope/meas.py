@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+import uuid
+
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
-import uuid
+
 
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
@@ -103,6 +105,16 @@ class meas_ExtractionTable(Base, BaseMixin):
     weight = Column(Float)
     sensitivity_multiplier = Column(Float)
     is_degas = Column(Boolean)
+
+    beam_diameter = Column(Float)
+    pattern = stringcolumn(100)
+    ramp_rate = Column(Float)
+    ramp_duration = Column(Float)
+
+    mask_position = Column(Float)
+    mask_name = stringcolumn(100)
+    attenuator = Column(Float)
+    reprate = Column(Float)
 
     sensitivity_id = foreignkey('gen_SensitivityTable')
     extract_device_id = foreignkey('gen_ExtractionDeviceTable')

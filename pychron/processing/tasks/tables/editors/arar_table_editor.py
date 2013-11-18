@@ -33,7 +33,7 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
     xls_writer_klass = None
     csv_writer_klass = None
 
-    analysis_group_klass=AnalysisGroup
+    analysis_group_klass = AnalysisGroup
     adapter_klass = None
     analysis_groups_adapter_klass = None
     extract_label = Str
@@ -52,13 +52,15 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
 
         ans = self._clean_items()
         t = self._writer_factory(self.pdf_writer_klass,
-                                 orientation='landscape',
+                                 #orientation='landscape',
                                  use_alternating_background=self.use_alternating_background)
 
         t.col_widths = self._get_column_widths()
         groups = self.analysis_groups
-        path = self._get_save_path(path)
-        #         p = '/Users/ross/Sandbox/aaaatable.pdf'
+
+        path = '/Users/ross/Sandbox/aaaatable.pdf'
+        #path = self._get_save_path(path)
+
         if path:
             key = lambda x: x.sample
             ans = groupby(ans, key=key)
@@ -106,8 +108,8 @@ class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):
         key = lambda x: x.sample
         ans = self._clean_items()
         ms = [
-              self.analysis_group_klass(analyses=list(ais),
-                 sample=sam)
+            self.analysis_group_klass(analyses=list(ais),
+                                      sample=sam)
             for sam, ais in groupby(ans, key=key)]
         return ms
 

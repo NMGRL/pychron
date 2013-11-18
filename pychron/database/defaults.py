@@ -98,7 +98,7 @@ def load_isotopedb_defaults(db):
             for p, name in iterdir(mdir):
                 _load_tray_map(db, p, name)
 
-        for t in ('invalid',):
+        for t in ('ok', 'invalid'):
             db.add_tag(t, user='default')
 
 

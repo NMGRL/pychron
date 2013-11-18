@@ -92,9 +92,11 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
 
 
 class SysLoggerPreferences(BasePreferencesHelper):
+    use_syslogger = Bool
     preferences_path = 'pychron.syslogger'
     username = Str
     password = Password
+
     host = Str
 
 

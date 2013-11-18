@@ -83,7 +83,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper):
 
     def _get_attrs(self):
         return ['fav_name', 'kind', 'username',
-                'host', 'name', 'password']
+                'host', 'db_name', 'password']
 
     def _get_values(self):
         return [self.fav_name,

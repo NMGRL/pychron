@@ -2,3 +2,5 @@
 *.idea
 *.pyc
 zobs/
+docs/_build
+*.hidden

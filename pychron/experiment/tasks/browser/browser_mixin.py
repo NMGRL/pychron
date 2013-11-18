@@ -48,7 +48,7 @@ class BrowserMixin(ColumnSorterMixin):
     project_filter = Str
     sample_filter = Str
 
-    selected_project = Any
+    selected_projects = Any
     selected_samples = Any
     dclicked_sample = Any
 
@@ -81,7 +81,7 @@ class BrowserMixin(ColumnSorterMixin):
     def set_projects(self, ps, sel):
         self.oprojects = ps
         self.projects = ps
-        self.trait_set(selected_project=sel)
+        self.trait_set(selected_projects=sel)
 
     def set_samples(self, s, sel):
         self.samples = s
@@ -103,7 +103,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.projects = ad
             self.oprojects = ad
 
-    def _selected_project_changed(self, new):
+    def _selected_projects_changed(self, new):
         if new:
             db = self.manager.db
             with db.session_ctx():
@@ -159,7 +159,7 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.manager.db
         sams = []
         with db.session_ctx():
-            sp = self.selected_project
+            sp = self.selected_projects
             if not hasattr(sp, '__iter__'):
                 sp = (sp,)
 
@@ -233,7 +233,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.sample_filter_values = vs
 
     def _clear_selection_button_fired(self):
-        self.selected_project = []
+        self.selected_projects = []
         self.selected_samples = []
 
     def _get_sample_analyses(self, samples, limit=500,

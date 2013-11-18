@@ -18,10 +18,10 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.core.database_adapter import PathDatabaseAdapter
+from pychron.database.migrate import manage_database
 from pychron.database.orms.bakeout_orm import BakeoutTable, ControllerTable, BakeoutPathTable
 from pychron.database.selectors.bakeout_selector import BakeoutDBSelector
 from pychron.paths import paths
-from pychron.database.migrate.manage_database import manage_database
 
 
 class BakeoutAdapter(PathDatabaseAdapter):

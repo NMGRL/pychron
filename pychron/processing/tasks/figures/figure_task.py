@@ -38,6 +38,7 @@ from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
+from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
 
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
@@ -186,9 +187,11 @@ class FigureTask(AnalysisEditTask):
             klass = IdeogramEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-                import FusionTableEditor as tklass
-
+            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+                FusionTableEditor as tklass
+#            from pychron.processing.tasks.tables.editors.fusion_table_editor \
+#                import FusionTableEditor as tklass
+             
         return self._new_figure(ans, name, klass, tklass,
                                 set_ans=set_ans,
                                 add_iso=add_iso,
@@ -202,8 +205,8 @@ class FigureTask(AnalysisEditTask):
             klass = SpectrumEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-                import FusionTableEditor as tklass
+            from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import \
+                StepHeatTableEditor as tklass
 
         return self._new_figure(ans, name, klass, tklass,
                                 add_iso=add_iso,
@@ -215,9 +218,9 @@ class FigureTask(AnalysisEditTask):
             klass = InverseIsochronEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-                import FusionTableEditor as tklass
-
+            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+                FusionTableEditor as tklass
+                
         feditor = self._new_figure(ans, name, klass, tklass,
                                    add_iso=False)
 
@@ -229,8 +232,8 @@ class FigureTask(AnalysisEditTask):
             klass = SeriesEditor
 
         if tklass is None:
-            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-                import FusionTableEditor as tklass
+            from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
+                FusionTableEditor as tklass
 
         return self._new_figure(ans, name, klass, tklass,
                                 add_iso=add_iso,
