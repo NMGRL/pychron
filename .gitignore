@@ -4,3 +4,5 @@
 zobs/
 docs/_build
 *.hidden
+*.project
+*.pydevproject
