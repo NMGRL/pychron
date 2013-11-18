@@ -15,31 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Property, Instance
-from traitsui.api import View, UItem, InstanceEditor
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from factory import toolkit_factory
 
-
-class RecallEditor(BaseTraitsEditor):
-    #model = Any
-    analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
-    #analysis_summary = Any
-
-    name = Property(depends_on='analysis_view.analysis_id')
-
-    def traits_view(self):
-        v = View(UItem('analysis_view',
-                       style='custom',
-                       editor=InstanceEditor()))
-        return v
-
-    def _get_name(self):
-        #if self.model and self.model.analysis_view:
-        if self.analysis_view:
-            return self.analysis_view.analysis_id
-        else:
-            return 'None'
+myTextEditor = toolkit_factory('text_editor', 'myTextEditor')
 
 #============= EOF =============================================

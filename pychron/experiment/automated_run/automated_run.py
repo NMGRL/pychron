@@ -38,7 +38,7 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
-from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
+from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter

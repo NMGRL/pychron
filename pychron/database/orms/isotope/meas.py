@@ -55,7 +55,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     comment = Column(BLOB)
 
     tag = Column(String(40),
-                 ForeignKey('proc_TagTable.name'), default='ok')
+                 ForeignKey('proc_TagTable.name'), default='')
 
     # meas relationships
     isotopes = relationship('meas_IsotopeTable', backref='analysis',
@@ -106,15 +106,15 @@ class meas_ExtractionTable(Base, BaseMixin):
     sensitivity_multiplier = Column(Float)
     is_degas = Column(Boolean)
 
-    beam_diameter=Column(Float)
-    pattern=stringcolumn(100)
-    ramp_rate=Column(Float)
-    ramp_duration=Column(Float)
+    beam_diameter = Column(Float)
+    pattern = stringcolumn(100)
+    ramp_rate = Column(Float)
+    ramp_duration = Column(Float)
 
-    mask_position=Column(Float)
-    mask_name=stringcolumn(100)
-    attenuator=Column(Float)
-    reprate=Column(Float)
+    mask_position = Column(Float)
+    mask_name = stringcolumn(100)
+    attenuator = Column(Float)
+    reprate = Column(Float)
 
     sensitivity_id = foreignkey('gen_SensitivityTable')
     extract_device_id = foreignkey('gen_ExtractionDeviceTable')
