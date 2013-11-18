@@ -25,7 +25,7 @@ import os
 #=============local library imports  ==========================
 
 from pychron.loggable import Loggable
-from pychron.database.core.base_orm import MigrateVersionTable
+from pychron.database.core.base_orm import AlembicVersionTable
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 import weakref
 
@@ -250,12 +250,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
 
     def get_migrate_version(self):
+        return True
         with self.session_ctx() as s:
-        #         sess = self.get_session()
-        #         if sess:
-            q = s.query(MigrateVersionTable)
+
+            #q = s.query(MigrateVersionTable)
+            q = s.query(AlembicVersionTable)
             mv = q.one()
-            #             self.close()
+
             return mv
 
     def get_results(self, tablename, **kw):

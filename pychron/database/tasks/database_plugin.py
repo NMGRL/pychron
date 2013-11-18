@@ -15,11 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from envisage.ui.tasks.task_extension import TaskExtension
-from pyface.tasks.action.schema_addition import SchemaAddition
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.database.tasks.actions import UpdateDatabaseAction
+#from pychron.database.tasks.actions import UpdateDatabaseAction
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, MassSpecConnectionPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -38,10 +36,10 @@ class DatabasePlugin(BaseTaskPlugin):
         )
         return [so, ]
 
-    def _my_task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(id='update_database',
-                                                      factory=UpdateDatabaseAction,
-                                                      path='MenuBar/Tools')])]
+    #def _my_task_extensions_default(self):
+    #    return [TaskExtension(actions=[SchemaAddition(id='update_database',
+    #                                                  factory=UpdateDatabaseAction,
+    #                                                  path='MenuBar/Tools')])]
 
     def start(self):
         iso = IsotopeDatabaseManager()

@@ -153,6 +153,12 @@ class MassSpecExtractor(Extractor):
             progress.increase_max(len(levels))
 
             for mli in levels:
+                if progress.canceled:
+                    sess.rollback()
+                    break
+                elif progress.accepted:
+                    break
+
                 progress.change_message('importing level {} {}'.format(name, mli.Level))
                 #print mli.Level, include_list
                 #if mli.Level not in include_list:
@@ -168,6 +174,11 @@ class MassSpecExtractor(Extractor):
                 positions = self.db.get_irradiation_positions(name,
                                                               mli.Level)
                 for ip in positions:
+                    if progress.canceled:
+                        sess.rollback()
+                        break
+                    elif progress.accepted:
+                        break
                     # is labnumber already in dest
                     sample = self._add_sample_project(dest, ip)
 
@@ -175,7 +186,7 @@ class MassSpecExtractor(Extractor):
                     if not ln:
                         self.debug('{} not in dest'.format(ip.IrradPosition))
                         ln = dest.add_labnumber(ip.IrradPosition, sample=sample)
-                        dest.sess.flush()
+                        #dest.sess.flush()
 
                         dbpos = dest.add_irradiation_position(ip.HoleNumber, ln,
                                                               name, mli.Level)
@@ -186,7 +197,7 @@ class MassSpecExtractor(Extractor):
                         fh.flux = fl
                         added_to_db = True
 
-                    dest.sess.flush()
+                    #dest.sess.flush()
 
                     ln.sample = sample
                     ln.note = ip.Note
@@ -194,9 +205,15 @@ class MassSpecExtractor(Extractor):
                     if include_analyses:
                         self.info('============ Adding Analyses ============')
                         for ai in ip.analyses:
+                            if progress.canceled:
+                                sess.rollback()
+                                break
+                            elif progress.accepted:
+                                break
+
                             if self._add_analysis(dest, ln, ai):
                                 added_to_db = True
-
+                        #
                             if include_blanks:
                                 if self._add_associated_unknown_blanks(dest, ai):
                                     added_to_db = True
@@ -207,7 +224,7 @@ class MassSpecExtractor(Extractor):
                                 if self._add_associated_cocktails(dest, ai):
                                     added_to_db = True
 
-                    dest.sess.flush()
+                    #dest.sess.flush()
                     if not dry_run:
                         dest.sess.commit()
 
@@ -464,7 +481,7 @@ class MassSpecExtractor(Extractor):
         if dest_an is None:
             return
 
-        dest.sess.flush()
+        #dest.sess.flush()
 
         if isinstance(dest_labnumber, (str, int, long)):
             iden = str(dest_labnumber)
@@ -551,7 +568,7 @@ class MassSpecExtractor(Extractor):
                 if ic_hist is None:
                     ic_hist=dest.add_detector_intercalibration_history(dest_an)
 
-                v=iso.detector.ICFactor, iso.detector.ICFactorEr
+                v,e=iso.detector.ICFactor, iso.detector.ICFactorEr
                 dest.add_detector_intercalibration(ic_hist, det,
                                                    user_value=v,
                                                    user_error=e)

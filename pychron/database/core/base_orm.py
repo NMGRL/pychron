@@ -23,10 +23,18 @@ from sqlalchemy import Column, Integer, String, BLOB, DateTime
 from sqlalchemy.sql.expression import func
 #============= local library imports  ==========================
 Base = declarative_base()
+
 class MigrateVersionTable(Base):
     __tablename__ = 'migrate_version'
     repository_id = Column(String(40), primary_key=True)
     version = Column(Integer)
+
+
+class AlembicVersionTable(Base):
+    __tablename__ = 'alembic_version'
+    version_num = Column(String(32), primary_key=True)
+
+
 
 class BaseMixin(object):
     @declared_attr

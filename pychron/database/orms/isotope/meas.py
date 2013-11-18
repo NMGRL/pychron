@@ -55,7 +55,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     comment = Column(BLOB)
 
     tag = Column(String(40),
-                 ForeignKey('proc_TagTable.name'), default='')
+                 ForeignKey('proc_TagTable.name'), default='ok')
 
     # meas relationships
     isotopes = relationship('meas_IsotopeTable', backref='analysis',

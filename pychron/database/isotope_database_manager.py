@@ -77,10 +77,12 @@ class IsotopeDatabaseManager(Loggable):
         self.populate_default_tables()
         return True
 
-    def populate_default_tables(self):
+    def populate_default_tables(self, db=None):
         self.debug('populating default tables')
-        db = self.db
-        if self.db:
+        if db is None:
+            db = self.db
+
+        if db:
             if db.connect(force=False):
                 from pychron.database.defaults import load_isotopedb_defaults
 
