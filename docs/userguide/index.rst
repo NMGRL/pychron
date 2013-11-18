@@ -1,7 +1,7 @@
 Pychron User Guide
 =========================
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    configuration/index
    operation/index
