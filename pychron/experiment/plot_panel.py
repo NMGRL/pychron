@@ -22,8 +22,9 @@ from pychron.graph.graph import Graph
 
 from pychron.graph.regression_graph import StackedRegressionGraph
 # from pychron.helpers.traitsui_shortcuts import instance_item
+from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pychron_constants import PLUSMINUS
-from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
+#from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
 # from pychron.helpers.formatting import floatfmt
 from pychron.ui.text_table import MultiTextTableAdapter
