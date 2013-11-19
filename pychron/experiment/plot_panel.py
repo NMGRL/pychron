@@ -464,7 +464,6 @@ class PlotPanel(Loggable):
                     continue
             else:
                 if self.refresh_age:
-                    arar_age.age = None
                     arar_age.calculate_age()
 
                 self.analysis_view.load_computed(arar_age, new_list=False)

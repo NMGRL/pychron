@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from lxml.etree import Element
 from pyface.message_dialog import warning
 #============= standard library imports ========================
 import os
 import sys
 import inspect
 #============= local library imports  ==========================
+from pychron.helpers.filetools import str_to_bool
 from pychron.xml.xml_parser import XMLParser
 from pychron.paths import paths
 
@@ -58,7 +60,7 @@ class InitializationParser(XMLParser):
 
     def __init__(self, *args, **kw):
         ver = '_proc'
-        #ver = '_exp'
+        ver = '_exp'
         #ver = '_exp_uv'
         #ver= '_spec'
         #ver='_diode'
@@ -94,7 +96,7 @@ class InitializationParser(XMLParser):
                 plugins = tree.getiterator(tag='plugin')
 
         return [p if element else p.text.strip()
-                for p in plugins if all_ or p.get('enabled').lower() == 'true']
+                for p in plugins if all_ or str_to_bool(p.get('enabled'))]
 
     #    def get_plugins_as_elements(self, category):
     #        tree = self._tree.find('plugins')
@@ -245,13 +247,12 @@ class InitializationParser(XMLParser):
 
         return [d if element else d.text.strip()
                 for d in subtree.findall(tag)
-                if all_ or lower(d.get('enabled')) == 'true']
+                if all_ or str_to_bool(d.get('enabled'))]
 
     def get_managers(self, elem, all_=False, element=False):
-        lower = lambda x: x.lower() if x else None
         return [m if element else m.text.strip()
                 for m in elem.findall('manager')
-                if all_ or lower(m.get('enabled')) == 'true']
+                if all_ or str_to_bool(m.get('enabled'))]
 
     def get_plugin(self, name, category=None):
         if '_' in name:
@@ -281,7 +282,10 @@ class InitializationParser(XMLParser):
         root = self.get_root()
         tree = root.find('plugins')
         s = lambda x: x.tag
-        return map(s, set([c for c in tree.iter() if lower(c.get('enabled')) != 'false']))
+
+        cats = map(s, [c for c in tree.iter(Element)])
+        return list(set(cats))
+        #return map(s, set([c for c in tree.iter()]))
 
     def _get_element(self, category, name, tag='plugin'):
         root = self.get_root()

@@ -31,9 +31,6 @@ class AutomatedRunAnalysisView(MainView):
         an = ar.arar_age
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
 
-        #for iso in self.isotopes:
-        #    print iso, iso.name, 'det', iso.detector
-
         self._irradiation_str = ar.spec.irradiation
         self._j = an.j
 

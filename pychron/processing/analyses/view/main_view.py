@@ -41,7 +41,6 @@ class MainView(HasTraits):
     extraction_values = List
     measurement_values = List
 
-
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
         if analysis:
@@ -250,10 +249,11 @@ class MainView(HasTraits):
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':
-                    ci.error = an.age_error_wo_j
+                    ci.error = an.age_err_wo_j
                 else:
-                    ci.value = floatfmt(getattr(an, attr).nominal_value)
-                    ci.error = floatfmt(getattr(an, attr).std_dev)
+                    v = getattr(an, attr)
+                    ci.value = floatfmt(nominal_value(v))
+                    ci.error = floatfmt(std_dev(v))
 
     def _get_editors(self):
         teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
