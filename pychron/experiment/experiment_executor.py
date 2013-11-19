@@ -134,6 +134,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
+        self.monitor=self._monitor_factory()
+
     def set_queue_modified(self):
         self.queue_modified = True
 
@@ -1135,7 +1137,6 @@ If "No" select from database
                 host = host.text  # if host else 'localhost'
             if port is not None:
                 port = int(port.text)  # if port else 1061
-            if kind is not None:
                 kind = kind.text  # if kind else 'udp'
 
             runner = RemotePyScriptRunner(host, port, kind)
@@ -1144,17 +1145,17 @@ If "No" select from database
 
         return runner
 
-    def _monitor_default(self):
+    def _monitor_factory(self):
         mon = None
         isok = True
-        self.debug('mode={}'.format(self.mode))
+        self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
             ip = InitializationParser()
             exp = ip.get_plugin('Experiment', category='general')
             monitor = exp.find('monitor')
-            if str_to_bool(monitor.get('enabled')):
-                host, port, kind = None, None, None
-                if monitor is not None:
+            if monitor is not None:
+                if str_to_bool(monitor.get('enabled')):
+                    host, port, kind = None, None, None
                     comms = monitor.find('communications')
                     host = comms.find('host')
                     port = comms.find('port')
@@ -1166,7 +1167,6 @@ If "No" select from database
                         port = int(port.text)  # if port else 1061
                     if kind is not None:
                         kind = kind.text
-
                     mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
         else:
             mon = AutomatedRunMonitor()

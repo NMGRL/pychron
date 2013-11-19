@@ -1081,7 +1081,6 @@ anaylsis_type={}
     def _set_active_detectors(self, dets):
         spec = self.spectrometer_manager.spectrometer
         self._active_detectors = [spec.get_detector(n) for n in dets]
-        print spec, dets, self._active_detectors
 
     def _define_detectors(self, isotope, det):
         spec = self.spectrometer_manager.spectrometer

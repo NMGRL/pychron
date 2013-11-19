@@ -194,7 +194,7 @@ class MainView(HasTraits):
                          error=floatfmt(rr.std_dev),
                          noncorrected_value=r.nominal_value,
                          noncorrected_error=r.std_dev,
-                         ic_factor=ic)
+                         ic_factor=nominal_value(ic))
 
     def _load_air_computed(self, an, new_list):
         if new_list:
