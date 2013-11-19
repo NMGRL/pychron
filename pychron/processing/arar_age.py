@@ -167,7 +167,7 @@ class ArArAge(Loggable):
             self.isotopes[name] = iso
 
         iso.detector = det
-        iso.ic_factor = self.get_ic_factor(det).nominal_value
+        iso.ic_factor = self.get_ic_factor(det)
 
     def get_isotope(self, name=None, detector=None):
         if name is None and detector is None:

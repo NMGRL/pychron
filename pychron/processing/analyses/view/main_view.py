@@ -42,9 +42,13 @@ class MainView(HasTraits):
     measurement_values = List
 
 
-    def __init__(self, analysis, *args, **kw):
+    def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
-        self._load(analysis)
+        if analysis:
+            self._load(analysis)
+
+    def load(self, an):
+        self._load(an)
 
     def _load(self, an):
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]

@@ -794,8 +794,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         if not self._check_managers(n=3):
             return True
 
-        if not self.monitor.check():
-            return True
+        if self.monitor:
+            if not self.monitor.check():
+                return True
 
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.
@@ -1166,6 +1167,7 @@ If "No" select from database
         else:
             mon = AutomatedRunMonitor()
 
+        self.debug('Automated run monitor {}'.format(mon))
         if mon is not None:
         #        mon.configuration_dir_name = paths.monitors_dir
             isok = mon.load()
