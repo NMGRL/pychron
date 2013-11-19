@@ -1012,7 +1012,9 @@ post_equilibration_script:name
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()
-                            edname = ''.join(map(lambda x: x[0].capitalize(), ed.name.split(' ')))
+                            edname=''
+                            if ed is not None:
+                                edname = ''.join(map(lambda x: x[0].capitalize(), ed.name.split(' ')))
                             ln = make_special_identifier(ln, edname, msname)
 
                 self.labnumber = ln

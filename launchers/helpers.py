@@ -20,7 +20,11 @@ import os
 import sys
 #============= local library imports  ==========================
 
-def build_version(ver, debug=False):
+def build_version(ver, setup_ver=None,debug=False):
+
+    if setup_ver is None:
+        setup_ver = ver
+
     root = os.path.dirname(__file__)
     #    if debug_path:
     # #       insert pychron pychron dir into sys.path
@@ -36,9 +40,9 @@ def build_version(ver, debug=False):
     from pychron.paths import paths
 
     paths.bundle_root = root
-    if '-' in ver:
-        ver = ver.split('-')[0]
-    paths.build(ver)
+    if '-' in setup_ver:
+        setup_ver = setup_ver.split('-')[0]
+    paths.build(setup_ver)
 
     # build globals
     build_globals(debug)

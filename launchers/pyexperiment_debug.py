@@ -26,7 +26,8 @@ from pyface.timer.do_later import do_later
 import os
 #============= local library imports  ==========================
 
-version_id = '_experiment-2.1.1'
+source_version_id = ''
+setup_version_id='_dev'
 from helpers import build_version
 '''
     obsolete:
@@ -37,7 +38,8 @@ from helpers import build_version
     use debug keyword instead 
 '''
 DEBUG = True
-build_version(version_id, debug=DEBUG)
+build_version(source_version_id,
+              setup_version_id,debug=DEBUG)
 def setup():
     '''
         entry point
