@@ -534,10 +534,8 @@ class MassSpecExtractor(Extractor):
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
             self.import_err_file.write('{}\n'.format(identifier))
 
-        #todo: copy ic factors from mass spec
         ic_hist=None
         for iso in dbanalysis.isotopes:
-
 
             pkt = iso.peak_time_series[-1]
             blob = pkt.PeakTimeBlob
