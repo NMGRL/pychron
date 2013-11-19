@@ -138,8 +138,10 @@ def calculate_decay_factor(dc, segments):
 
     b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
              for pi, ti, dti in segments])
-
-    return a / b
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return 1.0
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
