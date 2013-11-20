@@ -100,10 +100,10 @@ class Series(BaseArArFigure):
         if attr.endswith('bs'):
             return (ai.isotopes[attr[:-2]].baseline.uvalue
                     for ai in self.sorted_analyses)
-        elif '/' in attr:
-            n, d = attr.split('/')
-            return (getattr(ai, n) / getattr(ai, d)
-                    for ai in self.sorted_analyses)
+        #elif '/' in attr:
+        #    n, d = attr.split('/')
+            #return (getattr(ai, n) / getattr(ai, d)
+            #        for ai in self.sorted_analyses)
         elif attr == 'PC':
             return (getattr(ai, 'peak_center')
                     for ai in self.sorted_analyses)
