@@ -30,10 +30,6 @@ from pychron.loggable import Loggable
 from pychron.helpers.isotope_utils import sort_isotopes
 
 
-#def AgeProperty():
-#    return Property(depends_on='age_dirty')
-#
-
 arar_constants = None
 
 
@@ -46,43 +42,23 @@ class ArArAge(Loggable):
 
     irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
 
-    #irradiation_info = Tuple
     chron_segments = List
     interference_corrections = Dict
     production_ratios = Dict
 
     timestamp = Float
     decay_days = Property(depends_on='timestamp,irradiation_time')
-    #include_j_error = Bool(True)
-    #include_irradiation_error = Bool(True)
-    #include_decay_error = Bool(False)
 
-    #arar_result = Dict
-    #arar_updated=Event
-
-    #rad40 = AgeProperty()
-    #k39 = AgeProperty()
-    #ca37 = AgeProperty()
-    #cl36 = AgeProperty()
-    #rad40_percent = AgeProperty()
-    #
-    kca = Either(Variable, AffineScalarFunc)#AgeProperty()
-    cak = Either(Variable, AffineScalarFunc)#AgeProperty()
-    kcl = Either(Variable, AffineScalarFunc)#AgeProperty()
-    clk = Either(Variable, AffineScalarFunc)#AgeProperty()
+    kca = Either(Variable, AffineScalarFunc)
+    cak = Either(Variable, AffineScalarFunc)
+    kcl = Either(Variable, AffineScalarFunc)
+    clk = Either(Variable, AffineScalarFunc)
     rad40_percent = Either(Variable, AffineScalarFunc)
-    # ratios
-    #Ar40_39 = AgeProperty()
-    #Ar37_39 = AgeProperty()
-    #Ar36_39 = AgeProperty()
-    #
-    #sensitivity = Property
-    #sensitivity_multiplier = Property
-    #_sensitivity_multiplier = Float
 
     isotopes = Dict
     isotope_keys = Property
     non_ar_isotopes = Dict
+    computed = Dict
 
     R = Float
     R_err = Float
@@ -96,33 +72,16 @@ class ArArAge(Loggable):
     age_err_wo_irrad = Float
     age_err_wo_j_irrad = Float
 
-    #age_error = AgeProperty()
-    #age_error_wo_j = AgeProperty()
-    #age_dirty = Event
-    #
-    #Ar40 = AgeProperty()
-    #Ar39 = AgeProperty()
-    #Ar38 = AgeProperty()
-    #Ar37 = AgeProperty()
-    #Ar36 = AgeProperty()
-    #Ar40_error = AgeProperty()
-    #Ar39_error = AgeProperty()
-    #Ar38_error = AgeProperty()
-    #Ar37_error = AgeProperty()
-    #Ar36_error = AgeProperty()
-    #
-    #moles_Ar40 = AgeProperty()
-    #moles_K39 = AgeProperty()
-
     ar39decayfactor = Float
     ar37decayfactor = Float
 
     arar_constants = Instance(ArArConstants)
 
     moles_Ar40 = Float
-    #def __init__(self, *args, **kw):
-    #    super(ArArAge, self).__init__(*args, **kw)
-    #self.age = ufloat(0, 0)
+
+    _missing_isotope_warned = False
+    _kca_warning = False
+    _kcl_warning = False
 
     def get_ic_factor(self, det):
         factors = self.arar_constants.ic_factors
@@ -167,7 +126,7 @@ class ArArAge(Loggable):
             self.isotopes[name] = iso
 
         iso.detector = det
-        iso.ic_factor = self.get_ic_factor(det).nominal_value
+        iso.ic_factor = self.get_ic_factor(det)
 
     def get_isotope(self, name=None, detector=None):
         if name is None and detector is None:
@@ -251,7 +210,9 @@ class ArArAge(Loggable):
         try:
             self.kca = k / ca * k_ca_pr
         except ZeroDivisionError:
-            pass
+            if not self._kca_warning:
+                self._kca_warning = True
+                self.debug("ca37 is zero. can't calculated k/ca")
 
     def _calculate_kcl(self):
         k = self.get_computed_value('k39')
@@ -265,17 +226,33 @@ class ArArAge(Loggable):
                 clk = 1.0
 
             k_cl_pr = 1 / clk
+        try:
+            self.kcl = k / cl * k_cl_pr
+        except ZeroDivisionError:
+            if not self._kcl_warning:
+                self._kcl_warning = True
+                self.warning("cl36 is zero. can't calculated k/cl")
 
-        self.kcl = k / cl * k_cl_pr
 
     def _calculate_age(self, include_decay_error=None):
         #self.debug('calculate age')
-
         isos = []
+
+        iso_err = False
         for ik in ARGON_KEYS:
+            if not ik in self.isotopes:
+                if not self._missing_isotope_warned:
+                    self.warning('No isotope= "{}". Required for age calculation'.format(ik))
+                iso_err = True
+                continue
+
             iso = self.isotopes[ik]
             iv = iso.get_intensity()
             isos.append(iv)
+
+        self._missing_isotope_warned = iso_err
+        if iso_err:
+            return
 
         arc = self.arar_constants
         isos = abundance_sensitivity_correction(isos, arc.abundance_sensitivity)
@@ -370,296 +347,3 @@ class ArArAge(Loggable):
         return arar_constants
 
         #============= EOF =============================================
-        #def load_irradiation(self, ln):
-        #    self.timestamp = self._load_timestamp(ln)
-        #
-        #    self.interference_corrections=self._load_interference_corrections()
-        #    self.chron_segments=self._load_chron_segments()
-        #    self.decay_time=self._load_decay_time()
-        #
-        #    #self.irradiation_info = self._get_irradiation_info(ln)
-        #    self.j = self._get_j(ln)
-        #
-        #    self.production_ratios = self._get_production_ratios(ln)
-
-        #def _make_ic_factors_dict(self):
-        #    ic_factors = dict()
-        #    for ki in ARGON_KEYS:
-        #        if ki in self.isotopes:
-        #            iso = self.isotopes[ki]
-        #            ic_factors[ki] = self.get_ic_factor(iso.detector)
-        #
-        #    return ic_factors
-        #         @on_trait_change('age_dirty')
-        #    def _handle_arar_result(self, new):
-        #        #load error components into isotopes
-        #        for iso in self.isotopes.itervalues():
-        #            iso.age_error_component = self.get_error_component(iso.name)
-        #            print iso.name, iso.age_error_component
-        #================================================================================
-        # private
-        #================================================================================
-        #
-        #def _calculate_age2(self, include_j_error=None, include_decay_error=None, include_irradiation_error=None):
-        #    if include_decay_error is None:
-        #        include_decay_error = self.include_decay_error
-        #    else:
-        #        self.include_decay_error = include_decay_error
-        #
-        #    if include_j_error is None:
-        #        include_j_error = self.include_j_error
-        #    else:
-        #        self.include_j_error = include_j_error
-        #
-        #    if include_irradiation_error is None:
-        #        include_irradiation_error = self.include_irradiation_error
-        #    else:
-        #        self.include_irradiation_error = include_irradiation_error
-        #
-        #    fsignals = self._make_signals()
-        #    bssignals = self._make_signals(kind='baseline')
-        #    blsignals = self._make_signals(kind='blank')
-        #    bksignals = self._make_signals(kind='background')
-        #
-        #    ic_factors = self._make_ic_factors_dict()
-        #
-        #    irrad = self.irradiation_info
-        #    result = None
-        #    if irrad:
-        #        if not include_irradiation_error:
-        #            #set errors to zero
-        #            nirrad = []
-        #            for ir in irrad[:-2]:
-        #                nirrad.append((ir[0], 0))
-        #            nirrad.extend(irrad[-2:])
-        #            irrad = nirrad
-        #
-        #        ab = self.arar_constants.abundance_sensitivity
-        #        result = calculate_arar_age(fsignals, bssignals, blsignals, bksignals,
-        #                                    self.j, irrad, abundance_sensitivity=ab,
-        #                                    ic_factors=ic_factors,
-        #                                    discrimination=self.discrimination,
-        #                                    #ic=ic,
-        #                                    #ic=self.ic_factor,
-        #                                    include_decay_error=include_decay_error,
-        #                                    arar_constants=self.arar_constants)
-        #
-        #    if result:
-        #        self.arar_result = result
-        #        ai = result['age']
-        #    else:
-        #        ai = ufloat(0, 1.e-20)
-        #
-        #    ai = ai / self.arar_constants.age_scalar
-        #
-        #    return ai
-
-
-        #def _make_signals(self, kind=None):
-        #    isos = self.isotopes
-        #    #        print isos
-        #    def func(k):
-        #        tag = k if kind is None else '{}_{}'.format(k, kind)
-        #        #             if kind is None:
-        #        #                 tag = k
-        #        #             else:
-        #        #                 tag = '{}_{}'.format(k, kind)
-        #        if k in isos:
-        #            iso = isos[k]
-        #            if kind:
-        #                iso = getattr(iso, kind)
-        #            return iso.value, iso.error, tag
-        #        else:
-        #            return 0, 1e-20, tag
-        #
-        #    return (func(ki)
-        #            for ki in ARGON_KEYS)
-
-        #===============================================================================
-        # property get/set
-        #===============================================================================
-        #def _get_production_ratios(self):
-        #    return dict(Ca_K=1, Cl_K=1)
-
-        #@cached_property
-        #def _get_kca(self):
-        #    return self._calculate_kca()
-        #
-        #@cached_property
-        #def _get_cak(self):
-        #    try:
-        #        return 1 / self.kca
-        #    except ZeroDivisionError:
-        #        return 0
-        #
-        #@cached_property
-        #def _get_kcl(self):
-        #    return self._calculate_kcl()
-        #
-        #@cached_property
-        #def _get_clk(self):
-        #    try:
-        #        return 1 / self.kcl
-        #    except ZeroDivisionError:
-        #        return ufloat(0, 0)
-
-        #    @cached_property
-        #    def _get_signals(self):
-        # #        if not self._signals:
-        # #        self._load_signals()
-        #
-        #        return self._signals
-
-        #     @cached_property
-        #     def _get_age(self):
-        #         print 'ggggg'
-        #         r = self._calculate_age()
-        #         return r
-
-        #     @cached_property
-
-        #def _get_age_error(self):
-        #    return self.age.std_dev
-        #
-        ##     @cached_property
-        #def _get_age_error_wo_j(self):
-        #    try:
-        #        return float(self.arar_result['age_err_wo_j'] / self.arar_constants.age_scalar)
-        #    except KeyError:
-        #        return 1e-20
-
-        #     @cached_property
-        #     def _get_timestamp(self):
-        #         return datetime.now()
-
-        #def _get_irradiation_info(self, ln):
-        ##         '''
-        ##             return k4039, k3839,k3739, ca3937, ca3837, ca3637, cl3638, chronsegments, decay_time
-        ##         '''
-        #    prs = (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (1, 0), [], 1
-        #    return prs
-        #
-        #def _get_j(self):
-        #    s = 1.e-4
-        #    e = 1e-6
-        #
-        #    return ufloat(s, e, 'j')
-
-        #def _get_rad40(self):
-        #    return self._get_arar_result_attr('rad40')
-        #
-        #def _get_k39(self):
-        #    return self._get_arar_result_attr('k39')
-        #
-        #def _get_ca37(self):
-        #    return self._get_arar_result_attr('ca37')
-        #
-        #def _get_cl36(self):
-        #    return self._get_arar_result_attr('ca37')
-        #
-        #def _get_R(self):
-        #    try:
-        #        return self.rad40 / self.k39
-        #    except (ZeroDivisionError, TypeError):
-        #        return ufloat(0, 1e-20)
-
-        #def _get_rad40_percent(self):
-        #    try:
-        #        return self.rad40 / self.Ar40 * 100
-        #    except (ZeroDivisionError, TypeError), e:
-        #        self.debug('Rad40 Percent error {}'.format(e))
-        #        return ufloat(0, 1e-20)
-
-        #def _get_Ar40(self):
-        #
-        #    return self._get_arar_result_attr('Ar40')
-        #
-        #def _get_Ar39(self):
-        #    return self._get_arar_result_attr('Ar39')
-        #
-        #def _get_Ar38(self):
-        #    return self._get_arar_result_attr('Ar38')
-        #
-        #def _get_Ar37(self):
-        #    return self._get_arar_result_attr('Ar37')
-        #
-        #def _get_Ar36(self):
-        #    return self._get_arar_result_attr('Ar36')
-        #
-        #def _get_Ar40_error(self):
-        #    r = self._get_arar_result_attr('Ar40')
-        #    if r:
-        #        return r.std_dev
-        #
-        #def _get_Ar39_error(self):
-        #    r = self._get_arar_result_attr('Ar39')
-        #    if r:
-        #        return r.std_dev
-        #
-        #def _get_Ar38_error(self):
-        #    r = self._get_arar_result_attr('Ar38')
-        #    if r:
-        #        return r.std_dev
-        #
-        #def _get_Ar37_error(self):
-        #    r = self._get_arar_result_attr('Ar37')
-        #    if r:
-        #        return r.std_dev
-
-        #def _get_Ar36_error(self):
-        #    r = self._get_arar_result_attr('Ar36')
-        #    if r:
-        #        return r.std_dev
-        #
-        #def _get_moles_Ar40(self):
-        #    return 0.001
-        #
-        #def _get_moles_K39(self):
-        #    return self.k39 * self.sensitivity * self.sensitivity_multiplier
-        #
-        #def _get_ic_factor(self):
-        #    return ufloat(self.arar_constants.ic_factor_v,
-        #                  self.arar_constants.ic_factor_e, 'ic_factor')
-        #
-        ##     @cached_property
-        #def _get_Ar40_39(self):
-        #    try:
-        #        return self.rad40 / self.k39
-        #    except ZeroDivisionError:
-        #        return ufloat(0, 0)
-        #
-        #        #     @cached_property
-        #
-        #def _get_Ar37_39(self):
-        #    try:
-        #        return self.Ar37 / self.Ar39
-        #    except ZeroDivisionError:
-        #        return ufloat(0, 0)
-        #
-        #        #     @cached_property
-        #
-        #def _get_Ar36_39(self):
-        #    try:
-        #        return self.Ar36 / self.Ar39
-        #    except ZeroDivisionError:
-        #        return ufloat(0, 0)
-        #
-        #def _get_sensitivity(self):
-        #    return 1.0
-        #
-        #def _set_sensitivity_multiplier(self, v):
-        #    self._sensitivity_multiplier = v
-        #
-        #def _get_sensitivity_multiplier(self):
-        #    return self._sensitivity_multiplier
-
-        #def _get_arar_result_attr(self, key):
-        ##        print self.arar_result.keys()
-        #    if key in self.arar_result:
-        #        return self.arar_result[key]
-        #    elif key in self.isotopes:
-        #        return self.isotopes[key].uvalue
-        #    else:
-        #        keys = self.arar_result.keys()
-        #        #self.warning('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ NO KEY {} {}'.format(key, keys))
-        #        return ufloat(0, 1e-20)

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance
+from traits.api import HasTraits, List, Property, Any, Instance, Event
 from traitsui.api import View, UItem, InstanceEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -48,6 +48,8 @@ class ViewSelection(HasTraits):
 
 class AnalysisView(HasTraits):
     selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
+
+    refresh_needed = Event
 
     def load(self, an):
         analysis_type = an.analysis_type

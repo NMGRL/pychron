@@ -29,7 +29,6 @@ import xlrd
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.health.analysis_health import AnalysisHealth
 from pychron.experiment.queue.base_queue import extract_meta
-from pychron.experiment.sys_log import SysLogger
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
     ControlsPane, WaitPane, IsotopeEvolutionPane
 
@@ -58,7 +57,7 @@ class ExperimentEditorTask(EditorTask):
 
     loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
     notifier = Instance(Notifier, ())
-    syslogger = Instance(SysLogger, ())
+    syslogger = Instance('pychron.experiment.sys_log.SysLogger')
 
     analysis_health = Instance(AnalysisHealth)
 
@@ -115,15 +114,23 @@ class ExperimentEditorTask(EditorTask):
         #sys logger
         bind_preference(self, 'use_syslogger',
                         'pychron.use_syslogger')
-
-        bind_preference(self.syslogger, 'username',
-                        'pychron.syslogger.username')
-        bind_preference(self.syslogger, 'password',
-                        'pychron.syslogger.password')
-        bind_preference(self.syslogger, 'host',
-                        'pychron.syslogger.host')
+        if self.use_syslogger:
+            self._use_syslogger_changed()
 
         super(ExperimentEditorTask, self).activated()
+
+    def _use_syslogger_changed(self):
+        if self.use_syslogger:
+            from pychron.experiment.sys_log import SysLogger
+            self.syslogger=SysLogger()
+            bind_preference(self.syslogger, 'username',
+                            'pychron.syslogger.username')
+            bind_preference(self.syslogger, 'password',
+                            'pychron.syslogger.password')
+            bind_preference(self.syslogger, 'host',
+                            'pychron.syslogger.host')
+
+
 
     def create_dock_panes(self):
         self.isotope_evolution_pane = IsotopeEvolutionPane()

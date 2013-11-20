@@ -41,10 +41,13 @@ class MainView(HasTraits):
     extraction_values = List
     measurement_values = List
 
-
-    def __init__(self, analysis, *args, **kw):
+    def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
-        self._load(analysis)
+        if analysis:
+            self._load(analysis)
+
+    def load(self, an):
+        self._load(an)
 
     def _load(self, an):
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
@@ -191,7 +194,7 @@ class MainView(HasTraits):
                          error=floatfmt(rr.std_dev),
                          noncorrected_value=r.nominal_value,
                          noncorrected_error=r.std_dev,
-                         ic_factor=ic)
+                         ic_factor=nominal_value(ic))
 
     def _load_air_computed(self, an, new_list):
         if new_list:
@@ -246,10 +249,11 @@ class MainView(HasTraits):
             for ci in self.computed_values:
                 attr = ci.tag
                 if attr == 'wo_j':
-                    ci.error = an.age_error_wo_j
+                    ci.error = an.age_err_wo_j
                 else:
-                    ci.value = floatfmt(getattr(an, attr).nominal_value)
-                    ci.error = floatfmt(getattr(an, attr).std_dev)
+                    v = getattr(an, attr)
+                    ci.value = floatfmt(nominal_value(v))
+                    ci.error = floatfmt(std_dev(v))
 
     def _get_editors(self):
         teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),

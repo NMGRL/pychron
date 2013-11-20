@@ -477,7 +477,7 @@ class MassSpecExtractor(Extractor):
                                     comment=changeable.Comment,
                                     step=step,
                                     analysis_timestamp=dbanalysis.RunDateTime,
-                                    status=1 if changeable.StatusLevel == 1 else 0)
+                                    tag='ok' if changeable.StatusLevel == 0 else 'invalid')
         if dest_an is None:
             return
 
@@ -534,10 +534,8 @@ class MassSpecExtractor(Extractor):
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
             self.import_err_file.write('{}\n'.format(identifier))
 
-        #todo: copy ic factors from mass spec
         ic_hist=None
         for iso in dbanalysis.isotopes:
-
 
             pkt = iso.peak_time_series[-1]
             blob = pkt.PeakTimeBlob

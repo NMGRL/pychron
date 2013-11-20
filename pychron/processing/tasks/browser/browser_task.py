@@ -118,8 +118,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def dump_browser_selection(self):
         self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
-        obj=dict(projects=[p.name for p in self.selected_projects],
-                 samples=[p.name for p in self.selected_samples])
+
+        ps=[]
+        if self.selected_projects:
+            ps=[p.name for p in self.selected_projects]
+
+        ss=[]
+        if self.selected_samples:
+            ss=[p.name for p in self.selected_samples]
+
+        obj=dict(projects=ps,
+                 samples=ss)
 
         p=os.path.join(paths.hidden_dir, 'browser_selection')
         try:

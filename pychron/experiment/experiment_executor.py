@@ -51,7 +51,7 @@ from pychron.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.helpers.filetools import add_extension
+from pychron.helpers.filetools import add_extension, str_to_bool
 from pychron.globals import globalv
 from pychron.wait.wait_group import WaitGroup
 
@@ -133,6 +133,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
+
+        self.monitor=self._monitor_factory()
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -510,7 +512,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         if name:
             ret = YES
             if confirm:
-                m = 'Cancel {} in Progress'.format(name)
+                m = '"{}" is in progress. Are you sure you want to cancel'.format(name)
                 if msg:
                     m = '{}\n{}'.format(m, msg)
 
@@ -785,31 +787,36 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             self.cancel(confirm=False)
 
     def _pre_run_check(self):
-        '''
+        """
             return True to stop execution loop
-        '''
+        """
         if self._check_memory():
+            self._err_message = 'Not enough memory'
             return True
 
         if not self._check_managers(n=3):
+            self._err_message = 'Not all managers availabley'
             return True
 
-        if not self.monitor.check():
-            return True
+        if self.monitor:
+            if not self.monitor.check():
+                self._err_message = 'Automated Run Monitor failed'
+                self.warning('automated run monitor failed')
+                return True
 
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.
         self._wait_for_save()
 
     def _check_memory(self, threshold=50):
-        '''
+        """
             if avaliable memory is less than threshold  (MB)
             stop the experiment
             issue a warning
-            
+
             return True if out of memory
             otherwise None
-        '''
+        """
         # return amem in MB
         amem = mem_available()
         self.debug('Available memory {}. mem-threshold= {}'.format(amem, threshold))
@@ -1130,7 +1137,6 @@ If "No" select from database
                 host = host.text  # if host else 'localhost'
             if port is not None:
                 port = int(port.text)  # if port else 1061
-            if kind is not None:
                 kind = kind.text  # if kind else 'udp'
 
             runner = RemotePyScriptRunner(host, port, kind)
@@ -1139,33 +1145,33 @@ If "No" select from database
 
         return runner
 
-    def _monitor_default(self):
+    def _monitor_factory(self):
         mon = None
         isok = True
-        self.debug('mode={}'.format(self.mode))
+        self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
             ip = InitializationParser()
             exp = ip.get_plugin('Experiment', category='general')
             monitor = exp.find('monitor')
-            host, port, kind = None, None, None
-
             if monitor is not None:
-                comms = monitor.find('communications')
-                host = comms.find('host')
-                port = comms.find('port')
-                kind = comms.find('kind')
+                if str_to_bool(monitor.get('enabled')):
+                    host, port, kind = None, None, None
+                    comms = monitor.find('communications')
+                    host = comms.find('host')
+                    port = comms.find('port')
+                    kind = comms.find('kind')
 
-                if host is not None:
-                    host = host.text  # if host else 'localhost'
-                if port is not None:
-                    port = int(port.text)  # if port else 1061
-                if kind is not None:
-                    kind = kind.text
-
-                mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
+                    if host is not None:
+                        host = host.text  # if host else 'localhost'
+                    if port is not None:
+                        port = int(port.text)  # if port else 1061
+                    if kind is not None:
+                        kind = kind.text
+                    mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
         else:
             mon = AutomatedRunMonitor()
 
+        self.debug('Automated run monitor {}'.format(mon))
         if mon is not None:
         #        mon.configuration_dir_name = paths.monitors_dir
             isok = mon.load()

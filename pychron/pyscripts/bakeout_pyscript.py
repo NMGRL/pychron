@@ -125,6 +125,7 @@ class BakeoutPyScript(PyScript):
                     time.sleep(check_period)
                 else:
                     continue
+                
                 break
             else:
                 time.sleep(period)

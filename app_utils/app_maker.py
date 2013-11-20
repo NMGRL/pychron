@@ -20,6 +20,8 @@ import MacOS
 import os
 import plistlib
 import shutil
+
+
 def make():
     parser = argparse.ArgumentParser(description='Make a pychron application')
     parser.add_argument('-A', '--applications',
@@ -119,13 +121,11 @@ class Template(object):
 
         if os.path.isfile(icon_file):
             shutil.copyfile(icon_file,
-                            os.path.join(dest, 'Resources', icon_name)
-                            )
+                            os.path.join(dest, 'Resources', icon_name))
 
-        for ni, nd in (('splash', 'splashes'), ('about', 'abouts'),
-                           ):
-                sname = '{}_{}.png'.format(ni, self.name)
-                ins.copy_resource(os.path.join(root, 'resources', nd, sname))
+        for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
+            sname = '{}_{}.png'.format(ni, self.name)
+            ins.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
 #        for pn in ('start', 'stop'):
 #            ins.copy_resource(os.path.join(root,
@@ -156,14 +156,16 @@ class Maker(object):
     dest = None
     version = None
     name = None
-    def copy_resource(self, src):
+    def copy_resource(self, src, name=None):
         if os.path.isfile(src):
-            name = os.path.basename(src)
+            if name is None:
+                name = os.path.basename(src)
             shutil.copyfile(src,
                             self._resource_path(name))
 
     def _resource_path(self, name):
         return os.path.join(self.dest, 'Resources', name)
+
     def make_migrate_repos(self):
 
         root = self.root

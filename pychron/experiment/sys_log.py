@@ -29,7 +29,7 @@ from pychron.loggable import Loggable
 try:
     import paramiko
 except ImportError:
-    warning('Paramiko is required for SysLogger')
+    warning(None, 'Paramiko is required for SysLogger')
 
 
 class SysLogger(Loggable):

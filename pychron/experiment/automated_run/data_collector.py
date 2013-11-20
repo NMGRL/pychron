@@ -111,7 +111,11 @@ class DataCollector(Loggable):
         self.debug('starting measurment')
         with consumable(func=self._iter_step) as con:
             self._iter(con, evt, 1)
-            evt.wait(et * 1.1)
+            while not evt.is_set():
+                time.sleep(0.25)
+
+            #evt.wait(et * 1.1)
+
         self.debug('measurement finished')
 
     def _iter(self, con, evt, i, prev=0):
@@ -256,39 +260,50 @@ class DataCollector(Loggable):
                 return ti
 
     def _check_iteration(self, evt, i):
-
-    #         if self.plot_panel is None:
-    #             return 'break'
-        if evt:
-            if evt.isSet():
-                return True
+        if evt and evt.isSet():
+            return True
 
         j = i - 1
-        # exit the while loop if counts greater than max of original counts and the plot_panel counts
-        pc = 0
-        if self.plot_panel:
-            pc = self.plot_panel.ncounts
+        user_counts = 0 if self.plot_panel is None else self.plot_panel.ncounts
+        script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
+        original_counts=self.ncounts
+        count_args=(j, original_counts)
 
-        ncounts = self.ncounts
-        maxcounts = max(ncounts, pc)
-        if i > maxcounts:
+        if not self._alive:
+            self.info('measurement iteration executed {}/{} counts'.format(*count_args))
+            return 'cancel'
+
+        if user_counts!=original_counts:
+            if i>user_counts:
+                self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
+                self.plot_panel.total_counts -= (original_counts - i)
+                return 'break'
+        elif script_counts!=original_counts:
+            if i>script_counts:
+                self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
+                return 'break'
+        elif i>original_counts:
+            return 'break'
+
+        if self._truncate_signal:
+            self.info('measurement iteration executed {}/{} counts'.format(*count_args))
+            self._truncate_signal = False
+
             return 'break'
 
         if self.check_conditions:
             termination_condition = self._check_conditions(self.termination_conditions, i)
             if termination_condition:
                 self.info('termination condition {}. measurement iteration executed {}/{} counts'.format(
-                    termination_condition.message, j, ncounts),
-                          color='red'
-                )
+                    termination_condition.message, j, original_counts),
+                          color='red')
                 return 'cancel'
 
             truncation_condition = self._check_conditions(self.truncation_conditions, i)
             if truncation_condition:
                 self.info('truncation condition {}. measurement iteration executed {}/{} counts'.format(
-                    truncation_condition.message, j, ncounts),
-                          color='red'
-                )
+                    truncation_condition.message, j, original_counts),
+                          color='red')
                 self.state = 'truncated'
                 self.measurement_script.abbreviated_count_ratio = truncation_condition.abbreviated_count_ratio
 
@@ -299,33 +314,13 @@ class DataCollector(Loggable):
             if action_condition:
                 self.info(
                     'action condition {}. measurement iteration executed {}/{} counts'.format(action_condition.message,
-                                                                                              j, ncounts),
-                    color='red'
-                )
+                                                                                              j, original_counts),
+                    color='red')
                 action_condition.perform(self.measurement_script)
                 if not action_condition.resume:
                     return 'break'
 
-        if i > self.measurement_script.ncounts:
-            self.info('script termination. measurement iteration executed {}/{} counts'.format(j,
-                                                                                               self.measurement_script.ncounts))
-            return 'break'
 
-        if pc:
-            if i > pc:
-                self.info('user termination. measurement iteration executed {}/{} counts'.format(j, ncounts))
-                self.plot_panel.total_counts -= (ncounts - i)
-                return 'break'
-
-        if self._truncate_signal:
-            self.info('measurement iteration executed {}/{} counts'.format(j, ncounts))
-            self._truncate_signal = False
-
-            return 'break'
-
-        if not self._alive:
-            self.info('measurement iteration executed {}/{} counts'.format(j, ncounts))
-            return 'cancel'
 
     def _get_idx_func(self):
         original_idx = [(di.name, di.isotope) for di in self.detectors]

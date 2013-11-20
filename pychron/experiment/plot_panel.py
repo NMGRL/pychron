@@ -22,8 +22,9 @@ from pychron.graph.graph import Graph
 
 from pychron.graph.regression_graph import StackedRegressionGraph
 # from pychron.helpers.traitsui_shortcuts import instance_item
+from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pychron_constants import PLUSMINUS
-from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
+#from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
 # from pychron.helpers.formatting import floatfmt
 from pychron.ui.text_table import MultiTextTableAdapter
@@ -399,8 +400,14 @@ class PlotPanel(Loggable):
         return self._ncounts
 
     def _set_ncounts(self, v):
+
+        o=self._ncounts
+
         self.info('{} set to terminate after {} counts'.format(self.plot_title, v))
         self._ncounts = v
+
+        xmi,xma=self.isotope_graph.get_x_limits()
+        self.isotope_graph.set_x_limits(max_=max(xma, xma+(v-o)*1.05))
 
     def _get_ncycles(self):
         return self._ncycles
@@ -463,7 +470,6 @@ class PlotPanel(Loggable):
                     continue
             else:
                 if self.refresh_age:
-                    arar_age.age = None
                     arar_age.calculate_age()
 
                 self.analysis_view.load_computed(arar_age, new_list=False)

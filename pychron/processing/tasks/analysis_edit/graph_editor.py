@@ -71,7 +71,7 @@ class GraphEditor(BaseUnknownsEditor):
                 try:
                     obj = pickle.load(fp)
                     self._load_tool(obj)
-                except (pickle.PickleError, OSError, EOFError, AttributeError):
+                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError):
                     return
 
     def _load_tool(self, fits):
@@ -154,7 +154,7 @@ class GraphEditor(BaseUnknownsEditor):
         graph.clear()
         self._rebuild_graph()
 
-        #self.component_changed = True
+        self.component_changed = True
 
     def _rebuild_graph(self):
         pass

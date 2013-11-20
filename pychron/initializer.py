@@ -39,8 +39,6 @@ class Initializer(Loggable):
     device_prefs = Any
 
     def __init__(self, *args, **kw):
-        '''
-        '''
 
         super(Initializer, self).__init__(*args, **kw)
         self.clear()

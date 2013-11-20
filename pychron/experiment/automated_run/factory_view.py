@@ -31,6 +31,7 @@ Examples:
 6. D1 (drill position 1)
 7. T1-2 (goto named position T1-2 i.e transect 1, point 2)
 8. L3 (trace path L3)
+9. 1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
 '''
 
 PATTERN_TOOLTIP = 'Select a pattern from Remote or Local Patterns. \

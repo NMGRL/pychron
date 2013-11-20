@@ -1249,8 +1249,7 @@ anaylsis_type={}
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
-                arar_age=self.arar_age,
-            )
+                arar_age=self.arar_age)
 
         an = AutomatedRunAnalysisView(analysis_type=self.analysis_type,
                                       analysis_id=self.runid)
@@ -1581,8 +1580,7 @@ anaylsis_type={}
                                     endtime=endtime,
                                     aliquot=aliquot,
                                     step=self.spec.step,
-                                    comment=self.spec.comment,
-                )
+                                    comment=self.spec.comment)
                 sess.flush()
                 experiment = db.get_experiment(self.experiment_identifier, key='id')
                 if experiment is not None:

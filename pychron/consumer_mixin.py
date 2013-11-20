@@ -58,7 +58,7 @@ class ConsumerMixin(object):
 
     def add_consumable(self, v):
         if self._consumer_queue:
-            self._consumer_queue.put_nowait(v)
+            self._consumer_queue.put(v)
 
     def _consume(self):
         bt = self._buftime
