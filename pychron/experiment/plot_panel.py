@@ -400,8 +400,14 @@ class PlotPanel(Loggable):
         return self._ncounts
 
     def _set_ncounts(self, v):
+
+        o=self._ncounts
+
         self.info('{} set to terminate after {} counts'.format(self.plot_title, v))
         self._ncounts = v
+
+        xmi,xma=self.isotope_graph.get_x_limits()
+        self.isotope_graph.set_x_limits(max_=max(xma, xma+(v-o)*1.05))
 
     def _get_ncycles(self):
         return self._ncycles

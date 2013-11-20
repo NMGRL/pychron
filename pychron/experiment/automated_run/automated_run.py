@@ -1249,8 +1249,7 @@ anaylsis_type={}
             plot_panel = PlotPanel(
                 stack_order=stack_order,
                 info_func=self.info,
-                arar_age=self.arar_age,
-            )
+                arar_age=self.arar_age)
 
         an = AutomatedRunAnalysisView(analysis_type=self.analysis_type,
                                       analysis_id=self.runid)

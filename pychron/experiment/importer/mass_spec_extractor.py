@@ -477,7 +477,7 @@ class MassSpecExtractor(Extractor):
                                     comment=changeable.Comment,
                                     step=step,
                                     analysis_timestamp=dbanalysis.RunDateTime,
-                                    status=1 if changeable.StatusLevel == 1 else 0)
+                                    tag='ok' if changeable.StatusLevel == 0 else 'invalid')
         if dest_an is None:
             return
 
