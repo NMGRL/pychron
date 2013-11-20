@@ -1,5 +1,5 @@
 Easy Tools
----------------
+===========
 
 "Easy" tools are convient way to batch edits to the database or batch produce figures and/or tables. "Easy" tools are noninteractive and
 are configured prior to running using a YAML configuration file
