@@ -115,6 +115,7 @@ class Experimentor(IsotopeDatabaseManager):
                     if ai.executable]
         
     def _update(self, queues=None):
+        self.debug('update runs')
         if queues is None:
             queues = self.experiment_queues
 
@@ -122,13 +123,15 @@ class Experimentor(IsotopeDatabaseManager):
         if not queues:
             return
 
-        self.debug('update runs')
         self.debug('updating stats')
         self.stats.calculate()
+        self.debug('stats calculated')
 
         ans = self._get_all_runs(queues)
-
         self.stats.nruns = len(ans)
+
+        self.debug('get all runs n={}'.format(len(ans)))
+
         #         print len([i for i in ans])
         exclude = ('dg', 'pa')
         #        timethis(self._modify_aliquots_steps, args=(ans,), kwargs=dict(exclude=exclude))

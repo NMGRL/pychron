@@ -28,7 +28,6 @@ from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.loggable import Loggable
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.gui import invoke_in_main_thread
 
 
 class ExperimentFactory(Loggable, ConsumerMixin):
@@ -79,34 +78,33 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.run_factory.set_selected_runs(runs)
 
     def _add_run(self, *args, **kw):
-        def add():
-            egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
-            eg = max(egs) if egs else 0
+        egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
+        eg = max(egs) if egs else 0
 
-            positions = [str(pi.positions[0]) for pi in self.selected_positions]
+        positions = [str(pi.positions[0]) for pi in self.selected_positions]
 
-            load_name = self.queue_factory.load_name
-            new_runs, freq = self.run_factory.new_runs(positions=positions,
-                                                       auto_increment_position=self.auto_increment_position,
-                                                       auto_increment_id=self.auto_increment_id,
-                                                       extract_group_cnt=eg
-            )
-            #         if self.run_factory.check_run_addition(new_runs, load_name):
+        load_name = self.queue_factory.load_name
+        new_runs, freq = self.run_factory.new_runs(positions=positions,
+                                                   auto_increment_position=self.auto_increment_position,
+                                                   auto_increment_id=self.auto_increment_id,
+                                                   extract_group_cnt=eg)
+        #         if self.run_factory.check_run_addition(new_runs, load_name):
 
-            q = self.queue
-            if q.selected:
-                idx = q.automated_runs.index(q.selected[-1])
-            else:
-                idx = len(q.automated_runs) - 1
+        q = self.queue
+        if q.selected:
+            idx = q.automated_runs.index(q.selected[-1])
+        else:
+            idx = len(q.automated_runs) - 1
 
-            self.queue.add_runs(new_runs, freq)
+        self.queue.add_runs(new_runs, freq)
 
-            idx += len(new_runs)
+        idx += len(new_runs)
 
-            with self.run_factory.update_selected_ctx():
-                self.queue.select_run_idx(idx)
+        with self.run_factory.update_selected_ctx():
+            self.queue.select_run_idx(idx)
 
-        invoke_in_main_thread(add)
+            #add()
+            #invoke_in_main_thread(add)
 
     #===============================================================================
     # handlers

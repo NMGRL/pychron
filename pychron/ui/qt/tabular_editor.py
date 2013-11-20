@@ -25,7 +25,6 @@ from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
     _TableView
 from traitsui.mimedata import PyMimeData
 #============= standard library imports ========================
-import time
 #============= local library imports  ==========================
 from pychron.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
@@ -48,6 +47,8 @@ class _myTableView(_TableView, ConsumerMixin):
     paste_func = None
     drop_factory = None
     _dragging = None
+
+    _cut_indices = None
 
     def __init__(self, *args, **kw):
         super(_myTableView, self).__init__(*args, **kw)
@@ -151,8 +152,24 @@ class _myTableView(_TableView, ConsumerMixin):
             self._copy_cache = [self._editor.value[ci.row()] for ci in
                                     self.selectionModel().selectedRows()]
             self._editor.copy_cache = self._copy_cache
+            self._cut_indices = None
+        elif event.matches(QKeySequence.Cut):
+
+            self._cut_indices = [ci.row() for ci in
+                                 self.selectionModel().selectedRows()]
+
+            self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
+            #self._copy_cache = [self._editor.value[ci.row()] for ci in
+            #                        self.selectionModel().selectedRows()]
+            self._editor.copy_cache = self._copy_cache
 
         elif event.matches(QKeySequence.Paste):
+            if self._cut_indices:
+                for ci in self._cut_indices:
+                    self._editor.model.removeRow(ci)
+
+            self._cut_indices = None
+
             items = self._copy_cache
             if not items:
                 items = self._linked_copy_cache
