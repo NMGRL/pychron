@@ -18,6 +18,7 @@
 #============= standard library imports ========================
 import re
 #============= local library imports  ==========================
+
 '''
     use regex to match valid tansect entry
     e.g t2-3   point 3 of transect 2
@@ -61,13 +62,54 @@ DRILL_REGEX = re.compile('[dD]\d+$')
 
 ALIQUOT_REGEX = re.compile('\d+-+\d+$')
 
-'''
-    e.g. 1-4
-    
-'''
-SLICE_REGEX = re.compile('[\d]+-{1}[\d]+$')
-SSLICE_REGEX = re.compile('\d+:{1}\d+:{1}\d+$')
-PSLICE_REGEX = re.compile('\d+:{1}\d+$')
+
+def pos_gen(s, e, inc=1):
+    if s > e:
+        inc *= -1
+    return range(s, e + inc, inc)
+
+
+def slice_func(pos):
+    s, e = map(int, pos.split('-'))
+    return pos_gen(s, e)
+
+
+def sslice_func(pos):
+    s, e, inc = map(int, pos.split(':'))
+    return pos_gen(s, e, inc)
+
+
+def pslice_func(pos):
+    s, e = map(int, pos.split(':'))
+    return pos_gen(s, e)
+
+
+def cslice_func(pos):
+    args = pos.split(';')
+    positions = []
+    for ai in args:
+        if '-' in ai:
+            positions.extend(slice_func(ai))
+        else:
+            positions.append(int(ai))
+    return positions
+
+
+SLICE_REGEX = (re.compile(r'[\d]+-{1}[\d]+$'),
+               slice_func)#1-4
+SSLICE_REGEX = (re.compile(r'\d+:{1}\d+:{1}\d+$'),
+                sslice_func) #1:4:2
+PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
+                pslice_func) #1:4
+
+# 1-4;6;9;11-15
+# 1-4;6;9
+# 1-4;6
+# 6;9;11-15
+# 1-4;6;9;11-15;50-42
+
+CSLICE_REGEX = (re.compile(r'((\d+-\d+)|(\d+))(;+\d+)*((-\d+)|(;+\d+))*$'),
+                cslice_func)
 
 
 def make_image_regex(ext):

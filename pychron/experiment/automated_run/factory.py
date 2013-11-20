@@ -17,9 +17,9 @@
 #============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, Button, \
     Event, Enum
-# from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, Group, Spring, spring, \
-#    UItem, ButtonEditor, Label
+
 #============= standard library imports ========================
+import yaml
 import os
 #============= local library imports  ==========================
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -28,13 +28,11 @@ from pychron.experiment.utilities.identifier import convert_special_name, ANALYS
     make_special_identifier, make_standard_identifier
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.regex import TRANSECT_REGEX, POSITION_REGEX, SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX
-# from pychron.experiment.utilities.script_mixin import ScriptMixin
+    SSLICE_REGEX, CSLICE_REGEX
 from pychron.paths import paths
 from pychron.experiment.script.script import Script
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
-import yaml
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
@@ -73,6 +71,19 @@ def increment_value(m, increment=1):
             return s.join(m)
 
     return s.join(ms)
+
+
+def generate_positions(pos):
+    for regex, func in (SLICE_REGEX, SSLICE_REGEX,
+                        PSLICE_REGEX, CSLICE_REGEX):
+        if regex.match(pos):
+            return func(pos), True
+
+    else:
+        if TRANSECT_REGEX.match(pos):
+            return [pos], True
+
+    return [], False
 
 
 class AutomatedRunFactory(Loggable):
@@ -206,6 +217,7 @@ class AutomatedRunFactory(Loggable):
 
     mass_spectrometer = String
     extract_device = Str
+
     def set_end_after(self, v):
         self._update_run_values('end_after', v)
 
@@ -213,13 +225,13 @@ class AutomatedRunFactory(Loggable):
         return UpdateSelectedCTX(self)
 
     def check_run_addition(self, runs, load_name):
-        '''
+        """
             check if its ok to add runs to the queue.
             ie. do they have any missing values.
                 does the labnumber match the loading
-            
+
             return True if ok to add runs else False
-        '''
+        """
         hec = self.human_error_checker
         ret = hec.check_runs(runs, test_all=True)
         if ret:
@@ -337,42 +349,12 @@ class AutomatedRunFactory(Loggable):
 
     def _new_runs_by_position(self, pos, template=False, extract_group_cnt=0):
         arvs = []
-        s = None
-        e = None
-        inc = 1
-        #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-        #          TRANSECT_REGEX, POSITION_REGEX)
-        if SLICE_REGEX.match(pos):
-            s, e = map(int, pos.split('-'))
-        elif SSLICE_REGEX.match(pos):
-            s, e, inc = map(int, pos.split(':'))
-        elif PSLICE_REGEX.match(pos):
-            s, e = map(int, pos.split(':'))[:2]
-        else:
-            try:
-                s = int(self.position)
-                e = s
-            except ValueError:
-                pass
-
-        if e < s:
-            self.warning_dialog('Endposition {} must greater than start position {}'.format(e, s))
-            return
-
-        set_pos = True
-        if s is not None and e is not None:
-            positions = range(s, e + 1, inc)
-        else:
-            if TRANSECT_REGEX.match(pos):
-                positions = [pos]
-            else:
-                set_pos = False
-                positions = [0]
-
+        positions, set_pos = generate_positions(pos)
         p = ''
         for i in positions:
             if set_pos:
                 p = str(i)
+
             if template:
                 arvs.extend(self._render_template(p, extract_group_cnt))
                 extract_group_cnt += 1
@@ -392,8 +374,8 @@ class AutomatedRunFactory(Loggable):
             self.irrad_hole = str(hole)
             self.irrad_level = str(level.name)
 
-            self.selected_level=self.irrad_level
-            self.selected_irradiation=irrad.name
+            self.selected_level = self.irrad_level
+            self.selected_irradiation = irrad.name
 
             il = '{} {}:{}'.format(irrad.name, level.name, hole)
         return il
@@ -412,8 +394,7 @@ class AutomatedRunFactory(Loggable):
                 excludes.extend(('cleanup', 'position'))
         elif arv.analysis_type not in ('unknown', 'degas'):
             excludes.extend(('position', 'extract_value', 'extract_units', 'pattern',
-                             'cleanup', 'duration', 'beam_diameter'
-            ))
+                             'cleanup', 'duration', 'beam_diameter'))
 
         self._set_run_values(arv, excludes=excludes)
         return arv
@@ -427,22 +408,14 @@ class AutomatedRunFactory(Loggable):
                 'skip', 'mass_spectrometer', 'extract_device']
 
     def _set_run_values(self, arv, excludes=None):
+        """
+            if run is not an unknown and not a degas then don't copy evalue, eunits and pattern
+            if runs is an unknown but is part of an extract group dont copy the evalue
+        """
         if excludes is None:
             excludes = []
 
-        '''
-            if run is not an unknown and not a degas then don't copy evalue, eunits and pattern
-            if runs is an unknown but is part of an extract group dont copy the evalue
-        '''
         for attr in self._get_run_attr():
-        #for attr in (
-        #'position',
-        #'extract_value', 'extract_units', 'cleanup', 'duration',
-        #'pattern', 'beam_diameter',
-        #'weight', 'comment',
-        #'sample', 'irradiation',
-        #'skip', 'mass_spectrometer', 'extract_device'
-        #):
             if attr in excludes:
                 continue
             v = getattr(self, attr)
@@ -478,8 +451,7 @@ class AutomatedRunFactory(Loggable):
                      'extract_group',
                      'pattern', 'beam_diameter',
                      'position',
-                     'weight', 'comment',
-                     ):
+                     'weight', 'comment'):
 
             if attr in excludes:
                 continue
@@ -629,9 +601,6 @@ class AutomatedRunFactory(Loggable):
                         setattr(self, attr, v)
 
     def _load_scripts(self, old, new):
-    #        if not self.edit_mode:
-    #            return
-
         """
             load default scripts if
                 1. labnumber is special
@@ -903,7 +872,6 @@ class AutomatedRunFactory(Loggable):
         self._end_after = v
 
     #===============================================================================
-
     # handlers
     #===============================================================================
     def _load_defaults_button_fired(self):
@@ -947,16 +915,6 @@ weight, comment, skip, extract_group''')
                 new = ''
                 #print name, new, self._use_pattern()
         self._update_run_values(name, new)
-
-    def _end_after_changed(self, new):
-        print new
-        self.clear_end_after = new
-
-        #    if new:
-
-    #        self.clear_end_after = True
-
-
 
     @on_trait_change('''measurement_script:name, 
 extraction_script:name, 
@@ -1012,7 +970,7 @@ post_equilibration_script:name
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()
-                            edname=''
+                            edname = ''
                             if ed is not None:
                                 edname = ''.join(map(lambda x: x[0].capitalize(), ed.name.split(' ')))
                             ln = make_special_identifier(ln, edname, msname)
@@ -1116,14 +1074,10 @@ post_equilibration_script:name
 
         self.open_view(temp)
 
-    #         self._template = temp
-
     def _edit_pattern_fired(self):
         pat = self._new_pattern()
         pat.on_trait_change(self._pattern_closed, 'close_event')
         self.open_view(pat)
-
-    #         self._pattern = pat
 
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
@@ -1136,27 +1090,12 @@ post_equilibration_script:name
                     a = int(self.aliquot)
 
                 si.user_defined_aliquot = a
-                #si.assigned_aliquot = int(self.aliquot)
 
             self.update_info_needed = True
             self.refresh_table_needed = True
 
-
-            #def _edit_mode_changed(self):
-
-            #    if self.edit_mode:
-
-            #        self._load_default_scripts(self.labnumber)
-
     def _save_flux_button_fired(self):
         self._save_flux()
-
-    #     def _application_changed(self):
-    #         self.extraction_script.application = self.application
-    #         self.measurement_script.application = self.application
-    #         self.post_measurement_script.application = self.application
-    #         self.post_equilibration_script.application = self.application
-
 
     @on_trait_change('mass_spectrometer, can_edit')
     def _update_value(self, name, new):
@@ -1170,12 +1109,9 @@ post_equilibration_script:name
 
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
-                      #                      names=getattr(self, '{}_scripts'.format(name)),
                       application=self.application,
                       mass_spectrometer=self.mass_spectrometer,
-                      kind=kind,
-                      #                       can_edit=self.can_edit
-        )
+                      kind=kind)
 
     def _extraction_script_default(self):
         return self._script_factory('Extraction', 'extraction')
@@ -1214,6 +1150,53 @@ post_equilibration_script:name
         return self.factory_view_klass(model=self)
 
 #============= EOF =============================================
-
+#
+#def _generate_positions(pos):
+#        s = None
+#        e = None
+#        #(SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
+#        #          TRANSECT_REGEX, POSITION_REGEX)
+#
+#        if SLICE_REGEX.match(pos):
+#            s, e = map(int, pos.split('-'))
+#        elif SSLICE_REGEX.match(pos):
+#            s, e, inc = map(int, pos.split(':'))
+#        elif PSLICE_REGEX.match(pos):
+#            s, e = map(int, pos.split(':'))[:2]
+#        elif CSLICE_REGEX.match(pos):
+#            args = pos.split(';')
+#            positions = []
+#            for ai in args:
+#                if '-' in ai:
+#                    a, b = map(int, ai.split('-'))
+#                    inc = 1 if a < b else -1
+#                    positions.extend(range(a, b + inc, inc))
+#                else:
+#                    positions.append(ai)
+#
+#        elif TRANSECT_REGEX.match(pos):
+#            positions = [pos]
+#        #else:
+#        #    try:
+#        #        s = int(self.position)
+#        #        e = s
+#        #    except ValueError:
+#        #        pass
+#        #if e < s:
+#        #    self.warning_dialog('Endposition {} must greater than start position {}'.format(e, s))
+#        #    return
+#
+#        set_pos = True
+#        if s is not None and e is not None:
+#
+#            inc = 1 if s < e else -1
+#            positions = range(s, e + inc, inc)
+#            #else:
+#        #    if TRANSECT_REGEX.match(pos):
+#        #        positions = [pos]
+#        #    else:
+#        #        set_pos = False
+#        #        positions = [0]
+#        return positions, set_pos
 
 
