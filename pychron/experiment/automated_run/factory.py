@@ -22,13 +22,13 @@ from traits.api import String, Str, Property, Any, Float, Instance, Int, List, c
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
 from pychron.experiment.automated_run.factory_view import FactoryView
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
     make_special_identifier, make_standard_identifier
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.regex import TRANSECT_REGEX, POSITION_REGEX, SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, CSLICE_REGEX
 from pychron.paths import paths
 from pychron.experiment.script.script import Script
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
@@ -63,6 +63,7 @@ def increment_value(m, increment=1):
         s = ''
     else:
         m = m.split(s)
+
     ms = []
     for mi in m:
         try:
@@ -73,9 +74,28 @@ def increment_value(m, increment=1):
     return s.join(ms)
 
 
+def increment_position(pos):
+    for regex, sfunc, ifunc in (SLICE_REGEX, SSLICE_REGEX,
+                                PSLICE_REGEX, CSLICE_REGEX):
+        if regex.match(pos):
+            return ifunc(pos)
+    else:
+        m = map(int, pos.split(','))
+        ms = []
+        offset = max(m) - min(m)
+        inc = 1
+        for i, mi in enumerate(m):
+            try:
+                inc = m[i + 1] - mi
+            except IndexError:
+                pass
+            ms.append(mi + offset + inc)
+        return ','.join(map(str, ms))
+
+
 def generate_positions(pos):
-    for regex, func in (SLICE_REGEX, SSLICE_REGEX,
-                        PSLICE_REGEX, CSLICE_REGEX):
+    for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
+                               PSLICE_REGEX, CSLICE_REGEX):
         if regex.match(pos):
             return func(pos), True
 
@@ -307,22 +327,23 @@ class AutomatedRunFactory(Loggable):
         if auto_increment_position:
             pos = self.position
             if pos:
-                if ',' in pos:
-                    spos = map(int, pos.split(','))
-                    increment = spos[-1] - spos[0] + 1
-                    self.position = increment_value(pos, increment)
-                else:
-                    s = None
-                    if SLICE_REGEX.match(pos):
-                        s, e = map(int, pos.split('-'))
-                    elif SSLICE_REGEX.match(pos) or PSLICE_REGEX.match(pos):
-                        s, e = map(int, pos.split(':'))[:2]
-
-                    if s is not None:
-                        d = e - s
-                        ns = e + 1
-                        ne = ns + d
-                        self.position = '{}-{}'.format(ns, ne)
+                self.position = increment_position(pos)
+                #if ',' in pos:
+                #    spos = map(int, pos.split(','))
+                #    increment = spos[-1] - spos[0] + 1
+                #    self.position = increment_value(pos, increment)
+                #else:
+                #    s = None
+                #    if SLICE_REGEX.match(pos):
+                #        s, e = map(int, pos.split('-'))
+                #    elif SSLICE_REGEX.match(pos) or PSLICE_REGEX.match(pos):
+                #        s, e = map(int, pos.split(':'))[:2]
+                #
+                #    if s is not None:
+                #        d = e - s
+                #        ns = e + 1
+                #        ne = ns + d
+                #        self.position = '{}-{}'.format(ns, ne)
 
         return arvs, freq
 
@@ -748,8 +769,8 @@ class AutomatedRunFactory(Loggable):
         if not pos.strip():
             return ''
 
-        for r in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                  TRANSECT_REGEX, POSITION_REGEX):
+        for r, _, _ in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
+                        TRANSECT_REGEX, POSITION_REGEX):
             if r.match(pos):
                 return pos
         else:
