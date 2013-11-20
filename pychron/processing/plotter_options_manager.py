@@ -41,9 +41,9 @@ class PlotterOptionsManager(HasTraits):
     plotter_options_name = 'main'
     plotter_options_klass = PlotterOptions
 
-    delete_options = Button('-')
-    add_options = Button('+')
-    save_options = Button('+')
+    delete_options = Button
+    add_options = Button
+    save_options = Button
     new_options_name = Str
     persistence_name = ''
     persistence_root = Property
@@ -124,7 +124,7 @@ class PlotterOptionsManager(HasTraits):
                                    tooltip='Delete current plot options',
                                    enabled_when='object.plotter_options.name!="Default"',
                 ),
-                icon_button_editor('save_options', 'save',
+                icon_button_editor('save_options', 'disk',
                                    tooltip='Save changes to options',
                 )),
             Item('plotter_options',
