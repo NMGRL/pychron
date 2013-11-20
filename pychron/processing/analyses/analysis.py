@@ -266,7 +266,8 @@ class DBAnalysis(Analysis):
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
         exp = ext.experiment
-        self.experiment_txt = exp.blob
+        if exp:
+            self.experiment_txt = exp.blob
 
     def _sync_irradiation(self, ln):
         """

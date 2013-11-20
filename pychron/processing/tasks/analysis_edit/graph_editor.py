@@ -162,7 +162,7 @@ class GraphEditor(BaseUnknownsEditor):
     def traits_view(self):
         v = View(UItem('graph',
                        style='custom',
-                       editor=InstanceEditor()))
+                       editor=InstanceEditor(view='panel_view')))
         return v
 
     def _graph_default(self):

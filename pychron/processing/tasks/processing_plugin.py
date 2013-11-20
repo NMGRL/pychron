@@ -133,14 +133,11 @@ Install to enable MS Excel export''')
 
     def _tasks_default(self):
         tasks = [
-            #('pychron.entry.labnumber',
-            #  self._labnumber_task_factory,
-            #  'Labnumber', 'experiment'),
-            # ('pychron.entry.sensitivity',
-            #  self._sensitivity_entry_task_factory,
-            #  'Sensitivity', 'experiment'),
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
+            ('pychron.advanced_query',
+             self._advanced_query_task_factory, 'Advanced Query'),
+
             ('pychron.analysis_edit.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
             ('pychron.analysis_edit.flux',
@@ -152,28 +149,19 @@ Install to enable MS Excel export''')
             ('pychron.analysis_edit.discrimination',
              self._discrimination_task_factory, 'Discrimination'),
 
-            ('pychron.analysis_edit.batch',
-             self._batch_edit_task_factory, 'Batch Edit'),
-            ('pychron.analysis_edit.smart_batch',
-             self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
-
+            #('pychron.analysis_edit.batch',
+            # self._batch_edit_task_factory, 'Batch Edit'),
+            #('pychron.analysis_edit.smart_batch',
+            # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
 
             ('pychron.processing.figures',
              self._figure_task_factory, 'Figures'),
             # ('pychron.processing.publisher', self._publisher_task_factory, 'Publisher'),
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
-            #('pychron.processing.auto_figure',
-            # self._auto_figure_task_factory, 'AutoFigure'),
-
-            #('pychron.processing.smart_project',
-            # self._smart_project_task_factory, 'SmartProject'),
-
-            #('pychron.processing.browser',
-            # self._browser_task_factory, 'Analysis Browser'),
-            #'', 'Ctrl+Shift+B'),
             ('pychron.processing.respository',
-             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R')
+             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R'),
+
         ]
 
         return [
@@ -193,6 +181,11 @@ Install to enable MS Excel export''')
         from pychron.processing.tasks.flux.flux_task import FluxTask
 
         return FluxTask(manager=self._processor_factory())
+
+    def _advanced_query_task_factory(self):
+        from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+
+        return AdvancedQueryTask(manager=self._processor_factory())
 
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask

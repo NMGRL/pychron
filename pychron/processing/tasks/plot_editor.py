@@ -24,7 +24,7 @@ from enable.enable_traits import LineStyle
 from enable.markers import MarkerTrait
 from traits.api import HasTraits, Any, Float, Int, on_trait_change, Bool, \
     Instance, List, Range, Color, Str, Font, Enum
-from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, EnumEditor
+from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, EnumEditor, VFold
 # from pyface.timer.do_later import do_later
 # from traitsui.editors.range_editor import RangeEditor
 # from numpy.core.numeric import Inf
@@ -356,6 +356,7 @@ class PlotEditor(HasTraits):
                    UItem('x_axis', style='custom'), label='X Axis'),
             VGroup(ylim_grp,
                    UItem('y_axis', style='custom'), label='Y Axis'),
+            label='Axes',
             layout='tabbed')
 
         layout_grp = VGroup(
@@ -365,17 +366,12 @@ class PlotEditor(HasTraits):
             Item('padding_bottom', label='Bottom'),
             label='Padding')
 
-        general_grp = VGroup(
+        general_grp = VFold(
             axes_grp,
             layout_grp,
-            renderers_grp,
-        )
+            renderers_grp)
 
-        v = View(
-            general_grp,
-            #renderers_grp,
-            #layout_grp,
-        )
+        v = View(general_grp)
 
         return v
 

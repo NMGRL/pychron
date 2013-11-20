@@ -213,13 +213,12 @@ class BrowserPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-            Group(
-                self._get_browser_group(),
-                self._get_date_group(),
-                layout='tabbed'
-            )
-
-        )
+            VGroup(
+                HGroup(icon_button_editor('advanced_query', 'cog')),
+                Group(
+                    self._get_browser_group(),
+                    self._get_date_group(),
+                    layout='tabbed')))
 
         return v
 

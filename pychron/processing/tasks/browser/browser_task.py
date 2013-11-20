@@ -19,7 +19,7 @@ import os
 import pickle
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance
+    on_trait_change, Date, Int, Time, Instance, Button
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -77,6 +77,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #clear_selection_button = Button
 
     browser_pane = Any
+
+    advanced_query=Button
 
     #def set_projects(self, ps, sel):
     #    self.oprojects = ps
@@ -187,6 +189,15 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
+
+    def _advanced_query_fired(self):
+
+        app=self.window.application
+        win, task, is_open = app.get_open_task('pychron.advanced_query')
+        if is_open:
+            win.activate()
+        else:
+            win.open()
 
     @on_trait_change('mass_spectrometer, analysis_type, extraction_device')
     def _query(self):

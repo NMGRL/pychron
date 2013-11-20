@@ -26,13 +26,11 @@ from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsP
     TablePane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
-from pychron.processing.tasks.search_panes import QueryPane
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 from pychron.processing.analyses.analysis import Analysis
-from pychron.processing.selection.data_selector import DataSelector
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -46,7 +44,7 @@ class AnalysisEditTask(BaseBrowserTask):
     unknowns_adapter = UnknownsAdapter
     unknowns_pane_klass = UnknownsPane
 
-    data_selector = Instance(DataSelector)
+    #data_selector = Instance(DataSelector)
     _analysis_cache = List
 
     ic_factor_editor_count = 0
@@ -213,9 +211,9 @@ class AnalysisEditTask(BaseBrowserTask):
             self.controls_pane = cp
             panes.append(cp)
 
-        ps = self._create_db_panes()
-        if ps:
-            panes.extend(ps)
+        #ps = self._create_db_panes()
+        #if ps:
+        #    panes.extend(ps)
 
         return panes
 
@@ -223,18 +221,19 @@ class AnalysisEditTask(BaseBrowserTask):
         return ControlsPane()
 
     def _create_db_panes(self):
-        if self.manager.db:
-            if self.manager.db.connected:
-                selector = self.manager.db.selector
-                #selector._search_fired()
-
-                #             from pychron.processing.selection.data_selector import DataSelector
-                #             from pychron.processing.tasks.search_panes import ResultsPane
-
-                ds = DataSelector(database_selector=selector)
-                self.data_selector = ds
-                #             return (QueryPane(model=ds), ResultsPane(model=ds))
-                return QueryPane(model=ds),
+        return []
+        #if self.manager.db:
+        #    if self.manager.db.connected:
+        #        selector = self.manager.db.selector
+        #        #selector._search_fired()
+        #
+        #        #             from pychron.processing.selection.data_selector import DataSelector
+        #        #             from pychron.processing.tasks.search_panes import ResultsPane
+        #
+        #        ds = DataSelector(database_selector=selector)
+        #        self.data_selector = ds
+        #        #             return (QueryPane(model=ds), ResultsPane(model=ds))
+        #        return QueryPane(model=ds),
 
     def _create_unknowns_pane(self):
         up = self.unknowns_pane_klass(adapter_klass=self.unknowns_adapter)
@@ -353,7 +352,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 #
                 #        editor.analysis_cache = self._analysis_cache
 
-    @on_trait_change('''unknowns_pane:dclicked, data_selector:selector:dclicked''')
+    #@on_trait_change('''unknowns_pane:dclicked, data_selector:selector:dclicked''')
+    @on_trait_change('''unknowns_pane:dclicked''')
     def _selected_changed(self, new):
         print new
         if new:
@@ -429,8 +429,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 #     for ai in self._get_sample_analyses(si, include_invalid=iv)
                 #     if test(ai)]
 
-            else:
-                s = self.data_selector.selector.selected
+            #else:
+            #    s = self.data_selector.selector.selected
 
         return s
 
@@ -466,26 +466,26 @@ class AnalysisEditTask(BaseBrowserTask):
     def _ac_unknowns_changed(self):
         self.unknowns_pane.items = self.active_editor.unknowns
 
-    @on_trait_change('data_selector:selector:key_pressed')
-    def _key_press(self, obj, name, old, new):
-        '''
-            use 'u' to add selected analyses to unknowns pane
-        '''
-
-        if new:
-            s = self._get_selected_analyses()
-            if s:
-
-                c = new.text
-                if c == 'u':
-                    self.active_editor.unknowns.extend(s)
-                elif c == 'U':
-                    self.active_editor.unknowns = s
-                else:
-                    self._handle_key_pressed(c)
-
-    def _handle_key_pressed(self, c):
-        pass
+    #@on_trait_change('data_selector:selector:key_pressed')
+    #def _key_press(self, obj, name, old, new):
+    #    '''
+    #        use 'u' to add selected analyses to unknowns pane
+    #    '''
+    #
+    #    if new:
+    #        s = self._get_selected_analyses()
+    #        if s:
+    #
+    #            c = new.text
+    #            if c == 'u':
+    #                self.active_editor.unknowns.extend(s)
+    #            elif c == 'U':
+    #                self.active_editor.unknowns = s
+    #            else:
+    #                self._handle_key_pressed(c)
+    #
+    #def _handle_key_pressed(self, c):
+    #    pass
 
     def _do_easy(self, func):
         ep = EasyParser()

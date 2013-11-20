@@ -50,6 +50,7 @@ class AnalysisTable(HasTraits):
     n_all_analyses = Int
     npages = Property(depends_on='n_all_analyses,page_width')
 
+
     def _forward_fired(self):
         if self.page < self.npages:
             self.page += 1

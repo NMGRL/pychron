@@ -1626,6 +1626,19 @@ class Graph(Viewable, ContextMenuMixin):
     def show(self):
         do_after_timer(1, self.edit_traits)
 
+    def panel_view(self):
+        plot = Item('plotcontainer',
+                    style='custom',
+                    show_label=False,
+                    editor=ComponentEditor(
+                        #size=(self.width,
+                        #      self.height)
+                    ),
+        )
+
+        v = View(plot)
+        return v
+
     def traits_view(self):
         plot = Item('plotcontainer',
                     style='custom',

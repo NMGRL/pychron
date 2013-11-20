@@ -44,9 +44,9 @@ class RecallTask(AnalysisEditTask):
             editor = RecallEditor()
             self._open_editor(editor)
 
-            db = self.manager.db
-            db.selector.limit = 100
-            db.selector.load_recent()
+            #db = self.manager.db
+            #db.selector.limit = 100
+            #db.selector.load_recent()
 
             super(RecallTask, self).activated()
 
@@ -78,7 +78,7 @@ class RecallTask(AnalysisEditTask):
             id='pychron.recall',
             left=HSplitter(Tabbed(
                 PaneItem('pychron.browser'),
-                PaneItem('pychron.search.query'),
+                #PaneItem('pychron.search.query'),
             ),
                            PaneItem('pychron.analysis_edit.controls')
             ))
@@ -91,9 +91,9 @@ class RecallTask(AnalysisEditTask):
             self.plot_editor_pane,
             self._create_browser_pane()
         ]
-        ps = self._create_db_panes()
-        if ps:
-            panes.extend(ps)
+        #ps = self._create_db_panes()
+        #if ps:
+        #    panes.extend(ps)
         return panes
 
     #def recall(self, records):
