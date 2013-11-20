@@ -4,10 +4,10 @@ Processing
    :maxdepth: 1
 
    easy
-   ideogram
-   isochron
-   spectrum
-   blanks
-   series
-   flux
+   #ideogram
+   #isochron
+   #spectrum
+   #blanks
+   #series
+   #flux
 
