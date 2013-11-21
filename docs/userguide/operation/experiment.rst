@@ -1,8 +1,8 @@
 Experiments
 -------------
 
-This section describes how to write an experiment with Pychron. A pychron ``experiment``
-in Mass Spec parlance is a "Multiple Runs Sequence."
+This section describes how to write an experiment with Pychron. A Pychron ``experiment``
+in Mass Spec parlance is a ``Multiple Runs Sequence``.
 
 Position Rules
 ~~~~~~~~~~~~~~~
@@ -23,13 +23,31 @@ Here are a few examples of how Rule #9 is processed
 
 ::
 
-    user_input=1-6;9
+    user_input= 1-6;9
     yields positions= 1,2,3,4,5,6,9
+    
+    user_input= 1-3;9;11-13
+    yields positions= 1,2,3,4,5,6,9,11,12,13
+    
 
 
-The starting position e.g 1 in the above case can be greater than the end position e.g 6.
+The starting position, i.e 1 in the above case, can be greater than the end position i.e 6. 
+If the start > end, positions will decrease from start to end
 ::
 
-    user_input=9;6-1
+    user_input= 9;6-1
     yields positions= 9,6,5,4,3,2,1
+    
+    
+
+If auto-increment position is enabled pychron starts incrementing from the last value and follows the same pattern as the rule.
+
+::
+    
+    user_input= 1-6;9
+    auto_incremented= 10-15;18
+    
+    user_input= 1-6
+    auto_increment= 7-12
+    
 
