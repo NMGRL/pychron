@@ -68,12 +68,11 @@ class BatchEditTask(AnalysisEditTask):
     def prepare_destroy(self):
         p = os.path.join(paths.hidden_dir, self.id)
         d = shelve.open(p)
-        d['values'] = self.central_pane.values
-        d['blanks'] = self.central_pane.blanks
+        d['values'] = self.batch_editor.values
+        d['blanks'] = self.batch_editor.blanks
 
         d.close()
-        BaseBrowserTask.prepare_destroy()
-
+        BaseBrowserTask.prepare_destroy(self)
 
     def activated(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -81,9 +80,8 @@ class BatchEditTask(AnalysisEditTask):
             d = shelve.open(p)
 
             try:
-
-                self.central_pane.values = d['values']
-                self.central_pane.blanks = d['blanks']
+                self.batch_editor.values = d['values']
+                self.batch_editor.blanks = d['blanks']
             except Exception:
                 pass
 

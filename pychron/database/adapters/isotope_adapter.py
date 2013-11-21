@@ -138,13 +138,17 @@ class IsotopeAdapter(DatabaseAdapter):
 
     #def count_sample_analyses(self, *args, **kw):
     #    return self._get_sample_analyses('count', *args, **kw)
-    def get_labnumber_analyses(self, lns, **kw):
+    def get_labnumber_analyses(self, lns, low_post=None,**kw):
         if not hasattr(lns, '__iter__'):
             lns = (lns, )
+
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(gen_LabTable)
             q = q.filter(gen_LabTable.identifier.in_(lns))
+            if low_post:
+                q = q.filter(meas_AnalysisTable.analysis_timestamp>=low_post)
+
             return self._get_paginated_analyses(q, **kw)
 
     def _get_paginated_analyses(self, q, limit=None, offset=None,

@@ -136,7 +136,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
             lns = db.get_recent_labnumbers(lpost, ms)
 
-            sams = [SampleRecordView(li.sample, labnumber=li.identifier)
+            sams = [SampleRecordView(li.sample, labnumber=li.identifier, low_post=lpost)
                     for li in lns if li.sample]
             #ss = db.get_recent_samples(lpost, ms)
             #print ss
@@ -151,8 +151,7 @@ class BrowserMixin(ColumnSorterMixin):
     def _configure_sample_table_fired(self):
         s = SampleTableConfigurer(adapter=self.sample_tabular_adapter,
                                   title='Configure Sample Table',
-                                  parent=self
-        )
+                                  parent=self)
         s.edit_traits()
 
     def _set_samples(self):
@@ -241,14 +240,18 @@ class BrowserMixin(ColumnSorterMixin):
                              include_invalid=False):
         db = self.manager.db
         with db.session_ctx():
-            #s, p = zip(*[(si.name, si.project) for si in samples])
             lns = [si.labnumber for si in samples]
+            lps=[si.low_post for si in samples if si.low_post is not None]
+
+            low_post=min(lps) if lps else None
+
             o = None
             if page_width:
                 o = (page - 1) * page_width
                 limit = page_width
 
             ans, tc = db.get_labnumber_analyses(lns,
+                                                low_post=low_post,
                                                 limit=limit,
                                                 offset=o,
                                                 include_invalid=include_invalid)

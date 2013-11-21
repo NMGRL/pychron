@@ -149,8 +149,8 @@ Install to enable MS Excel export''')
             ('pychron.analysis_edit.discrimination',
              self._discrimination_task_factory, 'Discrimination'),
 
-            #('pychron.analysis_edit.batch',
-            # self._batch_edit_task_factory, 'Batch Edit'),
+            ('pychron.analysis_edit.batch',
+            self._batch_edit_task_factory, 'Batch Edit'),
             #('pychron.analysis_edit.smart_batch',
             # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
 

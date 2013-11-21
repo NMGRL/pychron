@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str
+from traits.api import HasTraits, Str, Date
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -34,6 +34,8 @@ class SampleRecordView(RecordView):
     material = Str
     project = Str
     labnumber = Str
+
+    low_post=Date #
 
     def _create(self, dbrecord):
         self.name = dbrecord.name
