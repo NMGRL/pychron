@@ -15,6 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from threading import Thread
+from enable.container import Container
 from traits.api import Instance, Dict, Bool
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor
@@ -25,10 +27,14 @@ from numpy import Inf, polyfit
 #============= local library imports  ==========================
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+#from pychron.ui.thread import Thread
 
 
 class IsotopeEvolutionEditor(GraphEditor):
-    component = Instance(GridPlotContainer)
+    component = Instance(Container)
+    #component = Instance(VPlotContainer)
+    #component = Instance(HPlotContainer)
+    #component = Instance(GridPlotContainer)
     graphs = Dict
     _suppress_update = Bool
 
@@ -37,7 +43,7 @@ class IsotopeEvolutionEditor(GraphEditor):
     pickle_path = 'iso_fits'
     unpack_peaktime = True
     update_on_unknowns = False
-    calculate_age = False
+    calculate_age = True
 
     def _set_name(self):
         if not self.name:
@@ -172,52 +178,92 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         return fit_hist
 
-    def _rebuild_graph(self):
+    def _plot_baselines(self, add_tools, fd, fit, g, i, isok, unk):
+        isok = isok[:-2]
+        iso = unk.isotopes[isok]
+        #iso.baseline.fit = fit.fit
+        xs, ys = iso.baseline.xs, iso.baseline.ys
+        g.new_series(xs, ys,
+                     fit=fit.fit,
+                     filter_outliers_dict=fd,
+                     add_tools=add_tools,
+                     plotid=i)
+        return xs
 
-        unk = self.unknowns
-        n = len(unk)
-        c = 1
-        r = 1
-        if n == 1:
-            r = c = 1
-        elif n >= 2:
-            r = 2
-
-            while n > r * c:
-                c += 1
-                if c > 7:
-                    r += 1
+    def _plot_signal(self, add_tools, fd, fit, g, i, isok, unk):
+        if not isok in unk.isotopes:
+            return []
 
         display_sniff = True
+        iso = unk.isotopes[isok]
+        if display_sniff:
+            sniff = iso.sniff
+            if sniff:
+                g.new_series(sniff.xs, sniff.ys,
+                             plotid=i,
+                             type='scatter',
+                             fit=False)
+        xs, ys = iso.xs, iso.ys
+        g.new_series(xs, ys,
+                     fit=fit.fit,
+                     filter_outliers_dict=fd,
+                     add_tools=add_tools,
+                     plotid=i)
+        return xs
 
-        self.component = self._container_factory((r, c))
 
+    def _rebuild_graph(self):
+        n = len(self.unknowns)
+        prog=None
+        if n > 1:
+            prog = self.processor.open_progress(n)
+            prog.change_message('Loading Plots')
+
+        t=Thread(target=self.__rebuild_graph)
+        t.start()
+        t.join()
+
+        if prog:
+            prog.close()
+
+
+    def __rebuild_graph(self):
         fits = list(self._graph_generator())
-
         if not fits:
             return
 
+        unk = self.unknowns
+        n = len(unk)
+        r,c = 1,1
+        if n >= 2:
+            while n > r * c:
+                c += 1
+                if c >= 7:
+                    r += 1
+
+        self.component = self._container_factory((r, c))
+
         prog = None
         n = len(self.unknowns)
-        if n > 1:
-            prog = self.processor.open_progress(n)
+        #if n > 1:
+        #    prog = self.processor.open_progress(n)
 
-        add_tools = bind_index = self.tool.auto_update or n == 1
+        #add_tools = bind_index = not self.tool.auto_update or n == 1
+        add_tools = not self.tool.auto_update or n == 1
 
         for j, unk in enumerate(self.unknowns):
             set_ytitle = j % c == 0
             set_xtitle = j >= (n / r)
-            g = self._graph_factory(bind_index=bind_index)
-            plot_kw = dict(padding=[50, 1, 1, 1],
-                           title=unk.record_id,
-                           border_width=1)
+            #g = self._graph_factory(bind_index=False)
+            g = self._graph_factory()
+            plot_kw = dict(padding=[50, 0, 50, 50],
+                           title=unk.record_id)
 
             with g.no_regression(refresh=False):
                 ma = -Inf
                 set_x_flag = False
                 i = 0
                 for fit in fits:
-                    #if fit.fit and fit.show:
                     set_x_flag = True
                     isok = fit.name
                     if set_ytitle:
@@ -232,35 +278,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                               filter_outliers=fit.use_filter)
 
                     if isok.endswith('bs'):
-                        isok = isok[:-2]
-                        iso = unk.isotopes[isok]
-                        #iso.baseline.fit = fit.fit
-                        xs, ys = iso.baseline.xs, iso.baseline.ys
-                        g.new_series(xs, ys,
-                                     fit=fit.fit,
-                                     filter_outliers_dict=fd,
-                                     add_tools=add_tools,
-                                     plotid=i)
+                        xs = self._plot_baselines(add_tools, fd, fit, g, i, isok, unk)
                     else:
-                    #                     if isok in unk.isotopes:
-                        iso = unk.isotopes[isok]
-                        if display_sniff:
-                            sniff = iso.sniff
-                            if sniff:
-                                g.new_series(sniff.xs, sniff.ys,
-                                             plotid=i,
-                                             type='scatter',
-                                             fit=False)
-
-                        #iso.fit = fit.fit
-#                        print iso, iso.xs
-                    
-                        xs, ys = iso.xs, iso.ys
-                        g.new_series(xs, ys,
-                                     fit=fit.fit,
-                                     filter_outliers_dict=fd,
-                                     add_tools=add_tools,
-                                     plotid=i)
+                        xs = self._plot_signal(add_tools, fd, fit, g, i, isok, unk)
 
                     ma = max(max(xs), ma)
                     i += 1
@@ -268,21 +288,8 @@ class IsotopeEvolutionEditor(GraphEditor):
             if set_x_flag:
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
-                #self.graphs[unk.record_id] = g
 
             self.component.add(g.plotcontainer)
-            #self.component.invalidate_draw()
-            self.component.request_redraw()
-#            self.component_changed=True
-            if prog:
-                prog.change_message('Plotting {}'.format(unk.record_id))
-                prog.increment()
-
-    #def refresh_unknowns(self):
-    #    if not self._suppress_update:
-    #        for ui in self.unknowns:
-    #        #                 ui.load_age()
-    #            ui.analysis_summary.update_needed = True
 
     def traits_view(self):
         v = View(UItem('component',
@@ -295,9 +302,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _container_factory(self, shape):
         return GridPlotContainer(shape=shape,
-                                 spacing=(1, 1,),
-                                 backbuffer=True
-        )
+                                 spacing=(1, 1))
 
     #============= deprecated =============================================
     def calculate_optimal_eqtime(self):

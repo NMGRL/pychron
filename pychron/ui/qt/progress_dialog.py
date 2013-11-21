@@ -83,9 +83,10 @@ class myProgressDialog(ProgressDialog):
         self.message = message
         try:
             self.message_control.setText(message)
-            self.increment()
-        except RuntimeError:
-            pass
+            if auto_increment:
+                self.increment()
+        except RuntimeError, e:
+            print e
 
     def _create_message(self, dialog, layout):
         label = QLabel(self.message, dialog)

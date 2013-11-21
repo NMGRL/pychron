@@ -42,10 +42,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                     Tabbed(
                         PaneItem('pychron.plot_editor'),
                         PaneItem('pychron.analysis_edit.unknowns')),
-                    PaneItem('pychron.analysis_edit.controls')
-                ),
-            ),
-        )
+                    PaneItem('pychron.analysis_edit.controls'))))
 
     def create_dock_panes(self):
         self.unknowns_pane = self._create_unknowns_pane()
@@ -69,9 +66,8 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
 
         editor = IsotopeEvolutionEditor(name='Iso Evo {:03n}'.format(self.iso_evo_editor_count),
-                                        processor=self.manager
-        )
-        selector = self.manager.db.selector
+                                        processor=self.manager)
+        #selector = self.manager.db.selector
 
         #        selector.queries[0].criterion = 'NM-251'
         #        selector._search_fired()

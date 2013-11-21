@@ -217,7 +217,7 @@ class PlotEditor(HasTraits):
                 return rend
 
     def _plot_changed(self):
-        print 'plot change'
+
         traits = {'xmin': self.plot.index_range.low,
                   'xmax': self.plot.index_range.high,
                   'ymin': self.plot.value_range.low,

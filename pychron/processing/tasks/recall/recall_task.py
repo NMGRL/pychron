@@ -72,6 +72,9 @@ class RecallTask(AnalysisEditTask):
         #             l, a, s = strip_runid(s)
         #             an = self.manager.db.get_unique_analysis(l, a, s)
         #    print 'asdfasfdasdfasdf'
+            if hasattr(an, '__iter__'):
+                an=an[0]
+
             an = self.manager.make_analysis(an,
                                             calculate_age=True)
             #             an.load_isotopes(refit=False)
