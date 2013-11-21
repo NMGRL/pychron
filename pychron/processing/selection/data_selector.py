@@ -128,10 +128,18 @@ class DataSelector(Loggable):
     file_selector = Instance(FileSelector)
 
     selector = Any
-#     selectors = List
     kind = Enum('Database', 'File')
-#     kind = Str('Database', enter_set=True, auto_set=False)
     open_button = Button('open')
+    append_button=Button
+    replace_button=Button
+
+    #def _append_button_fired(self):
+    #    print 'append'
+    #    print self.selector.selected
+    #
+    #def _replace_button_fired(self):
+    #    print 'replace'
+    #    print self.selector.selected
 
     def _kind_changed(self):
         if self.kind == 'Database':

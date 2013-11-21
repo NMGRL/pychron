@@ -26,6 +26,7 @@ from traitsui.api import View, Item, EnumEditor, TableEditor, VGroup, spring, HG
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.paths import paths
 from pychron.ui.custom_label_editor import CustomLabel
 from pychron.ui.tabular_editor import myTabularEditor
@@ -167,49 +168,33 @@ class AdvancedQueryPane(TraitsTaskPane):
         grp = HGroup(
             UItem('kind'),
             UItem('open_button',
-                  visible_when='kind=="File"'
-            ),
+                  visible_when='kind=="File"'),
             UItem(selector_name('add_query_button'),
                   style='custom',
                   editor=ButtonEditor(label='',
                                       image=ImageResource(name='add.png',
-                                                          search_path=paths.icon_search_path
-                                      ),
-                  ),
-                  visible_when='kind=="Database"',
-            ),
+                                                          search_path=paths.icon_search_path)),
+                  visible_when='kind=="Database"'),
             UItem(selector_name('delete_query_button'),
                   style='custom',
                   editor=ButtonEditor(image=ImageResource(name='delete.png',
-                                                          search_path=paths.icon_search_path
-                  )),
-                  visible_when='kind=="Database"',
-            ),
-        )
+                                                          search_path=paths.icon_search_path)),
+                  visible_when='kind=="Database"'))
         filter_grp = HGroup(
             UItem(selector_name('search'),
-                  visible_when='kind=="Database"',
-            ),
+                  visible_when='kind=="Database"'),
             UItem(selector_name('mass_spectrometer'),
                   label='Spec.',
-                  editor=EnumEditor(name=selector_name('mass_spectrometers')),
-            ),
+                  editor=EnumEditor(name=selector_name('mass_spectrometers'))),
             UItem(selector_name('analysis_type'),
-                  editor=EnumEditor(name=selector_name('analysis_types'))
-            ),
-            visible_when='kind=="Database"',
-        )
+                  editor=EnumEditor(name=selector_name('analysis_types'))),
+            visible_when='kind=="Database"')
 
-        v = View(
-            VSplit(
-                self._results_group(),
-                VGroup(
-                    grp,
-                    filter_grp,
-                    self._query_group()
-                )
-            )
-        )
+        results_grp=VSplit(self._results_group(),
+                           VGroup(grp,filter_grp,self._query_group()))
+        button_grp=HGroup(icon_button_editor('append_button','add'),
+                          icon_button_editor('replace_button','arrow_refresh'))
+        v = View(VGroup(button_grp, results_grp))
         return v
 
 

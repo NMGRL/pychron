@@ -338,7 +338,6 @@ class BaseArArFigure(HasTraits):
     def _get_sorted_analyses(self):
         return sorted(self.analyses,
                       key=self._cmp_analyses,
-                      reverse=self._reverse_sorted_analyses
-        )
+                      reverse=self._reverse_sorted_analyses)
 
         #============= EOF =============================================

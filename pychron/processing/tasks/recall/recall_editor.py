@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Property, Instance
+from traits.api import Property, Instance, Any
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -23,11 +23,16 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 
 class RecallEditor(BaseTraitsEditor):
-    #model = Any
+    model = Any
     analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
     #analysis_summary = Any
 
     name = Property(depends_on='analysis_view.analysis_id')
+
+    def set_items(self, items):
+        print 'asdf', items
+        self.model=items[0]
+        self.analysis_view=self.model.analysis_view
 
     def traits_view(self):
         v = View(UItem('analysis_view',

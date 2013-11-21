@@ -23,10 +23,13 @@ from pychron.processing.plotters.figure_panel import FigurePanel
 from pychron.graph.regression_graph import StackedRegressionGraph
 
 #============= local library imports  ==========================
+
+
 class SeriesPanel(FigurePanel):
     _figure_klass = Series
     equi_stack = True
     graph_klass = StackedRegressionGraph
+    graph_spacing = 5
 
 
 class DashboardSeriesPanel(SeriesPanel):

@@ -33,10 +33,26 @@ def calculate_isochron(analyses):
     from pychron.regression.new_york_regressor import ReedYorkRegressor
 
     ref=analyses[0]
-    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
-            ai.isotopes['Ar36'].get_interference_corrected_value(),
-            ai.isotopes['Ar40'].get_interference_corrected_value())
-           for ai in analyses]
+    #try:
+    #    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
+    #        ai.isotopes['Ar36'].get_interference_corrected_value(),
+    #        ai.isotopes['Ar40'].get_interference_corrected_value())
+    #       for ai in analyses]
+    #except KeyError:
+    #    self.warning('Missing Isotope {}')
+    ans=[]
+    for ai in analyses:
+        try:
+            a=ai.isotopes['Ar39'].get_interference_corrected_value()
+            b=ai.isotopes['Ar36'].get_interference_corrected_value()
+            c=ai.isotopes['Ar40'].get_interference_corrected_value()
+        except KeyError:
+            continue
+
+        ans.append((a,b,c))
+
+    if not ans:
+        return
 
     a39, a36, a40 = array(ans).T
     try:

@@ -54,8 +54,11 @@ class Ideogram(BaseArArFigure):
 
         self._analysis_number_cnt = 0
 
-        self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
+        try:
+            self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                    for ai in self._get_xs(key=self.index_key)]).T
+        except ValueError:
+            return
 
         omit = self._get_omitted(self.sorted_analyses,
                                  omit='omit_ideo')
@@ -82,13 +85,18 @@ class Ideogram(BaseArArFigure):
             self._rebuild_ideo(omit)
 
     def max_x(self, attr):
-        return max([ai.nominal_value + ai.std_dev
+        try:
+            return max([ai.nominal_value + ai.std_dev
                     for ai in self._unpack_attr(attr)])
+        except ValueError:
+            return 0
 
     def min_x(self, attr):
-        return min([ai.nominal_value - ai.std_dev
+        try:
+            return min([ai.nominal_value - ai.std_dev
                     for ai in self._unpack_attr(attr)])
-
+        except ValueError:
+            return 0
     #===============================================================================
     # plotters
     #===============================================================================

@@ -55,6 +55,16 @@ class AnalysisEditTask(BaseBrowserTask):
 
     external_recall_window = True
 
+    def append_unknown_analyses(self, ans):
+        pane=self.unknowns_pane
+        if pane:
+            pane.items.extend(ans)
+
+    def replace_unkonwn_analyses(self, ans):
+        pane=self.unknowns_pane
+        if pane:
+            pane.items=ans
+
     def find_associated_analyses(self):
         #self.information_dialog('Find associated not yet implemented')
 
@@ -321,7 +331,6 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
-        print 'asdfasdf'
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
 

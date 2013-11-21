@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Any, Event, Instance, List
-from traitsui.api import View, UItem, Group
+from traitsui.api import View, UItem, Group, VGroup
 from enable.base_tool import BaseTool
 from chaco.abstract_overlay import AbstractOverlay
 from enable.colors import ColorTrait
@@ -73,10 +73,10 @@ class SelectorOverlay(AbstractOverlay):
 
 
 def flatten_container(container):
-    '''
-        input a nested container and 
+    """
+        input a nested container and
         return a list of Plots
-    '''
+    """
     return list(flatten(container))
 
 
@@ -152,10 +152,9 @@ class PlotEditorPane(TraitsDockPane):
         plot_grp = Group(
             UItem('current_editor',
                   style='custom'),
-            label='Plot'
-        )
+            label='Plot')
 
-        v = View(plot_grp, annotation_grp)
+        v = View(VGroup(plot_grp, annotation_grp))
         return v
 
 #============= EOF =============================================

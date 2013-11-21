@@ -15,13 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, on_trait_change, List
+from traits.api import HasTraits, Any, on_trait_change, List, Int
 #============= standard library imports ========================
 from itertools import groupby
 from pychron.graph.stacked_graph import StackedGraph
 from numpy.core.numeric import Inf
 
 #============= local library imports  ==========================
+
+
 class FigurePanel(HasTraits):
     figures = List
     graph = Any
@@ -30,8 +32,8 @@ class FigurePanel(HasTraits):
     _index_attr = None
     equi_stack = False
     graph_klass = StackedGraph
+    graph_spacing = Int
     meta = Any
-
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -54,7 +56,7 @@ class FigurePanel(HasTraits):
 
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0), )
+                             container_dict=dict(padding=0, spacing=self.graph_spacing), )
 
         po = self.plot_options
         attr = self._index_attr

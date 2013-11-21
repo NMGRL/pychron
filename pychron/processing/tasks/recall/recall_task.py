@@ -38,6 +38,18 @@ class RecallTask(AnalysisEditTask):
                  AddDiffAction(),
                  image_size=(16, 16))]
 
+    def append_unknown_analyses(self, ans):
+        for i,ai in enumerate(ans):
+            if not (i==0 and self.active_editor):
+                self.new_editor()
+            self._set_selected_analysis(ai)
+
+    def replace_unkonwn_analyses(self, ans):
+        for ei in self.editor_area.editors:
+            ei.close()
+
+        self.append_unknown_analyses(ans)
+
     def activated(self, load=False):
         self.load_projects()
         if load:

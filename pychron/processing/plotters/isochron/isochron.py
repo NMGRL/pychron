@@ -21,10 +21,9 @@ from chaco.array_data_source import ArrayDataSource
 #============= standard library imports ========================
 from numpy import array, linspace, delete
 #============= local library imports  ==========================
-from uncertainties import ufloat
 
 from pychron.helpers.formatting import calc_percent_error, floatfmt
-from pychron.processing.argon_calculations import age_equation, calculate_isochron
+from pychron.processing.argon_calculations import calculate_isochron
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
@@ -101,7 +100,11 @@ class InverseIsochron(Isochron):
         self._ref_age_scalar = refiso.arar_constants.age_scalar
         self._ref_age_units = refiso.arar_constants.age_units
 
-        age, reg, data=calculate_isochron(analyses)
+        try:
+            age, reg, data=calculate_isochron(analyses)
+        except TypeError:
+            return
+
         xs, ys, xerrs, yerrs=data
         self._cached_data = data
         self._age=age

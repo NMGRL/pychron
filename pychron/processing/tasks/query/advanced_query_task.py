@@ -15,17 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
+from traits.api import Instance, on_trait_change
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.processing.selection.data_selector import DataSelector
+from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.query.panes import AdvancedQueryPane
 
 
 class AdvancedQueryTask(BaseManagerTask):
     id='pychron.advanced_query'
     name='Advanced Query'
+    data_selector=Instance(DataSelector)
+
     def activated(self):
         selector=self.manager.db.selector
         selector.load_recent()
@@ -33,7 +36,43 @@ class AdvancedQueryTask(BaseManagerTask):
     def create_central_pane(self):
         selector = self.manager.db.selector
         ds = DataSelector(database_selector=selector)
+        self.data_selector=ds
         return AdvancedQueryPane(model=ds)
 
+    @on_trait_change('data_selector:[append_button, replace_button]')
+    def _handle_selection(self, name, new):
+        app=self.window.application
+        ans=self.data_selector.selector.selected
+        ref_asked=False
+        for win in app.windows:
+            task=win.active_task
+            if not issubclass(type(task), AnalysisEditTask):
+                continue
+
+            if hasattr(task, 'references_pane'):
+                pane=task.references_pane
+                if pane:
+                    if not ref_asked:
+                        add_to_ref=self.confirmation_dialog('Add selected analyses to References?')
+
+                    if add_to_ref:
+                        if name=='replace_button':
+                            pane.items=ans
+                        else:
+                            pane.items.extend(ans)
+            else:
+
+                if name=='replace_button':
+                    task.replace_unkonwn_analyses(ans)
+                else:
+                    task.append_unknown_analyses(ans)
+
+
+    def _add_to_pane(self, pane, action, items):
+        if action=='replace_button':
+            pane.items=items
+        else:
+            pane.items.extend(items)
 #============= EOF =============================================
+
 

@@ -24,7 +24,7 @@ from enable.enable_traits import LineStyle
 from enable.markers import MarkerTrait
 from traits.api import HasTraits, Any, Float, Int, on_trait_change, Bool, \
     Instance, List, Range, Color, Str, Font, Enum
-from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, EnumEditor, VFold
+from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, EnumEditor
 # from pyface.timer.do_later import do_later
 # from traitsui.editors.range_editor import RangeEditor
 # from numpy.core.numeric import Inf
@@ -337,8 +337,7 @@ class PlotEditor(HasTraits):
         renderers_grp = Group(
             VGroup(UItem('selected_renderer_name',
                          editor=EnumEditor(name='renderer_names')),
-                   UItem('selected_renderer', style='custom')
-            ),
+                   UItem('selected_renderer', style='custom')),
             label='Selected Plot')
 
         xlim_grp = HGroup(Item('xauto', label='Auto'),
@@ -350,14 +349,10 @@ class PlotEditor(HasTraits):
         ylim_grp = HGroup(UItem('ymin', format_str='%0.4f'),
                           UItem('ymax', format_str='%0.4f'),
                           label='Y Limits')
-
-        axes_grp = Group(
-            VGroup(xlim_grp,
-                   UItem('x_axis', style='custom'), label='X Axis'),
-            VGroup(ylim_grp,
-                   UItem('y_axis', style='custom'), label='Y Axis'),
-            label='Axes',
-            layout='tabbed')
+        xgrp=VGroup(xlim_grp,
+                    UItem('x_axis', style='custom'), label='X Axis')
+        ygrp=VGroup(ylim_grp,
+                   UItem('y_axis', style='custom'), label='Y Axis')
 
         layout_grp = VGroup(
             Item('padding_left', label='Left'),
@@ -366,10 +361,10 @@ class PlotEditor(HasTraits):
             Item('padding_bottom', label='Bottom'),
             label='Padding')
 
-        general_grp = VFold(
-            axes_grp,
+        general_grp = Group(
+            xgrp,ygrp,
             layout_grp,
-            renderers_grp)
+            renderers_grp, layout='tabbed')
 
         v = View(general_grp)
 
