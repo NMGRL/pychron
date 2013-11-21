@@ -39,6 +39,10 @@ class IsotopeEvolutionEditor(GraphEditor):
     update_on_unknowns = False
     calculate_age = False
 
+    def _set_name(self):
+        if not self.name:
+            super(IsotopeEvolutionEditor, self)._set_name()
+
     def _tool_default(self):
         t = IsoEvoFitSelector(auto_update=False)
         return t

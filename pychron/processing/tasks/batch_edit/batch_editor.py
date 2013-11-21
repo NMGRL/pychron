@@ -29,13 +29,20 @@ class UValue(HasTraits):
     name = Str
     use = Bool
 
+    _orig_nominal_value=None
+    _orig_std_dev=None
+
     def _nominal_value_changed(self, old, new):
-        if old:
-            self.use = True
+        if old is not None:
+            self.use = self._orig_nominal_value!=new
+        if self._orig_nominal_value is None:
+            self._orig_nominal_value=old
 
     def _std_dev_changed(self, old, new):
-        if old:
-            self.use = True
+        if old is not None:
+            self.use = self._orig_std_dev != new
+        if self._orig_std_dev is None:
+            self._orig_std_dev = old
 
 
 class BatchEditor(Loggable):
@@ -48,12 +55,10 @@ class BatchEditor(Loggable):
     _sens_value = Float
 
     def populate(self, unks):
-
-
         keys = set([ki for ui in unks
                     for ki in ui.isotope_keys])
-        keys = sort_isotopes(list(keys))
 
+        keys = sort_isotopes(list(keys))
         blanks = []
         for ki in keys:
             blank = next((bi for bi in self.blanks if bi.name == ki), None)
@@ -64,8 +69,8 @@ class BatchEditor(Loggable):
         self.blanks = blanks
 
         keys = set([iso.detector for ui in unks
-                    for iso in ui.isotopes.itervalues()
-        ])
+                    for iso in ui.isotopes.itervalues()])
+
         keys = sort_isotopes(list(keys))
         values = []
         for ki in keys:

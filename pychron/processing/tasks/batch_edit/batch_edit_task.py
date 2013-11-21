@@ -21,6 +21,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 from traits.api import Instance, on_trait_change, List
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed
+from pychron.entry.sensitivity_entry import SensitivityEntry
+from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
 
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.batch_edit.batch_editor import BatchEditor
@@ -163,7 +165,6 @@ class BatchEditTask(AnalysisEditTask):
     def _add_discrimination(self, analysis, v, e):
         db = self.manager.db
         hist = db.add_detector_parameter_history(analysis)
-        #         db.flush()  # FLUSH NECESSARY
 
         db.add_detector_parameter(hist, disc=v, disc_error=e)
         analysis.dbrecord.selected_histories.selected_detector_param = hist
@@ -171,25 +172,34 @@ class BatchEditTask(AnalysisEditTask):
     @on_trait_change('unknowns_pane:[items, update_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
         AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
-        self.batch_editor.populate(self.unknowns)
+
+        ans=self.manager.make_analyses(self.unknowns_pane.items)
+        self.batch_editor.populate(ans)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
-        is_append = name == 'append_button'
 
-        unks = None
-        if is_append:
-            unks = self.unknowns
-
-        s = self._get_selected_analyses(unks)
+        s=self._get_selected_analyses(self.unknowns)
         if s:
-            s = self.manager.make_analyses(s)
-            if is_append:
-                unks.extend(s)
+            if name=='replace_button':
+                self.unknowns_pane.items=s
             else:
-                self.unknowns = s
+                self.unknowns_pane.items.extend(s)
 
-            self.unknowns_pane.items = self.unknowns
+        #is_append = name == 'append_button'
+        #unks = None
+        #if is_append:
+        #    unks = self.unknowns
+
+        #s = self._get_selected_analyses(unks)
+        #if s:
+        #    s = self.manager.make_analyses(s)
+            #if is_append:
+            #    unks.extend(s)
+            #else:
+            #    self.unknowns = s
+            #
+            #self.unknowns_pane.items = self.unknowns
 
             #===============================================================================
 
@@ -202,21 +212,22 @@ class BatchEditTask(AnalysisEditTask):
     # #             self.manager.load_analyses(unks)
     #             self.central_pane.unknowns = unks
 
-    @on_trait_change('central_pane:db_sens_button')
+    @on_trait_change('batch_editor:db_sens_button')
     def _update_db_sens_button(self):
         app = self.window.application
-        entry = app.get_service('pychron.entry.modal_sensitivity')
-        if entry:
-            print entry
+        #entry = app.get_service('pychron.entry.modal_sensitivity')
+        #if entry:
+        #    print entry
 
-            #se = SensitivityEntry()
-            #se.activate()
+        se = SensitivityEntry()
+        se.activate()
 
-            #p = SensitivityPane(model=se)
-            #info = p.edit_traits(kind='livemodal', view='readonly_view')
-            #if info.result:
-            #    s = se.selected
-            #    self.central_pane.sens_value = s.sensitivity
+        p = SensitivityPane(model=se)
+        info = p.edit_traits(kind='livemodal', view='readonly_view')
+        if info.result:
+            s = se.selected
+            if s is not None:
+                self.batch_editor.sens_value = s.sensitivity
 
             #===============================================================================
             # defaults

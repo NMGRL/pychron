@@ -64,10 +64,8 @@ class BatchEditPane(TraitsDockPane):
             CheckboxColumn(name='use', label='Use')
         ]
         grp = VGroup(UItem('blanks', editor=TableEditor(columns=cols,
-                                                        sortable=False,
-        )),
-                     label='Blanks'
-        )
+                                                        sortable=False)),
+                     label='Blanks')
         return grp
 
     def _sensitivity_group(self):

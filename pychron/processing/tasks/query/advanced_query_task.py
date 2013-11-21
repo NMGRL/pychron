@@ -41,8 +41,11 @@ class AdvancedQueryTask(BaseManagerTask):
 
     @on_trait_change('data_selector:[append_button, replace_button]')
     def _handle_selection(self, name, new):
-        app=self.window.application
         ans=self.data_selector.selector.selected
+        if not ans:
+            return
+
+        app=self.window.application
         ref_asked=False
         for win in app.windows:
             task=win.active_task

@@ -64,21 +64,17 @@ class BrowserPane(TraitsDockPane):
         project_grp = VGroup(
             HGroup(Label('Filter'),
                    UItem('project_filter',
-                         width=75
-                   ),
+                         width=75),
                    icon_button_editor('clear_selection_button',
                                       'cross',
-                                      tooltip='Clear selected'),
-            ),
+                                      tooltip='Clear selected')),
             UItem('projects',
                   editor=TabularEditor(editable=False,
                                        selected='selected_projects',
                                        adapter=ProjectAdapter(),
-                                       multi_select=True
-                  ),
-                  width=75
-            )
-        )
+                                       multi_select=True),
+                  width=75))
+
         sample_grp = VGroup(
             HGroup(
                 #Label('Filter'),
@@ -93,9 +89,7 @@ class BrowserPane(TraitsDockPane):
                       tooltip='Omit non-analyzed samples'),
                 icon_button_editor('configure_sample_table',
                                    'cog',
-                                   tooltip='Configure Sample Table'
-                )
-            ),
+                                   tooltip='Configure Sample Table')),
             UItem('samples',
                   editor=TabularEditor(
                       adapter=self.sample_tabular_adapter,
@@ -106,18 +100,14 @@ class BrowserPane(TraitsDockPane):
                       column_clicked='column_clicked',
                       #update='update_sample_table',
                       #refresh='update_sample_table',
-                      stretch_last_section=False
-                  ),
-                  width=75
-            )
-        )
+                      stretch_last_section=False),
+                  width=75))
 
         grp = VSplit(
             project_grp,
             sample_grp,
             self._get_analysis_group(),
-            label='Project/Sample'
-        )
+            label='Project/Sample')
 
         return grp
 
@@ -128,8 +118,7 @@ class BrowserPane(TraitsDockPane):
             UItem('mass_spectrometer',
                   editor=EnumEditor(name='mass_spectrometers')),
             UItem('extraction_device',
-                  editor=EnumEditor(name='extraction_devices')),
-        )
+                  editor=EnumEditor(name='extraction_devices')))
 
         grp = VGroup(
             f_grp,
@@ -143,12 +132,11 @@ class BrowserPane(TraitsDockPane):
             UItem('end_date',
                   editor=DateEditor(allow_future=False),
                   style='custom'),
-            UItem('end_time', ),
-        )
+            UItem('end_time', ))
+
         return VSplit(grp,
                       self._get_analysis_group(base='danalysis'),
-                      label='Date'
-        )
+                      label='Date')
 
     def _get_analysis_group(self, base='analysis'):
         def make_name(name):
@@ -166,9 +154,7 @@ class BrowserPane(TraitsDockPane):
                       editor=EnumEditor(name=make_name('analysis_filter_values')),
                       width=-25),
                 icon_button_editor(make_name('configure_analysis_filter'), 'cog',
-                                   tooltip='Configure/Advanced query'
-                ),
-            ),
+                                   tooltip='Configure/Advanced query')),
             UItem(make_name('analyses'),
                   editor=myTabularEditor(
                       adapter=self.analysis_tabular_adapter,
@@ -178,14 +164,11 @@ class BrowserPane(TraitsDockPane):
                       dclicked=make_name('dclicked'),
                       multi_select=self.multi_select,
                       drag_external=True,
-                      stretch_last_section=False
-
-                  ),
+                      stretch_last_section=False),
                   #                                  editor=ListStrEditor(editable=False,
                   #                                           selected='selected_analysis'
                   #                                           )
-                  width=300
-            ),
+                  width=300),
             HGroup(
                 Item(make_name('page_width'),
                      label='N',
@@ -214,7 +197,8 @@ class BrowserPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             VGroup(
-                HGroup(icon_button_editor('advanced_query', 'cog')),
+                HGroup(icon_button_editor('advanced_query', 'application_form_magnify',
+                                          tooltip='Advanced Query')),
                 Group(
                     self._get_browser_group(),
                     self._get_date_group(),

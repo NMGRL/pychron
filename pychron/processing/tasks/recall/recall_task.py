@@ -39,6 +39,7 @@ class RecallTask(AnalysisEditTask):
                  image_size=(16, 16))]
 
     def append_unknown_analyses(self, ans):
+
         for i,ai in enumerate(ans):
             if not (i==0 and self.active_editor):
                 self.new_editor()

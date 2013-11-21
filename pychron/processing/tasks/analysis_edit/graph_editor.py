@@ -127,7 +127,7 @@ class GraphEditor(BaseUnknownsEditor):
                 self.load_tool()
 
     def _set_name(self):
-        na = list(set([ni.sample for ni in self.unknowns]))
+        na = list(set([ni.labnumber for ni in self.unknowns]))
         na = self._grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 

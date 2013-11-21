@@ -192,8 +192,8 @@ class AdvancedQueryPane(TraitsTaskPane):
 
         results_grp=VSplit(self._results_group(),
                            VGroup(grp,filter_grp,self._query_group()))
-        button_grp=HGroup(icon_button_editor('append_button','add'),
-                          icon_button_editor('replace_button','arrow_refresh'))
+        button_grp=HGroup(icon_button_editor('append_button','add', tooltip='Append'),
+                          icon_button_editor('replace_button','arrow_refresh',tooltip='Replace'))
         v = View(VGroup(button_grp, results_grp))
         return v
 
