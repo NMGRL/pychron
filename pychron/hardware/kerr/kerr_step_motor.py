@@ -243,6 +243,7 @@ class KerrStepMotor(KerrMotor):
         '''
         hpos = self._calculate_hysteresis_position(pos, hysteresis)
         self._motor_position = hpos
+        self._desired_position = pos
         #============pos is in mm===========
         addr = self.address
         cmd = '74'

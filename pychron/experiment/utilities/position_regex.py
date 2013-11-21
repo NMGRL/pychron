@@ -160,4 +160,5 @@ XY_REGEX = re.compile('[-,\d+].*\d*,[-,\d+].*\d*')
         D34
 '''
 DRILL_REGEX = re.compile('[dD]\d+$')
+POINT_REGEX = re.compile('p\d+$')
 #============= EOF =============================================

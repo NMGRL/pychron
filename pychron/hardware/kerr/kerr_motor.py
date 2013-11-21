@@ -39,10 +39,10 @@ SIGN = ['negative', 'positive']
 
 
 class KerrMotor(KerrDevice, ConsumerMixin):
-    '''
+    """
         Base class for motors controller by a kerr microcontroller board
 
-    '''
+    """
     use_initialize = Bool(True)
     use_hysteresis = Bool(False)
     hysteresis_value = Float(0)  # nominal value to for hysteresis
@@ -298,6 +298,7 @@ class KerrMotor(KerrDevice, ConsumerMixin):
 
         self._execute_hex_commands(commands)
         if self.home_at_startup:
+            self.info('============ HOME AT STARTUP =============')
             self._execute_hex_commands([(self.address, '00', 100, 'reset position')])
             self._home_motor(*args, **kw)
 

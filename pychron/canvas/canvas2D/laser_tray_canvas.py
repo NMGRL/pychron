@@ -30,7 +30,6 @@ from pychron.canvas.canvas2D.map_canvas import MapCanvas
 
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, \
     VelocityPolyLine, RasterPolygon, LaserPoint, DrillPoint
-from pychron.regex import TRANSECT_REGEX, DRILL_REGEX
 from pychron.canvas.canvas2D.crosshairs_overlay import CrosshairsOverlay
 import os
 from chaco.data_view import DataView
@@ -61,6 +60,7 @@ from chaco.data_view import DataView
 #            gc.clip_to_rect(component.x, component.y, component.width, component.height)
 #            for li in self.component.markup_objects:
 #                li.render(gc)
+from pychron.experiment.utilities.position_regex import TRANSECT_REGEX, DRILL_REGEX
 
 
 class BoundsOverlay(AbstractOverlay):
@@ -410,6 +410,8 @@ class LaserTrayCanvas(MapCanvas):
         elif DRILL_REGEX.match(v):
             return self.get_drill_point(v)
         else:
+            # v= p2 e.g. identifier is only 2
+            v = v[1:]
             return self.scene.get_item(v, klass=LaserPoint)
 
     def get_transect_point(self, v):

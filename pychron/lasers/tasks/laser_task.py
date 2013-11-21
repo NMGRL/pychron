@@ -28,7 +28,7 @@ from pychron.lasers.tasks.panes.diode import FusionsDiodeClientPane, \
     FusionsDiodePane, FusionsDiodeStagePane, FusionsDiodeControlPane, \
     FusionsDiodeSupplementalPane
 from pychron.lasers.tasks.panes.uv import FusionsUVPane, FusionsUVClientPane, \
-    FusionsUVSupplementalPane, FusionsUVControlPane, FusionsUVStagePane
+    FusionsUVControlPane, FusionsUVStagePane
 # from pyface.tasks.action.schema import SMenu
 # from pychron.lasers.tasks.laser_actions import OpenScannerAction
 #============= standard library imports ========================
@@ -36,6 +36,7 @@ from pychron.lasers.tasks.panes.uv import FusionsUVPane, FusionsUVClientPane, \
 
 class BaseLaserTask(BaseHardwareTask):
     power_map_enabled = Property(depends_on='manager')
+
     def _get_power_map_enabled(self):
         return self.manager.mode != 'client'
 
@@ -46,28 +47,29 @@ class BaseLaserTask(BaseHardwareTask):
     def prepare_destroy(self):
         self.manager.shutdown()
 
+
 class FusionsTask(BaseLaserTask):
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('{}.stage'.format(self.id)),
                           top=Splitter(
-#                                        Tabbed(
-                                              PaneItem('{}.control'.format(self.id),
-                                                       width=200
-                                                       ),
-#                                               PaneItem('{}.axes'.format(self.id))
-#                                               ),
-                                       PaneItem('pychron.lasers.pulse',
-                                                width=300),
-                                       Tabbed(
-                                              PaneItem('pychron.lasers.optics'),
-                                              PaneItem('{}.supplemental'.format(self.id))
-                                              )
-                                       )
+                              #                                        Tabbed(
+                              PaneItem('{}.control'.format(self.id),
+                                       width=200
+                              ),
+                              #                                               PaneItem('{}.axes'.format(self.id))
+                              #                                               ),
+                              PaneItem('pychron.lasers.pulse',
+                                       width=300),
+                              Tabbed(
+                                  PaneItem('pychron.lasers.optics'),
+                                  PaneItem('{}.supplemental'.format(self.id))
+                              )
                           )
+        )
 
-#===============================================================================
-# action handlers
-#===============================================================================
+    #===============================================================================
+    # action handlers
+    #===============================================================================
     def open_power_calibration(self):
         if self.manager:
             pc = self.manager.power_calibration_manager
@@ -83,22 +85,22 @@ class FusionsTask(BaseLaserTask):
         if pm.load_pattern():
             self.window.application.open_view(pm)
 
-#     def open_pattern(self):
-#         if self.manager:
-#             self.manager.open_pattern_maker()
-#
-#     def new_pattern(self):
-#         if self.manager:
-#             self.manager.new_pattern_maker()
-#
-#     def execute_pattern(self):
-#         if self.manager:
-#             self.manager.execute_pattern()
+            #     def open_pattern(self):
+            #         if self.manager:
+            #             self.manager.open_pattern_maker()
+            #
+            #     def new_pattern(self):
+            #         if self.manager:
+            #             self.manager.new_pattern_maker()
+            #
+            #     def execute_pattern(self):
+            #         if self.manager:
+            #             self.manager.execute_pattern()
 
-#     def open_power_map(self):
-#         if self.manager:
-#             pm = self.manager.get_power_map_manager()
-#             self.window.application.open_view(pm)
+            #     def open_power_map(self):
+            #         if self.manager:
+            #             pm = self.manager.get_power_map_manager()
+            #             self.window.application.open_view(pm)
 
     def test_degas(self):
         if self.manager:
@@ -110,11 +112,12 @@ class FusionsTask(BaseLaserTask):
 class FusionsCO2Task(FusionsTask):
     id = 'pychron.fusions.co2'
     name = 'Fusions CO2'
+
     def create_central_pane(self):
-#         if self.manager.mode == 'client':
-#             return FusionsCO2ClientPane(model=self.manager)
-#         else:
-#             return FusionsCO2Pane(model=self.manager)
+    #         if self.manager.mode == 'client':
+    #             return FusionsCO2ClientPane(model=self.manager)
+    #         else:
+    #             return FusionsCO2Pane(model=self.manager)
 
         return FusionsCO2Pane(model=self.manager)
 
@@ -122,18 +125,19 @@ class FusionsCO2Task(FusionsTask):
         if self.manager.mode == 'client':
             return [
 
-                    FusionsCO2StagePane(model=self.manager),
-                    FusionsCO2ControlPane(model=self.manager),
-                    ]
+                FusionsCO2StagePane(model=self.manager),
+                FusionsCO2ControlPane(model=self.manager),
+            ]
         else:
             return [
-#                     FusionsCO2AxesPane(model=self.manager),
-                    FusionsCO2StagePane(model=self.manager),
-                    FusionsCO2ControlPane(model=self.manager),
-                    PulsePane(model=self.manager),
-                    OpticsPane(model=self.manager),
-                    AuxilaryGraphPane(model=self.manager),
-                    ]
+                #                     FusionsCO2AxesPane(model=self.manager),
+                FusionsCO2StagePane(model=self.manager),
+                FusionsCO2ControlPane(model=self.manager),
+                PulsePane(model=self.manager),
+                OpticsPane(model=self.manager),
+                AuxilaryGraphPane(model=self.manager),
+            ]
+
 
 class FusionsDiodeTask(FusionsTask):
     id = 'fusions.diode'
@@ -150,19 +154,21 @@ class FusionsDiodeTask(FusionsTask):
             return []
         else:
             return [
-                 FusionsDiodeStagePane(model=self.manager),
-                 FusionsDiodeControlPane(model=self.manager),
-                 FusionsDiodeSupplementalPane(model=self.manager),
+                FusionsDiodeStagePane(model=self.manager),
+                FusionsDiodeControlPane(model=self.manager),
+                FusionsDiodeSupplementalPane(model=self.manager),
 
-#                TestPane(model=self.manager),
+                #                TestPane(model=self.manager),
                 PulsePane(model=self.manager),
                 OpticsPane(model=self.manager),
                 AuxilaryGraphPane(model=self.manager),
-                ]
+            ]
+
 
 class FusionsUVTask(FusionsTask):
     id = 'fusions.uv'
     name = 'Fusions UV'
+
     def create_central_pane(self):
         klass = FusionsUVPane
         if self.manager.mode == 'client':
@@ -175,13 +181,14 @@ class FusionsUVTask(FusionsTask):
             return []
         else:
             return [
-                    FusionsUVStagePane(model=self.manager),
-                    FusionsUVControlPane(model=self.manager),
-                    FusionsUVSupplementalPane(model=self.manager),
+                FusionsUVStagePane(model=self.manager),
+                FusionsUVControlPane(model=self.manager),
+                #FusionsUVSupplementalPane(model=self.manager),
 
-    #                TestPane(model=self.manager),
-#                     PulsePane(model=self.manager),
-                    OpticsPane(model=self.manager),
-                    # AuxilaryGraphPane(model=self.manager),
-                    ]
+                #                TestPane(model=self.manager),
+                #                     PulsePane(model=self.manager),
+                OpticsPane(model=self.manager),
+                # AuxilaryGraphPane(model=self.manager),
+            ]
+
 #============= EOF =============================================

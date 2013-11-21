@@ -23,9 +23,10 @@
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+import time
+
 from aerotech_axis import AerotechAxis
 from pychron.hardware.motion_controller import MotionController
-import time
 from pychron.hardware.core.data_helper import make_bitarray
 
 
@@ -132,14 +133,14 @@ class AerotechMotionController(MotionController):
         if self._validate(value, nkey, cp) is not None:
             setattr(self, '_{}_position'.format(key), value)
             nv = value - cp
-#            if key == 'x':
-#                x = value
-#                y = self._y_position
-#                o = self._x_position
-#            else:
-#                x = self._x_position
-#                y = value
-#                o = self._y_position
+            #            if key == 'x':
+            #                x = value
+            #                y = self._y_position
+            #                o = self._x_position
+            #            else:
+            #                x = self._x_position
+            #                y = value
+            #                o = self._y_position
             x = self._x_position
             y = self._y_position
             self.parent.canvas.set_stage_position(x, y)
@@ -154,8 +155,8 @@ class AerotechMotionController(MotionController):
 
             self.ask(cmd, handshake_only=True)
 
+            self.timer = self.timer_factory(func=func)
             if block:
-                self.timer = self.timer_factory(func=func)
                 self.block()
             else:
                 if name == 'Z':
@@ -163,12 +164,13 @@ class AerotechMotionController(MotionController):
 
                 self.parent.canvas.set_stage_position(x, y)
 
-#    def enqueue_move(self, x, y, v):
-#        if self.xy_swapped():
-#            cmd = 'LI X{} Y{} F{}'.format(y, x, v)
-#        else:
-#            cmd = 'LI X{} Y{} F{}'.format(x, y, v)
-#        self.ask(cmd, handshake_only=True)
+                #    def enqueue_move(self, x, y, v):
+                #        if self.xy_swapped():
+                #            cmd = 'LI X{} Y{} F{}'.format(y, x, v)
+                #        else:
+                #            cmd = 'LI X{} Y{} F{}'.format(x, y, v)
+                #        self.ask(cmd, handshake_only=True)
+
     def start_command_buffer(self):
         self.hold(True)
 

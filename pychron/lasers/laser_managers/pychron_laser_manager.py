@@ -24,6 +24,7 @@ import apptools.sweet_pickle as pickle
 import time
 from threading import Thread
 #============= local library imports  ==========================
+from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient,\
@@ -32,7 +33,6 @@ from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
 from pychron.helpers.filetools import str_to_bool
 import os
 from pychron.paths import paths
-from pychron.regex import TRANSECT_REGEX
 
 
 class PychronLaserManager(BaseLaserManager):

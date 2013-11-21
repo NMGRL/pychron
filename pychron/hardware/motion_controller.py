@@ -29,8 +29,8 @@ from pychron.hardware.core.motion.motion_profiler import MotionProfiler
 
 
 class MotionController(CoreDevice):
-    '''
-    '''
+    """
+    """
     axes = Dict
     xaxes_max = Property
     xaxes_min = Property
@@ -72,7 +72,7 @@ class MotionController(CoreDevice):
         self.parent.canvas.set_stage_position(self._x_position,
                                               self._y_position)
 
-    def timer_factory(self, func=None, period=250):
+    def timer_factory(self, func=None, period=100):
         '''
         
             reuse timer if func is the same
