@@ -20,7 +20,7 @@ from threading import Thread
 from chaco.plot_label import PlotLabel
 from enable.container import Container
 from enable.label import Label
-from traits.api import Instance, Dict, Bool
+from traits.api import Instance, Dict, Bool, Any
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor
 from chaco.plot_containers import GridPlotContainer
@@ -35,7 +35,8 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 class IsotopeEvolutionEditor(GraphEditor):
-    component = Instance(Container)
+    component = Any
+    #component = Instance(Container)
     #component = Instance(VPlotContainer)
     #component = Instance(HPlotContainer)
     #component = Instance(GridPlotContainer)
@@ -245,7 +246,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if c >= 7:
                     r += 1
 
-        self.component = self._container_factory((r, c))
+        cg=self._container_factory((r, c))
+        self.component = cg.plotcontainer
 
         #prog = None
         n = len(self.unknowns)
@@ -299,7 +301,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 
-            self.component.plotcontainer.add(g.plotcontainer)
+            self.component.add(g.plotcontainer)
 
     def traits_view(self):
         v = View(UItem('component',
