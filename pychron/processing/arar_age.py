@@ -97,12 +97,7 @@ class ArArAge(Loggable):
         v = next((error for (var, error) in self.uage.error_components().items()
                   if var.tag == key), 0)
 
-        print self.uage.error_components()
-        #for var, err in self.uage.error_components().items():
-        #    print var.tag, var, err
-
         ae = self.uage.std_dev
-        print 'get e comp {} {} {}'.format(key, v, ae)
         if ae:
             return v ** 2 / ae ** 2 * 100
         else:
