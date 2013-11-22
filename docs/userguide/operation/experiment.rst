@@ -24,10 +24,10 @@ Here are a few examples of how Rule #9 is processed
 ::
 
     user_input= 1-6;9
-    yields positions= 1,2,3,4,5,6,9
+    positions= 1,2,3,4,5,6,9
     
     user_input= 1-3;9;11-13
-    yields positions= 1,2,3,4,5,6,9,11,12,13
+    positions= 1,2,3,4,5,6,9,11,12,13
     
 
 
