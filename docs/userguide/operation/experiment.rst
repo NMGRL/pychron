@@ -24,9 +24,13 @@ Here are a few examples of how Rule #9 is processed
 ::
 
     user_input= 1-6;9
+    
+    #resulting positions
     positions= 1,2,3,4,5,6,9
     
     user_input= 1-3;9;11-13
+    
+    #resulting positions
     positions= 1,2,3,4,5,6,9,11,12,13
     
 
@@ -36,7 +40,9 @@ If the start > end, positions will decrease from start to end
 ::
 
     user_input= 9;6-1
-    yields positions= 9,6,5,4,3,2,1
+    
+    #resulting positions
+    positions= 9,6,5,4,3,2,1
     
     
 
