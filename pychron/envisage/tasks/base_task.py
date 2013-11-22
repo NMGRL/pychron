@@ -33,6 +33,7 @@ from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
 from pyface.confirmation_dialog import ConfirmationDialog
+from pychron.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
@@ -369,6 +370,7 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
+    _default_extension= ''
     wildcard = None
     manager = Any
 
@@ -441,7 +443,9 @@ class BaseManagerTask(BaseTask):
                             **kw
         )
         if dialog.open() == OK:
-            return dialog.path
+            path=dialog.path
+            if path:
+                return add_extension(path, ext=self._default_extension)
 
 
 class BaseExtractionLineTask(BaseManagerTask):

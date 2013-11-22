@@ -84,8 +84,6 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
-        '''
-        '''
         #        self.plotcontainer.stack_order = 'bottom_to_top'
         #        bottom = self.plotcontainer.stack_order == 'bottom_to_top'
         #        if self.equi_stack:
@@ -110,7 +108,7 @@ class StackedGraph(Graph):
 
         p = super(StackedGraph, self).new_plot(**kw)
         p.value_axis.ensure_labels_bounded = True
-        p.value_axis.title_spacing = 40
+        p.value_axis.title_spacing = 30
 
         #p.value_axis.on_trait_change(self._update_foo, 'updated')
         #if self.bind_padding:

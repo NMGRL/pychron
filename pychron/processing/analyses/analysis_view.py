@@ -61,7 +61,8 @@ class AnalysisView(HasTraits):
         experiment_view = ExperimentView(an)
 
         subviews = [main_view,
-                    experiment_view]
+                    experiment_view,
+                    ]
 
         self.selection_tool = ViewSelection(subviews=subviews,
                                             selected_view=main_view)

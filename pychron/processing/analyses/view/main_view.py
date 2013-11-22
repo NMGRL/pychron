@@ -84,11 +84,15 @@ class MainView(HasTraits):
                              value=self._get_irradiation(an)),
             MeasurementValue(name='J',
                              value=jf),
+
+            MeasurementValue(name='Project',
+                             value=an.project),
             MeasurementValue(name='Sample',
                              value=an.sample),
             MeasurementValue(name='Material',
                              value=an.material),
-
+            MeasurementValue(name='Comment',
+                             value=an.comment),
             MeasurementValue(name='Ar39Decay',
                              value=floatfmt(a39)),
             MeasurementValue(name='Ar37Decay',
