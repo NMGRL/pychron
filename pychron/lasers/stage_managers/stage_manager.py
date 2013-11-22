@@ -26,6 +26,7 @@ import os
 import time
 from numpy import array, asarray
 #=============local library imports  ==========================
+from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.helpers.color_generators import colors8i as colors
@@ -40,7 +41,6 @@ from pychron.geometry.geometry import sort_clockwise
 from pychron.geometry.convex_hull import convex_hull
 from pychron.geometry.polygon_offset import polygon_offset
 from pychron.lasers.stage_managers.calibration.tray_calibration_manager import TrayCalibrationManager
-from pychron.regex import TRANSECT_REGEX, XY_REGEX
 from pychron.ui.stage_component_editor import LaserComponentEditor
 from pychron.ui.thread import Thread
 from pychron.ui.preference_binding import bind_preference, ColorPreferenceBinding
