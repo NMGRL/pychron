@@ -28,6 +28,7 @@ Here are a few examples of how Rule #9 is processed
     #resulting positions
     positions= 1,2,3,4,5,6,9
     
+    
     user_input= 1-3;9;11-13
     
     #resulting positions
@@ -51,9 +52,14 @@ If auto-increment position is enabled pychron starts incrementing from the last 
 ::
     
     user_input= 1-6;9
-    auto_incremented= 10-15;18
+    
+    #resulting auto-incremented positions
+    positions= 10-15;18
+    
     
     user_input= 1-6
-    auto_increment= 7-12
+    
+    #resulting auto-incremented positions
+    positions= 7-12
     
 
