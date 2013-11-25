@@ -29,13 +29,15 @@ class Notifier(Loggable):
     _req_sock = None
 
     _handlers = Dict
+    def __init__(self, *args, **kw):
+        self._lock=Lock()
+        super(Notifier, self).__init__(*args, **kw)
 
     def _port_changed(self):
         self.setup(self.port)
 
     def setup(self, port):
         if port:
-            self._lock = Lock()
 
             context = zmq.Context()
             sock = context.socket(zmq.PUB)

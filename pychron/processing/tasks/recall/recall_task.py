@@ -59,16 +59,16 @@ class RecallTask(AnalysisEditTask):
         #             l, a, s = strip_runid(s)
         #             an = self.manager.db.get_unique_analysis(l, a, s)
         #    print 'asdfasfdasdfasdf'
-            an = self.manager.make_analyses(an,
-                                            calculate_age=True)[0]
+            an = self.manager.make_analysis(an,
+                                            calculate_age=True)
             #             an.load_isotopes(refit=False)
             #self.active_editor.analysis_summary = an.analysis_summary
             self.active_editor.analysis_view = an.analysis_view
             self.controls_pane.tool = an.analysis_view.selection_tool
-            #self.active_editor.model = an
+            self.active_editor.model = an
 
-    def create_dock_panes(self):
-        return [self._create_browser_pane(multi_select=False)]
+#    def create_dock_panes(self):
+#        return [self._create_browser_pane(multi_select=False)]
 
     def _dclicked_sample_changed(self):
         pass

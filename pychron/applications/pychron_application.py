@@ -47,7 +47,7 @@ paths.set_icon_search_path(get_resource_root())
 class PychronApplication(BaseTasksApplication):
     def _about_dialog_default(self):
         about_dialog = AboutDialog(
-            image=ImageResource(name='about{}.png'.format(paths.version),
+            image=ImageResource(name='about.png',
                                 search_path=[paths.app_resources,
                                              paths.abouts]
             ),
@@ -56,7 +56,7 @@ class PychronApplication(BaseTasksApplication):
 
     def _splash_screen_default(self):
         sp = SplashScreen(
-            image=ImageResource(name='splash{}.png'.format(paths.version),
+            image=ImageResource(name='splash.png',
                                 search_path=[paths.app_resources,
                                              paths.splashes]
             ),

@@ -138,8 +138,10 @@ def calculate_decay_factor(dc, segments):
 
     b = sum([pi * ((1 - math.exp(-dc * ti)) / (dc * math.exp(dc * dti)))
              for pi, ti, dti in segments])
-
-    return a / b
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return 1.0
 
 
 def abundance_sensitivity_correction(isos, abundance_sensitivity):
@@ -192,9 +194,9 @@ def interference_corrections(a40, a39, a38, a37, a36,
         k39 = a39 - ca39
         k37 = x * k39
 
-    k38 = pr.get('k3839') * k39
-    ca36 = pr.get('ca3637') * ca37
-    ca38 = pr.get('ca3837') * ca37
+    k38 = pr.get('k3839', 0) * k39
+    ca36 = pr.get('ca3637', 0) * ca37
+    ca38 = pr.get('ca3837', 0) * ca37
 
     return k37, k38, k39, ca36, ca37, ca38, ca39
 

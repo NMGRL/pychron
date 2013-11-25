@@ -255,7 +255,7 @@ class DBAnalysis(Analysis):
 
         # copy related table attrs
         self._sync_experiment(meas_analysis)
-        self._sync_irradiation(meas_analysis)
+        self._sync_irradiation(meas_analysis.labnumber)
         self._sync_isotopes(meas_analysis, unpack)
         self._sync_detector_info(meas_analysis)
         self._sync_extraction(meas_analysis)
@@ -268,11 +268,10 @@ class DBAnalysis(Analysis):
         exp = ext.experiment
         self.experiment_txt = exp.blob
 
-    def _sync_irradiation(self, meas_analysis):
+    def _sync_irradiation(self, ln):
         """
             copy irradiation info starting with a labnumber dbrecord
         """
-        ln = meas_analysis.labnumber
         self._sync_j(ln)
         pos = ln.irradiation_position
         if pos:

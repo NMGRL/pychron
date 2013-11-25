@@ -9,7 +9,7 @@ List of Plugins
 
   * **Database** - Access to MySQL, SQLite, PostgreSQL, etc. All database dialects supported by SQLAlchemy.
   * **Entry** - Enter information into a database. Projects, samples, labnumbers, etc.
-  * **Processing** - Processing Data. Make figures and tables.
+  * **Processing** - Process Data. Make figures and tables.
   * **ArArConstants** - Constants used in Ar-Ar geochronology.
   * **SystemMonitor** - "Strip-chart" recording of laboratory conditions and processes.
 

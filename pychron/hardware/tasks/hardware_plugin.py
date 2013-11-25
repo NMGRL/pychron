@@ -61,9 +61,6 @@ class OpenFlagManagerAction(Action):
 
 
 class HardwarePlugin(BaseTaskPlugin):
-    '''
-        
-    '''
     id = 'pychron.hardware.plugin'
     managers = ExtensionPoint(List(Dict),
                               id='pychron.hardware.managers')
@@ -84,9 +81,7 @@ class HardwarePlugin(BaseTaskPlugin):
         return [TaskFactory(id='tasks.hardware',
                             name='Hardware',
                             factory=self._factory,
-                            task_group='hardware'
-        )
-        ]
+                            task_group='hardware')]
 
     def _factory(self):
         man = self.application.get_service(HardwareManager)
@@ -94,8 +89,6 @@ class HardwarePlugin(BaseTaskPlugin):
         return task
 
     def _service_offers_default(self):
-        '''
-        '''
 
         so_hm = self.service_offer_factory(
             protocol=HardwareManager,
@@ -131,8 +124,6 @@ class HardwarePlugin(BaseTaskPlugin):
     #        return SystemLockManager(application=self.application)
 
     def start(self):
-        '''
-        '''
         # if self.managers:
         from pychron.initializer import Initializer
 
