@@ -15,10 +15,10 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import DelegatesTo, Int, Property, Instance, \
-    Button, List, String, Event, Bool, on_trait_change, Str
-from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, spring, \
-     EnumEditor, InstanceEditor
+from traits.api import DelegatesTo, Property, Instance, \
+    Button, List, String, Event, Bool
+from traitsui.api import View, Item, HGroup, VGroup, spring, \
+     EnumEditor
 # from apptools.preferences.preference_binding import bind_preference
 #=============standard library imports =======================
 import os

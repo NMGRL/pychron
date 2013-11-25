@@ -29,7 +29,6 @@ from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker
 # from pychron.canvas.scene_viewer import LaserMineViewer
 #from pychron.regex import TRANSECT_REGEX
-from pychron.ui.gui import convert_color
 maker_dict = dict(polygon=PolygonMaker, point=PointMaker, line=LineMaker, transect=TransectMaker)
 
 

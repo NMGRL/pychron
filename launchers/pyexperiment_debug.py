@@ -18,7 +18,6 @@
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
 
-from pyface.timer.do_later import do_later
 # import gc
 # print gc.get_threshold()
 # gc.set_debug(gc.DEBUG_LEAK| gc.DEBUG_STATS)
@@ -80,7 +79,7 @@ def setup():
     
 def mem():
     from pychron.envisage.pychron_run import app_factory
-    import time
+
     app=setup()
     
     app=app_factory(app)
