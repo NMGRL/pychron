@@ -17,7 +17,7 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Float, Int, Str
+from traits.api import Float, Int, Str, Bool
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -44,6 +44,7 @@ class ATLLaserControlUnit(CoreDevice):
     burst_readback = Int
     status_readback = Str
     action_readback = Str
+    firing = Bool
     #    _timer = None
     #    _enabled = Bool(False)
     #    triggered = Bool(False)
@@ -242,12 +243,14 @@ class ATLLaserControlUnit(CoreDevice):
 
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
+        self.firing = True
 
     def laser_stop(self):
     #        self.stop_update_timer()
 
         cmd = self._build_command(11, 1)
         self._send_command(cmd)
+        self.firing = False
 
     def get_laser_status(self, verbose=True):
         r = self._send_query(11, 1, verbose=verbose)
@@ -353,34 +356,36 @@ class ATLLaserControlUnit(CoreDevice):
         b = self.get_nburst(verbose=False)
         if b is not None:
             self.burst_readback = b
-            #        s=self.get_laser_status(verbose=False)
-            #        if s<=3:
+            if self.burst_readback == 0:
+                self.laser_stop()
+                #        s=self.get_laser_status(verbose=False)
+                #        if s<=3:
 
-            #        vs=self._send_query(6, 2, verbose=False)
-            # #        vs=self._send_query(30, 2, verbose=False)
-            #        if vs is not None:
-            #            vs=self._parse_response(vs, 2)
-            #            print vs
+                #        vs=self._send_query(6, 2, verbose=False)
+                # #        vs=self._send_query(30, 2, verbose=False)
+                #        if vs is not None:
+                #            vs=self._parse_response(vs, 2)
+                #            print vs
 
-            #        formatter = lambda x:x / 10.0
-            #        read and set energy and pressure_readback as one block
-            #        self._update_parameter_list([('energy_readback', formatter)], 8, 1)
-            # #        read and set frequency and hv as one block
-            #        self._update_parameter_list(['reprate', ('hv', formatter)], 1001, 2)
+                #        formatter = lambda x:x / 10.0
+                #        read and set energy and pressure_readback as one block
+                #        self._update_parameter_list([('energy_readback', formatter)], 8, 1)
+                # #        read and set frequency and hv as one block
+                #        self._update_parameter_list(['reprate', ('hv', formatter)], 1001, 2)
 
-            #        read and set gas action
+                #        read and set gas action
 
-            #    def _anytrait_changed(self, name, value):
-            #        '''
-            #
-            #        '''
-            #        if name in ['energy', 'reprate', 'hv']:
-            #            f = getattr(self, 'set_%s' % name)
-            #            self.info('setting %s %s' % (name, value))
-            #            f(value)
-            #
-            #            if self.simulation:
-            #                setattr(self, 'update_%s' % name, value)
+                #    def _anytrait_changed(self, name, value):
+                #        '''
+                #
+                #        '''
+                #        if name in ['energy', 'reprate', 'hv']:
+                #            f = getattr(self, 'set_%s' % name)
+                #            self.info('setting %s %s' % (name, value))
+                #            f(value)
+                #
+                #            if self.simulation:
+                #                setattr(self, 'update_%s' % name, value)
 
     def _set_answer_parameters(self, start_addr_value, answer_len,
                                verbose=True, ):

@@ -405,7 +405,7 @@ class LaserTrayCanvas(MapCanvas):
         return self.scene.get_item(v, klass=DrillPoint)
 
     def get_point(self, v):
-        if TRANSECT_REGEX.match(v):
+        if TRANSECT_REGEX[0].match(v):
             return self.get_transect_point(v)
         elif DRILL_REGEX.match(v):
             return self.get_drill_point(v)
