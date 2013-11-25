@@ -175,15 +175,24 @@ class BaseArArFigure(HasTraits):
                 for ai in self.sorted_analyses:
                     if n in ai.isotopes and d in ai.isotopes:
                         yield ai.isotopes[n].get_intensity()/ai.isotopes[d].get_intensity()
-        elif attr in self.sorted_analyses[0].isotopes:
-            def gen():
-                for ai in self.sorted_analyses:
-                    if attr in ai.isotopes:
-                        yield ai.isotopes[attr].get_intensity()
         else:
             def gen():
                 for ai in self.sorted_analyses:
-                    yield getattr(ai, attr)
+                    yield ai.get_value(attr)
+
+        #elif attr in self.sorted_analyses[0].isotopes:
+        #    def gen():
+        #        for ai in self.sorted_analyses:
+        #            if attr in ai.isotopes:
+        #                yield ai.isotopes[attr].get_intensity()
+        #elif attr in self.sorted_analyses[0].computed:
+        #    def gen():
+        #        for ai in self.sorted_analyses:
+        #            yield ai.computed[attr]
+        #else:
+        #    def gen():
+        #        for ai in self.sorted_analyses:
+        #            yield getattr(ai, attr)
 
         return gen()
 

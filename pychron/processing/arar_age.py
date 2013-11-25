@@ -83,6 +83,17 @@ class ArArAge(Loggable):
     _kca_warning = False
     _kcl_warning = False
 
+    def get_value(self, attr):
+        if attr in self.computed:
+            return self.computed[attr]
+        elif attr in self.isotopes:
+            return self.isotopes[attr]
+        elif hasattr(self, attr):
+            return getattr(self, attr)
+        else:
+            return ufloat(0,0, tag=attr)
+
+
     def get_ic_factor(self, det):
         factors = self.arar_constants.ic_factors
         ic = 1, 1e-20
