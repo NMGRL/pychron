@@ -22,12 +22,13 @@ from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker
 # from pychron.canvas.scene_viewer import LaserMineViewer
-from pychron.regex import TRANSECT_REGEX
+#from pychron.regex import TRANSECT_REGEX
 from pychron.ui.gui import convert_color
 maker_dict = dict(polygon=PolygonMaker, point=PointMaker, line=LineMaker, transect=TransectMaker)
 

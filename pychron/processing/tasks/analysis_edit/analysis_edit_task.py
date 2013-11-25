@@ -113,17 +113,18 @@ class AnalysisEditTask(BaseBrowserTask):
 
     def recall(self, records):
         if not hasattr(records, '__iter__'):
-            records = (records, )
+            records = (records,)
 
-        ans = self.manager.make_analyses(records, calculate_age=True)
+        ans = self.manager.make_analyses(records,
+                                         unpack=True,
+                                         calculate_age=True)
 
         def func(rec):
         #             rec.load_isotopes()
         #    rec.calculate_age()
-            reditor = RecallEditor(analysis_view=rec.analysis_view)
+            reditor = RecallEditor(analysis_view=rec.analysis_view,
+                                   model=rec)
             self.editor_area.add_editor(reditor)
-
-        #             self.add_iso_evo(reditor.name, rec)
 
         if ans:
             for ri in ans:
@@ -321,6 +322,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
+        print 'asdfasdf'
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
 

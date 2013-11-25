@@ -61,7 +61,7 @@ class BaseMeasurement(HasTraits):
 
             self.xs = array(xs)
             self.ys = array(ys)
-
+        
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
             endianness = self.endianness
@@ -97,7 +97,7 @@ class IsotopicMeasurement(BaseMeasurement):
     regressor = Property(depends_on='xs,ys,fit')
 
     def __init__(self, dbresult=None, *args, **kw):
-
+        
         if dbresult:
             self._value = dbresult.signal_
             self._error = dbresult.signal_err

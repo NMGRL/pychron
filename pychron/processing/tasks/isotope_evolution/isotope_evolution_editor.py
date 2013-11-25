@@ -249,6 +249,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                                              fit=False)
 
                         #iso.fit = fit.fit
+#                        print iso, iso.xs
+                    
                         xs, ys = iso.xs, iso.ys
                         g.new_series(xs, ys,
                                      fit=fit.fit,
@@ -267,6 +269,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             self.component.add(g.plotcontainer)
             #self.component.invalidate_draw()
             self.component.request_redraw()
+#            self.component_changed=True
             if prog:
                 prog.change_message('Plotting {}'.format(unk.record_id))
                 prog.increment()
