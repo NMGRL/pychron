@@ -104,6 +104,10 @@ class FusionsUVManager(FusionsLaserManager):
         ac = atl.is_enabled()
         return lc and ac
 
+    def goto_named_position(self, pos):
+        self.stage_manager.goto_position(pos)
+        return 'OK'
+
     #
     #    def goto_named_position(self, pos):
     #        sm = self.stage_manager

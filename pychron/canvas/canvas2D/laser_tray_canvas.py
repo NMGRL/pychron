@@ -78,9 +78,11 @@ class BoundsOverlay(AbstractOverlay):
         gc.draw_rect((x1 + 1, y1, w, h), constants.STROKE)
         gc.restore_state()
 
-DIRECTIONS = {'Left':('x', 1), 'Right':('x', -1),
-                 'Down':('y', 1), 'Up':('y', -1)
-                 }
+
+DIRECTIONS = {'Left': ('x', 1), 'Right': ('x', -1),
+              'Down': ('y', 1), 'Up': ('y', -1)
+}
+
 
 class ImageOverlay(AbstractOverlay):
     alpha = Range(0.0, 1.0, 1.0)
@@ -92,7 +94,7 @@ class ImageOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-#             gc.clip_to_rect(0, 0, scomponent.width, self.component.height)
+        #             gc.clip_to_rect(0, 0, scomponent.width, self.component.height)
             gc.set_alpha(self.alpha)
             if not self._image_cache_valid:
                 self._compute_cached_image()
@@ -101,7 +103,7 @@ class ImageOverlay(AbstractOverlay):
                 gc.draw_image(self._cached_image,
                               rect=(other_component.x, other_component.y,
                                     other_component.width, other_component.height)
-                              )
+                )
 
     def _compute_cached_image(self):
         pic = Image.open(self.path)
@@ -131,6 +133,7 @@ class ImageOverlay(AbstractOverlay):
     def _alpha_changed(self):
         self.request_redraw()
 
+
 class LaserTrayCanvas(MapCanvas):
     '''
     '''
@@ -144,7 +147,7 @@ class LaserTrayCanvas(MapCanvas):
     _desired_position = Any
 
     bgcolor = 'mediumturquoise'
-#    map = StageMap
+    #    map = StageMap
     show_axes = True
     current_position = Property(depends_on='cur_pos')
     cur_pos = Tuple(Float(0), Float(0))
@@ -157,7 +160,7 @@ class LaserTrayCanvas(MapCanvas):
 
     show_desired_position = Bool(True)
 
-#    desired_position_color = Color(0x008000)
+    #    desired_position_color = Color(0x008000)
     desired_position_color = Color('green')
     show_laser_position = Bool(True)
 
@@ -166,23 +169,22 @@ class LaserTrayCanvas(MapCanvas):
     beam_radius = Float(0)
     crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
 
-
     crosshairs_color = Color  # Property(Color('maroon'), depends_on='_crosshairs_color')
-#    _crosshairs_color = Any
+    #    _crosshairs_color = Any
 
     crosshairs_offset_color = Color('blue')
 
     crosshairs_radius = Range(0.0, 4.0, 1.0)
-#    crosshairs_offset = Tuple(0, 0)
+    #    crosshairs_offset = Tuple(0, 0)
     crosshairs_offsetx = Int
     crosshairs_offsety = Int
-#    _jog_moving = False
+    #    _jog_moving = False
     show_bounds_rect = Bool(True)
-#     points = List
+    #     points = List
     transects = List
     lines = List
     polygons = List
-#     markup_objects = List
+    #     markup_objects = List
 
     _new_line = True
     _new_transect = True
@@ -202,10 +204,10 @@ class LaserTrayCanvas(MapCanvas):
     def clear_all(self):
         self._point_count = 1
         self.lines = []
-#         self.points = []
+        #         self.points = []
         self.transects = []
         self.polygons = []
-#         self.markup_objects = []
+        #         self.markup_objects = []
         self.reset_markup()
         self.scene.reset_layers()
 
@@ -214,31 +216,31 @@ class LaserTrayCanvas(MapCanvas):
         self._new_transect = True
         self._new_polygon = True
 
-#    def remove_point_overlay(self):
-#        for o in self.overlays[:]:
-#            if isinstance(o, PointOverlay):
-#                self.overlays.remove(o)
-#
-#    def remove_line_overlay(self):
-#        for o in self.overlays[:]:
-#            if isinstance(o, LineOverlay):
-#                self.overlays.remove(o)
-#    def remove_markup_overlay(self):
-#        for o in self.overlays[:]:
-#            if isinstance(o, MarkupOverlay):
-#                self.overlays.remove(o)
+    #    def remove_point_overlay(self):
+    #        for o in self.overlays[:]:
+    #            if isinstance(o, PointOverlay):
+    #                self.overlays.remove(o)
+    #
+    #    def remove_line_overlay(self):
+    #        for o in self.overlays[:]:
+    #            if isinstance(o, LineOverlay):
+    #                self.overlays.remove(o)
+    #    def remove_markup_overlay(self):
+    #        for o in self.overlays[:]:
+    #            if isinstance(o, MarkupOverlay):
+    #                self.overlays.remove(o)
 
-#    def add_point_overlay(self):
-#        po = PointOverlay(component=self)
-#        self.overlays.append(po)
+    #    def add_point_overlay(self):
+    #        po = PointOverlay(component=self)
+    #        self.overlays.append(po)
 
-#    def add_line_overlay(self):
-#        po = LineOverlay(component=self)
-#        self.overlays.append(po)
+    #    def add_line_overlay(self):
+    #        po = LineOverlay(component=self)
+    #        self.overlays.append(po)
 
-#    def add_markup_overlay(self):
-#        mo = MarkupOverlay(component=self)
-#        self.overlays.append(mo)
+    #    def add_markup_overlay(self):
+    #        mo = MarkupOverlay(component=self)
+    #        self.overlays.append(mo)
 
 
     def point_exists(self, xy=None, tol=1e-5):
@@ -249,21 +251,23 @@ class LaserTrayCanvas(MapCanvas):
             reimplement with scene
         '''
         return False
-#         for p in self.points:
-# #        for p in self.markupcontainer.itervalues():
-# #            if isinstance(p, PointIndicator):
-#             if abs(p.x - x) < tol and abs(p.y - y) < tol:
-#                 # point already in the markup dict
-#                 return p
+
+    #         for p in self.points:
+    # #        for p in self.markupcontainer.itervalues():
+    # #            if isinstance(p, PointIndicator):
+    #             if abs(p.x - x) < tol and abs(p.y - y) < tol:
+    #                 # point already in the markup dict
+    #                 return p
 
     def set_transect_step(self, step):
         transect = self.transects[-1]
-#        for pi in transect.step_points:
-#            self.remove_point(pi)
+        #        for pi in transect.step_points:
+        #            self.remove_point(pi)
 
         transect.step = step
         self.request_redraw()
-#        transect.set_step_points()
+
+    #        transect.set_step_points()
 
     def new_polygon_point(self, xy=None,
                           ptargs=None,
@@ -271,8 +275,8 @@ class LaserTrayCanvas(MapCanvas):
                           line_color=(1, 0, 0),
                           point_color=(1, 0, 0),
                           **kw
-#                          use_convex_hull=False,
-                           ):
+                          #                          use_convex_hull=False,
+    ):
         if ptargs is None:
             ptargs = dict()
 
@@ -285,17 +289,17 @@ class LaserTrayCanvas(MapCanvas):
         if self._new_polygon:
             self._new_polygon = False
             poly = RasterPolygon([xy],
-                         identifier=identifier,
-                         default_color=point_color,
-                         ptargs=ptargs,
-                         **kw
-#                         canvas=self,
-#                         use_convex_hull=use_convex_hull,
-#                         **ptargs
-                         )
+                                 identifier=identifier,
+                                 default_color=point_color,
+                                 ptargs=ptargs,
+                                 **kw
+                                 #                         canvas=self,
+                                 #                         use_convex_hull=use_convex_hull,
+                                 #                         **ptargs
+            )
             self.polygons.append(poly)
             self.scene.add_item(poly)
-#            self.markup_objects.append(poly)
+        #            self.markup_objects.append(poly)
         else:
             poly = self.polygons[-1]
             poly.add_point(xy, default_color=point_color, **ptargs)
@@ -306,15 +310,15 @@ class LaserTrayCanvas(MapCanvas):
 
         if self._new_transect:
             self._new_transect = False
-#            kw['identifier'] = str(len(self.lines) + 1)
-#            kw['canvas'] = self
+            #            kw['identifier'] = str(len(self.lines) + 1)
+            #            kw['canvas'] = self
             transect = Transect(xy[0], xy[1],
                                 identifier=str(len(self.transects) + 1),
                                 canvas=self,
                                 default_color=point_color,
                                 step=step,
                                 **ptargs
-                                )
+            )
             self.scene.add_item(transect)
             self.transects.append(transect)
         else:
@@ -323,8 +327,8 @@ class LaserTrayCanvas(MapCanvas):
             tran.add_point(xy[0], xy[1], **ptargs)
             tran.set_step_points(**ptargs)
 
-#            tran.set_endpoint(xy)
-#            self._set_transect_points(tran, step, **ptargs)
+        #            tran.set_endpoint(xy)
+        #            self._set_transect_points(tran, step, **ptargs)
 
     def new_line_point(self, xy=None, z=0, line_color=(1, 0, 0), point_color=(1, 0, 0), velocity=None, **kw):
         if xy is None:
@@ -332,15 +336,15 @@ class LaserTrayCanvas(MapCanvas):
 
         if self._new_line:
             kw['identifier'] = str(len(self.lines) + 1)
-#            kw['canvas'] = self
+            #            kw['canvas'] = self
 
             line = VelocityPolyLine(*xy, z=z,
-                          default_color=point_color,
-                          **kw
-                          )
+                                    default_color=point_color,
+                                    **kw
+            )
             self._new_line = False
             self.scene.add_item(line)
-#            self.markup_objects.append(line)
+            #            self.markup_objects.append(line)
             self.lines.append(line)
         else:
             line = self.lines[-1]
@@ -349,16 +353,17 @@ class LaserTrayCanvas(MapCanvas):
                            z=z,
                            line_color=line_color,
                            point_color=point_color)
-#        pid='point{}'.format(len(line))
-#        p=PointIndicator(*self._stage_position,
-#                identifier=pid,
-#                canvas=self,
-#                **kw
-#                )
+        #        pid='point{}'.format(len(line))
+        #        p=PointIndicator(*self._stage_position,
+        #                identifier=pid,
+        #                canvas=self,
+        #                **kw
+        #                )
 
-#    def remove_point(self, pi):
-#        self.scene.remove_item(pi)
-#        self.points.remove(pi)
+        #    def remove_point(self, pi):
+        #        self.scene.remove_item(pi)
+        #        self.points.remove(pi)
+
     def remove_item(self, name):
         self.scene.remove_item(name)
 
@@ -372,17 +377,18 @@ class LaserTrayCanvas(MapCanvas):
             xy = self._stage_position
 
         p = LaserPoint(*xy,
-                identifier=str(self._point_count),  # str(len(self.points) + 1),
-                **kw
-                )
+                       identifier=str(self._point_count), # str(len(self.points) + 1),
+                       **kw
+        )
         self._point_count += 1
         self.scene.add_item(p)
-#        self.points.append(p)
+        #        self.points.append(p)
         self.request_redraw()
         return p
 
     def get_transects(self):
         return self.scene.get_items(Transect)
+
     def get_lines(self):
         return self.scene.get_items(VelocityPolyLine)
 
@@ -424,29 +430,29 @@ class LaserTrayCanvas(MapCanvas):
         drill = self.get_drill(v)
         return drill
 
-#    def config_view(self):
-#        v = View(
-#                VGroup(
-#                       Item('show_bounds_rect'),
-# #                       Item('render_map'),
-#                       Item('show_grids'),
-#                       HGroup(Item('show_laser_position'),
-#                              Item('crosshairs_color',
-#                                   editor=ColorEditor(),
-#                                   springy=True, show_label=False)
-#                              ),
-#                       Item('crosshairs_kind'),
-#                       Item('crosshairs_radius'),
-#                       HGroup(
-#                              Item('crosshairs_offsetx', label='Offset'),
-#                              Item('crosshairs_offsety', show_label=False)
-#                              ),
-#                       Item('crosshairs_offset_color'),
-#                       HGroup(Item('show_desired_position'),
-#                              Item('desired_position_color', springy=True, show_label=False)),
-#                       )
-#            )
-#        return v
+    #    def config_view(self):
+    #        v = View(
+    #                VGroup(
+    #                       Item('show_bounds_rect'),
+    # #                       Item('render_map'),
+    #                       Item('show_grids'),
+    #                       HGroup(Item('show_laser_position'),
+    #                              Item('crosshairs_color',
+    #                                   editor=ColorEditor(),
+    #                                   springy=True, show_label=False)
+    #                              ),
+    #                       Item('crosshairs_kind'),
+    #                       Item('crosshairs_radius'),
+    #                       HGroup(
+    #                              Item('crosshairs_offsetx', label='Offset'),
+    #                              Item('crosshairs_offsety', show_label=False)
+    #                              ),
+    #                       Item('crosshairs_offset_color'),
+    #                       HGroup(Item('show_desired_position'),
+    #                              Item('desired_position_color', springy=True, show_label=False)),
+    #                       )
+    #            )
+    #        return v
 
 
     def valid_position(self, x, y):
@@ -460,12 +466,12 @@ class LaserTrayCanvas(MapCanvas):
 
                 try:
                     if between(p.xaxes_min, x, p.xaxes_max) and \
-                        between(p.yaxes_min, y, p.yaxes_max):
-#                    if p.xaxes_min < x <= p.xaxes_max and p.yaxes_min < y <= p.yaxes_max:
+                            between(p.yaxes_min, y, p.yaxes_max):
+                    #                    if p.xaxes_min < x <= p.xaxes_max and p.yaxes_min < y <= p.yaxes_max:
                         return x, y
                 except AttributeError:
                     pass
-#                if 'x' in p.axes and 'y' in p.axes:
+                #                if 'x' in p.axes and 'y' in p.axes:
 
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]
@@ -482,9 +488,10 @@ class LaserTrayCanvas(MapCanvas):
 
     def clear_desired_position(self):
         pass
-#    def clear_desired_position(self):
-#        self._desired_position = None
-#        self.request_redraw()
+
+    #    def clear_desired_position(self):
+    #        self._desired_position = None
+    #        self.request_redraw()
 
     def set_desired_position(self, x, y):
         '''
@@ -518,16 +525,16 @@ class LaserTrayCanvas(MapCanvas):
 
         self.set_mapper_limits(mapper, (nmi, nma))
 
-#===============================================================================
-# interactor
-#===============================================================================
+    #===============================================================================
+    # interactor
+    #===============================================================================
     def normal_left_down(self, event):
         '''
         '''
-#        if self.calibrate or self.markup:
-#            super(LaserTrayCanvas, self).normal_left_down(event)
-#
-#        else:
+        #        if self.calibrate or self.markup:
+        #            super(LaserTrayCanvas, self).normal_left_down(event)
+        #
+        #        else:
 
         pos = self.valid_position(event.x, event.y)
         if pos:
@@ -535,14 +542,14 @@ class LaserTrayCanvas(MapCanvas):
                 self.parent.linear_move(*pos, use_calibration=False)
             event.handled = True
 
-#    def normal_mouse_wheel(self, event):
-#        enable_mouse_wheel_zoom = False
-#        if enable_mouse_wheel_zoom:
-#            inc = event.mouse_wheel
-# #            self.parent.parent.laser_controller.set_zoom(inc, relative=True)
-#            self.parent.parent.laser_controller.set_motor('zoom', inc, relative=True)
-# #            self.parent.parent.logic_board.set_zoom(inc, relative=True)
-#            event.handled = True
+        #    def normal_mouse_wheel(self, event):
+        #        enable_mouse_wheel_zoom = False
+        #        if enable_mouse_wheel_zoom:
+        #            inc = event.mouse_wheel
+        # #            self.parent.parent.laser_controller.set_zoom(inc, relative=True)
+        #            self.parent.parent.laser_controller.set_motor('zoom', inc, relative=True)
+        # #            self.parent.parent.logic_board.set_zoom(inc, relative=True)
+        #            event.handled = True
 
     def normal_key_pressed(self, event):
         c = event.character
@@ -571,14 +578,14 @@ class LaserTrayCanvas(MapCanvas):
         '''
         '''
         self.cur_pos = (event.x, event.y)
-#        if self.calibrate or self.markup:
-#            super(LaserTrayCanvas, self).normal_mouse_move(event)
-#
-#            #both the markup and map canvas can handle this event
-#            MarkupCanvas.normal_mouse_move(self, event)
-#            if not event.handled:
-#                MapCanvas.normal_mouse_move(self, event)
-#        else:
+        #        if self.calibrate or self.markup:
+        #            super(LaserTrayCanvas, self).normal_mouse_move(event)
+        #
+        #            #both the markup and map canvas can handle this event
+        #            MarkupCanvas.normal_mouse_move(self, event)
+        #            if not event.handled:
+        #                MapCanvas.normal_mouse_move(self, event)
+        #        else:
 
         if self.valid_position(event.x, event.y):
             event.window.set_pointer(self.cross_pointer)
@@ -600,46 +607,47 @@ class LaserTrayCanvas(MapCanvas):
         event.window.set_pointer(self.normal_pointer)
         self.request_redraw()
         event.handled = True
-#===============================================================================
-# private
-#===============================================================================
+
+    #===============================================================================
+    # private
+    #===============================================================================
     def _calc_relative_move_direction(self, char, direction):
         return direction
 
-#    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
-#        for pi in tran.step_points:
-#            self.remove_point(pi)
-#
-#        tran.step_points = []
-#
-#        for li in tran.lines:
-#            p1 = li.start_point
-#            p2 = li.end_point
-# #            p1 = tran.start_point
-# #            p2 = tran.end_point
-#
-#            x, y = p1.x, p1.y
-# #            p = self.new_point((x, y), **ptargs)
-# #            tran.step_points.append(p)
-#            tol = step / 3.
-#            while 1:
-#                x, y = calc_point_along_line(x, y, p2.x, p2.y, step)
-#                ptargs['use_border'] = False
-#                if abs(p2.x - x) < tol and abs(p2.y - y) < tol:
-# #                    ptargs['use_border'] = True
-#                    p = self.new_point((p2.x, p2.y), **ptargs)
-#                    tran.step_points.append(p)
-#                    break
-#                else:
-# #                    ptargs['use_border'] = False
-#                    p = self.new_point((x, y),
-#                                   line_color=line_color, point_color=point_color,
-#                                   **ptargs)
-#                    tran.step_points.append(p)
-#
-#    #            line.add_point(*xy,
-#    #                           line_color=line_color,
-#    #                           point_color=point_color)
+    #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
+    #        for pi in tran.step_points:
+    #            self.remove_point(pi)
+    #
+    #        tran.step_points = []
+    #
+    #        for li in tran.lines:
+    #            p1 = li.start_point
+    #            p2 = li.end_point
+    # #            p1 = tran.start_point
+    # #            p2 = tran.end_point
+    #
+    #            x, y = p1.x, p1.y
+    # #            p = self.new_point((x, y), **ptargs)
+    # #            tran.step_points.append(p)
+    #            tol = step / 3.
+    #            while 1:
+    #                x, y = calc_point_along_line(x, y, p2.x, p2.y, step)
+    #                ptargs['use_border'] = False
+    #                if abs(p2.x - x) < tol and abs(p2.y - y) < tol:
+    # #                    ptargs['use_border'] = True
+    #                    p = self.new_point((p2.x, p2.y), **ptargs)
+    #                    tran.step_points.append(p)
+    #                    break
+    #                else:
+    # #                    ptargs['use_border'] = False
+    #                    p = self.new_point((x, y),
+    #                                   line_color=line_color, point_color=point_color,
+    #                                   **ptargs)
+    #                    tran.step_points.append(p)
+    #
+    #    #            line.add_point(*xy,
+    #    #                           line_color=line_color,
+    #    #                           point_color=point_color)
     def _add_bounds_rect(self):
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
@@ -649,9 +657,9 @@ class LaserTrayCanvas(MapCanvas):
         self.overlays.append(ch)
         self.crosshairs_overlay = ch
 
-#===============================================================================
-# handlers
-#===============================================================================
+    #===============================================================================
+    # handlers
+    #===============================================================================
     @on_trait_change('''show_laser_position, show_desired_position,
                          desired_position_color,
                          crosshairs_+
@@ -668,20 +676,21 @@ class LaserTrayCanvas(MapCanvas):
 
         self.request_redraw()
 
-#===============================================================================
-# property get/set
-#===============================================================================
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_crosshairs_color(self):
         return self._crosshairs_color
-#
-#    def _set_crosshairs__color(self, v):
-#        print v, 'craaerwer'
-#        self._crosshairs_color
+
+    #
+    #    def _set_crosshairs__color(self, v):
+    #        print v, 'craaerwer'
+    #        self._crosshairs_color
 
     def _get_current_position(self):
 
         md = self.map_data(self.cur_pos)
-        return  self.cur_pos[0], md[0], self.cur_pos[1], md[1]
+        return self.cur_pos[0], md[0], self.cur_pos[1], md[1]
 
     def _get_stage_position(self):
         '''
@@ -696,19 +705,21 @@ class LaserTrayCanvas(MapCanvas):
             x, y = self.map_screen([self._desired_position])[0]
             return x, y
 
-#===============================================================================
-# defaults
-#===============================================================================
+        #===============================================================================
+        # defaults
+        #===============================================================================
+
     def _scene_default(self):
         from pychron.canvas.canvas2D.scene.laser_mine_scene import LaserMineScene
+
         s = LaserMineScene(canvas=self)
         return s
 
-#========================EOF====================================================
+    #========================EOF====================================================
 
-#===============================================================================
-# draw
-#===============================================================================
+    #===============================================================================
+    # draw
+    #===============================================================================
     def draw(self, gc, *args, **kw):
         '''
 
@@ -717,7 +728,6 @@ class LaserTrayCanvas(MapCanvas):
                         self.outer_width, self.outer_height)
         DataView.draw(self, gc, *args, **kw)
         self._draw_hook(gc, *args, **kw)
-
 
 
 #    def _draw_hook(self, gc, *args, **kw):
