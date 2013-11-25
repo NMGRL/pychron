@@ -100,6 +100,7 @@ class AutomatedRunSpec(Loggable):
     #===========================================================================
     # display only
     #===========================================================================
+    project = Str
     sample = Str
     irradiation = Str
     material = Str

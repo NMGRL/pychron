@@ -165,13 +165,15 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _get_analysis_info(self, li):
         dbln = self.db.get_labnumber(li)
-        sample, material, irradiation = '', '', ''
+        project, sample, material, irradiation = '', '', '', ''
         if dbln:
             sample = dbln.sample
             if sample:
                 if sample.material:
                     material = sample.material.name
                 sample = sample.name
+                if sample.project:
+                    project=sample.project.name
 
             dbpos = dbln.irradiation_position
             if dbpos:
@@ -187,7 +189,7 @@ class Experimentor(IsotopeDatabaseManager):
             step = dban.step
 
         #            self.debug('{} {} {}'.format(li, analysis, sample))
-        return sample, material, irradiation, aliquot, step
+        return project, sample, material, irradiation, aliquot, step
 
     def _modify_aliquots_steps(self, ans, exclude=None):
         cache = dict()
@@ -207,8 +209,8 @@ class Experimentor(IsotopeDatabaseManager):
                 
                 # is run in cache
                 if not ln in cache:
-                    sample, material, irrad, aliquot, step = self._get_analysis_info(ln)
-                    cache[ln] = dict(sample=sample,
+                    project, sample, material, irrad, aliquot, step = self._get_analysis_info(ln)
+                    cache[ln] = dict(project=project, sample=sample,
                                      material=material,
                                      irradiation=irrad,
                                      aliquot=aliquot,
@@ -276,6 +278,7 @@ class Experimentor(IsotopeDatabaseManager):
                 if _not_run(ai):
 #                if ai.state == 'not run':
                     ai.trait_set(aliquot=int(aq),
+                                 project=last['project'] or '',
                                  sample=last['sample'] or '',
                                  irradiation=last['irradiation'] or '',
                                  material=last['material'] or '',
