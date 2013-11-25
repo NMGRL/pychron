@@ -93,6 +93,7 @@ class ArArAge(Loggable):
         return r
 
     def get_error_component(self, key):
+
         v = next((error for (var, error) in self.uage.error_components().items()
                   if var.tag == key), 0)
 

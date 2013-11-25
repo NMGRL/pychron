@@ -42,11 +42,17 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     commands_pane = Instance(CommandsPane)
 
     wildcard = '*.py'
-    auto_detab = Bool(False)
+    _default_extension= '.py'
 
+    auto_detab = Bool(False)
     _current_script = Any
     use_trace = Bool(False)
     trace_delay = Int(50)
+
+    def __init__(self, *args, **kw):
+        super(PyScriptTask, self).__init__(*args, **kw)
+        bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
+
     def _runner_factory(self):
         # get the extraction line manager's mode
         man = self._get_el_manager()
@@ -146,13 +152,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if self._current_script:
             self._current_script.cancel()
 
-    def __init__(self, *args, **kw):
-        super(PyScriptTask, self).__init__(*args, **kw)
-        bind_preference(self, 'auto_detab', 'pychron.pyscript.auto_detab')
 
-    def activated(self):
-        from pyface.timer.do_later import do_later
-        do_later(self.window.reset_layout)
+
+    #def activated(self):
+    #    from pyface.timer.do_later import do_later
+    #    do_later(self.window.reset_layout)
 
     def _default_directory_default(self):
         return paths.scripts_dir

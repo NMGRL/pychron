@@ -25,6 +25,7 @@ from uncertainties import ufloat, umath
 from numpy import array
 from pychron.processing.arar_constants import ArArConstants
 from pychron.stats.core import calculate_weighted_mean
+import copy
 
 #============= local library imports  ==========================
 
@@ -284,7 +285,8 @@ def calculate_R(isotopes,
     rad40 = a40 - atm40 - k40
     R = rad40 / k39
 
-    r = ufloat(R.nominal_value, R.std_dev)
+    #r = ufloat(R.nominal_value, R.std_dev)
+    r=copy.copy(R)
 
     non_ar_isotopes = dict(k38=k38, k37=k37,
                            ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
@@ -325,7 +327,12 @@ def age_equation(j, R,
     if not include_decay_error:
         lk = lk.nominal_value
 
-    return (lk ** -1 * umath.log(1 + j * R)) / scalar
+    try:
+        a=(lk ** -1 * umath.log(1 + j * R)) / scalar
+    except ValueError:
+        a=0
+
+    return a
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}

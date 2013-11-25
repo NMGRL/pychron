@@ -33,6 +33,7 @@ from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
 from pyface.confirmation_dialog import ConfirmationDialog
+from pychron.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
@@ -106,15 +107,15 @@ class WindowGroup(Group):
 
 
 class myTaskWindowLaunchAction(TaskWindowLaunchAction):
-    '''
+    """
         modified TaskWIndowLaunchAction default behaviour
-        
-        .perform() previously created a new window on every event. 
-        
-        now raise the window if its available else create it
-    '''
 
-    style = 'toggle'
+        .perform() previously created a new window on every event.
+
+        now raise the window if its available else create it
+    """
+
+    #style = 'toggle'
 
     def perform(self, event):
         application = event.task.window.application
@@ -128,11 +129,16 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
             if self.task_id == self.task.id:
                 self.checked = True
 
-    @on_trait_change('task:window:closed')
+    @on_trait_change('task:window:closing')
     def _window_closed(self):
         if self.task:
             if self.task_id == self.task.id:
+                #not having the desired effect. check on action remaims
                 self.checked = False
+
+
+    #def _checked_changed(self):
+    #    print self.checked, self.task_id
 
 #             window = self.task.window
 #             print win, window
@@ -213,6 +219,9 @@ class BaseTask(Task, Loggable):
     application = DelegatesTo('window')
 
     #suppress_pane_change=False
+    #@on_trait_change('window:closing')
+    #def _handle_window_closed(self):
+    #    print self.application
 
     def _show_pane(self, p):
         #if not self.suppress_pane_change:
@@ -369,6 +378,7 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
+    _default_extension= ''
     wildcard = None
     manager = Any
 
@@ -441,7 +451,9 @@ class BaseManagerTask(BaseTask):
                             **kw
         )
         if dialog.open() == OK:
-            return dialog.path
+            path=dialog.path
+            if path:
+                return add_extension(path, ext=self._default_extension)
 
 
 class BaseExtractionLineTask(BaseManagerTask):

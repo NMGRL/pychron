@@ -27,11 +27,9 @@ class IsoEvoFitSelector(FilterFitSelector):
     plot_button = Button('Plot')
 
     def load_fits(self, keys, fits):
-        bs = [
-            '{}bs'.format(ki) for ki in keys
-        ]
+        bs = ['{}bs'.format(ki) for ki in keys]
         bfs = ['average_SEM' for fi in fits]
-        #         for ki in keys:
+
         super(IsoEvoFitSelector, self).load_fits(keys + bs, fits + bfs)
 
     def _plot_button_fired(self):

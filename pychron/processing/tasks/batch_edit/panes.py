@@ -15,9 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, VGroup, UItem, \
     HGroup, TableEditor, ButtonEditor
-from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
 from pyface.image_resource import ImageResource
@@ -29,7 +29,7 @@ from pychron.paths import paths
 
 
 
-class BatchEditPane(TraitsDockPane):
+class BatchEditPane(TraitsTaskPane):
 
 #===============================================================================
 # views

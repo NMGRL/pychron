@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import os
 import shelve
-from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 from traits.api import Instance, on_trait_change, List
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed
@@ -41,7 +41,7 @@ from pychron.processing.tasks.smart_selection.panes import SmartSelection
 class BatchEditTask(AnalysisEditTask):
     name = 'Batch Edit'
     id = 'pychron.analysis_edit.batch'
-    central_pane = Instance(TraitsDockPane)
+    central_pane = Instance(TraitsTaskPane)
     central_pane_klass = BatchEditPane
     batch_editor = Instance(BatchEditor, ())
 
@@ -74,7 +74,7 @@ class BatchEditTask(AnalysisEditTask):
         d['blanks'] = self.batch_editor.blanks
 
         d.close()
-        BaseBrowserTask.prepare_destroy(self)
+        self.dump_browser_selection()
 
     def activated(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -235,8 +235,8 @@ class BatchEditTask(AnalysisEditTask):
 
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
-        search = Tabbed(PaneItem('pychron.browser'),
-                        PaneItem('pychron.search.query'))
+        search = Tabbed(PaneItem('pychron.browser'))
+                        #PaneItem('pychron.search.query'))
 
         #a=Splitter(d,orientation='vertical')
 

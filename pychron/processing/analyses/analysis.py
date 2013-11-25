@@ -420,7 +420,6 @@ class DBAnalysis(Analysis):
 
             iso.discrimination = idisc
 
-
     def _sync_isotopes(self, meas_analysis, unpack):
         #self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,),
         #kwargs={'unpack':True},msg='sync-isotopes')
@@ -430,15 +429,17 @@ class DBAnalysis(Analysis):
 
         self.peak_center = self._get_peak_center(meas_analysis)
 
-
     def _get_isotope_dict(self, get):
         d = dict()
-        for ki in ARGON_KEYS:
-            if self.isotopes.has_key(ki):
-                v = get(self.isotopes[ki])
-            else:
-                v = ufloat(0, 0)
-            d[ki] = v
+        for ki, v in self.isotopes.iteritems():
+            d[ki] = get(v)
+
+        #for ki in ARGON_KEYS:
+        #    if self.isotopes.has_key(ki):
+        #        v = get(self.isotopes[ki])
+        #    else:
+        #        v = ufloat(0, 0)
+        #    d[ki] = v
 
         return d
 

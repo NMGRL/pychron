@@ -297,7 +297,9 @@ class Isotope(IsotopicMeasurement):
         return self.get_corrected_value() * self.ic_factor
 
     def baseline_corrected_value(self):
-        return self.uvalue - self.baseline.uvalue.nominal_value
+        nv=self.uvalue - self.baseline.uvalue.nominal_value
+        #print 'asd', nv, self.name
+        return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
     def get_corrected_value(self):
         v = self.baseline_corrected_value()

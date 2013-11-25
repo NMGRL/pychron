@@ -116,6 +116,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     base_error_text = Property
     blank_value_text = Property
     blank_error_text = Property
+    ic_factor_text=Property
 
     value_percent_error_text = Property
     blank_percent_error_text = Property
@@ -138,6 +139,10 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     value_percent_error_width = pwidth
     blank_percent_error_width = pwidth
     baseline_percent_error_width = pwidth
+
+    def _get_ic_factor_text(self):
+        ic = self.item.ic_factor
+        return floatfmt(ic.nominal_value, n=2)
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_corrected_value()

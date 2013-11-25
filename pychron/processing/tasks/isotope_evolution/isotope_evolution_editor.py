@@ -16,22 +16,23 @@
 
 #============= enthought library imports =======================
 from threading import Thread
-from enable.container import Container
-from traits.api import Instance, Dict, Bool
+#from chaco.label import Label
+from traits.api import Instance, Dict, Bool, Any
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor
-from chaco.plot_containers import GridPlotContainer
 #============= standard library imports ========================
 from numpy import Inf, polyfit
 
 #============= local library imports  ==========================
+from pychron.graph.graph import Graph
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #from pychron.ui.thread import Thread
 
 
 class IsotopeEvolutionEditor(GraphEditor):
-    component = Instance(Container)
+    component = Any
+    #component = Instance(Container)
     #component = Instance(VPlotContainer)
     #component = Instance(HPlotContainer)
     #component = Instance(GridPlotContainer)
@@ -214,12 +215,12 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _rebuild_graph(self):
         n = len(self.unknowns)
-        prog=None
+        prog = None
         if n > 1:
             prog = self.processor.open_progress(n)
             prog.change_message('Loading Plots')
 
-        t=Thread(target=self.__rebuild_graph)
+        t = Thread(target=self.__rebuild_graph)
         t.start()
         t.join()
 
@@ -234,16 +235,17 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         unk = self.unknowns
         n = len(unk)
-        r,c = 1,1
+        r, c = 1, 1
         if n >= 2:
             while n > r * c:
                 c += 1
                 if c >= 7:
                     r += 1
 
-        self.component = self._container_factory((r, c))
+        cg=self._container_factory((r, c))
+        self.component = cg.plotcontainer
 
-        prog = None
+        #prog = None
         n = len(self.unknowns)
         #if n > 1:
         #    prog = self.processor.open_progress(n)
@@ -252,12 +254,17 @@ class IsotopeEvolutionEditor(GraphEditor):
         add_tools = not self.tool.auto_update or n == 1
 
         for j, unk in enumerate(self.unknowns):
-            set_ytitle = j % c == 0
-            set_xtitle = j >= (n / r)
-            #g = self._graph_factory(bind_index=False)
+            set_ytitle = j%c == 0
+            padding=[40,10,40,40]
+
+
+            set_xtitle = True if r == 1 else j >= (n / r)
+
             g = self._graph_factory()
-            plot_kw = dict(padding=[50, 0, 50, 50],
-                           title=unk.record_id)
+
+            plot_kw = dict(padding=padding,
+                           title=unk.record_id,
+                           )
 
             with g.no_regression(refresh=False):
                 ma = -Inf
@@ -272,7 +279,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                     if set_xtitle:
                         plot_kw['xtitle'] = 'Time (s)'
 
-                    g.new_plot(**plot_kw)
+                    p=g.new_plot(**plot_kw)
+
                     fd = dict(filter_outlier_iterations=fit.filter_iterations,
                               filter_outlier_std_devs=fit.filter_std_devs,
                               filter_outliers=fit.use_filter)
@@ -298,11 +306,14 @@ class IsotopeEvolutionEditor(GraphEditor):
         return v
 
     def _component_default(self):
-        return self._container_factory((1, 1))
+        g=self._container_factory((1, 1))
+        return g.plotcontainer
 
     def _container_factory(self, shape):
-        return GridPlotContainer(shape=shape,
-                                 spacing=(1, 1))
+        g=Graph(container_dict=dict(kind='g', shape=shape, spacing=(1,1)))
+        return g
+        #return GridPlotContainer(shape=shape,
+        #                         spacing=(1, 1))
 
     #============= deprecated =============================================
     def calculate_optimal_eqtime(self):
