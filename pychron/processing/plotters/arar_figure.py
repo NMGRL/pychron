@@ -168,17 +168,22 @@ class BaseArArFigure(HasTraits):
         return x.timestamp
 
     def _unpack_attr(self, attr):
+
         if '/' in attr:
             n, d = attr.split('/')
             def gen():
                 for ai in self.sorted_analyses:
                     if n in ai.isotopes and d in ai.isotopes:
                         yield ai.isotopes[n].get_intensity()/ai.isotopes[d].get_intensity()
-        else:
+        elif attr in self.sorted_analyses[0].isotopes:
             def gen():
                 for ai in self.sorted_analyses:
                     if attr in ai.isotopes:
                         yield ai.isotopes[attr].get_intensity()
+        else:
+            def gen():
+                for ai in self.sorted_analyses:
+                    yield getattr(ai, attr)
 
         return gen()
 

@@ -212,8 +212,8 @@ class Spectrum(BaseArArFigure):
     # utils
     #===============================================================================
     def _get_age_errors(self, ans):
-        ages, errors = zip(*[(ai.age.nominal_value,
-                              ai.age.std_dev)
+        ages, errors = zip(*[(ai.uage.nominal_value,
+                              ai.uage.std_dev)
                              for ai in self.sorted_analyses])
         return array(ages), array(errors)
 
@@ -222,7 +222,7 @@ class Spectrum(BaseArArFigure):
             exclude = []
 
         ages, errors = self._get_age_errors(self.sorted_analyses)
-        k39s = [a.k39.nominal_value for a in self.sorted_analyses]
+        k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
 
         # provide 1s errors
         platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
@@ -247,27 +247,25 @@ class Spectrum(BaseArArFigure):
             return 0, array([0, 0]), 0, 0, 0
 
     def _calculate_total_gas_age(self, analyses):
-        '''
+        """
             sum the corrected rad40 and k39 values
-             
-            not necessarily the same as isotopic recombination
-            
-        '''
 
-        rad40, k39 = zip(*[(a.rad40, a.k39) for a in analyses])
+            not necessarily the same as isotopic recombination
+
+        """
+
+        rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
         rad40 = sum(rad40)
         k39 = sum(k39)
 
-        s = a.arar_constants.age_scalar
         j = a.j
-        return age_equation(rad40 / k39, j, scalar=s)
+        return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
 
     def _calculate_spectrum(self,
                             excludes=None,
                             group_id=0,
                             index_key='k39',
-                            value_key='age'
-    ):
+                            value_key='uage'):
 
         if excludes is None:
             excludes = []
@@ -275,7 +273,8 @@ class Spectrum(BaseArArFigure):
         analyses = self.sorted_analyses
 
         values = [getattr(a, value_key) for a in analyses]
-        ar39s = [getattr(a, index_key).nominal_value for a in analyses]
+
+        ar39s =  [a.computed[index_key].nominal_value for a in analyses]
         xs = []
         ys = []
         es = []
