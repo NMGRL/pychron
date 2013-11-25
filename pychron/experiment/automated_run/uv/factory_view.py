@@ -41,10 +41,6 @@ class UVFactoryView(FactoryView):
             ),
 
             HGroup(
-                Item('duration', label='Duration (s)',
-                     tooltip='Set the number of seconds to run the extraction device.'
-
-                ),
                 Item('cleanup', label='Cleanup (s)',
                      tooltip='Set the number of seconds to getter the sample gas'
                 )
@@ -52,18 +48,11 @@ class UVFactoryView(FactoryView):
             HGroup(
                 Item('mask', editor=EnumEditor(name='masks')),
                 Item('attenuator'),
+                Item('reprate'),
             ),
             HGroup(
                 Item('position',
-                     tooltip=POSITION_TOOLTIP),
-                Item('pattern',
-                     show_label=False,
-                     tooltip=PATTERN_TOOLTIP,
-                     editor=EnumEditor(name='patterns')),
-                Item('edit_pattern',
-                     show_label=False,
-                     editor=ButtonEditor(label_value='edit_pattern_label')
-                )),
+                     tooltip=POSITION_TOOLTIP)),
             label='Extract',
             show_border=True
         )

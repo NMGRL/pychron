@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Button, List
+from traits.api import Str, Button, List, CStr
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
@@ -23,9 +23,9 @@ from pychron.pychron_constants import NULL_STR
 
 
 class UVAutomatedRunSpec(AutomatedRunSpec):
-    mask = Str
-    attenuator = Str
-    reprate = Str
+    mask = CStr
+    attenuator = CStr
+    reprate = CStr
     #masks = Property
     extract_units_names = List([NULL_STR, 'burst', 'continuous'])
     _default_extract_units = 'burst'

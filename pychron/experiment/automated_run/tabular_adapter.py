@@ -179,14 +179,27 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
 
 class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
-    def _columns_factory(self):
-        cols = super(UVAutomatedRunSpecAdapter, self)._columns_factory()
+     def _columns_factory(self):
+        cols = [
+            #                ('', 'state'),
+            ('Labnumber', 'labnumber'),
+            ('Aliquot', 'aliquot'),
+            ('Sample', 'sample'),
+            ('Position', 'position'),
 
-        cols.insert(7, ('Rep. Rate', 'reprate'))
-        cols.insert(8, ('Mask', 'mask'))
-        cols.insert(9, ('Attenuator', 'attenuator'))
-
-        cols.pop(10)
+            ('Extract', 'extract_value'),
+            ('Units', 'extract_units'),
+            ('Rep. Rate', 'reprate'),
+            ('Mask', 'mask'),
+            ('Attenuator', 'attenuator'),
+            ('Cleanup (s)', 'cleanup'),
+            ('Extraction', 'extraction_script'),
+            ('Measurement', 'measurement_script'),
+            ('Truncate', 'truncate_condition'),
+            ('Post Eq.', 'post_equilibration_script'),
+            ('Post Meas.', 'post_measurement_script'),
+            ('Comment', 'comment')
+        ]
 
         return cols
 

@@ -89,7 +89,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                                                    auto_increment_id=self.auto_increment_id,
                                                    extract_group_cnt=eg)
         #         if self.run_factory.check_run_addition(new_runs, load_name):
-
+        #if self.run_factory.check_run_addition(new_runs, load_name):
         q = self.queue
         if q.selected:
             idx = q.automated_runs.index(q.selected[-1])

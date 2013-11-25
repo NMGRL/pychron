@@ -132,7 +132,16 @@ CSLICE_REGEX = (re.compile(r'((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*'),
     4. [\d\W]+  followed by at least one digit character and no word characters
     5  $         end of string
 '''
-TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), None, None)
+
+def transect_func(pos):
+    return [pos]
+
+def transect_ifunc(pos):
+    t,p=pos.split('-')
+    return '{}-{}'.format(t, int(p)+1)
+
+
+TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_ifunc)
 
 '''
     use regex to match valid position

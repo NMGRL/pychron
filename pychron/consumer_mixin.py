@@ -97,8 +97,10 @@ class ConsumerMixin(object):
                             invoke_in_main_thread(func, a)
                         else:
                             func(a)
-            except Exception:
-                pass
+            except Exception, e:
+                import traceback
+                traceback.print_exc()
+                #pass
 
 #             if not self._should_consume:
 #                 break

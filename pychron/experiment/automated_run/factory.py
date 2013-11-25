@@ -47,10 +47,11 @@ class UpdateSelectedCTX(object):
 
     def __enter__(self):
         self._factory.set_labnumber = False
+        self._factory.set_position = False
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._factory.set_labnumber = True
-
+        self._factory.set_position = True
 
 def EKlass(klass):
     return klass(enter_set=True, auto_set=False)
@@ -76,7 +77,7 @@ def increment_value(m, increment=1):
 
 def increment_position(pos):
     for regex, sfunc, ifunc in (SLICE_REGEX, SSLICE_REGEX,
-                                PSLICE_REGEX, CSLICE_REGEX):
+                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return ifunc(pos)
     else:
@@ -95,13 +96,13 @@ def increment_position(pos):
 
 def generate_positions(pos):
     for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
-                               PSLICE_REGEX, CSLICE_REGEX):
+                               PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos), True
 
-    else:
-        if TRANSECT_REGEX.match(pos):
-            return [pos], True
+    #else:
+    #    if TRANSECT_REGEX.match(pos):
+    #        return [pos], True
 
     return [], False
 
@@ -120,6 +121,7 @@ class AutomatedRunFactory(Loggable):
     factory_view_klass = FactoryView
 
     set_labnumber = True
+    set_position = True
 
     labnumber = String(enter_set=True, auto_set=False)
     update_labnumber = Event
@@ -279,7 +281,8 @@ class AutomatedRunFactory(Loggable):
         self.debug('len selected runs {}'.format(len(runs)))
         if runs:
             run = runs[0]
-            self._clone_run(run, set_labnumber=self.set_labnumber)
+            self._clone_run(run, set_labnumber=self.set_labnumber,
+                            set_position=self.set_position)
 
         self._selected_runs = runs
         self.suppress_update = False
@@ -459,13 +462,15 @@ class AutomatedRunFactory(Loggable):
             s = getattr(self, name)
             setattr(arv, name, s.name)
 
-    def _clone_run(self, run, excludes=None, set_labnumber=True):
+    def _clone_run(self, run, excludes=None, set_labnumber=True, set_position=True):
         self.debug('cloning run {}'.format(run))
         if excludes is None:
             excludes = []
 
         if not set_labnumber:
             excludes.append('labnumber')
+        if not set_position:
+            excludes.append('position')
 
         for attr in ('labnumber',
                      'extract_value', 'extract_units', 'cleanup', 'duration',

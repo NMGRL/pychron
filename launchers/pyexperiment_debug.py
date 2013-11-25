@@ -26,7 +26,7 @@ import os
 #============= local library imports  ==========================
 
 source_version_id = ''
-setup_version_id='_experiment'
+setup_version_id='_dev'
 from helpers import build_version
 '''
     obsolete:
@@ -40,9 +40,9 @@ DEBUG = True
 build_version(source_version_id,
               setup_version_id,debug=DEBUG)
 def setup():
-    '''
+    """
         entry point
-    '''
+    """
     
     from pychron.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths

@@ -539,9 +539,10 @@ class PychronUVLaserManager(PychronLaserManager):
     def _move_to_position(self, pos, autocenter):
 
         cmd = 'GoToPoint'
-        if pos.startswith('t'):
-            if not TRANSECT_REGEX.match(pos):
-                cmd = None
+
+        #if pos.startswith('t'):
+        #    if not TRANSECT_REGEX[0].match(pos):
+        #        cmd = None
 
         if isinstance(pos, (str, unicode)):
             if not pos:
