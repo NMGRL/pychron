@@ -224,6 +224,7 @@ class MainView(HasTraits):
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
                  ('R', 'R', None, 'R_err'))
+        
         if new_list:
             def comp_factory(n, a, value=None, error_tag=None):
                 if value is None:
