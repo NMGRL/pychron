@@ -15,15 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Any, Button, on_trait_change
-from traitsui.api import View, Item, UItem, TabularEditor, Label, \
-    HGroup
-from traitsui.tabular_adapter import TabularAdapter
 import shelve
 import os
+
+from traits.api import HasTraits, Str, List, Any, Button, on_trait_change
+from traitsui.api import View, UItem, TabularEditor, Label, \
+    HGroup
+from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.paths import paths
-from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.loggable import Loggable
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -64,18 +66,10 @@ class LayoutManager(Loggable):
             for _id, pos, size in self.selected.layouts:
 
                 task = app.get_task(_id)
-#                 for win in app.windows:
-#                     if win.active_task and win.active_task.id=_id:
-#                         break
-#                 else:
-#                     win = app.create_window(TaskWindowLayout(_id))
-#
-#                 win = next((win for win in app.windows
-#                             if win.active_task.id == _id), None)
-#                 if win is None:
-                win = task.window
-                win.trait_set(position=pos, size=size)
-                win.show(True)
+                if task:
+                    win = task.window
+                    win.trait_set(position=pos, size=size)
+                    win.show(True)
 
     def _add_button_fired(self):
         self.new_layout()

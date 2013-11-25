@@ -38,7 +38,7 @@ class RepositoryTask(AnalysisEditTask):
     def _selected_projects_changed(self, new):
         project = ''
         if new:
-            project = new.name
+            project = new[0].name
 
         self.igsn.project = project
         BaseBrowserTask._selected_projects_changed(self, new)
@@ -58,11 +58,11 @@ class RepositoryTask(AnalysisEditTask):
     def create_central_pane(self):
         return RepositoryPane(model=self)
 
-    def create_dock_panes(self):
-        ps = AnalysisEditTask.create_dock_panes(self)
+    #def create_dock_panes(self):
+        #ps = AnalysisEditTask.create_dock_panes(self)
         #ps.extend([BrowserPane(model=self)])
-        ps.append(self._create_browser_pane())
-        return ps
+        #ps.append(self._create_browser_pane())
+        #return ps
 
     def _save_to_db(self):
         '''

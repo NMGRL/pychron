@@ -17,13 +17,9 @@
 #============= enthought library imports =======================
 from threading import Thread
 #from chaco.label import Label
-from chaco.plot_label import PlotLabel
-from enable.container import Container
-from enable.label import Label
 from traits.api import Instance, Dict, Bool, Any
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor
-from chaco.plot_containers import GridPlotContainer
 #============= standard library imports ========================
 from numpy import Inf, polyfit
 
@@ -310,7 +306,8 @@ class IsotopeEvolutionEditor(GraphEditor):
         return v
 
     def _component_default(self):
-        return self._container_factory((1, 1))
+        g=self._container_factory((1, 1))
+        return g.plotcontainer
 
     def _container_factory(self, shape):
         g=Graph(container_dict=dict(kind='g', shape=shape, spacing=(1,1)))
