@@ -24,11 +24,27 @@ command_register = makeRegistry()
 
 
 class UVExtractionPyScript(ExtractionPyScript):
+
     def set_default_context(self):
         super(UVExtractionPyScript, self).set_default_context()
         self.setup_context(reprate=0,
                            mask=0,
                            attenuator=0)
+
+    @property
+    def reprate(self):
+        return self.get_context()['reprate']
+
+    @verbose_skip
+    @command_register
+    def set_reprate(self, value=''):
+        if value=='':
+            value=self.reprate
+
+        self._manager_action([('set_reprate', (value,), {})],
+                             protocol=ILaserManager,
+                             name=self.extract_device)
+
 
     @verbose_skip
     @command_register

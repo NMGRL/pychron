@@ -469,6 +469,9 @@ class PychronUVLaserManager(PychronLaserManager):
     def _optics_client_default(self):
         return UVLaserOpticsClient(parent=self)
 
+    def set_reprate(self, v):
+        self._ask('SetReprate {}'.format(v))
+
     def extract(self, power, **kw):
         self._set_nburst(power)
         self._ask('Fire burst')
