@@ -169,11 +169,13 @@ class Experimentor(IsotopeDatabaseManager):
         if dbln:
             sample = dbln.sample
             if sample:
+                if sample.project:
+                    project=sample.project.name
+
                 if sample.material:
                     material = sample.material.name
                 sample = sample.name
-                if sample.project:
-                    project=sample.project.name
+
 
             dbpos = dbln.irradiation_position
             if dbpos:
