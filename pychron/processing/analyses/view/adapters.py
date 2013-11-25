@@ -142,7 +142,12 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
-        return floatfmt(ic.nominal_value, n=2)
+        if ic is None:
+            v=0.0
+        else:
+            v=ic.nominal_value
+
+        return floatfmt(v, n=2)
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_corrected_value()
