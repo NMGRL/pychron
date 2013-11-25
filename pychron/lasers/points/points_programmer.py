@@ -22,12 +22,14 @@ from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker
 # from pychron.canvas.scene_viewer import LaserMineViewer
 #from pychron.regex import TRANSECT_REGEX
+from pychron.ui.gui import convert_color
 maker_dict = dict(polygon=PolygonMaker, point=PointMaker, line=LineMaker, transect=TransectMaker)
 
 
@@ -93,32 +95,31 @@ class PointsProgrammer(Manager):
         canvas.show_all()
         canvas.invalidate_and_redraw()
 
-        #def _set_entry(self, v):
-        #    canvas = self.canvas
-        #    v = v.lower()
-        #    if v.startswith('l'):
-        #        self.line = canvas.get_line(v)
-        #    elif v.startswith('t'):
-        #        if TRANSECT_REGEX.match(v):
-        #            point = canvas.get_transect_point(v)
-        #            if point:
-        #                self.point = point
-        #
-        #    elif v.startswith('r'):
-        #        self.polygon = canvas.get_polygon(v[1:])
-        #    elif v.startswith('p'):
-        #        self.point = canvas.get_point(v[1:])
-        #    else:
-        #        try:
-        #            int(v)
-        #            self.point = canvas.get_point(v)
-        #            print v, self.point
-        #        except ValueError, e:
-        #            print e
+    def _set_entry(self, v):
+        canvas = self.canvas
+        v = v.lower()
+        if v.startswith('l'):
+            self.line = canvas.get_line(v)
+        elif v.startswith('t'):
+            if TRANSECT_REGEX.match(v):
+                point = canvas.get_transect_point(v)
+                if point:
+                    self.point = point
 
-        #===============================================================================
+        elif v.startswith('r'):
+            self.polygon = canvas.get_polygon(v[1:])
+        elif v.startswith('p'):
+            self.point = canvas.get_point(v[1:])
+        else:
+            try:
+                int(v)
+                self.point = canvas.get_point(v)
+                print v, self.point
+            except ValueError, e:
+                print e
 
-    # handlers
+#===============================================================================
+# handlers
 #===============================================================================
     def _position_entry_changed(self):
         self._set_entry(self.position_entry)
@@ -281,9 +282,9 @@ class PointsProgrammer(Manager):
     def traits_view(self):
         v = View(VGroup(
 #                       Item('show_scene_viewer', show_label=False),
-#                       Item('position_entry', label='Position'),  # @todo: move to stage manager
-Item('mode')
-        ),
+                       Item('position_entry', label='Position'),  # @todo: move to stage manager
+                       Item('mode')
+                       ),
                 HGroup(Item('show_hide', show_label=False,
                          editor=ButtonEditor(label_value='show_hide_label')
                          ),

@@ -15,10 +15,10 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import DelegatesTo, Property, Instance, \
-    Button, List, String, Event, Bool
-from traitsui.api import View, Item, HGroup, VGroup, spring, \
-    EnumEditor
+from traits.api import DelegatesTo, Int, Property, Instance, \
+    Button, List, String, Event, Bool, on_trait_change, Str
+from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, spring, \
+     EnumEditor, InstanceEditor
 # from apptools.preferences.preference_binding import bind_preference
 #=============standard library imports =======================
 import os
@@ -26,7 +26,7 @@ import os
 import time
 from numpy import array, asarray
 #=============local library imports  ==========================
-from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
+from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
 # from pychron.helpers.color_generators import colors8i as colors
@@ -499,7 +499,7 @@ class StageManager(Manager):
             name = func.func_name
 
         self.move_thread = Thread(name='stage.{}'.format(name),
-                                  target=func, args=(pos,) + args, kwargs=kw)
+                                target=self._move_to_hole, args=(pos,) + args, kwargs=kw)
         self.move_thread.start()
 
     def _drill_point(self, pt):
@@ -790,9 +790,6 @@ class StageManager(Manager):
 #        sc.end_command_buffer()
 
     def _move_to_point(self, pt):
-        if isinstance(pt, str):
-            pt = self.canvas.get_point(pt)
-
         pos = pt.x, pt.y
 
         self.info('Move to point {}: {:0.5f},{:0.5f},{:0.5f}'.format(pt.identifier,
@@ -1052,12 +1049,8 @@ class StageManager(Manager):
 #            self.move_to_hole(v)
     def _calibrated_position_entry_changed(self):
         v = self.calibrated_position_entry
-
         if XY_REGEX.match(v):
             self._move_to_calibrated_position(v)
-        elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
-            self.move_to_point(v)
-
         else:
             self.move_to_hole(v)
 

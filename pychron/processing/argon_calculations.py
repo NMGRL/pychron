@@ -25,7 +25,6 @@ from uncertainties import ufloat, umath
 from numpy import array
 from pychron.processing.arar_constants import ArArConstants
 from pychron.stats.core import calculate_weighted_mean
-import copy
 
 #============= local library imports  ==========================
 
@@ -34,26 +33,10 @@ def calculate_isochron(analyses):
     from pychron.regression.new_york_regressor import ReedYorkRegressor
 
     ref=analyses[0]
-    #try:
-    #    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
-    #        ai.isotopes['Ar36'].get_interference_corrected_value(),
-    #        ai.isotopes['Ar40'].get_interference_corrected_value())
-    #       for ai in analyses]
-    #except KeyError:
-    #    self.warning('Missing Isotope {}')
-    ans=[]
-    for ai in analyses:
-        try:
-            a=ai.isotopes['Ar39'].get_interference_corrected_value()
-            b=ai.isotopes['Ar36'].get_interference_corrected_value()
-            c=ai.isotopes['Ar40'].get_interference_corrected_value()
-        except KeyError:
-            continue
-
-        ans.append((a,b,c))
-
-    if not ans:
-        return
+    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
+            ai.isotopes['Ar36'].get_interference_corrected_value(),
+            ai.isotopes['Ar40'].get_interference_corrected_value())
+           for ai in analyses]
 
     a39, a36, a40 = array(ans).T
     try:
@@ -211,9 +194,9 @@ def interference_corrections(a40, a39, a38, a37, a36,
         k39 = a39 - ca39
         k37 = x * k39
 
-    k38 = pr.get('k3839',0) * k39
-    ca36 = pr.get('ca3637',0) * ca37
-    ca38 = pr.get('ca3837',0) * ca37
+    k38 = pr.get('k3839', 0) * k39
+    ca36 = pr.get('ca3637', 0) * ca37
+    ca38 = pr.get('ca3837', 0) * ca37
 
     return k37, k38, k39, ca36, ca37, ca38, ca39
 
@@ -285,8 +268,7 @@ def calculate_R(isotopes,
     rad40 = a40 - atm40 - k40
     R = rad40 / k39
 
-    #r = ufloat(R.nominal_value, R.std_dev)
-    r=copy.copy(R)
+    r = ufloat(R.nominal_value, R.std_dev)
 
     non_ar_isotopes = dict(k38=k38, k37=k37,
                            ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
@@ -327,12 +309,7 @@ def age_equation(j, R,
     if not include_decay_error:
         lk = lk.nominal_value
 
-    try:
-        a=(lk ** -1 * umath.log(1 + j * R)) / scalar
-    except ValueError:
-        a=0
-
-    return a
+    return (lk ** -1 * umath.log(1 + j * R)) / scalar
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}
