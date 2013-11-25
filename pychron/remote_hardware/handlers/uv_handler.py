@@ -29,6 +29,9 @@ from laser_handler import LaserHandler
 class UvHandler(LaserHandler):
     manager_name = 'fusions_uv'
 
+    def IsFiring(self, manager):
+        return manager.is_firing()
+
     def Fire(self, manager, mode, *args):
         result = manager.fire_laser(mode)
         return result

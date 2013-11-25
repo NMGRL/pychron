@@ -294,6 +294,9 @@ class FusionsUVManager(FusionsLaserManager):
         else:
             return 'laser not on'
 
+    def is_firing(self):
+        return self.atl_controller.firing
+
     def set_reprate(self, r):
         self.atl_controller.set_reprate(r, save=False)
         return True

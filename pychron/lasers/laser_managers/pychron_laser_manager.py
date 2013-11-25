@@ -475,6 +475,7 @@ class PychronUVLaserManager(PychronLaserManager):
     def extract(self, power, **kw):
         self._set_nburst(power)
         self._ask('Fire burst')
+        self._block('IsFiring')
 
     def end_extract(self):
         self._ask('Fire stop')

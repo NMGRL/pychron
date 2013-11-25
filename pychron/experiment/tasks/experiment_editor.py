@@ -151,8 +151,10 @@ class ExperimentEditor(BaseTraitsEditor):
 
     def _validate_experiment_queues(self, eqs):
         # check runs
-        hec = HumanErrorChecker()
+        #hec = HumanErrorChecker()
         for qi in eqs:
+            hec=qi.human_error_checker
+
             qi.executable = True
             qi.initialized = True
 

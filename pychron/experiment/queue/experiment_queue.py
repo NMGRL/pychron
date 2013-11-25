@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, on_trait_change, Int, List, Bool, Property
+from traits.api import Any, on_trait_change, Int, List, Bool, Property, Instance
 from pyface.timer.do_later import do_later
 #============= standard library imports ========================
 
@@ -24,6 +24,7 @@ from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.queue.experiment_queue_action import ExperimentQueueAction
+from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.ui.gui import invoke_in_main_thread
 
 
@@ -40,6 +41,8 @@ class ExperimentQueue(BaseExperimentQueue):
     queue_actions = List
 
     executed = Bool(False)
+
+    human_error_checker=Instance(HumanErrorChecker, ())
 
     def select_run_idx(self, idx):
         if self.automated_runs:
@@ -148,7 +151,7 @@ class ExperimentQueue(BaseExperimentQueue):
             return all([ai.executable for ai in self.automated_runs])
 
     def check_runs(self):
-        hec = HumanErrorChecker()
+        hec=self.human_error_checker
         err = hec.check_runs(self.automated_runs, test_all=True)
         if err:
             hec.report_errors(err)
@@ -162,6 +165,14 @@ class ExperimentQueue(BaseExperimentQueue):
         rgen = (r for r in runs)
         return rgen, len(runs)
 
+    def _extract_device_changed(self):
+        self.debug('extract device changed {}'.format(self.extract_device))
+        if 'uv' in self.extract_device.lower():
+            k=UVHumanErrorChecker
+        else:
+            k=HumanErrorChecker
+
+        self.human_error_checker=k()
 
 #============= EOF =============================================
 #        rgen = (r for r in newruns)
