@@ -36,6 +36,7 @@ class AutomatedRunAnalysisView(MainView):
 
         self.load_computed(an)
         self.load_extraction(ar.spec)
+
         self.load_measurement(ar.spec, an)
 
     def _get_irradiation(self, an):

@@ -230,60 +230,14 @@ class AutomatedRun(Loggable):
         else:
             self._activate_detectors(dets)
 
-            #p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
-            #self.plot_panel = p
-            #
-            #spec = self.spectrometer_manager.spectrometer
-            #
-            #self._active_detectors = [spec.get_detector(n) for n in dets]
-            #if create:
-            #    p.create(self._active_detectors)
-            #else:
-            ##             p.clear_displays()
-            #    p.isotope_graph.clear_plots()
-            #
-            #p.show_isotope_graph()
-            #
-            #for iso in self.arar_age.isotopes:
-            #    self.arar_age.set_isotope(iso, (0, 0))
-            #
-            #cb = False
-            #self.arar_age.clear_blanks()
-            #if (not self.spec.analysis_type.startswith('blank') \
-            #        and not self.spec.analysis_type.startswith('background')):
-            #
-            #    cb = True
-            #    blanks = self.experiment_executor.get_prev_blanks()
-            #    if not blanks:
-            #        blanks = dict(Ar40=(0, 0), Ar39=(0, 0), Ar38=(0, 0), Ar37=(0, 0), Ar36=(0, 0))
-            #
-            #    for iso, v in blanks.iteritems():
-            #        self.arar_age.set_blank(iso, v)
-            #
-            #for d in self._active_detectors:
-            #    self.arar_age.set_isotope(d.isotope, (0, 0),
-            #                              detector=d.name,
-            #                              correct_for_blank=cb)
-            #
-            #self.arar_age.clear_baselines()
-            #baselines = self.experiment_executor.get_prev_baselines()
-            #if not baselines:
-            #    baselines = dict(Ar40=(0, 0), Ar39=(0, 0), Ar38=(0, 0), Ar37=(0, 0), Ar36=(0, 0))
-            #
-            #for iso, v in baselines.iteritems():
-            #    self.arar_age.set_baseline(iso, v)
-            #
-            #p.analysis_view.load(self)
-            ##p.clear_displays()
-
     def py_set_regress_fits(self, fits, series=0):
-        '''
-            fits can be 
+        """
+            fits can be
             1. 'linear'
             2. ('linear',)
             3. ('linear', 'linear')
-            4. ((0,100,'linear'),(100,None, 'parabolic')] 
-        '''
+            4. ((0,100,'linear'),(100,None, 'parabolic')]
+        """
 
         def make_fits(fi):
             if isinstance(fi, str):
@@ -304,9 +258,6 @@ class AutomatedRun(Loggable):
         else:
 
             fits = make_fits(fits)
-            #if self.plot_panel:
-
-            #self.plot_panel.fits = fits
             self.fits = [(None, fits)]
 
         self.debug('=============== Fit Blocks =============')
@@ -330,7 +281,6 @@ class AutomatedRun(Loggable):
             return
 
         if self.plot_panel:
-            #self.plot_panel._ncounts = ncounts
             self.plot_panel.is_baseline = False
 
         gn = 'signal'
@@ -424,12 +374,8 @@ class AutomatedRun(Loggable):
                 self.info(msg)
                 if self.plot_panel:
                     self.plot_panel.total_counts += settling_time
-                    #self.collector.total_counts += settling_time
-                #self.multi_collector.total_counts += settling_time
 
                 self.wait(settling_time, msg)
-                #self.experiment_executor.wait(settling_time, msg)
-                #                 self._wait(settling_time)
 
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
@@ -825,24 +771,19 @@ class AutomatedRun(Loggable):
                 ln = self.db.get_labnumber(ln)
                 if ln:
                     an = DBAnalysis()
-                    an.sync_irradiation(ln)
-
-                    #an.load_irradiation(ln)
-
                     x = datetime.now()
                     now = time.mktime(x.timetuple())
+                    an.timestamp=now
+                    an.sync_irradiation(ln)
+
                     self.arar_age.trait_set(j=an.j,
                                             production_ratios=an.production_ratios,
                                             interference_corrections=an.interference_corrections,
                                             chron_segments=an.chron_segments,
                                             irradiation_time=an.irradiation_time,
-                                            timestamp=now
-                    )
-                    #self.arar_age.j = an.j
-                    #self.arar_age.production_ratios = an.production_ratios
-                    #self.arar_age.irradiation_info = an.irradiation_info
-                    #                 self.arar_age.load_irradiation(ln)
-                    #             self.arar_age.labnumber_record = ln
+                                            timestamp=now)
+
+                    self.arar_age.calculate_decay_factors()
 
         self.info('Start automated run {}'.format(self.runid))
 
@@ -1258,8 +1199,7 @@ anaylsis_type={}
         plot_panel.trait_set(
             plot_title=title,
             analysis_view=an,
-            refresh_age=self.analysis_type in ('unknown', 'cocktail')
-        )
+            refresh_age=self.analysis_type in ('unknown', 'cocktail'))
 
         return plot_panel
 

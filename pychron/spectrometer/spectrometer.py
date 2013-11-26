@@ -17,6 +17,7 @@
 
 
 #============= enthought library imports =======================
+import random
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Event, Bool
 
@@ -311,11 +312,10 @@ class Spectrometer(SpectrometerDevice):
         if not keys:
         #             signals = [(ns + self.testcnt * 0.1) + random.random()
         #                         for ns in [1, 100, 3, 1, 1, 0]]
-            signals = [1, 100, 3, 0, 0, 0.01]
-
-
+            signals = [1, 100, 3, 0.01, 0.01, 0.01]
+            signals=[si + random.random() for si in signals]
             #             signals = [(i * 2 + self.testcnt * 0.1) + random.random() for i in range(6)]
-            self.testcnt += 1
+            #self.testcnt += 1
             if tagged:
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
@@ -323,10 +323,10 @@ class Spectrometer(SpectrometerDevice):
         return keys, signals
 
     def get_intensity(self, dkeys):
-        '''
+        """
             dkeys: str or tuple of strs
-            
-        '''
+
+        """
         #        index = DETECTOR_ORDER.index(key)
         data = self.get_intensities()
         if data is not None:

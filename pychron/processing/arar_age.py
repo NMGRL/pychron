@@ -16,6 +16,7 @@
 
 
 #============= enthought library imports =======================
+from copy import copy
 from traits.api import Dict, Property, Instance, Float, Str, List, Either
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
@@ -60,6 +61,7 @@ class ArArAge(Loggable):
     non_ar_isotopes = Dict
     computed = Dict
 
+    uR = Either(Variable, AffineScalarFunc)
     R = Float
     R_err = Float
     R_err_wo_irrad = Float
@@ -185,19 +187,22 @@ class ArArAge(Loggable):
         """
 
         if not self.age or force:
-            self._calculate_age(**kw)
+            self.calculate_decay_factors()
 
+            self._calculate_age(**kw)
             self._calculate_kca()
             self._calculate_kcl()
 
-    #    #print 'calc', self.age, force
-    #    #        self.debug('calculate age ={}'.format(self.age))
-    #    if not self.age or force:
-    ##        #self.age=timethis(self._calculate_age, kwargs=kw, msg='calculate_age')
-    #        self.age = self._calculate_age(**kw)
-    ##
-    ##        self.age_dirty = True
-    #    return self.age
+    def calculate_decay_factors(self):
+        arc = self.arar_constants
+        #only calculate decayfactors once
+        if not self.ar39decayfactor:
+            a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
+                                           self.chron_segments)
+            a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
+                                           self.chron_segments)
+            self.ar37decayfactor = a37df
+            self.ar39decayfactor = a39df
 
     def get_non_ar_isotope(self, key):
         return self.non_ar_isotopes.get(key, ufloat(0, 0))
@@ -246,9 +251,12 @@ class ArArAge(Loggable):
                 self.warning("cl36 is zero. can't calculated k/cl")
 
 
+
     def _calculate_age(self, include_decay_error=None):
         #self.debug('calculate age')
         isos = []
+
+        arc = self.arar_constants
 
         iso_err = False
         for ik in ARGON_KEYS:
@@ -266,19 +274,9 @@ class ArArAge(Loggable):
         if iso_err:
             return
 
-        arc = self.arar_constants
         isos = abundance_sensitivity_correction(isos, arc.abundance_sensitivity)
-
-        a37df = calculate_decay_factor(arc.lambda_Ar37.nominal_value,
-                                       self.chron_segments)
-
-        a39df = calculate_decay_factor(arc.lambda_Ar39.nominal_value,
-                                       self.chron_segments)
-        self.ar37decayfactor = a37df
-        self.ar39decayfactor = a39df
-
-        isos[1] *= a39df
-        isos[3] *= a37df
+        isos[1] *=self.ar39decayfactor
+        isos[3] *=self.ar37decayfactor
 
         R, R_wo_irrad, non_ar, computed, interference_corrected = calculate_R(isos,
                                                                               decay_time=self.decay_days,
@@ -291,11 +289,12 @@ class ArArAge(Loggable):
         for k, v in interference_corrected.iteritems():
             self.isotopes[k].interference_corrected_value = v
 
+        self.uR=R
         self.R = R.nominal_value
         self.R_err = R.std_dev
         self.R_err_wo_irrad = R_wo_irrad.std_dev
 
-        j = self.j.__copy__()
+        j = copy(self.j)
         age = age_equation(j, R, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
@@ -303,16 +302,22 @@ class ArArAge(Loggable):
 
         self.age = float(age.nominal_value)
         self.age_err = float(age.std_dev)
+
         j.std_dev = 0
         self.age_err_wo_j = float(age.std_dev)
 
-        j = self.j.__copy__()
+        j = copy(self.j)
         age = age_equation(j, R_wo_irrad, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
         self.age_err_wo_irrad = float(age.std_dev)
         j.std_dev = 0
         self.age_err_wo_j_irrad = float(age.std_dev)
+
+        #print 'asddsadf'
+        #print self.age_err
+        #print self.age_err_wo_j
+        #print self.age_err_wo_j_irrad
 
         for iso in self.isotopes.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)

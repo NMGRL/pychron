@@ -55,6 +55,7 @@ class DataCollector(Loggable):
     starttime = None
     _alive = False
     _evt = None
+    _warned_no_fit=None
 
     def _detectors_changed(self):
         self._idx_func = self._get_idx_func()
@@ -80,6 +81,7 @@ class DataCollector(Loggable):
             return
 
         self._truncate_signal = False
+        self._warned_no_fit=[]
 
         st = time.time()
         if self.starttime is None:
@@ -96,25 +98,22 @@ class DataCollector(Loggable):
         self._evt = evt
         evt.clear()
 
-        #         wait for graphs to be fully constructed in the MainThread
+        #wait for graphs to be fully constructed in the MainThread
         evt.wait(0.05)
 
         self._alive = True
 
-        self._measure(evt, et)
+        self._measure(evt)
 
         tt = time.time() - st
         self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
-        #return self.total_counts
 
-    def _measure(self, evt, et):
+    def _measure(self, evt):
         self.debug('starting measurment')
         with consumable(func=self._iter_step) as con:
             self._iter(con, evt, 1)
             while not evt.is_set():
                 time.sleep(0.25)
-
-            #evt.wait(et * 1.1)
 
         self.debug('measurement finished')
 
@@ -186,7 +185,13 @@ class DataCollector(Loggable):
             if dn:
                 iso = dn.isotope
                 pi = idx_func(iso,dn.name)
-                fi = nfs[pi]
+                try:
+                    fi = nfs[pi]
+                except IndexError:
+                    if not dn.name in self._warned_no_fit:
+                        self.warning('No fit defined for {}'.format(dn.name))
+                        self._warned_no_fit.append(dn.name)
+                    continue
 
                 if pi >= np:
                     graph.new_plot()

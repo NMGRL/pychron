@@ -266,7 +266,11 @@ def calculate_R(isotopes,
     k40 = k39 * pr.get('k4039', 1)
 
     rad40 = a40 - atm40 - k40
-    R = rad40 / k39
+    try:
+        R = rad40 / k39
+    except ZeroDivisionError:
+        R=ufloat(1.0,0)
+
 
     r = ufloat(R.nominal_value, R.std_dev)
 
@@ -274,7 +278,12 @@ def calculate_R(isotopes,
                            ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
                            cl36=cl36)
 
-    computed = dict(rad40=rad40, rad40_percent=rad40 / a40 * 100,
+    try:
+        rp=rad40 / a40 * 100
+    except ZeroDivisionError:
+        rp=ufloat(0,0)
+
+    computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
