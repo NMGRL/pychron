@@ -168,6 +168,8 @@ extract_device, delay_+, tray, username, load_name]''')
 
         if self.queue:
             self.queue.set_extract_device(ed)
+            self.queue.username=self._username
+            self.queue.mass_spectrometer=self._mass_spectrometer
 
     def _get_patterns(self, ed):
         ps = []
