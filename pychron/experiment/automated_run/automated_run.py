@@ -1841,35 +1841,34 @@ anaylsis_type={}
 
     def _save_detector_intercalibration(self, analysis):
         self.info('saving detector intercalibration')
-
         if self.arar_age:
-            ic = self.arar_age.get_ic_factor('CDD')
-            #        else:
-            #            ic = ArArAge(application=self.application).cdd_ic_factor
+            history=None
+            for det in self._active_detectors:
+                det=det.name
+                ic = self.arar_age.get_ic_factor(det)
+                self.info('default ic_factor {}= {}'.format(det, ic))
+                if det=='CDD':
+                    # save cdd_ic_factor so it can be exported to secondary db
+                    self.cdd_ic_factor = ic
+                    self.debug('default cdd_ic_factor={}'.format(ic))
 
-            # save cdd_ic_factor so it can be exported to secondary db
-            self.cdd_ic_factor = ic
-
-            def func():
-                self.info('default cdd_ic_factor={}'.format(ic))
                 db = self.db
                 user = self.spec.username
                 user = user if user else NULL_STR
 
                 self.info('{} adding detector intercalibration history for {}'.format(user, self.runid))
 
-                history = db.add_detector_intercalibration_history(analysis,
-                                                                   user=user,
-                )
-                analysis.selected_histories.selected_detector_intercalibration = history
+                if history is None:
+                    history = db.add_detector_intercalibration_history(analysis,
+                                                                   user=user)
+                    analysis.selected_histories.selected_detector_intercalibration = history
 
                 uv, ue = ic.nominal_value, ic.std_dev
-                db.add_detector_intercalibration(history, 'CDD',
+                db.add_detector_intercalibration(history, det,
                                                  user_value=float(uv),
-                                                 user_error=float(ue),
-                )
+                                                 user_error=float(ue))
 
-            return self._time_save(func, 'detector intercalibration')
+            #return self._time_save(func, 'detector intercalibration')
 
     def _save_blank_info(self, analysis):
         self.info('saving blank info')

@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from numpy import Inf
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Int, Button, Event, String, cached_property, \
     HasTraits, Range, Float
@@ -42,7 +43,6 @@ from Queue import Queue
 from pychron.helpers.timer import Timer
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.readout_view import ReadoutView
-from pychron.deprecate import deprecated
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 # class CSVDataManager(HasTraits):
 #    def new_file(self, p, mode='w'):
@@ -63,7 +63,7 @@ class ScanManager(Manager):
     graph = Instance(TimeSeriesStreamGraph)
     readout_view = Instance(ReadoutView)
 
-    integration_time = Enum(0.065536, 0.131072, 0.262144, 0.524288,
+    integration_time = Enum(0, 0.065536, 0.131072, 0.262144, 0.524288,
                             1.048576, 2.097152, 4.194304, 8.388608,
                             16.777216, 33.554432, 67.108864)
 
@@ -117,13 +117,13 @@ class ScanManager(Manager):
 
             self.trait_set(isotope=iso, trait_change_notify=False)
 
-    @deprecated
-    def close(self, isok):
-        self.stop_scan()
-
-    @deprecated
-    def opened(self, ui):
-        self.setup_scan()
+    #@deprecated
+    #def close(self, isok):
+    #    self.stop_scan()
+    #
+    #@deprecated
+    #def opened(self, ui):
+    #    self.setup_scan()
 
     def stop_scan(self):
         self.dump_settings()
@@ -139,6 +139,8 @@ class ScanManager(Manager):
     def setup_scan(self):
         self.graph = self._graph_factory()
 
+        #trigger a timer reset. set to 0 then default
+        self.integration_time = 0
         self.integration_time = 1.048576
 
         # listen to detector for enabling
@@ -203,16 +205,25 @@ class ScanManager(Manager):
                 'graph_ymin',
                 'graph_ymax',
                 'graph_y_auto',
-                'graph_scan_width'
-        ]
+                'graph_scan_width']
 
 
     def _update(self, data):
         keys, signals = data
         if signals:
             x = self.graph.record_multiple(signals,
-                                           track_y=False,
-            )
+                                           track_y=False)
+
+            if self.graph_y_auto:
+                mi,ma=Inf,-Inf
+                for k,plot in self.graph.plots[0].plots.iteritems():
+                    plot=plot[0]
+                    if plot.visible:
+                        ys=plot.value.get_data()
+                        ma=max(ma, max(ys))
+                        mi=min(ma, min(ys))
+
+                self.graph.set_y_limits(min_=mi,max_=ma, pad='0.1')
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
@@ -221,27 +232,10 @@ class ScanManager(Manager):
         data = self.spectrometer.get_intensities()
         if data:
             self._update(data)
-            #            self._write_data(x, keys, signals)
-
-            #    def _write_data(self, x, keys, signals):
-            # #        st = time.clock()
-            #            dm = self.record_data_manager
-            #            if dm:
-            #                if self._first_recording:
-            #                    self._first_recording = False
-            #                    dm.write_to_frame(('time',) + tuple(keys))
-            #                dm.write_to_frame((x,) + tuple(signals))
-            # #        print time.clock() - st
 
     def reset_scan_timer(self):
         self.info('reset scan timer')
         self.timer = self._timer_factory()
-
-    #def _start_timer(self):
-    ##        self._first_iteration = True
-    #    self.info('starting scan timer')
-    #    self.integration_time = 1.048576
-    #    self.timer = self._timer_factory()
 
     def _stop_timer(self):
         self.info('stopping scan timer')
@@ -314,10 +308,10 @@ class ScanManager(Manager):
 
     def _graph_y_auto_changed(self, new):
         p = self.graph.plots[0]
-        if new:
-            p.value_range.low_setting = 'auto'
-            p.value_range.high_setting = 'auto'
-        else:
+        if not new:
+            #p.value_range.low_setting = 'auto'
+            #p.value_range.high_setting = 'auto'
+        #else:
             p.value_range.low_setting = self.graph_ymin
             p.value_range.high_setting = self.graph_ymax
         self.graph.redraw()
@@ -368,10 +362,11 @@ class ScanManager(Manager):
 
 
     def _integration_time_changed(self):
-        self.spectrometer.set_integration_time(self.integration_time)
+        if self.integration_time:
+            self.spectrometer.set_integration_time(self.integration_time)
 
-        self.graph.set_scan_delay(self.integration_time)
-        self.reset_scan_timer()
+            self.graph.set_scan_delay(self.integration_time)
+            self.reset_scan_timer()
 
 
     def _consume(self, dm):

@@ -82,8 +82,8 @@ class SpectrometerPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         sm = self.application.get_service(SpectrometerManager)
-        scm = self.application.get_service(ScanManager)
-
+        #scm = self.application.get_service(ScanManager)
+        scm=self._factory_scan()
         t = SpectrometerTask(manager=sm,
                              scan_manager=scm)
         return t
@@ -100,14 +100,15 @@ class SpectrometerPlugin(BaseTaskPlugin):
         so = self.service_offer_factory(
             protocol=SpectrometerManager,
             factory=self._factory_spectrometer)
-        so1 = self.service_offer_factory(
-            protocol=ScanManager,
-            factory=self._factory_scan)
+        #so1 = self.service_offer_factory(
+        #    protocol=ScanManager,
+        #    factory=self._factory_scan)
         so2 = self.service_offer_factory(
             protocol=IonOpticsManager,
             factory=self._factory_ion_optics)
 
-        return [so, so1, so2]
+        #return [so, so1, so2]
+        return [so, so2]
 
     def _my_task_extensions_default(self):
         return [
