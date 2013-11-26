@@ -204,7 +204,9 @@ class ATLLaserControlUnit(CoreDevice):
         return v
 
     def get_nburst(self, verbose=True):
-        self.debug('get nburst')
+        if verbose:
+            self.debug('get nburst')
+
         v = 0
         resp = self._send_query(22, 2, verbose=verbose)
         if resp is not None and len(resp) == 8:
@@ -346,7 +348,6 @@ class ATLLaserControlUnit(CoreDevice):
         r = self._send_query(27, 1, verbose=verbose)
         return self._parse_response(r, 1)
 
-
     def open_valve(self, addr):
         self.info('open valve {}'.format(addr))
 
@@ -354,8 +355,7 @@ class ATLLaserControlUnit(CoreDevice):
         self.info('close valve {}'.format(addr))
 
     def update_parameters(self):
-        '''
-        '''
+
         # energy and pressure_readback
         vs = self._send_query(8, 4, verbose=False)
         #        print vs
@@ -369,51 +369,15 @@ class ATLLaserControlUnit(CoreDevice):
                 self.status_readback = STATUS[vs[2]]
                 self.action_readback = ACTION[vs[3]]
 
-                #        time.sleep(0.1)
-                #        vs=self._send_query(12, 1, verbose=False)
-                #        if vs is not None:
-                #            vs=self._parse_response(vs, 1)
-                #            print vs
-                #        print self.get_process_status()
         b = self.get_nburst(verbose=False)
         if b is not None:
             self.burst_readback = b
-            if not b or b == self.burst_shot:
-                self.laser_stop()
-                #        s=self.get_laser_status(verbose=False)
-                #        if s<=3:
-
-                #        vs=self._send_query(6, 2, verbose=False)
-                # #        vs=self._send_query(30, 2, verbose=False)
-                #        if vs is not None:
-                #            vs=self._parse_response(vs, 2)
-                #            print vs
-
-                #        formatter = lambda x:x / 10.0
-                #        read and set energy and pressure_readback as one block
-                #        self._update_parameter_list([('energy_readback', formatter)], 8, 1)
-                # #        read and set frequency and hv as one block
-                #        self._update_parameter_list(['reprate', ('hv', formatter)], 1001, 2)
-
-                #        read and set gas action
-
-                #    def _anytrait_changed(self, name, value):
-                #        '''
-                #
-                #        '''
-                #        if name in ['energy', 'reprate', 'hv']:
-                #            f = getattr(self, 'set_%s' % name)
-                #            self.info('setting %s %s' % (name, value))
-                #            f(value)
-                #
-                #            if self.simulation:
-                #                setattr(self, 'update_%s' % name, value)
+            if self.firing:
+                if not b or b == self.burst_shot:
+                    self.laser_stop()
 
     def _set_answer_parameters(self, start_addr_value, answer_len,
                                verbose=True, ):
-
-        #        answer_len = '{:04X}'.format(answer_len)
-        #        start_addr_value = '{:04X}'.format(start_addr_value)
 
         values = [start_addr_value, answer_len]
         cmd = self._build_command(ANSWER_ADDR, values)
