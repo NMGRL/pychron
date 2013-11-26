@@ -317,8 +317,10 @@ def age_equation(j, R,
     lk = arar_constants.lambda_k
     if not include_decay_error:
         lk = lk.nominal_value
-
-    return (lk ** -1 * umath.log(1 + j * R)) / scalar
+    try:
+        return (lk ** -1 * umath.log(1 + j * R)) / scalar
+    except ValueError:
+        return ufloat(0,0)
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}
