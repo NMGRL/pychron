@@ -16,12 +16,14 @@
 
 #============= enthought library imports =======================
 import math
+import os
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
     Int, Property, Event
-
+import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.tasks.browser.table_configurer import TableConfigurer
+from pychron.paths import paths
 
 
 class AnalysisTable(HasTraits):
@@ -42,7 +44,7 @@ class AnalysisTable(HasTraits):
 
     forward = Button
     backward = Button
-    page_width = Int(10)
+    page_width = Int(100)
     page = Int(1, enter_set=True, auto_set=False)
 
     forward_enabled = Bool
@@ -52,6 +54,23 @@ class AnalysisTable(HasTraits):
 
     no_update = False
     scroll_to_row=Event
+
+    def load(self):
+        p = os.path.join(paths.hidden_dir, 'analysis_table')
+        if os.path.isfile(p):
+            d={}
+            with open(p, 'r') as fp:
+                try:
+                   d=pickle.load(fp)
+                except (pickle.PickleError, OSError, EOFError):
+                    pass
+
+            self.trait_set(**d)
+
+    def dump(self):
+        p=os.path.join(paths.hidden_dir, 'analysis_table')
+        with open(p,'w') as fp:
+            pickle.dump({'page_width':self.page_width}, fp)
 
     def _forward_fired(self):
         if self.page < self.npages:

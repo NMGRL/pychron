@@ -142,6 +142,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def prepare_destroy(self):
         self.dump_browser_selection()
+        self.analysis_table.dump()
 
     def activated(self):
         self.load_projects()
@@ -155,6 +156,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
+        self.analysis_table.load()
+
 
     def _set_db(self):
         #self.analysis_table.db = self.manager.db
