@@ -158,7 +158,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.load_browser_selection()
         self.analysis_table.load()
 
-
     def _set_db(self):
         #self.analysis_table.db = self.manager.db
         self.danalysis_table.db = self.manager.db

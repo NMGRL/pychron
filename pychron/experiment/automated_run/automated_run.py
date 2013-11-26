@@ -167,6 +167,7 @@ class AutomatedRun(Loggable):
 
     #    condition_truncated = Bool
     truncated = Bool
+    eqtime=Float
 
     measuring = Bool(False)
     dirty = Bool(False)
@@ -802,7 +803,6 @@ class AutomatedRun(Loggable):
         #self.peak_hop_collector.total_counts=0
         self.multi_collector.canceled = False
 
-
         #        self._total_counts = 0
         self._equilibration_done = False
         self.refresh_scripts()
@@ -818,6 +818,8 @@ class AutomatedRun(Loggable):
             if script:
                 self._setup_context(script)
 
+        #load extraction metadata
+        self.eqtime=self._get_extraction_parameter('eqtime', 15)
         return True
 
     #===============================================================================
@@ -2059,8 +2061,7 @@ anaylsis_type={}
             self.debug('{}'.format(self.extract_device))
 
         return self._ext_factory(root, self.script_info.extraction_script_name,
-                                 klass=klass
-        )
+                                 klass=klass)
 
     def _post_measurement_script_factory(self):
         root = paths.post_measurement_dir
