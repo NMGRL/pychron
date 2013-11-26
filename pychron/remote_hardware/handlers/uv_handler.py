@@ -29,7 +29,7 @@ from laser_handler import LaserHandler
 class UvHandler(LaserHandler):
     manager_name = 'fusions_uv'
 
-    def IsFiring(self, manager):
+    def IsFiring(self, manager, *args):
         return manager.is_firing()
 
     def Fire(self, manager, mode, *args):
@@ -46,10 +46,10 @@ class UvHandler(LaserHandler):
     def GetBurstMode(self, manager, *args):
         return manager.get_burst_mode()
 
-    def SetReprate(self,manager, v, *args):
+    def SetReprate(self, manager, v, *args):
         return manager.set_reprate(v)
 
 
-    #============= views ===================================
+        #============= views ===================================
 
-    #============= EOF ====================================
+        #============= EOF ====================================

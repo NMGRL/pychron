@@ -17,8 +17,7 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property, \
-    Int
+from traits.api import Instance, Enum, Button, Str, DelegatesTo, Event, Property
 
 #============= standard library imports ========================
 import time
@@ -77,8 +76,8 @@ class FusionsUVManager(FusionsLaserManager):
     status_readback = DelegatesTo('atl_controller')
     action_readback = DelegatesTo('atl_controller')
 
-    burst_shot = Int(enter_set=True, auto_set=False)
-    reprate = Int(enter_set=True, auto_set=False)
+    burst_shot = DelegatesTo('atl_controller')
+    reprate = DelegatesTo('atl_controller')
 
     #     execute_button = DelegatesTo('laser_script_executor')
     #     execute_label = DelegatesTo('laser_script_executor')
@@ -368,13 +367,13 @@ class FusionsUVManager(FusionsLaserManager):
                 self.atl_controller.laser_run()
                 #self.firing = True
 
-    def _burst_shot_changed(self):
-        if self.burst_shot:
-            self.set_nburst(self.burst_shot)
+    #def _burst_shot_changed(self):
+    #    if self.burst_shot:
+    #        self.set_nburst(self.burst_shot)
 
-    def _reprate_changed(self):
-        if self.reprate:
-            self.set_reprate(self.reprate)
+    #def _reprate_changed(self):
+    #    if self.reprate:
+    #        self.set_reprate(self.reprate)
 
     def _mode_changed(self):
         if self.mode == 'Burst':
