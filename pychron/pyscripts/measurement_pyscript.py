@@ -75,7 +75,7 @@ class MeasurementPyScript(ValvePyScript):
     #        return cmds
 
     def get_variables(self):
-        return ['truncated']
+        return ['truncated','eqtime']
 
     #===============================================================================
     # commands
@@ -523,6 +523,17 @@ class MeasurementPyScript(ValvePyScript):
     @property
     def truncated(self):
         return self._automated_run_call(lambda: self.automated_run.truncated)
+
+    @property
+    def eqtime(self):
+        if self.automated_run:
+            return self._automated_run_call(lambda: self.automated_run.eqtime)
+        else:
+            r=15
+            cg=self._get_config()
+            if cg.has_option('Default','eqtime'):
+                r=cg.getfloat('Default','eqtime',)
+            return r
 
 #===============================================================================
 # handler
