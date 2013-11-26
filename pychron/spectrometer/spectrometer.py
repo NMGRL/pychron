@@ -399,6 +399,9 @@ class Spectrometer(SpectrometerDevice):
             config.read(p)
 
             for section in config.sections():
+                if section=='Default':
+                    continue
+
                 for attr in config.options(section):
                     v = config.getfloat(section, attr)
                     if v is not None:

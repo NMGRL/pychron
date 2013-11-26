@@ -25,6 +25,10 @@ command_register = makeRegistry()
 
 class UVExtractionPyScript(ExtractionPyScript):
 
+    def get_command_register(self):
+        cm = super(UVExtractionPyScript, self).get_command_register()
+        return command_register.commands.items() + cm
+
     def set_default_context(self):
         super(UVExtractionPyScript, self).set_default_context()
         self.setup_context(reprate=0,

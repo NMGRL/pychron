@@ -26,7 +26,7 @@ import os
 #============= local library imports  ==========================
 
 source_version_id = ''
-setup_version_id='_experiment'
+setup_version_id='_dev'
 from helpers import build_version
 '''
     obsolete:

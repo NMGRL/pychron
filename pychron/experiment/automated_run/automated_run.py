@@ -2053,13 +2053,13 @@ anaylsis_type={}
 
         return ms
 
-    def _extraction_script_factory(self):
+    def _extraction_script_factory(self, klass=None):
         root = paths.extraction_dir
-        klass = None
-        if self.extract_device == 'Fusions UV':
-            klass = UVExtractionPyScript
-            self.debug('{}'.format(self.extract_device))
-
+        #klass = None
+        #print 'edivas', self.extract_device
+        #if self.extract_device == 'Fusions UV':
+        #    klass = UVExtractionPyScript
+        #    self.debug('{}'.format(self.extract_device))
         return self._ext_factory(root, self.script_info.extraction_script_name,
                                  klass=klass)
 
