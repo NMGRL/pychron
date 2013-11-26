@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import math
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Int, Property
+    Int, Property, Event
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -50,6 +50,8 @@ class AnalysisTable(HasTraits):
     n_all_analyses = Int
     npages = Property(depends_on='n_all_analyses,page_width')
 
+    no_update = False
+    scroll_to_row=Event
 
     def _forward_fired(self):
         if self.page < self.npages:
@@ -62,15 +64,20 @@ class AnalysisTable(HasTraits):
         p -= 1
         self.page = max(1, p)
 
-    def set_analyses(self, ans, tc, reset_page=False):
+    def set_analyses(self, ans, tc,page, reset_page=False):
         self.analyses = ans
         self.oanalyses = ans
+        self.n_all_analyses = tc
         if reset_page:
             self.no_update = True
-            self.page = 1
+            if page<0:
+                self.page=self.npages
+
+                self.scroll_to_row=self.page_width
+            else:
+                self.page = 1
             self.no_update = False
 
-        self.n_all_analyses = tc
         #self.forward_enabled=bool(ans)
         #self.backward_enabled=bool(ans or self.page)
 

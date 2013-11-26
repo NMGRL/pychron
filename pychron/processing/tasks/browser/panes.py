@@ -164,6 +164,7 @@ class BrowserPane(TraitsDockPane):
                       dclicked=make_name('dclicked'),
                       multi_select=self.multi_select,
                       drag_external=True,
+                      scroll_to_row=make_name('scroll_to_row'),
                       stretch_last_section=False),
                   #                                  editor=ListStrEditor(editable=False,
                   #                                           selected='selected_analysis'

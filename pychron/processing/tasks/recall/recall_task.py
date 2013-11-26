@@ -37,6 +37,7 @@ class RecallTask(AnalysisEditTask):
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
                  image_size=(16, 16))]
+    auto_select_analysis = False
 
     def append_unknown_analyses(self, ans):
 

@@ -163,6 +163,10 @@ class IsotopeAdapter(DatabaseAdapter):
         if limit:
             q = q.limit(limit)
         if offset:
+
+            if offset<0:
+                offset=max(0,tc+offset)
+
             q = q.offset(offset)
 
         return self._query_all(q), tc

@@ -259,27 +259,29 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _selected_samples_changed(self, new):
         if new:
-            ans = []
-            include_invalid = not self.analysis_table.omit_invalid
-
-            aa, tc = self._get_sample_analyses(new,
-                                               include_invalid=include_invalid,
-                                               page_width=self.analysis_table.page_width,
-                                               page=1)
-            ans.extend(aa)
-
-            ans = self.analysis_table.set_analyses(ans,
-                                                   tc,
-                                                   reset_page=True)
-
+            self._set_page(-1, reset_page=True)
+            #include_invalid = not self.analysis_table.omit_invalid
+            #
+            #aa, tc = self._get_sample_analyses(new,
+            #                                   include_invalid=include_invalid,
+            #                                   page_width=self.analysis_table.page_width,
+            #                                   page=-1)
+            #
+            #ans = self.analysis_table.set_analyses(aa,
+            #                                       tc,
+            #                                       reset_page=True)
+            #
+            ans=self.analysis_table.analyses
             if ans and self.auto_select_analysis:
                 self.analysis_table.selected = ans[0]
 
     @on_trait_change('analysis_table:page')
-    def _page_changed(self):
+    def _page_changed(self, new):
+        self._set_page(new)
+
+    def _set_page(self, page, reset_page=False):
         if not self.analysis_table.no_update:
             include_invalid = not self.analysis_table.omit_invalid
-            page = self.analysis_table.page
             page_width = self.analysis_table.page_width
 
             ans, tc = self._get_sample_analyses(self.selected_samples,
@@ -287,7 +289,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                 page_width=page_width,
                                                 page=page)
 
-            self.analysis_table.set_analyses(ans, tc)
+            self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)

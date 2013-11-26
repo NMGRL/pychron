@@ -247,7 +247,9 @@ class BrowserMixin(ColumnSorterMixin):
 
             o = None
             if page_width:
-                o = (page - 1) * page_width
+                if page>0:
+                    page-=1
+                o = page * page_width
                 limit = page_width
 
             ans, tc = db.get_labnumber_analyses(lns,
