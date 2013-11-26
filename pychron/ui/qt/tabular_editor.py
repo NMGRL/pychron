@@ -332,10 +332,6 @@ class _TabularEditor(qtTabularEditor):
 
 
 class myTabularEditor(TabularEditor):
-#     scroll_to_bottom = Bool(True)
-#     scroll_to_row_hint = 'visible'
-#    scroll_to_row_hint = 'bottom'
-#    drag_move = Bool(False)
     key_pressed = Str
     rearranged = Str
     pasted = Str

@@ -72,17 +72,10 @@ class AnalysisTable(HasTraits):
             self.no_update = True
             if page<0:
                 self.page=self.npages
-
                 self.scroll_to_row=self.page_width
             else:
                 self.page = 1
             self.no_update = False
-
-        #self.forward_enabled=bool(ans)
-        #self.backward_enabled=bool(ans or self.page)
-
-    #def _page_changed(self):
-    #    self.backward_enabled=bool(self.oanalyses or self.page)
 
     def _analysis_filter_changed(self, new):
         if new:

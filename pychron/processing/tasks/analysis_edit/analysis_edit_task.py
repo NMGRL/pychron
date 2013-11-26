@@ -434,13 +434,6 @@ class AnalysisEditTask(BaseBrowserTask):
                                                             include_invalid=iv)
                      if test(ai)]
 
-                #s = [ai for si in self.selected_samples
-                #     for ai in self._get_sample_analyses(si, include_invalid=iv)
-                #     if test(ai)]
-
-            #else:
-            #    s = self.data_selector.selector.selected
-
         return s
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
