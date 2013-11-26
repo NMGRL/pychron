@@ -51,6 +51,8 @@ class ATLLaserControlUnit(CoreDevice):
 
     reprate = Property(Int(enter_set=True, auto_set=False), depends_on='_reprate')
     _reprate = Int
+    _was_fired = False
+
     #    _timer = None
     #    _enabled = Bool(False)
     #    triggered = Bool(False)
@@ -265,9 +267,11 @@ class ATLLaserControlUnit(CoreDevice):
         #        if self.is_burst_mode(ps):
         #            self.set_burst_mode(False, ps)
         self.debug('run laser')
+        self.firing = True
+
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
-        self.firing = True
+
 
     def laser_stop(self):
     #        self.stop_update_timer()
@@ -373,8 +377,15 @@ class ATLLaserControlUnit(CoreDevice):
         if b is not None:
             self.burst_readback = b
             if self.firing:
-                if not b or b == self.burst_shot:
+                self.debug('readback={} burst={} fired={}'.format(b, self.burst_shot, self._was_fired))
+                if self._was_fired and b == self.burst_shot:
                     self.laser_stop()
+                    self._was_fired = False
+
+                self._was_fired = b != self.burst_shot
+                #if not b or b == self.burst_shot:
+
+                #self.laser_stop()
 
     def _set_answer_parameters(self, start_addr_value, answer_len,
                                verbose=True, ):
@@ -386,9 +397,7 @@ class ATLLaserControlUnit(CoreDevice):
 
 
     def _build_command(self, start_addr, values):
-        '''
 
-        '''
 
         if isinstance(start_addr, int):
             start_addr = '{:04X}'.format(start_addr)
