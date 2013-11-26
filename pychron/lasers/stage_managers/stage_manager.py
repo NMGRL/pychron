@@ -1052,7 +1052,9 @@ class StageManager(Manager):
 #            self.move_to_hole(v)
     def _calibrated_position_entry_changed(self):
         v = self.calibrated_position_entry
+        self.goto_position(v)
 
+    def goto_position(self, v):
         if XY_REGEX.match(v):
             self._move_to_calibrated_position(v)
         elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
