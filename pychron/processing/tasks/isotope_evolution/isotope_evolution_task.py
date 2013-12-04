@@ -30,6 +30,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
     iso_evo_editor_count = 1
     id = 'pychron.analysis_edit.isotope_evolution',
+    auto_select_analysis = False
 
     def _default_layout_default(self):
         return TaskLayout(
