@@ -272,9 +272,10 @@ class Spectrum(BaseArArFigure):
 
         analyses = self.sorted_analyses
 
-        values = [getattr(a, value_key) for a in analyses]
+        #values = [getattr(a, value_key) for a in analyses]
+        values = [a.get_value(value_key) for a in analyses]
+        ar39s = [a.computed[index_key].nominal_value for a in analyses]
 
-        ar39s =  [a.computed[index_key].nominal_value for a in analyses]
         xs = []
         ys = []
         es = []
