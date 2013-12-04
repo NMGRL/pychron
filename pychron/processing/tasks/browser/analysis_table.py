@@ -83,9 +83,12 @@ class AnalysisTable(HasTraits):
         p -= 1
         self.page = max(1, p)
 
-    def set_analyses(self, ans, tc,page, reset_page=False):
+    def set_analyses(self, ans, tc=None, page=None, reset_page=False):
         self.analyses = ans
         self.oanalyses = ans
+        if tc is None:
+            tc=len(ans)
+
         self.n_all_analyses = tc
         if reset_page:
             self.no_update = True

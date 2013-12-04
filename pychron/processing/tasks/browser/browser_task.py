@@ -58,7 +58,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     tool_bars = [SToolBar(NewBrowserEditorAction(),
                           image_size=(16, 16))]
 
-    auto_select_analysis = Bool(True)
+    auto_select_analysis = Bool(False)
 
     mass_spectrometer = Str(DEFAULT_SPEC)
     mass_spectrometers = List

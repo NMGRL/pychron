@@ -52,7 +52,7 @@ class BrowserMixin(ColumnSorterMixin):
     selected_samples = Any
     dclicked_sample = Any
 
-    auto_select_analysis = Bool(True)
+    auto_select_analysis = Bool(False)
 
     sample_filter_values = List
     sample_filter_parameter = Str('Sample')
