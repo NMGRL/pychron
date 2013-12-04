@@ -28,6 +28,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.time_series_graph import TimeSeriesGraph
 from pychron.graph.stacked_graph import StackedGraph
+from pychron.helpers.fits import convert_fit
 from pychron.regression.ols_regressor import PolynomialRegressor
 from pychron.regression.mean_regressor import MeanRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
@@ -451,26 +452,28 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     @classmethod
     def _convert_fit(cls, f):
-        if isinstance(f, str):
-            f = f.lower()
-            fits = ['linear', 'parabolic', 'cubic']
-            if f in fits:
-                f = fits.index(f) + 1
-            elif 'average' in f:
-                if f.endswith('sem'):
-                    f = 'averageSEM'
-                else:
-                    f = 'averageSD'
-                    #                if not (f.endswith('sd') or f.endswith('sem')):
-                    #                    f = 'averageSD'
-                    #            elif f in ['preceeding', 'bracketing interpolate', 'bracketing average']:
-                    #                f = f
-            else:
-                f = None
-                #        elif isinstance(f, tuple):
-                #            #f == fitfunc, errfunc
-                #            return f
-        return f
+        return convert_fit(f)
+
+        #if isinstance(f, str):
+        #    f = f.lower()
+        #    fits = ['linear', 'parabolic', 'cubic']
+        #    if f in fits:
+        #        f = fits.index(f) + 1
+        #    elif 'average' in f:
+        #        if f.endswith('sem'):
+        #            f = 'averageSEM'
+        #        else:
+        #            f = 'averageSD'
+        #            #                if not (f.endswith('sd') or f.endswith('sem')):
+        #            #                    f = 'averageSD'
+        #            #            elif f in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+        #            #                f = f
+        #    else:
+        #        f = None
+        #        #        elif isinstance(f, tuple):
+        #        #            #f == fitfunc, errfunc
+        #        #            return f
+        #return f
 
     #    def _apply_filter(self, filt, xs, ys):
     def _apply_filter(self, filt, xs):
