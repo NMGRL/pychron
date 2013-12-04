@@ -57,16 +57,12 @@ class TagTable(HasTraits):
             else:
                 tags = dbtags
 
-            for di in tags:
-                print di.name
-
             ts = [Tag(name=di.name,
                       user=di.user,
                       date=di.create_date,
-                      omit_ideo=di.omit_ideo,
-                      omit_iso=di.omit_iso,
-                      omit_spec=di.omit_spec,
-            )
+                      omit_ideo=di.omit_ideo or False,
+                      omit_iso=di.omit_iso or False,
+                      omit_spec=di.omit_spec or False)
                   for di in tags]
 
             self.tags = ts
@@ -78,8 +74,7 @@ class TagTable(HasTraits):
             return db.add_tag(name=name, user=user,
                               omit_ideo=tag.omit_ideo,
                               omit_spec=tag.omit_spec,
-                              omit_iso=tag.omit_iso
-            )
+                              omit_iso=tag.omit_iso)
 
     def add_tag(self, tag):
         self._add_tag(tag)
