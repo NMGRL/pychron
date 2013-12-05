@@ -53,26 +53,31 @@ class InterpolationTask(AnalysisEditTask):
 
     @on_trait_change('references_pane:[append_button, replace_button]')
     def _append_references(self, obj, name, old, new):
-        s = self.data_selector.selector.selected
-        if not hasattr(s, '__iter__'):
-            s = (s,)
+        is_append = name == 'append_button'
+        if self.active_editor:
+            refs = None
+            if is_append:
+                refs = self.active_editor.references
 
-        if name == 'append_button':
-            self.references_pane.items.extend(s)
-        else:
-            self.references_pane.items = s
+            s = self._get_selected_analyses(refs)
+            if s:
+                if is_append:
+                    refs = self.active_editor.references
+                    refs.extend(s)
+                else:
+                    self.active_editor.references = s
 
     @on_trait_change('active_editor:references')
     def _update_references(self):
         if self.references_pane:
             self.references_pane.items = self.active_editor.references
 
-    def _handle_key_pressed(self, c):
-        s = self.data_selector.selector.selected
-        if c == 'r':
-            self.references_pane.items.extend(s)
-        elif c == 'R':
-            self.references_pane.items = s
+    #def _handle_key_pressed(self, c):
+    #    s = self.data_selector.selector.selected
+    #    if c == 'r':
+    #        self.references_pane.items.extend(s)
+    #    elif c == 'R':
+    #        self.references_pane.items = s
 
     def _load_references(self, analyses, atype=None):
         if not hasattr(analyses, '__iter__'):

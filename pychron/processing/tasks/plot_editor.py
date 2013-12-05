@@ -258,7 +258,10 @@ class PlotEditor(HasTraits):
         #self.renderers = rs
         def pred(x):
             if '-' in x:
-                return int(x.split('-')[1])
+                try:
+                    return int(x.split('-')[1])
+                except ValueError:
+                    return x
             else:
                 return x
 
