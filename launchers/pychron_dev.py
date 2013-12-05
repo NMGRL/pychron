@@ -21,7 +21,7 @@ ETSConfig.toolkit = "qt4"
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-version_id = '_dev'
+setup_version_id = '_dev'
 from helpers import build_version
 '''
     set_path=True inserts the pychron source directory into the PYTHONPATH
@@ -29,7 +29,7 @@ from helpers import build_version
     Use false (default) if your are launching from a standalone bundle. 
 '''
 DEBUG = True
-build_version(version_id, debug=DEBUG)
+build_version('', setup_version_id, debug=DEBUG)
 
 def main():
     """

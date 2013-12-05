@@ -23,6 +23,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.lasers.tasks.editors.pid_tuning_editor import PIDTuningEditor
 from pychron.lasers.tasks.editors.power_map_editor import PowerMapEditor
 from pychron.lasers.tasks.editors.power_calibration_editor import PowerCalibrationEditor
 from pychron.lasers.tasks.editors.pyrometer_calibration_editor import PyrometerCalibrationEditor
@@ -127,6 +128,9 @@ class LaserCalibrationTask(BaseLaserTask):
         editor = PyrometerCalibrationEditor(name='Pyrometer Calibration')
         self._open_editor(editor)
 
+    def new_pid_tuner(self):
+        editor=PIDTuningEditor(name='PID Tuning')
+        self._open_editor(editor)
     #===============================================================================
     # handlers
     #===============================================================================

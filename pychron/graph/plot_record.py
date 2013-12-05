@@ -45,4 +45,10 @@ class PlotRecord(object):
 
         return ', '.join(s)
 
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __iter__(self):
+        return iter(self.data)
+
 #============= EOF =====================================

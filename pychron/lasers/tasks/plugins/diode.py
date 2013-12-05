@@ -21,7 +21,7 @@ from pyface.action.group import Group
 
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 from pychron.lasers.tasks.laser_actions import OpenScannerAction, \
-    OpenAutoTunerAction, PowerMapAction, PowerCalibrationAction, TestDegasAction, PyrometerCalibrationAction
+    OpenAutoTunerAction, PowerMapAction, PowerCalibrationAction, TestDegasAction, PyrometerCalibrationAction, PIDTuningAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
 from pychron.lasers.tasks.laser_task import FusionsDiodeTask
 
@@ -54,21 +54,22 @@ class FusionsDiodePlugin(FusionsPlugin):
                 #                                                   factory=lambda: Group(),
                 #                                                   path='MenuBar/Extraction'
                 #                                                   ),
-                SchemaAddition(id='open_scan',
-                               factory=factory_scan,
-                               path='MenuBar/Laser'
-                               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-                ),
-                SchemaAddition(id='open_autotune',
-                               factory=factory_tune,
-                               path='MenuBar/Laser'
-                               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-                ),
+                #SchemaAddition(id='open_scan',
+                #               factory=factory_scan,
+                #               path='MenuBar/Laser'
+                #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
+                #),
+                #SchemaAddition(id='open_autotune',
+                #               factory=factory_tune,
+                #               path='MenuBar/Laser'
+                #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
+                #),
                 SchemaAddition(id='calibration',
                                factory=lambda: Group(
                                    PowerMapAction(),
                                    PowerCalibrationAction(),
                                    PyrometerCalibrationAction(),
+                                   PIDTuningAction()
                                ),
                                path='MenuBar/Laser'
                 ),

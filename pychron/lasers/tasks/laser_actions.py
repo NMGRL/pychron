@@ -172,4 +172,10 @@ class PyrometerCalibrationAction(LaserCalibrationAction):
         task = self._get_task(event)
         task.new_pyrometer_calibration()
 
+
+class PIDTuningAction(LaserCalibrationAction):
+    name='PID Tuning'
+    def perform(self, event):
+        task = self._get_task(event)
+        task.new_pid_tuner()
 #============= EOF =============================================

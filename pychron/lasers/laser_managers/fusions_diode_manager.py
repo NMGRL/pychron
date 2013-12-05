@@ -19,8 +19,6 @@ from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 from apptools.preferences.preference_binding import bind_preference
 #=============standard library imports ========================
-from functools import partial
-import os
 from threading import Timer
 #=============local library imports  ==========================
 
@@ -79,57 +77,57 @@ class FusionsDiodeManager(FusionsLaserManager):
     #
     #        self.pyrometer.start_scan()
     # #        self.control_module_manager.start_scan()
-    def open_scanner(self):
-        from pychron.lasers.scanner import PIDScanner
-
-        self._open_scanner(PIDScanner, 'scanner.yaml')
-
-    def open_autotuner(self):
-        from pychron.lasers.autotuner import AutoTuner
-
-        self._open_scanner(AutoTuner, 'autotuner.yaml')
-
-    def _open_scanner(self, klass, name):
-        from pychron.lasers.scanner import ScannerController
-
-        p = os.path.join(paths.scripts_dir, name)
-
-        s = klass(control_path=p,
-                  manager=self
-        )
-
-        tc = self.temperature_controller
-        tm = self.get_device('temperature_monitor')
-
-        def tc_gen():
-            while 1:
-                pr = tc.get_temp_and_power(verbose=False)
-                for pi in pr.data:
-                    yield pi
-
-        # populate scanner with functions
-        gen = tc_gen()
-        s.setup(directory='diode_autotune_scans')
-        s.new_function(gen, name='Temp. Pyrometer (C)')
-        s.new_function(gen, name='Power (%)')
-
-        if tm is not None:
-            func = partial(tm.read_temperature, verbose=False)
-            s.new_function(func, name='Reflector Temp (C)')
-
-        # bind to request_power change. set Setpoint static value
-        s.new_static_value('Setpoint')
-        self.on_trait_change(lambda v: s.set_static_value('Setpoint', v), self._requested_power)
-
-        # bind to Scanner's stop_event. Set laser power to 0.
-        s.on_trait_change(lambda: self.set_laser_temperature(0), 'stop_event')
-
-        # bind to Scanners setpoint
-        #        s.on_trait_change(lambda v: self.set_laser_temperature(v), 'setpoint')
-
-        sc = ScannerController(model=s,
-                               application=self.application)
-        self.open_view(sc)
+    #def open_scanner(self):
+    #    from pychron.lasers.scanner import PIDScanner
+    #
+    #    self._open_scanner(PIDScanner, 'scanner.yaml')
+    #
+    #def open_autotuner(self):
+    #    from pychron.lasers.autotuner import AutoTuner
+    #
+    #    self._open_scanner(AutoTuner, 'autotuner.yaml')
+    #
+    #def _open_scanner(self, klass, name):
+    #    from pychron.lasers.scanner import ScannerController
+    #
+    #    p = os.path.join(paths.scripts_dir, name)
+    #
+    #    s = klass(control_path=p,
+    #              manager=self
+    #    )
+    #
+    #    tc = self.temperature_controller
+    #    tm = self.get_device('temperature_monitor')
+    #
+    #    def tc_gen():
+    #        while 1:
+    #            pr = tc.get_temp_and_power(verbose=False)
+    #            for pi in pr.data:
+    #                yield pi
+    #
+    #    # populate scanner with functions
+    #    gen = tc_gen()
+    #    s.setup(directory='diode_autotune_scans')
+    #    s.new_function(gen, name='Temp. Pyrometer (C)')
+    #    s.new_function(gen, name='Power (%)')
+    #
+    #    if tm is not None:
+    #        func = partial(tm.read_temperature, verbose=False)
+    #        s.new_function(func, name='Reflector Temp (C)')
+    #
+    #    # bind to request_power change. set Setpoint static value
+    #    s.new_static_value('Setpoint')
+    #    self.on_trait_change(lambda v: s.set_static_value('Setpoint', v), self._requested_power)
+    #
+    #    # bind to Scanner's stop_event. Set laser power to 0.
+    #    s.on_trait_change(lambda: self.set_laser_temperature(0), 'stop_event')
+    #
+    #    # bind to Scanners setpoint
+    #    #        s.on_trait_change(lambda v: self.set_laser_temperature(v), 'setpoint')
+    #
+    #    sc = ScannerController(model=s,
+    #                           application=self.application)
+    #    self.open_view(sc)
 
 
     def bind_preferences(self, pref_id):

@@ -55,13 +55,13 @@ class ScannerController(ApplicationController):
 
 
 class Scanner(Loggable):
-    '''
+    """
         Scanner is a base class for displaying a scan of device data
-        
+
         ScanableDevices has this ability built in but more complicated scans are
-        best done here. ScanableDevice scan is best used from continuous long term recording 
+        best done here. ScanableDevice scan is best used from continuous long term recording
         of a single or multiple values
-    '''
+    """
 
     _graph = Instance(StreamStackedGraph)
     manager = Instance(ILaserManager)
@@ -217,7 +217,7 @@ class Scanner(Loggable):
         #            self.warning('no manager available')
 
     def _control(self, ydict):
-        self.start_control_hook()
+        self.start_control_hook(ydict)
 
         #        if self.manager:
         #            if self.manager.temperature_controller:
@@ -256,7 +256,7 @@ class Scanner(Loggable):
         while time.time() - st < d and self._scanning:
             time.sleep(1)
 
-    def start_control_hook(self):
+    def start_control_hook(self, *args, **kw):
         pass
 
     def end_control_hook(self, ok):
@@ -332,7 +332,7 @@ class PIDScanner(Scanner):
 
                 self.data_manager.write_to_frame(['dead_band={}'.format(self.dead_band)])
 
-    def start_control_hook(self):
+    def start_control_hook(self, ydict):
         if self.manager is not None:
             tc = self.manager.temperature_controller
 

@@ -303,12 +303,12 @@ class WatlowEZZone(CoreDevice):
         self.info('read pid parameters')
         pid_vals = self.read(1890, nregisters=8, nbytes=21, response_type='float')
         if pid_vals:
-            self.info('======================== PID ====================='.format())
+            self.info('======================== PID =====================')
             for pa, pv in zip(pid_attrs, pid_vals):
                 setattr(self, pa, pv)
-
                 self.info('{} set to {}'.format(pa, pv))
-            self.info('=================================================='.format())
+            self.info('==================================================')
+        return pid_vals
 
     def initialization_hook(self):
         self.info('read input sensor type')
@@ -391,8 +391,6 @@ class WatlowEZZone(CoreDevice):
         return PlotRecord([t, p], (0, 1), ('Temp', 'Power'))
 
     def get_temperature(self, **kw):
-        '''
-        '''
         if 'verbose' in kw and kw['verbose']:
             self.info('Read temperature')
 
@@ -901,6 +899,7 @@ class WatlowEZZone(CoreDevice):
     def read_heat_power(self, **kw):
         '''
         '''
+
         return self.read(1904, nregisters=2, **kw)
 
     def read_autotune_setpoint(self, **kw):

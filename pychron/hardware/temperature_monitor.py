@@ -18,7 +18,7 @@
 
 #=============enthought library imports=======================
 from traits.api import Float, Property, Str
-from traitsui.api import View, Item, EnumEditor
+from traitsui.api import Item, EnumEditor, VGroup
 #=============standard library imports ========================
 # import time
 #=============local library imports  ==========================
@@ -108,7 +108,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         return r
 
     def initialize(self, *args, **kw):
-        self.set_input_type('C')
+        #self.set_input_type('C')
 
         self.info('getting input type')
         return self.read_input_type()
@@ -193,9 +193,9 @@ class DPi32TemperatureMonitor(ISeriesDevice):
             # compare with sent command for error checking
             if re[:3] == 'R07':
                 re = make_bitarray(int(re[3:]))
-                input_class = INPUT_CLASS_MAP[int(re[:2])]
+                input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
                 if input_class == 'TC':
-                    self._input_type = TC_MAP[int(re[2:6])]
+                    self._input_type = TC_MAP[int(re[2:6], 2)]
 
                 return True
 
@@ -214,10 +214,8 @@ class DPi32TemperatureMonitor(ISeriesDevice):
                    )
         g.new_series()
 
-    def traits_view(self):
-        '''
-        '''
-        return View(Item('process_value', style='readonly'),
+    def get_control_group(self):
+        return VGroup(Item('process_value', style='readonly'),
                     Item('input_type', editor=EnumEditor(values=TC_KEYS), show_label=False))
 
 #    def current_state_view(self):

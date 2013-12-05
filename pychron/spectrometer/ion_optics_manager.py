@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Range, Instance, Bool, \
     Button, Any, Str, Float, Enum, HasTraits, List
-from traitsui.api import View, Item, EnumEditor, Handler
+from traitsui.api import View, Item, EnumEditor, Handler, HGroup
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -48,6 +48,7 @@ class PeakCenterConfig(HasTraits):
     isotope = Str('Ar40')
     isotopes = List(transient=True)
     dac = Float
+    use_current_dac=Bool(True)
 
     directions = Enum('Increase', 'Decrease', 'Oscillate')
 
@@ -63,7 +64,9 @@ class PeakCenterConfig(HasTraits):
     def traits_view(self):
         v = View(Item('detector', editor=EnumEditor(name='detectors')),
                  Item('isotope', editor=EnumEditor(name='isotopes')),
-                 Item('dac'),
+                 HGroup(Item('use_current_dac',
+                        label='Use Current DAC'),
+                        Item('dac', enabled_when='not use_current_dac')),
                  Item('directions'),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
@@ -168,11 +171,10 @@ class IonOpticsManager(Manager):
 
                 detector = pcc.detector.name
                 isotope = pcc.isotope
-                dac = pcc.dac
                 directions = pcc.directions
 
-                if dac > 0:
-                    center_dac = dac
+                if not pcc.use_current_dac:
+                    center_dac = pcc.dac
 
         if isinstance(detector, (tuple, list)):
             ref = detector[0]
