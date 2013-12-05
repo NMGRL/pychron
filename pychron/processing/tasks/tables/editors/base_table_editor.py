@@ -78,7 +78,6 @@ class BaseTableEditor(BaseUnknownsEditor):
 
         return path
 
-
     def make_pdf_table(self, *args, **kw):
         pass
 

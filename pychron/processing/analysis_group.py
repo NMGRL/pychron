@@ -15,13 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, cached_property, Str
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool
 #============= standard library imports ========================
 from numpy import array
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.processing.analysis import Marker
-from pychron.processing.argon_calculations import find_plateaus, calculate_plateau_age, age_equation, calculate_isochron
+from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS
 from pychron.stats.core import calculate_mswd, calculate_weighted_mean
 
@@ -170,55 +170,100 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             return ufloat(v,e)
 
 
-class AnalysisRatioMean(AnalysisGroup):
-    Ar40_39 = Property
-    Ar37_39 = Property
-    Ar36_39 = Property
-    kca = Property
-    kcl = Property
+class InterpretedAge(StepHeatAnalysisGroup):
+    preferred_age=Property(depends_on='preferred_age_kind')
+    preferred_age_value=Property(depends_on='preferred_age_kind')
+    preferred_age_error=Property(depends_on='preferred_age_kind')
 
-    def _get_Ar40_39(self):
-        return self._calculate_weighted_mean('Ar40_39')
+    preferred_age_kind=Str
+    preferred_ages= Property(depends_on='analyses')
+    use=Bool
 
-    #        return self._calculate_weighted_mean('rad40') / self._calculate_weighted_mean('k39')
+    def _get_preferred_age_value(self):
+        pa=self.preferred_age
+        if pa is not None:
+            return pa.nominal_value
 
-    def _get_Ar37_39(self):
-        return self._calculate_weighted_mean('Ar37_39')
+    def _get_preferred_age_error(self):
+        pa = self.preferred_age
+        if pa is not None:
+            return pa.std_dev
+    def _get_preferred_age(self):
+        pa=None
+        if self.preferred_age_kind=='Weighted Mean':
+            pa=self.weighted_age
+        elif self.preferred_age_kind=='Arthimetic Mean':
+            pa=self.arith_age
+        elif self.preferred_age_kind=='Isochron':
+            pa=self.isochron_age
+        elif self.preferred_age_kind=='Integrated':
+            pa=self.integrated_age
+        elif self.preferred_age_kind=='Plateau':
+            pa=self.plateau_age
 
-    #        return self._calculate_weighted_mean('Ar37') / self._calculate_weighted_mean('Ar39')
+        return pa
 
-    def _get_Ar36_39(self):
-        return self._calculate_weighted_mean('Ar36_39')
+    @cached_property
+    def _get_preferred_ages(self):
+        ps=['Weighted Mean','Arithmetic Mean','Isochron']
+        if self.analyses:
+            ref=self.analyses[0]
+            if ref.step:
+                ps.append('Integrated')
+                if self.plateau_age:
+                    ps.append('Plateau')
 
-    #        return self._calculate_weighted_mean('Ar36') / self._calculate_weighted_mean('Ar39')
-
-    def _get_kca(self):
-        return self._calculate_weighted_mean('kca')
-
-    def _get_kcl(self):
-        return self._calculate_weighted_mean('kcl')
-
-
-class AnalysisIntensityMean(AnalysisGroup):
-    Ar40 = Property
-    Ar39 = Property
-    Ar38 = Property
-    Ar37 = Property
-    Ar36 = Property
-
-    def _get_Ar40(self):
-        return self._calculate_weighted_mean('Ar40')
-
-    def _get_Ar39(self):
-        return self._calculate_weighted_mean('Ar39')
-
-    def _get_Ar38(self):
-        return self._calculate_weighted_mean('Ar38')
-
-    def _get_Ar37(self):
-        return self._calculate_weighted_mean('Ar37')
-
-    def _get_Ar36(self):
-        return self._calculate_weighted_mean('Ar36')
+        return ps
 
 #============= EOF =============================================
+
+#class AnalysisRatioMean(AnalysisGroup):
+#    Ar40_39 = Property
+#    Ar37_39 = Property
+#    Ar36_39 = Property
+#    kca = Property
+#    kcl = Property
+#
+#    def _get_Ar40_39(self):
+#        return self._calculate_weighted_mean('Ar40_39')
+#
+#    #        return self._calculate_weighted_mean('rad40') / self._calculate_weighted_mean('k39')
+#
+#    def _get_Ar37_39(self):
+#        return self._calculate_weighted_mean('Ar37_39')
+#
+#    #        return self._calculate_weighted_mean('Ar37') / self._calculate_weighted_mean('Ar39')
+#
+#    def _get_Ar36_39(self):
+#        return self._calculate_weighted_mean('Ar36_39')
+#
+#    #        return self._calculate_weighted_mean('Ar36') / self._calculate_weighted_mean('Ar39')
+#
+#    def _get_kca(self):
+#        return self._calculate_weighted_mean('kca')
+#
+#    def _get_kcl(self):
+#        return self._calculate_weighted_mean('kcl')
+#
+#class AnalysisIntensityMean(AnalysisGroup):
+#    Ar40 = Property
+#    Ar39 = Property
+#    Ar38 = Property
+#    Ar37 = Property
+#    Ar36 = Property
+#
+#    def _get_Ar40(self):
+#        return self._calculate_weighted_mean('Ar40')
+#
+#    def _get_Ar39(self):
+#        return self._calculate_weighted_mean('Ar39')
+#
+#    def _get_Ar38(self):
+#        return self._calculate_weighted_mean('Ar38')
+#
+#    def _get_Ar37(self):
+#        return self._calculate_weighted_mean('Ar37')
+#
+#    def _get_Ar36(self):
+#        return self._calculate_weighted_mean('Ar36')
+

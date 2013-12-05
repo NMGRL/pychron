@@ -23,7 +23,9 @@ from pyface.tasks.action.schema import SToolBar
 from itertools import groupby
 import cPickle as pickle
 #============= local library imports  ==========================
+from pychron.processing.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
@@ -127,10 +129,10 @@ class FigureTask(AnalysisEditTask):
                 self._get_unique_group_id())
 
     def clear_grouping(self):
-        '''
+        """
             if selected then set selected group_id to 0
             else set all to 0
-        '''
+        """
         if self.active_editor:
             sel = self.unknowns_pane.selected
             if sel:
@@ -141,9 +143,10 @@ class FigureTask(AnalysisEditTask):
             self.active_editor.set_group(idx, 0)
             #             self.unknowns_pane.update_needed = True
             self.unknowns_pane.refresh_needed = True
-            #===============================================================================
-            # figures
-            #===============================================================================
+
+    #===============================================================================
+    # figures
+    #===============================================================================
 
     def add_text_box(self):
         ac = self.active_editor
@@ -239,30 +242,6 @@ class FigureTask(AnalysisEditTask):
                                 add_table=add_table)
 
 
-    #         func = self.manager.new_inverse_isochron
-    #         from pychron.processing.tasks.figures.figure_editor import InverseIsochronEditor
-    #         klass = InverseIsochronEditor
-    #         self._new_figure(ans, name, func, klass, plotter_kw)
-
-    #     def new_series(self, ans, klass=None, name='Series',
-    #                    plotter_kw=None
-    #                   ):
-    #         if klass is None:
-    #             from pychron.processing.tasks.figures.figure_editor import SeriesEditor as klass
-    #         func = self.manager.new_series
-    #
-    #         self._new_figure(ans, name, func, klass, plotter_kw)
-    #
-    #         editor = self.active_editor
-    #         refiso = ans[0]
-    # #         editor._unknowns = ans
-    #         editor.trait_set(_unknowns=ans,
-    #                          unknowns=ans,
-    #                          trait_change_notify=False)
-    # #         editor.unknowns = ans
-    #         editor.tool.load_fits(refiso.isotope_keys,
-    #                               refiso.isotope_fits
-    #                               )
     #===============================================================================
     # actions
     #===============================================================================
@@ -271,6 +250,34 @@ class FigureTask(AnalysisEditTask):
 
     def open_figure(self):
         self._open_figure()
+
+    def set_interpreted_age(self):
+        key=lambda x: x.group_id
+        unks=sorted(self.active_editor.unknowns, key=key)
+        ias=[]
+        for gid, ans in groupby(self.active_editor.unknowns,
+                               key=key):
+            ans=list(ans)
+            ias.append(InterpretedAge(analyses=ans, use=True))
+
+        iaf=InterpretedAgeFactory(groups=ias)
+        info=iaf.edit_traits()
+        if info.result:
+            for g in iaf.groups:
+                db=self.manager.db
+                if g.use:
+                    with db.session_ctx():
+                        ln=db.get_labnumber(g.identifier)
+                        if not ln:
+                            continue
+
+                        hist=db.add_interpreted_age_history(ln)
+                        ia=db.add_interpreted_age(hist, age=g.preferred_age_value,
+                                                  age_err=g.preferred_age_error,
+                                                  age_kind=g.preferred_age_kind)
+                        for ai in g.analyses:
+                            db.add_interpreted_age_set(ia, ai)
+
 
     #===============================================================================
     # db persistence

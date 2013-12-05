@@ -35,7 +35,7 @@ from pychron.processing.tasks.processing_actions import IdeogramAction, \
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
-    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, SetInterpretedAgeAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.processing_preferences import ProcessingPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
@@ -76,7 +76,8 @@ Install to enable MS Excel export''')
                 SpectrumAction(),
                 IdeogramAction(),
                 InverseIsochronAction(),
-                SeriesAction())
+                SeriesAction(),
+                )
 
         def data_menu():
             return SMenu(id='Data', name='Data')
@@ -95,31 +96,27 @@ Install to enable MS Excel export''')
                          FluxAction())
 
         return [
-            self._make_task_extension([
-                ('recall_action', RecallAction, 'MenuBar/File'),
-                ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
-                #('smart_batch_edit', SmartBatchEditAction, 'MenuBar/Edit'),
-                ('reduction_group', reduction_group, 'MenuBar/Data'),
-                ('figure_group', figure_group, 'MenuBar/Data'),
-                ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/Tools'),
-                ('data', data_menu, 'MenuBar',
-                 {'before': 'Tools', 'after': 'View'}),
-                ('tag', TagAction, 'MenuBar/Data'),
-                ('database_save', DatabaseSaveAction, 'MenuBar/Data'),
-                ('grouping_group', grouping_group, 'MenuBar/Data'),
-                ('easy_group', lambda: SGroup(id='Easy', name='Easy'), 'MenuBar/Tools'),
-                ('easy_import', EasyImportAction, 'MenuBar/Tools/Easy'),
-                ('easy_figures', EasyFiguresAction, 'MenuBar/Tools/Easy'),
-                ('easy_tables', EasyTablesAction, 'MenuBar/Tools/Easy'),
+            self._make_task_extension([('recall_action', RecallAction, 'MenuBar/File'),
+                                       ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
+                                       ('reduction_group', reduction_group, 'MenuBar/Data'),
+                                       ('figure_group', figure_group, 'MenuBar/Data'),
+                                       ('interpreted_age', SetInterpretedAgeAction, 'MenuBar/Data'),
 
-            ]),
+                                       ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/Tools'),
+                                       ('data', data_menu, 'MenuBar', {'before': 'Tools', 'after': 'View'}),
+                                       ('tag', TagAction, 'MenuBar/Data'),
+                                       ('database_save', DatabaseSaveAction, 'MenuBar/Data'),
+                                       ('grouping_group', grouping_group, 'MenuBar/Data'),
+                                       ('easy_group', lambda: SGroup(id='Easy', name='Easy'), 'MenuBar/Tools'),
+                                       ('easy_import', EasyImportAction, 'MenuBar/Tools/Easy'),
+                                       ('easy_figures', EasyFiguresAction, 'MenuBar/Tools/Easy'),
+                                       ('easy_tables', EasyTablesAction, 'MenuBar/Tools/Easy')]),
             self._make_task_extension([('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/Tools'),
-                                       ('easy_fit', EasyFitAction, 'MenuBar/Tools/Easy'),
-                                      ],
+                                       ('easy_fit', EasyFitAction, 'MenuBar/Tools/Easy')],
                                       task_id='pychron.analysis_edit.isotope_evolution'),
-            self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/Easy'), ],
+            self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/Easy')],
                                       task_id='pychron.analysis_edit.blanks'),
-            self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/Tools/Easy'), ],
+            self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/Tools/Easy')],
                                       task_id='pychron.analysis_edit.discrimination'),
         ]
 
