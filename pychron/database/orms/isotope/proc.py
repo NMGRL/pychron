@@ -92,6 +92,24 @@ class proc_ArArTable(Base, BaseMixin):
     rad40_err = Column(Float)
 
 
+class proc_InterpretedAgeSetTable(Base, BaseMixin):
+    interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+    forced_plateau_step = Column(Boolean)
+
+
+class proc_InterpretedAgeHistoryTable(Base, HistoryMixin):
+    interpreted_ages = relationship('proc_InterpretedAgeTable', backref='history')
+    lab_id = foreignkey('gen_LabTable')
+
+
+class proc_InterpretedAgeTable(Base, BaseMixin):
+    history_id = foreignkey('proc_InterpretedAgeHistoryTable')
+    age_kind = stringcolumn(32)
+    age = Column(Float)
+    age_err = Column(Float)
+
+
 class proc_BlanksSetTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
@@ -124,8 +142,7 @@ class proc_BackgroundsHistoryTable(Base, HistoryMixin):
                                backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_backgrounds',
-                            uselist=False
-    )
+                            uselist=False)
 
 
 class proc_BackgroundsTable(Base, BaseMixin):

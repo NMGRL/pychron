@@ -249,7 +249,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     @on_trait_change('analysis_table:omit_invalid')
     def _omit_invalid_changed(self):
-        self._selected_sample_changed(self.selected_samples)
+        self._selected_samples_changed(self.selected_samples)
 
     def _dclicked_sample_changed(self):
         ans = self._get_sample_analyses(self.selected_samples,
