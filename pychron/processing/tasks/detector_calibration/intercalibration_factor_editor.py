@@ -106,8 +106,12 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
     def _get_reference_values(self, dets):
         n, d = dets.split('/')
-        nys = array([ri.get_isotope(detector=n).uvalue for ri in self.references])
-        dys = array([ri.get_isotope(detector=d).uvalue for ri in self.references])
+        self.debug('get reference values {}, {}'.format(n,d))
+        nys = [ri.get_isotope(detector=n) for ri in self.references]
+        dys = [ri.get_isotope(detector=d) for ri in self.references]
+        nys=array([ni.get_corrected_value() for ni in nys if ni is not None])
+        dys=array([di.get_corrected_value() for di in dys if di is not None])
+
         try:
             rys = (nys / dys) / self.tool.standard_ratio
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])
