@@ -130,10 +130,10 @@ class IsotopeAdapter(DatabaseAdapter):
             if exclude_uuids:
                 q = q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             if limit:
                 q = q.limit(limit)
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             return self._query_all(q)
 
     #def count_sample_analyses(self, *args, **kw):
@@ -1057,6 +1057,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 return
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None):
+        self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             if ln:
@@ -1080,9 +1081,11 @@ class IsotopeAdapter(DatabaseAdapter):
                     q = q.filter(meas_AnalysisTable.aliquot == aliquot)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            #         q = q.limit(1)
+            q = q.limit(1)
             try:
-                return q.first()
+                r=q.one()
+                self.debug('{}-{}'.format(r.labnumber.identifier, r.aliquot))
+                return r
             except NoResultFound, e:
                 self.debug('get last analysis {}'.format(e))
                 return

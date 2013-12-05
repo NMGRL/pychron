@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from datetime import datetime, timedelta
-from threading import Thread
+from threading import Thread, Lock
 import time
 #from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
@@ -73,10 +73,13 @@ class SystemMonitorEditor(SeriesEditor):
 
     task = Any
 
+    db_lock=None
+
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
+        self.db_lock=Lock()
 
     def prepare_destroy(self):
         self.stop()
@@ -111,23 +114,27 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
-        self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
-        return
+        def func():
+            #with self.db_lock:
+            self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
+            proc = self.processor
+            db = proc.db
+            with db.session_ctx():
+                if last_run_uuid is None:
+                    dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+                else:
+                    dbrun = db.get_analysis_uuid(last_run_uuid)
 
-        proc = self.processor
-        db = proc.db
-        with db.session_ctx():
-            dbrun = db.get_analysis_uuid(last_run_uuid)
-            if not dbrun:
-                dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+                #if last_run_uuid:
+                #    dbrun = db.get_analysis_uuid(last_run_uuid)
+                if dbrun:
+                    an = proc.make_analysis(dbrun)
+                    self._refresh_sys_mon_series(an)
+                    self._refresh_figures(an)
 
-            if dbrun:
-                an = proc.make_analysis(dbrun)
-                self._refresh_sys_mon_series(an)
-                self._refresh_figures(an)
+        invoke_in_main_thread(func)
 
     def start(self):
-        return
 
         self.load_tool()
 
@@ -150,7 +157,10 @@ class SystemMonitorEditor(SeriesEditor):
                 url = self.conn_spec.url
                 self.warning('System publisher not available url={}'.format(url))
 
-        t = Thread(name='poll', target=self._poll)
+        last_run_uuid = self._get_last_run_uuid()
+        #self.run_added_handler(last_run_uuid)
+
+        t = Thread(name='poll', target=self._poll, args=(last_run_uuid,))
         t.setDaemon(True)
         t.start()
 
@@ -160,9 +170,8 @@ class SystemMonitorEditor(SeriesEditor):
     def _load_tool(self, obj):
         self.tool = obj
 
-    def _poll(self):
+    def _poll(self, last_run_uuid):
         self._polling = True
-        last_run_uuid = self._get_last_run_uuid()
         sub = self.subscriber
 
         db_poll_interval = self._db_poll_interval
@@ -263,7 +272,8 @@ class SystemMonitorEditor(SeriesEditor):
             e.basename = '{} Series'.format(camel_case(attr))
             return e
 
-        editor = self._update_editor(editor, new, identifier, None, layout=False)
+        editor = self._update_editor(editor, new, identifier, None, layout=False,
+                                     use_date_range=True)
         setattr(self, name, editor)
 
     def _refresh_ideogram(self, identifier):
@@ -321,7 +331,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                  labnumber=identifier,
                                                  limit=limit)
             else:
-                ans = db.get_labnumber_analyses(identifier, limit=limit)
+                ans, tc = db.get_labnumber_analyses(identifier, limit=limit)
 
             return self.processor.make_analyses(ans)
 

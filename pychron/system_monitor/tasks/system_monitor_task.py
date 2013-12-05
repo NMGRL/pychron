@@ -117,8 +117,8 @@ class SystemMonitorTask(FigureTask):
                                          task=self)
             editor.start()
             self._open_editor(editor)
-            if editor:
-                do_later(editor.run_added_handler)
+            #if editor:
+            #    do_later(editor.run_added_handler)
 
             return editor
 

@@ -98,17 +98,27 @@ class Series(BaseArArFigure):
 
     def _unpack_attr(self, attr):
         if attr.endswith('bs'):
-            return (ai.isotopes[attr[:-2]].baseline.uvalue
-                    for ai in self.sorted_analyses)
-        #elif '/' in attr:
-        #    n, d = attr.split('/')
-            #return (getattr(ai, n) / getattr(ai, d)
-            #        for ai in self.sorted_analyses)
-        elif attr == 'PC':
-            return (getattr(ai, 'peak_center')
-                    for ai in self.sorted_analyses)
+           f=lambda x: x.baseline.uvalue
+           return (f(ai) for ai in self.sorted_analyses)
+        elif attr=='PC':
+           return super(Series, self)._unpack_attr(attr)
         else:
-            return super(Series, self)._unpack_attr(attr)
+           gs=super(Series, self)._unpack_attr(attr)
+           f=lambda x: x.get_intensity()
+           return map(f, gs)
+
+        #if attr.endswith('bs'):
+        #    return (ai.isotopes[attr[:-2]].baseline.uvalue
+        #            for ai in self.sorted_analyses)
+        ##elif '/' in attr:
+        ##    n, d = attr.split('/')
+        #    #return (getattr(ai, n) / getattr(ai, d)
+        #    #        for ai in self.sorted_analyses)
+        #elif attr == 'PC':
+        #    return (getattr(ai, 'peak_center')
+        #            for ai in self.sorted_analyses)
+        #else:
+        #    return super(Series, self)._unpack_attr(attr)
 
 #===============================================================================
 # plotters

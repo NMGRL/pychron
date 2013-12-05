@@ -133,7 +133,6 @@ class IsotopeDatabaseManager(Loggable):
 
         with self.db.session_ctx():
             if ans:
-
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
                 #for di in db_ans:
                 #    self.debug('is DBAnalysis -{}'.format(di.record_id))
