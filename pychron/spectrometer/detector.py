@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
     Int, on_trait_change, Array
-from traitsui.api import View, Item, VGroup, HGroup, \
+from traitsui.api import View, Item, HGroup, \
     spring, Spring
 #============= standard library imports ========================
 import os
@@ -40,7 +40,7 @@ class Detector(SpectrometerDevice):
     kind = Str
 
     deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
-    _deflection = Float
+    _deflection = Float(0)
 
     deflection_correction_sign=Int(1)
 
@@ -107,9 +107,15 @@ class Detector(SpectrometerDevice):
     def read_deflection(self):
         r = self.ask('GetDeflection {}'.format(self.name))
         try:
-            self._deflection = float(r)
-        except (ValueError, TypeError):
-            self._deflection = 0
+            if r is None:
+                self.warning('Failed reading {} deflection. Error=No response. Using previous value {}'.format(self.name,
+                                                                                                            self._deflection))
+            else:
+                self._deflection = float(r)
+
+        except (ValueError, TypeError), e:
+            self.warning('Failed reading {} deflection. Error={}. Using previous value {}'.format(self.name,e,
+                                                                                       self._deflection))
 
     def get_deflection_correction(self, current=False):
         if current:
@@ -125,43 +131,16 @@ class Detector(SpectrometerDevice):
         c[-1] -= dac
         return optimize.newton(poly1d(c), 1)
 
-    #    def color_square_factory(self, width=10, height=10):
-    #        def color_factory(window, editor):
-    # #            panel = wx.Panel(window,
-    # #                           - 1,
-    # #                           size=(width, height)
-    # #                           )
-    # #            panel.SetBackgroundColour(self.color)
-    #            from PySide.QtGui import QWidget, QPalette, QLabel
-    #            panel = QLabel()
-    #
-    #            panel.setFixedWidth(width)
-    #            panel.setFixedHeight(height)
-    # #            panel.setGeometry(0, 0, width, height)
-    #            p = QPalette()
-    #            p.setColor(QPalette.Base, self.color)
-    #            panel.setPalette(p)
-    #            print self.color
-    #            return panel
-    #
-    #        return color_factory
-
     def intensity_view(self):
         v = View(HGroup(
             Item('color',
                  editor=ColorSquareEditor(),
-                 #                             editor=CustomEditor(factory=self.color_square_factory()),
-                 width=20,
-            ),
+                 width=20),
             Item('name', style='readonly'),
-            #                         Spring(width=25, springy=False),
             spring,
-            Item('intensity', style='readonly',
-            ),
+            Item('intensity', style='readonly'),
             Spring(springy=False, width=150),
-            Item('std', style='readonly',
-            ),
-            #                        spring,
+            Item('std', style='readonly'),
             Spring(springy=False, width=100),
             show_labels=False
         )
@@ -169,26 +148,12 @@ class Detector(SpectrometerDevice):
         return v
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(
-                Item('color',
-                     width=40,
-                     editor=ColorSquareEditor(),
-                     #                                     editor=CustomEditor(factory=self.color_square_factory(width=30))
-                ),
-                Item('name', style='readonly'),
-                spring,
-
-                #                                Item('isotope', width= -75,
-                #                                     editor=EnumEditor(name='isotopes')
-                #                                     ),
-                Item('active', ),
-                Item('deflection'),
-                show_labels=False
-            )
-        )
-        )
-
+        v = View(HGroup(Item('active'),
+                        Item('color',width=25, editor=ColorSquareEditor()),
+                        Item('name', style='readonly'),
+                        spring,
+                        Item('deflection'),
+                        show_labels=False))
         return v
 
 

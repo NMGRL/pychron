@@ -18,8 +18,7 @@
 from threading import Thread
 #from chaco.label import Label
 from traits.api import Instance, Dict, Bool, Any
-from traitsui.api import View, UItem
-from enable.component_editor import ComponentEditor
+from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import Inf, polyfit
 
@@ -245,7 +244,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     r += 1
 
         cg=self._container_factory((r, c))
-        self.component = cg.plotcontainer
+        self.component = cg#.plotcontainer
 
         #prog = None
         n = len(self.unknowns)
@@ -259,14 +258,12 @@ class IsotopeEvolutionEditor(GraphEditor):
             set_ytitle = j%c == 0
             padding=[40,10,40,40]
 
-
             set_xtitle = True if r == 1 else j >= (n / r)
 
-            g = self._graph_factory()
+            g = self._graph_factory(add_context_menu=False)
 
             plot_kw = dict(padding=padding,
-                           title=unk.record_id,
-                           )
+                           title=unk.record_id)
 
             with g.no_regression(refresh=False):
                 ma = -Inf
@@ -299,17 +296,19 @@ class IsotopeEvolutionEditor(GraphEditor):
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 
-            self.component.add(g.plotcontainer)
+            self.component.plotcontainer.add(g.plotcontainer)
+            print 'aaa',self.component.plotcontainer, g.plotcontainer
 
     def traits_view(self):
-        v = View(UItem('component',
-                       style='custom',
-                       editor=ComponentEditor()))
+        v=View(UItem('component', style='custom', editor=InstanceEditor()))
+        #v = View(UItem('component',
+        #               style='custom',
+        #               editor=ComponentEditor()))
         return v
 
     def _component_default(self):
         g=self._container_factory((1, 1))
-        return g.plotcontainer
+        return g
 
     def _container_factory(self, shape):
         g=Graph(container_dict=dict(kind='g', shape=shape, spacing=(1,1)))

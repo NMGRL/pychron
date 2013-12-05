@@ -320,8 +320,7 @@ class Magnet(SpectrometerDevice):
                 VGroup(
                     Item('dac', editor=RangeEditor(low_name='dacmin',
                                                    high_name='dacmax',
-                                                   format='%0.3f',
-                    )),
+                                                   format='%0.5f')),
 
                     Item('mass', editor=RangeEditor(mode='slider', low_name='massmin',
                                                     high_name='massmax',
@@ -329,8 +328,7 @@ class Magnet(SpectrometerDevice):
                     HGroup(Spring(springy=False,
                                   width=48),
                            Item('massmin', width=-40), Spring(springy=False,
-                                                              width=138,
-                        ),
+                                                              width=138),
                            Item('massmax', width=-55),
 
                            show_labels=False),

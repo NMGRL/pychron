@@ -54,9 +54,7 @@ class ContextMenuMixin(HasTraits):
         for n, f, kw in self.get_contextual_menu_save_actions():
             save_actions.append(self.action_factory(n, f, **kw))
 
-        save_menu = MenuManager(
-            name='Save Figure',
-            *save_actions)
+        save_menu = MenuManager(name='Save Figure',*save_actions)
 
         #        if not self.crosshairs_enabled:
         #            crosshairs_action = self.action_factory('Show Crosshairs',

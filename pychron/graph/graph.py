@@ -50,7 +50,6 @@ from pychron.viewable import Viewable
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
 from chaco.array_data_source import ArrayDataSource
-import weakref
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
     #                'Helvetica',
@@ -112,6 +111,7 @@ class Graph(Viewable, ContextMenuMixin):
     editor_enabled = True
 
     line_inspectors_write_metadata = False
+    add_context_menu=Bool(True)
 
     plot_editor = Any
 
@@ -141,18 +141,18 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def __init__(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         super(Graph, self).__init__(*args, **kw)
         self.clear()
 
         pc = self.plotcontainer
-        menu = ContextualMenuTool(parent=self,
-                                  component=pc,
-                                  #                                      plotid= -1
-        )
+        #print 'add context menu', self.add_context_menu, pc
+        if self.add_context_menu:
+            menu = ContextualMenuTool(parent=self,
+                                      component=pc)
 
-        pc.tools.append(menu)
+            pc.tools.append(menu)
 
     def _assemble_plot_metadata(self, plot):
         meta = dict()
@@ -803,14 +803,14 @@ class Graph(Viewable, ContextMenuMixin):
 
         plotid = len(self.plots) - 1
 
-        for tool in pc.tools:
-            if isinstance(tool, ContextualMenuTool):
-                contextmenu = False
+        #for tool in pc.tools:
+        #    if isinstance(tool, ContextualMenuTool):
+        #        contextmenu = False
 
-        if contextmenu:
-            menu = ContextualMenuTool(parent=weakref.ref(self)(),
-                                      component=pc)
-            pc.tools.append(menu)
+        #if contextmenu:
+        #    menu = ContextualMenuTool(parent=weakref.ref(self)(),
+        #                              component=pc)
+        #    pc.tools.append(menu)
 
         for t in ['x', 'y']:
             title = '{}title'.format(t)
@@ -1420,8 +1420,8 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def _render_to_pdf(self, save=True, canvas=None, filename=None, dest_box=None):
-        '''
-        '''
+        """
+        """
         from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 
         if filename:
@@ -1432,11 +1432,12 @@ class Graph(Viewable, ContextMenuMixin):
         gc = PdfPlotGraphicsContext(filename=filename,
                                     pdf_canvas=canvas)
         pc = self.plotcontainer
-        pc.do_layout(force=True)
-        gc.render_component(pc,
-                            valign='center')
+        print pc
+        #pc.do_layout(force=True)
+        gc.render_component(pc,valign='center')
         if save:
             gc.save()
+
         return gc
 
     #        pc.bgcolor = ob

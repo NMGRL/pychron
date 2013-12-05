@@ -58,7 +58,6 @@ class ContextualMenuTool(Interactor):
 
     def normal_right_down(self, event):
 
-
         comps = self.component.components_at(event.x, event.y)
         if comps:
             plot = comps[0]

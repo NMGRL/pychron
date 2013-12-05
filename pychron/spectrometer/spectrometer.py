@@ -352,28 +352,31 @@ class Spectrometer(SpectrometerDevice):
         return cor
 
     def correct_dac(self, det, dac):
-    #        dac is in axial units
+        """
+            dac is in axial units
+            convert to detector units
+                convert to axial detector
+                dac_a=  dac_d / relpos
+                relpos==dac_detA/dac_axial
 
-    #        convert to detector
+            correct for deflection
+            correct for hv
+        """
+        #convert to detector units
         dac *= det.relative_position
 
-        '''
-        convert to axial detector 
-        dac_a=  dac_d / relpos
-        
-        relpos==dac_detA/dac_axial 
-        
-        '''
-        # correct for deflection
-
+        #correct for deflection
         dev = det.get_deflection_correction(current=True)
         dac += dev
 
-        #        #correct for hv
+        #correct for hv
         dac *= self.get_hv_correction(current=True)
         return dac
 
     def uncorrect_dac(self, det, dac):
+        """
+            inverse of correct_dac
+        """
         dac /= self.get_hv_correction(current=True)
         dev = det.get_deflection_correction(current=True)
         dac -= dev
@@ -391,8 +394,7 @@ class Spectrometer(SpectrometerDevice):
                            zsymmetry='ZSymmetry',
                            zfocus='ZFocus',
                            extractionlens='ExtractionLens',
-                           ioncountervoltage='IonCounterVoltage'
-        )
+                           ioncountervoltage='IonCounterVoltage')
 
         self.debug('Sending configuration to spectrometer')
         if self.microcontroller:
