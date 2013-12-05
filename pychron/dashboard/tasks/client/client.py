@@ -167,14 +167,15 @@ class DashboardClient(Subscriber):
     values = List
 
     def load_configuration(self):
-        #config=self.request('config')
-        config = CONFIG
-        self._load_configuration(config)
+        config=self.request('config')
+        #config = CONFIG
+        if config:
+            self._load_configuration(config)
 
     def _load_configuration(self, config):
         try:
             d = pickle.loads(config)
-        except pickle.PickleError:
+        except (pickle.PickleError, ImportError):
             self.warning('Could not load configuration: {}'.format(config))
             return
 

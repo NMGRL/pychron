@@ -107,7 +107,7 @@ class SystemMonitorTask(FigureTask):
                 pass
 
     def _editor_factory(self):
-        self.connection = self.connections[1]
+        self.connection = self.connections[0]
         #ask user for system
         #info = self.edit_traits(view='get_connection_view')
         if 1:

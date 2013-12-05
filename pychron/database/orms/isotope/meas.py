@@ -66,7 +66,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     # proc relationships
     blanks_histories = relationship('proc_BlanksHistoryTable', backref='analysis')
     blanks_sets = relationship('proc_BlanksSetTable', backref='analysis')
-    interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
+    #interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
 
     backgrounds_histories = relationship('proc_BackgroundsHistoryTable', backref='analysis')
     backgrounds_sets = relationship('proc_BackgroundsSetTable', backref='analysis')
