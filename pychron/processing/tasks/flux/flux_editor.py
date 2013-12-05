@@ -95,6 +95,14 @@ class FluxEditor(GraphEditor):
     positions = Property(depends_on='positions_dirty')
     geometry = List
 
+    def _gather_unknowns(self, refresh_data,
+                         exclude='invalid',
+                         compress_groups=True):
+        pass
+
+    def _update_unknowns(self, obj, name, old, new):
+        pass
+
     def _get_positions(self):
         return sorted(self.monitor_positions.itervalues(), key=lambda x: x.hole_id)
 

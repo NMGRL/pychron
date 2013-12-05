@@ -106,18 +106,19 @@ class FluxTask(InterpolationTask):
     @on_trait_change('manager:level')
     def _level_changed(self, new):
         if new:
-            level = self.manager.get_level(new)
-            if self.active_editor:
-                self.active_editor.level = level
+            with self.manager.db.session_ctx():
+                level = self.manager.get_level(new)
+                if self.active_editor:
+                    self.active_editor.level = level
 
-            if level:
-                refs, unks = self.manager.group_level(level)
-                r, u = list(refs), list(unks)
-                self.unknowns_pane.items = u
-                self.references_pane.items = r
+                if level:
+                    refs, unks = self.manager.group_level(level)
+                    r, u = list(refs), list(unks)
+                    self.unknowns_pane.items = u
+                    self.references_pane.items = r
 
-                #self.active_editor.unknowns=u
-                #self.active_editor.references= r
+                    #self.active_editor.unknowns=u
+                    #self.active_editor.references= r
 
     @on_trait_change('active_editor:tool:calculate_button')
     def _calculate_flux(self):
@@ -199,14 +200,15 @@ class FluxTask(InterpolationTask):
             editor.geometry = geom
 
             for ais in ans:
-                ref = ais[0]
-                pid = ref.labnumber.irradiation_position.position
-                ident = ref.labnumber.identifier
+                if ais:
+                    ref = ais[0]
+                    pid = ref.labnumber.irradiation_position.position
+                    ident = ref.labnumber.identifier
 
-                x, y, r = geom[pid - 1]
-                aa = proc.make_analyses(ais, progress=prog)
-                j = mean_j(aa)
-                editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev)
+                    x, y, r = geom[pid - 1]
+                    aa = proc.make_analyses(ais, progress=prog)
+                    j = mean_j(aa)
+                    editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev)
 
     def _get_geometry(self, irrad=None, level=None, holder=None):
         man = self.manager

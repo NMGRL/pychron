@@ -79,22 +79,24 @@ class Processor(IsotopeDatabaseManager):
                 if pos.sample == 'FC-2':
                     return True
 
-        if isinstance(level, str):
-            level = self.db.get_level(level, irradiation)
+        db=self.db
+        with db.session_ctx():
+            if isinstance(level, str):
+                level = db.get_level(level, irradiation)
 
-        refs = []
-        unks = []
-        if level:
-            positions = level.positions
+            refs = []
+            unks = []
+            if level:
+                positions = level.positions
 
-            if positions:
-                def pos_factory(px):
-                    ip = IrradiationPositionRecord()
-                    ip.create(px)
-                    return ip
+                if positions:
+                    def pos_factory(px):
+                        ip = IrradiationPositionRecord()
+                        ip.create(px)
+                        return ip
 
-                positions = [pos_factory(pp) for pp in positions]
-                refs, unks = partition(positions, monitor_filter)
+                    positions = [pos_factory(pp) for pp in positions]
+                    refs, unks = partition(positions, monitor_filter)
 
         return refs, unks
 
