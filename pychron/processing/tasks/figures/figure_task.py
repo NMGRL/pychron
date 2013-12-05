@@ -255,9 +255,9 @@ class FigureTask(AnalysisEditTask):
         key=lambda x: x.group_id
         unks=sorted(self.active_editor.unknowns, key=key)
         ias=[]
-        for gid, ans in groupby(self.active_editor.unknowns,
-                               key=key):
-            ans=list(ans)
+        ok='omit_{}'.format(self.active_editor.basename)
+        for gid, ans in groupby(unks, key=key):
+            ans=filter(lambda x: not x.is_omitted(ok), ans)
             ias.append(InterpretedAge(analyses=ans, use=True))
 
         iaf=InterpretedAgeFactory(groups=ias)
@@ -272,10 +272,11 @@ class FigureTask(AnalysisEditTask):
                             continue
 
                         hist=db.add_interpreted_age_history(ln)
-                        ia=db.add_interpreted_age(hist, age=g.preferred_age_value,
-                                                  age_err=g.preferred_age_error,
+                        ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
+                                                  age_err=g.preferred_age_error or 0,
                                                   age_kind=g.preferred_age_kind)
                         for ai in g.analyses:
+                            ai=db.get_analysis_uuid(ai.uuid)
                             db.add_interpreted_age_set(ia, ai)
 
 

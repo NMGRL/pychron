@@ -63,7 +63,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksTable, proc_BackgroundsTable, proc_BlanksHistoryTable, proc_BackgroundsHistoryTable, \
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
-    proc_FigurePrefTable, proc_TagTable, proc_ArArTable
+    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable
 
 # @todo: change rundate and runtime to DateTime columns
 
@@ -346,9 +346,9 @@ class IsotopeAdapter(DatabaseAdapter):
         #table = getattr(mod, name)
         table = self.__import_proctable(name)
         #table = globals()['proc_{}HistoryTable'.format(name)]
-        analysis = self.get_analysis(analysis, )
+        analysis = self.get_analysis(analysis)
         h = table(analysis=analysis, **kw)
-        self._add_item(h, )
+        self._add_item(h)
         return h
 
     def _add_set(self, name, key, value, analysis, idname=None, **kw):
@@ -463,6 +463,29 @@ class IsotopeAdapter(DatabaseAdapter):
             note.analysis = analysis
             #analysis.notes.append(obj)
         return obj
+
+    def add_interpreted_age_history(self, labnumber, **kw):
+        name = 'proc_InterpretedAgeHistoryTable'
+        table = self.__import_proctable(name)
+
+        labnumber=self.get_labnumber(labnumber)
+        t=table(identifier=labnumber.identifier, **kw)
+        labnumber.selected_interpreted_age=t
+
+        self._add_item(t)
+
+        return t
+
+    def add_interpreted_age(self, history, **kw):
+        return self._add_series_item('InterpretedAge', 'interpreted_age', history, **kw)
+
+    def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
+        item=proc_InterpretedAgeSetTable(analysis=analysis,
+                                         interpreted_age_id=interpreted_age.id,
+                                         **kw)
+        return self._add_item(item)
+        #return self._add_set('InterpretedAge', 'interpreted_age',
+        #                     interpreted_age, analysis, **kw)
 
     def add_blanks_history(self, analysis, **kw):
         return self._add_history('Blanks', analysis, **kw)
@@ -1104,16 +1127,19 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(meas_AnalysisTable, value, key=key)
 
     def get_analysis_type(self, value):
-        return self._retrieve_item(gen_AnalysisTypeTable, value, )
+        return self._retrieve_item(gen_AnalysisTypeTable, value)
+
+    def get_interpreted_age_history(self, value):
+        return self._retrieve_item(proc_InterpretedAgeHistoryTable, value)
 
     def get_blank(self, value):
-        return self._retrieve_item(proc_BlanksTable, value, )
+        return self._retrieve_item(proc_BlanksTable, value)
 
     def get_blanks_history(self, value):
-        return self._retrieve_item(proc_BlanksHistoryTable, value, )
+        return self._retrieve_item(proc_BlanksHistoryTable, value)
 
     def get_background(self, value):
-        return self._retrieve_item(proc_BackgroundsTable, value, )
+        return self._retrieve_item(proc_BackgroundsTable, value)
 
     def get_backgrounds_history(self, value):
         return self._retrieve_item(proc_BackgroundsHistoryTable, value, )

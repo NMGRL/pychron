@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str
+from traits.api import Str, List
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
@@ -31,10 +31,12 @@ from pyface.tasks.action.task_action import TaskAction
 #===============================================================================
 # grouping
 #===============================================================================
-class GroupAction(TaskAction):
+
+class myTaskAction(TaskAction):
+    task_ids=List
     def _task_changed(self):
         if self.task:
-            if self.task.id in ('pychron.processing.figures',):
+            if self.task.id in self.task_ids:
                 enabled = True
                 if self.enabled_name:
                     if self.object:
@@ -46,9 +48,9 @@ class GroupAction(TaskAction):
                 self._enabled = False
 
     def _enabled_update(self):
-        '''
+        """
              reimplement ListeningAction's _enabled_update
-        '''
+        """
         if self.enabled_name:
             if self.object:
                 self.enabled = bool(self._get_attr(self.object,
@@ -59,6 +61,12 @@ class GroupAction(TaskAction):
             self.enabled = self._enabled
         else:
             self.enabled = bool(self.object)
+
+class FigureTaskAction(myTaskAction):
+    task_ids=List(['pychron.processing.figures',])
+
+class GroupAction(FigureTaskAction):
+    pass
 
 
 class GroupSelectedAction(GroupAction):
@@ -190,4 +198,11 @@ class SmartProjectAction(Action):
 
         task.process_project_file()
 
+
+class SetInterpretedAgeAction(FigureTaskAction):
+    name = 'Set Interpreted Age...'
+    #accelerator = 'Ctrl+t'
+    method = 'set_interpreted_age'
+
 #============= EOF =============================================
+

@@ -31,11 +31,11 @@ from pychron.processing.tasks.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction
+    SeriesAction, SetInterpretedAgeAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
-    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, SetInterpretedAgeAction
+    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.processing_preferences import ProcessingPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask

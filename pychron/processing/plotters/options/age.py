@@ -29,6 +29,8 @@ class AgeOptions(PlotterOptions):
     include_decay_error = Bool(False)
     nsigma = Enum(1, 2, 3)
     show_info = Bool(True)
+    show_mean_info=Bool(True)
+    show_error_type_info=Bool(True)
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
@@ -36,7 +38,7 @@ class AgeOptions(PlotterOptions):
                   'include_irradiation_error',
                   'include_decay_error',
                   'nsigma',
-                  'show_info'
+                  'show_info', 'show_mean_info','show_error_type_info'
         ]
         return attrs
 

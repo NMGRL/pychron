@@ -98,16 +98,22 @@ class proc_InterpretedAgeSetTable(Base, BaseMixin):
     forced_plateau_step = Column(Boolean)
 
 
-class proc_InterpretedAgeHistoryTable(Base, HistoryMixin):
-    interpreted_ages = relationship('proc_InterpretedAgeTable', backref='history')
-    lab_id = foreignkey('gen_LabTable')
+class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
+    create_date = Column(DateTime, default=func.now())
+    user = stringcolumn()
 
+    interpreted_ages = relationship('proc_InterpretedAgeTable', backref='history')
+    identifier = stringcolumn(80)
+    selected = relationship('gen_LabTable',
+                            backref='selected_interpreted_age',
+                            uselist=False)
 
 class proc_InterpretedAgeTable(Base, BaseMixin):
     history_id = foreignkey('proc_InterpretedAgeHistoryTable')
     age_kind = stringcolumn(32)
     age = Column(Float)
     age_err = Column(Float)
+    sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 
 class proc_BlanksSetTable(Base, BaseMixin):

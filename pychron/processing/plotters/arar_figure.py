@@ -115,16 +115,15 @@ class BaseArArFigure(HasTraits):
         pass
 
     def _get_omitted(self, ans, omit=None):
-        def test(a):
-            r = ai.temp_status
-            if omit:
-                r = r or getattr(ai, omit)
-
-            print ai.aliquot, r, omit, ai.filter_omit
-            return r or ai.tag == 'omit' or ai.filter_omit
+        #def test(a):
+        #    r = ai.temp_status
+        #    if omit:
+        #        r = r or getattr(ai, omit)
+        #    #print ai.aliquot, r, omit, ai.filter_omit
+        #    return r or ai.filter_omit #or ai.tag == 'omit'
 
         return [i for i, ai in enumerate(ans)
-                if test(ai)]
+                if ai.is_omitted(omit)]
 
     def _set_selected(self, ans, sel):
         #print self.group_id, sel

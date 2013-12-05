@@ -55,14 +55,23 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
 
+    def is_omitted(self, omit_key=None):
+        omit=False
+        if omit_key:
+            omit= getattr(self, omit_key)
+            #print ai.aliquot, r, omit, ai.filter_omit
+        #return r or ai.filter_omit #or ai.tag == 'omit'
+        #omit=False
+        return self.temp_status or self.filter_omit or omit
+
     def flush(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         return
 
     def commit(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         return
 
     def sync(self, obj, **kw):

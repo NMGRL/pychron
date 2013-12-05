@@ -27,8 +27,7 @@ def upgrade():
                                                                server_default=sa.func.now()))
 
     op.add_column('proc_InterpretedAgeHistoryTable', sa.Column('user', sa.String(80)))
-    op.add_column('proc_InterpretedAgeHistoryTable', sa.Column('lab_id', sa.Integer,
-                                                               sa.ForeignKey('gen_LabTable.id')))
+    op.add_column('proc_InterpretedAgeHistoryTable', sa.Column('identifier', sa.String(80)))
 
     #op.add_column('proc_InterpretedAgeTable', sa.Column('id', sa.Integer,primary_key=True))
     op.add_column('proc_InterpretedAgeTable', sa.Column('history_id', sa.Integer,
@@ -45,8 +44,14 @@ def upgrade():
                                                            sa.ForeignKey('proc_InterpretedAgeTable.id')))
     op.add_column('proc_InterpretedAgeSetTable', sa.Column('forced_plateau_step', sa.Boolean))
 
+    op.add_column('gen_LabTable', sa.Column('selected_interpreted_age_id',
+                                            sa.Integer, sa.ForeignKey('proc_InterpretedAgeHistoryTable.id')))
 
 def downgrade():
+    op.drop_column('gen_LabTable', 'selected_interpreted_age_id')
+
     op.drop_table('proc_InterpretedAgeSetTable')
     op.drop_table('proc_InterpretedAgeTable')
+
     op.drop_table('proc_InterpretedAgeHistoryTable')
+

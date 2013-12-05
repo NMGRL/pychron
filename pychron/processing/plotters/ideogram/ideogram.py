@@ -84,7 +84,7 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        print 'ideo omit', self.group_id, omit, plots
+        #print 'ideo omit', self.group_id, omit, plots
         if omit:
             self._rebuild_ideo(list(omit))
 
@@ -185,8 +185,8 @@ class Ideogram(BaseArArFigure):
                          plotid=pid,
                          visible=False,
                          color=scatter.color,
-                         line_style='dash',
-        )
+                         line_style='dash')
+
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
@@ -209,15 +209,21 @@ class Ideogram(BaseArArFigure):
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
-            m = self.options.mean_calculation_kind
-            e = self.options.error_calc_method
-            s = self.options.nsigma
             if self.options.show_info:
-                pl = PlotLabel(text=u'Mean: {} +/-{}s\nError Type: {}'.format(m, s, e),
-                               overlay_position='inside top',
-                               hjustify='left',
-                               component=plot)
-                plot.overlays.append(pl)
+                ts=[]
+                if self.options.show_mean_info:
+                    m = self.options.mean_calculation_kind
+                    s=self.options.nsigma
+                    ts.append('Mean: {} +/-{}s'.format(m,s))
+                if self.options.show_error_type_info:
+                    ts.append('Error Type:{}'.format(self.options.error_calc_method))
+
+                if ts:
+                    pl = PlotLabel(text='\n'.join(ts),
+                                   overlay_position='inside top',
+                                   hjustify='left',
+                                   component=plot)
+                    plot.overlays.append(pl)
 
     def _add_mean_indicator(self, g, line, bins, probs, pid):
         maxp = max(probs)
@@ -241,8 +247,7 @@ class Ideogram(BaseArArFigure):
                                  nsgima=self.options.nsigma,
                                  color=line.color,
                                  text=text,
-                                 visibile=self.options.display_mean_indicator
-        )
+                                 visible=self.options.display_mean_indicator)
         line.overlays.append(m)
 
         line.tools.append(OverlayMoveTool(component=m,
@@ -277,12 +282,12 @@ class Ideogram(BaseArArFigure):
             #sel = [i for i, a in enumerate(sorted_ans)
             #            if a.temp_status]
             sel = self._get_omitted(sorted_ans, omit='omit_ideo')
-            print 'update graph meta'
+            #print 'update graph meta'
             self._rebuild_ideo(sel)
 
 
     def _rebuild_ideo(self, sel):
-        print 'rebuild ideo {}'.format(sel)
+        #print 'rebuild ideo {}'.format(sel)
         graph = self.graph
 
         if len(graph.plots) > 1:
@@ -329,7 +334,8 @@ class Ideogram(BaseArArFigure):
                     ov.set_x(wm)
                     #ov.x=wm
                     ov.error = we
-                    ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n)
+                    if ov.label:
+                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n)
 
             # update the data label position
             #for ov in sp.overlays:

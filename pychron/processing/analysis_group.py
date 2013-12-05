@@ -83,7 +83,8 @@ class AnalysisGroup(HasTraits):
     def _get_values(self, attr):
         vs = (getattr(ai, attr) for ai in self.analyses
               if not isinstance(ai, Marker) and \
-                 ai.temp_status == 0 and not ai.tag)
+                not ai.is_omitted())
+                 #ai.temp_status == 0 and not ai.tag)
 
         vs = [vi for vi in vs if vi is not None]
         if vs:
@@ -175,24 +176,27 @@ class InterpretedAge(StepHeatAnalysisGroup):
     preferred_age_value=Property(depends_on='preferred_age_kind')
     preferred_age_error=Property(depends_on='preferred_age_kind')
 
-    preferred_age_kind=Str
+    preferred_age_kind=Str('Weighted Mean')
     preferred_ages= Property(depends_on='analyses')
     use=Bool
 
     def _get_preferred_age_value(self):
         pa=self.preferred_age
         if pa is not None:
-            return pa.nominal_value
+            return float(pa.nominal_value)
+        return 0
 
     def _get_preferred_age_error(self):
         pa = self.preferred_age
         if pa is not None:
-            return pa.std_dev
+            return float(pa.std_dev)
+        return 0
+
     def _get_preferred_age(self):
         pa=None
         if self.preferred_age_kind=='Weighted Mean':
             pa=self.weighted_age
-        elif self.preferred_age_kind=='Arthimetic Mean':
+        elif self.preferred_age_kind=='Arithmetic Mean':
             pa=self.arith_age
         elif self.preferred_age_kind=='Isochron':
             pa=self.isochron_age

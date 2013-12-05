@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Enum, Float, Bool
-from traitsui.api import Item, HGroup, Group
+from traitsui.api import Item, HGroup, Group, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -51,8 +51,6 @@ class IdeogramOptions(AgeOptions):
 
     def _get_groups(self):
         g = Group(
-            Item('show_info', label='Display Info.'),
-            Item('_'),
             Item('probability_curve_kind',
                  width=-150,
                  label='Probability Curve Method'),
@@ -66,10 +64,13 @@ class IdeogramOptions(AgeOptions):
             Item('include_j_error'),
             Item('include_irradiation_error'),
             Item('include_decay_error'),
+            label='Calculations')
 
-            label='Calculations'
-        )
-        return (g,)
+        g2=Group(Item('display_mean_indicator', label='Display Mean'),
+                 Item('display_mean', label='Display Mean Value'),
+                 label='Display')
+
+        return VGroup(g,g2,label='Options'),
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
@@ -78,7 +79,8 @@ class IdeogramOptions(AgeOptions):
             'mean_calculation_kind',
             'error_calc_method',
             'xlow', 'xhigh',
-            'use_centered_range', 'centered_range'
+            'use_centered_range', 'centered_range',
+            'display_mean','display_mean_indicator'
         ]
 
 #============= EOF =============================================

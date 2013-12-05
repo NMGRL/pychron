@@ -64,6 +64,8 @@ class PlotterOptions(BasePlotterOptions):
     ytitle_font = Property
     ytitle_font_size = Enum(*SIZES)
     ytitle_font_name = Enum(*FONTS)
+
+    x_filter_str=Str
     #     data_type_editable = Bool(True)
 
 
@@ -109,6 +111,7 @@ class PlotterOptions(BasePlotterOptions):
                  'ytick_font_name',
                  'ytitle_font_size',
                  'ytitle_font_name',
+                 'x_filter_str'
         ]
         return attrs
 
@@ -174,8 +177,13 @@ class PlotterOptions(BasePlotterOptions):
                 HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
                        Item('title', springy=True, enabled_when='not auto_generate_title',
                             tooltip='User specified plot title')),
-            ),
-            self._get_aux_plots_group(),
+                HGroup(Item('show_info',label='Display Info'),
+                       Item('show_mean_info', label='Mean',enabled_when='show_info'),
+                       Item('show_error_type_info',label='Error Type',enabled_when='show_info'),
+                       show_border=True, label='Info'),
+                self._get_aux_plots_group(),
+                HGroup(Item('x_filter_str', label='X Filter'))
+                ),
             label='Plot')
 
         return main_grp
@@ -189,8 +197,8 @@ class PlotterOptions(BasePlotterOptions):
                 object_column(name='height',
                               format_func=lambda x: str(x) if x else ''),
                 checkbox_column(name='show_labels', label='Labels'),
-                checkbox_column(name='x_error', label='X Error'),
-                checkbox_column(name='y_error', label='Y Error'),
+                checkbox_column(name='x_error', label='X Err.'),
+                checkbox_column(name='y_error', label='Y Err.'),
                 object_column(name='filter_str', label='Filter')]
 
         aux_plots_grp = Item('aux_plots',

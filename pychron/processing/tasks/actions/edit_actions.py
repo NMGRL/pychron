@@ -128,10 +128,4 @@ class SCLFTableAction(AnalysisEditAction):
     task_id = 'pychron.processing.publisher'
 
 
-class SetInterpretedAgeAction(TaskAction):
-    name = 'Set Interpreted Age...'
-    #accelerator = 'Ctrl+t'
-    method = 'set_interpreted_age'
-
-
 #============= EOF =============================================

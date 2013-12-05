@@ -28,14 +28,16 @@ from pychron.loggable import Loggable
 class InterpretedAgeFactory(Loggable):
     groups=List
     def traits_view(self):
-        cols=[ObjectColumn(name='identifier'),
+        cols=[ObjectColumn(name='identifier', editable=False),
               ObjectColumn(name='preferred_age_kind',
                            editor=EnumEditor(name='preferred_ages')),
-              ObjectColumn(name='preferred_age_value', format='%0.3f'),
-              ObjectColumn(name='preferred_age_error', format='%0.4f'),
+              ObjectColumn(name='preferred_age_value', format='%0.3f',editable=False),
+              ObjectColumn(name='preferred_age_error', format='%0.4f',editable=False),
+              ObjectColumn(name='nanalyses', editable=False),
+
               CheckboxColumn(name='use',label='Save DB')]
         editor=TableEditor(columns=cols)
-        v=View(Item('groups', editor=editor),
+        v=View(Item('groups', show_label=False, editor=editor),
                resizable=True,
                kind='livemodal',
                buttons=['OK','Cancel'])
