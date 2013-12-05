@@ -229,6 +229,8 @@ class Magnet(SpectrometerDevice):
             return 0
 
         dac = polyval(polyfit(xs, ys, fit), mass)
+        self.debug('map mass to dac {} >> {}'.format(mass, dac))
+
         return dac
 
     def map_dac_to_isotope(self, dac=None, det=None):

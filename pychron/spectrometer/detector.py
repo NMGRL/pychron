@@ -36,10 +36,13 @@ charge = 1.6021764874e-19
 class Detector(SpectrometerDevice):
     name = Str
     relative_position = Float(1)
+
     kind = Str
 
     deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
     _deflection = Float
+
+    deflection_correction_sign=Int(1)
 
     _deflection_correction_factors = None
     #    intensity = Property(depends_on='spectrometer:intensity_dirty')
@@ -108,11 +111,14 @@ class Detector(SpectrometerDevice):
         except (ValueError, TypeError):
             self._deflection = 0
 
-    def get_deflection_correction(self):
+    def get_deflection_correction(self, current=False):
+        if current:
+            self.read_deflection()
+
         de = self._deflection
         dev = polyval(self._deflection_correction_factors, [de])[0]
 
-        return dev
+        return self.deflection_correction_sign*dev
 
     def map_dac_to_deflection(self, dac):
         c = self._deflection_correction_factors[:]
