@@ -1223,7 +1223,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #        return self._retrieve_item(meas_MeasurementTable, value, key='hash')
 
     def get_molecular_weight(self, value):
-        return self._retrieve_item(gen_MolecularWeightTable, value, )
+        return self._retrieve_item(gen_MolecularWeightTable, value)
 
     def get_user(self, value):
         return self._retrieve_item(gen_UserTable, value, )

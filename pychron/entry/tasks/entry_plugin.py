@@ -22,12 +22,18 @@ from pyface.action.group import Group
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction
+from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction
+from pychron.entry.molecular_weight_factory import MolecularWeightFactory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class EntryPlugin(BaseTaskPlugin):
     id = 'pychron.entry'
+
+    def _service_offers_default(self):
+        so1=self.service_offer_factory(factory=MolecularWeightFactory,
+                                       protocol=MolecularWeightFactory)
+        return [so1]
 
     def _my_task_extensions_default(self):
         return [
@@ -48,8 +54,12 @@ class EntryPlugin(BaseTaskPlugin):
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
                                    path='MenuBar/Edit',
-                                   absolute_position='first')
-                ])]
+                                   absolute_position='first'),
+                    SchemaAddition(id='molecular_weight_entry',
+                                   factory=AddMolecularWeightAction,
+                                   path='MenuBar/Edit',
+                                   absolute_position='first'
+                                   )])]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.entry.labnumber',

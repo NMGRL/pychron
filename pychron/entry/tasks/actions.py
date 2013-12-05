@@ -22,6 +22,13 @@ from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+class AddMolecularWeightAction(Action):
+    name='Add/Edit Molecular Weight'
+    def perform(self,event):
+        app = event.task.window.application
+        s=app.get_service('pychron.entry.molecular_weight_factory.MolecularWeightFactory')
+        s.add_molecular_weight()
+
 class LabnumberEntryAction(Action):
     name = 'Labnumber Entry'
     accelerator = 'Ctrl+Shift+l'
