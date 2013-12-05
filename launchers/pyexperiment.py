@@ -22,16 +22,15 @@ import os
 #============= local library imports  ==========================
 
 version_id = ''
+setup_version_id='_dev'
 from helpers import build_version
-build_version(version_id)
+build_version(version_id, setup_ver=setup_version_id)
 
-# PYC = os.path.join(merc, 'pychron_source.zip')
-# sys.path.insert(0, PYC)
 
 def main():
-    '''
+    """
         entry point
-    '''
+    """
     from pychron.envisage.pychron_run import launch
     from pychron.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
@@ -57,26 +56,7 @@ def main():
 
     from pychron.applications.pyexperiment import PyExperiment as app
     launch(app)
-    os._exit(0)
 
-
-def profile_code():
-    '''
-    '''
-
-    import cProfile
-#    app_path = '/Users/Ross/Programming/pychron_beta/application_launch.py'
-#    l = open(app_path, 'r')
-    cProfile.run('main()', 'profile.out')
-    import pstats
-    p = pstats.Stats('profile.out')
-    p.strip_dirs()
-    p.sort_stats('time')
-
-    p.print_stats(1000)
-
-    os._exit(0)
-#    sys.exit()
 if __name__ == '__main__':
 
     main()
