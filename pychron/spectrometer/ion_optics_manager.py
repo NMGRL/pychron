@@ -249,17 +249,16 @@ class IonOpticsManager(Manager):
 
             det = spec.get_detector(ref)
 
-            # correct for hv
-            dac_d /= spec.get_hv_correction(current=True)
-
-            # correct for deflection
-            dac_d = dac_d - det.get_deflection_correction()
-
-            # convert dac to axial units
-            dac_a = dac_d / det.relative_position
-
+            ## correct for hv
+            #dac_d /= spec.get_hv_correction(current=True)
+            #
+            ## correct for deflection
+            #dac_d = dac_d - det.get_deflection_correction(current=True)
+            #
+            ## convert dac to axial units
+            #dac_a = dac_d / det.relative_position
+            dac_a=spec.uncorrect_dac(det, dac_d)
             self.info('converted to axial units {}'.format(dac_a))
-            #             args = ref, isotope, dac_a
 
             if save:
                 save = True

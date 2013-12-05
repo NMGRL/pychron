@@ -272,12 +272,15 @@ class Spectrometer(SpectrometerDevice):
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
             relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            deflection_corrrection_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
+
             color = self.config_get(config, name, 'color', default='black')
             default_state = self.config_get(config, name, 'default_state', default=True, cast='boolean')
             isotope = self.config_get(config, name, 'isotope')
             kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
             self.add_detector(name=name,
                               relative_position=relative_position,
+                              deflection_corrrection_sign=deflection_corrrection_sign,
                               color=color,
                               active=default_state,
                               isotope=isotope,
@@ -362,8 +365,8 @@ class Spectrometer(SpectrometerDevice):
         
         '''
         # correct for deflection
-        dev = det.get_deflection_correction()
 
+        dev = det.get_deflection_correction(current=True)
         dac += dev
 
         #        #correct for hv
@@ -371,8 +374,8 @@ class Spectrometer(SpectrometerDevice):
         return dac
 
     def uncorrect_dac(self, det, dac):
-        dac /= self.get_hv_correction()
-        dev = det.get_deflection_correction()
+        dac /= self.get_hv_correction(current=True)
+        dev = det.get_deflection_correction(current=True)
         dac -= dev
         dac /= det.relative_position
         return dac
