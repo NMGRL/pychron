@@ -62,11 +62,15 @@ class Ideogram(BaseArArFigure):
 
         omit = self._get_omitted(self.sorted_analyses,
                                  omit='omit_ideo')
-
+        omit=set(omit)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.name))(po, plotobj, pid)
-            #add limits tool
-            #self._add_limits_tool(plotobj)
+            args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            if args:
+                scatter, omits=args
+                for i,ai in enumerate(self.sorted_analyses):
+                    ai.filter_omit=i in omits
+
+                omit=omit.union(set(omits))
 
         graph.set_x_limits(min_=self.xmi, max_=self.xma,
                            pad='0.05')
@@ -80,9 +84,9 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        #print 'ideo omit', self.group_id, omit, plots
+        print 'ideo omit', self.group_id, omit, plots
         if omit:
-            self._rebuild_ideo(omit)
+            self._rebuild_ideo(list(omit))
 
     def max_x(self, attr):
         try:
@@ -97,12 +101,16 @@ class Ideogram(BaseArArFigure):
                     for ai in self._unpack_attr(attr)])
         except ValueError:
             return 0
+
+
     #===============================================================================
     # plotters
     #===============================================================================
 
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
+
+        omits=self._get_aux_plot_omits(po, ys)
 
         scatter = self._add_aux_plot(ys,
                                      title, pid)
@@ -117,14 +125,14 @@ class Ideogram(BaseArArFigure):
             self._add_point_labels(scatter)
 
         self._add_scatter_inspector(scatter)
-        return scatter
+        return scatter, omits
 
     def _plot_analysis_number(self, *args, **kw):
-        self.__plot_analysis_number(*args, **kw)
+        return self.__plot_analysis_number(*args, **kw)
 
     def _plot_analysis_number_stacked(self, *args, **kw):
         kw['stacked'] = True
-        self.__plot_analysis_number(*args, **kw)
+        return self.__plot_analysis_number(*args, **kw)
 
     def __plot_analysis_number(self, po, plot, pid, stacked=False):
         xs = self.xs
@@ -157,7 +165,9 @@ class Ideogram(BaseArArFigure):
         self.graph.set_y_limits(min_=0,
                                 max_=max(ys) + 1,
                                 plotid=pid)
-        return scatter
+
+        omits=self._get_aux_plot_omits(po, ys)
+        return scatter, omits
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -267,10 +277,12 @@ class Ideogram(BaseArArFigure):
             #sel = [i for i, a in enumerate(sorted_ans)
             #            if a.temp_status]
             sel = self._get_omitted(sorted_ans, omit='omit_ideo')
+            print 'update graph meta'
             self._rebuild_ideo(sel)
 
 
     def _rebuild_ideo(self, sel):
+        print 'rebuild ideo {}'.format(sel)
         graph = self.graph
 
         if len(graph.plots) > 1:
@@ -289,6 +301,7 @@ class Ideogram(BaseArArFigure):
 
         def f(a):
             i, _ = a
+            #print a, i not in sel, sel
             return i not in sel
 
         d = zip(self.xs, self.xes)

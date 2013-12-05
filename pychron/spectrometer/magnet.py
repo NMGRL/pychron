@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Any, Property, Float, Event
+from scipy import optimize
+from traits.api import HasTraits, List, Any, Property, Float, Event, Str
 from traitsui.api import View, Item, VGroup, HGroup, Spring, \
     TableEditor, RangeEditor
 from traitsui.table_column import ObjectColumn
@@ -24,8 +25,9 @@ from traitsui.table_column import ObjectColumn
 import os
 import csv
 import time
-from numpy import polyval, polyfit, array, min, nonzero
+from numpy import polyval, polyfit, array, min, nonzero, poly1d
 #============= local library imports  ==========================
+from pychron.helpers.fits import convert_fit
 from pychron.paths import paths
 # import math
 # from pychron.graph.graph import Graph
@@ -71,6 +73,8 @@ class Magnet(SpectrometerDevice):
     detector = Any
 
     dac_changed = Event
+
+    fitfunc=Str('parabolic')
 
     def update_field_table(self, isotope, dac):
         """
@@ -164,23 +168,28 @@ class Magnet(SpectrometerDevice):
                 reader = csv.reader(f)
                 xs = []
                 ys = []
-                cp = []
                 isos = []
 
                 molweights = self.spectrometer.molecular_weights
                 for line in reader:
+                    try:
+                        fit=int(convert_fit(line[0]))
+                    except ValueError:
+                        pass
+
                     try:
                         iso = line[0]
                         x, y = molweights[iso], float(line[1])
                         isos.append(iso)
                         xs.append(x)
                         ys.append(y)
-                        cp.append(CalibrationPoint(x=x, y=y))
-
                     except KeyError:
                         self.debug('no molecular weight for {}'.format(line[0]))
 
-            return array(isos), array(xs), array(ys)
+            if fit is None:
+                fit='parabolic'
+
+            return array(isos), array(xs), array(ys), fit
         else:
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
 
@@ -202,15 +211,24 @@ class Magnet(SpectrometerDevice):
 
     def map_dac_to_mass(self, d):
         _, xs, ys = self._get_mftable()
-        a, b, c = polyfit(xs, ys, 2)
-        c = c - d
-        m = (-b + (b * b - 4 * a * c) ** 0.5) / (2 * a)
+        args = polyfit(xs, ys, 2)
 
-        return m
+        args[-1] -= d
+        mass = optimize.brentq(poly1d(args), 0, 200)
+        #c = c - d
+        #m = (-b + (b * b - 4 * a * c) ** 0.5) / (2 * a)
+
+        return mass
 
     def map_mass_to_dac(self, mass):
-        _, xs, ys = self._get_mftable()
-        dac = polyval(polyfit(xs, ys, 2), mass)
+        _, xs, ys, fit= self._get_mftable()
+
+        fit=convert_fit(fit)
+        if not isinstance(fit, int):
+            self.warning('invalid magnet dac fit= {}'.format(fit))
+            return 0
+
+        dac = polyval(polyfit(xs, ys, fit), mass)
         return dac
 
     def map_dac_to_isotope(self, dac=None, det=None):

@@ -38,7 +38,6 @@ from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
-from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
 
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
@@ -97,9 +96,9 @@ class FigureTask(AnalysisEditTask):
         self.plotter_options_pane = PlotterOptionsPane()
         self.figure_selector_pane = FigureSelectorPane()
 
-        fs = [fi.name for fi in self.manager.db.get_figures()]
-        if fs:
-            self.figure_selector_pane.trait_set(figures=fs, figure=fs[0])
+        #fs = [fi.name for fi in self.manager.db.get_figures()]
+        #if fs:
+        #    self.figure_selector_pane.trait_set(figures=fs, figure=fs[0])
 
         return panes + [self.plotter_options_pane,
                         self.figure_selector_pane,

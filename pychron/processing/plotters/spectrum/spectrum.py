@@ -58,7 +58,7 @@ class Spectrum(BaseArArFigure):
 
         #self._plot_age_spectrum(graph.plots[0], 0)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.name))(po, plotobj, pid)
+            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
 
 
     def max_x(self, attr):

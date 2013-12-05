@@ -33,7 +33,7 @@ class IdeogramOptions(AgeOptions):
     centered_range = Float(0.5)
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
-    plot_option_name = 'relative_probability'
+    plot_option_name = 'Ideogram'
 
     def _get_x_axis_group(self):
         vg = super(IdeogramOptions, self)._get_x_axis_group()

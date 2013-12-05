@@ -64,7 +64,7 @@ class InverseIsochron(Isochron):
         #self._plot_inverse_isochron(graph.plots[0], 0)
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.name))(po, plotobj, pid + 1)
+            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid + 1)
 
         #for si in self.sorted_analyses:
         #    print si.record_id, si.group_id

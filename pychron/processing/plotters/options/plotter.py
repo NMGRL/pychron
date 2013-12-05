@@ -184,13 +184,14 @@ class PlotterOptions(BasePlotterOptions):
         cols = [checkbox_column(name='use', ),
                 object_column(name='name',
                               width=130,
-                              editor=EnumEditor(name='plot_names')),
+                              editor=EnumEditor(name='names')),
                 object_column(name='scale'),
                 object_column(name='height',
                               format_func=lambda x: str(x) if x else ''),
                 checkbox_column(name='show_labels', label='Labels'),
                 checkbox_column(name='x_error', label='X Error'),
-                checkbox_column(name='y_error', label='Y Error')]
+                checkbox_column(name='y_error', label='Y Error'),
+                object_column(name='filter_str', label='Filter')]
 
         aux_plots_grp = Item('aux_plots',
                              style='custom',

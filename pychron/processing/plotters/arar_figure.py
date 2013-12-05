@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import re
 from chaco.array_data_source import ArrayDataSource
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property
@@ -118,7 +119,9 @@ class BaseArArFigure(HasTraits):
             r = ai.temp_status
             if omit:
                 r = r or getattr(ai, omit)
-            return r or ai.tag == 'omit'
+
+            print ai.aliquot, r, omit, ai.filter_omit
+            return r or ai.tag == 'omit' or ai.filter_omit
 
         return [i for i, ai in enumerate(ans)
                 if test(ai)]
@@ -126,7 +129,8 @@ class BaseArArFigure(HasTraits):
     def _set_selected(self, ans, sel):
         #print self.group_id, sel
         for i, a in enumerate(ans):
-            a.temp_status = 1 if i in sel else 0
+            if not a.filter_omit:
+                a.temp_status = 1 if i in sel else 0
 
         self.refresh_unknowns_table = True
         #if not self._suppress_table_update:
@@ -212,8 +216,19 @@ class BaseArArFigure(HasTraits):
     #===========================================================================
     # aux plots
     #===========================================================================
-    def _plot_radiogenic_yield(self, po, plot, pid):
+    def _get_aux_plot_omits(self, po, ys):
+        omits = []
+        fs = po.filter_str
+        if fs:
+            m=re.match(r'[A-Za-z]+', fs)
+            if m:
+                k=m.group(0)
+                ts=[(eval(fs, {k:yi}),i) for i, yi in enumerate(ys)]
+                omits=[idx for ti,idx in ts if ti]
 
+        return omits
+
+    def _plot_radiogenic_yield(self, po, plot, pid):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('rad40_percent')])
         return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es)

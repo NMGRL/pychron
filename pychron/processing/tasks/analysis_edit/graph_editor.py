@@ -18,7 +18,6 @@
 from reportlab.lib.pagesizes import letter
 from traits.api import Any, List, on_trait_change, Instance, Property, Event, File
 from traitsui.api import View, UItem, InstanceEditor
-from pychron.codetools.simple_timeit import timethis
 #============= standard library imports ========================
 from numpy import asarray
 import os
@@ -236,20 +235,17 @@ class GraphEditor(BaseUnknownsEditor):
             #aa=self.unknowns
 
             if ans:
-                ans = timethis(self.processor.make_analyses,
-                               args=(ans,),
-                               kwargs={'exclude': exclude,
-                                       'calculate_age': self.calculate_age,
-                                       'unpack': self.unpack_peaktime},
-                               msg='MAKE ANALYSES TOTAL')
+                ans=self.processor.make_analyses(ans, exclude=exclude,
+                                                 calculate_age=self.calculate_age,
+                                                 unpack=self.unpack_peaktime)
 
-                #unks = self.processor.make_analyses(list(aa),
-                #                                    exclude=exclude)
-                #ans = unks
-            #    if bb:
-            #        ans.extend(bb)
-            #else:
-            #    ans = bb
+                #ans = timethis(self.processor.make_analyses,
+                #               args=(ans,),
+                #               kwargs={'exclude': exclude,
+                #                       'calculate_age': self.calculate_age,
+                #                       'unpack': self.unpack_peaktime},
+                #               msg='MAKE ANALYSES TOTAL')
+
 
             if compress_groups:
                 # compress groups

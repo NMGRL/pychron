@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any, Either
+    Date, Any, Either, Bool
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -30,7 +30,6 @@ from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
-from pychron.pychron_constants import ARGON_KEYS
 from pychron.helpers.formatting import calc_percent_error
 
 Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs')
@@ -47,6 +46,10 @@ class Analysis(ArArAge):
     step = Str
 
     aliquot_step_str = Str
+
+    temp_status = Int
+    filter_omit = Bool
+    tag = Str
 
     omit_ideo = False
     omit_spec = False
@@ -87,7 +90,8 @@ class DBAnalysis(Analysis):
     #analysis_summary_klass = DBAnalysisSummary
     analysis_view_klass = DBAnalysisView
     #     status = Int
-    temp_status = Int
+
+
     record_id = Str
     uuid = Str
 
@@ -119,7 +123,7 @@ class DBAnalysis(Analysis):
     reprate = Either(Float, Str)
 
     analysis_type = Str
-    tag = Str
+
     timestamp = Float
     rundate = Date
 
@@ -662,7 +666,7 @@ class DBAnalysis(Analysis):
     def _get_status_text(self):
         r = 'OK'
 
-        if self.temp_status != 0:
+        if self.temp_status != 0 or self.filter_omit:
             r = 'Omitted'
 
         return r
