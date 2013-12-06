@@ -173,13 +173,13 @@ class AutomatedRunSpec(Loggable):
         return s
 
     def get_estimated_duration(self, script_context, warned):
-        '''
+        """
             use the pyscripts to calculate etd
-            
+
             script_context is a dictionary of already loaded scripts
-            
+
             this is a good point to set executable as well
-        '''
+        """
         if not self._estimated_duration or self._changed:
             s = self.test_scripts(script_context, warned)
 
