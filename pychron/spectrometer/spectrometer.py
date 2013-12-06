@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import random
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Event, Bool
+    Any, Enum, Str, DelegatesTo, Bool
 
 #============= standard library imports ========================
 from ConfigParser import ConfigParser
@@ -94,7 +94,7 @@ class Spectrometer(SpectrometerDevice):
     dc_npeak_centers = Int(3)
 
     _alive = False
-    intensity_dirty = Event
+    #intensity_dirty = Event
 
     testcnt = 0
     send_config_on_startup = Bool
@@ -206,7 +206,7 @@ class Spectrometer(SpectrometerDevice):
         p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
-            relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            #relative_position = self.config_get(config, name, 'relative_position', cast='float')
             deflection_corrrection_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
             color = self.config_get(config, name, 'color', default='black')
@@ -214,7 +214,7 @@ class Spectrometer(SpectrometerDevice):
             isotope = self.config_get(config, name, 'isotope')
             kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
             self.add_detector(name=name,
-                              relative_position=relative_position,
+                              #relative_position=relative_position,
                               deflection_corrrection_sign=deflection_corrrection_sign,
                               color=color,
                               active=default_state,
@@ -257,7 +257,11 @@ class Spectrometer(SpectrometerDevice):
             if tagged:
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
-        self.intensity_dirty = dict(zip(keys, signals))
+        for k, v in zip(keys, signals):
+            det=self.get_detector(k)
+            det.set_intensity(v)
+
+        #self.intensity_dirty = dict(zip(keys, signals))
         return keys, signals
 
     def get_intensity(self, dkeys):
@@ -265,7 +269,6 @@ class Spectrometer(SpectrometerDevice):
             dkeys: str or tuple of strs
 
         """
-        #        index = DETECTOR_ORDER.index(key)
         data = self.get_intensities()
         if data is not None:
             keys, signals = data
@@ -301,9 +304,6 @@ class Spectrometer(SpectrometerDevice):
         #dac is already in detector units.
         #mftable has mappings for each detector
 
-        #convert to detector units
-        #dac *= det.relative_position
-
         #correct for deflection
         dev = det.get_deflection_correction(current=True)
         dac += dev
@@ -317,9 +317,7 @@ class Spectrometer(SpectrometerDevice):
             inverse of correct_dac
         """
         dac /= self.get_hv_correction(current=True)
-        dev = det.get_deflection_correction(current=True)
-        dac -= dev
-        dac /= det.relative_position
+        dac -= det.get_deflection_correction(current=True)
         return dac
 
     #===============================================================================

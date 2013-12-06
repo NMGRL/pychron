@@ -15,14 +15,26 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
-    Label, Spring, ListEditor, Group, InstanceEditor, UItem, ButtonEditor
+    Label, Spring, ListEditor, Group, InstanceEditor, UItem, ButtonEditor, TableEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.table_column import ObjectColumn, TableColumn
 from pychron.envisage.tasks.pane_helpers import spacer
 
+
+class ColorColumn(TableColumn):
+    cell_color_name=Str
+    def get_cell_color( self, object):
+        if self.cell_color_name:
+            return getattr(object, self.cell_color_name)
+        return self.cell_color_
+
+    def get_value(self, *args, **kw):
+        return
 
 class ScanPane(TraitsTaskPane):
     def traits_view(self):
@@ -39,19 +51,16 @@ class ReadoutPane(TraitsDockPane):
 class IntensitiesPane(TraitsDockPane):
     id = 'pychron.spectrometer.intensities'
     name = 'Intensities'
+
     def traits_view(self):
-        intensity_grp = VGroup(
-                   HGroup(spring, Label('Intensity'),
-                          Spring(springy=False, width=90),
-                          Label(u'1\u03c3'),
-                          Spring(springy=False, width=87)),
-                   Item('detectors',
-                       show_label=False,
-                       editor=ListEditor(style='custom', mutable=False,
-                                         editor=InstanceEditor(view='intensity_view'))),
-                   show_border=True
-                   )
-        v = View(intensity_grp)
+        cols=[ColorColumn(cell_color_name='color',label='Color'),
+              ObjectColumn(name='name', width=175),
+              ObjectColumn(name='intensity', width=100),
+              ObjectColumn(name='std', label=u'\u00b11\u03c3')]
+        g=UItem('detectors', editor=TableEditor(columns=cols,
+                                                sortable=False,
+                                                editable=False))
+        v=View(g)
         return v
 
 class ControlsPane(TraitsDockPane):
