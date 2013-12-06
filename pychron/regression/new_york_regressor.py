@@ -91,9 +91,14 @@ class YorkRegressor(OLSRegressor):
 
     def _calculate_xy_bar(self, W):
         xs, ys = self.xs, self.ys
+
         sW = sum(W)
-        x_bar = sum(W * xs) / sW
-        y_bar = sum(W * ys) / sW
+        try:
+            x_bar = sum(W * xs) / sW
+            y_bar = sum(W * ys) / sW
+        except ZeroDivisionError:
+            x_bar,y_bar=0,0
+
         return x_bar, y_bar
 
     def get_slope(self):

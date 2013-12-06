@@ -38,6 +38,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 class TablePane(TraitsDockPane):
     append_button = Button
     replace_button = Button
+    clear_button = Button
 
     items = List
 
@@ -53,7 +54,6 @@ class TablePane(TraitsDockPane):
     def dump(self):
         pass
 
-
     def traits_view(self):
         v = View(VGroup(
             UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
@@ -63,12 +63,7 @@ class TablePane(TraitsDockPane):
                                                   selected='selected',
                                                   dclicked='dclicked',
                                                   update='update_needed',
-                                                  refresh='refresh_needed'
-                                                  #                                                            auto_resize_rows=True
-            ),
-            )
-        )
-        )
+                                                  refresh='refresh_needed'))))
         return v
 
 
@@ -78,8 +73,10 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
 
     _add_tooltip = '''(u) Append unknowns'''
     _replace_tooltip = '''(Shift+u) Replace unknowns'''
+    _clear_tooltip = '''Clear unknowns'''
     configure_button = Button
-    clear_button = Button
+    clear_history_button = Button
+
     history_limit = Int(10)
 
     configure_history_tooltip = 'Configure previous selections'
@@ -189,7 +186,10 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             HGroup(icon_button_editor('append_button', 'add',
                                       tooltip=self._add_tooltip),
                    icon_button_editor('replace_button', 'arrow_refresh',
-                                      tooltip=self._replace_tooltip)),
+                                      tooltip=self._replace_tooltip),
+                   icon_button_editor('clear_button', 'delete',
+                                      tooltip=self._clear_tooltip),
+                   ),
             HGroup(UItem('previous_selection',
                          editor=EnumEditor(name='previous_selections')),
                    icon_button_editor('configure_button', 'cog',
@@ -210,15 +210,17 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     def configure_view(self):
         v = View(
             Item('history_limit', label='Max. N History'),
-            icon_button_editor('clear_button', 'delete',
+            icon_button_editor('clear_history_button', 'delete',
                                label='Clear',
                                tooltip=self.clear_prev_selection_tooltip),
             buttons=['OK', 'Cancel', 'Revert'],
-            title='Configure History'
-        )
+            title='Configure History')
         return v
 
     def _clear_button_fired(self):
+        self.items=[]
+
+    def _clear_history_button_fired(self):
         d = self._open_shelve()
         d.update(dict())
         d.close()
@@ -244,6 +246,7 @@ class ReferencesPane(HistoryTablePane):
 
     _add_tooltip = '''(r) Append references'''
     _replace_tooltip = ''' (Shift+r) Replace references'''
+    _clear_tooltip = '''Clear references'''
 
 
 class ControlsPane(TraitsDockPane):
