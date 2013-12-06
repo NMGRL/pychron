@@ -232,10 +232,11 @@ class MagnetScan(SpectrometerTask):
         spec = self.spectrometer
         mag = spec.magnet
         if map_mass:
+            detname=self.reference_detector.name
             ds = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(sm))
+                                  mag.map_mass_to_dac(sm, detname))
             de = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(em))
+                                  mag.map_mass_to_dac(em, detname))
 
 
             #        de = mag.calculate_dac(em)

@@ -103,6 +103,9 @@ class IonOpticsManager(Manager):
         spec = self.spectrometer
         mag = spec.magnet
 
+        det = spec.get_detector(detector)
+        self.debug('detector {}'.format(det))
+
         if use_dac:
             dac = pos
         else:
@@ -116,10 +119,8 @@ class IonOpticsManager(Manager):
                 mag._mass = pos
 
             # pos is mass i.e 39.962
-            dac = mag.map_mass_to_dac(pos)
+            dac = mag.map_mass_to_dac(pos, det.name)
 
-        det = spec.get_detector(detector)
-        self.debug('detector {}'.format(det))
         if det:
             dac = spec.correct_dac(det, dac)
 
@@ -132,7 +133,7 @@ class IonOpticsManager(Manager):
 
         molweights = spec.molecular_weights
         mass = molweights[iso]
-        dac = spec.magnet.map_mass_to_dac(mass)
+        dac = spec.magnet.map_mass_to_dac(mass, det.name)
 
         # correct for deflection
         return spec.correct_dac(det, dac)

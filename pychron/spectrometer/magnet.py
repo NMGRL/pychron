@@ -25,7 +25,7 @@ from traitsui.table_column import ObjectColumn
 import os
 import csv
 import time
-from numpy import polyval, polyfit, array, min, nonzero, poly1d
+from numpy import polyval, polyfit, min, nonzero, poly1d
 #============= local library imports  ==========================
 from pychron.helpers.fits import convert_fit
 from pychron.paths import paths
@@ -76,27 +76,28 @@ class Magnet(SpectrometerDevice):
 
     fitfunc=Str('parabolic')
 
-    def update_field_table(self, isotope, dac):
+    def update_field_table(self, det,  isotope, dac):
         """
 
             dac needs to be in axial units
         """
-
         self.info('update mftable {} {}'.format(isotope, dac))
 
-        isos, xs, ys = self._get_mftable()
-
+        #isos, xs, ys = self._get_mftable()
+        d, fit, header=self._get_mftable()
+        isos,xs,ys=d[det]
         try:
             refindex = min(nonzero(isos == isotope)[0])
 
             delta = dac - ys[refindex]
             # need to calculate all ys
             # using simple linear offset
-            ys += delta
+            #ys += delta
+            for k,(iso,xx,yy) in d.iteritems():
+                d[k]=iso, xx, yy+delta
 
-            self.dump(isos, xs, ys)
-
-            self._mftable = isos, xs, ys
+            self.dump(isos, fit, header,d)
+            #self._mftable = isos, xs, ys
 
         except ValueError:
             import traceback
@@ -106,18 +107,15 @@ class Magnet(SpectrometerDevice):
 
     def mftable_view(self):
         cols = [ObjectColumn(name='x', label='Mass'),
-                ObjectColumn(name='y', label='DAC'),
-        ]
+                ObjectColumn(name='y', label='DAC')]
+
         teditor = TableEditor(columns=cols, editable=False)
         v = View(HGroup(
             Item('calibration_points', editor=teditor, show_label=False),
-            Item('graph', show_label=False, style='custom')
-        ),
+            Item('graph', show_label=False, style='custom')),
                  width=700,
                  height=500,
-                 resizable=True
-
-        )
+                 resizable=True)
         return v
 
     #===============================================================================
@@ -166,30 +164,59 @@ class Magnet(SpectrometerDevice):
         if os.path.isfile(p):
             with open(p, 'U') as f:
                 reader = csv.reader(f)
-                xs = []
-                ys = []
-                isos = []
+                #xs = []
+                #ys = []
+                #isos = []
 
                 molweights = self.spectrometer.molecular_weights
+                fit = convert_fit(reader.next()[0])
+                header = map(str.strip, reader.next()[1:])
+
+                d = {}
                 for line in reader:
+                    iso = line[0]
                     try:
-                        fit=int(convert_fit(line[0]))
-                    except ValueError:
-                        pass
-
-                    try:
-                        iso = line[0]
-                        x, y = molweights[iso], float(line[1])
-                        isos.append(iso)
-                        xs.append(x)
-                        ys.append(y)
+                        mw = molweights[iso]
                     except KeyError:
-                        self.debug('no molecular weight for {}'.format(line[0]))
+                        continue
 
-            if fit is None:
-                fit='parabolic'
+                    for i, li in enumerate(line[1:]):
+                        hi = header[i]
+                        try:
+                            li=float(li)
+                        except (TypeError, ValueError):
+                            continue
 
-            return array(isos), array(xs), array(ys), fit
+                        if hi in d:
+                            isos, xs, ys = d[hi]
+                            isos.append(iso)
+                            xs.append(mw)
+                            ys.append(li)
+                        else:
+                            d[hi] = [iso],[mw],[li]
+
+                            #for line in reader:
+                            #    try:
+                            #        fit=int(convert_fit(line[0]))
+                            #    except ValueError:
+                            #        pass
+                            #
+                            #    iso = line[0]
+                            #
+                            #    try:
+                            #        x, y = molweights[iso]
+                            #    except KeyError:
+                            #        self.debug('no molecular weight for {}'.format(line[0]))
+                            #        continue
+                            #
+                            #    isos.append(iso)
+                            #    #xs.append(x)
+                            #    #ys.append(y)
+                            #
+            #if fit is None:
+            #    fit='parabolic'
+            #return array(isos), array(xs), array(ys), fit
+            return d, fit, header
         else:
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
 
@@ -198,30 +225,48 @@ class Magnet(SpectrometerDevice):
         if d is not None:
             self._dac = d
 
-    def dump(self, isos, xs, ys):
+    #def dump(self, isos, xs, ys):
+    def dump(self, isos,fit, header, d):
         p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
         with open(p, 'w') as f:
             writer = csv.writer(f)
-            for a in zip(isos, ys):
+            writer.writerow([fit])
+            header.insert(0, '#iso')
+            writer.writerow(header)
+
+            for iso in isos:
+                a=(iso, )+ d[iso]
                 writer.writerow(a)
+            #for a in zip(isos, ys):
+            #    writer.writerow(a)
 
             #===============================================================================
             # mapping
             #===============================================================================
 
-    def map_dac_to_mass(self, d):
-        _, xs, ys = self._get_mftable()
-        args = polyfit(xs, ys, 2)
+    def map_dac_to_mass(self, dac, detname):
+        #_, xs, ys = self._get_mftable()
+        d, fit, _ =self._get_mftable()
+        _, xs, ys = d[detname]
 
-        args[-1] -= d
-        mass = optimize.brentq(poly1d(args), 0, 200)
+        fit = convert_fit(fit)
+        if not isinstance(fit, int):
+            self.warning('invalid magnet dac fit= {}'.format(fit))
+            return 0
+
+        args = polyfit(xs, ys, fit)
+
+        args[-1] -= dac
+        mass = optimize.brent(poly1d(args))
         #c = c - d
         #m = (-b + (b * b - 4 * a * c) ** 0.5) / (2 * a)
 
         return mass
 
-    def map_mass_to_dac(self, mass):
-        _, xs, ys, fit= self._get_mftable()
+    def map_mass_to_dac(self, mass, detname):
+        #_, xs, ys, fit= self._get_mftable()
+        d, fit, _ = self._get_mftable()
+        _, xs, ys = d[detname]
 
         fit=convert_fit(fit)
         if not isinstance(fit, int):
@@ -242,7 +287,7 @@ class Magnet(SpectrometerDevice):
         if det:
             dac = self.spectrometer.uncorrect_dac(det, dac)
 
-        m = self.map_dac_to_mass(dac)
+        m = self.map_dac_to_mass(dac, det.name)
         molweights = self.spectrometer.molecular_weights
         return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
@@ -254,12 +299,11 @@ class Magnet(SpectrometerDevice):
 
     def _set_mass(self, m):
     #        print 'set mass', m
-        dac = self.map_mass_to_dac(m)
         if self.detector:
+            dac = self.map_mass_to_dac(m, self.detector.name)
             dac = self.spectrometer.correct_dac(self.detector, dac)
-
-        self._mass = m
-        self.dac = dac
+            self._mass = m
+            self.dac = dac
 
     def _validate_dac(self, d):
         return self._validate_float(d)
