@@ -329,7 +329,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     #if self.active_editor.unknowns:
                     self.unknowns_pane.items = self.active_editor.unknowns
 
-    @on_trait_change('active_editor:tool:save_event')
+    @on_trait_change('active_editor:save_event')
     def _handle_save_event(self):
         self._save_to_db()
 

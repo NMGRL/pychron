@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from threading import Thread
 #from chaco.label import Label
-from traits.api import Instance, Dict, Bool, Any
+from traits.api import Instance, Dict, Bool, Any, on_trait_change
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import Inf, polyfit
@@ -45,6 +45,10 @@ class IsotopeEvolutionEditor(GraphEditor):
     unpack_peaktime = True
     update_on_unknowns = False
     calculate_age = True
+
+    @on_trait_change('tool:save_event')
+    def _handle_save_event(self):
+        self.save_event=True
 
     def _set_name(self):
         if not self.name:
