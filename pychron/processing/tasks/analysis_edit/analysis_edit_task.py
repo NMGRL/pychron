@@ -329,6 +329,10 @@ class AnalysisEditTask(BaseBrowserTask):
                     #if self.active_editor.unknowns:
                     self.unknowns_pane.items = self.active_editor.unknowns
 
+    @on_trait_change('active_editor:tool:save_event')
+    def _handle_save_event(self):
+        self._save_to_db()
+
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
         if self.plot_editor_pane:
@@ -448,14 +452,14 @@ class AnalysisEditTask(BaseBrowserTask):
 
             s = self._get_selected_analyses(unks)
             if s:
-                if is_append:
-
-                    unks = self.active_editor.unknowns
-                    unks.extend(s)
-
-                    #self.active_editor.unknowns=unks
-                else:
-                    self.active_editor.unknowns = s
+                self.active_editor.set_items(s, is_append)
+                #if is_append:
+                #    self.active_editor.set_items()
+                #    #unks = self.active_editor.unknowns
+                #    #unks.extend(s)
+                #    #self.active_editor.unknowns=unks
+                #else:
+                #    self.active_editor.set_items(s)
 
                 #print 'asd', len(self.active_editor.unknowns)
                 #self.unknowns_pane.items=self.active_editor.unknowns

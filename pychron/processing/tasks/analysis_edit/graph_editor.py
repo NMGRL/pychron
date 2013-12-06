@@ -92,15 +92,24 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def set_items(self, unks):
+    def set_items(self, unks, is_append=False):
+        unks = self.processor.make_analyses(unks,
+                                            calculate_age=self.calculate_age,
+                                            unpack=self.unpack_peaktime)
+
+        if is_append:
+            punks=self.unknowns
+            punks.extend(unks)
+            unks=punks
+
         self.unknowns = unks
 
     @on_trait_change('unknowns[]')
     def _update_unknowns(self, obj, name, old, new):
-        #print '11111', len(self.unknowns)
         self._gather_unknowns(True)
         #print '22222', new, len(self.unknowns)
         if self.unknowns:
+            #if new[0] and issubclass(type(new[0]), Analysis):
             if self.auto_plot:
                 self.rebuild_graph()
 

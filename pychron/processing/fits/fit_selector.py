@@ -35,6 +35,7 @@ class FitSelector(HasTraits):
     fits = List(Fit)
     update_needed = Event
     suppress_refresh_unknowns = Bool
+    save_event= Event
 
     fit_klass = Fit
     command_key = Bool

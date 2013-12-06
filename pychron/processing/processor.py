@@ -20,7 +20,7 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.expression import and_
+from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
@@ -51,7 +51,7 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
-    def find_associated_analyses(self, analysis, delta=12, atype=None, **kw):
+    def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
         """
             find atype analyses +/- delta hours (12 hours default)
             if atype is None use "blank_{analysis.analysis_type}"
@@ -62,16 +62,18 @@ class Processor(IsotopeDatabaseManager):
 
         ms = analysis.mass_spectrometer
         post = analysis.timestamp
+        if isinstance(post, float):
+            post = datetime.fromtimestamp(post)
 
-        #         delta = -2
         if atype is None:
             atype = 'blank_{}'.format(analysis.analysis_type)
-        br = self._find_analyses(ms, post, -delta, atype, **kw)
 
-        #         delta = 2
-        ar = self._find_analyses(ms, post, delta, atype, **kw)
+        post = post - timedelta(hours=delta)
+        return self._filter_analyses(ms, post, delta, limit, atype, **kw)
+        #br = self._find_analyses(ms, post, -delta, atype, **kw)
+        #ar = self._find_analyses(ms, post, delta, atype, **kw)
+        #return br + ar
 
-        return br + ar
 
     def group_level(self, level, irradiation=None, monitor_filter=None):
         if monitor_filter is None:
@@ -495,8 +497,8 @@ class Processor(IsotopeDatabaseManager):
         else:
             return []
 
-    def _filter_analyses(self, ms, post, delta, lim, at, filter_hook=None):
-        '''
+    def _filter_analyses(self, ms, post, delta, lim, at, exclude_uuids=None, filter_hook=None):
+        """
             ms= spectrometer
             post= timestamp
             delta= time in hours
@@ -507,7 +509,7 @@ class Processor(IsotopeDatabaseManager):
 
             if delta is post
             get all before post+delta and after post
-        '''
+        """
         sess = self.db.get_session()
         q = sess.query(meas_AnalysisTable)
         q = q.join(meas_MeasurementTable)
@@ -528,11 +530,13 @@ class Processor(IsotopeDatabaseManager):
             gen_AnalysisTypeTable.name == at,
             meas_AnalysisTable.analysis_timestamp >= a,
             meas_AnalysisTable.analysis_timestamp <= b,
-            gen_MassSpectrometerTable.name == ms
-        ))
+            gen_MassSpectrometerTable.name == ms))
 
         if filter_hook:
             q = filter_hook(q)
+
+        if exclude_uuids:
+            q=q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
         q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
         q = q.limit(lim)

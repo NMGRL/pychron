@@ -16,10 +16,11 @@
 
 #============= enthought library imports =======================
 from traits.api import Button
-from traitsui.api import View, Item, HGroup, UItem, spring
+from traitsui.api import View, Item, HGroup, spring
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 
 
@@ -40,9 +41,11 @@ class IsoEvoFitSelector(FilterFitSelector):
 
     def traits_view(self):
         v = View(
-            HGroup(UItem('plot_button',
+            HGroup(icon_button_editor('plot_button','chart_curve_go',
                          tooltip='Replot the isotope evolutions. \
 This may take awhile if many analyses are selected'),
+                   icon_button_editor('save_event', 'database_save',
+                                      tooltip='Save fits to database'),
                    spring,
                    Item('auto_update',
                         label='Auto Plot',

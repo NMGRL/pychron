@@ -254,9 +254,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _dclicked_sample_changed(self):
         ans = self._get_sample_analyses(self.selected_samples,
                                         include_invalid=not self.analysis_table.omit_invalid)
-        print self.active_editor
         if self.active_editor:
-            self.active_editor.unknowns = ans
+            self.active_editor.set_items(ans)
+            #self.active_editor.unknowns = ans
             #self.unknowns_pane.items = self.active_editor.unknowns
 
     def _selected_samples_changed(self, new):

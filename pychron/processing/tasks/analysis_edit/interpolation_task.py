@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import timedelta
 from traits.api import on_trait_change
 from traits.api import Any
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
@@ -23,7 +22,6 @@ from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 
 
 class InterpolationTask(AnalysisEditTask):
@@ -79,42 +77,41 @@ class InterpolationTask(AnalysisEditTask):
     #    elif c == 'R':
     #        self.references_pane.items = s
 
-    def _load_references(self, analyses, atype=None):
-        if not hasattr(analyses, '__iter__'):
-            analyses = (analyses, )
-
-        ds = [ai.rundate for ai in analyses]
-        dt = timedelta(days=self.days_pad, hours=self.hours_pad)
-
-        sd = min(ds) - dt
-        ed = max(ds) + dt
-
-        self.start_date = sd.date()
-        self.end_date = ed.date()
-        self.start_time = sd.time()
-        self.end_time = ed.time()
-
-        at = atype or self.analysis_type
-
-        if self.analysis_type == DEFAULT_AT:
-            self.analysis_type = at = self.default_reference_analysis_type
-
-        ref = analyses[-1]
-        exd = ref.extract_device
-        ms = ref.mass_spectrometer
-
-        self.trait_set(extraction_device=exd or 'Extraction Device',
-                       mass_spectrometer=ms or 'Mass Spectrometer', trait_change_notify=False)
-
-        db = self.manager.db
-        with db.session_ctx():
-            ans = db.get_analyses_data_range(sd, ed,
-                                             analysis_type=at,
-                                             mass_spectrometer=ms,
-                                             extract_device=exd
-            )
-            ans = [self._record_view_factory(ai) for ai in ans]
-            self.danalysis_table.set_analyses(ans)
-            return ans
+    #def _load_references(self, analyses, atype=None):
+    #    if not hasattr(analyses, '__iter__'):
+    #        analyses = (analyses, )
+    #
+    #    ds = [ai.rundate for ai in analyses]
+    #    dt = timedelta(days=self.days_pad, hours=self.hours_pad)
+    #
+    #    sd = min(ds) - dt
+    #    ed = max(ds) + dt
+    #
+    #    self.start_date = sd.date()
+    #    self.end_date = ed.date()
+    #    self.start_time = sd.time()
+    #    self.end_time = ed.time()
+    #
+    #    at = atype or self.analysis_type
+    #
+    #    if self.analysis_type == DEFAULT_AT:
+    #        self.analysis_type = at = self.default_reference_analysis_type
+    #
+    #    ref = analyses[-1]
+    #    exd = ref.extract_device
+    #    ms = ref.mass_spectrometer
+    #
+    #    self.trait_set(extraction_device=exd or 'Extraction Device',
+    #                   mass_spectrometer=ms or 'Mass Spectrometer', trait_change_notify=False)
+    #
+    #    db = self.manager.db
+    #    with db.session_ctx():
+    #        ans = db.get_analyses_data_range(sd, ed,
+    #                                         analysis_type=at,
+    #                                         mass_spectrometer=ms,
+    #                                         extract_device=exd)
+    #        ans = [self._record_view_factory(ai) for ai in ans]
+    #        self.danalysis_table.set_analyses(ans)
+    #        return ans
 
 #============= EOF =============================================

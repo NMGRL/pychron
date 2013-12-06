@@ -86,16 +86,28 @@ class InterpolationEditor(GraphEditor):
     def _find_references(self):
     #         ans = set([ai for ui in self._unknowns
     #                 for ai in self.processor.find_associated_analyses(ui)])
+        print 'find rerefas'
         ans = []
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
+            n=len(self.unknowns)
+            prog=None
+            if n>1:
+                prog=proc.open_progress(n)
+
             for ui in self.unknowns:
+                if prog:
+                    prog.change_message('Finding associated analyses for {}'.format(ui.record_id))
+
                 for ai in proc.find_associated_analyses(ui,
-                                                        atype=self.default_reference_analysis_type):
+                                                        atype=self.default_reference_analysis_type,
+                                                        exclude_uuids=uuids):
                     if not ai.uuid in uuids:
                         uuids.append(ai.uuid)
                         ans.append(ai)
+            if prog:
+                prog.close()
 
             ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
             ans = self.processor.make_analyses(ans)

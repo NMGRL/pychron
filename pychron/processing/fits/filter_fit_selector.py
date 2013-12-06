@@ -51,7 +51,7 @@ class FilterFitSelector(FitSelector):
                 CheckboxColumn(name='use_filter'),
                 ObjectColumn(name='filter_iterations', label='Filter Iter.'),
                 ObjectColumn(name='filter_std_devs', label='Filter SD'),
-                CheckboxColumn(name='use', label='Save DB')]
+                CheckboxColumn(name='use', label='Save')]
 
         return cols
 
