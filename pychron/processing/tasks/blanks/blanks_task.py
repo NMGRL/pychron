@@ -56,10 +56,11 @@ class BlanksTask(InterpolationTask):
         self._open_editor(editor)
         self.blank_editor_count += 1
 
-    def _set_selected_analysis(self, new):
-        if not new:
-            return
-        self._load_references(new)
+    #def _set_selected_analysis(self, new):
+    #    if not new:
+    #        return
+    #
+    #    self._load_references(new)
 
     def do_easy_blanks(self):
         self._do_easy(self._easy_blanks)

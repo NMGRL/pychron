@@ -151,6 +151,7 @@ class ArArAge(Loggable):
         else:
             attr = 'detector'
             value = detector
+
             return next((iso for iso in self.isotopes.itervalues()
                          if getattr(iso, attr) == value), None)
 

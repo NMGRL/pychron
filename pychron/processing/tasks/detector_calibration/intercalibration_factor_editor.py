@@ -109,8 +109,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         self.debug('get reference values {}, {}'.format(n,d))
         nys = [ri.get_isotope(detector=n) for ri in self.references]
         dys = [ri.get_isotope(detector=d) for ri in self.references]
-        nys=array([ni.get_corrected_value() for ni in nys if ni is not None])
-        dys=array([di.get_corrected_value() for di in dys if di is not None])
+        nys = array([ni.get_corrected_value() for ni in nys if ni is not None])
+        dys = array([di.get_corrected_value() for di in dys if di is not None])
 
         try:
             rys = (nys / dys) / self.tool.standard_ratio
