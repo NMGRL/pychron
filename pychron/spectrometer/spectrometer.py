@@ -289,7 +289,7 @@ class Spectrometer(SpectrometerDevice):
             cor = source.nominal_hv / cur
         return cor
 
-    def correct_dac(self, det, dac):
+    def correct_dac(self, det, dac, current=True):
         """
             dac is in axial units
             convert to detector units
@@ -300,24 +300,25 @@ class Spectrometer(SpectrometerDevice):
             correct for deflection
             correct for hv
         """
-
+        #self.debug('correct dac {} {} {}'.format(det, dac, current))
         #dac is already in detector units.
         #mftable has mappings for each detector
 
         #correct for deflection
-        dev = det.get_deflection_correction(current=True)
+        dev = det.get_deflection_correction(current=current)
         dac += dev
 
         #correct for hv
-        dac *= self.get_hv_correction(current=True)
+        dac *= self.get_hv_correction(current=current)
         return dac
 
-    def uncorrect_dac(self, det, dac):
+    def uncorrect_dac(self, det, dac, current=True):
         """
             inverse of correct_dac
         """
-        dac /= self.get_hv_correction(current=True)
-        dac -= det.get_deflection_correction(current=True)
+        #self.debug('uncorrect dac {} {} {}'.format(det, dac, current))
+        dac /= self.get_hv_correction(current=current)
+        dac -= det.get_deflection_correction(current=current)
         return dac
 
     #===============================================================================

@@ -23,6 +23,8 @@ from numpy import linspace, random, \
 import weakref
 
 #============= local library imports  ==========================
+
+
 def convert_fit(f):
     if isinstance(f, (str, unicode)):
         f = f.lower()
@@ -38,6 +40,15 @@ def convert_fit(f):
             f = None
     return f
 
+
+def unconvert_fit(f):
+    if isinstance(f, int):
+        try:
+            f=['linear', 'parabolic','cubic'][f-1]
+        except IndexError:
+            pass
+
+    return f
 
 
 #============= EOF =============================================

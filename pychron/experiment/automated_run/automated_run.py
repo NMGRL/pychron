@@ -2120,14 +2120,15 @@ anaylsis_type={}
         if not script:
             return default
 
-        m = ast.parse(script._text)
+        m = ast.parse(script.text)
         docstr = ast.get_docstring(m)
+        self.debug('{} {} metadata {}'.format(script.name, key, docstr))
         if docstr:
             try:
                 params = yaml.load(docstr)
                 return params[key]
             except KeyError:
-                pass
+                self.warning('No value "{}" in metadata'.format(key))
             except TypeError:
                 self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(script.name, key))
 

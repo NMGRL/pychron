@@ -111,7 +111,7 @@ class ScanManager(Manager):
         # covnert dac into a mass
         # convert mass to isotope
         #            d = self.magnet.dac
-            iso = self.magnet.map_dac_to_isotope()
+            iso = self.magnet.map_dac_to_isotope(current=False)
             if not iso in self.isotopes:
                 iso = NULL_STR
 
@@ -221,7 +221,7 @@ class ScanManager(Manager):
                     if plot.visible:
                         ys=plot.value.get_data()
                         ma=max(ma, max(ys))
-                        mi=min(ma, min(ys))
+                        mi=min(mi, min(ys))
 
                 self.graph.set_y_limits(min_=mi,max_=ma, pad='0.1')
 

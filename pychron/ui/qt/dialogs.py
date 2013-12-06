@@ -41,23 +41,24 @@ class myMessageMixin(object):
         """
 
         evt = Event()
-        invoke_in_main_thread(self._open, evt, timeout)
-            
+        invoke_in_main_thread(self._open, evt)
+
         st=time.time()
         while not evt.is_set():
             time.sleep(0.25)
-            et = time.time() - st - 1
-            if et > timeout - 1:
-                invoke_in_main_thread(self.destroy)
-                return self.timeout_return_code
+            if timeout:
+                et = time.time() - st - 1
+                if et > timeout - 1:
+                    invoke_in_main_thread(self.destroy)
+                    return self.timeout_return_code
 
-            if self.control:
-                t = '{}\n\nTimeout in {:n}s'.format(self.message, int(timeout - et))
-                invoke_in_main_thread(self.control.setText, t)
+                if self.control:
+                    t = '{}\n\nTimeout in {:n}s'.format(self.message, int(timeout - et))
+                    invoke_in_main_thread(self.control.setText, t)
 
         return self.return_code
 
-    def _open(self, evt, timeout):
+    def _open(self, evt):
 
         if self.control is None:
             self._create()

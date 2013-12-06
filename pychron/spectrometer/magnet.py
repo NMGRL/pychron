@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.ui import set_toolkit
+set_toolkit('qt4')
 
 #============= enthought library imports =======================
 from scipy import optimize
@@ -25,9 +27,9 @@ from traitsui.table_column import ObjectColumn
 import os
 import csv
 import time
-from numpy import polyval, polyfit, min, nonzero, poly1d
+from numpy import polyval, polyfit, min, nonzero, poly1d, array
 #============= local library imports  ==========================
-from pychron.helpers.fits import convert_fit
+from pychron.helpers.fits import convert_fit, unconvert_fit
 from pychron.paths import paths
 # import math
 # from pychron.graph.graph import Graph
@@ -48,6 +50,12 @@ def get_float(func):
             pass
 
     return dec
+
+
+def get_detector_name(det):
+    if not isinstance(det, (str, unicode)):
+        det=det.name
+    return det
 
 
 class Magnet(SpectrometerDevice):
@@ -81,11 +89,15 @@ class Magnet(SpectrometerDevice):
 
             dac needs to be in axial units
         """
+        det=get_detector_name(det)
+
         self.info('update mftable {} {}'.format(isotope, dac))
 
         #isos, xs, ys = self._get_mftable()
         d, fit, header=self._get_mftable()
-        isos,xs,ys=d[det]
+
+        isos,xs,ys=map(array, d[det])
+
         try:
             refindex = min(nonzero(isos == isotope)[0])
 
@@ -167,11 +179,13 @@ class Magnet(SpectrometerDevice):
                 #xs = []
                 #ys = []
                 #isos = []
+                if self.spectrometer:
+                    molweights = self.spectrometer.molecular_weights
+                else:
+                    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
 
-                molweights = self.spectrometer.molecular_weights
                 fit = convert_fit(reader.next()[0])
                 header = map(str.strip, reader.next()[1:])
-
                 d = {}
                 for line in reader:
                     iso = line[0]
@@ -226,25 +240,32 @@ class Magnet(SpectrometerDevice):
             self._dac = d
 
     #def dump(self, isos, xs, ys):
-    def dump(self, isos,fit, header, d):
+    def dump(self, isos, fit, header, d):
         p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
         with open(p, 'w') as f:
             writer = csv.writer(f)
-            writer.writerow([fit])
-            header.insert(0, '#iso')
-            writer.writerow(header)
 
-            for iso in isos:
-                a=(iso, )+ d[iso]
+            fit=unconvert_fit(fit)
+
+            writer.writerow([fit])
+
+            writer.writerow(['iso']+header)
+
+            for i,iso in enumerate(isos):
+                a=[iso]
+                for hi in header:
+                    iso,xs,ys=d[hi]
+                    a.append(ys[i])
+
                 writer.writerow(a)
-            #for a in zip(isos, ys):
-            #    writer.writerow(a)
 
             #===============================================================================
             # mapping
             #===============================================================================
 
     def map_dac_to_mass(self, dac, detname):
+        detname=get_detector_name(detname)
+
         #_, xs, ys = self._get_mftable()
         d, fit, _ =self._get_mftable()
         _, xs, ys = d[detname]
@@ -264,6 +285,8 @@ class Magnet(SpectrometerDevice):
         return mass
 
     def map_mass_to_dac(self, mass, detname):
+        detname=get_detector_name(detname)
+
         #_, xs, ys, fit= self._get_mftable()
         d, fit, _ = self._get_mftable()
         _, xs, ys = d[detname]
@@ -278,14 +301,14 @@ class Magnet(SpectrometerDevice):
 
         return dac
 
-    def map_dac_to_isotope(self, dac=None, det=None):
+    def map_dac_to_isotope(self, dac=None, det=None, current=True):
         if dac is None:
             dac = self._dac
         if det is None:
             det = self.detector
 
         if det:
-            dac = self.spectrometer.uncorrect_dac(det, dac)
+            dac = self.spectrometer.uncorrect_dac(det, dac, current=current)
 
         m = self.map_dac_to_mass(dac, det.name)
         molweights = self.spectrometer.molecular_weights
@@ -301,7 +324,7 @@ class Magnet(SpectrometerDevice):
     #        print 'set mass', m
         if self.detector:
             dac = self.map_mass_to_dac(m, self.detector.name)
-            dac = self.spectrometer.correct_dac(self.detector, dac)
+            dac = self.spectrometer.correct_dac(self.detector, dac, current=False)
             self._mass = m
             self.dac = dac
 
@@ -390,11 +413,14 @@ class Magnet(SpectrometerDevice):
 
 if __name__ == '__main__':
     from launchers.helpers import build_version
+    build_version('_dev')
 
-    build_version('_experiment')
+    from pychron.helpers.logger_setup import logging_setup
+    logging_setup('magnet')
     m = Magnet()
     m.load()
-    m.configure_traits()
+    m.update_field_table('AX','Ar40', 5)
+    #m.configure_traits()
 #============= EOF =============================================
 # def get_dac_for_mass(self, mass):
 #        reg = self.regressor
