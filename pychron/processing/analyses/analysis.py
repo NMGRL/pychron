@@ -55,6 +55,9 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
 
+    def is_temp_omitted(self):
+        return self.temp_status or self.filter_omit
+
     def is_omitted(self, omit_key=None):
         omit=False
         if omit_key:
@@ -62,7 +65,7 @@ class Analysis(ArArAge):
             #print ai.aliquot, r, omit, ai.filter_omit
         #return r or ai.filter_omit #or ai.tag == 'omit'
         #omit=False
-        return self.temp_status or self.filter_omit or omit
+        return self.is_temp_omitted() or omit
 
     def flush(self, *args, **kw):
         """

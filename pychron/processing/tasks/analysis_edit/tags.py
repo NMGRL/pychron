@@ -13,23 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from traits.etsconfig.etsconfig import ETSConfig
 
-ETSConfig.toolkit = 'qt4'
-
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
 
 
 #============= enthought library imports =======================
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
 from traits.api import HasTraits, Str, List, Instance, Any, Button, Date, Bool
-from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, TableEditor, Handler, VGroup
-from pychron.loggable import Loggable
-from pychron.paths import paths
-from pyface.image_resource import ImageResource
+from traitsui.api import View, Item, UItem, HGroup, TableEditor, \
+    Handler, VGroup, TabularEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.loggable import Loggable
+
+
+class ItemAdapter(TabularAdapter):
+    columns = [('Run ID', 'record_id'),
+               ('Sample', 'sample'),
+               ('Tag', 'tag')]
+    font='arial 10'
+
 
 class Tag(HasTraits):
     name = Str
@@ -49,13 +55,22 @@ class TagTable(HasTraits):
         with db.session_ctx():
             dbtags = db.get_tags()
 
+            #make invalid and ok first in tag list
+
             invalid_tag = next((t for t in dbtags
                                 if t.name == 'invalid'), None)
+            ok_tag = next((t for t in dbtags
+                           if t.name == 'ok'), None)
+            f = []
             if invalid_tag:
                 dbtags.remove(invalid_tag)
-                tags = [invalid_tag, ] + dbtags
-            else:
-                tags = dbtags
+                f.append(invalid_tag)
+
+            if ok_tag:
+                dbtags.remove(ok_tag)
+                f.append(ok_tag)
+
+            tags = f + dbtags
 
             ts = [Tag(name=di.name,
                       user=di.user,
@@ -121,6 +136,7 @@ class TagTableView(Loggable):
     save_button = Button
 
     selected = Any
+    items = List
 
     def save(self):
         self.table.save()
@@ -163,40 +179,26 @@ class TagTableView(Loggable):
                 self.table.delete_tag(si)
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name'),
-                ObjectColumn(name='user'),
+        cols = [ObjectColumn(name='name', editable=False),
+                ObjectColumn(name='user', editable=False),
                 CheckboxColumn(name='omit_ideo'),
                 CheckboxColumn(name='omit_spec'),
                 CheckboxColumn(name='omit_iso')]
 
         editor = TableEditor(columns=cols,
                              selected='selected',
-                             sortable=False)
+                             sortable=False,
+        )
 
         v = View(UItem('object.table.tags',
                        editor=editor),
                  HGroup(
-                     UItem('add_tag_button',
-                           style='custom',
-                           tooltip='Add a tag',
-                           editor=ButtonEditor(image=ImageResource(name='add.png',
-                                                                   search_path=paths.icon_search_path))
-                     ),
-                     UItem('delete_tag_button',
-                           style='custom',
-                           tooltip='Delete selected tags',
-                           editor=ButtonEditor(image=ImageResource(name='delete.png',
-                                                                   search_path=paths.icon_search_path))
-                     ),
-                     UItem('save_button',
-                           style='custom',
-                           tooltip='Save changes to the database',
-                           editor=ButtonEditor(image=ImageResource(name='database_save.png',
-                                                                   search_path=paths.icon_search_path))
-                     ),
-
-
-                 ),
+                     icon_button_editor('add_tag_button', 'add', tooltip='Add a tag'),
+                     icon_button_editor('delete_tag_button', 'delete', tooltip='Delete selected tags'),
+                     icon_button_editor('save_button', 'database_save', tooltip='Save changes to the database')),
+                 UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
+                                                     multi_select=True,
+                                                     operations=['delete'])),
 
                  resizable=True,
                  width=500,
@@ -204,8 +206,8 @@ class TagTableView(Loggable):
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
                  handler=TagTableViewHandler,
-                 title='Tags'
-        )
+                 title='Tags')
+
         return v
 
 

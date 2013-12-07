@@ -40,7 +40,7 @@ class AnalysisTable(HasTraits):
                                        'Age', 'Labnumber', 'Aliquot', 'Step'])
 
     omit_invalid = Bool(True)
-    configure_analysis_filter = Button
+    configure_analysis_table = Button
 
     forward = Button
     backward = Button
@@ -54,6 +54,7 @@ class AnalysisTable(HasTraits):
 
     no_update = False
     scroll_to_row=Event
+    refresh_needed=Event
 
     def load(self):
         p = os.path.join(paths.hidden_dir, 'analysis_table')
@@ -110,11 +111,8 @@ class AnalysisTable(HasTraits):
         else:
             self.analyses = self.oanalyses
 
-    def _configure_analysis_filter_fired(self):
-        #msg = 'Advanced search not implemented yet!'
-        #warning(None, msg)
+    def _configure_analysis_table_fired(self):
 
-        #self.information_dialog()
         c = TableConfigurer(adapter=self.tabular_adapter,
                             title='Configure Analysis Table')
         c.edit_traits()

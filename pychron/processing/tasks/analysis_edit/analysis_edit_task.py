@@ -172,31 +172,34 @@ class AnalysisEditTask(BaseBrowserTask):
             analyses selected in figure e.g temp_status!=0
 
         """
+        items = self.unknowns_pane.selected
+        if not items:
+            items = [i for i in self.unknowns_pane.items
+                     if i.is_temp_omitted()]
 
-        tag = self._get_tagname()
-        if tag:
-            items = self.unknowns_pane.selected
             if not items:
-                items = [i for i in self.unknowns_pane.items if i.temp_status != 0]
+                items=self.analysis_table.selected
 
-            if items:
+        if not items:
+            self.warning_dialog('No analyses selected to Tag')
+        else:
+            a = self._get_tagname(items)
+            if a:
+                tag, items=a
                 db = self.manager.db
                 name = tag.name
                 with db.session_ctx():
-                    def func(ai, x):
-                        self.debug('setting {} tag= {}'.format(ai.record_id, name))
-                        x.tag = name
-
-                        ai.set_tag(tag)
-
                     for it in items:
-                        ma = db.get_analysis_uuid(it.uuid)
-                        func(it, ma)
+                        self.debug('setting {} tag= {}'.format(it.record_id, name))
 
+                        ma = db.get_analysis_uuid(it.uuid)
+                        ma.tag = name
+                        it.set_tag(tag)
+
+                self.analysis_table.refresh_needed=True
                 self.unknowns_pane.refresh_needed = True
                 self.active_editor.rebuild(refresh_data=False)
-            else:
-                self.warning_dialog('Not analyses selected to Tag')
+
 
     def prepare_destroy(self):
         if self.unknowns_pane:
@@ -250,20 +253,19 @@ class AnalysisEditTask(BaseBrowserTask):
         up.load()
         return up
 
-    def _get_tagname(self):
-        print 'asdf'
+    def _get_tagname(self, items):
         from pychron.processing.tasks.analysis_edit.tags import TagTableView
 
         db = self.manager.db
         with db.session_ctx():
-            v = TagTableView()
+            v = TagTableView(items=items)
             v.table.db = db
             v.table.load()
 
         info = v.edit_traits()
         if info.result:
             tag = v.selected
-            return tag
+            return tag, v.items
 
     def _open_ideogram_editor(self, ans, name, task=None):
         _id = 'pychron.processing.figures'

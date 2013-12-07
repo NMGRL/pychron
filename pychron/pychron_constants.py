@@ -39,8 +39,8 @@ SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibrat
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
 FIT_TYPES = ['linear', 'parabolic', 'cubic',
-             'averageSD',
-             'averageSEM']
+             'average_SD',
+             'average_SEM']
 INTERPOLATE_TYPES = ['Preceeding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + ['Preceeding', 'Bracketing Interpolate', 'Bracketing Average']
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}

@@ -30,14 +30,14 @@ from pychron.ui.tabular_editor import myTabularEditor
 
 
 class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Identifier', 'record_id'),
+    all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
                    ('Flux', 'flux_fit_status')]
 
-    columns = [('Identifier', 'record_id'),
+    columns = [('Run ID', 'record_id'),
                ('Tag', 'tag'),
                #('Iso Fits', 'iso_fit_status'),
                #('Blank', 'blank_fit_status'),
@@ -153,13 +153,14 @@ class BrowserPane(TraitsDockPane):
                 UItem(make_name('analysis_filter'),
                       editor=EnumEditor(name=make_name('analysis_filter_values')),
                       width=-25),
-                icon_button_editor(make_name('configure_analysis_filter'), 'cog',
+                icon_button_editor(make_name('configure_analysis_table'), 'cog',
                                    tooltip='Configure/Advanced query')),
             UItem(make_name('analyses'),
                   editor=myTabularEditor(
                       adapter=self.analysis_tabular_adapter,
                       #                                                       editable=False,
                       operations=['move'],
+                      refresh=make_name('refresh_needed'),
                       selected=make_name('selected'),
                       dclicked=make_name('dclicked'),
                       multi_select=self.multi_select,

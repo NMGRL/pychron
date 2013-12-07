@@ -50,8 +50,8 @@ DEFAULT_ED = 'Extraction Device'
 
 
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
-    analysis_table = Instance(AnalysisTable, ())
-    danalysis_table = Instance(AnalysisTable, ())
+    analysis_table = Instance(AnalysisTable)
+    danalysis_table = Instance(AnalysisTable)
 
     analysis_filter = String(enter_set=True, auto_set=False)
 

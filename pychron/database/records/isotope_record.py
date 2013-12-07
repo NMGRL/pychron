@@ -43,6 +43,8 @@ class IsotopeRecordView(HasTraits):
     temp_status = 0
 
     record_id = ''
+    def set_tag(self, tag):
+        self.tag=tag.name
 
     def create(self, dbrecord):
 #        print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
