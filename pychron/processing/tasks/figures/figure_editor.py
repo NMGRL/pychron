@@ -23,23 +23,15 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-from pychron.codetools.simple_timeit import timethis
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 
 
 class FigureEditor(GraphEditor):
-#     path = File
     table_editor = Any
     component = Any
-    #     plotter = Any
-    #     tool = Any
     plotter_options_manager = Any
     associated_editors = List
-    #     processor = Any
-    #     unknowns = List
-    #     _unknowns = List
-    #     _cached_unknowns = List
-    #     _suppress_rebuild = False
+
     tool = Any
 
     annotation_tool = Any
@@ -90,9 +82,7 @@ class FigureEditor(GraphEditor):
     def set_group(self, idxs, gid, refresh=True):
 
         for i, uu in enumerate(self.unknowns):
-        #         for i, (ui, uu) in enumerate(zip(self._unknowns, self.unknowns)):
             if i in idxs:
-            #                 ui.group_id = gid
                 uu.group_id = gid
 
         if refresh:
@@ -105,8 +95,6 @@ class FigureEditor(GraphEditor):
         ans = self.unknowns
         for e in self.associated_editors:
             if isinstance(e, FigureEditor):
-            #                e.analysis_cache = self.analysis_cache
-                #e.trait_set(unknowns=ans, trait_change_notify=False)
                 e.unknowns = ans
             else:
                 e.items = ans
@@ -116,54 +104,17 @@ class FigureEditor(GraphEditor):
 
         if ans:
             po = self.plotter_options_manager.plotter_options
-            model, comp = timethis(self.get_component, args=(ans, po),
-                                   msg='get_component {}'.format(self.__class__.__name__))
-            #comp = self._get_component(ans, po)
+            #model, comp = timethis(self.get_component, args=(ans, po),
+            #                       msg='get_component {}'.format(self.__class__.__name__))
+            model, comp = self.get_component(ans, po)
             if comp:
-                #do_later(comp.request_redraw)
                 comp.invalidate_and_redraw()
-                #if set_model:
                 self.figure_model = model
                 self.component = comp
                 self.component_changed = True
 
     def get_component(self, ans, po):
         pass
-
-        #         return self._get_component()
-
-#         func = getattr(self.processor, self.func)
-#         return func(ans=ans, plotter_options=po)
-
-
-# class SeriesEditor(FigureEditor):
-#     plotter_options_manager = Instance(SeriesOptionsManager, ())
-#     func = 'new_series'
-#     plotter_options_manager = Instance(SeriesOptionsManager, ())
-#     def _get_component(self, ans, po):
-#         if ans:
-#             comp, plotter = self.processor.new_series(ans=ans,
-#                                                       options=dict(fits=self.tool.fits),
-#                                                       plotter_options=po)
-#             self.plotter = plotter
-#             return comp
-
-#     def show_series(self, key, fit='Linear'):
-#         fi = next((ti for ti in self.tool.fits if ti.name == key), None)
-# #         self.tool.suppress_refresh_unknowns = True
-#         if fi:
-#             fi.trait_set(
-#                          fit=fit,
-#                          show=True,
-#                          trait_change_notify=False)
-#
-#         self.rebuild(refresh_data=False)
-#             fi.fit = fit
-#             fi.show = True
-
-#         self.tool.suppress_refresh_unknowns = False
-
-
 
 
 

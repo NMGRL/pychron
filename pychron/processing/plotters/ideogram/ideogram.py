@@ -67,10 +67,10 @@ class Ideogram(BaseArArFigure):
             args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
             if args:
                 scatter, omits=args
-                for i,ai in enumerate(self.sorted_analyses):
-                    ai.filter_omit=i in omits
-
                 omit=omit.union(set(omits))
+
+        for i, ai in enumerate(self.sorted_analyses):
+            ai.filter_omit = i in omit
 
         graph.set_x_limits(min_=self.xmi, max_=self.xma,
                            pad='0.05')
@@ -84,7 +84,7 @@ class Ideogram(BaseArArFigure):
         plot.value_axis.tick_label_formatter = lambda x: ''
         plot.value_axis.tick_visible = False
 
-        #print 'ideo omit', self.group_id, omit, plots
+        #print 'ideo omit', self.group_id, omit
         if omit:
             self._rebuild_ideo(list(omit))
 

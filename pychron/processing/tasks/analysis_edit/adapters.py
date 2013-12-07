@@ -37,7 +37,7 @@ class UnknownsAdapter(TabularAdapter):
     error_width = Int(60)
     tag_width = Int(50)
 
-    font = 'arial 12'
+    font = 'arial 10'
     #     record_id_text_color = Property
     #     tag_text_color = Property
     age_text = Property
@@ -47,7 +47,8 @@ class UnknownsAdapter(TabularAdapter):
         c = 'white'
         if self.item.tag == 'invalid':
             c = '#C9C5C5'
-        elif self.item.temp_status != 0:#and not self.item.tag:
+        elif self.item.is_omitted():
+        #elif self.item.temp_status != 0:#and not self.item.tag:
             c = '#FAC0C0'
         return c
 
@@ -93,7 +94,7 @@ class ReferencesAdapter(TabularAdapter):
     columns = [
         ('Run ID', 'record_id'),
     ]
-    font = 'arial 12'
+    font = 'arial 10'
 
 #     font = 'modern 10'
 #    record_id_width = Int(50)

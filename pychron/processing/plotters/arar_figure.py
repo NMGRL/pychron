@@ -242,7 +242,7 @@ class BaseArArFigure(HasTraits):
                        for ai in self._unpack_attr('kca')])
         return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es)
 
-    def _plot_moles_K39(self, po, plot, pid):
+    def _plot_moles_k39(self, po, plot, pid):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('k39')])
 

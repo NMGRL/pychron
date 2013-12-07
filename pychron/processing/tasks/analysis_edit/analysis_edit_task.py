@@ -338,54 +338,27 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
 
-    @on_trait_change('unknowns_pane:[items, update_needed]')
+    @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
-        if not obj._no_update:
-            #print 'upadte unkownasdf pane', new,
-            if self.active_editor:
-                self.active_editor.unknowns = self.unknowns_pane.items
-            if self.plot_editor_pane:
-                self.plot_editor_pane.analyses = self.unknowns_pane.items
-                #                self._append_cache(self.active_editor)
+        if name=='dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif name=='refresh_editor_needed':
+            self.active_editor.rebuild()
+        else:
+            if not obj._no_update:
+                #print 'upadte unkownasdf pane', new,
+                if self.active_editor:
+                    self.active_editor.unknowns = self.unknowns_pane.items
+                if self.plot_editor_pane:
+                    self.plot_editor_pane.analyses = self.unknowns_pane.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):
         if new:
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
-
-                #    def _append_cache(self, editor):
-                #        if hasattr(editor, 'unknowns'):
-                #            ans = editor.unknowns
-                #            ids = [ai.uuid for ai in self._analysis_cache]
-                #            c = [ai for ai in ans if ai.uuid not in ids]
-                #
-                #            if c:
-                #                self._analysis_cache.extend(c)
-                #
-                #        editor.analysis_cache = self._analysis_cache
-
-    #@on_trait_change('''unknowns_pane:dclicked, data_selector:selector:dclicked''')
-    @on_trait_change('''unknowns_pane:dclicked''')
-    def _selected_changed(self, new):
-        print new
-        if new:
-            print new.item
-            if isinstance(new.item, (IsotopeRecordView, Analysis)):
-                self._recall_item(new.item)
-                #                self._open_external_recall_editor(new.item)
-
-    #@on_trait_change('controls_pane:save_button')
-    #def _save_fired(self):
-    #    db = self.manager.db
-    #    commit = not self.controls_pane.dry_run
-    #    with db.session_ctx(commit=commit):
-    #        self._save_to_db()
-    #
-    #    if commit:
-    #        self.info('committing changes')
-    #    else:
-    #        self.info('dry run- not committing changes')
 
     @on_trait_change('[analysis_table, danalysis_table]:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):

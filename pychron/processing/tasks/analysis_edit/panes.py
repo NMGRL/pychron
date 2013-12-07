@@ -26,6 +26,7 @@ import hashlib
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
 from pychron.ui.custom_label_editor import CustomLabel
 from pychron.ui.tabular_editor import myTabularEditor
 from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
@@ -45,6 +46,8 @@ class TablePane(TraitsDockPane):
     _no_update = False
     update_needed = Event
     refresh_needed = Event
+    refresh_editor_needed=Event
+
     selected = Any
     dclicked = Any
 
@@ -76,6 +79,8 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     _clear_tooltip = '''Clear unknowns'''
     configure_button = Button
     clear_history_button = Button
+
+    configure_filter_button = Button
 
     history_limit = Int(10)
 
@@ -181,6 +186,12 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         d = shelve.open(p)
         return d
 
+    def _get_cs_label(self):
+        m = 'Current Selection'
+        if self.items:
+            m = '{} n= {}'.format(m, len(self.items))
+        return m
+
     def traits_view(self):
         v = View(VGroup(
             HGroup(icon_button_editor('append_button', 'add',
@@ -189,7 +200,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                       tooltip=self._replace_tooltip),
                    icon_button_editor('clear_button', 'delete',
                                       tooltip=self._clear_tooltip),
-                   ),
+                   icon_button_editor('configure_filter_button', 'filter',
+                                      tooltip='Configure/Apply a filter',
+                                      enabled_when='items')),
             HGroup(UItem('previous_selection',
                          editor=EnumEditor(name='previous_selections')),
                    icon_button_editor('configure_button', 'cog',
@@ -203,8 +216,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                                   dclicked='dclicked',
                                                   refresh='refresh_needed',
                                                   multi_select=True,
-                                                  column_clicked='column_clicked'
-            ))))
+                                                  column_clicked='column_clicked'))))
         return v
 
     def configure_view(self):
@@ -228,11 +240,16 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     def _configure_button_fired(self):
         self.edit_traits(view='configure_view', kind='livemodal')
 
-    def _get_cs_label(self):
-        m = 'Current Selection'
-        if self.items:
-            m = '{} n= {}'.format(m, len(self.items))
-        return m
+    def _configure_filter_button_fired(self):
+        tf=TableFilter(items=self.items)
+        info=tf.edit_traits(kind='livemodal')
+        if info.result:
+            if not tf.filtered:
+                tf.apply_filter()
+
+            self.trait_set(items=tf.items, trait_change_notify=False)
+            self.refresh_needed=True
+            self.refresh_editor_needed=True
 
 
 class UnknownsPane(HistoryTablePane):
