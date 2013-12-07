@@ -213,6 +213,8 @@ class DBAnalysis(Analysis):
         """
         self._sync_irradiation(ln)
 
+    def sync_detector_info(self, meas_analysis):
+        self._sync_detector_info(meas_analysis)
 
     def sync_arar(self, meas_analysis):
         self.debug('not using db arar')
