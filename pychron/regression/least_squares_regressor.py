@@ -76,8 +76,10 @@ class LeastSquaresRegressor(BaseRegressor):
 #                print r, self.initial_guess
                 self._coefficients = list(coeffs)
                 self._covariance = cov
-
-                self._coefficient_errors = list(sqrt(diagonal(cov)))
+                try:
+                    self._coefficient_errors = list(sqrt(diagonal(cov)))
+                except ValueError:
+                    pass
 
     def _calculate_coefficients(self):
         return self._coefficients

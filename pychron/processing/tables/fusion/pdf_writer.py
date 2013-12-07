@@ -15,12 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Int, Str
+from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.pdf.items import Row, Subscript, Superscript, NamedParameter, \
-    FootNoteRow, FooterRow
+from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import TablePDFWriter
@@ -263,7 +261,7 @@ class FusionTablePDFWriter(TablePDFWriter):
             # computed
             #==============================================================
             ('rad40_percent', value(n=1)),
-            ('R', value(n=5)),
+            ('F', value(n=5)),
             ('age', value(n=2)),
             ('age', error(n=4)),
             ('kca', value(n=2)),

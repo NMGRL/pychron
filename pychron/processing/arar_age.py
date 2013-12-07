@@ -23,7 +23,7 @@ from pychron.pychron_constants import ARGON_KEYS
 from uncertainties import ufloat, Variable, AffineScalarFunc
 
 #============= local library imports  ==========================
-from pychron.processing.argon_calculations import calculate_R, abundance_sensitivity_correction, age_equation, calculate_decay_factor
+from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 
@@ -61,10 +61,10 @@ class ArArAge(Loggable):
     non_ar_isotopes = Dict
     computed = Dict
 
-    uR = Either(Variable, AffineScalarFunc)
-    R = Float
-    R_err = Float
-    R_err_wo_irrad = Float
+    uF = Either(Variable, AffineScalarFunc)
+    F = Float
+    F_err = Float
+    F_err_wo_irrad = Float
 
     uage = Either(Variable, AffineScalarFunc)
 
@@ -278,7 +278,7 @@ class ArArAge(Loggable):
         isos[1] *=self.ar39decayfactor
         isos[3] *=self.ar37decayfactor
 
-        R, R_wo_irrad, non_ar, computed, interference_corrected = calculate_R(isos,
+        f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(isos,
                                                                               decay_time=self.decay_days,
                                                                               interferences=self.interference_corrections,
                                                                               arar_constants=self.arar_constants)
@@ -289,13 +289,13 @@ class ArArAge(Loggable):
         for k, v in interference_corrected.iteritems():
             self.isotopes[k].interference_corrected_value = v
 
-        self.uR=R
-        self.R = R.nominal_value
-        self.R_err = R.std_dev
-        self.R_err_wo_irrad = R_wo_irrad.std_dev
+        self.uF=f
+        self.F = f.nominal_value
+        self.F_err = f.std_dev
+        self.F_err_wo_irrad = f_wo_irrad.std_dev
 
         j = copy(self.j)
-        age = age_equation(j, R, include_decay_error=include_decay_error,
+        age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
         self.uage = age
@@ -307,7 +307,7 @@ class ArArAge(Loggable):
         self.age_err_wo_j = float(age.std_dev)
 
         j = copy(self.j)
-        age = age_equation(j, R_wo_irrad, include_decay_error=include_decay_error,
+        age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
         self.age_err_wo_irrad = float(age.std_dev)

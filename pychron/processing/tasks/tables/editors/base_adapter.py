@@ -190,7 +190,7 @@ class BaseAdapter(TabularAdapter):
         return self._get_value('rad40_percent', n=1)
 
     def _get_R_text(self):
-        return self._get_value('R', n=2)
+        return self._get_value('F', n=2)
 
     def _get_age_text(self):
         return self._get_value('age')

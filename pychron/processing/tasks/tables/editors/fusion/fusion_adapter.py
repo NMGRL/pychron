@@ -42,7 +42,7 @@ class FusionTableAdapter(BaseAdapter):
         (PM, 'ar36_err'),
         ('%40Ar*', 'rad40_percent'),
 
-        ('40Ar*/39ArK', 'R'),
+        ('40Ar*/39ArK', 'F'),
         ('Age', 'age'),
         (PM, 'age_error'),
         ('K/Ca', 'kca'),

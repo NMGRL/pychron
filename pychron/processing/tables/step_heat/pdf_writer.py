@@ -189,7 +189,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             ('uage', value(n=2)),
             ('age_err_wo_j', error(n=4)),
             ('rad40_percent', value(n=1)),
-            ('R', value(n=5)),
+            ('F', value(n=5)),
             ('kca', value(n=1)),
             ('kca', error(n=1)),
 

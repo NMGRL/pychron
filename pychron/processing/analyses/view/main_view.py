@@ -223,8 +223,8 @@ class MainView(HasTraits):
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
-                 ('R','uR'),
-                 ('w/o Irrad', 'wo_irrad', '', 'R_err_wo_irrad'),)
+                 ('F','uF'),
+                 ('w/o Irrad', 'wo_irrad', '', 'F_err_wo_irrad'),)
         
         if new_list:
             def comp_factory(n, a, value=None, error_tag=None):
@@ -256,7 +256,7 @@ class MainView(HasTraits):
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j
                 elif attr=='wo_irrad':
-                    ci.error=an.R_err_wo_irrad
+                    ci.error=an.F_err_wo_irrad
                 else:
                     v = getattr(an, attr)
                     ci.value = floatfmt(nominal_value(v))

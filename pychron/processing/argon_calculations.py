@@ -229,7 +229,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
     return atm36, cl36
 
 
-def calculate_R(isotopes,
+def calculate_F(isotopes,
                 decay_time,
                 interferences=None,
                 arar_constants=None):
@@ -302,13 +302,13 @@ def calculate_R(isotopes,
     return r, r_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def age_equation(j, R,
+def age_equation(j, f,
                  include_decay_error=False,
                  arar_constants=None):
     if isinstance(j, (tuple, str)):
         j = ufloat(j)
-    if isinstance(R, (tuple, str)):
-        R = ufloat(R)
+    if isinstance(f, (tuple, str)):
+        f = ufloat(f)
     if arar_constants is None:
         arar_constants = ArArConstants()
 
@@ -318,7 +318,7 @@ def age_equation(j, R,
     if not include_decay_error:
         lk = lk.nominal_value
     try:
-        return (lk ** -1 * umath.log(1 + j * R)) / scalar
+        return (lk ** -1 * umath.log(1 + j * f)) / scalar
     except ValueError:
         return ufloat(0,0)
 

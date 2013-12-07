@@ -15,11 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
+from reportlab.platypus.flowables import PageBreak
+
 from pychron.pdf.base_pdf_writer import BasePDFWriter
 from pychron.loading.component_flowable import ComponentFlowable
-from reportlab.platypus.flowables import PageBreak
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from itertools import groupby
@@ -123,7 +123,7 @@ class FluxPDFWriter(BasePDFWriter):
                  ('extract_value', '{}'),
                  ('moles_Ar40', value()),
                  ('rad40_percent', value(n=1)),
-                 ('R', value(n=5)),
+                 ('F', value(n=5)),
                  ('age', value(n=2)),
                  ('age', error(n=4)),
                  ('kca', value(n=2)),

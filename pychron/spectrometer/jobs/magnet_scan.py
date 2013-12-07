@@ -70,9 +70,7 @@ class MagnetScan(SpectrometerTask):
 
     verbose = False
 
-    def _scan_dac(self, values, det=None):
-        if det is None:
-            det = self.reference_detector
+    def _scan_dac(self, values):
 
         if self.spectrometer.simulation:
             self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
