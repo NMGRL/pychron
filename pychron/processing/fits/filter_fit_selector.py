@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Int
+from traits.api import Bool, Int, Str
 from traitsui.api import EnumEditor
 
 #============= standard library imports ========================
@@ -30,6 +30,7 @@ class FilterFit(Fit):
     use_filter = Bool
     filter_iterations = Int
     filter_std_devs = Int
+    truncate= Str
 
     def _use_filter_changed(self):
         if self.use_filter:
@@ -51,6 +52,7 @@ class FilterFitSelector(FitSelector):
                 CheckboxColumn(name='use_filter'),
                 ObjectColumn(name='filter_iterations', label='Filter Iter.'),
                 ObjectColumn(name='filter_std_devs', label='Filter SD'),
+                ObjectColumn(name='truncate', label='Trunc.'),
                 CheckboxColumn(name='use', label='Save')]
 
         return cols

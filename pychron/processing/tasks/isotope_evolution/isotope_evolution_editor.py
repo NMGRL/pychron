@@ -184,7 +184,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         return fit_hist
 
-    def _plot_baselines(self, add_tools, fd, fit, g, i, isok, unk):
+    def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):
         isok = isok[:-2]
         iso = unk.isotopes[isok]
         #iso.baseline.fit = fit.fit
@@ -196,7 +196,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                      plotid=i)
         return xs
 
-    def _plot_signal(self, add_tools, fd, fit, g, i, isok, unk):
+    def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
         if not isok in unk.isotopes:
             return []
 
@@ -213,6 +213,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         g.new_series(xs, ys,
                      fit=fit.fit,
                      filter_outliers_dict=fd,
+                     truncate=trunc,
                      add_tools=add_tools,
                      plotid=i)
         return xs
@@ -287,11 +288,12 @@ class IsotopeEvolutionEditor(GraphEditor):
                     fd = dict(filter_outlier_iterations=fit.filter_iterations,
                               filter_outlier_std_devs=fit.filter_std_devs,
                               filter_outliers=fit.use_filter)
+                    trunc=fit.truncate
 
                     if isok.endswith('bs'):
-                        xs = self._plot_baselines(add_tools, fd, fit, g, i, isok, unk)
+                        xs = self._plot_baselines(add_tools, fd, fit, trunc, g, i, isok, unk)
                     else:
-                        xs = self._plot_signal(add_tools, fd, fit, g, i, isok, unk)
+                        xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
                     ma = max(max(xs), ma)
                     i += 1
