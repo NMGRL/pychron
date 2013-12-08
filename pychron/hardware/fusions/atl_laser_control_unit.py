@@ -134,21 +134,6 @@ class ATLLaserControlUnit(CoreDevice):
     def is_enabled(self):
         return self.status_readback == 'Laser On'
 
-    #    def laser_burst(self, n):
-    # get process status
-    # if not burst mode set to burst mode
-    #        ps=self.get_process_status()
-    #        if not self.is_burst_mode(ps):
-    #            time.sleep(0.05)
-    #            self.set_burst_mode(True, ps)
-    #
-    #        time.sleep(0.05)
-    # #        #set number of bursts
-    #        self.set_nburst(n)
-
-    # run laser
-    #        cmd = self._build_command(11, 3)
-    #        self._send_command(cmd)
     def set_reprate(self, n, save=True):
         lh = self._make_integer_pair(n)
         if lh:
@@ -179,11 +164,9 @@ class ATLLaserControlUnit(CoreDevice):
                 cmd = self._build_command(1004, lh)
                 self._send_command(cmd, lock=False)
 
+                self._burst_shot = int(n)
                 if save:
                     self._save_eeprom()
-                self._burst_shot = int(n)
-
-                #        self.burst_readback = self.get_nburst()
 
     def _save_eeprom(self, lock=False):
         cmd = self._build_command(37, 1)
@@ -247,10 +230,6 @@ class ATLLaserControlUnit(CoreDevice):
         cmd = self._build_command(11, 1)
         self._send_command(cmd)
 
-    #        self.ask('A'+ENQ)
-    # self._enabled = True
-
-
     def laser_off(self):
         cmd = self._build_command(11, 0)
         self._send_command(cmd)
@@ -261,17 +240,11 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_run(self):
-
-        #        #self.start_update_timer()
-        #        ps=self.get_process_status()
-        #        if self.is_burst_mode(ps):
-        #            self.set_burst_mode(False, ps)
         self.debug('run laser')
         self.firing = True
 
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
-
 
     def laser_stop(self):
     #        self.stop_update_timer()
@@ -379,13 +352,11 @@ class ATLLaserControlUnit(CoreDevice):
             if self.firing:
                 self.debug('readback={} burst={} fired={}'.format(b, self.burst_shot, self._was_fired))
                 if self._was_fired and b == self.burst_shot:
+                    self.debug('AUTO STOP LASER')
                     self.laser_stop()
                     self._was_fired = False
 
                 self._was_fired = b != self.burst_shot
-                #if not b or b == self.burst_shot:
-
-                #self.laser_stop()
 
     def _set_answer_parameters(self, start_addr_value, answer_len,
                                verbose=True, ):

@@ -24,7 +24,6 @@ import apptools.sweet_pickle as pickle
 import time
 from threading import Thread
 #============= local library imports  ==========================
-from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient,\
@@ -343,10 +342,9 @@ class PychronLaserManager(BaseLaserManager):
 
         cnt = 0
         tries = 0
-        maxtries = 200  # timeout after 50 s
-        nsuccess = 4
+        maxtries = int(50 / float(period))  # timeout after 50 s
+        nsuccess = 2
         self._cancel_blocking = False
-        #        period = 0.25
         while tries < maxtries and cnt < nsuccess:
             if self._cancel_blocking:
                 break
@@ -361,11 +359,10 @@ class PychronLaserManager(BaseLaserManager):
                 try:
                     if not str_to_bool(resp):
                         cnt += 1
-                except:
+                except (ValueError, TypeError):
                     cnt = 0
 
                 if position_callback:
-
                     if self._communicator.simulation:
                         x, y, z = cnt / 3., cnt / 3., 0
                         position_callback(x, y, z)
@@ -373,19 +370,18 @@ class PychronLaserManager(BaseLaserManager):
                         xyz = self.get_position()
                         if xyz:
                             position_callback(*xyz)
-
             else:
                 cnt = 0
             tries += 1
 
         state = cnt >= nsuccess
         if state:
-            self.info('Move completed')
+            self.info('Block completed')
         else:
             if self._cancel_blocking:
-                self.info('Move failed. canceled by user')
+                self.info('Block failed. canceled by user')
             else:
-                self.info('Move failed. timeout after {}s'.format(maxtries * period))
+                self.warning('Block failed. timeout after {}s'.format(maxtries * period))
 
         return state
 
@@ -474,7 +470,11 @@ class PychronUVLaserManager(PychronLaserManager):
 
     def extract(self, power, **kw):
         self._set_nburst(power)
+
+        time.sleep(0.25)
         self._ask('Fire burst')
+        time.sleep(0.25)
+
         self._block('IsFiring', period=0.5)
 
     def end_extract(self):
