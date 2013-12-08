@@ -168,6 +168,9 @@ class IonOpticsManager(Manager):
                           period=900,
                           directions='Increase',
                           center_dac=None, plot_panel=None):
+
+        self._ointegration_time = self.spectrometer.integration_time
+
         if detector is None or isotope is None:
             pcc = self.peak_center_config
             info = pcc.edit_traits()
@@ -180,7 +183,6 @@ class IonOpticsManager(Manager):
                 isotope = pcc.isotope
                 directions = pcc.directions
 
-                self._ointegration_time = self.spectrometer.integration_time
                 self.spectrometer.set_integration_time(pcc.integration_time)
 
                 period = int(pcc.integration_time * 1000 * 0.9)
