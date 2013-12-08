@@ -18,7 +18,7 @@
 from traits.api import HasTraits, Int, List, String, Float, Bool, \
     on_trait_change, Str, Any, Instance
 from traitsui.api import View, Item, VGroup, Group, HGroup, Label, Spring, \
-    UItem, ListEditor, InstanceEditor, spring, EnumEditor
+    UItem, ListEditor, InstanceEditor, spring, EnumEditor, TableEditor
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
 #============= standard library imports ========================
@@ -26,7 +26,7 @@ import re
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 from pychron.paths import paths
@@ -236,14 +236,14 @@ class MeasurementParameterEditor(ParameterEditor):
             ('multicollect_counts', int),
             ('active_detectors', extract_detectors),
 
-            ('baseline_before', str_to_bool),
-            ('baseline_after', str_to_bool),
+            ('baseline_before', to_bool),
+            ('baseline_after', to_bool),
             ('baseline_counts', int),
             ('baseline_detector', str_to_str),
             ('baseline_mass', float),
 
-            ('peak_center_before', str_to_bool),
-            ('peak_center_after', str_to_bool),
+            ('peak_center_before', to_bool),
+            ('peak_center_after', to_bool),
             ('peak_center_detector', str_to_str),
             ('peak_center_isotope', str_to_str),
 
@@ -252,7 +252,7 @@ class MeasurementParameterEditor(ParameterEditor):
             ('eq_outlet', str_to_str),
             ('eq_delay', float),
 
-            ('use_peak_hop', str_to_bool),
+            ('use_peak_hop', to_bool),
             ('ncycles', int),
         )
         found = []

@@ -25,7 +25,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
 from pychron.paths import paths
 
@@ -69,7 +69,7 @@ class ExtractionLineScene(Scene):
 
         key = elem.text.strip()
         display_name = elem.get('display_name', key)
-        fill = str_to_bool(elem.get('fill', 'T'))
+        fill = to_bool(elem.get('fill', 'T'))
 
         x, y = self._get_floats(elem, 'translation')
         w, h = self._get_floats(elem, 'dimension')
@@ -191,7 +191,7 @@ class ExtractionLineScene(Scene):
         c = self._make_color(c)
         l = klass(ox + x, oy + y,
                   bgcolor=c,
-                  use_border=str_to_bool(label.get('use_border', 'T')),
+                  use_border=to_bool(label.get('use_border', 'T')),
                   name=name,
                   text=label.text.strip(),
                   **kw
@@ -372,8 +372,7 @@ class ExtractionLineScene(Scene):
             #                 print b
                 rect = self._new_rectangle(b, c, bw=5, origin=(ox + lox, oy + loy),
                                            type_tag='rect',
-                                           layer='legend'
-                )
+                                           layer='legend')
 
                 maxx = max(maxx, rect.x)
                 maxy = max(maxy, rect.y)

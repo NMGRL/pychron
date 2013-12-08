@@ -22,7 +22,7 @@ import os
 import sys
 import inspect
 #============= local library imports  ==========================
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 from pychron.xml.xml_parser import XMLParser
 from pychron.paths import paths
 
@@ -96,7 +96,7 @@ class InitializationParser(XMLParser):
                 plugins = tree.getiterator(tag='plugin')
 
         return [p if element else p.text.strip()
-                for p in plugins if all_ or str_to_bool(p.get('enabled'))]
+                for p in plugins if all_ or to_bool(p.get('enabled'))]
 
     #    def get_plugins_as_elements(self, category):
     #        tree = self._tree.find('plugins')
@@ -247,12 +247,12 @@ class InitializationParser(XMLParser):
 
         return [d if element else d.text.strip()
                 for d in subtree.findall(tag)
-                if all_ or str_to_bool(d.get('enabled'))]
+                if all_ or to_bool(d.get('enabled'))]
 
     def get_managers(self, elem, all_=False, element=False):
         return [m if element else m.text.strip()
                 for m in elem.findall('manager')
-                if all_ or str_to_bool(m.get('enabled'))]
+                if all_ or to_bool(m.get('enabled'))]
 
     def get_plugin(self, name, category=None):
         if '_' in name:

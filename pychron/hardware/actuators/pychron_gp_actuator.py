@@ -19,7 +19,7 @@ import time
 
 #========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 
 
 
@@ -127,7 +127,7 @@ class PychronGPActuator(GPActuator):
         cmd = 'GetValveState {}'.format(self._get_valve_name(obj))
         resp = self.ask(cmd)
         if resp is not None:
-            resp = str_to_bool(resp.strip())
+            resp = to_bool(resp.strip())
 
         return resp
 

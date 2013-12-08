@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from threading import Thread
 #============= local library imports  ==========================
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
@@ -24,7 +23,7 @@ from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
 from pychron.remote_hardware.errors.laser_errors import LogicBoardCommErrorCode, \
     EnableErrorCode, DisableErrorCode, InvalidSampleHolderErrorCode, \
     InvalidMotorErrorCode
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 # from pychron.remote_hardware.errors.error import InvalidDirectoryErrorCode
 # from pychron.paths import paths
 # import os
@@ -270,7 +269,7 @@ class LaserHandler(BaseRemoteHardwareHandler):
     def GoToHole(self, manager, hole, autocenter, *args):
         try:
             hole = int(hole)
-            autocenter = str_to_bool(autocenter)
+            autocenter = to_bool(autocenter)
 
             err = manager.stage_manager.move_to_hole(str(hole),
                                                      correct_position=autocenter)

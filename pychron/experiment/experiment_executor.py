@@ -51,7 +51,7 @@ from pychron.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.helpers.filetools import add_extension, str_to_bool
+from pychron.helpers.filetools import add_extension, to_bool
 from pychron.globals import globalv
 from pychron.wait.wait_group import WaitGroup
 
@@ -1154,7 +1154,7 @@ If "No" select from database
             exp = ip.get_plugin('Experiment', category='general')
             monitor = exp.find('monitor')
             if monitor is not None:
-                if str_to_bool(monitor.get('enabled')):
+                if to_bool(monitor.get('enabled')):
                     host, port, kind = None, None, None
                     comms = monitor.find('communications')
                     host = comms.find('host')

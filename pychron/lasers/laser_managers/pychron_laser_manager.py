@@ -29,7 +29,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient,\
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 import os
 from pychron.paths import paths
 
@@ -264,7 +264,7 @@ class PychronLaserManager(BaseLaserManager):
             resp = ask(cmd)
             if resp is not None:
                 try:
-                    if str_to_bool(resp):
+                    if to_bool(resp):
                         cnt += 1
                 except:
                     cnt = 0
@@ -357,7 +357,7 @@ class PychronLaserManager(BaseLaserManager):
 
             if resp is not None:
                 try:
-                    if not str_to_bool(resp):
+                    if not to_bool(resp):
                         cnt += 1
                 except (ValueError, TypeError):
                     cnt = 0

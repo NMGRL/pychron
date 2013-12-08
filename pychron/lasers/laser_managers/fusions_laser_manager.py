@@ -37,7 +37,7 @@ from pychron.hardware.fiber_light import FiberLight
 from laser_manager import LaserManager
 # from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
 # from pychron.viewable import Viewable
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 from pychron.ui.thread import Thread
 # from pychron.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager
@@ -223,7 +223,7 @@ class FusionsLaserManager(LaserManager):
     def set_motor_lock(self, name, value):
         m = self.get_motor(name)
         if m is not None:
-            m.locked = str_to_bool(value)
+            m.locked = to_bool(value)
             return True
 
     def set_motor(self, *args, **kw):

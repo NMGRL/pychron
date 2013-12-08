@@ -88,7 +88,7 @@ def unique_path(root, base, extension='txt'):
     return p, cnt
 
 
-def str_to_bool(a):
+def to_bool(a):
     """
         a: a str or bool object
 
@@ -99,6 +99,8 @@ def str_to_bool(a):
 
     if isinstance(a, bool):
         return a
+    elif isinstance(a, (int, float)):
+        return bool(a)
 
     tks = ['true', 't', 'yes', 'y', '1', 'ok']
     fks = ['false', 'f', 'no', 'n', '0']

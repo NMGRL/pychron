@@ -26,7 +26,7 @@ from traits.api import Instance, on_trait_change, List, Str
 #============= local library imports  ==========================
 from pychron.dashboard.tasks.server.device import DashboardDevice
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.helpers.filetools import str_to_bool
+from pychron.helpers.filetools import to_bool
 from pychron.loggable import Loggable
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
@@ -87,7 +87,7 @@ class DashboardServer(Loggable):
 
             enabled = dev.find('use')
             if enabled is not None:
-                enabled = str_to_bool(enabled.text.strip())
+                enabled = to_bool(enabled.text.strip())
 
             d = DashboardDevice(name=name, use=bool(enabled),
                                 _device=device)
@@ -106,7 +106,7 @@ class DashboardServer(Loggable):
                     except ValueError:
                         period = 60
 
-                enabled = str_to_bool(self._get_xml_value(v, 'enabled', False))
+                enabled = to_bool(self._get_xml_value(v, 'enabled', False))
                 timeout = self._get_xml_value(v, 'timeout', 0)
                 d.add_value(n, tag, func_name, period, enabled, timeout)
 
