@@ -120,7 +120,7 @@ class SpectrometerManager(Manager):
         return True
 
     def finish_loading(self):
-        integration_time = 1.048576
+        #integration_time = 1.048576
 
         # set device microcontrollers
         self.spectrometer.set_microcontroller(self.spectrometer_microcontroller)
@@ -129,7 +129,10 @@ class SpectrometerManager(Manager):
         self.spectrometer.source.sync_parameters()
 
         # set integration time
-        self.integration_time = integration_time
+        self.spectrometer.get_integration_time()
+        #integration_time = self.spectrometer.get_integration_time()
+        #self.integration_time = integration_time
+
         # self.integration_time = 0.065536
 
         self.spectrometer.load_configurations()

@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import time
 from traits.api import Float
 #============= standard library imports ========================
 from numpy import max
@@ -79,9 +80,11 @@ class PeakCenter(MagnetScan):
             except AttributeError:
                 width = 0.001
 
-            #            print center_dac + 0.001, start, end, nsteps
-            #            intensities = self._scan_dac(dac_values, self.detector)
-            #            self.data = (dac_values, intensities)
+            #move to start position
+            delay=1
+            self.info('moving to starting dac {}. delay {} before continuing'.format(start, delay))
+            self.spectrometer.magnet.set_dac(start)
+            time.sleep(delay)
 
             ok = self._do_scan(start, end, width, directions=self.directions, map_mass=False)
             self.debug('result of _do_scan={}'.format(ok))
@@ -118,95 +121,16 @@ class PeakCenter(MagnetScan):
 
     def _calculate_peak_center(self, x, y):
         result = calculate_peak_center(x, y,
-                                       min_peak_height=self.min_peak_height,
-        )
+                                       min_peak_height=self.min_peak_height)
         if result is not None:
             if isinstance(result, str):
                 self.warning(result)
             else:
                 return result
-                #        peak_threshold = self.min_peak_height
-                #        peak_percent = 0.8
-                #
-                #        x = array(x)
-                #        y = array(y)
-                #
-                #        ma = max(y)
-                #        max_i = argmax(y)
-                #
-                #        if ma < peak_threshold:
-                #            self.warning('No peak greater than {}. max = {}'.format(peak_threshold, ma))
-                #            return
-                #
-                #        mx = x[max_i]
-                #        my = ma
-                #
-                #        #look backward for point that is peak_percent% of max
-                #        for i in range(max_i, max_i - 50, -1):
-                #            #this prevent looping around to the end of the list
-                #            if i < 1:
-                #                self.warning('PeakCenterError: could not find a low pos')
-                #                return
-                #
-                #            try:
-                #                if y[i] < (ma * (1 - peak_percent)):
-                #                    break
-                #            except IndexError:
-                #                '''
-                #                could not find a low pos
-                #                '''
-                #                self.warning('PeakCenterError: could not find a low pos')
-                #                return
-                #
-                #        xstep = (x[i] - x[i - 1]) / 2.
-                #        lx = x[i] - xstep
-                #        ly = y[i] - (y[i] - y[i - 1]) / 2.
-                #
-                #        #look forward for point that is 80% of max
-                #        for i in range(max_i, max_i + 50, 1):
-                #            try:
-                #                if y[i] < (ma * (1 - peak_percent)):
-                #                    break
-                #            except IndexError:
-                #                '''
-                #                    could not find a high pos
-                #                '''
-                #                self.warning('PeakCenterError: could not find a high pos')
-                #                return
-                #        try:
-                #            hx = x[i + 1] - xstep
-                #            hy = y[i] - (y[i] - y[i + 1]) / 2.
-                #        except IndexError:
-                #            self.warning('peak not well centered')
-                #            return
-                #
-                #        if (hx - lx) < 0:
-                #            self.warning('unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx))
-                #            return
-                #
-                #        cx = (hx + lx) / 2.0
-                #        cy = ma
-                #
-                #        #find index in x closest to cx
-                #        ccx = abs(x - cx).argmin()
-                #        #check to see if were on a plateau
-                #        yppts = y[ccx - 2:ccx + 2]
-                #
-                #        slope, _ = polyfit(range(len(yppts)), yppts, 1)
-                #        std = yppts.std()
-                #
-                #        if std > 5 and abs(slope) < 1:
-                #            self.warning('No peak plateau std = {} slope = {}'.format(std, slope))
-                #            return
-                #        else:
-                #            self.info('peak plateau std = {} slope = {}'.format(std, slope))
-                #
-                #        return [lx, cx, hx ], [ly, cy, hy], mx, my
 
-                #===============================================================================
-                # factories
-                #===============================================================================
-
+    #===============================================================================
+    # factories
+    #===============================================================================
     def _graph_factory(self, graph=None):
         if graph is None:
             graph = Graph(
@@ -221,18 +145,9 @@ class PeakCenter(MagnetScan):
             show_legend='ul',
             legend_kw=dict(
                 font='modern 8',
-                line_spacing=1
-            )
+                line_spacing=1))
 
-        )
-
-        graph.new_series(
-            line_width=2
-
-            #                          type='scatter',
-            #                          marker='circle',
-            #                          marker_size=1.25
-        )
+        graph.new_series(line_width=2)
 
         graph.set_series_label('*{}'.format(self.reference_detector))
         self._markup_idx = 1
@@ -246,12 +161,10 @@ class PeakCenter(MagnetScan):
 
         graph.new_series(type='scatter', marker='circle',
                          marker_size=4,
-                         color='green'
-        )
+                         color='green')
         graph.new_series(type='scatter', marker='circle',
                          marker_size=4,
-                         color='green'
-        )
+                         color='green')
 
         #graph.plots[0].value_range.tight_bounds = False
         return graph

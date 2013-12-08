@@ -26,7 +26,7 @@ from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.spectrometer.detector import Detector
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
 from pychron.ui.thread import Thread
 from pychron.paths import paths
 import os
@@ -48,9 +48,12 @@ class PeakCenterConfig(HasTraits):
     isotope = Str('Ar40')
     isotopes = List(transient=True)
     dac = Float
-    use_current_dac=Bool(True)
-
+    use_current_dac = Bool(True)
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
     directions = Enum('Increase', 'Decrease', 'Oscillate')
+
+    def _integration_time_default(self):
+        return QTEGRA_INTEGRATION_TIMES[4] #1.048576
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -65,8 +68,9 @@ class PeakCenterConfig(HasTraits):
         v = View(Item('detector', editor=EnumEditor(name='detectors')),
                  Item('isotope', editor=EnumEditor(name='isotopes')),
                  HGroup(Item('use_current_dac',
-                        label='Use Current DAC'),
+                             label='Use Current DAC'),
                         Item('dac', enabled_when='not use_current_dac')),
+                 Item('integration_time'),
                  Item('directions'),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
@@ -90,6 +94,8 @@ class IonOpticsManager(Manager):
     canceled = False
 
     peak_center_result = None
+
+    _ointegration_time = None
 
     def get_mass(self, isotope_key):
         spec = self.spectrometer
@@ -173,6 +179,11 @@ class IonOpticsManager(Manager):
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
+
+                self._ointegration_time = self.spectrometer.integration_time
+                self.spectrometer.set_integration_time(pcc.integration_time)
+
+                period = int(pcc.integration_time * 1000 * 0.9)
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
@@ -258,7 +269,7 @@ class IonOpticsManager(Manager):
             #
             ## convert dac to axial units
             #dac_a = dac_d / det.relative_position
-            dac_a=spec.uncorrect_dac(det, dac_d)
+            dac_a = spec.uncorrect_dac(det, dac_d)
             self.info('converted to axial units {}'.format(dac_a))
 
             if save:
@@ -282,6 +293,8 @@ class IonOpticsManager(Manager):
         # still necessary with qt? and tasks
 
         self.trait_set(alive=False)
+        if self._ointegration_time:
+            self.spectrometer.set_integration_time(self._ointegration_time)
 
     def close(self):
         self.cancel_peak_center()

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import random
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Bool
+    Any, Enum, Str, DelegatesTo, Bool, TraitError
 
 #============= standard library imports ========================
 from ConfigParser import ConfigParser
@@ -28,21 +28,19 @@ from pychron.spectrometer.source import Source
 from pychron.spectrometer.magnet import Magnet
 from pychron.spectrometer.detector import Detector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER
+from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
 #from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
 
 debug = False
-QTEGRA_INTEGRATION_TIMES = array([0.065536, 0.131072, 0.262144, 0.524288,
-                                  1.048576, 2.097152, 4.194304, 8.388608,
-                                  16.777216, 33.554432, 67.108864])
+
 
 
 def normalize_integration_time(it):
     """
         find the integration time closest to "it"
     """
-    x = QTEGRA_INTEGRATION_TIMES
+    x = array(QTEGRA_INTEGRATION_TIMES)
     return x[argmin(abs(x - it))]
 
 
@@ -64,9 +62,7 @@ class Spectrometer(SpectrometerDevice):
     detectors = List(Detector)
 
     microcontroller = Any
-    integration_time = Enum(0.065536, 0.131072, 0.262144, 0.524288,
-                            1.048576, 2.097152, 4.194304, 8.388608,
-                            16.777216, 33.554432, 67.108864)
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
 
     reference_detector = Str('H1')
 
@@ -98,6 +94,19 @@ class Spectrometer(SpectrometerDevice):
 
     testcnt = 0
     send_config_on_startup = Bool
+
+    def get_integration_time(self, current=True):
+        if current:
+            resp=self.microcontroller.ask('GetIntegrationTime')
+            if resp:
+                try:
+                    self.integration_time=float(resp)
+                    self.info('Integration Time {}'.format(self.integration_time))
+
+                except (TypeError, ValueError, TraitError):
+                    self.warning('Invalid integration time. resp={}'.format(resp))
+                    self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
+        return self.integration_time
 
     def set_integration_time(self, it):
         it = normalize_integration_time(it)
@@ -188,9 +197,10 @@ class Spectrometer(SpectrometerDevice):
         self.molecular_weight = 'Ar40'
 
     def load(self):
-        self.load_detectors()
 
+        self.load_detectors()
         self.magnet.load()
+
         self.debug('Detectors {}'.format(self.detectors))
         for d in self.detectors:
             d.load_deflection_coefficients()

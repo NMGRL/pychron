@@ -96,6 +96,11 @@ DETECTOR_ORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 DETECTOR_MAP = {o: i for i, o in enumerate(DETECTOR_ORDER)}
 
 IC_ANALYSIS_TYPE_MAP = {'air': 0, 'cocktail': 1}
+
+QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
+                                  1.048576, 2.097152, 4.194304, 8.388608,
+                                  16.777216, 33.554432, 67.108864]
+
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
 # ('NM-213', ['A', 'C', 'I', 'J', 'K', 'L']),
 # ('NM-216', ['C', 'D', 'E', 'F']),
