@@ -604,6 +604,7 @@ class DBAnalysis(Analysis):
                     r.set_fit(fit)
                     isodict[name] = r
 
+
     def _get_peak_center(self, meas_analysis):
         return ufloat(0, 0)
 

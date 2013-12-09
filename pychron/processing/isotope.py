@@ -62,8 +62,6 @@ class BaseMeasurement(HasTraits):
             self.xs = array(xs)
             self.ys = array(ys)
 
-        self.uvalue=ufloat(0,0)
-
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
             endianness = self.endianness
@@ -83,10 +81,7 @@ class BaseMeasurement(HasTraits):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    # uvalue = Property(depends='value, error, _value, _error, dirty')
-    # uvalue = Property(depends_on='dirty')
-
-    uvalue=Any
+    uvalue = Property(depends_on='value, error, _value, _error, dirty')
 
     value = Property(depends_on='_value,fit, dirty')
     error = Property(depends_on='_error,fit, dirty')
@@ -96,10 +91,10 @@ class IsotopicMeasurement(BaseMeasurement):
     fit = String
     fit_abbreviation = Property(depends_on='fit')
 
-    filter_outliers_dict=Dict
+    filter_outliers_dict = Dict
 
-    regressor = Property#(depends_on='xs,ys,fit, dirty')
-    dirty=Event
+    regressor = Property(depends_on='xs,ys,fit, dirty')
+    dirty = Event
 
     def __init__(self, dbresult=None, *args, **kw):
 
@@ -113,9 +108,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit(self, fit):
         if fit is not None:
-            self.filter_outliers_dict=dict(filter_outliers=bool(fit.filter_outliers),
-                                           iterations=int(fit.filter_outlier_iterations),
-                                           std_devs=int(fit.filter_outlier_std_devs))
+            self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
+                                             iterations=int(fit.filter_outlier_iterations),
+                                             std_devs=int(fit.filter_outlier_std_devs))
             self.fit = fit.fit
 
     def set_uvalue(self, v):
@@ -125,9 +120,7 @@ class IsotopicMeasurement(BaseMeasurement):
             self._value = v.nominal_value
             self._error = v.std_dev
 
-        self.uvalue._nominal_value=self._value
-        self.uvalue._std_dev = self._error
-        # self.dirty=True
+        self.dirty = True
 
     def _mean_regressor_factory(self):
         reg = MeanRegressor(xs=self.xs, ys=self.ys,
@@ -136,17 +129,14 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _set_error(self, v):
         self._error = v
-        self.uvalue._std_dev=v
 
     def _set_value(self, v):
         self._value = v
-        self.uvalue._nominal_value=v
 
     #@cached_property
     def _get_value(self):
         if self.xs is not None and len(self.xs) > 1:  # and self.ys is not None:
-            v=self.regressor.predict(0)
-            self.value=v
+            v = self.regressor.predict(0)
             return v
         else:
             return self._value
@@ -154,8 +144,7 @@ class IsotopicMeasurement(BaseMeasurement):
     #@cached_property
     def _get_error(self):
         if self.xs is not None and len(self.xs) > 1:
-            v=self.regressor.predict_error(0)
-            self.error=v
+            v = self.regressor.predict_error(0)
             return v
         else:
             return self._error
@@ -180,9 +169,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
         return reg
 
-    # @cached_property
-    # def _get_uvalue(self):
-    #     return ufloat(self.value, self.error)
+    @cached_property
+    def _get_uvalue(self):
+        return ufloat(self.value, self.error)
 
     def _get_fit_abbreviation(self):
         return fit_abbreviation(self.fit)
@@ -275,7 +264,7 @@ class Isotope(IsotopicMeasurement):
         """
             return the discrimination and ic_factor corrected value
         """
-        return self.disc_corrected_value() * self.ic_factor
+        return self.disc_corrected_value() * (self.ic_factor or 1.0)
 
     def disc_corrected_value(self):
         disc = self.discrimination
@@ -285,10 +274,10 @@ class Isotope(IsotopicMeasurement):
         return self.get_corrected_value() * nominal_value(disc)
 
     def ic_corrected_value(self):
-        return self.get_corrected_value() * self.ic_factor
+        return self.get_corrected_value() * (self.ic_factor or 1.0)
 
     def baseline_corrected_value(self):
-        nv=self.uvalue - self.baseline.uvalue.nominal_value
+        nv = self.uvalue - self.baseline.uvalue.nominal_value
         return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
     def get_corrected_value(self):

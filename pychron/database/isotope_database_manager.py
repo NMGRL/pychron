@@ -285,7 +285,6 @@ class IsotopeDatabaseManager(Loggable):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
-    @simple_timer()
     def _analysis_factory(self, rec, progress=None,
                           calculate_age=False,
                           unpack=False,
