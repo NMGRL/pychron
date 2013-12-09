@@ -147,6 +147,7 @@ class AutomatedRun(Loggable):
     extraction_script = Instance(ExtractionPyScript)
 
     _active_detectors = List
+    _peak_center_detectors = List
     _loaded = False
     _measured = False
 
@@ -166,7 +167,7 @@ class AutomatedRun(Loggable):
 
     #    condition_truncated = Bool
     truncated = Bool
-    eqtime=Float
+    eqtime = Float
 
     measuring = Bool(False)
     dirty = Bool(False)
@@ -225,7 +226,7 @@ class AutomatedRun(Loggable):
             return
 
         if peak_center:
-            self._set_active_detectors(dets)
+            self._peak_center_detectors=self._set_active_detectors(dets)
         else:
             self._activate_detectors(dets)
 
@@ -304,8 +305,7 @@ class AutomatedRun(Loggable):
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
-                         delay=None
-    ):
+                         delay=None):
         mem_log('pre equilibration')
         evt = TEvent()
         if not self._alive:
@@ -318,8 +318,7 @@ class AutomatedRun(Loggable):
                                inlet=inlet,
                                outlet=outlet,
                                delay=delay,
-                               do_post_equilibration=do_post_equilibration)
-        )
+                               do_post_equilibration=do_post_equilibration))
         t.start()
 
         mem_log('post equilibration')
@@ -354,8 +353,7 @@ class AutomatedRun(Loggable):
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
                      series=0, nintegrations=5, settling_time=4,
-                     fit='average_SEM'
-    ):
+                     fit='average_SEM'):
 
         if not self._alive:
             return
@@ -456,7 +454,7 @@ class AutomatedRun(Loggable):
 
             self.debug('peak center started')
 
-            ad = [di.name for di in self._active_detectors
+            ad = [di.name for di in self._peak_center_detectors
                   if di.name != detector]
 
             pc = ion.setup_peak_center(detector=[detector] + ad,
@@ -772,7 +770,7 @@ class AutomatedRun(Loggable):
                     an = DBAnalysis()
                     x = datetime.now()
                     now = time.mktime(x.timetuple())
-                    an.timestamp=now
+                    an.timestamp = now
                     an.sync_irradiation(ln)
 
                     self.arar_age.trait_set(j=an.j,
@@ -817,7 +815,7 @@ class AutomatedRun(Loggable):
                 self._setup_context(script)
 
         #load extraction metadata
-        self.eqtime=self._get_extraction_parameter('eqtime', 15)
+        self.eqtime = self._get_extraction_parameter('eqtime', 15)
         return True
 
     #===============================================================================
@@ -1021,7 +1019,7 @@ anaylsis_type={}
     #             self._term_thread.start()
     def _set_active_detectors(self, dets):
         spec = self.spectrometer_manager.spectrometer
-        self._active_detectors = [spec.get_detector(n) for n in dets]
+        return [spec.get_detector(n) for n in dets]
 
     def _define_detectors(self, isotope, det):
         spec = self.spectrometer_manager.spectrometer
@@ -1057,7 +1055,7 @@ anaylsis_type={}
         p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
         self.plot_panel = p
 
-        self._set_active_detectors(dets)
+        self._active_detectors=self._set_active_detectors(dets)
 
         if create:
             p.create(self._active_detectors)
@@ -1787,7 +1785,7 @@ anaylsis_type={}
                 det=det.name
                 ic = self.arar_age.get_ic_factor(det)
                 self.info('default ic_factor {}= {}'.format(det, ic))
-                if det=='CDD':
+                if det == 'CDD':
                     # save cdd_ic_factor so it can be exported to secondary db
                     self.cdd_ic_factor = ic
                     self.debug('default cdd_ic_factor={}'.format(ic))
@@ -1800,7 +1798,7 @@ anaylsis_type={}
 
                 if history is None:
                     history = db.add_detector_intercalibration_history(analysis,
-                                                                   user=user)
+                                                                       user=user)
                     analysis.selected_histories.selected_detector_intercalibration = history
 
                 uv, ue = ic.nominal_value, ic.std_dev
@@ -1808,7 +1806,7 @@ anaylsis_type={}
                                                  user_value=float(uv),
                                                  user_error=float(ue))
 
-            #return self._time_save(func, 'detector intercalibration')
+                    #return self._time_save(func, 'detector intercalibration')
 
     def _save_blank_info(self, analysis):
         self.info('saving blank info')
@@ -1931,6 +1929,7 @@ anaylsis_type={}
         rid = self.runid
 
         blanks = self.get_previous_blanks()
+
         dkeys = [d.name for d in self._active_detectors]
         sf = dict(zip(dkeys, fb))
         p = self._current_data_frame
