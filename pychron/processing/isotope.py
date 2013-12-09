@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event, Any
+    Array, String, Either, Dict, cached_property, Event
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
@@ -171,7 +171,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     @cached_property
     def _get_uvalue(self):
-        return ufloat(self.value, self.error)
+        return ufloat(self.value, self.error, tag=self.name)
 
     def _get_fit_abbreviation(self):
         return fit_abbreviation(self.fit)

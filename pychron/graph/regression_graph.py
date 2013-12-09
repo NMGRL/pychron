@@ -195,7 +195,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.regression_results = regs
 
     def _plot_regression(self, plot, scatter, line):
-    #         try:
         if not plot.visible:
             self.regressors.append(None)
             return

@@ -18,7 +18,6 @@
 #============= enthought library imports =======================
 from copy import copy
 from traits.api import Dict, Property, Instance, Float, Str, List, Either
-from pychron.codetools.simple_timeit import simple_timer
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -106,7 +105,6 @@ class ArArAge(Loggable):
         return r
 
     def get_error_component(self, key):
-
         v = next((error for (var, error) in self.uage.error_components().items()
                   if var.tag == key), 0)
 

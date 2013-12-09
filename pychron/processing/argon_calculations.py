@@ -18,11 +18,12 @@
 
 #============= standard library imports ========================
 import math
+from copy import deepcopy
 
 from numpy import asarray, argmax, average
 from uncertainties import ufloat, umath
-# from copy import deepcopy
 from numpy import array
+
 from pychron.processing.arar_constants import ArArConstants
 from pychron.stats.core import calculate_weighted_mean
 
@@ -267,12 +268,12 @@ def calculate_F(isotopes,
 
     rad40 = a40 - atm40 - k40
     try:
-        R = rad40 / k39
+        f = rad40 / k39
     except ZeroDivisionError:
-        R=ufloat(1.0,0)
+        f=ufloat(1.0,0)
 
-
-    r = ufloat(R.nominal_value, R.std_dev)
+    rf=deepcopy(f)
+    # f = ufloat(f.nominal_value, f.std_dev, tag='F')
 
     non_ar_isotopes = dict(k38=k38, k37=k37,
                            ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
@@ -297,9 +298,9 @@ def calculate_F(isotopes,
     ##clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
-    r_wo_irrad = R
+    f_wo_irrad = f
 
-    return r, r_wo_irrad, non_ar_isotopes, computed, interference_corrected
+    return rf, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
 def age_equation(j, f,
