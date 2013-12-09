@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-
+from pychron.ui import set_toolkit
+set_toolkit('qt4')
 #============= enthought library imports =======================
-import re
 from traits.api import List, Any, Event, Callable
 from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
-from numpy import linspace, random, \
-    delete
+from numpy import linspace, random
 import weakref
 
 #============= local library imports  ==========================
@@ -55,14 +54,6 @@ class NoRegressionCTX(object):
         self._obj.suppress_regression = False
         if self._refresh:
             self._obj.refresh()
-
-
-class StatsFilterParameters(object):
-    '''
-        exclude points where (xi-xm)**2>SDx*tolerance_factor
-    '''
-    tolerance_factor = 3.0
-    blocksize = 20
 
 
 class RegressionGraph(Graph, RegressionContextMenuMixin):
@@ -104,33 +95,16 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     #===============================================================================
     #
     #===============================================================================
-
-    def set_filter(self, fi, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        scatter.filter = fi
-        self.redraw()
-
     def set_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
         scatter = plot.plots['data{}'.format(series)][0]
         scatter.filter_outliers_dict['filter_outliers'] = fi
-        #        scatter.index.metadata['selections'] = []
-
         self.redraw()
 
     def get_filter_outliers(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
         scatter = plot.plots['data{}'.format(series)][0]
         return scatter.filter_outliers_dict['filter_outliers']
-
-    #        scatter.filter_outliers = fi
-    #        self.redraw()
-
-    def get_filter(self, plotid=0, series=0):
-        plot = self.plots[plotid]
-        scatter = plot.plots['data{}'.format(series)][0]
-        return scatter.filter
 
     def set_fit(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
@@ -160,13 +134,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def clear(self):
         self.regressors = []
-
-        #x = self.indices[:]
-        #for idx in x:
-        #    idx.on_trait_change(self.update_metadata,
-        #                        'metadata_changed', remove=True)
-        #    self.indices.remove(idx)
-        #del x
         self.selected_component = None
 
         for p in self.plots:
@@ -234,228 +201,133 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return self._regress(plot, scatter, line)
 
     def _regress(self, plot, scatter, line):
-        x = scatter.index.get_data()
-        y = scatter.value.get_data()
-        index = scatter.index
+        if scatter.no_regression:
+            return
 
-        fod = scatter.filter_outliers_dict
-
-        ox = x[:]
-        oy = y[:]
-        #        ox, oy = None, None
         fit = convert_fit(scatter.fit)
         if fit is None:
             return
 
-        meta = index.metadata
-        #        apply_filter = False
-        if not fod['filter_outliers'] and not scatter.truncate:
-            apply_filter = False
-            csel = set(meta['selections'])
-            sel = list(csel)
-            if 'filtered' in meta:
-                fpts = meta['filtered']
-                if fpts:
-                    fpts = set(meta['filtered'])
-                    sel = list(csel - fpts)
-
-            nmeta = dict(selections=sel,
-                         filtered=None)
-            index.trait_set(metadata=nmeta)
-
-        else:
-            if 'filtered' in meta:
-                apply_filter = True if meta['filtered'] is None else False
-            else:
-                apply_filter = True
-
-        selection = meta.get('selections', [])
-
-        if selection:
-            x = delete(x, selection, 0)
-            y = delete(y, selection, 0)
-
+        index = scatter.index
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
 
         if fit in [1, 2, 3]:
-            if y.shape[0] < fit + 1:
-                return
-            r = self._poly_regress(r, x, y, ox, oy, index, fit, fod,
-                                   apply_filter, scatter, selection)
+            r = self._poly_regress(scatter, r, fit)
+
         elif isinstance(fit, tuple):
-            r = self._least_square_regress(r, x, y, ox, oy, index, fit, fod,
-                                           apply_filter, scatter)
+            r = self._least_square_regress(scatter, r, fit)
+
         elif isinstance(fit, BaseRegressor):
-            r = self._custom_regress(r, x, y, ox, oy, index, fit, fod,
-                                     apply_filter, scatter, selection)
-
+            r = self._custom_regress(scatter, r, fit)
         else:
-            r = self._mean_regress(r, x, y, ox, oy, index, fit, fod,
-                                   apply_filter, scatter)
+            r = self._mean_regress(scatter, r, fit)
 
-        low = plot.index_range.low
-        high = plot.index_range.high
-        fx = linspace(low, high, 100)
-        fy = r.predict(fx)
-        if line:
-            line.regressor = r
+        if r:
+            low = plot.index_range.low
+            high = plot.index_range.high
+            fx = linspace(low, high, 100)
+            fy = r.predict(fx)
+            if line:
+                line.regressor = r
 
-            line.index.set_data(fx)
-            line.value.set_data(fy)
+                line.index.set_data(fx)
+                line.value.set_data(fy)
 
-            if hasattr(line, 'error_envelope'):
-                ci = r.calculate_ci(fx, fy)
-                #                 print ci
-                if ci is not None:
-                    ly, uy = ci
-                else:
-                    ly, uy = fy, fy
+                if hasattr(line, 'error_envelope'):
+                    ci = r.calculate_ci(fx, fy)
+                    #                 print ci
+                    if ci is not None:
+                        ly, uy = ci
+                    else:
+                        ly, uy = fy, fy
 
-                line.error_envelope.lower = ly
-                line.error_envelope.upper = uy
-                line.error_envelope.invalidate()
+                    line.error_envelope.lower = ly
+                    line.error_envelope.upper = uy
+                    line.error_envelope.invalidate()
 
         return r
 
-    def _least_square_regress(self, r, x, y, ox, oy, index,
-                              fit, fod, apply_filter, scatter):
+    def _set_regressor(self, scatter, r):
+        selection = scatter.index.metadata['selections']
+        selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
+
+        x = scatter.index.get_data()
+        y = scatter.value.get_data()
+        r.trait_set(xs=x, ys=y,
+                    user_excluded=selection,
+                    filter_outliers_dict=scatter.filter_outliers_dict)
+
+    def _set_excluded(self, scatter, r):
+        scatter.no_regression = True
+        scatter.index.metadata['selections'] = r.get_excluded()
+        scatter.no_regression = False
+
+    def _poly_regress(self, scatter, r, fit):
+
+        if hasattr(scatter, 'yerror'):
+            if r is None or not isinstance(r, WeightedPolynomialRegressor):
+                r = WeightedPolynomialRegressor()
+            # r.trait_set(yserr=es, trait_change_notify=False)
+        else:
+            if r is None or not isinstance(r, PolynomialRegressor):
+                r = PolynomialRegressor()
+
+        self._set_regressor(scatter, r)
+        r.trait_set(degree=fit)
+        r.set_truncate(scatter.truncate)
+
+        r.calculate()
+        if r.ys.shape[0] < fit + 1:
+            return
+
+        self._set_excluded(scatter, r)
+
+        return r
+
+    def _least_square_regress(self, scatter, r, fit):
         fitfunc, errfunc = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
 
-        r.trait_set(xs=x, ys=y,
-                    fitfunc=fitfunc,
+        self._set_regressor(scatter, r)
+        r.trait_set(fitfunc=fitfunc,
                     errfunc=errfunc,
                     trait_change_notify=False)
         r.calculate()
+        self._set_excluded(scatter, r)
 
-        if apply_filter:
-            self._apply_outlier_filter(r, ox, oy, index, fod)
-            if scatter.truncate:
-                self._apply_truncation(r, index, scatter.truncate)
-
-        return r
-
-    def _mean_regress(self, r, x, y, ox, oy, index,
-                      fit, fod, apply_filter, scatter):
+    def _mean_regress(self, scatter, r, fit):
 
         if r is None or not isinstance(r, MeanRegressor):
             r = MeanRegressor()
 
-        r.trait_set(xs=x, ys=y, fit=fit, trait_change_notify=False)
+        self._set_regressor(scatter, r)
+        r.trait_set(fit=fit, trait_change_notify=False)
         r.calculate()
 
-        if apply_filter:
-            self._apply_outlier_filter(r, ox, oy, index, fod)
-            if scatter.truncate:
-                self._apply_truncation(r, index, scatter.truncate)
+        self._set_excluded(scatter, r)
 
-        return r
-
-    def _custom_regress(self, r, x, y, ox, oy, index,
-                        fit, fod, apply_filter, scatter, selection):
-        kw = dict(xs=x, ys=y)
+    def _custom_regress(self, scatter, r, fit):
+        kw={}
         if hasattr(scatter, 'yerror'):
             es = scatter.yerror.get_data()
-            if selection:
-                es = delete(es, selection, 0)
             kw['yserr'] = es
 
         if hasattr(scatter, 'xerror'):
             es = scatter.xerror.get_data()
-            if selection:
-                es = delete(es, selection, 0)
             kw['xserr'] = es
 
         if r is None or not isinstance(r, fit):
             r = fit()
 
+        self._set_regressor(scatter,r)
         r.trait_set(trait_change_notify=False,
                     **kw)
         r.calculate()
 
-        if apply_filter:
-            self._apply_outlier_filter(r, ox, oy, index, fod)
-            if scatter.truncate:
-                self._apply_truncation(r, index, scatter.truncate)
-        return r
-
-    def _poly_regress(self, r, x, y, ox, oy, index,
-                      fit, fod, apply_filter, scatter, selection):
-
-        if hasattr(scatter, 'yerror'):
-            es = scatter.yerror.get_data()
-            if selection:
-                es = delete(es, selection, 0)
-
-            if r is None or not isinstance(r, WeightedPolynomialRegressor):
-                r = WeightedPolynomialRegressor()
-
-            r.trait_set(yserr=es, trait_change_notify=False)
-        else:
-            if r is None or not isinstance(r, PolynomialRegressor):
-                r = PolynomialRegressor()
-
-        r.trait_set(xs=x, ys=y, degree=fit,
-                    trait_change_notify=False)
-        r.calculate()
-        if apply_filter:
-            self._apply_outlier_filter(r, ox, oy, index, fod)
-
-            if scatter.truncate:
-                self._apply_truncation(r, index, scatter.truncate)
-
-        return r
-
-    def _apply_outlier_filter(self, reg, ox, oy, index, fod):
-        try:
-            if fod['filter_outliers']:
-            #                 t_fx, t_fy = ox[:], oy[:]
-                t_fx, t_fy = ox, oy
-                niterations = fod['filter_outlier_iterations']
-                n = fod['filter_outlier_std_devs']
-                for _ in range(niterations):
-                    excludes = list(reg.calculate_outliers(nsigma=n))
-                    oxcl = excludes[:]
-                    sels = index.metadata['selections']
-
-                    excludes = sorted(list(set(sels + excludes)))
-                    index.metadata['filtered'] = oxcl
-                    index.metadata['selections'] = excludes
-
-                    t_fx = delete(t_fx, excludes, 0)
-                    t_fy = delete(t_fy, excludes, 0)
-                    reg.trait_set(xs=t_fx, ys=t_fy)
-
-        except (KeyError, TypeError), e:
-            print 'apply outlier filter', e
-            index.metadata['selections'] = []
-            index.metadata['filtered'] = None
-
-        # return reg
-
-    def _apply_truncation(self, reg, index, filt):
-        """
-           filt: str   x>10 remove all points greater than 10
-           xs: index array
-        """
-        m = re.match(r'[A-Za-z]+', filt)
-        if m:
-            k = m.group(0)
-            xs,ys=reg.xs, reg.ys
-            exclude=eval(filt, {k:xs})
-            excludes=list(exclude.nonzero()[0])
-
-            sels = index.metadata['selections']
-            index.metadata['filtered'] = sels
-            excludes=list(set(excludes+sels))
-            index.metadata['selections'] = excludes
-
-            t_fx = delete(xs, excludes, 0)
-            t_fy = delete(ys, excludes, 0)
-            reg.trait_set(xs=t_fx, ys=t_fy)
+        self._set_excluded(scatter, r)
 
     def _new_scatter(self, kw, marker, marker_size, plotid,
                      x, y, fit, filter_outliers_dict, truncate):
@@ -478,6 +350,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         scatter.filter_outliers_dict = filter_outliers_dict
         scatter.truncate=truncate
         scatter.index.on_trait_change(self.update_metadata, 'metadata_changed')
+        scatter.no_regression=False
 
         return scatter, si
 
@@ -487,7 +360,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    fit='linear',
                    filter_outliers_dict=None,
                    use_error_envelope=True,
-                   truncate=None,
+                   truncate='',
                    marker='circle',
                    marker_size=2,
                    add_tools=True,
@@ -579,7 +452,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         scatter.overlays.append(rect_overlay)
         broadcaster.tools.append(rect_tool)
 
-
+    def _bind_index(self, *args, **kw):
+        pass
 
 
 class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
@@ -599,16 +473,22 @@ if __name__ == '__main__':
 
     rg = RegressionGraph()
     rg.new_plot()
-    x = linspace(0, 10, 200)
+    n=50
+    x = linspace(0, 10, n)
 
-    y = 2 * x + random.rand(200)
+    y = 2 * x + random.rand(n)
 
-    d = np.zeros(200)
-    d[::10] = random.rand() * 15
+    d = np.zeros(n)
+    d[::10] = random.rand() + 5
+    d[::15] = random.rand() + 2
 
     y += d
-    rg.new_series(x, y, filter_outliers=True)
-    rg._update_graph()
+
+    fod={'filter_outliers':True, 'iterations':1, 'std_devs':2}
+    rg.new_series(x, y,
+                  truncate='x<1',
+                  filter_outliers_dict=fod)
+
     rg.configure_traits()
 #============= EOF =============================================
 # @classmethod
@@ -678,3 +558,60 @@ if __name__ == '__main__':
 #             exc_xs = []
 #
 #         return exc_xs
+# def _apply_outlier_filter(self, reg, ox, oy, index, fod):
+    #     try:
+    #         if fod['filter_outliers']:
+    #         #                 t_fx, t_fy = ox[:], oy[:]
+    #             t_fx, t_fy = ox, oy
+    #             niterations = fod['filter_outlier_iterations']
+    #             n = fod['filter_outlier_std_devs']
+    #             for _ in range(niterations):
+    #                 excludes = list(reg.calculate_outliers(nsigma=n))
+    #                 oxcl = excludes[:]
+    #                 sels = index.metadata['selections']
+    #
+    #                 excludes = sorted(list(set(sels + excludes)))
+    #                 index.metadata['filtered'] = oxcl
+    #                 index.metadata['selections'] = excludes
+    #
+    #                 t_fx = delete(t_fx, excludes, 0)
+    #                 t_fy = delete(t_fy, excludes, 0)
+    #                 reg.trait_set(xs=t_fx, ys=t_fy)
+    #
+    #     except (KeyError, TypeError), e:
+    #         print 'apply outlier filter', e
+    #         index.metadata['selections'] = []
+    #         index.metadata['filtered'] = None
+    #
+    #     # return reg
+    #
+    # def _apply_truncation(self, reg, index, filt):
+    #     """
+    #        filt: str   x>10 remove all points greater than 10
+    #        xs: index array
+    #     """
+    #     m = re.match(r'[A-Za-z]+', filt)
+    #     if m:
+    #         k = m.group(0)
+    #         xs,ys=reg.xs, reg.ys
+    #         exclude=eval(filt, {k:xs})
+    #         excludes=list(exclude.nonzero()[0])
+    #
+    #         sels = index.metadata['selections']
+    #         index.metadata['filtered'] = sels
+    #         excludes=list(set(excludes+sels))
+    #         index.metadata['selections'] = excludes
+    #
+    #         t_fx = delete(xs, excludes, 0)
+    #         t_fy = delete(ys, excludes, 0)
+    #         reg.trait_set(xs=t_fx, ys=t_fy)
+
+    # def set_filter(self, fi, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     scatter.filter = fi
+    #     self.redraw()
+    # def get_filter(self, plotid=0, series=0):
+    #     plot = self.plots[plotid]
+    #     scatter = plot.plots['data{}'.format(series)][0]
+    #     return scatter.filter

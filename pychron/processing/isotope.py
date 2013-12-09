@@ -16,11 +16,11 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Bool, Int, Array, String, Either
+    Bool, Array, String, Either, Dict
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
-from numpy import array, delete
+from numpy import array
 from pychron.regression.mean_regressor import MeanRegressor
 from pychron.regression.ols_regressor import PolynomialRegressor
 import struct
@@ -89,9 +89,11 @@ class IsotopicMeasurement(BaseMeasurement):
 
     fit = String
     fit_abbreviation = Property(depends_on='fit')
-    filter_outliers = Bool
-    filter_outlier_iterations = Int
-    filter_outlier_std_devs = Int
+
+    filter_outliers_dict=Dict
+    # filter_outliers = Bool
+    # filter_outlier_iterations = Int
+    # filter_outlier_std_devs = Int
     refit = Bool(True)
 
     regressor = Property(depends_on='xs,ys,fit')
@@ -108,21 +110,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit(self, fit):
         if fit is not None:
-
-            self.filter_outliers = bool(fit.filter_outliers)
-            try:
-                self.filter_outlier_iterations = int(
-                    fit.filter_outlier_iterations)  # if fit.filter_outliers_iterations else 0
-            except TypeError, e:
-                pass
-                #                print '{}. fit.filter_outlier_iterations'.format(e)
-
-            try:
-                self.filter_outlier_std_devs = int(
-                    fit.filter_outlier_std_devs)  # if fit.filter_outliers_std_devs else 0
-            except TypeError, e:
-                pass
-                #                print '{}. fit.filter_outlier_std_devs'.format(e)
+            self.filter_outliers_dict=dict(filter_outliers=bool(fit.filter_outliers),
+                                           iterations=int(fit.filter_outlier_iterations),
+                                           std_devs=int(fit.filter_outlier_std_devs))
             self.fit = fit.fit
 
     def set_uvalue(self, v):
@@ -133,7 +123,8 @@ class IsotopicMeasurement(BaseMeasurement):
             self._error = v.std_dev
 
     def _mean_regressor_factory(self):
-        reg = MeanRegressor(xs=self.xs, ys=self.ys)
+        reg = MeanRegressor(xs=self.xs, ys=self.ys,
+                            filter_outliers_dict=self.filter_outliers_dict)
         return reg
 
     def _set_error(self, v):
@@ -167,24 +158,24 @@ class IsotopicMeasurement(BaseMeasurement):
         try:
             if 'average' in self.fit.lower():
                 reg = self._mean_regressor_factory()
-            #                if self.es:
-            #                    reg = WeightedMeanRegressor(xs=self.xs, ys=self.ys, errors=self.es)
-            #                else:
-            #                    reg = MeanRegressor(xs=self.xs, ys=self.ys)
             else:
                 reg = PolynomialRegressor(xs=self.xs,
                                           ys=self.ys,
-                                          degree=self.fit)
+                                          degree=self.fit,
+                                          filter_outliers_dict=self.filter_outliers_dict)
 
         except Exception, e:
-            reg = PolynomialRegressor(xs=self.xs, ys=self.ys, degree=self.fit)
+            reg = PolynomialRegressor(xs=self.xs, ys=self.ys,
+                                      degree=self.fit,
+                                      filter_outliers_dict=self.filter_outliers_dict)
 
-        if self.filter_outliers:
-            for _ in range(self.filter_outlier_iterations):
-                excludes = list(reg.calculate_outliers(nsigma=self.filter_outlier_std_devs))
-                xs = delete(self.xs, excludes, 0)
-                ys = delete(self.ys, excludes, 0)
-                reg.trait_set(xs=xs, ys=ys, excludes=excludes)
+        reg.calculate()
+        # if self.filter_outliers:
+        #     for _ in range(self.filter_outlier_iterations):
+        #         excludes = list(reg.calculate_outliers(nsigma=self.filter_outlier_std_devs))
+        #         xs = delete(self.xs, excludes, 0)
+        #         ys = delete(self.ys, excludes, 0)
+        #         reg.trait_set(xs=xs, ys=ys, excludes=excludes)
 
         return reg
 

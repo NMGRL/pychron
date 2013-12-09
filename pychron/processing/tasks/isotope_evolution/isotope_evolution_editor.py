@@ -285,8 +285,8 @@ class IsotopeEvolutionEditor(GraphEditor):
 
                     p=g.new_plot(**plot_kw)
 
-                    fd = dict(filter_outlier_iterations=fit.filter_iterations,
-                              filter_outlier_std_devs=fit.filter_std_devs,
+                    fd = dict(iterations=fit.filter_iterations,
+                              std_devs=fit.filter_std_devs,
                               filter_outliers=fit.use_filter)
                     trunc=fit.truncate
 
