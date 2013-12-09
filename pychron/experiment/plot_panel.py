@@ -269,133 +269,6 @@ class PlotPanel(Loggable):
 
         self.detectors = dets
 
-        #def clear_displays(self):
-        #    self._print_results()
-
-        #def _make_display_summary(self):
-        #    def factory(n, v):
-        #        if isinstance(v, tuple):
-        #            sv, se = v
-        #        else:
-        #            sv = v.nominal_value
-        #            se = v.std_dev
-        #
-        #        return DisplayValue(name=n, value=sv, error=se)
-        #
-        #    arar_age = self.arar_age
-        #    summary = []
-        #    if arar_age:
-        #        # call age first
-        #        # loads all the other attrs
-        #        age = arar_age.calculate_age()
-        #        summary = [
-        #                   factory(name, v) for name, v in
-        #                   [
-        #                    ('Age', age),
-        #                    ('', ('', arar_age.age_error_wo_j)),
-        #                    ('J', arar_age.j),
-        #                    ('K/Ca', arar_age.kca),
-        #                    ('K/Cl', arar_age.kcl),
-        #                    ('*40Ar %', arar_age.rad40_percent),
-        #                    ('IC', arar_age.ic_factor)
-        #                    ]
-        #                 ]
-        #
-        #    return summary
-
-    #    def _get_signal_dicts(self):
-    #        sig, base, blank = {}, {}, {}
-    #        if self.arar_age:
-    #            isos = self.arar_age.isotopes.values()
-    ##            isos = [iso for iso in self.arar_age.isotopes.values()]
-    #
-    #            sig = dict([(v.name, v.uvalue) for v in isos])
-    #            base = dict([(v.name, v.baseline.uvalue) for v in isos])
-    #            blank = dict([(v.name, v.blank.uvalue) for v in isos])
-    #        return sig, base, blank
-    #
-    #    def _make_display_ratios(self):
-    #        cfb = self.correct_for_baseline
-    #        cfbl = self.correct_for_blank
-    ##         base = self.baselines
-    ##         blank = self.blanks
-    #        sig, base, blank = self._get_signal_dicts()
-    #
-    #        def factory(n, d, scalar=1):
-    #            r = DisplayRatio(name='{}/{}'.format(n, d))
-    #            try:
-    #                sn = sig[n]
-    #                sd = sig[d]
-    #            except KeyError:
-    #                return r
-    #
-    #            for ci, dd in ((cfb, base), (cfbl, blank)):
-    #                if ci:
-    #                    try:
-    #                        sn -= dd[n]
-    #                        sd -= dd[d]
-    #                    except KeyError:
-    #                        pass
-    #            try:
-    #                rr = (sn / sd) * scalar
-    #                v, e = rr.nominal_value, rr.std_dev
-    #            except ZeroDivisionError:
-    #                v, e = 0, 0
-    #            r.value = v
-    #            r.error = e
-    #
-    #            return r
-    #
-    #        ratios = [('Ar40', 'Ar39'), ('Ar40', 'Ar36')]
-    #        return [factory(*args) for args in ratios]
-
-    #    def _make_display_signals(self):
-    ##         sig = self.signals
-    ##         base = self.baselines
-    ##         blank = self.blanks
-    ##         sig=dict([(k,v) ])
-    #        sig, base, blank = self._get_signal_dicts()
-    #        cfb = self.correct_for_baseline
-    #        cfbl = self.correct_for_blank
-    #        def factory(det, fi):
-    #            iso = det.isotope
-    #            if iso in sig:
-    #                v = sig[iso]
-    #            else:
-    #                v = ufloat(0, 0)
-    #
-    #            if iso in base:
-    #                bv = base[iso]
-    #            else:
-    #                bv = ufloat(0, 0)
-    #
-    #            if iso in blank:
-    #                blv = blank[iso]
-    #            else:
-    #                blv = ufloat(0, 0)
-    #
-    #            iv = v
-    #            if cfb:
-    #                iv = iv - bv
-    #
-    #            if cfbl:
-    #                iv = iv - blv
-    #
-    #            return DisplaySignal(isotope=iso,
-    #                                 detector=det.name,
-    #                                 fit=fi[0].upper(),
-    #                                 intercept_value=iv.nominal_value,
-    #                                 intercept_error=iv.std_dev,
-    #                                 raw_value=v.nominal_value,
-    #                                 raw_error=v.std_dev,
-    #                                 baseline_value=bv.nominal_value,
-    #                                 baseline_error=bv.std_dev,
-    #                                 blank_value=blv.nominal_value,
-    #                                 blank_error=blv.std_dev,
-    #                                 )
-    #
-    #        return [factory(det, fi) for det, fi in zip(self.detectors, self.fits)]
-
     def _get_ncounts(self):
         return self._ncounts
 
@@ -455,20 +328,17 @@ class PlotPanel(Loggable):
                 if reg is None:
                     continue
 
-                try:
+                if isinstance(reg, float):
+                    vv, ee=reg, 0
+                else:
                     vv = reg.predict(0)
                     ee = reg.predict_error(0)
-                    if self.is_baseline:
-                        arar_age.set_baseline(iso, (vv, ee))
-                    else:
-                        arar_age.set_isotope(iso, (vv, ee))
 
-                except TypeError, e:
-                    print 'type error', e
-                    break
-                except AssertionError, e:
-                    print 'assertion error', e
-                    continue
+                if self.is_baseline:
+                    arar_age.set_baseline(iso, (vv, ee))
+                else:
+                    arar_age.set_isotope(iso, (vv, ee))
+
             else:
                 if self.refresh_age:
                     arar_age.calculate_age(force=True)

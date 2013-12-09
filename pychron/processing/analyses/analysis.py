@@ -452,13 +452,6 @@ class DBAnalysis(Analysis):
         for ki, v in self.isotopes.iteritems():
             d[ki] = get(v)
 
-        #for ki in ARGON_KEYS:
-        #    if self.isotopes.has_key(ki):
-        #        v = get(self.isotopes[ki])
-        #    else:
-        #        v = ufloat(0, 0)
-        #    d[ki] = v
-
         return d
 
     def _get_ic_factors(self, meas_analysis):

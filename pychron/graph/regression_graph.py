@@ -185,10 +185,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 for si, fl in zip(scatters, fls):
                     r = self._plot_regression(plot, si, fl)
                     regs.append(r)
-
-            except ValueError, e:
-                break
-
+            except ValueError:
+                try:
+                    si=ps[ks[0]][0]
+                    regs.append(si.value.get_data()[-1])
+                except IndexError:
+                    break
         self.regressors = regs
         self.regression_results = regs
 
