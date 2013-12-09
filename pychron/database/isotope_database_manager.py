@@ -21,6 +21,7 @@ from traits.api import Instance, String, Property, Event, \
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.codetools.simple_timeit import simple_timer
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.helpers.iterfuncs import partition
 from pychron.ui.progress_dialog import myProgressDialog
@@ -56,18 +57,12 @@ class IsotopeDatabaseManager(Loggable):
         if bind:
             try:
                 self.bind_preferences()
-            except AttributeError, e:
-                pass
-                #import traceback
-                #
-                #traceback.print_exc()
-                #self.debug('bind exception. {}'.format(e))
+            except AttributeError:
+                import traceback
+                traceback.print_exc()
 
-                #         if connect and not self.db.connect(warn=warn):
         if connect:
             self.db.connect(warn=warn)
-
-            #             self.db = None
 
     def isConnected(self):
         if self.db:
@@ -125,6 +120,10 @@ class IsotopeDatabaseManager(Loggable):
                       progress=None,
                       unpack=False,
                       exclude=None, **kw):
+        """
+            loading the analysis' signals appears to be the most expensive operation.
+            the majority of the load time is in _construct_analysis
+        """
         if exclude:
             ans = self.filter_analysis_tag(ans, exclude)
 
@@ -134,15 +133,11 @@ class IsotopeDatabaseManager(Loggable):
         with self.db.session_ctx():
             if ans:
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
-                #for di in db_ans:
-                #    self.debug('is DBAnalysis -{}'.format(di.record_id))
 
                 if no_db_ans:
                     cached_ans, no_db_ans = partition(no_db_ans,
                                                       lambda x: x.uuid in ANALYSIS_CACHE)
                     cached_ans = list(cached_ans)
-                    #for ci in cached_ans:
-                    #    self.debug('getting {} from cache'.format(ci.labnumber.identifier))
 
                     db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
@@ -168,7 +163,6 @@ class IsotopeDatabaseManager(Loggable):
 
                             a = self._analysis_factory(ai,
                                                        progress=progress,
-
                                                        calculate_age=calculate_age,
                                                        unpack=unpack,
                                                        **kw)
@@ -291,6 +285,7 @@ class IsotopeDatabaseManager(Loggable):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
+    @simple_timer()
     def _analysis_factory(self, rec, progress=None,
                           calculate_age=False,
                           unpack=False,
@@ -308,19 +303,6 @@ class IsotopeDatabaseManager(Loggable):
             a = self._construct_analysis(rec, calculate_age, unpack, progress)
             self._add_to_cache(a)
             return a
-            #if progress:
-            #    show_age = calculate_age and atype in ('unknown', 'cocktail')
-            #    m = 'calculating age' if show_age else ''
-            #    msg = 'loading {}. {}'.format(rid, m)
-            #    progress.change_message(msg)
-            #    #a = timethis(func, args=(rec,), msg='make analysis')
-            #    a = func(rec)
-            #    self._add_to_cache(rec)
-            #    progress.increment()
-            #else:
-            #    a = func(rec)
-
-            #return a
 
     def _construct_analysis(self, rec, calculate_age, unpack, prog):
         atype = None

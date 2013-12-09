@@ -18,6 +18,7 @@
 #============= enthought library imports =======================
 from copy import copy
 from traits.api import Dict, Property, Instance, Float, Str, List, Either
+from pychron.codetools.simple_timeit import simple_timer
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -187,6 +188,7 @@ class ArArAge(Loggable):
         """
 
         if not self.age or force:
+
             self.calculate_decay_factors()
 
             self._calculate_age(**kw)
@@ -250,30 +252,33 @@ class ArArAge(Loggable):
                 self._kcl_warning = True
                 self.warning("cl36 is zero. can't calculated k/cl")
 
+    def _assemble_ar_ar_isotopes(self):
+        isotopes=self.isotopes
 
-
-    def _calculate_age(self, include_decay_error=None):
-        #self.debug('calculate age')
-        isos = []
-
-        arc = self.arar_constants
-
-        iso_err = False
         for ik in ARGON_KEYS:
-            if not ik in self.isotopes:
+            if not ik in isotopes:
                 if not self._missing_isotope_warned:
                     self.warning('No isotope= "{}". Required for age calculation'.format(ik))
-                iso_err = True
-                continue
+                self._missing_isotope_warned=True
+                return
+        else:
+            self._missing_isotope_warned = False
 
-            iso = self.isotopes[ik]
-            iv = iso.get_intensity()
-            isos.append(iv)
+        isos=[isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
-        self._missing_isotope_warned = iso_err
-        if iso_err:
+        return isos
+
+    @simple_timer()
+    def _calculate_age(self, include_decay_error=None):
+        """
+            approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
+            Isotope.get_intensity takes about 5ms.
+        """
+        isos=self._assemble_ar_ar_isotopes()
+        if not isos:
             return
 
+        arc = self.arar_constants
         isos = abundance_sensitivity_correction(isos, arc.abundance_sensitivity)
         isos[1] *=self.ar39decayfactor
         isos[3] *=self.ar37decayfactor

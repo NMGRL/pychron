@@ -257,21 +257,27 @@ class BrowserMixin(ColumnSorterMixin):
                                                 limit=limit,
                                                 offset=o,
                                                 include_invalid=include_invalid)
+            prog=None
+            n=len(ans)
+            if n>25 or len(lns)>2:
+                prog=self.manager.open_progress(n)
 
-            ans = [self._record_view_factory(a) for a in ans]
+            ans = [self._record_view_factory(a, progress=prog) for a in ans]
+            if prog:
+                prog.close()
+
             if page_width:
                 return ans, tc
             else:
                 return ans
 
-    def _record_view_factory(self, ai, **kw):
+    def _record_view_factory(self, ai, progress=None, **kw):
+
         iso = IsotopeRecordView(**kw)
         iso.create(ai)
+        if progress:
+            progress.change_message('Loading {}'.format(iso.record_id))
+
         return iso
-
-        #===============================================================================
-
-# handlers
-#===============================================================================
 
 #============= EOF =============================================
