@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event
+    Array, String, Either, Dict, cached_property, Event, Any
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
@@ -61,7 +61,9 @@ class BaseMeasurement(HasTraits):
 
             self.xs = array(xs)
             self.ys = array(ys)
-        
+
+        self.uvalue=ufloat(0,0)
+
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
             endianness = self.endianness
@@ -81,7 +83,10 @@ class BaseMeasurement(HasTraits):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends='value, error, _value, _error, dirty')
+    # uvalue = Property(depends='value, error, _value, _error, dirty')
+    # uvalue = Property(depends_on='dirty')
+
+    uvalue=Any
 
     value = Property(depends_on='_value,fit, dirty')
     error = Property(depends_on='_error,fit, dirty')
@@ -93,11 +98,11 @@ class IsotopicMeasurement(BaseMeasurement):
 
     filter_outliers_dict=Dict
 
-    regressor = Property(depends_on='xs,ys,fit, dirty')
+    regressor = Property#(depends_on='xs,ys,fit, dirty')
     dirty=Event
 
     def __init__(self, dbresult=None, *args, **kw):
-        
+
         if dbresult:
             self._value = dbresult.signal_
             self._error = dbresult.signal_err
@@ -120,7 +125,9 @@ class IsotopicMeasurement(BaseMeasurement):
             self._value = v.nominal_value
             self._error = v.std_dev
 
-        self.dirty=True
+        self.uvalue._nominal_value=self._value
+        self.uvalue._std_dev = self._error
+        # self.dirty=True
 
     def _mean_regressor_factory(self):
         reg = MeanRegressor(xs=self.xs, ys=self.ys,
@@ -129,27 +136,27 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _set_error(self, v):
         self._error = v
+        self.uvalue._std_dev=v
 
     def _set_value(self, v):
         self._value = v
+        self.uvalue._nominal_value=v
 
     #@cached_property
     def _get_value(self):
         if self.xs is not None and len(self.xs) > 1:  # and self.ys is not None:
-        #            if len(self.xs) > 2 and len(self.ys) > 2:
-        #            print self.xs
-        #            print self._get_regression_param('coefficients')
-        #            return self._get_regression_param('coefficients')
-            return self.regressor.predict(0)
+            v=self.regressor.predict(0)
+            self.value=v
+            return v
         else:
             return self._value
 
     #@cached_property
     def _get_error(self):
         if self.xs is not None and len(self.xs) > 1:
-        #            if len(self.xs) > 2 and len(self.ys) > 2:
-            return self.regressor.predict_error(0)
-        #            return self._get_regression_param('coefficient_errors')
+            v=self.regressor.predict_error(0)
+            self.error=v
+            return v
         else:
             return self._error
 
@@ -173,9 +180,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
         return reg
 
-    #@cached_property
-    def _get_uvalue(self):
-        return ufloat(self.value, self.error)
+    # @cached_property
+    # def _get_uvalue(self):
+    #     return ufloat(self.value, self.error)
 
     def _get_fit_abbreviation(self):
         return fit_abbreviation(self.fit)

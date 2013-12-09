@@ -173,6 +173,7 @@ class ArArAge(Loggable):
             niso = Isotope(name=iso)
             self.isotopes[iso] = niso
 
+        self.debug('setting {} blank {}'.format(iso, v))
         self.isotopes[iso].blank.set_uvalue(v)
 
     def set_baseline(self, iso, v):
@@ -268,7 +269,6 @@ class ArArAge(Loggable):
 
         return isos
 
-    @simple_timer()
     def _calculate_age(self, include_decay_error=None):
         """
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.

@@ -64,7 +64,7 @@ def mass_cal_func(p, x):
 def least_squares(func, xs, ys, initial_guess):
     xs, ys = asarray(xs), asarray(ys)
     errfunc = lambda p, x, v: func(p, x) - v
-    ret, info = optimize.leastsq(errfunc, initial_guess, args=(xs,ys))
+    ret, info = optimize.leastsq(errfunc, initial_guess, args=(xs, ys))
     return ret
 
 
@@ -113,9 +113,9 @@ class Magnet(SpectrometerDevice):
             # need to calculate all ys
             # using simple linear offset
             #ys += delta
-            for k, (iso, xx, yy) in d.iteritems():
-                ny=yy+delta
-                p=least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
+            for k, (iso, xx, yy, _) in d.iteritems():
+                ny = yy + delta
+                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
                 d[k] = iso, xx, ny, p
 
             self.dump(isos, header, d)
@@ -191,8 +191,8 @@ class Magnet(SpectrometerDevice):
         _, xs, ys, p = d[detname]
 
         def func(x, *args):
-            c=list(p)
-            c[-1]-=dac
+            c = list(p)
+            c[-1] -= dac
             return mass_cal_func(c, x)
 
         mass = optimize.brentq(func, 0, 200)
@@ -202,7 +202,7 @@ class Magnet(SpectrometerDevice):
         detname = get_detector_name(detname)
         d, _ = self._get_mftable()
         _, xs, ys, p = d[detname]
-        dac=mass_cal_func(p, mass)
+        dac = mass_cal_func(p, mass)
 
         self.debug('map mass to dac {} >> {}'.format(mass, dac))
 
@@ -263,8 +263,8 @@ class Magnet(SpectrometerDevice):
                             d[hi] = [iso], [mw], [li]
 
             for k, (isos, xs, ys) in d.iteritems():
-                cs=least_squares(mass_cal_func, xs, ys, [ys[0], xs[0], 0])
-                d[k]=(isos, xs, ys, cs)
+                cs = least_squares(mass_cal_func, xs, ys, [ys[0], xs[0], 0])
+                d[k] = (isos, xs, ys, cs)
 
             return d, header
         else:
@@ -357,24 +357,25 @@ class Magnet(SpectrometerDevice):
 
         return v
 
-    #     def _get_calibration_points(self):
-    #         if self.mftable is not None:
-    #             molweights = MOLECULAR_WEIGHTS
-    # #            molweights = self.spectrometer.molecular_weights
-    #             xs, ys = self.mftable
-    #             return [CalibrationPoint(x=molweights[xi], y=yi) for xi, yi in zip(xs, ys)]
-    #def mftable_view(self):
-    #    cols = [ObjectColumn(name='x', label='Mass'),
-    #            ObjectColumn(name='y', label='DAC')]
-    #
-    #    teditor = TableEditor(columns=cols, editable=False)
-    #    v = View(HGroup(
-    #        Item('calibration_points', editor=teditor, show_label=False),
-    #        Item('graph', show_label=False, style='custom')),
-    #             width=700,
-    #             height=500,
-    #             resizable=True)
-    #    return v
+        #     def _get_calibration_points(self):
+        #         if self.mftable is not None:
+        #             molweights = MOLECULAR_WEIGHTS
+        # #            molweights = self.spectrometer.molecular_weights
+        #             xs, ys = self.mftable
+        #             return [CalibrationPoint(x=molweights[xi], y=yi) for xi, yi in zip(xs, ys)]
+        #def mftable_view(self):
+        #    cols = [ObjectColumn(name='x', label='Mass'),
+        #            ObjectColumn(name='y', label='DAC')]
+        #
+        #    teditor = TableEditor(columns=cols, editable=False)
+        #    v = View(HGroup(
+        #        Item('calibration_points', editor=teditor, show_label=False),
+        #        Item('graph', show_label=False, style='custom')),
+        #             width=700,
+        #             height=500,
+        #             resizable=True)
+        #    return v
+
 
 if __name__ == '__main__':
     from launchers.helpers import build_version
