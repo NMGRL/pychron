@@ -49,11 +49,8 @@ class OLSRegressor(BaseRegressor):
         cxs = self.get_clean_xs()
         cys = self.get_clean_ys()
 
-        if not len(cxs) or \
-                not len(cys):
-            return
-
-        if len(cxs) != len(cys):
+        if not self._check_integrity(cxs,cys):
+            self.debug('A integrity check failed')
             return
 
         if not self._filtering:
@@ -64,13 +61,15 @@ class OLSRegressor(BaseRegressor):
 
         X = self._get_X(fx)
         if X is not None:
+            if not self._check_integrity(X, fy):
+                self.debug('B integrity check failed')
+                return
+
             try:
-                # print 'calculate {} {}'.format(len(fx), len(fy))
                 ols = OLS(fy, X)
                 self._result = ols.fit()
             except Exception, e:
                 import traceback
-
                 traceback.print_exc()
 
     def predict(self, pos):

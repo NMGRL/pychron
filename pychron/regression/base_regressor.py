@@ -22,11 +22,12 @@ from traits.api import HasTraits, Array, List, Event, Property, Any, \
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
+from pychron.loggable import Loggable
 from tinv import tinv
 from pychron.pychron_constants import ALPHAS
 
 
-class BaseRegressor(HasTraits):
+class BaseRegressor(Loggable):
     xs = Array
     ys = Array
     xserr = Array
@@ -44,16 +45,16 @@ class BaseRegressor(HasTraits):
 
     n = Property(depends_on='dirty, xs, ys')
 
-    user_excluded=List
-    outlier_excluded=List
-    truncate_excluded=List
+    user_excluded = List
+    outlier_excluded = List
+    truncate_excluded = List
 
-    filter_outliers_dict=Dict
-    truncate=Str
+    filter_outliers_dict = Dict
+    truncate = Str
 
-    filter_xs=Array
-    filter_ys=Array
-    _filtering=Bool(False)
+    filter_xs = Array
+    filter_ys = Array
+    _filtering = Bool(False)
 
     def _get_n(self):
         return len(self.xs)
@@ -66,18 +67,18 @@ class BaseRegressor(HasTraits):
     #     self.calculate()
 
     def get_filtered_data(self, xs, ys):
-        rx,ry=xs,ys
-        fod=self.filter_outliers_dict
+        rx, ry = xs, ys
+        fod = self.filter_outliers_dict
         if fod.get('filter_outliers', False):
             for _ in range(fod['iterations']):
                 self._filtering = True
                 self.calculate()
                 self._filtering = False
 
-                outliers=self.calculate_outliers(nsigma=fod['std_devs'])
-                self.outlier_excluded=list(set(self.outlier_excluded+list(outliers)))
-                rx=delete(rx, outliers, 0)
-                ry=delete(ry, outliers, 0)
+                outliers = self.calculate_outliers(nsigma=fod['std_devs'])
+                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
+                rx = delete(rx, outliers, 0)
+                ry = delete(ry, outliers, 0)
 
         return rx, ry
 
@@ -88,14 +89,26 @@ class BaseRegressor(HasTraits):
         return self._clean_array(self.ys)
 
     def _clean_array(self, v):
-        exc = list(set(self.user_excluded+self.truncate_excluded))
+        exc = list(set(self.user_excluded + self.truncate_excluded))
         return delete(v, exc, 0)
 
+    def _check_integrity(self, x, y):
+        nx, ny = len(x), len(y)
+        if not nx or not ny:
+            return
+        if nx != ny:
+            return
+
+        if nx == 1 or ny == 1:
+            return
+
+        return True
+
     def get_excluded(self):
-        return list(set(self.user_excluded+self.outlier_excluded+self.truncate_excluded))
+        return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):
-        self.truncate=trunc
+        self.truncate = trunc
         if self.truncate:
             m = re.match(r'[A-Za-z]+', self.truncate)
             if m:
@@ -175,7 +188,7 @@ class BaseRegressor(HasTraits):
 
     def calculate_ci(self, rx, rmodel=None):
         if rmodel is None:
-            rmodel=self.predict(rx)
+            rmodel = self.predict(rx)
 
         cors = self._calculate_ci(rx, rmodel)
         #         print cors
@@ -283,7 +296,8 @@ class BaseRegressor(HasTraits):
         eq = '+'.join(ps)
         s = '{}    y={}+{}'.format(fit, eq, constant)
         return s
-    #    fit = property(fset=_set_fit, fget=_get_fit)
+        #    fit = property(fset=_set_fit, fget=_get_fit)
+
 #            lower=[]
 #                lower.append(rmodel[i] - cor)
 #                upper.append(rmodel[i] + cor)

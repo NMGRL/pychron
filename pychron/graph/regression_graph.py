@@ -208,21 +208,20 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if fit is None:
             return
 
-        index = scatter.index
         r = None
         if line and hasattr(line, 'regressor'):
             r = line.regressor
 
         if fit in [1, 2, 3]:
-            r = self._poly_regress(scatter, r, fit)
+            r=self._poly_regress(scatter, r, fit)
 
         elif isinstance(fit, tuple):
-            r = self._least_square_regress(scatter, r, fit)
+            r=self._least_square_regress(scatter, r, fit)
 
         elif isinstance(fit, BaseRegressor):
-            r = self._custom_regress(scatter, r, fit)
+            r=self._custom_regress(scatter, r, fit)
         else:
-            r = self._mean_regress(scatter, r, fit)
+            r=self._mean_regress(scatter, r, fit)
 
         if r:
             low = plot.index_range.low
@@ -283,7 +282,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             return
 
         self._set_excluded(scatter, r)
-
         return r
 
     def _least_square_regress(self, scatter, r, fit):
@@ -297,6 +295,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     trait_change_notify=False)
         r.calculate()
         self._set_excluded(scatter, r)
+        return r
 
     def _mean_regress(self, scatter, r, fit):
 
@@ -308,6 +307,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.calculate()
 
         self._set_excluded(scatter, r)
+        return r
 
     def _custom_regress(self, scatter, r, fit):
         kw={}
@@ -328,6 +328,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.calculate()
 
         self._set_excluded(scatter, r)
+        return r
 
     def _new_scatter(self, kw, marker, marker_size, plotid,
                      x, y, fit, filter_outliers_dict, truncate):

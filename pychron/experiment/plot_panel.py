@@ -451,6 +451,7 @@ class PlotPanel(Loggable):
             arar_age = self.arar_age
 
             for iso, reg in zip(self._plot_keys, new):
+
                 if reg is None:
                     continue
 

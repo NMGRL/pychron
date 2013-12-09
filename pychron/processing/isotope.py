@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property
+    Array, String, Either, Dict, cached_property, Event
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
@@ -81,10 +81,10 @@ class BaseMeasurement(HasTraits):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends='value, error, _value, _error')
+    uvalue = Property(depends='value, error, _value, _error, dirty')
 
-    value = Property(depends_on='_value,fit')
-    error = Property(depends_on='_error,fit')
+    value = Property(depends_on='_value,fit, dirty')
+    error = Property(depends_on='_error,fit, dirty')
     _value = Float
     _error = Float
 
@@ -93,7 +93,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
     filter_outliers_dict=Dict
 
-    regressor = Property(depends_on='xs,ys,fit')
+    regressor = Property(depends_on='xs,ys,fit, dirty')
+    dirty=Event
 
     def __init__(self, dbresult=None, *args, **kw):
         
@@ -119,6 +120,8 @@ class IsotopicMeasurement(BaseMeasurement):
             self._value = v.nominal_value
             self._error = v.std_dev
 
+        self.dirty=True
+
     def _mean_regressor_factory(self):
         reg = MeanRegressor(xs=self.xs, ys=self.ys,
                             filter_outliers_dict=self.filter_outliers_dict)
@@ -130,7 +133,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def _set_value(self, v):
         self._value = v
 
-    @cached_property
+    #@cached_property
     def _get_value(self):
         if self.xs is not None and len(self.xs) > 1:  # and self.ys is not None:
         #            if len(self.xs) > 2 and len(self.ys) > 2:
@@ -141,7 +144,7 @@ class IsotopicMeasurement(BaseMeasurement):
         else:
             return self._value
 
-    @cached_property
+    #@cached_property
     def _get_error(self):
         if self.xs is not None and len(self.xs) > 1:
         #            if len(self.xs) > 2 and len(self.ys) > 2:
@@ -150,7 +153,7 @@ class IsotopicMeasurement(BaseMeasurement):
         else:
             return self._error
 
-    @cached_property
+    #@cached_property
     def _get_regressor(self):
         try:
             if 'average' in self.fit.lower():
@@ -170,7 +173,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
         return reg
 
-    @cached_property
+    #@cached_property
     def _get_uvalue(self):
         return ufloat(self.value, self.error)
 
