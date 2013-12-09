@@ -108,10 +108,12 @@ class Spectrometer(SpectrometerDevice):
                     self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
         return self.integration_time
 
-    def set_integration_time(self, it):
+    def set_integration_time(self, it, force=False):
         it = normalize_integration_time(it)
-        name = 'SetIntegrationTime'
-        self.set_parameter(name, it)
+        if self.integration_time!=it or force:
+            name = 'SetIntegrationTime'
+            self.set_parameter(name, it)
+
         return it
 
     def send_configuration(self):

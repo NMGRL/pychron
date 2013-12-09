@@ -59,7 +59,6 @@ from pychron.experiment.export.export_spec import ExportSpec
 from pychron.ui.gui import invoke_in_main_thread
 from pychron.codetools.memory_usage import mem_log
 from pychron.codetools.file_log import file_log
-from pychron.pyscripts.uv_extraction_line_pyscript import UVExtractionPyScript
 from pychron.experiment.automated_run.multi_collector import MultiCollector
 from pychron.processing.analyses.analysis import DBAnalysis
 
@@ -203,8 +202,7 @@ class AutomatedRun(Loggable):
     #===============================================================================
     def py_set_integration_time(self, v):
         spectrometer = self.spectrometer_manager
-
-        nv = spectrometer.set_integration_time(v)
+        nv = spectrometer.set_integration_time(v, force=True)
         self._integration_seconds = nv
 
     def py_is_last_run(self):

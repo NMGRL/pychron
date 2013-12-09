@@ -165,7 +165,7 @@ class IonOpticsManager(Manager):
             self._peak_center(*args)
 
     def setup_peak_center(self, detector=None, isotope=None,
-                          period=900,
+                          integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None):
 
@@ -173,8 +173,9 @@ class IonOpticsManager(Manager):
 
         if detector is None or isotope is None:
             pcc = self.peak_center_config
+            pcc.dac=self.spectrometer.magnet.dac
+
             info = pcc.edit_traits()
-            #             info = self.edit_traits(view='peak_center_config_view')
             if not info.result:
                 return
             else:
@@ -182,13 +183,13 @@ class IonOpticsManager(Manager):
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
-
-                self.spectrometer.set_integration_time(pcc.integration_time)
-
-                period = int(pcc.integration_time * 1000 * 0.9)
+                integration_time=pcc.integration_time
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
+
+        self.spectrometer.set_integration_time(integration_time)
+        period = int(integration_time * 1000 * 0.9)
 
         if isinstance(detector, (tuple, list)):
             ref = detector[0]
