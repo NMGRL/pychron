@@ -170,9 +170,11 @@ class LaserCalibrationTask(BaseLaserTask):
                 self.control_pane.editor = self.active_editor.editor
 
     @on_trait_change('active_editor:completed')
-    def _update_completed(self):
-        self.executing = False
-        self.active_editor.was_executed = True
+    def _update_completed(self, new):
+        print 'asdf', new
+        if new:
+            self.executing = False
+            self.active_editor.was_executed = True
 
 
 #===============================================================================

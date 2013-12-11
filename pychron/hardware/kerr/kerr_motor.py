@@ -150,8 +150,8 @@ class KerrMotor(KerrDevice, ConsumerMixin):
         return value
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
         args = [
             ('Motion', 'steps', 'int'),
             ('Motion', 'min_steps', 'int'),
@@ -656,11 +656,9 @@ class KerrMotor(KerrDevice, ConsumerMixin):
             #                self.update_position = self._data_position
 
     def timer_factory(self):
-        '''
-
+        """
             reuse timer if possible
-
-        '''
+        """
         timer = self.timer
 
         func = self._update_position

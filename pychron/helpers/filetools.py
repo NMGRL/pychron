@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #========== standard library imports ==========
 import os
 
@@ -40,9 +38,7 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
             ds = [pi for pi in ds
                   if test(pi)]
         if filtername:
-            ds = [pi for pi in ds
-                  if pi.startswith(filtername)
-            ]
+            ds = [pi for pi in ds if pi.startswith(filtername)]
 
     if remove_extension:
         ds = [os.path.splitext(pi)[0] for pi in ds]
@@ -68,9 +64,9 @@ def unique_dir(root, base):
 
 
 def unique_path(root, base, extension='txt'):
-    '''
+    """
 
-    '''
+    """
     if extension:
         if '.' not in extension:
             extension = '.{}'.format(extension)
@@ -115,8 +111,8 @@ def to_bool(a):
 
 
 def parse_xy(p, delimiter=','):
-    '''
-    '''
+    """
+    """
     data = parse_file(p)
     if data:
         func = lambda i, data: [float(l.split(delimiter)[i]) for l in data]
@@ -125,29 +121,35 @@ def parse_xy(p, delimiter=','):
 
 
 def commented_line(l):
-    '''
-    '''
+    """
+    """
     if l[:1] == '#':
         return True
     else:
         return False
 
 
-def parse_file(p, delimiter=None):
-    '''
-    '''
+def parse_file(p, delimiter=None, cast=None):
+    """
+        p: absolute path
+        delimiter: str
+        cast: callable. applied to each delimited field
+
+    """
     if os.path.exists(p) and os.path.isfile(p):
         with open(p, 'U') as fp:
-            r = filetoarray(fp)
+            r = filetolist(fp)
             if delimiter:
-                r = [ri.split(delimiter) for ri in r]
+                if cast is None:
+                    cast = str
+                r = [map(cast, ri.split(delimiter)) for ri in r]
 
             return r
 
 
 def parse_setupfile(p):
-    '''
-    '''
+    """
+    """
 
     fp = parse_file(p)
     if fp:
@@ -164,7 +166,7 @@ def parse_canvasfile(p, kw):
         with open(p, 'r') as fp:
             indices = {}
             i = 0
-            f = filetoarray(fp)
+            f = filetolist(fp)
             count = 1
             for i in range(len(f)):
                 if f[i][:1] == '!':
@@ -183,21 +185,28 @@ def parse_canvasfile(p, kw):
             return indices
 
 
-def filetoarray(f, commentchar='#'):
-    '''
-
-    '''
+def filetolist(f, commentchar='#'):
+    """
+        f: file-like object
+        return list
+    """
 
     def isNewLine(c):
         return c == chr(10) or c == chr(13)
 
-    r = []
+    def test(li):
+        cc = li[:1]
+        return not (cc == commentchar or isNewLine(cc))
 
-    for line in f:
-        cc = line[:1]
-        if not cc == commentchar and not isNewLine(cc):
-            # l = line[:-1] if line[-1:] == '\n' else line
-            # remove inline comments
-            line = line.split('#')[0]
-            r.append(line.strip())
+    r = [line for line in f if test(line)]
+    r = [line.split(commentchar)[0].strip() for line in r]
+    # r = []
+    #
+    # for line in f:
+    #     cc = line[:1]
+    #     if not cc == commentchar and not isNewLine(cc):
+    #         # l = line[:-1] if line[-1:] == '\n' else line
+    #         # remove inline comments
+    #         line = line.split('#')[0]
+    #         r.append(line.strip())
     return r

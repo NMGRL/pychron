@@ -38,10 +38,8 @@ class ScannerController(ApplicationController):
 
     def traits_view(self):
         v = View(UItem('controller.execute_button',
-                       editor=ButtonEditor(label_value='controller.execute_label')
-        ),
-                 Item('setpoint', enabled_when='_scanning'),
-        )
+                       editor=ButtonEditor(label_value='controller.execute_label')),
+                 Item('setpoint', enabled_when='_scanning'))
         return v
 
     def controller_execute_button_changed(self, info):
@@ -141,8 +139,11 @@ class Scanner(Loggable):
         self.stop_event = True
         self.info('scan stopped')
         if self.manager:
+            self._stop_hook()
             self.manager.disable_device()
-            self.manager.set_laser_temperature(0)
+
+    def _stop_hook(self):
+        pass
 
     def execute(self):
 
@@ -233,8 +234,9 @@ class Scanner(Loggable):
             if self._scanning:
                 self.setpoint = t
 
-                if self.manager:
-                    self.manager.set_laser_temperature(t)
+                self._set_power_hook(t)
+                # if self.manager:
+                    # self.manager.set_laser_temperature(t, set_pid=False)
 
                 self.set_static_value('Setpoint', t, plotid=0)
                 self._maintain_setpoint(t, d)
@@ -242,13 +244,18 @@ class Scanner(Loggable):
         if self._scanning:
             self.setpoint = 0
             self.set_static_value('Setpoint', 0)
-            if self.manager:
-                self.manager.set_laser_temperature(0)
+            self._set_power_hook(0)
+            # if self.manager:
+                # self.manager.set_laser_temperature(0)
 
             time.sleep(end_delay)
             self.stop()
 
         self.end_control_hook(self._scanning)
+
+    def _set_power_hook(self, t):
+        if self.manager:
+            self.manager.set_laser_temperature(t)
 
     def _maintain_setpoint(self, t, d):
         self.info('setting setpoint to {} for {}s'.format(t, d))

@@ -37,11 +37,19 @@ class PIDTuningScanner(Scanner):
     #def _write_calibration(self, data):
     #    dm = self.csv_data_manager
     #    dm.write_to_frame(data)
+    def _stop_hook(self):
+        self._set_power_hook(0)
+
+    def _set_power_hook(self, t):
+        if self.manager:
+            self.manager.set_laser_temperature(t, set_pid=False)
 
     def start_control_hook(self, ydict):
         self.csv_data_manager = dm = CSVDataManager()
         p = os.path.join(paths.data_dir, 'pid_tune')
+
         dm.new_frame(directory=p)
+        self.debug('Save autotuned pid to {}'.format(dm.get_current_path()))
 
         aggr = ydict['autotune_aggressiveness']
         setpoint = ydict['autotune_setpoint']
@@ -64,23 +72,25 @@ class PIDTuningScanner(Scanner):
         if d == 'autotune':
             self._autotune(t)
             self._write_pid_parameters(t)
+            self._cool_down()
             #py, tc = self._equilibrate(t)
             #self._write_calibration((t, py, tc))
 
         else:
             super(PIDTuningScanner, self)._maintain_setpoint(t, d)
 
+    def _cool_down(self):
+        """
+            wait until temp is below threshold
+        """
+        threshold=100
+        tm=self.manager.get_device('temperature_monitor')
+        ct=tm.get_process_value()
+        while ct>threshold:
+            time.sleep(1)
+            ct=tm.get_process_value()
+
     def _autotune(self, ctemp):
-
-        #ctemp=self._current_setpoint
-        #ctemp = self.manager.map_temperature(temp)
-
-        #py = self.manager.get_device('pyrometer')
-        #tc = self.manager.get_device('temperature_monitor')
-        #temps = []
-        #n = 10
-        #tol = self._eq_tol
-        #std = self._eq_std
         tc=self.manager.get_device('temperature_controller')
 
         self.info('starting autotune')
@@ -90,31 +100,13 @@ class PIDTuningScanner(Scanner):
         st=time.time()
         while self._scanning:
             sti = time.time()
-            if self.autotune_finished():
+            if tc.autotune_finished():
                 break
             elapsed = time.time() - sti
             time.sleep(max(0.0001, min(1, 1 - elapsed)))
 
         tt=time.time()-st
-        self.info('total tuning time for {}C ={0.1f}s'.format(ctemp, tt))
-        #nn = 30
-        #ptemps = []
-        #ctemps = []
-        #for _ in range(nn):
-        #    if not self._scanning:
-        #        break
-        #
-        #    sti = time.time()
-        #
-        #    py_t = py.temperature
-        #    tc_t = tc.process_value
-        #
-        #    ptemps.append(py_t)
-        #    ctemps.append(tc_t)
-        #    elapsed = time.time() - sti
-        #    time.sleep(max(0.0001, min(1, 1 - elapsed)))
-        #
-        #return array(ptemps).mean(), array(ctemps).mean()
+        self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
 
 
 class PIDTuningEditor(LaserEditor):
@@ -122,6 +114,7 @@ class PIDTuningEditor(LaserEditor):
 
     def stop(self):
         self.scanner.stop()
+        self.completed=True
 
     def _scan_pyrometer(self):
         d = self._pyrometer

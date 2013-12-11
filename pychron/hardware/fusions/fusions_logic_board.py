@@ -382,8 +382,7 @@ class FusionsLogicBoard(CoreDevice):
     # motor methods
     #==============================================================================
     def set_motor(self, name, value, block=False,
-                  relative=False,
-    ):
+                  relative=False):
 
         motor = next((m for m in self.motors if m.name == name), None)
         if motor is None:

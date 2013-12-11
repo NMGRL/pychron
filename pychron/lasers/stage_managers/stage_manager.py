@@ -796,23 +796,22 @@ class StageManager(Manager):
         if isinstance(pt, str):
             pt = self.canvas.get_point(pt)
 
-        pos = pt.x, pt.y
+        if pt is not None:
+            pos = pt.x, pt.y
 
-        self.info('Move to point {}: {:0.5f},{:0.5f},{:0.5f}'.format(pt.identifier,
-                                                                     pt.x, pt.y, pt.z))
-        self.stage_controller.linear_move(block=True, *pos)
+            self.info('Move to point {}: {:0.5f},{:0.5f},{:0.5f}'.format(pt.identifier,
+                                                                         pt.x, pt.y, pt.z))
+            self.stage_controller.linear_move(block=True, *pos)
 
-        if hasattr(pt, 'z'):
-            self.stage_controller.set_z(pt.z, block=True)
+            if hasattr(pt, 'z'):
+                self.stage_controller.set_z(pt.z, block=True)
 
-        self.debug('Not setting motors for pt')
-        #self.parent.set_motors_for_point(pt)
+            self.debug('Not setting motors for pt')
+            #self.parent.set_motors_for_point(pt)
 
-        self._move_to_point_hook()
+            self._move_to_point_hook()
 
-        self.info('Move complete')
-
-    #        self.move_thread = None
+            self.info('Move complete')
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
