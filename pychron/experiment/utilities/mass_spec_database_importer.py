@@ -245,10 +245,10 @@ class MassSpecDatabaseImporter(Loggable):
                 dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
                 if not dbdet.Label in bs:
-                    self._add_baseline(analysis, spec, dbiso, dbdet)
+                    self._add_baseline(analysis, spec, dbiso, dbdet, det)
                     bs.append(dbdet.Label)
 
-                self._add_signal(analysis, spec, dbiso, dbdet, runtype)
+                self._add_signal(analysis, spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
@@ -327,10 +327,11 @@ class MassSpecDatabaseImporter(Loggable):
                               sfit,
                               dbdet)
 
-    def _add_baseline(self, analysis, spec, dbiso, dbdet):
-        self.debug('add baseline dbdet {}'.format(dbdet.Label))
+    def _add_baseline(self, analysis, spec, dbiso, dbdet, odet):
+        self.debug('add baseline dbdet= {}. original det= {}'.format(dbdet.Label, odet))
+
         det = dbdet.Label
-        tb, vb = spec.get_baseline_data(dbiso.Label, det)
+        tb, vb = spec.get_baseline_data(dbiso.Label, odet)
         blob = self._build_timeblob(tb, vb)
 
         db = self.db
