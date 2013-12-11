@@ -142,10 +142,12 @@ class ExportSpec(Loggable):
             this wont work if mixing multicollect and peakhop
         """
         bdet = self._get_baseline_detector(iso, det)
-        try:
-            return self._get_data('baseline', None, bdet, verbose=False)
-        except NoSuchNodeError:
+        tb, vb=self._get_data('baseline', iso, bdet, verbose=False)
+        if len(tb) == 1 and not tb[0]:
+            self.debug('Baseline not collected on {} for {}. using {}'.format(bdet, iso, det))
             return self._get_data('baseline', iso, det)
+        else:
+            return tb, vb
         # return self._get_data('baseline', iso, det, **kw)
 
     def get_signal_data(self, iso, det, **kw):

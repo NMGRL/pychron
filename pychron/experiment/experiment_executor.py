@@ -233,6 +233,13 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     def wait(self, t, msg=''):
         self._wait(t, msg)
 
+    def get_wait_control(self):
+        with self.wait_control_lock:
+            wd = self.wait_group.active_control
+            if wd.is_active():
+                wd = self.wait_group.add_control()
+        return wd
+
     def stop(self):
         if self.delaying_between_runs:
             self._alive = False
@@ -672,9 +679,11 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         self._wait(delay, msg)
         self.delaying_between_runs = False
 
+
     def _wait(self, delay, msg):
         wg = self.wait_group
-        wc = wg.active_control
+        wc=self.get_wait_control()
+        # wc = wg.active_control
         invoke_in_main_thread(wc.trait_set, wtime=delay, message=msg)
         #        wc.trait_set(wtime=delay,
         # #                     message=msg
@@ -682,6 +691,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         time.sleep(0.1)
         wc.reset()
         wc.start()
+        wg.pop()
 
     def _set_extract_state(self, state, flash, color='green'):
 

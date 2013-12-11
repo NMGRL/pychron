@@ -701,10 +701,7 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self, timeout, message):
         if self.manager:
-            with self.manager.wait_control_lock:
-                wd = self.manager.wait_group.active_control
-                if wd.is_active():
-                    wd = self.manager.wait_group.add_control()
+            wd=self.manager.get_wait_control()
         else:
             wd = self._wait_control
 

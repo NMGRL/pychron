@@ -58,8 +58,8 @@ class WaitGroup(HasTraits):
 
     def pop(self):
         if len(self.controls) > 1:
-            self.controls.pop(0)
-            self.active_control = self.controls[0]
+            self.controls.pop()
+            self.active_control = self.controls[-1]
 
     def stop(self):
         for ci in self.controls:
@@ -70,7 +70,7 @@ class WaitGroup(HasTraits):
             kw['page_name'] = 'Wait {:02n}'.format(len(self.controls))
         w = WaitControl(**kw)
 
-        self.controls.insert(0, w)
+        self.controls.append(w)
         self.active_control = w
 
         return w

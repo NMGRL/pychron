@@ -70,6 +70,12 @@ class WaitControl(Loggable):
         self.debug('Join finished')
 
     def start(self, block=True, evt=None, wtime=None):
+        if self.timer:
+            self.debug('{} has a timer. Stopping timer'.format(self.page_name))
+            self.timer.stop()
+            self.timer.wait_for_completion()
+            self.debug('Timer successfully terminated')
+
         if evt is None:
             evt = Event()
 
@@ -80,9 +86,6 @@ class WaitControl(Loggable):
         if wtime:
             self.wtime=wtime
             self.reset()
-
-        if self.timer:
-            self.timer.stop()
 
         self.timer = Timer(1000, self._update_time,
                            delay=1000
