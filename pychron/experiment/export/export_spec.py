@@ -88,6 +88,7 @@ class ExportSpec(Loggable):
         else:
             self.debug('{} has no ic_factor attribute'.format(record, ))
 
+
     def open_file(self):
         return self.data_manager.open_file(self.data_path)
 
@@ -135,16 +136,20 @@ class ExportSpec(Loggable):
     def get_baseline_fit(self, det):
         return 'average_SEM'
 
-    def get_baseline_data(self, iso, det):
+    def get_baseline_data(self, iso, det, **kw):
         """
             if is_peak_hop return CDD baseline always
+            this wont work if mixing multicollect and peakhop
         """
-        det = self._get_baseline_detector(iso, det)
+        bdet = self._get_baseline_detector(iso, det)
+        try:
+            return self._get_data('baseline', None, bdet, verbose=False)
+        except NoSuchNodeError:
+            return self._get_data('baseline', iso, det)
+        # return self._get_data('baseline', iso, det, **kw)
 
-        return self._get_data('baseline', None, det)
-
-    def get_signal_data(self, iso, det):
-        return self._get_data('signal', iso, det)
+    def get_signal_data(self, iso, det, **kw):
+        return self._get_data('signal', iso, det, **kw)
 
     def get_baseline_uvalue(self, det):
         vb = []
@@ -168,13 +173,13 @@ class ExportSpec(Loggable):
         return ufloat(v, e)
 
     def _get_baseline_detector(self, iso, det):
-        if self.is_peak_hop:
-            det = self.peak_hop_detector
-            msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
-            self.debug(msg)
+        # if self.is_peak_hop:
+        #     det = self.peak_hop_detector
+        #     msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
+        #     self.debug(msg)
         return det
 
-    def _get_data(self, group, iso, det):
+    def _get_data(self, group, iso, det, verbose=True):
         dm = self.data_manager
         hfile = dm._frame
         root = hfile.root
@@ -194,8 +199,9 @@ class ExportSpec(Loggable):
             t, v = zip(*data)
         except (NoSuchNodeError, AttributeError, StopIteration):
             import traceback
+            if verbose:
+                self.debug(traceback.format_exc())
 
-            self.debug(traceback.format_exc())
             t, v = [0, ], [0, ]
 
         return t, v

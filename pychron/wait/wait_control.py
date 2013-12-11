@@ -81,6 +81,9 @@ class WaitControl(Loggable):
             self.wtime=wtime
             self.reset()
 
+        if self.timer:
+            self.timer.stop()
+
         self.timer = Timer(1000, self._update_time,
                            delay=1000
                            )

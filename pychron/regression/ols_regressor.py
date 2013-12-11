@@ -50,7 +50,7 @@ class OLSRegressor(BaseRegressor):
         cys = self.get_clean_ys()
 
         if not self._check_integrity(cxs,cys):
-            self.debug('A integrity check failed')
+            # self.debug('A integrity check failed')
             return
 
         if not self._filtering:

@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from tables.exceptions import NoSuchNodeError
 from traits.api import Instance, Button
 from traitsui.api import View, Item
 
@@ -295,6 +296,12 @@ class MassSpecDatabaseImporter(Loggable):
             det = spec.peak_hop_detector
 
         tb, vb = spec.get_signal_data(iso, det)
+
+        #tb[0] if not error getting signal/iso/det table from h5file
+        #this will happen if mixing multicollect and
+        if len(tb) == 1 and not tb[0]:
+            det = dbdet.Label
+            tb, vb = spec.get_signal_data(iso, det)
 
         baseline = spec.get_baseline_uvalue(det)
         vb = array(vb) - baseline.nominal_value
