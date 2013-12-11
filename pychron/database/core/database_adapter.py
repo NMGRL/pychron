@@ -75,7 +75,7 @@ class SessionCTX(object):
                 self._parent.sess = None
 
         #print 'exit',self._commit, self._close_at_exit, self._parent._sess_stack
-        self._sess.flush()
+        # self._sess.flush()
         if self._close_at_exit:
             try:
                 #self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
@@ -178,9 +178,7 @@ class DatabaseAdapter(Loggable):
                     engine = create_engine(url, echo=False)
                     #                     Session.configure(bind=engine)
 
-                    self.session_factory = sessionmaker(bind=engine,
-                                                        #                                                         autoflush=False
-                    )
+                    self.session_factory = sessionmaker(bind=engine,autoflush=False)
                     if test:
                         self.connected = self._test_db_connection()
                     else:

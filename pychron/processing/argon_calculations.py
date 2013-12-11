@@ -320,7 +320,7 @@ def age_equation(j, f,
         lk = lk.nominal_value
     try:
         return (lk ** -1 * umath.log(1 + j * f)) / scalar
-    except ValueError:
+    except (ValueError, TypeError):
         return ufloat(0,0)
 
 # plateau definition

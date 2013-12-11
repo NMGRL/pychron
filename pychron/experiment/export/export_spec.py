@@ -173,10 +173,10 @@ class ExportSpec(Loggable):
         return ufloat(v, e)
 
     def _get_baseline_detector(self, iso, det):
-        # if self.is_peak_hop:
-        #     det = self.peak_hop_detector
-        #     msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
-        #     self.debug(msg)
+        if self.is_peak_hop:
+            det = self.peak_hop_detector
+            msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
+            self.debug(msg)
         return det
 
     def _get_data(self, group, iso, det, verbose=True):

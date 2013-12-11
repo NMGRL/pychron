@@ -127,7 +127,7 @@ class Scanner(Loggable):
                 kw['xtitle'] = 'Time'
 
             g.new_plot(
-                data_limit=1000,
+                data_limit=2000,
                 **kw)
             g.new_series(plotid=i)
         self._graph = g

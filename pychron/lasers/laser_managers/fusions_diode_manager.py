@@ -204,7 +204,7 @@ class FusionsDiodeManager(FusionsLaserManager):
             tc.set_pid(power)
 
         func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
-        func(power, **kw)
+        func(power, set_pid=set_pid, **kw)
 
     def _enable_hook(self):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled

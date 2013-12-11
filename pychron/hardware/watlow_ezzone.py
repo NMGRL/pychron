@@ -495,14 +495,15 @@ class WatlowEZZone(CoreDevice):
         except KeyError, e:
             self.debug('set_baudrate keyerror {}'.format(e))
 
-    def set_closed_loop_setpoint(self, setpoint, **kw):
+    def set_closed_loop_setpoint(self, setpoint, set_pid=True, **kw):
         """
         """
         self._clsetpoint = setpoint
         if self.use_calibrated_temperature and self.calibration:
             setpoint = self.map_temperature(setpoint)
 
-        self.set_pid(setpoint)
+        if set_pid:
+            self.set_pid(setpoint)
 
         self.calibrated_setpoint = setpoint
         self.info('setting closed loop setpoint = {:0.3f}'.format(setpoint))

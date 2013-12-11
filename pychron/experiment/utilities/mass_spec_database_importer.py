@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from tables.exceptions import NoSuchNodeError
 from traits.api import Instance, Button
 from traitsui.api import View, Item
 
@@ -160,7 +159,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 
-
         gst = time.time()
 
         db = self.db
@@ -243,6 +241,7 @@ class MassSpecDatabaseImporter(Loggable):
 
             bs = []
             for iso, det in isotopes:
+                self.debug('adding isotope {} {}'.format(iso, det))
                 dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
                 if not dbdet.Label in bs:
@@ -295,7 +294,7 @@ class MassSpecDatabaseImporter(Loggable):
         if spec.is_peak_hop:
             det = spec.peak_hop_detector
 
-        tb, vb = spec.get_signal_data(iso, det)
+        tb, vb = spec.get_signal_data(iso, det, verbose=False)
 
         #tb[0] if not error getting signal/iso/det table from h5file
         #this will happen if mixing multicollect and
