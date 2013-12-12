@@ -109,9 +109,10 @@ class ExperimentQueue(BaseExperimentQueue):
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):
-        idx = self.automated_runs.index(new[-1])
-        self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
-        invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
+        if new:
+            idx = self.automated_runs.index(new[-1])
+            self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
     #
     # #             do_later(self.trait_set, automated_runs_scroll_to_row=idx)
     #

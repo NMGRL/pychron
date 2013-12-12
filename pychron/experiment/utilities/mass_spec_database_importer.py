@@ -295,7 +295,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         tb, vb = spec.get_signal_data(iso, odet)
 
-        baseline = spec.get_baseline_uvalue(det)
+        baseline = spec.get_baseline_uvalue(odet)
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
@@ -335,11 +335,11 @@ class MassSpecDatabaseImporter(Loggable):
         if spec.is_peak_hop:
             det = spec.peak_hop_detector
 
-        bs = spec.get_baseline_uvalue(det)
+        bs = spec.get_baseline_uvalue(odet)
 
         sem = bs.std_dev / (ncnts) ** 0.5
 
-        bfit = spec.get_baseline_fit(det)
+        bfit = spec.get_baseline_fit(odet)
 
         infoblob = self._make_infoblob(bs.nominal_value, sem)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
@@ -375,6 +375,14 @@ class MassSpecDatabaseImporter(Loggable):
         b = encode_infoblob(rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs)
         return b
 
+    def _db_default(self):
+        db = MassSpecDatabaseAdapter(kind='mysql',
+                                     host='localhost',
+                                     username='root',
+                                     password='Argon',
+                                     name='massspecdata_import')
+
+        return db
 
     #===========================================================================
     # debugging
@@ -497,21 +505,6 @@ class MassSpecDatabaseImporter(Loggable):
     def traits_view(self):
         v = View(Item('test', show_label=False))
         return v
-
-    def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql',
-                                     host='localhost',
-                                     username='root',
-                                     password='Argon',
-                                     name='massspecdata_import'
-                                     #                                     host='129.138.12.131',
-                                     #                                     username='massspec',
-                                     #                                     password='DBArgon',
-                                     #                                     name='massspecdata_isotopedb'
-        )
-        #        db.connect()
-
-        return db
 
 
 if __name__ == '__main__':
