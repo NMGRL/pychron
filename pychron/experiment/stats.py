@@ -73,9 +73,7 @@ class ExperimentStats(Loggable):
         if runs:
             ni = len(runs)
             script_ctx = dict()
-
             dur = sum([a.get_estimated_duration(script_ctx, warned) for a in runs])
-
 
             btw = (self.delay_between_analyses * ni)
             dur += btw + self.delay_before_analyses

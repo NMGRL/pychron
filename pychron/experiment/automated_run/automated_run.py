@@ -81,8 +81,8 @@ class ScriptInfo(HasTraits):
     post_equilibration_script_name = Str
 
 
-scripts = {}
-warned_scripts = []
+SCRIPTS = {}
+WARNED_SCRIPTS = []
 
 
 def assemble_script_blob(scripts, kinds=None):
@@ -160,7 +160,7 @@ class AutomatedRun(Loggable):
     _processed_signals_dict = None
     _save_enabled = False
 
-    valid_scripts = Dict
+    # valid_scripts = Dict
     peak_center = None
     coincidence_scan = None
     update = Event
@@ -191,7 +191,7 @@ class AutomatedRun(Loggable):
 
     _current_data_frame = None
 
-    warned_scripts = []
+    # WARNED_SCRIPTS = []
 
     is_last = False
     is_peak_hop = Bool(False)
@@ -1982,8 +1982,8 @@ anaylsis_type={}
         if sname and sname != NULL_STR:
             sname = self._make_script_name(sname)
             #            print sname, self.scripts
-            if sname in scripts:
-                script = scripts[sname]
+            if sname in SCRIPTS:
+                script = SCRIPTS[sname]
                 if script.check_for_modifications():
                     self.debug('script {} modified reloading'.format(sname))
                     script = self._bootstrap_script(sname, name)
@@ -1993,19 +1993,19 @@ anaylsis_type={}
         return script
 
     def _bootstrap_script(self, fname, name):
-        #global scripts
-        global warned_scripts
-        #if not self.warned_scripts:
-        #    self.warned_scripts = []
-        #warned_scripts = self.warned_scripts
+        global SCRIPTS
+        global WARNED_SCRIPTS
+        #if not self.WARNED_SCRIPTS:
+        #    self.WARNED_SCRIPTS = []
+        #WARNED_SCRIPTS = self.WARNED_SCRIPTS
 
         def warn(fn, e):
             self.invalid_script = True
             self.executable = False
             self.spec.executable = False
 
-            if not fn in warned_scripts:
-                warned_scripts.append(fn)
+            if not fn in WARNED_SCRIPTS:
+                WARNED_SCRIPTS.append(fn)
                 #                 e = traceback.format_exc()
                 self.warning_dialog('Invalid Script {}\n{}'.format(fn, e))
 
@@ -2016,14 +2016,14 @@ anaylsis_type={}
         if s and os.path.isfile(s.filename):
             if s.bootstrap():
                 s.set_default_context()
-                try:
-                    s.test()
-                #                    s.test()
-                # #                    setattr(self, '_{}_script'.format(name), s)
-                except Exception, e:
-                    e = traceback.format_exc()
-                    warn(fname, e)
-                    valid = False
+                # try:
+                #     s.test()
+                # #                    s.test()
+                # # #                    setattr(self, '_{}_script'.format(name), s)
+                # except Exception, e:
+                #     e = traceback.format_exc()
+                #     warn(fname, e)
+                #     valid = False
                     #                    setattr(self, '_{}_script'.format(name), None)
         else:
             valid = False
@@ -2031,9 +2031,9 @@ anaylsis_type={}
             e = 'Not a file'
             warn(fname, e)
 
-        self.valid_scripts[name] = valid
-        #if valid:
-        #    scripts[fname] = s
+        # self.valid_scripts[name] = valid
+        if valid:
+           SCRIPTS[fname] = s
         return s
 
     def _measurement_script_factory(self):

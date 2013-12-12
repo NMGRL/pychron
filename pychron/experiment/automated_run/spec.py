@@ -39,8 +39,7 @@ class AutomatedRunSpec(Loggable):
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
-                 'invalid', 'test'
-    )
+                 'invalid', 'test')
 
     skip = Bool(False)
     end_after = Bool(False)
@@ -180,6 +179,7 @@ class AutomatedRunSpec(Loggable):
 
             this is a good point to set executable as well
         """
+
         if not self._estimated_duration or self._changed:
             s = self.test_scripts(script_context, warned)
 

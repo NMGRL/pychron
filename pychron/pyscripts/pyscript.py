@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Any, Bool, DelegatesTo, Dict, Property, Int
+from traits.api import Str, Any, Bool, Property, Int
 from pyface.confirmation_dialog import confirm  # from pyface.wx.dialog import confirmation
 #============= standard library imports ========================
 import time
@@ -26,7 +26,7 @@ from threading import Event, Thread, Lock
 
 from pychron.loggable import Loggable
 
-from Queue import Queue, Empty, LifoQueue
+from Queue import Empty, LifoQueue
 # from pychron.globals import globalv
 # from pychron.ui.gui import invoke_in_main_thread
 import sys
@@ -37,7 +37,6 @@ from pychron.globals import globalv
 from pychron.wait.wait_control import WaitControl
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
-from pychron.ui.gui import invoke_in_main_thread
 
 
 class IntervalContext(object):
@@ -261,6 +260,7 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
+            self.syntax_checked = True
             self.testing_syntax = True
             self._syntax_error = True
 
@@ -278,7 +278,6 @@ class PyScript(Loggable):
                 self.info('syntax checking passed')
                 self._syntax_error = False
 
-            self.syntax_checked = True
             self.testing_syntax = False
 
     def compile_snippet(self, snippet):
@@ -306,7 +305,7 @@ class PyScript(Loggable):
         else:
             snippet = self.text
 
-        if os.path.isfile(snippet):
+        if trace:
             sys.settrace(self.traceit)
             import imp
 
