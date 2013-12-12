@@ -71,10 +71,8 @@ class WaitControl(Loggable):
 
     def start(self, block=True, evt=None, wtime=None):
         if self.timer:
-            self.debug('{} has a timer. Stopping timer'.format(self.page_name))
             self.timer.stop()
             self.timer.wait_for_completion()
-            self.debug('Timer successfully terminated')
 
         if evt is None:
             evt = Event()

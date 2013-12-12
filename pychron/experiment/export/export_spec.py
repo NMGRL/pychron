@@ -138,21 +138,16 @@ class ExportSpec(Loggable):
 
     def get_baseline_data(self, iso, det, **kw):
         """
-            if is_peak_hop return CDD baseline always
-            this wont work if mixing multicollect and peakhop
+            det is the original detector not the mass spec fooling detector
         """
         self.debug('get baseline data {} {}'.format(iso, det))
+        if self.is_peak_hop and det == self.peak_hop_detector:
+            iso = None
 
-        bdet = self._get_baseline_detector(iso, det)
-        tb, vb=self._get_data('baseline', iso, bdet, verbose=False)
-        if len(tb) == 1 and not tb[0]:
-            self.debug('Baseline not collected on {} for {}. using {}'.format(bdet, iso, det))
-            return self._get_data('baseline', iso, det)
-        else:
-            return tb, vb
-        # return self._get_data('baseline', iso, det, **kw)
+        return self._get_data('baseline', iso, det)
 
     def get_signal_data(self, iso, det, **kw):
+        self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
 
     def get_baseline_uvalue(self, det):
@@ -203,6 +198,7 @@ class ExportSpec(Loggable):
             t, v = zip(*data)
         except (NoSuchNodeError, AttributeError, StopIteration):
             import traceback
+
             if verbose:
                 self.debug(traceback.format_exc())
 

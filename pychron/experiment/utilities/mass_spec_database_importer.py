@@ -228,13 +228,14 @@ class MassSpecDatabaseImporter(Loggable):
         #sess.flush()
         analysis.ChangeableItemsID = item.ChangeableItemsID
 
-        self._add_isotopes(sess, analysis, spec, refdbdet, runtype)
+        self._add_isotopes(analysis, spec, refdbdet, runtype)
+        sess.flush()
 
         t = time.time() - gst
         self.debug('{} added analysis time {}s'.format(spec.record_id, t))
         return analysis
 
-    def _add_isotopes(self, sess, analysis, spec, refdet, runtype):
+    def _add_isotopes(self, analysis, spec, refdet, runtype):
         with spec.open_file():
             isotopes = list(spec.iter_isotopes())
             isotopes = sort_isotopes(isotopes, key=lambda x: x[0])
@@ -245,10 +246,10 @@ class MassSpecDatabaseImporter(Loggable):
                 dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
                 if not dbdet.Label in bs:
-                    self._add_baseline(analysis, spec, dbiso, dbdet, det)
+                    self._add_baseline(spec, dbiso, dbdet, det)
                     bs.append(dbdet.Label)
 
-                self._add_signal(analysis, spec, dbiso, dbdet, det, runtype)
+                self._add_signal(spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
@@ -275,7 +276,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         return db.add_isotope(analysis, dbdet, iso), dbdet
 
-    def _add_signal(self, analysis, spec, dbiso, dbdet, runtype):
+    def _add_signal(self, spec, dbiso, dbdet, odet, runtype):
         #===================================================================
         # peak time
         #===================================================================
@@ -291,16 +292,8 @@ class MassSpecDatabaseImporter(Loggable):
 
         iso = dbiso.Label
         det = dbdet.Label
-        if spec.is_peak_hop:
-            det = spec.peak_hop_detector
 
-        tb, vb = spec.get_signal_data(iso, det, verbose=False)
-
-        #tb[0] if not error getting signal/iso/det table from h5file
-        #this will happen if mixing multicollect and
-        if len(tb) == 1 and not tb[0]:
-            det = dbdet.Label
-            tb, vb = spec.get_signal_data(iso, det)
+        tb, vb = spec.get_signal_data(iso, odet)
 
         baseline = spec.get_baseline_uvalue(det)
         vb = array(vb) - baseline.nominal_value
@@ -327,7 +320,7 @@ class MassSpecDatabaseImporter(Loggable):
                               sfit,
                               dbdet)
 
-    def _add_baseline(self, analysis, spec, dbiso, dbdet, odet):
+    def _add_baseline(self, spec, dbiso, dbdet, odet):
         self.debug('add baseline dbdet= {}. original det= {}'.format(dbdet.Label, odet))
 
         det = dbdet.Label
