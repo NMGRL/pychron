@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from datetime import datetime
 from traits.api import Any, Str, Int, List, Property, \
-    Event, Instance, Bool, Dict, HasTraits, Float
+    Event, Instance, Bool, HasTraits, Float
 #============= standard library imports ========================
 import os
 import traceback
@@ -139,7 +139,7 @@ class AutomatedRun(Loggable):
 
     cdd_ic_factor = Any
 
-    scripts = Dict
+    # scripts = Dict
 
     measurement_script = Instance(MeasurementPyScript)
     post_measurement_script = Instance(ExtractionPyScript)
@@ -175,9 +175,6 @@ class AutomatedRun(Loggable):
     termination_conditions = List
     truncation_conditions = List
     action_conditions = List
-
-    #    _total_counts = 0
-    _processed_signals_dict = None
 
     fits = List
     runid = Property
