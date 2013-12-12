@@ -34,6 +34,7 @@ from pychron.experiment.utilities.identifier import convert_identifier, \
     ANALYSIS_MAPPING
 #from pychron.deprecate import deprecated
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.pyscripts.error import PyscriptError
 
 LAlphas = list(ALPHAS)
 
@@ -344,7 +345,10 @@ class Experimentor(IsotopeDatabaseManager):
     def _update_queues(self):
         qs = self.experiment_queues
         self.stats.experiment_queues = qs
-        self.stats.calculate()
+        try:
+            self.stats.calculate()
+        except PyscriptError, e:
+            self.warning_dialog(str(e))
         self.refresh_executable(qs)
 
         self.debug('executor executable {}'.format(self.executor.executable))
