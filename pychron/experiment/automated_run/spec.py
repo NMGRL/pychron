@@ -151,10 +151,9 @@ class AutomatedRunSpec(Loggable):
                 if arun is None:
                     arun = self.make_run(new_uuid=False)
 
-                arun.invalid_script = False
+                # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
-
                     ok = script.syntax_ok()
                     script_oks.append(ok)
                     script_context[name] = script, ok
@@ -163,11 +162,12 @@ class AutomatedRunSpec(Loggable):
                         if si in ('measurement_script', 'extraction_script'):
                             d = script.calculate_estimated_duration()
                             s += d
-                elif arun.invalid_script:
-                    script_oks.append(False)
+                # elif arun.invalid_script:
+                #     script_oks.append(False)
         if arun:
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
+
         self.executable = all(script_oks)
         return s
 
@@ -179,7 +179,6 @@ class AutomatedRunSpec(Loggable):
 
             this is a good point to set executable as well
         """
-
         if not self._estimated_duration or self._changed:
             s = self.test_scripts(script_context, warned)
 

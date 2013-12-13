@@ -54,12 +54,12 @@ class NewportMotionController(MotionController):
             # get and clear any error
             self.read_error()
 
-            self.setup_consumer(buftime=500)
+            self.setup_consumer()
             return r
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
         self.axes_factory(config)
         config_path = self.configuration_dir_path
         group = config.get('Optional', 'group')
@@ -290,16 +290,16 @@ ABLE TO USE THE HARDWARE JOYSTICK
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None, update=250,
                          immediate=False, **kw):
-        '''
-        '''
         args = (key, value, block, mode, velocity, update, kw)
         if block or immediate:
             self._single_axis_move(args)
         else:
+            self.debug('add {} to consume queue'.format(args))
             self.add_consumable((self._single_axis_move, args))
 
     def _single_axis_move(self, args):
         key, value, block, mode, velocity, update, kw = args
+        self.debug('single axis move {}'.format(args))
         x = None
         y = None
         try:
@@ -318,6 +318,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 
         cmd = self._build_command(cmd, xx=aid,
                                   nn='{:0.5f}'.format(self._sign_correct(value, key) * ax.drive_ratio))
+        self.debug('command {}'.format(cmd))
         func = None
 
         if key != 'z':
@@ -330,7 +331,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
                 y = value
                 o = self._y_position
 
-            if self._validate(value, key, cur=o) is  None:
+            if self._validate(value, key, cur=o) is None:
                 value = float(value)
                 if abs(value - o) <= 0.001:
                     return 'At desired position. cur={} desired={}'.format(o, value)
@@ -368,6 +369,8 @@ ABLE TO USE THE HARDWARE JOYSTICK
                     self._z_position = value
                     self.z_progress = value
 
+        self.debug('command={} block={}. kw={}'.format(cmd, block, kw))
+        setattr(self, '_{}_position'.format(key), value)
         self._axis_move(cmd, block=block, **kw)
 
     def multiple_axis_move(self, axes_list, block=False):
@@ -614,10 +617,10 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self.debug('calculated {} {} {} {}'.format(change, nv, ac, dc))
             if change:
                 obj.trait_set(acceleration=ac,
-                                        deceleration=dc,
-                                        velocity=nv,
-                                        trait_change_notify=False
-                                        )
+                                    deceleration=dc,
+                                    velocity=nv,
+                                    trait_change_notify=False
+                                    )
         else:
             change = (obj.machine_acceleration != obj.acceleration or
                       obj.machine_deceleration != obj.deceleration or

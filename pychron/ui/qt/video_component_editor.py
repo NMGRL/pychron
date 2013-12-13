@@ -27,19 +27,18 @@ from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 
 
 class _VideoComponentEditor(_LaserComponentEditor):
-    '''
-    '''
+    """
+    """
     playTimer = Any
     fps = Int
     def init(self, parent):
-        '''
+        """
         Finishes initializing the editor by creating the underlying toolkit
         widget.
-   
-        '''
+
+        """
         super(_VideoComponentEditor, self).init(parent)
 
-        print 'start play timer'
         self.playTimer = QTimer(self.control)
         self.playTimer.timeout.connect(self.update)
         if self.value.fps:
@@ -84,8 +83,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
 #            event.RequestMore()
 
 class VideoComponentEditor(LaserComponentEditor):
-    '''
-    '''
+    """
+    """
     klass = _VideoComponentEditor
 
 #============= EOF ====================================

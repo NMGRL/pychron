@@ -184,7 +184,7 @@ class AutomatedRun(Loggable):
     _equilibration_done = False
 
     #    save_error_flag = False
-    invalid_script = False
+    # invalid_script = False
 
     _current_data_frame = None
 
@@ -1997,8 +1997,8 @@ anaylsis_type={}
         #WARNED_SCRIPTS = self.WARNED_SCRIPTS
 
         def warn(fn, e):
-            self.invalid_script = True
-            self.executable = False
+            # self.invalid_script = True
+            # self.executable = False
             self.spec.executable = False
 
             if not fn in WARNED_SCRIPTS:
@@ -2030,7 +2030,7 @@ anaylsis_type={}
 
         # self.valid_scripts[name] = valid
         if valid:
-           SCRIPTS[fname] = s
+            SCRIPTS[fname] = s
         return s
 
     def _measurement_script_factory(self):

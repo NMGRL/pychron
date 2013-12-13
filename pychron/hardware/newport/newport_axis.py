@@ -18,7 +18,7 @@
 
 
 #=============enthought library imports=======================
-from traits.api import Property, Str, Float, CInt, Int, Button
+from traits.api import Property, Str, Float, Int, Button
 from traitsui.api import View, Item, Group, EnumEditor, HGroup, VGroup, spring
 
 #=============standard library imports ========================
@@ -149,8 +149,8 @@ def int_binstr(n):
 
 
 class NewportAxis(Axis):
-    '''
-    '''
+    """
+    """
     loaded = False
 
     loadposition = Float

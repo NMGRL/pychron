@@ -101,7 +101,7 @@ class Loggable(HasTraits):
 
     def warning_dialog(self, msg, sound=None, title='Warning'):
         dialog = myMessageDialog(
-            parent=None, message=msg,
+            parent=None, message=str(msg),
             title=title,
             severity='warning'
         )

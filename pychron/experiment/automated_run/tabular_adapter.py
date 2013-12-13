@@ -81,18 +81,18 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         item = self.item
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
-
-        if item.skip:
-            color = SKIP_COLOR  # '#33CCFF'  # light blue
-        elif item.state in COLORS:
-            color = COLORS[item.state]
-        elif item.end_after:
-            color = COLORS['end_after']
         else:
-            if row % 2 == 0:
-                color = 'white'
+            if item.skip:
+                color = SKIP_COLOR  # '#33CCFF'  # light blue
+            elif item.state in COLORS:
+                color = COLORS[item.state]
+            elif item.end_after:
+                color = COLORS['end_after']
             else:
-                color = '#E6F2FF'  # light gray blue
+                if row % 2 == 0:
+                    color = 'white'
+                else:
+                    color = '#E6F2FF'  # light gray blue
 
         return color
 

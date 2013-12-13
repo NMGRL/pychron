@@ -84,7 +84,7 @@ class PIDTuningScanner(Scanner):
             wait until temp is below threshold
         """
         self._set_power_hook(0)
-        threshold=300
+        threshold=200
         tm=self.manager.get_device('temperature_monitor')
         ct=tm.get_process_value()
         while ct>threshold:
@@ -106,6 +106,7 @@ class PIDTuningScanner(Scanner):
             elapsed = time.time() - sti
             time.sleep(max(0.0001, min(1, 1 - elapsed)))
 
+        tc.enable_tru_tune=True
         tt=time.time()-st
         self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
 

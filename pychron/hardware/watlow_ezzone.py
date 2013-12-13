@@ -521,7 +521,7 @@ class WatlowEZZone(CoreDevice):
             self.warning('Set point not set. {} != {} retrying'.format(sp, setpoint))
             self.write(2160, setpoint, nregisters=2, **kw)
 
-    def set_open_loop_setpoint(self, setpoint, use_calibration=None, verbose=True, **kw):
+    def set_open_loop_setpoint(self, setpoint, use_calibration=None, verbose=True, set_pid=False, **kw):
         """
 
         """

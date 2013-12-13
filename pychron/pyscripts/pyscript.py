@@ -22,6 +22,7 @@ import time
 import os
 import inspect
 from threading import Event, Thread, Lock
+import traceback
 #============= local library imports  ==========================
 
 from pychron.loggable import Loggable
@@ -196,8 +197,11 @@ class PyScript(Loggable):
 
     def calculate_estimated_duration(self):
         self._estimated_duration = 0
-        self._set_syntax_checked(False)
-        self.test()
+        if not self._syntax_checked:
+            self.debug('calculate_estimated duration. syntax requires testing')
+            self.test()
+        # self._set_syntax_checked(False)
+        # self.test()
         return self.get_estimated_duration()
 
     def traceit(self, frame, event, arg):
@@ -265,7 +269,6 @@ class PyScript(Loggable):
             self._syntax_error = True
 
             r = self._execute(argv=argv)
-
             if r is not None:
                 self.info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
@@ -284,9 +287,6 @@ class PyScript(Loggable):
         try:
             code = compile(snippet, '<string>', 'exec')
         except Exception, e:
-            import traceback
-
-            traceback.print_exc()
             return e
         else:
             return code
@@ -336,17 +336,20 @@ class PyScript(Loggable):
                 except KeyError, e:
                     return MainError()
                 except Exception, e:
-                    import traceback
-
-                    traceback.print_exc()
-                    # #            self.warning_dialog(str(e))
-                    return e
+                    return traceback.format_exc(limit=5)
             else:
                 return code_or_err
 
 
     def syntax_ok(self):
-        return not self._syntax_error
+        try:
+            self.test()
+        except PyscriptError, e:
+            self.warning_dialog(e)
+            return False
+
+        return True
+        # return not self._syntax_error
 
     def check_for_modifications(self):
         old = self.toblob()
