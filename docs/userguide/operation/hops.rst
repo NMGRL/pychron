@@ -4,7 +4,7 @@ This section describes how to define a peak hopping sequence.
 
 
 
-A peak hop sequence,``HOPS``, is a list of peak hops (e.i. magnet moves).
+A peak hop sequence,``HOPS``, is a list of peak hops (i.e magnet moves).
 
 ::
 
