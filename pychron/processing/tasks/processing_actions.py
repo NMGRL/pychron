@@ -185,8 +185,6 @@ class RecallAction(Action):
         app = event.task.window.application
         task = app.get_task('pychron.recall')
 
-        task.activated(load=True)
-
 
 class SmartProjectAction(Action):
     name = 'Smart Project'

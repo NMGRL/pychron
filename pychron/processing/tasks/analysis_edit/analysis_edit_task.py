@@ -118,29 +118,36 @@ class AnalysisEditTask(BaseBrowserTask):
                 #ans=self.manager.make_analyses(ans)
                 self.active_editor.unknowns.extend(tans)
 
-
     def recall(self, records):
+        """
+            if analysis is already open activate the editor
+            otherwise open a new editor
+        """
+
         if not hasattr(records, '__iter__'):
             records = (records,)
 
-        ans = self.manager.make_analyses(records,
+        for editor in self.editor_area.editors:
+            if isinstance(editor, RecallEditor):
+                if editor.model:
+                    for r in records:
+                        if editor.model.uuid==r.uuid:
+                            self.activate_editor(editor)
+                            records.remove(r)
+
+        if records:
+            ans = self.manager.make_analyses(records,
                                          unpack=True,
                                          calculate_age=True)
 
-        def func(rec):
-        #             rec.load_isotopes()
-        #    rec.calculate_age()
-            reditor = RecallEditor(analysis_view=rec.analysis_view,
-                                   model=rec)
-            self.editor_area.add_editor(reditor)
+            if ans:
+                for rec in ans:
+                    editor = RecallEditor(analysis_view=rec.analysis_view,
+                                           model=rec)
+                    self.editor_area.add_editor(editor)
 
-        if ans:
-            for ri in ans:
-                func(ri)
-                #             self.manager._load_analyses(ans, func=func)
-
-            ed = self.editor_area.editors[-1]
-            self.editor_area.activate_editor(ed)
+                ed = self.editor_area.editors[-1]
+                self.editor_area.activate_editor(ed)
 
     def new_ic_factor(self):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import IntercalibrationFactorEditor
