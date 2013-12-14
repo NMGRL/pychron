@@ -17,19 +17,18 @@
 #============= enthought library imports =======================
 from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int
-from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, Splitter
+from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, \
     BakeoutEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
-    ExamplePane, EditorPane, CommandEditorPane, ControlPane
+    EditorPane, CommandEditorPane, ControlPane
 from pychron.paths import paths
 from pychron.ui.preference_binding import bind_preference
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 import os
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.execute_mixin import ExecuteMixin
 from pychron.pyscripts.laser_pyscript import LaserPyScript
 
@@ -48,6 +47,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     _current_script = Any
     use_trace = Bool(False)
     trace_delay = Int(50)
+
+    description=String
 
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
@@ -126,12 +127,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 if self.use_trace:
                     self.active_editor.trace_delay = self.trace_delay
 
-                t = script.execute(
-#                                    new_thread=True,
-                                   trace=self.use_trace
-                                   )
-#                 t.join()
-
+                t = script.execute(trace=self.use_trace)
 
         self.executing = False
 
@@ -152,8 +148,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if self._current_script:
             self._current_script.cancel()
 
-
-
     #def activated(self):
     #    from pyface.timer.do_later import do_later
     #    do_later(self.window.reset_layout)
@@ -161,33 +155,33 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def _default_directory_default(self):
         return paths.scripts_dir
 
-    def _default_layout_default(self):
-        return TaskLayout(
-                          id='pychron.pyscript',
-                          left=Splitter(
-
-                                        PaneItem('pychron.pyscript.control',
-                                          height=100),
-
-                                        PaneItem('pychron.pyscript.commands_editor',
-                                          height=100,
-                                          width=510,
-                                          ),
-#                                      Tabbed(
-                                            PaneItem('pychron.pyscript.editor',
-                                              width=510,
-                                              ),
-#                                             PaneItem('pychron.pyscript.commands',
-#                                               width=525,
+#     def _default_layout_default(self):
+#         return TaskLayout(
+#                           id='pychron.pyscript',
+#                           left=Splitter(
+#
+#                                         PaneItem('pychron.pyscript.control',
+#                                           height=100),
+#
+#                                         PaneItem('pychron.pyscript.commands_editor',
+#                                           height=100,
+#                                           width=510,
+#                                           ),
+# #                                      Tabbed(
+#                                             PaneItem('pychron.pyscript.editor',
+#                                               width=510,
 #                                               ),
-                                        orientation='vertical',
-                                     ),
-#                                 ),
-                          right=PaneItem('pychron.pyscript.commands',
-                                         width=175),
-#                          top=PaneItem('pychron.pyscript.description'),
-#                           bottom=
-                          )
+# #                                             PaneItem('pychron.pyscript.commands',
+# #                                               width=525,
+# #                                               ),
+#                                         orientation='vertical',
+#                                      ),
+# #                                 ),
+#                           right=PaneItem('pychron.pyscript.commands',
+#                                          width=175),
+# #                          top=PaneItem('pychron.pyscript.description'),
+# #                           bottom=
+#                           )
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
@@ -198,11 +192,14 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 self.command_editor_pane,
                 self.editor_pane,
                 self.control_pane,
+                DescriptionPane(model=self)
                 ]
 
     @on_trait_change('commands_pane:command_object')
     def _update_selected(self, new):
         self.command_editor_pane.command_object = new
+        if new:
+            self.description=new.description
 
     def _active_editor_changed(self):
         if self.active_editor:
@@ -231,16 +228,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if info.result:
             self._open_editor(path='')
             return True
-
-#     def open(self):
-# #         path = '/Users/ross/Pychrondata_diode/scripts/measurement/jan_unknown.py'
-# #         path = '/Users/ross/Pychrondata_diode/scripts/extra/jan_unknown.py'
-# #        path = '/Users/ross/Pychrondata_diode/scripts/extraction/jan_diode.py'
-# #        path = '/Users/ross/Pychrondata_demo/scripts/laser/zoom_scan.py'
-# #         path = os.path.join(paths.scripts_dir, 'lasers', 'video_test.py')
-#         path = os.path.join(paths.scripts_dir, 'laser', 'power_map.py')
-#         self._open_file(path)
-#         return True
 
     def _open_file(self, path, **kw):
         self.info('opening pyscript: {}'.format(path))
@@ -273,14 +260,25 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def _update_lineno(self, new):
         self.active_editor.highlight_line = new
 
-    def _get_description(self):
-        if self.selected:
-            return self.selected.description
-        return ''
+    # def _get_description(self):
+    #     if self.selected:
+    #         return self.selected.description
+    #     return ''
 
     def _get_example(self):
         if self.selected:
             return self.selected.example
         return ''
 
-#============= EOF =============================================
+    def _default_layout_default(self):
+        left=Splitter(PaneItem('pychron.pyscript.commands', height=500, width=125),
+                      PaneItem('pychron.pyscript.commands_editor', height=200, width=125),
+                      orientation='vertical')
+        bottom=PaneItem('pychron.pyscript.description')
+        return TaskLayout(id='pychron.pyscript',
+                          left=left,
+                          bottom=bottom
+                          )
+
+
+        #============= EOF =============================================

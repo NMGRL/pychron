@@ -425,6 +425,8 @@ class AutomatedRun(Loggable):
         writer = self._get_data_writer(group)
 
         check_conditions = True
+        self._add_truncate_condition()
+
         ret = self._peak_hop(cycles, counts, hops, group, writer,
                              starttime, starttime_offset, series,
                              fits, check_conditions)
@@ -497,28 +499,28 @@ class AutomatedRun(Loggable):
     # conditions
     #===============================================================================
     def py_add_termination(self, attr, comp, value, start_count, frequency):
-        '''
+        """
             attr must be an attribute of arar_age
-        '''
+        """
         self.termination_conditions.append(TerminationCondition(attr, comp, value,
                                                                 start_count,
                                                                 frequency))
 
     def py_add_truncation(self, attr, comp, value, start_count, frequency,
                           abbreviated_count_ratio):
-        '''
+        """
             attr must be an attribute of arar_age
-        '''
+        """
+
         self.truncation_conditions.append(TruncationCondition(attr, comp, value,
                                                               start_count,
                                                               frequency,
-                                                              abbreviated_count_ratio=abbreviated_count_ratio
-        ))
+                                                              abbreviated_count_ratio=abbreviated_count_ratio))
 
     def py_add_action(self, attr, comp, value, start_count, frequency, action, resume):
-        '''
+        """
             attr must be an attribute of arar_age
-        '''
+        """
         self.action_conditions.append(ActionCondition(attr, comp, value,
                                                       start_count,
                                                       frequency,
@@ -1104,6 +1106,7 @@ anaylsis_type={}
 
     def _add_truncate_condition(self):
         t = self.spec.truncate_condition
+        self.debug('adding truncate condition {}'.format(t))
         if t:
             if t.endswith('.yaml'):
                 p = os.path.join(paths.truncation_dir, t)
@@ -1134,7 +1137,7 @@ anaylsis_type={}
                     self.debug('truncate_condition parse failed {} {}'.format(e, t))
                     return
 
-            self.py_add_truncation(attr, comp, value, int(start), freq, acr)
+            self.py_add_truncation(attr, comp, float(value), int(start), freq, acr)
 
     def wait(self, t, msg=''):
         if self.experiment_executor:

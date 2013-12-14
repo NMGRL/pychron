@@ -15,29 +15,41 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+import time
+
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, Any, List, String, cached_property, Int
 from pyface.tasks.api import Editor
-import os
+from PySide.QtGui import QTextCursor, QTextFormat, QTextEdit
+
 from pychron.pyscripts.parameter_editor import MeasurementParameterEditor, \
     ParameterEditor
-from PySide.QtGui import QTextCursor, QTextFormat, QTextEdit
-import time
+
 # from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
+
 SCRIPT_PKGS = dict(Bakeout='pychron.pyscripts.bakeout_pyscript',
-                    Extraction='pychron.pyscripts.extraction_line_pyscript',
-                    Measurement='pychron.pyscripts.measurement_pyscript'
-                    )
+                   Extraction='pychron.pyscripts.extraction_line_pyscript',
+                   Measurement='pychron.pyscripts.measurement_pyscript'
+)
 
 from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget
+
+
 class myCodeWidget(AdvancedCodeWidget):
     commands = None
+
     def __init__(self, parent, commands=None, *args, **kw):
         super(myCodeWidget, self).__init__(parent, *args, **kw)
         self.commands = commands
         self.setAcceptDrops(True)
+
+        #setup lexer
+        lexer = PyScriptLexer(commands)
+        self.code.highlighter._lexer = lexer
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat('traits-ui-tabular-editor'):
@@ -49,7 +61,7 @@ class myCodeWidget(AdvancedCodeWidget):
         mime = e.mimeData()
         idx = mime.data('traits-ui-tabular-editor')
 
-#        cmd = ''
+        #        cmd = ''
         cmd = self.commands.command_objects[int(idx)]
         if cmd:
             text = cmd.to_string()
@@ -61,7 +73,7 @@ class myCodeWidget(AdvancedCodeWidget):
 
                 block = cur.block()
                 line = block.text()
-                indent = self.code._get_indent_position(line)
+                indent = max(4, self.code._get_indent_position(line))
                 line = line.strip()
                 token = line.split(' ')[0]
                 token = token.strip()
@@ -77,7 +89,7 @@ class myCodeWidget(AdvancedCodeWidget):
         selection = QTextEdit.ExtraSelection()
         selection.format.setBackground(self.code.line_highlight_color)
         selection.format.setProperty(
-                QTextFormat.FullWidthSelection, True)
+            QTextFormat.FullWidthSelection, True)
 
         doc = self.code.document()
         block = doc.findBlockByLineNumber(lineno - 1)
@@ -99,7 +111,7 @@ class Commands(HasTraits):
         self.script_commands = prepcommands(ps.get_commands())
         self.script_commands.sort()
         co = [self._command_factory(si)
-                    for si in self.script_commands]
+              for si in self.script_commands]
         self.command_objects = co
 
     def _command_factory(self, scmd):
@@ -118,7 +130,7 @@ class Commands(HasTraits):
             try:
                 cmd = getattr(m, klass)()
                 setattr(self, cmd_name, cmd)
-            except AttributeError, e :
+            except AttributeError, e:
                 if scmd:
                     print e
 
@@ -176,16 +188,16 @@ class PyScriptEditor(Editor):
     def _create_control(self, parent):
 
         self.control = control = myCodeWidget(parent,
-                                            commands=self.commands
-                                            )
-#        self.control = control = AdvancedCodeWidget(parent)
+                                              commands=self.commands
+        )
+        #        self.control = control = AdvancedCodeWidget(parent)
         self._show_line_numbers_changed()
 
         # Install event filter to trap key presses.
-#        event_filter = PythonEditorEventFilter(self, self.control)
-#        event_filter.control = self.control
-#        self.control.installEventFilter(event_filter)
-#        self.control.code.installEventFilter(event_filter)
+        #        event_filter = PythonEditorEventFilter(self, self.control)
+        #        event_filter.control = self.control
+        #        self.control.installEventFilter(event_filter)
+        #        self.control.code.installEventFilter(event_filter)
 
         # Connect signals for text changes.
         control.code.modificationChanged.connect(self._on_dirty_changed)
@@ -200,17 +212,17 @@ class PyScriptEditor(Editor):
         self.dirty = dirty
 
     def _on_text_changed(self):
-#        if not self.suppress_change:
+    #        if not self.suppress_change:
         self.editor.parse(self.getText())
         self.changed = True
         self.dirty = True
 
-#    @on_trait_change('editor:body')
-#    def _on_body_change(self):
-#        if self.editor.body:
-#            self.suppress_change = True
-#            self.setText(self.editor.body)
-#            self.suppress_change = False
+    #    @on_trait_change('editor:body')
+    #    def _on_body_change(self):
+    #        if self.editor.body:
+    #            self.suppress_change = True
+    #            self.setText(self.editor.body)
+    #            self.suppress_change = False
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
@@ -228,9 +240,9 @@ class PyScriptEditor(Editor):
     def _get_name(self):
         return os.path.basename(self.path) or 'Untitled'
 
-#===============================================================================
-# persistence
-#===============================================================================
+    #===============================================================================
+    # persistence
+    #===============================================================================
     def load(self, path=None):
         if path is None:
             path = self.path
@@ -256,11 +268,13 @@ class PyScriptEditor(Editor):
         if txt:
             with open(path, 'w') as fp:
                 fp.write(txt)
+
     save = dump
-#    def save(self, path):
-#        self.dump(path)
+    #    def save(self, path):
+    #        self.dump(path)
     def _detab(self, txt):
         return txt.replace('\t', ' ' * 4)
+
 
 class MeasurementEditor(PyScriptEditor):
 #    editor = Instance(MeasurementParameterEditor, ())
@@ -269,15 +283,18 @@ class MeasurementEditor(PyScriptEditor):
     def _editor_default(self):
         return MeasurementParameterEditor(editor=self)
 
+
 class ExtractionEditor(PyScriptEditor):
 #    editor = Instance(ParameterEditor, ())
     kind = 'Extraction'
+
     def _editor_default(self):
         return ParameterEditor(editor=self)
 
 
 class BakeoutEditor(PyScriptEditor):
     kind = 'Bakeout'
+
     def _editor_default(self):
         return ParameterEditor(editor=self)
 

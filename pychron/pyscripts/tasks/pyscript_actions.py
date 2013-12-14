@@ -15,15 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 from pyface.action.action import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class OpenPyScriptAction(Action):
-    '''
-    '''
+    """
+    """
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
@@ -36,11 +34,10 @@ class OpenPyScriptAction(Action):
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout('pychron.pyscript',
                                                              size=(1200, 100)
-                                                             ),
-
-                                            )
+                                                             ))
             task = win.active_task
-            if task.open():
+            test_path='/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+            if task.open(path=test_path):
                 win.open()
 
 class NewPyScriptAction(Action):

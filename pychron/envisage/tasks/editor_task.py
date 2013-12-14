@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
 
@@ -40,19 +41,21 @@ class BaseEditorTask(BaseManagerTask):
                 pass
 
     def open(self, path=None, **kw):
-        ''' Shows a dialog to open a file.
-        '''
-        if path is None:
+        """
+            Shows a dialog to open a file.
+        """
+        if path is None or not os.path.isfile(path):
             path = self.open_file_dialog()
+
         if path:
             self._open_file(path, **kw)
             return True
 
     def save(self, path=None):
-        '''
-            if the active_editor doesnt have a path e.g not yet saved 
+        """
+            if the active_editor doesnt have a path e.g not yet saved
             do a save as
-        '''
+        """
         if self.active_editor:
             if self.active_editor.path:
                 path = self.active_editor.path

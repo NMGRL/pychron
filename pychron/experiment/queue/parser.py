@@ -89,7 +89,7 @@ class RunParser(Loggable):
                      'pattern',
                      'position',
                      'comment',
-#                     ('truncate', 'truncate_condition'),
+                     ('truncate', 'truncate_condition'),
                      # ver 1.0
                      'extract_units',
                      # ver 2.0

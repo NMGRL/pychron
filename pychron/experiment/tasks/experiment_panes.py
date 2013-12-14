@@ -76,16 +76,15 @@ class ExperimentFactoryPane(TraitsDockPane):
     def traits_view(self):
         add_button = icon_button_editor('add_button', 'add',
                                         enabled_when='ok_add',
-                                        tooltip='Add run'
-        )
+                                        tooltip='Add run')
 
         save_button = icon_button_editor('save_button', 'disk',
-                                         tooltip='Save queue to file'
-        )
+                                         tooltip='Save queue to file')
+
         edit_button = icon_button_editor('edit_mode_button', 'table_edit',
                                          enabled_when='edit_enabled',
-                                         tooltip='Toggle edit mode'
-        )
+                                         tooltip='Toggle edit mode')
+
         clear_button = icon_button_editor('clear_button',
                                           'table_row_delete',
                                           tooltip='Clear all runs added using "frequency"')
@@ -95,20 +94,15 @@ class ExperimentFactoryPane(TraitsDockPane):
             HGroup(
                 QFItem('mass_spectrometer',
                        show_label=False,
-                       editor=EnumEditor(name=make_qf_name('mass_spectrometers')),
-                ),
+                       editor=EnumEditor(name=make_qf_name('mass_spectrometers'))),
                 QFItem('extract_device',
                        show_label=False,
-                       editor=EnumEditor(name=make_qf_name('extract_devices')),
-                )
-            ),
+                       editor=EnumEditor(name=make_qf_name('extract_devices')))),
             QFItem('load_name',
                    show_label=False,
-                   editor=EnumEditor(name=make_qf_name('load_names'))
-            ),
+                   editor=EnumEditor(name=make_qf_name('load_names'))),
             QFItem('delay_before_analyses'),
-            QFItem('delay_between_analyses')
-        )
+            QFItem('delay_between_analyses'))
 
         button_bar = HGroup(
             save_button,
@@ -117,30 +111,25 @@ class ExperimentFactoryPane(TraitsDockPane):
             edit_button,
             CustomLabel(make_rf_name('edit_mode_label'),
                         color='red',
-                        width=40
-            ),
+                        width=40),
             spring,
             RFItem('end_after', width=30),
-            RFItem('skip')
-        )
+            RFItem('skip'))
         edit_grp = VFold(
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
-                label='General'
-            ),
+                label='General'),
             self._get_script_group(),
             self._get_truncate_group(),
-            enabled_when=make_qf_name('ok_make')
-        )
+            enabled_when=make_qf_name('ok_make'))
 
         lower_button_bar = HGroup(
             add_button,
             clear_button,
             Label('Auto Increment'),
             Item('auto_increment_id', label='L#'),
-            Item('auto_increment_position', label='Position'),
-        )
+            Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
                 queue_grp,
