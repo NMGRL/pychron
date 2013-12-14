@@ -16,13 +16,13 @@
 
 
 
-'''
+"""
 Global path structure
 
 add a path verification function
 make sure directory exists and build if not
-'''
-from os import path, mkdir, getcwd
+"""
+from os import path, mkdir
 
 
 
@@ -34,6 +34,7 @@ from os import path, mkdir, getcwd
 #    project_root = 'branches/pychron'
 #
 # project_home = join(host_url, project_root)
+
 
 class Paths():
     version = None
@@ -141,10 +142,20 @@ class Paths():
     # files
     #===========================================================================
     backup_recovery_file = None
-    def set_icon_search_path(self, app_rec=None):
+
+    def set_search_paths(self, app_rec=None):
         self.app_resources=app_rec
+        self.set_icon_search_path()
+        self.set_sound_search_path()
+
+    def set_icon_search_path(self):
         self.icon_search_path = [self.icons,
                                  self.app_resources]
+
+    def set_sound_search_path(self):
+        self.sound_search_path = [self.sounds,
+                                 self.app_resources]
+
     def build(self, version):
         self.version = version
 
@@ -272,8 +283,7 @@ class Paths():
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
 
-        self.set_icon_search_path()
-
+        self.set_search_paths()
         
 paths = Paths()
 paths.build('_beta')

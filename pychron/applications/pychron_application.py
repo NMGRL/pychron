@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance
 # from envisage.ui.workbench.api import WorkbenchApplication
 from pyface.api import AboutDialog, SplashScreen
 from pyface.image_resource import ImageResource
@@ -42,7 +41,8 @@ def get_resource_root():
     return path
 
 
-paths.set_icon_search_path(get_resource_root())
+# paths.set_icon_search_path(get_resource_root())
+paths.set_search_paths(get_resource_root())
 
 class PychronApplication(BaseTasksApplication):
     def _about_dialog_default(self):

@@ -188,8 +188,7 @@ class PyScriptEditor(Editor):
     def _create_control(self, parent):
 
         self.control = control = myCodeWidget(parent,
-                                              commands=self.commands
-        )
+                                              commands=self.commands)
         #        self.control = control = AdvancedCodeWidget(parent)
         self._show_line_numbers_changed()
 

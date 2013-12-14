@@ -17,7 +17,7 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Any, Int
+from traits.api import Any, Int, Str, Event
 #============= standard library imports ========================
 # from wx import EVT_IDLE, EVT_PAINT
 from PySide.QtCore import QTimer
@@ -31,6 +31,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
     """
     playTimer = Any
     fps = Int
+    stop_timer=Event
+
     def init(self, parent):
         """
         Finishes initializing the editor by creating the underlying toolkit
@@ -47,7 +49,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
         self.value.on_trait_change(self.stop, 'closed_event')
 
         self.value.on_trait_change(self._update_fps, 'fps')
-
+        self.sync_value('stop_timer', 'stop_timer', mode='both')
 
     def _update_fps(self):
         if self.value.fps:
@@ -64,6 +66,10 @@ class _VideoComponentEditor(_LaserComponentEditor):
             self.value.draw_valid = False
             self.control.repaint()
 
+    def _stop_timer_fired(self):
+        print 'VideoComponentEditor stopping playTimer'
+        self.playTimer.stop()
+
 #    def onClose(self):
 #        self.playTimer.Stop()
 #
@@ -72,19 +78,11 @@ class _VideoComponentEditor(_LaserComponentEditor):
 #            self.control.Refresh()
 #            evt.Skip()
 
-#    def onIdle(self, event):
-# #        '''
-# #
-# #        '''
-#        if self.control is not None:
-#            self.control.Refresh()
-#            time.sleep(1 / float(self.value.fps))
-#            event.Skip()
-#            event.RequestMore()
 
 class VideoComponentEditor(LaserComponentEditor):
     """
     """
     klass = _VideoComponentEditor
+    stop_timer=Str
 
 #============= EOF ====================================

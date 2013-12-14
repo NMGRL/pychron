@@ -55,8 +55,8 @@ from stage_map import StageMap
 
 
 class StageManager(Manager):
-    '''
-    '''
+    """
+    """
     stage_controller_class = String('Newport')
 
     stage_controller = Instance(MotionController)
@@ -1235,11 +1235,7 @@ class StageManager(Manager):
     #
     #        w = 640 * canvas.scaling
     #        h = w * 0.75
-        return self.canvas_editor_klass(
-            #                                        width=w + canvas.padding_left + canvas.padding_right,
-            #                                          height=h + canvas.padding_top + canvas.padding_bottom,
-            keyboard_focus='keyboard_focus'
-        )
+        return self.canvas_editor_klass(keyboard_focus='keyboard_focus')
 
     #===============================================================================
     # defaults
