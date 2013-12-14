@@ -87,9 +87,9 @@ class Scanner(Loggable):
             self.set_static_value(name, *args, **kw)
 
     def set_static_value(self, name_or_idx, value, plotid=None):
-        '''
+        """
             if the plotid is not None add a horizontal guide at value
-        '''
+        """
         if isinstance(name_or_idx, str):
             name_or_idx = next((i for i, (e, a) in enumerate(self.static_values)), None)
 
@@ -127,7 +127,7 @@ class Scanner(Loggable):
                 kw['xtitle'] = 'Time'
 
             g.new_plot(
-                data_limit=2000,
+                data_limit=3000,
                 **kw)
             g.new_series(plotid=i)
         self._graph = g

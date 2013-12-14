@@ -120,7 +120,6 @@ class InitializationParser(XMLParser):
                      if p.tag == name
                     ), None)
 
-
     def get_groups(self):
         tree = self.get_root()
         #        root = tree.getroot()

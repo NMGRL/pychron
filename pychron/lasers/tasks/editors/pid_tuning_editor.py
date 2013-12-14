@@ -84,7 +84,7 @@ class PIDTuningScanner(Scanner):
             wait until temp is below threshold
         """
         self._set_power_hook(0)
-        threshold=200
+        threshold=100
         tm=self.manager.get_device('temperature_monitor')
         ct=tm.get_process_value()
         while ct>threshold:

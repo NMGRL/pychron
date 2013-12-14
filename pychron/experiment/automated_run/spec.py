@@ -139,7 +139,7 @@ class AutomatedRunSpec(Loggable):
             name = getattr(self, si)
             if name in script_context:
                 if name not in warned:
-                    self.debug('{:<30s} in script context. using previous estimated duration'.format(name))
+                    self.debug('{} in script context. using previous estimated duration'.format(name))
                     warned.append(name)
 
                 script, ok = script_context[name]

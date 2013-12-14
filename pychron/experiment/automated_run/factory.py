@@ -98,13 +98,9 @@ def generate_positions(pos):
     for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
-            return func(pos), True
-
-    #else:
-    #    if TRANSECT_REGEX.match(pos):
-    #        return [pos], True
-
-    return [], False
+            return func(pos)
+    else:
+        return [pos]
 
 
 class AutomatedRunFactory(Loggable):
@@ -366,19 +362,18 @@ class AutomatedRunFactory(Loggable):
             template = self._use_template() and not freq
             arvs = self._new_runs_by_position(positions, template, extract_group_cnt)
 
-        if not arvs:
-            arvs = [self._new_run()]
+        # if not arvs:
+        #     arvs = [self._new_run()]
 
         return arvs, freq
 
     def _new_runs_by_position(self, pos, template=False, extract_group_cnt=0):
         arvs = []
-        positions, set_pos = generate_positions(pos)
-        p = ''
-        for i in positions:
-            if set_pos:
-                p = str(i)
+        positions=generate_positions(pos)
 
+        for i in positions:
+            # if set_pos:
+            p = str(i)
             if template:
                 arvs.extend(self._render_template(p, extract_group_cnt))
                 extract_group_cnt += 1
