@@ -396,6 +396,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
         manager.set_laser_output(p, units)
         return result
 
+    def GetAchievedOutput(self, manager):
+        result='0'
+        manager.get_achieved_output()
+        return str(result)
+
 #===============================================================================
 # Positioning
 #===============================================================================

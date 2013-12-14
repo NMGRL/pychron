@@ -75,6 +75,9 @@ class FusionsUVManager(FusionsLaserManager):
     dbname = paths.uvlaser_db
     db_root = paths.uvlaser_db_root
 
+    def get_achieved_output(self):
+        return self.atl_controller.get_mean_energy()
+
     def prepare(self):
         controller = self.laser_controller
         return controller.prepare()

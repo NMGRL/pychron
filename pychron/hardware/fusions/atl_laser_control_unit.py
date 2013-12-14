@@ -17,14 +17,15 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Float, Int, Str, Bool, Property
+from traits.api import Float, Int, Str, Bool, Property, Array
 #============= standard library imports ========================
+from numpy import array, hstack
+import time
+from threading import Lock
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.checksum_helper import computeBCC
-import time
 from pychron.hardware.core.data_helper import make_bitarray
-from threading import Lock
 
 STX = chr(2)
 ETX = chr(3)
@@ -37,8 +38,8 @@ ACTION = ['Turn Off', 'Turn on', 'Single Shot', 'Run', 'Firing']
 
 
 class ATLLaserControlUnit(CoreDevice):
-    '''
-    '''
+    """
+    """
     energy_readback = Float
     pressure_readback = Float
     burst_readback = Int
@@ -52,6 +53,8 @@ class ATLLaserControlUnit(CoreDevice):
     reprate = Property(Int(enter_set=True, auto_set=False), depends_on='_reprate')
     _reprate = Int
     _was_fired = False
+
+    energies=Array
 
     #    _timer = None
     #    _enabled = Bool(False)
@@ -242,6 +245,7 @@ class ATLLaserControlUnit(CoreDevice):
     def laser_run(self):
         self.debug('run laser')
         self.firing = True
+        self.energies=array()
 
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
@@ -333,15 +337,15 @@ class ATLLaserControlUnit(CoreDevice):
 
     def update_parameters(self):
 
-        # energy and pressure_readback
+        # energy, pressure, status, action
         vs = self._send_query(8, 4, verbose=False)
-        #        print vs
-        #        vs=self._send_query(30, 2, verbose=False)
+
         if vs is not None:
             vs = self._parse_response(vs, 4)
-            #            print vs
             if vs is not None:
                 self.energy_readback = vs[0] / 10.
+                self.energies=hstack((self.energies[:-5], [self.energy_readback]))
+
                 self.pressure_readback = vs[1]
                 self.status_readback = STATUS[vs[2]]
                 self.action_readback = ACTION[vs[3]]
@@ -366,9 +370,7 @@ class ATLLaserControlUnit(CoreDevice):
 
         self._send_command(cmd, verbose=verbose)
 
-
     def _build_command(self, start_addr, values):
-
 
         if isinstance(start_addr, int):
             start_addr = '{:04X}'.format(start_addr)

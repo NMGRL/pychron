@@ -150,6 +150,9 @@ class BaseLaserManager(Manager):
     def set_motors_for_point(self, pt):
         pass
 
+    def get_achieved_output(self):
+        pass
+
 #===============================================================================
 # getter/setters
 #===============================================================================
