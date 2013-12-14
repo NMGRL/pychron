@@ -402,7 +402,8 @@ class AutomatedRun(Loggable):
         if not self._alive:
             return
 
-        is_baseline = group == 'baseline'
+        is_baseline=False
+        # is_baseline = group == 'baseline'
 
         self.peak_hop_collector.is_baseline = is_baseline
 
@@ -431,11 +432,11 @@ class AutomatedRun(Loggable):
                              starttime, starttime_offset, series,
                              fits, check_conditions)
 
-        if is_baseline:
-            if self.plot_panel:
-                bs = dict([(iso.name, iso.baseline.uvalue) for iso in
-                           self.arar_age.isotopes.values()])
-                self.experiment_executor._prev_baselines = bs
+        # if is_baseline:
+        #     if self.plot_panel:
+        #         bs = dict([(iso.name, iso.baseline.uvalue) for iso in
+        #                    self.arar_age.isotopes.values()])
+        #         self.experiment_executor._prev_baselines = bs
 
         self.is_peak_hop = False
         return ret
@@ -1264,15 +1265,15 @@ anaylsis_type={}
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
                   fits, check_conditions):
-        '''
+        """
             ncycles: int
-            hops: list of tuples 
-            
+            hops: list of tuples
+
                 hop = 'Isotope:Det[,Isotope:Det,...]', Count, Settling Time(s)
-                
-                ex. 
+
+                ex.
                 hop = 'Ar40:H1,Ar36:CDD', 10, 1
-        '''
+        """
 
         self.peak_hop_collector.trait_set(ncycles=ncycles,
                                           parent=self)

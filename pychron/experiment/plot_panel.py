@@ -40,7 +40,7 @@ HEIGHT = 250
 ERROR_WIDTH = 10
 VALUE_WIDTH = 12
 
-# class SignalAdapter(SimpleTextTableAdapter):
+
 class SignalAdapter(MultiTextTableAdapter):
     columns = [
         [
@@ -138,6 +138,7 @@ class TraitsContainer(HasTraits):
 #               )
 #        return v
 
+
 class GraphContainer(TraitsContainer):
 
 #    graphs = List
@@ -196,9 +197,9 @@ class PlotPanel(Loggable):
     current_cycle = Str
     current_color = Color
 
-    detectors = List
+    # detectors = List
     #fits = List
-    isotopes = Property(depends_on='detectors')
+    # isotopes = Property(depends_on='detectors')
 
     stack_order = 'bottom_to_top'
     series_cnt = 0
@@ -241,10 +242,21 @@ class PlotPanel(Loggable):
             super(PlotPanel, self).info(*args, **kw)
 
     def reset(self):
-        #self.clear_displays()
-
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
+
+    def set_detectors(self, isos, dets):
+        """
+            isos: list of str
+            dets: list of str
+            set the detector for each isotope
+        """
+        a = self.arar_age
+        for iso, det in zip(isos, dets):
+            try:
+                a.isotopes[iso].detector=det
+            except KeyError:
+                self.debug('isotope {} not in ArArAge.isotopes. keys={}'.format(iso, ','.join(a.isotopes.keys())))
 
     def create(self, dets):
         """
@@ -265,22 +277,22 @@ class PlotPanel(Loggable):
                 xtitle='time (s)',
                 padding_left=70,
                 padding_right=10)
-            self._plot_keys.append(det.isotope)
+            self._plot_keys.append(det)
 
-        self.detectors = dets
+            # self.detectors = dets
 
     def _get_ncounts(self):
         return self._ncounts
 
     def _set_ncounts(self, v):
 
-        o=self._ncounts
+        o = self._ncounts
 
         self.info('{} set to terminate after {} counts'.format(self.plot_title, v))
         self._ncounts = v
 
-        xmi,xma=self.isotope_graph.get_x_limits()
-        self.isotope_graph.set_x_limits(max_=max(xma, xma+(v-o)*1.05))
+        xmi, xma = self.isotope_graph.get_x_limits()
+        self.isotope_graph.set_x_limits(max_=max(xma, xma + (v - o) * 1.05))
 
     def _get_ncycles(self):
         return self._ncycles
@@ -297,9 +309,8 @@ class PlotPanel(Loggable):
                                       use_data_tool=False,
                                       padding_bottom=35)
 
-
-    def _get_isotopes(self):
-        return [d.isotope for d in self.detectors]
+    # def _get_isotopes(self):
+    #     return [d.isotope for d in self.detectors]
 
     #===============================================================================
     # handlers
@@ -313,8 +324,6 @@ class PlotPanel(Loggable):
             p.page_name = 'Peak Center'
             self.graphs = [g, p]
 
-            #            self.graph_container.graphs = [g, p]
-
     def _plot_title_changed(self, new):
         self.graph_container.label = new
 
@@ -323,33 +332,60 @@ class PlotPanel(Loggable):
         if new:
             arar_age = self.arar_age
 
-            for iso, reg in zip(self._plot_keys, new):
-
+            for det, reg in zip(self._plot_keys, new):
                 if reg is None:
                     continue
-
                 if isinstance(reg, float):
-                    vv, ee=reg, 0
+                    vv, ee = reg, 0
                 else:
                     vv = reg.predict(0)
                     ee = reg.predict_error(0)
 
+                v=vv,ee
+                iso=det.isotope
                 if self.is_baseline:
-                    arar_age.set_baseline(iso, (vv, ee))
+                    if self.is_peak_hop:
+                        for ii in self.arar_age.isotopes.itervalues():
+                            if ii.detector==det.name:
+                                arar_age.set_baseline(ii.name, v)
+                    else:
+                        arar_age.set_baseline(iso, v)
                 else:
-                    arar_age.set_isotope(iso, (vv, ee))
+                    arar_age.set_isotope(iso, v)
 
-            else:
-                if self.refresh_age:
-                    arar_age.calculate_age(force=True)
+            if self.refresh_age:
+                arar_age.calculate_age(force=True)
 
-                self.analysis_view.load_computed(arar_age, new_list=False)
-                self.analysis_view.refresh_needed = True
+            self.analysis_view.load_computed(arar_age, new_list=False)
+            self.analysis_view.refresh_needed = True
 
-                #===============================================================================
-                # defaults
-                #===============================================================================
+            # else:
+            #     for det,reg in zip(self._plot_keys, new):
+            #         iso=det.name
+            #         if reg is None:
+            #             continue
+            #
+            #         if isinstance(reg, float):
+            #             vv, ee = reg, 0
+            #         else:
+            #             vv = reg.predict(0)
+            #             ee = reg.predict_error(0)
+            #
+            #         if self.is_baseline:
+            #             arar_age.set_baseline(iso, (vv, ee))
+            #         else:
+            #             arar_age.set_isotope(iso, (vv, ee))
+            #
+            #     else:
+            #         if self.refresh_age:
+            #             arar_age.calculate_age(force=True)
+            #
+            #         self.analysis_view.load_computed(arar_age, new_list=False)
+            #         self.analysis_view.refresh_needed = True
 
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _isotope_graph_default(self):
         return self._graph_factory()
 
@@ -357,10 +393,9 @@ class PlotPanel(Loggable):
         self.isotope_graph.page_name = 'Isotopes'
         self.peak_center_graph.page_name = 'Peak Center'
 
-        #        return GraphContainer(graphs=[self.graph, self.peak_center_graph])
         return GraphContainer(model=self)
 
     def _graphs_default(self):
         return [self.isotope_graph, self.peak_center_graph]
 
-        #============= EOF =============================================
+#============= EOF =============================================
