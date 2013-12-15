@@ -363,7 +363,6 @@ class AutomatedRun(Loggable):
                     detector = self._active_detectors[0].name
 
                 ion.position(mass, detector)
-                self._update_plot_panel_labels()
 
                 msg = 'Delaying {}s for detectors to settle'.format(settling_time)
                 self.info(msg)
@@ -1234,7 +1233,7 @@ anaylsis_type={}
 
             self.overlap_evt.set()
 
-    def _update_plot_panel_labels(self):
+    def _update_labels(self):
         if self.plot_panel:
             if self.plot_panel.isotope_graph:
                 # update the plot_panel labels
@@ -1244,7 +1243,23 @@ anaylsis_type={}
                     if i < n:
                         plots[i].y_axis.title = det.isotope
 
-                    self.arar_age.set_isotope_detector(det)
+                    # self.arar_age.set_isotope_detector(det)
+
+
+    def _update_detectors(self):
+        for det in self._active_detectors:
+            self.arar_age.set_isotope_detector(det)
+
+    def _set_magnet_position(self, pos, detector,
+                             dac=False, update_detectors=True, update_labels=True, update_isotopes=True):
+        ion = self.ion_optics_manager
+        if ion is not None:
+            ion.position(pos, detector, dac, update_isotopes=update_isotopes)
+
+        if update_labels:
+            self._update_labels()
+        if update_detectors:
+            self._update_detectors()
 
         #remove non active isotopes
         for iso in self.arar_age.isotopes.keys():
@@ -1252,18 +1267,8 @@ anaylsis_type={}
             if det is None:
                 self.arar_age.isotopes.pop(iso)
 
-        if self.plot_panel:
-            self.plot_panel.analysis_view.load(self)
-            self.plot_panel.analysis_view.refresh_needed = True
-
-    def _set_magnet_position(self, pos, detector,
-                             dac=False, update_isotopes=True):
-        ion = self.ion_optics_manager
-        if ion is not None:
-            ion.position(pos, detector, dac, update_isotopes=update_isotopes)
-
-        if update_isotopes:
-            self._update_plot_panel_labels()
+        self.plot_panel.analysis_view.load(self)
+        self.plot_panel.analysis_view.refresh_needed = True
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
