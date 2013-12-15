@@ -898,7 +898,6 @@ class AutomatedRun(Loggable):
             self.post_measurement_save()
 
             return True
-
         else:
             self.do_post_equilibration()
             self.do_post_measurement()

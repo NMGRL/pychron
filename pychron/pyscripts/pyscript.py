@@ -328,18 +328,16 @@ class PyScript(Loggable):
                 try:
                     exec code_or_err in safe_dict
                     func=safe_dict['main']
-                    try:
-                        func(*argv)
-                    except TypeError:
-                        func()
-                        
+                    if argv is None:
+                        argv=tuple()
+                    func(*argv)
+
                 except KeyError, e:
                     return MainError()
                 except Exception, e:
                     return traceback.format_exc(limit=5)
             else:
                 return code_or_err
-
 
     def syntax_ok(self):
         try:
@@ -643,8 +641,8 @@ class PyScript(Loggable):
         self._truncate = False
 
         error = self.execute_snippet(trace, argv)
-
         if error:
+            self.warning(str(error))
             return error
 
         if self.testing_syntax:
