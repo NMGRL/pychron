@@ -583,15 +583,15 @@ class AutomatedRun(Loggable):
                 self.state = state
 
     def truncate_run(self, style='normal'):
-        '''
+        """
             truncate the measurement script
-            
+
             style:
                 normal- truncate current measure iteration and continue
-                quick- truncate current measure iteration use truncated_counts for following 
+                quick- truncate current measure iteration use truncated_counts for following
                         measure iterations
-            
-        '''
+
+        """
         if self.measuring:
             style = style.lower()
             if style == 'normal':

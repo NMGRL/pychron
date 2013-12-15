@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import izip
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event
 
@@ -61,6 +62,13 @@ class BaseMeasurement(HasTraits):
 
             self.xs = array(xs)
             self.ys = array(ys)
+
+    def pack(self, endianness=None):
+        if endianness is None:
+            endianness = self.endianness
+
+        fmt='{}ff'.format(endianness)
+        return ''.join((struct.pack(fmt, x,y) for x,y in izip(self.xs, self.ys)))
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:

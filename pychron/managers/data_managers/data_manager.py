@@ -43,8 +43,8 @@ class DataManager(Manager):
         pass
 
     def new_frame(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         p = self._new_frame_path(*args, **kw)
 
         name, _ext = os.path.splitext(os.path.basename(p))
@@ -56,9 +56,9 @@ class DataManager(Manager):
     def _new_frame_path(self, path=None, directory='scans',
                         offset=0,
                         base_frame_name=None, verbose=True):
-        '''
+        """
 
-        '''
+        """
         if base_frame_name is None:
             base_frame_name = 'scan'
 
