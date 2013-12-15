@@ -184,6 +184,7 @@ class DataCollector(Loggable):
             if dn:
                 iso = dn.isotope
                 pi = idx_func(iso, dn.name)
+                # print iso, dn.name, pi
                 try:
                     fi = nfs[pi]
                 except IndexError:
@@ -326,7 +327,7 @@ class DataCollector(Loggable):
 
     def _get_idx_func(self):
         original_idx = [(di.name, di.isotope) for di in self.detectors]
-
+        print original_idx
         def idx_func(isot, detname):
             idx = next((i for i, (n, ii) in enumerate(original_idx)
                         if ii == isot), None)

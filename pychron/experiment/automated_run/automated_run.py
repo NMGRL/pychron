@@ -1251,7 +1251,9 @@ anaylsis_type={}
             self.arar_age.set_isotope_detector(det)
 
     def _set_magnet_position(self, pos, detector,
-                             dac=False, update_detectors=True, update_labels=True, update_isotopes=True):
+                             dac=False, update_detectors=True,
+                             update_labels=True, update_isotopes=True,
+                             remove_non_active=True):
         ion = self.ion_optics_manager
         if ion is not None:
             ion.position(pos, detector, dac, update_isotopes=update_isotopes)
@@ -1260,12 +1262,12 @@ anaylsis_type={}
             self._update_labels()
         if update_detectors:
             self._update_detectors()
-
-        #remove non active isotopes
-        for iso in self.arar_age.isotopes.keys():
-            det = next((di for di in self._active_detectors if di.isotope == iso), None)
-            if det is None:
-                self.arar_age.isotopes.pop(iso)
+        if remove_non_active:
+            #remove non active isotopes
+            for iso in self.arar_age.isotopes.keys():
+                det = next((di for di in self._active_detectors if di.isotope == iso), None)
+                if det is None:
+                    self.arar_age.isotopes.pop(iso)
 
         self.plot_panel.analysis_view.load(self)
         self.plot_panel.analysis_view.refresh_needed = True
