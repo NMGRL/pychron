@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, Float, DelegatesTo, Int, List, Bool
+from traits.api import Any, Float, DelegatesTo, List, Bool
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 from pyface.timer.do_later import do_after
 #============= standard library imports ========================
@@ -56,16 +56,14 @@ def psuedo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
 class MagnetScan(SpectrometerTask):
 #    graph = Any
     detectors = DelegatesTo('spectrometer')
+    integration_time=DelegatesTo('spectrometer')
+
     reference_detector = Any
     additional_detectors = List
-    #    execute = Event
-    #    execute_label = Property(depends_on='_alive')
-    #    _alive = Bool
 
     start_mass = Float(36)
     stop_mass = Float(40)
     step_mass = Float(1)
-    period = Int(900)
     normalize = Bool(True)
 
     verbose = False
@@ -105,7 +103,7 @@ class MagnetScan(SpectrometerTask):
             di = None
 
         if di is not None and self.isAlive():
-            p = self.period
+            p=int(self.integration_time*1000*0.9)
             do_after(p, self._iter_dac, mag, di, gen, evt, intensities)
         else:
             evt.set()
@@ -163,16 +161,10 @@ class MagnetScan(SpectrometerTask):
 
     def _magnet_step_hook(self):
         spec = self.spectrometer
-        #if detector:
-        #    ds = [str(detector)]
-        #else:
         ds = [str(self.reference_detector)] + self.additional_detectors
-        #        spec.magnet.set_dac(di, verbose=False)
-        #        if delay:
-        #            time.sleep(delay)
         intensity = spec.get_intensity(ds)
 
-        #            debug
+        # debug
         if globalv.experiment_debug:
             from numpy import array, random, ones
 
@@ -180,7 +172,6 @@ class MagnetScan(SpectrometerTask):
             v = array([v])
 
             r = ones(len(ds))
-            #             r = random.random(len(ds))
             r = r * v
             if len(r) > 1:
                 r[1] *= 0.5
@@ -188,7 +179,6 @@ class MagnetScan(SpectrometerTask):
                     r[2] *= 0.1
 
             intensity = r
-            #             intensity = (intensity,) * len(ds)
 
         return intensity
 
@@ -236,8 +226,6 @@ class MagnetScan(SpectrometerTask):
             de = spec.correct_dac(self.reference_detector,
                                   mag.map_mass_to_dac(em, detname))
 
-
-            #        de = mag.calculate_dac(em)
             massdev = abs(sm - em)
             dacdev = abs(ds - de)
 
@@ -273,123 +261,14 @@ class MagnetScan(SpectrometerTask):
         v = View(
             Group(
                 Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_mass', label='Start'),
-                Item('stop_mass', label='Stop'),
-                Item('step_mass', label='Step'),
-                Item('period', label='Scan Period (ms)'),
+                Item('start_mass', label='Start Mass', tooltip='Start scan at this mass'),
+                Item('stop_mass', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
+                Item('step_mass', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
+                Item('integration_time', label='Integration (s)'),
                 HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
                                     show_label=False)),
                 label='Magnet Scan',
-                show_border=True
-            )
-            #                 buttons=['OK', 'Cancel'],
-            #                 title=self.title
-            #                  HGroup(spring, Item('execute', editor=ButtonEditor(label_value='execute_label'),
-            #                        show_label=False))
+                show_border=True))
 
-        )
         return v
-
-        #============= EOF =============================================
-        #    title = 'Magnet Scan'
-        #    def _scan_dac(self, values, det, delay=850):
-        #
-        #        graph = self.graph
-        #        spec = self.spectrometer
-        #
-        #        mag = spec.magnet
-        #        mag.settling_time = 0.5
-        #        if globalv.experiment_debug:
-        #            delay = 1
-        #            mag.settling_time = 0.001
-        #
-        #        peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
-        #
-        #        do = values[0]
-        #        mag.set_dac(do, verbose=False)
-        #        time.sleep(delay / 1000.)
-        #
-        #        intensity = spec.get_intensity(det)
-        #        if globalv.experiment_debug:
-        #            intensity = peak_generator.next()
-        #        intensities = [intensity]
-        #
-        # #        if graph:
-        # #            graph.add_datum(
-        # #                            (do, intensity),
-        # ##                            update_y_limits=True,
-        # #                            do_after=1)
-        #
-        #        for di in values[1:]:
-        #            if not self.isAlive():
-        #                break
-        #
-        #            mag.set_dac(di, verbose=False)
-        #
-        #            intensity = spec.get_intensity(det)
-        #
-        # #            debug
-        #            if globalv.experiment_debug:
-        #                intensity = peak_generator.next()
-        #
-        #            intensities.append(intensity)
-        #            if graph:
-        #                graph.add_datum(
-        #                                (di, intensity),
-        #                                update_y_limits=True,
-        #                                do_after=1)
-        #
-        #            time.sleep(delay / 1000.)
-        #
-        #        return intensities
-
-        #     def _scan_dac(self, values, det, start_delay=3):
-        #         '''
-        #             period: ms between steps
-        #             start_delay: wait start_delay s after first step before first measurement.
-        #
-        #
-        #         '''
-        #
-        #         spec = self.spectrometer
-        #
-        #         mag = spec.magnet
-        #         mag.settling_time = 0.25
-        #
-        #         period = self.period
-        #         if globalv.experiment_debug:
-        #             period = 50
-        # #             mag.settling_time = 0.5
-        #
-        #         peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
-        #
-        #         do = values[0]
-        #         mag.set_dac(do, verbose=False)
-        #         intensities = self._magnet_step_hook(
-        # #                                             do,
-        # #                                             period=start_delay,
-        #                                              detector=det,
-        #                                              peak_generator=peak_generator)
-        #
-        #         invoke_in_main_thread(self._graph_hook, do, intensities)
-        #         rintensities = [intensities]
-        #
-        #         period = period / 1000.
-        #         for di in values[1:]:
-        #             if not self.isAlive():
-        #                 break
-        #
-        #             mag.set_dac(di, verbose=False)
-        #             if period:
-        #                 time.sleep(period)
-        #
-        #             intensities = self._magnet_step_hook(detector=det,
-        #                                                  peak_generator=peak_generator)
-        #             rintensities.append(intensities)
-        #
-        #             invoke_in_main_thread(self._graph_hook, di, intensities,
-        #                                   update_y_limits=True)
-        # #             self._graph_hook(di, intensities, update_y_limits=True)
-        #
-        #
-        #         return rintensities
+#============= EOF =============================================

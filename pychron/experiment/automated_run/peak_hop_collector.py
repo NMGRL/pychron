@@ -143,4 +143,7 @@ class PeakHopCollector(DataCollector):
                 for i in xrange(int(counts)):
                     yield c, dets, isos, defls, settle, i
 
+
+
+
 #============= EOF =============================================

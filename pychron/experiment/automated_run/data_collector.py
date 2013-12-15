@@ -45,6 +45,7 @@ class DataCollector(Loggable):
     #grpname = Str
 
     is_baseline = Bool(False)
+    for_peak_hop=Bool(False)
     fits = List
     series_idx = Int
     #total_counts = CInt
@@ -166,61 +167,73 @@ class DataCollector(Loggable):
     def plot_data(self, *args, **kw):
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
-    def _plot_data(self, i, x, keys, signals):
-        if globalv.experiment_debug:
-            x *= (self.period_ms * 0.001) ** -1
-
-        graph = self.plot_panel.isotope_graph
-
-        nfs = self.get_fit_block(i)
-        #if self.grpname == 'signal':
-        #self.plot_panel.fits = nfs
-
-        np = len(graph.plots)
+    def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
         idx_func = self._idx_func
+        nfs = self.get_fit_block(i)
+        for iso in self.arar_age.isotopes.itervalues():
+            pi = idx_func(iso.name, iso.detector)
+            signal = signals[keys.index(iso.detector)]
+            self._set_plot_data(pi, iso.name, nfs, x, signal)
 
+    def _plot_data_(self, i, x, keys, signals):
+        nfs = self.get_fit_block(i)
+        idx_func = self._idx_func
         for dn in keys:
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
                 pi = idx_func(iso, dn.name)
-                # print iso, dn.name, pi
-                try:
-                    fi = nfs[pi]
-                except IndexError:
-                    if not iso in self._warned_no_fit:
-                        self.warning('No fit defined for {}, idx={}'.format(iso, pi))
-                        self._warned_no_fit.append(iso)
-                    continue
-
-                if pi >= np:
-                    graph.new_plot()
-                    graph.new_series(type='scatter',
-                                     marker='circle',
-                                     plotid=pi)
-                    dn.series_idx = 0
-
-                series = self.series_idx
-                if hasattr(dn, 'series_idx'):
-                    series = dn.series_idx
-
-                miso = self.arar_age.isotopes[iso]
-                if self.is_baseline:
-                    miso.baseline.fit = fi
-                else:
-                    miso.fit = fi
-
                 signal = signals[keys.index(dn.name)]
+                self._set_plot_data(pi, iso, nfs, x, signal)
 
-                #print i, x, pi, dn
-                graph.add_datum((x, signal),
-                                series=series,
-                                plotid=pi,
-                                update_y_limits=True,
-                                ypadding='0.1')
-                if fi:
-                    graph.set_fit(fi, plotid=pi, series=0)
+    def _set_plot_data(self, pi, iso, nfs, x, signal):
+        graph = self.plot_panel.isotope_graph
+        np = len(graph.plots)
+        # print iso, dn.name, pi
+        try:
+            fi = nfs[pi]
+        except IndexError:
+            if not iso in self._warned_no_fit:
+                self.warning('No fit defined for {}, idx={}'.format(iso, pi))
+                self._warned_no_fit.append(iso)
+            return
 
+        if pi >= np:
+            graph.new_plot()
+            graph.new_series(type='scatter',
+                             marker='circle',
+                             plotid=pi)
+            # dn.series_idx = 0
+            #
+        # series = self.series_idx
+        # if hasattr(dn, 'series_idx'):
+        #     series = dn.series_idx
+
+        miso = self.arar_age.isotopes[iso]
+        if self.is_baseline:
+            miso.baseline.fit = fi
+        else:
+            miso.fit = fi
+
+        #print i, x, pi, dn
+        graph.add_datum((x, signal),
+                        series=self.series_idx,
+                        plotid=pi,
+                        update_y_limits=True,
+                        ypadding='0.1')
+        if fi:
+            graph.set_fit(fi, plotid=pi, series=0)
+
+    def _plot_data(self, i, x, keys, signals):
+        if globalv.experiment_debug:
+            x *= (self.period_ms * 0.001) ** -1
+
+        if self.is_baseline and self.for_peak_hop:
+            self._plot_baseline_for_peak_hop(i, x, keys, signals)
+        else:
+            self._plot_data_(i, x, keys, signals)
+
+        graph=self.plot_panel.isotope_graph
         graph.refresh()
 
     #===============================================================================
@@ -327,7 +340,7 @@ class DataCollector(Loggable):
 
     def _get_idx_func(self):
         original_idx = [(di.name, di.isotope) for di in self.detectors]
-        print original_idx
+        # print original_idx
         def idx_func(isot, detname):
             idx = next((i for i, (n, ii) in enumerate(original_idx)
                         if ii == isot), None)

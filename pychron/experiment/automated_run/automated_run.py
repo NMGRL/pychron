@@ -382,6 +382,11 @@ class AutomatedRun(Loggable):
 
         self.multi_collector.is_baseline = True
         check_conditions = True
+
+        #AutomatedRun.is_peak_hop is False but PlotPanel.is_peak_hop will still be true
+        #if this run ever did a peak hop
+        self.collector.for_peak_hop=self.plot_panel.is_peak_hop
+
         result = self._measure(gn,
                                self._get_data_writer(gn),
                                ncounts, starttime,
