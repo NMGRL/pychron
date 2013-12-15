@@ -141,7 +141,8 @@ Multicollect
 Peak Hop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For a detailed description of a Peak Hop sequence see :doc:`hops`.
+For a detailed description of a Peak Hop sequence see :doc:`hops`. Instead of defining the peak hop sequence
+directly within the measurement script it is cleaner to load the sequence from a separate file using `load_hops`
 
 ::
 
