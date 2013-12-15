@@ -1234,12 +1234,12 @@ anaylsis_type={}
             self.overlap_evt.set()
 
     def _set_magnet_position(self, pos, detector,
-                             dac=False, update_labels=True):
+                             dac=False, update_isotopes=True):
         ion = self.ion_optics_manager
         if ion is not None:
-            ion.position(pos, detector, dac)
+            ion.position(pos, detector, dac, update_isotopes=update_isotopes)
 
-        if update_labels:
+        if update_isotopes:
             if self.plot_panel:
                 if self.plot_panel.isotope_graph:
                     # update the plot_panel labels
@@ -1247,7 +1247,7 @@ anaylsis_type={}
                     n = len(plots)
                     for i, det in enumerate(self._active_detectors):
                         if i < n:
-                            plots[i].y_axis.title = '{} {}'.format(det.name, det.isotope)
+                            plots[i].y_axis.title = det.isotope
 
                         self.arar_age.set_isotope_detector(det)
 
@@ -1281,7 +1281,7 @@ anaylsis_type={}
         #self.peak_hop_collector.stop()
         #ncounts = sum([ci+s for _h, ci, s in hops]) * ncycles
         #ncounts = self.measurement_script.ncounts
-        check_conditions = True
+        # check_conditions = True
         return self._measure(grpname,
                              data_writer,
                              ncounts,

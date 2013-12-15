@@ -117,8 +117,9 @@ class IonOpticsManager(Manager):
         else:
             self.debug('POSITION {} {}'.format(pos, detector))
             if isinstance(pos, str):
-                # if the pos is an isotope then update the detectors
-                spec.update_isotopes(pos, detector)
+                if update_isotopes:
+                    # if the pos is an isotope then update the detectors
+                    spec.update_isotopes(pos, detector)
 
                 # pos is isotope
                 pos = self.get_mass(pos)

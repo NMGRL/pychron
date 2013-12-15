@@ -237,8 +237,7 @@ class Graph(Viewable, ContextMenuMixin):
         point_inspector = PointInspector(scatter,
                                          convert_index=convert_index)
         pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector
-        )
+                                                   tool=point_inspector)
         #
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
@@ -250,21 +249,40 @@ class Graph(Viewable, ContextMenuMixin):
     def update_group_attribute(self, plot, attr, value, dataid=0):
         pass
 
+    def get_plot_by_ytitle(self, iso, startswith=False):
+        """
+            iso: str
+
+            return None or Plot with y_axis.title equal to iso
+            if startswith is True title only has to start with iso
+        """
+        if startswith:
+            is_equal=lambda x: x.startswith(iso)
+        else:
+            is_equal= lambda x: x.__eq__(iso)
+
+        plot=None
+        for po in self.plots:
+            if is_equal(po.y_axis.title):
+                plot=po
+                break
+
+        return plot
 
     def get_num_plots(self):
-        '''
-        '''
+        """
+        """
         return len(self.plots)
 
     def get_num_series(self, plotid):
-        '''
-        '''
+        """
+        """
         return len(self.series[plotid])
 
     def get_data(self, plotid=0, series=0, axis=0):
-        '''
+        """
 
-        '''
+        """
         s = self.series[plotid][series]
         p = self.plots[plotid]
         return p.data.get_data(s[axis])

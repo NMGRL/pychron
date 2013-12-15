@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Array
 #============= standard library imports ========================
-from numpy import average, ones, asarray, float64
+from numpy import average, ones, asarray
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
 
@@ -47,21 +47,30 @@ sem={}
 
     @property
     def mean(self):
-        return self.ys.mean()
+        if len(self.ys):
+            return self.ys.mean()
+        else:
+            return 0
 
     @property
     def std(self):
-        '''
+        """
             mass spec uses ddof=1
             ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
             ddof=1 unbiased estimator of the variance of the infinite population
-        '''
-        ys = asarray(self.ys, dtype=float64)
-        return ys.std(ddof=self.ddof)
+        """
+        if len(self.ys):
+            # ys = asarray(self.ys, dtype=float64)
+            return self.ys.std(ddof=self.ddof)
+        else:
+            return 0
 
     @property
     def sem(self):
-        return self.std * 1 / len(self.ys) ** 0.5
+        if len(self.ys):
+            return self.std * 1 / len(self.ys) ** 0.5
+        else:
+            return 0
 
     def predict(self, xs, *args):
         return ones(asarray(xs).shape) * self.mean

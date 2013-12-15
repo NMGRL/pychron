@@ -180,7 +180,6 @@ class DataCollector(Loggable):
         idx_func = self._idx_func
 
         for dn in keys:
-            
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
@@ -324,8 +323,6 @@ class DataCollector(Loggable):
                 action_condition.perform(self.measurement_script)
                 if not action_condition.resume:
                     return 'break'
-
-
 
     def _get_idx_func(self):
         original_idx = [(di.name, di.isotope) for di in self.detectors]

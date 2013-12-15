@@ -252,11 +252,18 @@ class PlotPanel(Loggable):
             set the detector for each isotope
         """
         a = self.arar_age
+        g=self.isotope_graph
         for iso, det in zip(isos, dets):
             try:
-                a.isotopes[iso].detector=det
+                a.set_isotope_detector(det, iso=iso)
             except KeyError:
                 self.debug('isotope {} not in ArArAge.isotopes. keys={}'.format(iso, ','.join(a.isotopes.keys())))
+                continue
+
+            #set plot labels
+            plot=g.get_plot_by_ytitle(iso, startswith=True)
+            if plot:
+                plot.y_axis.title=iso
 
     def create(self, dets):
         """
@@ -274,11 +281,11 @@ class PlotPanel(Loggable):
         self._plot_keys = []
         for det in dets:
             g.new_plot(
-                ytitle='{} {} (fA)'.format(det.name, det.isotope),
+                # ytitle='{} {} (fA)'.format(det.isotope, det.name),
                 xtitle='time (s)',
                 padding_left=70,
                 padding_right=10)
-            self._plot_keys.append(det)
+            self._plot_keys.append((det.name, det.isotope))
 
     def _get_ncounts(self):
         return self._ncounts
@@ -331,7 +338,7 @@ class PlotPanel(Loggable):
         if new:
             arar_age = self.arar_age
 
-            for det, reg in zip(self._plot_keys, new):
+            for (detname, iso), reg in zip(self._plot_keys, new):
                 if reg is None:
                     continue
                 if isinstance(reg, float):
@@ -340,12 +347,11 @@ class PlotPanel(Loggable):
                     vv = reg.predict(0)
                     ee = reg.predict_error(0)
 
-                v=vv,ee
-                iso=det.isotope
+                v = vv, ee
                 if self.is_baseline:
                     if self.is_peak_hop:
                         for ii in self.arar_age.isotopes.itervalues():
-                            if ii.detector==det.name:
+                            if ii.detector == detname:
                                 arar_age.set_baseline(ii.name, v)
                     else:
                         arar_age.set_baseline(iso, v)

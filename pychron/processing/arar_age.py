@@ -129,8 +129,13 @@ class ArArAge(Loggable):
         for iso in self.isotopes.itervalues():
             iso.age_error_component = 0
 
-    def set_isotope_detector(self, det):
-        name, det = det.isotope, det.name
+    def set_isotope_detector(self, det, iso=None):
+        if iso:
+            name=iso
+
+        if not isinstance(det, str):
+            name, det = det.isotope, det.name
+
         if name in self.isotopes:
             iso = self.isotopes[name]
         else:
