@@ -177,7 +177,9 @@ class MainView(HasTraits):
             try:
                 return niso / diso
             except ZeroDivisionError:
-                return ufloat(0, 1e-20)
+                pass
+
+        return ufloat(0, 1e-20)
 
     def _get_corrected_ratio(self, nd):
         n, d = nd.split('/')
@@ -186,7 +188,8 @@ class MainView(HasTraits):
             try:
                 return niso.ic_corrected_value() / diso.ic_corrected_value(), diso.ic_factor / niso.ic_factor
             except ZeroDivisionError:
-                return ufloat(0, 1e-20), 1
+                pass
+        return ufloat(0, 1e-20), 1
 
     def _update_ratios(self, an):
         for ci in self.computed_values:

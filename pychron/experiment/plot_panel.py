@@ -280,11 +280,13 @@ class PlotPanel(Loggable):
         self.detectors = dets
         self._plot_keys = []
         for det in dets:
-            g.new_plot(
+            p=g.new_plot(
                 # ytitle='{} {} (fA)'.format(det.isotope, det.name),
                 xtitle='time (s)',
                 padding_left=70,
                 padding_right=10)
+            p.y_axis.title_spacing=50
+
             self._plot_keys.append((det.name, det.isotope))
 
     def _get_ncounts(self):

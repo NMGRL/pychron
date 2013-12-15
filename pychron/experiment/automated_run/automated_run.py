@@ -438,7 +438,8 @@ class AutomatedRun(Loggable):
         #                    self.arar_age.isotopes.values()])
         #         self.experiment_executor._prev_baselines = bs
 
-        self.is_peak_hop = False
+        #dont set PlotPanel.is_peak_hop to False until after the baselines are collected
+        self.trait_set(is_peak_hop=False, trait_change_notify=False)
         return ret
 
     def py_peak_center(self, detector=None, save=True, **kw):
