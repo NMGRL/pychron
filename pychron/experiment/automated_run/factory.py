@@ -346,24 +346,21 @@ class AutomatedRunFactory(Loggable):
 
         return arvs, freq
 
-        #===============================================================================
-        # private
-        #===============================================================================
-
+    #===============================================================================
+    # private
+    #===============================================================================
     def _new_runs(self, positions, extract_group_cnt=0):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
 
-        arvs = None
         if not special:
             if not positions:
                 positions = self.position
 
             template = self._use_template() and not freq
             arvs = self._new_runs_by_position(positions, template, extract_group_cnt)
-
-        # if not arvs:
-        #     arvs = [self._new_run()]
+        else:
+            arvs = [self._new_run()]
 
         return arvs, freq
 

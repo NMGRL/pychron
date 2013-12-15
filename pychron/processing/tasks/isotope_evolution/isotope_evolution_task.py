@@ -193,16 +193,28 @@ class IsotopeEvolutionTask(AnalysisEditTask):
 
         doc = ep.doc('iso_fits')
         projects = doc['projects']
-        self.active_editor.unknowns = [ai for proj in projects
+        unks=(ai for proj in projects
                                        for si in db.get_samples(project=proj)
                                        for ln in si.labnumbers
-                                       for ai in ln.analyses][:10]
+                                       for ai in ln.analyses)
+        found=[]
+        while 1:
+            u=[]
+            for _ in xrange(100):
+                try:
+                    u.append(unks.next())
+                except StopIteration:
+                    pass
+            if u:
+                self.active_editor.unknowns=u
+                # self.active_editor.unknowns.append(unks.next())
+                found=self.find_associated_analyses(found=found)
+                fits = doc['fit_isotopes']
+                filters = doc['filter_isotopes']
 
-        self.find_associated_analyses()
-        fits = doc['fit_isotopes']
-        filters = doc['filter_isotopes']
+                self.active_editor.save_fits(fits, filters)
+                db.sess.commit()
 
-        self.active_editor.save_fits(fits, filters)
         return True
 
         #def _dclicked_sample_changed(self, new):

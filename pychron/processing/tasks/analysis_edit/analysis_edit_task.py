@@ -65,7 +65,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items=ans
 
-    def find_associated_analyses(self):
+    def find_associated_analyses(self, found=None):
         #self.information_dialog('Find associated not yet implemented')
 
         if self.active_editor:
@@ -77,7 +77,10 @@ class AnalysisEditTask(BaseBrowserTask):
             db = self.manager.db
             with db.session_ctx():
                 tans = []
-                uuids = []
+                if found is None:
+                    uuids = []
+                else:
+                    uuids=found
 
                 ngroups = len(list(groupby(unks, key=key)))
                 prog = self.manager.open_progress(ngroups + 1)
@@ -117,6 +120,7 @@ class AnalysisEditTask(BaseBrowserTask):
                 prog.close()
                 #ans=self.manager.make_analyses(ans)
                 self.active_editor.unknowns.extend(tans)
+                return uuids
 
     def recall(self, records):
         """

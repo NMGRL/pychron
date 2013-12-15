@@ -137,7 +137,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, filter_dict):
         db = self.processor.db
-        print name
+        # print name
         if name.endswith('bs'):
             name = name[:-2]
             dbfit = unk.get_db_fit(name, meas_analysis, 'baseline')
@@ -303,7 +303,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 g.refresh()
 
             self.component.plotcontainer.add(g.plotcontainer)
-            print 'aaa',self.component.plotcontainer, g.plotcontainer
+            #print 'aaa',self.component.plotcontainer, g.plotcontainer
 
     def traits_view(self):
         v=View(UItem('component', style='custom', editor=InstanceEditor()))
