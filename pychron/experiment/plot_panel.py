@@ -197,7 +197,7 @@ class PlotPanel(Loggable):
     current_cycle = Str
     current_color = Color
 
-    # detectors = List
+    detectors = List
     #fits = List
     # isotopes = Property(depends_on='detectors')
 
@@ -270,6 +270,7 @@ class PlotPanel(Loggable):
         g = self.isotope_graph
         self.selected_graph = g
 
+        self.detectors = dets
         self._plot_keys = []
         for det in dets:
             g.new_plot(
@@ -278,8 +279,6 @@ class PlotPanel(Loggable):
                 padding_left=70,
                 padding_right=10)
             self._plot_keys.append(det)
-
-            # self.detectors = dets
 
     def _get_ncounts(self):
         return self._ncounts
