@@ -59,7 +59,7 @@ sem={}
             ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
             ddof=1 unbiased estimator of the variance of the infinite population
         """
-        if len(self.ys):
+        if len(self.ys)>self.ddof:
             # ys = asarray(self.ys, dtype=float64)
             return self.ys.std(ddof=self.ddof)
         else:

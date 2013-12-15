@@ -116,7 +116,7 @@ class PeakHopCollector(DataCollector):
 
                         self.measurement_script.set_deflection(det, defl)
 
-                self.parent.set_magnet_position(isotope, detector, update_isotopes=False)
+                self.parent.set_magnet_position(isotope, detector, update_isotopes=True)
                 msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
                 self.parent.wait(settle, msg)
                 self.debug(msg)

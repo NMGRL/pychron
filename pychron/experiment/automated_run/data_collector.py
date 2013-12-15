@@ -55,7 +55,7 @@ class DataCollector(Loggable):
     starttime = None
     _alive = False
     _evt = None
-    _warned_no_fit=None
+    _warned_no_fit = None
 
     def _detectors_changed(self):
         self._idx_func = self._get_idx_func()
@@ -81,7 +81,7 @@ class DataCollector(Loggable):
             return
 
         self._truncate_signal = False
-        self._warned_no_fit=[]
+        self._warned_no_fit = []
 
         st = time.time()
         if self.starttime is None:
@@ -183,13 +183,13 @@ class DataCollector(Loggable):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                pi = idx_func(iso,dn.name)
+                pi = idx_func(iso, dn.name)
                 try:
                     fi = nfs[pi]
                 except IndexError:
-                    if not dn.name in self._warned_no_fit:
-                        self.warning('No fit defined for {}'.format(dn.name))
-                        self._warned_no_fit.append(dn.name)
+                    if not iso in self._warned_no_fit:
+                        self.warning('No fit defined for {}, idx={}'.format(iso, pi))
+                        self._warned_no_fit.append(iso)
                     continue
 
                 if pi >= np:
@@ -270,23 +270,23 @@ class DataCollector(Loggable):
         j = i - 1
         user_counts = 0 if self.plot_panel is None else self.plot_panel.ncounts
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
-        original_counts=self.ncounts
-        count_args=(j, original_counts)
+        original_counts = self.ncounts
+        count_args = (j, original_counts)
 
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'
 
-        if user_counts!=original_counts:
-            if i>user_counts:
+        if user_counts != original_counts:
+            if i > user_counts:
                 self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 self.plot_panel.total_counts -= (original_counts - i)
                 return 'break'
-        elif script_counts!=original_counts:
-            if i>script_counts:
+        elif script_counts != original_counts:
+            if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 return 'break'
-        elif i>original_counts:
+        elif i > original_counts:
             return 'break'
 
         if self._truncate_signal:
@@ -326,14 +326,16 @@ class DataCollector(Loggable):
 
     def _get_idx_func(self):
         original_idx = [(di.name, di.isotope) for di in self.detectors]
+
         def idx_func(isot, detname):
-            idx=next((i for i, (n, ii) in enumerate(original_idx)
-                         if ii == isot), None)
-#            if idx is None:
-#                idx=next((i for i, (n, ii) in enumerate(original_idx)
-#                         if n == detname), None)
+            idx = next((i for i, (n, ii) in enumerate(original_idx)
+                        if ii == isot), None)
+
+            if idx is None:
+                idx = next((i for i, (n, ii) in enumerate(original_idx)
+                            if n == detname), None)
             return idx
-        
+
         return idx_func
 
         #============= EOF =============================================
