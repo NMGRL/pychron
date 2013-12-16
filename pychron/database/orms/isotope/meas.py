@@ -168,8 +168,7 @@ class meas_IsotopeTable(Base, BaseMixin):
     fits = relationship('proc_FitTable',
                         backref='isotope')
     results = relationship('proc_IsotopeResultsTable',
-                           backref='isotope',
-    )
+                           backref='isotope')
 
 
 class meas_MeasurementTable(Base, BaseMixin):

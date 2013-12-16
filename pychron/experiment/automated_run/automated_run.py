@@ -20,7 +20,6 @@ from traits.api import Any, Str, Int, List, Property, \
     Event, Instance, Bool, HasTraits, Float
 #============= standard library imports ========================
 import os
-import traceback
 import re
 import time
 import ast
@@ -32,7 +31,6 @@ from numpy import Inf
 import gc
 # from memory_profiler import profile
 import weakref
-from itertools import groupby
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector, parse_hops
 from pychron.globals import globalv
@@ -54,7 +52,6 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
 from pychron.experiment.automated_run.condition import TruncationCondition, \
     ActionCondition, TerminationCondition
 from pychron.processing.arar_age import ArArAge
-from pychron.processing.isotope import IsotopicMeasurement
 from pychron.experiment.export.export_spec import ExportSpec
 from pychron.ui.gui import invoke_in_main_thread
 from pychron.codetools.memory_usage import mem_log
@@ -998,15 +995,19 @@ anaylsis_type={}
            signal_string, age_string)
 
     def get_baseline_corrected_signals(self):
-        if self._processed_signals_dict is not None:
-            d = dict()
-            signals = self._processed_signals_dict
-            for iso, _, kind in self._save_isotopes:
-                if kind == 'signal':
-                    si = signals['{}signal'.format(iso)]
-                    bi = signals['{}baseline'.format(iso)]
-                    d[iso] = si - bi
-            return d
+        d=dict()
+        for k, iso in self.arar_age.isotopes.iteritems():
+            d[k]=iso.baseline_corrected_value()
+
+        # if self._processed_signals_dict is not None:
+        #     d = dict()
+        #     signals = self._processed_signals_dict
+        #     for iso, _, kind in self._save_isotopes:
+        #         if kind == 'signal':
+        #             si = signals['{}signal'.format(iso)]
+        #             bi = signals['{}baseline'.format(iso)]
+        #             d[iso] = si - bi
+        #     return d
 
     def get_position_list(self):
         return self._make_iterable(self.spec.position)
@@ -1251,7 +1252,6 @@ anaylsis_type={}
 
                     # self.arar_age.set_isotope_detector(det)
 
-
     def _update_detectors(self):
         for det in self._active_detectors:
             self.arar_age.set_isotope_detector(det)
@@ -1305,7 +1305,6 @@ anaylsis_type={}
                              starttime, starttime_offset,
                              series, fits, check_conditions)
 
-
     def _get_data_generator(self):
         def gen():
             spec = self.spectrometer_manager.spectrometer
@@ -1346,7 +1345,7 @@ anaylsis_type={}
             termination_conditions=self.termination_conditions,
             action_conditions=self.action_conditions,
 
-            #grpname=grpname,
+            collection_kind=grpname,
             series_idx=series,
             fits=fits,
             check_conditions=check_conditions,
@@ -1369,7 +1368,6 @@ anaylsis_type={}
 
         mem_log('post measure')
         return True
-
 
     def _setup_isotope_graph(self, fits, starttime_offset):
         """
@@ -1493,17 +1491,17 @@ anaylsis_type={}
         cp = self._current_data_frame
         # do preliminary processing of data
         # returns signals dict
-        try:
-            ss = self._preliminary_processing(cp)
-        except Exception, e:
-            import traceback
+        # try:
+        #     ss = self._preliminary_processing(cp)
+        # except Exception, e:
+        #     import traceback
+        #
+        #     self.debug('preliminary_processing - {}'.format(traceback.format_exc()))
+        #     self.warning('could not process isotope signals. not saving to database')
+        #     mem_log('post pychron save')
+        #     return
 
-            self.debug('preliminary_processing - {}'.format(traceback.format_exc()))
-            self.warning('could not process isotope signals. not saving to database')
-            mem_log('post pychron save')
-            return
-
-        self._processed_signals_dict = ss
+        # self._processed_signals_dict = ss
 
         ln = self.spec.labnumber
         aliquot = self.spec.aliquot
@@ -1560,7 +1558,8 @@ anaylsis_type={}
 
                 # add selected history
                 db.add_selected_histories(a)
-                self._save_isotope_info(a, ss)
+                # self._save_isotope_info(a, ss)
+                self._save_isotope_data(a)
 
                 # save ic factor
                 self._save_detector_intercalibration(a)
@@ -1593,74 +1592,44 @@ anaylsis_type={}
         self.is_peak_hop = False
         return True
 
-    def _preliminary_processing(self, p):
-        self.info('organizing data for database save')
-        dm = self.data_manager
-        dm.open_data(p)
-        signals = [(iso, detname)
-                   for (iso, detname, kind) in self._save_isotopes
-                   if kind == 'signal']
-        baselines = [(iso, detname)
-                     for (iso, detname, kind) in self._save_isotopes
-                     if kind == 'baseline']
-        sniffs = [(iso, detname)
-                  for (iso, detname, kind) in self._save_isotopes
-                  if kind == 'sniff']
+    def _save_isotope_data(self, analysis):
+        self.debug('saving isotopes')
+        db=self.db
+        dbhist = db.add_fit_history(analysis,
+                                    user=self.spec.username)
 
-        rsignals = dict()
+        for iso in self.arar_age.isotopes.itervalues():
+            detname=iso.detector
+            dbdet = db.get_detector(detname)
+            if dbdet is None:
+                dbdet = db.add_detector(detname)
+                # db.sess.flush()
 
-        def extract_xy(tb):
-            try:
-                x, y = zip(*[(r['time'], r['value']) for r in tb.iterrows()])
-            except ValueError:
-                x, y = [], []
-            return x, y
+            self._save_signal_data(dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
+            self._save_signal_data(dbhist, analysis, dbdet, iso, iso, 'signal')
+            self._save_signal_data(dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
-        #fits = self.plot_panel.fits
-        #for fit, (iso, detname) in zip(fits, signals):
-        for iso, detname in signals:
-            try:
-                fit = self.arar_age.isotopes[iso].fit
-            except (AttributeError, KeyError):
-                fit = 'linear'
+    def _save_signal_data(self, dbhist, analysis, dbdet, iso, m, kind):
 
-            tab = dm.get_table(detname, '/signal/{}'.format(iso))
-            x, y = extract_xy(tab)
+        self.debug('saving data {} {} xs={}'.format(iso.name,kind, len(m.xs)))
 
-            #            if iso=='Ar40':
-            #                print 'prelim signal,',len(x), x[0], x[-1]
-            s = IsotopicMeasurement(xs=x, ys=y, fit=fit)
-            #            print 'signal',iso, s.value, y
-            rsignals['{}signal'.format(iso)] = s
+        db=self.db
+        dbiso=db.add_isotope(analysis, iso.name, dbdet)
 
+        data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
+        db.add_signal(dbiso, data)
 
-        #baseline_fits = ['average_SEM', ] * len(baselines)
-        #for fit, (iso, detname) in zip(baseline_fits, baselines):
-        for iso, detname in baselines:
-            try:
-                fit = self.arar_age.isotopes[iso].baseline.fit
-            except (AttributeError, KeyError):
-                fit = 'average_SEM'
+        add_result=kind in ('baseline','signal')
 
-            tab = dm.get_table(detname, '/baseline/{}'.format(iso))
-            x, y = extract_xy(tab)
+        if add_result:
+            if m.fit:
+                # add fit
+                db.add_fit(dbhist, dbiso, fit=m.fit)
 
-            bs = IsotopicMeasurement(xs=x, ys=y, fit=fit)
-            #            print 'baseline',iso, bs.value, y
-
-            rsignals['{}baseline'.format(iso)] = bs
-
-        for (iso, detname) in sniffs:
-            tab = dm.get_table(detname, '/sniff/{}'.format(iso))
-
-            x, y = extract_xy(tab)
-            sn = IsotopicMeasurement(xs=x, ys=y)
-
-            rsignals['{}sniff'.format(iso)] = sn
-
-        #         peak_center = dm.get_table('peak_center', '/')
-        dm.close_file()
-        return rsignals
+            # add isotope result
+            db.add_isotope_result(dbiso,
+                                  dbhist,
+                                  signal_=float(m.value), signal_err=float(m.error))
 
     def _time_save(self, func, name, *args, **kw):
         st = time.time()
@@ -1710,11 +1679,9 @@ anaylsis_type={}
             meas = db.add_measurement(
                 analysis,
                 self.spec.analysis_type,
-                self.spec.mass_spectrometer,
-            )
+                self.spec.mass_spectrometer)
             script = db.add_script(self.measurement_script.name,
-                                   self.measurement_script.toblob(),
-            )
+                                   self.measurement_script.toblob())
             #             sess.flush()
             #             db.flush()
 
@@ -1755,8 +1722,7 @@ anaylsis_type={}
 
             if self.extraction_script:
                 script = db.add_script(self.extraction_script.name,
-                                       self._assemble_extraction_blob(),
-                )
+                                       self._assemble_extraction_blob())
                 ext.script_id = script.id
 
             for pi in self.get_position_list():
@@ -1857,54 +1823,7 @@ anaylsis_type={}
             uv = v.nominal_value
             ue = float(v.std_dev)
             func(history, user_value=uv, user_error=ue,
-                 isotope=isotope,
-            )
-
-
-    def _save_isotope_info(self, analysis, signals):
-        self.info('saving isotope info')
-        #         @profile
-        def func():
-            db = self.db
-
-            # add fit history
-            dbhist = db.add_fit_history(analysis,
-                                        user=self.spec.username)
-
-            key = lambda x: x[1]
-            si = sorted(self._save_isotopes, key=key)
-
-            for detname, isos in groupby(si, key=key):
-                det = db.get_detector(detname)
-                if det is None:
-                    det = db.add_detector(detname)
-                    db.sess.flush()
-
-                for iso, detname, kind in isos:
-                    # add isotope
-                    dbiso = db.add_isotope(analysis, iso, det,
-                                           kind=kind)
-                    db.sess.flush()
-
-                    s = signals['{}{}'.format(iso, kind)]
-
-                    # add signal data
-                    data = ''.join([struct.pack('>ff', x, y)
-                                    for x, y in zip(s.xs, s.ys)])
-                    db.add_signal(dbiso, data)
-
-                    if s.fit:
-                        # add fit
-                        db.add_fit(dbhist, dbiso, fit=s.fit)
-
-                    if kind in ['signal', 'baseline']:
-                        # add isotope result
-                        db.add_isotope_result(dbiso,
-                                              dbhist,
-                                              signal_=float(s.value), signal_err=float(s.error),
-                        )
-
-        return self._time_save(func, 'isotope info')
+                 isotope=isotope)
 
     def _save_monitor_info(self, analysis):
         if self.monitor:
@@ -1945,7 +1864,7 @@ anaylsis_type={}
         rs_name, rs_text = self._assemble_script_blob()
         rid = self.runid
 
-        blanks = self.get_previous_blanks()
+        # blanks = self.get_previous_blanks()
 
         dkeys = [d.name for d in self._active_detectors]
         sf = dict(zip(dkeys, fb))
@@ -1956,9 +1875,11 @@ anaylsis_type={}
                          runscript_text=rs_text,
                          signal_fits=sf,
                          spectrometer=self.spec.mass_spectrometer.capitalize(),
-                         blanks=blanks,
+                         # blanks=blanks,
                          data_path=p,
-                         signal_intercepts=self._processed_signals_dict,
+                         isotopes=self.arar_age.isotopes,
+                         # signal_intercepts=si,
+                         # signal_intercepts=self._processed_signals_dict,
                          is_peak_hop=self.save_as_peak_hop)
         exp.load_record(self)
         return exp
@@ -1970,7 +1891,6 @@ anaylsis_type={}
                      pattern=spec.pattern,
                      ramp_duration=spec.ramp_duration,
                      ramp_rate=spec.ramp_rate)
-
 
     def _assemble_extraction_blob(self):
         _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))
@@ -2061,8 +1981,7 @@ anaylsis_type={}
 
         ms = MeasurementPyScript(root=root,
                                  name=sname,
-                                 runner=self.runner,
-        )
+                                 runner=self.runner)
         #        ms.setup_context(is_last=self.is_last)
 
         return ms
@@ -2160,7 +2079,7 @@ anaylsis_type={}
     #===============================================================================
     # data writing
     #===============================================================================
-    def _get_data_writer(self, grpname, dets=None):
+    def _get_data_writer(self, grpname):
         def write_data(dets, x, keys, signals):
             dm = self.data_manager
             for det in dets:
@@ -2267,6 +2186,159 @@ anaylsis_type={}
             #    return MultiCollector()
 
 #============= EOF =============================================
+
+        # for kind in ('sniff','signal','baseline'):
+        #     dbiso = db.add_isotope(analysis, iso.name, det,
+        #                            kind=kind)
+        #     if kind in ('sniff', 'baseline'):
+        #         m=getattr(iso, kind)
+        #     else:
+        #         m=iso
+        #
+        #     self.debug('saving signal {} xs={}'.format(iso.name, len(m.xs)))
+        #     data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
+        #     db.add_signal(dbiso, data)
+        #     if m.fit:
+        #         # add fit
+        #         db.add_fit(dbhist, dbiso, fit=m.fit)
+        #
+        #     if kind in ('signal', 'baseline'):
+        #         # add isotope result
+        #         db.add_isotope_result(dbiso,
+        #                               dbhist,
+        #                               signal_=float(m.value), signal_err=float(m.error))
+
+        # def _save_isotope_info(self, analysis, signals):
+        #     self.info('saving isotope info')
+        #     # def func_peak_hop():
+        #     #     db = self.db
+        #     #
+        #     #     # add fit history
+        #     #     dbhist = db.add_fit_history(analysis,
+        #     #                                 user=self.spec.username)
+        #     #     for iso in self.arar_age.isotopes.itervalues():
+        #     #         detname=iso.detector
+        #     #         det = db.get_detector(detname)
+        #     #         if det is None:
+        #     #             det = db.add_detector(detname)
+        #     #             db.sess.flush()
+        #
+        #
+        #
+        #     def func():
+        #         db = self.db
+        #
+        #         # add fit history
+        #         dbhist = db.add_fit_history(analysis,
+        #                                     user=self.spec.username)
+        #
+        #         key = lambda x: x[1]
+        #         si = sorted(self._save_isotopes, key=key)
+        #
+        #         for detname, isos in groupby(si, key=key):
+        #             det = db.get_detector(detname)
+        #             if det is None:
+        #                 det = db.add_detector(detname)
+        #                 db.sess.flush()
+        #
+        #             for iso, detname, kind in isos:
+        #                 # add isotope
+        #                 dbiso = db.add_isotope(analysis, iso, det,
+        #                                        kind=kind)
+        #                 db.sess.flush()
+        #
+        #                 s = signals['{}{}'.format(iso, kind)]
+        #
+        #                 # add signal data
+        #                 data = ''.join([struct.pack('>ff', x, y)
+        #                                 for x, y in zip(s.xs, s.ys)])
+        #                 db.add_signal(dbiso, data)
+        #
+        #                 if s.fit:
+        #                     # add fit
+        #                     db.add_fit(dbhist, dbiso, fit=s.fit)
+        #
+        #                 if kind in ['signal', 'baseline']:
+        #                     # add isotope result
+        #                     db.add_isotope_result(dbiso,
+        #                                           dbhist,
+        #                                           signal_=float(s.value), signal_err=float(s.error))
+        #
+        #     if self.is_peak_hop:
+        #         func()
+        #     else:
+        #         func()
+        # return self._time_save(func, 'isotope info')
+
+# def _preliminary_processing(self, p):
+#     self.info('organizing data for database save')
+#     dm = self.data_manager
+#     dm.open_data(p)
+#     signals = [(iso, detname)
+#                for (iso, detname, kind) in self._save_isotopes
+#                if kind == 'signal']
+#     baselines = [(iso, detname)
+#                  for (iso, detname, kind) in self._save_isotopes
+#                  if kind == 'baseline']
+#     sniffs = [(iso, detname)
+#               for (iso, detname, kind) in self._save_isotopes
+#               if kind == 'sniff']
+#
+#     rsignals = dict()
+#
+#     def extract_xy(tb):
+#         try:
+#             x, y = zip(*[(r['time'], r['value']) for r in tb.iterrows()])
+#         except ValueError:
+#             x, y = [], []
+#         return x, y
+#
+#     #fits = self.plot_panel.fits
+#     #for fit, (iso, detname) in zip(fits, signals):
+#     for iso, detname in signals:
+#         try:
+#             fit = self.arar_age.isotopes[iso].fit
+#         except (AttributeError, KeyError):
+#             fit = 'linear'
+#
+#         tab = dm.get_table(detname, '/signal/{}'.format(iso))
+#         x, y = extract_xy(tab)
+#
+#         #            if iso=='Ar40':
+#         #                print 'prelim signal,',len(x), x[0], x[-1]
+#         s = IsotopicMeasurement(xs=x, ys=y, fit=fit)
+#         #            print 'signal',iso, s.value, y
+#         rsignals['{}signal'.format(iso)] = s
+#
+#
+#     #baseline_fits = ['average_SEM', ] * len(baselines)
+#     #for fit, (iso, detname) in zip(baseline_fits, baselines):
+#     for iso, detname in baselines:
+#         try:
+#             fit = self.arar_age.isotopes[iso].baseline.fit
+#         except (AttributeError, KeyError):
+#             fit = 'average_SEM'
+#
+#         tab = dm.get_table(detname, '/baseline/{}'.format(iso))
+#         x, y = extract_xy(tab)
+#
+#         bs = IsotopicMeasurement(xs=x, ys=y, fit=fit)
+#         #            print 'baseline',iso, bs.value, y
+#
+#         rsignals['{}baseline'.format(iso)] = bs
+#
+#     for (iso, detname) in sniffs:
+#         tab = dm.get_table(detname, '/sniff/{}'.format(iso))
+#
+#         x, y = extract_xy(tab)
+#         sn = IsotopicMeasurement(xs=x, ys=y)
+#
+#         rsignals['{}sniff'.format(iso)] = sn
+#
+#     #         peak_center = dm.get_table('peak_center', '/')
+#     dm.close_file()
+#     return rsignals
+
 #     def _get_fit_block(self, iter_cnt, fits):
 #         for sli, fs in fits:
 #             if sli:

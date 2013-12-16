@@ -33,9 +33,10 @@ class ExportSpec(Loggable):
     step = Str
     irradpos = CStr
 
-    blanks = Dict
-    signal_fits = Dict
-    signal_intercepts = Dict
+    isotopes=Dict
+    # blanks = Dict
+    # signal_fits = Dict
+    # signal_intercepts = Dict
 
     spectrometer = Str
     extract_device = Str
@@ -88,7 +89,6 @@ class ExportSpec(Loggable):
         else:
             self.debug('{} has no ic_factor attribute'.format(record, ))
 
-
     def open_file(self):
         return self.data_manager.open_file(self.data_path)
 
@@ -109,16 +109,17 @@ class ExportSpec(Loggable):
 
     def get_blank_uvalue(self, iso):
         try:
-            b = self.blanks[iso]
+            b = self.isotopes[iso].blank.baseline_corrected_value()
         except KeyError:
-            self.debug('no blank for {} {}'.format(iso, self.blanks.keys()))
+            self.debug('no blank for {} {}'.format(iso, self.isotopes.keys()))
             b = ufloat(0, 0)
 
         return b
 
     def get_signal_uvalue(self, iso, det):
         try:
-            ps = self.signal_intercepts['{}signal'.format(iso)]
+            ps=self.isotopes[iso].uvalue
+            # ps = self.signal_intercepts['{}signal'.format(iso)]
         except KeyError, e:
             self.debug('no key {} {}'.format(iso,
                                              self.signal_intercepts.keys()))

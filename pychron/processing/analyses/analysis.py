@@ -519,7 +519,7 @@ class DBAnalysis(Analysis):
                              **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
                 if fit is None:
-                    fit = Fit(fit='average_sem',
+                    fit = Fit(fit='average_SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0)

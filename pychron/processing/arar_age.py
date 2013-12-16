@@ -21,7 +21,7 @@ from traits.api import Dict, Property, Instance, Float, Str, List, Either
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
-
+from numpy import hstack
 #============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants
@@ -116,6 +116,16 @@ class ArArAge(Loggable):
 
     #def get_signal_value(self, k):
     #    return self._get_arar_result_attr(k)
+    def append_data(self, iso, x, signal, kind):
+        if iso in self.isotopes:
+            ii=self.isotopes[iso]
+            if kind in ('sniff','baseline'):
+                ii=getattr(ii, kind)
+
+            ii.xs=hstack((ii.xs, (x,)))
+            ii.ys=hstack((ii.ys, (signal,)))
+        else:
+            self.debug('failed appending data for {}. not a current isotope {}'.format(iso, self.isotope_keys))
 
     def clear_baselines(self):
         for k in self.isotopes:

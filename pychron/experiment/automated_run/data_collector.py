@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, List, CInt, Int, Bool
+from traits.api import Any, List, CInt, Int, Bool, Enum
 # from traitsui.api import View, Item
 # from pyface.timer.do_later import do_after
 #============= standard library imports ========================
@@ -57,6 +57,8 @@ class DataCollector(Loggable):
     _alive = False
     _evt = None
     _warned_no_fit = None
+
+    collection_kind=Enum(('sniff','signal','baseline'))
 
     def _detectors_changed(self):
         self._idx_func = self._get_idx_func()
@@ -158,6 +160,29 @@ class DataCollector(Loggable):
     def _save_data(self, x, keys, signals):
         self.data_writer(self.detectors, x, keys, signals)
 
+        #update arar_age
+        if self.is_baseline and self.for_peak_hop:
+            self._update_baseline_peak_hop(x, keys, signals)
+        else:
+            self._update_isotopes(x, keys, signals)
+
+    def _update_baseline_peak_hop(self, x, keys, signals):
+        a=self.arar_age
+        for iso in self.arar_age.isotopes.itervalues():
+            signal = signals[keys.index(iso.detector)]
+            a.append_data(iso, x, signal, 'baseline')
+
+    def _update_isotopes(self, x, keys, signals):
+        a=self.arar_age
+
+        kind=self.collection_kind
+        for dn in keys:
+            dn = self._get_detector(dn)
+            if dn:
+                iso = dn.isotope
+                signal = signals[keys.index(dn.name)]
+                a.append_data(iso, x, signal, kind)
+
     def _get_detector(self, d):
         if isinstance(d, str):
             d = next((di for di in self.detectors
@@ -203,17 +228,6 @@ class DataCollector(Loggable):
             graph.new_series(type='scatter',
                              marker='circle',
                              plotid=pi)
-            # dn.series_idx = 0
-            #
-        # series = self.series_idx
-        # if hasattr(dn, 'series_idx'):
-        #     series = dn.series_idx
-
-        miso = self.arar_age.isotopes[iso]
-        if self.is_baseline:
-            miso.baseline.fit = fi
-        else:
-            miso.fit = fi
 
         #print i, x, pi, dn
         graph.add_datum((x, signal),
@@ -221,6 +235,13 @@ class DataCollector(Loggable):
                         plotid=pi,
                         update_y_limits=True,
                         ypadding='0.1')
+
+        miso = self.arar_age.isotopes[iso]
+        if self.is_baseline:
+            miso.baseline.fit = fi
+        else:
+            miso.fit = fi
+
         if fi:
             graph.set_fit(fi, plotid=pi, series=0)
 

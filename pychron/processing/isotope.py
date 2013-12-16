@@ -67,8 +67,8 @@ class BaseMeasurement(HasTraits):
         if endianness is None:
             endianness = self.endianness
 
-        fmt='{}ff'.format(endianness)
-        return ''.join((struct.pack(fmt, x,y) for x,y in izip(self.xs, self.ys)))
+        fmt = '{}ff'.format(endianness)
+        return ''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
@@ -229,11 +229,8 @@ class CorrectionIsotopicMeasurement(IsotopicMeasurement):
 #            self._value = self.dbrecord.user_value
 #            self._error = self.dbrecord.user_error
 
+
 class Background(CorrectionIsotopicMeasurement):
-    pass
-
-
-class Blank(CorrectionIsotopicMeasurement):
     pass
 
 
@@ -245,21 +242,34 @@ class Sniff(BaseMeasurement):
     pass
 
 
-class Isotope(IsotopicMeasurement):
+class BaseIsotope(IsotopicMeasurement):
+    baseline = Instance(Baseline, ())
+    baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+
+    def baseline_corrected_value(self):
+        nv = self.uvalue - self.baseline.uvalue.nominal_value
+        return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
+
+    def _get_baseline_fit_abbreviation(self):
+        return fit_abbreviation(self.baseline.fit)
+
+
+class Blank(BaseIsotope):
+    pass
+
+
+class Isotope(BaseIsotope):
     _kind = 'signal'
 
-    baseline = Instance(Baseline)
-    blank = Instance(Blank)
-    background = Instance(Background)
-    sniff = Instance(Sniff)
+    blank = Instance(Blank, ())
+    background = Instance(Background, ())
+    sniff = Instance(Sniff, ())
 
     correct_for_blank = True
     ic_factor = Either(Variable, AffineScalarFunc)
 
     age_error_component = Float(0.0)
     temporary_ic_factor = None
-
-    baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
     discrimination = Either(Variable, AffineScalarFunc)
 
@@ -284,10 +294,6 @@ class Isotope(IsotopicMeasurement):
     def ic_corrected_value(self):
         return self.get_corrected_value() * (self.ic_factor or 1.0)
 
-    def baseline_corrected_value(self):
-        nv = self.uvalue - self.baseline.uvalue.nominal_value
-        return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
-
     def get_corrected_value(self):
         v = self.baseline_corrected_value()
 
@@ -296,16 +302,4 @@ class Isotope(IsotopicMeasurement):
 
         return v - self.background.uvalue
 
-    def _baseline_default(self):
-        return Baseline()
-
-    def _blank_default(self):
-        return Blank()
-
-    def _background_default(self):
-        return Background()
-
-    def _get_baseline_fit_abbreviation(self):
-        return fit_abbreviation(self.baseline.fit)
-
-        #============= EOF =============================================
+#============= EOF =============================================
