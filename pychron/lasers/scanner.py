@@ -230,16 +230,14 @@ class Scanner(Loggable):
         print setpoints
         self.set_static_value('Setpoint', 0)
         time.sleep(start_delay)
-        for t, d in setpoints:
+        for args in setpoints:
+            t=args[0]
             if self._scanning:
                 self.setpoint = t
-
                 self._set_power_hook(t)
-                # if self.manager:
-                    # self.manager.set_laser_temperature(t, set_pid=False)
 
                 self.set_static_value('Setpoint', t, plotid=0)
-                self._maintain_setpoint(t, d)
+                self._maintain_setpoint(t, *args[1:])
 
         if self._scanning:
             self.setpoint = 0
@@ -257,7 +255,7 @@ class Scanner(Loggable):
         if self.manager:
             self.manager.set_laser_temperature(t)
 
-    def _maintain_setpoint(self, t, d):
+    def _maintain_setpoint(self, t, d, *args):
         self.info('setting setpoint to {} for {}s'.format(t, d))
         st = time.time()
         while time.time() - st < d and self._scanning:

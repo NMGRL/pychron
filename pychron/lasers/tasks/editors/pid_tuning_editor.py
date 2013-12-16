@@ -58,26 +58,33 @@ class PIDTuningScanner(Scanner):
             tc.autotune_setpoint = setpoint
             tc.autotune_aggressiveness = aggr
 
-    def _write_pid_parameters(self, setpoint):
+    def _write_pid_parameters(self, setpoint, max_output):
         dm=self.csv_data_manager
 
         tc = self.manager.get_device('temperature_controller')
-        args=tc.report_pid()
-        if args:
-            ph, pc, i, d=args
-            d=(setpoint, ph,pc, i, d)
-            dm.write_to_frame(d)
+        if tc:
+            args=tc.report_pid()
+            if args:
+                ph, pc, i, d=args
+                d=(setpoint, ph, pc, i, d, max_output)
+                dm.write_to_frame(d)
 
-    def _maintain_setpoint(self, t, d):
+    def _maintain_setpoint(self, t, d, max_output):
         if d == 'autotune':
+            self._set_max_output(max_output)
             self._autotune(t)
-            self._write_pid_parameters(t)
+            self._write_pid_parameters(t, max_output)
             self._cool_down()
             #py, tc = self._equilibrate(t)
             #self._write_calibration((t, py, tc))
 
         else:
             super(PIDTuningScanner, self)._maintain_setpoint(t, d)
+
+    def _set_max_output(self, v):
+        tc = self.manager.get_device('temperature_controller')
+        if tc:
+            tc.max_output=v
 
     def _cool_down(self):
         """
