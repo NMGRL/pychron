@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 from pyface.tasks.action.task_action import TaskAction
 from pyface.image_resource import ImageResource
 from pychron.paths import paths
@@ -27,16 +25,21 @@ class AddTextBoxAction(TaskAction):
     method = 'add_text_box'
     name = 'Annotate'
     image = ImageResource(name='annotate.png',
-                          search_path=paths.icon_search_path
-    )
+                          search_path=paths.icon_search_path)
 
 
 class SaveFigureAction(TaskAction):
     method = 'save_figure'
     name = 'Save Figure'
     image = ImageResource(name='database_save.png',
-                          search_path=paths.icon_search_path
-    )
+                          search_path=paths.icon_search_path)
+
+
+class SavePDFFigureAction(TaskAction):
+    method = 'save_pdf_figure'
+    name = 'Save PDF Figure'
+    image = ImageResource(name='file_pdf.png',
+                          search_path=paths.icon_search_path)
 
 
 class OpenFigureAction(TaskAction):

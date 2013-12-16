@@ -34,10 +34,10 @@ class SeriesEditor(FigureEditor):
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
 
-    def _update_unknowns_hook(self):
+    def _update_analyses_hook(self):
         po = self.plotter_options_manager.plotter_options
 
-        ref = self.unknowns[0]
+        ref = self.analyses[0]
         po.load_aux_plots(ref)
 
         self._set_name()

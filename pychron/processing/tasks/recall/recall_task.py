@@ -113,7 +113,7 @@ class RecallTask(AnalysisEditTask):
             name='IsoEvo {}'.format(name),
             processor=self.manager)
 
-        ieditor.unknowns = [rec]
+        ieditor.set_items([rec])
         self.editor_area.add_editor(ieditor)
 
     def add_diff(self):

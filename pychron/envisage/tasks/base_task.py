@@ -444,16 +444,17 @@ class BaseManagerTask(BaseTask):
                 r = dialog.paths
             return r
 
-    def save_file_dialog(self, **kw):
+    def save_file_dialog(self,ext=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
         dialog = FileDialog(parent=self.window.control, action='save as',
-                            **kw
-        )
+                            **kw)
         if dialog.open() == OK:
             path=dialog.path
             if path:
-                return add_extension(path, ext=self._default_extension)
+                if ext is None:
+                    ext=self._default_extension
+                return add_extension(path, ext=ext)
 
 
 class BaseExtractionLineTask(BaseManagerTask):

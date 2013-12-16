@@ -81,27 +81,31 @@ class FigureEditor(GraphEditor):
 
     def set_group(self, idxs, gid, refresh=True):
 
-        for i, uu in enumerate(self.unknowns):
+        for i, uu in enumerate(self.analyses):
             if i in idxs:
                 uu.group_id = gid
 
         if refresh:
-            self.rebuild(refresh_data=False)
+            # self.rebuild(refresh_data=False)
+            self.rebuild()
 
     def _rebuild_graph(self):
-        self.rebuild(refresh_data=False)
+        # self.rebuild(refresh_data=False)
+        self.rebuild()
 
-    def _update_unknowns_hook(self):
-        ans = self.unknowns
+    def _update_analyses_hook(self):
+        ans = self.analyses
         for e in self.associated_editors:
-            if isinstance(e, FigureEditor):
-                e.unknowns = ans
-            else:
-                e.items = ans
+            e.set_items(ans)
+            # if isinstance(e, FigureEditor):
+            #     pass
+                # e.unknowns = ans
+                # else:
+                #     e.items = ans
 
-    def rebuild(self, refresh_data=False, compress_groups=True):
-        ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
-
+    def rebuild(self):
+        # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
+        ans=self.analyses
         if ans:
             po = self.plotter_options_manager.plotter_options
             #model, comp = timethis(self.get_component, args=(ans, po),

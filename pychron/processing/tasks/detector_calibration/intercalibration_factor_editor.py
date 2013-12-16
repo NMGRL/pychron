@@ -40,11 +40,11 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
             prog=None
-            n=len(self.unknowns)
+            n=len(self.analyses)
             if n>1:
                 prog=self.processor.open_progress(n=n)
 
-            for unk in self.unknowns:
+            for unk in self.analyses:
                 if prog:
                     prog.change_message('Saving ICs for {}'.format(unk.record_id))
 
@@ -109,7 +109,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         p_ues = reg.predict_error(xs, error_calc=self.tool.error_calc.lower())
 
         _, d = iso.split('/')
-        for ui, v, e in zip(self.sorted_unknowns, p_uys, p_ues):
+        for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
             ui.set_temporary_ic_factor(d, v, e)
 
         return p_uys, p_ues
@@ -134,8 +134,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
     def _get_current_values(self, dets):
         #return None, None
         n, d = dets.split('/')
-        nys = array([ri.get_ic_factor(n) for ri in self.unknowns])
-        dys = array([ri.get_ic_factor(d) for ri in self.unknowns])
+        nys = array([ri.get_ic_factor(n) for ri in self.analyses])
+        dys = array([ri.get_ic_factor(d) for ri in self.analyses])
         try:
             rys = dys / nys
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])

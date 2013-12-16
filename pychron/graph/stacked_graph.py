@@ -199,10 +199,10 @@ class StackedGraph(Graph):
         return s, _p
 
     def _bounds_changed(self, bounds):
-        '''
+        """
             vertically resizes the stacked graph.
             the plots are sized equally
-        '''
+        """
         if self.vertical_resize:
             self._update_bounds(bounds, self.plotcontainer.components)
 

@@ -45,11 +45,12 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'
-        if self.item.tag == 'invalid':
-            c = '#C9C5C5'
-        elif self.item.is_omitted():
-        #elif self.item.temp_status != 0:#and not self.item.tag:
-            c = '#FAC0C0'
+        if not isinstance(self.item, IsotopeRecordView):
+            if self.item.tag == 'invalid':
+                c = '#C9C5C5'
+            elif self.item.is_omitted():
+            #elif self.item.temp_status != 0:#and not self.item.tag:
+                c = '#FAC0C0'
         return c
 
     def _get_age_text(self):

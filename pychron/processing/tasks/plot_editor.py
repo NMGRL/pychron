@@ -119,7 +119,6 @@ class Axis(HasTraits):
     @on_trait_change('tick_font_size')
     def _update_tick_font(self):
         f = copy.copy(self.plot_axis.tick_label_font)
-
         f.size = self.tick_font_size
         self.plot_axis.tick_label_font = f
         self.plot_axis.invalidate_and_redraw()

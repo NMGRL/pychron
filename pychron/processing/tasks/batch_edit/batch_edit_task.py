@@ -102,7 +102,7 @@ class BatchEditTask(AnalysisEditTask):
         self.debug('save to database')
         cname = 'blanks'
         proc = self.manager
-        for ui in self.unknowns:
+        for ui in self.analyses:
             # blanks
             history = proc.add_history(ui, cname)
             for bi in self.central_pane.blanks:
@@ -173,13 +173,13 @@ class BatchEditTask(AnalysisEditTask):
     def _update_unknowns_runs(self, obj, name, old, new):
         AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
 
-        ans=self.manager.make_analyses(self.unknowns_pane.items)
-        self.batch_editor.populate(ans)
+        # ans=self.manager.make_analyses(self.unknowns_pane.items)
+        self.batch_editor.populate(self.unknowns_pane.items)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
 
-        s=self._get_selected_analyses(self.unknowns)
+        s=self._get_selected_analyses(self.analyses)
         if s:
             if name=='replace_button':
                 self.unknowns_pane.items=s

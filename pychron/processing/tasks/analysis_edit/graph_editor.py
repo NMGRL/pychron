@@ -34,8 +34,9 @@ class GraphEditor(BaseUnknownsEditor):
     tool = Instance(FitSelector, ())
     graph = Any
     processor = Any
-    unknowns = List
-    #     _unknowns = List
+
+    analyses = List
+
     component = Property
     _component = Any
 
@@ -48,20 +49,21 @@ class GraphEditor(BaseUnknownsEditor):
     calculate_age = True
 
     auto_plot = Property
-    update_on_unknowns = True
+    update_on_analyses = True
 
     def prepare_destroy(self):
         self.dump_tool()
 
     def dump_tool(self):
-        p = os.path.join(paths.hidden_dir, self.pickle_path)
-        with open(p, 'w') as fp:
-            tool = self._dump_tool()
-            pickle.dump(tool, fp)
+        if self.tool:
+            p = os.path.join(paths.hidden_dir, self.pickle_path)
+            self.debug('dumping tool {}, {}'.format(self.tool, p))
+            with open(p, 'w') as fp:
+                tool = self._dump_tool()
+                pickle.dump(tool, fp)
 
     def _dump_tool(self):
-        if self.tool:
-            return self.tool.fits
+        return self.tool.fits
 
     def load_tool(self):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
@@ -77,6 +79,7 @@ class GraphEditor(BaseUnknownsEditor):
         for fi in fits:
             ff = next((fo for fo in self.tool.fits if fo.name == fi.name), None)
             if ff:
+                self.debug('setting fit {} {} {}'.format(fi.name, fi.fit, fi.use))
                 ff.trait_set(fit=fi.fit,
                              use=fi.use,
                              show=fi.show)
@@ -93,30 +96,32 @@ class GraphEditor(BaseUnknownsEditor):
         return xs
 
     def set_items(self, unks, is_append=False):
-        unks = self.processor.make_analyses(unks,
+        ans = self.processor.make_analyses(unks,
                                             calculate_age=self.calculate_age,
                                             unpack=self.unpack_peaktime)
 
         if is_append:
-            punks=self.unknowns
-            punks.extend(unks)
-            unks=punks
+            pans = self.analyses
+            pans.extend(ans)
+            ans = pans
 
-        self.unknowns = unks
+        self.analyses=ans
+        self._update_analyses()
+        self.dump_tool()
 
-    @on_trait_change('unknowns[]')
-    def _update_unknowns(self, obj, name, old, new):
-        self._gather_unknowns(True)
-        #print '22222', new, len(self.unknowns)
-        if self.unknowns:
+    def _update_analyses(self):
+        ans=self.analyses
+        if ans:
+            self.debug('analyses changed nanalyses={}'.format(len(ans)))
+            self._compress_analyses(ans)
             #if new[0] and issubclass(type(new[0]), Analysis):
             if self.auto_plot:
                 self.rebuild_graph()
 
-            refiso = self.unknowns[0]
+            refiso = ans[0]
             self._load_refiso(refiso)
             self._set_name()
-            self._update_unknowns_hook()
+            self._update_analyses_hook()
         else:
             self._null_component()
             self.component_changed = True
@@ -135,28 +140,23 @@ class GraphEditor(BaseUnknownsEditor):
                 self.load_tool()
 
     def _set_name(self):
-        na = list(set([ni.labnumber for ni in self.unknowns]))
+        na = list(set([ni.labnumber for ni in self.analyses]))
         na = self._grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 
-    def _update_unknowns_hook(self):
+    def _update_analyses_hook(self):
         pass
 
     @on_trait_change('tool:update_needed')
     def _tool_refresh(self):
-        print 'tool update'
+        self.debug('tool refresh')
         self.rebuild_graph()
-        #if not self.tool.suppress_refresh_unknowns:
-        self.refresh_unknowns()
-
-    def refresh_unknowns(self):
-        pass
+        self.dump_tool()
 
     def rebuild(self, *args, **kw):
         pass
 
     def rebuild_graph(self):
-        #if not self.suppress_rebuild:
         graph = self.graph
 
         graph.clear()
@@ -179,8 +179,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _graph_factory(self, **kw):
         g = StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom',
                                                        use_backbuffer=True,
-                                                       spacing=5),
-                                   **kw)
+                                                       spacing=5), **kw)
         return g
 
     def _graph_generator(self):
@@ -219,56 +218,7 @@ class GraphEditor(BaseUnknownsEditor):
             gc.render_component(c)
             gc.save(path)
 
-            #         with gc:
-            #         self.rebuild_graph()
-
-    def _gather_unknowns(self, refresh_data,
-                         exclude='invalid',
-                         compress_groups=True):
-        '''
-            use cached runs
-            
-            use exclude keyward to specific tags that will not be 
-            gathered
-            
-        '''
-
-        ans = self.unknowns
-        if refresh_data or not ans:
-            #ids = [ai.uuid for ai in self.analysis_cache]
-            #aa = [ai for ai in self.unknowns if ai.uuid not in ids]
-            #
-            #nids = (ai.uuid for ai in self.unknowns if ai.uuid in ids)
-            #bb = [next((ai for ai in self.analysis_cache if ai.uuid == i)) for i in nids]
-            #aa = list(aa)
-            #aa=self.unknowns
-
-            if ans:
-                ans=self.processor.make_analyses(ans, exclude=exclude,
-                                                 calculate_age=self.calculate_age,
-                                                 unpack=self.unpack_peaktime)
-
-                #ans = timethis(self.processor.make_analyses,
-                #               args=(ans,),
-                #               kwargs={'exclude': exclude,
-                #                       'calculate_age': self.calculate_age,
-                #                       'unpack': self.unpack_peaktime},
-                #               msg='MAKE ANALYSES TOTAL')
-
-
-            if compress_groups:
-                # compress groups
-                self._compress_unknowns(ans)
-
-            #self.trait_set(unknowns=ans, trait_change_notify=False)
-            self.unknowns = ans
-        else:
-            if exclude:
-                ans = self.processor.filter_analysis_tag(ans, exclude)
-
-        return ans
-
-    def _compress_unknowns(self, ans):
+    def _compress_analyses(self, ans):
         if not ans:
             return
 
@@ -285,6 +235,51 @@ class GraphEditor(BaseUnknownsEditor):
                 ai.group_id = gid - mgid
 
     def _get_auto_plot(self):
-        return len(self.unknowns) == 1 or self.update_on_unknowns
+        return len(self.analyses) == 1 or self.update_on_analyses
 
-        #============= EOF =============================================
+#============= EOF =============================================
+# def _gather_unknowns(self, refresh_data,
+    #                      exclude='invalid',
+    #                      compress_groups=True):
+    #     '''
+    #         use cached runs
+    #
+    #         use exclude keyward to specific tags that will not be
+    #         gathered
+    #
+    #     '''
+    #
+    #     ans = self.unknowns
+    #     if refresh_data or not ans:
+    #         #ids = [ai.uuid for ai in self.analysis_cache]
+    #         #aa = [ai for ai in self.unknowns if ai.uuid not in ids]
+    #         #
+    #         #nids = (ai.uuid for ai in self.unknowns if ai.uuid in ids)
+    #         #bb = [next((ai for ai in self.analysis_cache if ai.uuid == i)) for i in nids]
+    #         #aa = list(aa)
+    #         #aa=self.unknowns
+    #
+    #         if ans:
+    #             ans=self.processor.make_analyses(ans, exclude=exclude,
+    #                                              calculate_age=self.calculate_age,
+    #                                              unpack=self.unpack_peaktime)
+    #
+    #             #ans = timethis(self.processor.make_analyses,
+    #             #               args=(ans,),
+    #             #               kwargs={'exclude': exclude,
+    #             #                       'calculate_age': self.calculate_age,
+    #             #                       'unpack': self.unpack_peaktime},
+    #             #               msg='MAKE ANALYSES TOTAL')
+    #
+    #
+    #         if compress_groups:
+    #             # compress groups
+    #             self._compress_unknowns(ans)
+    #
+    #         #self.trait_set(unknowns=ans, trait_change_notify=False)
+    #         self.unknowns = ans
+    #     else:
+    #         if exclude:
+    #             ans = self.processor.filter_analysis_tag(ans, exclude)
+    #
+    #     return ans

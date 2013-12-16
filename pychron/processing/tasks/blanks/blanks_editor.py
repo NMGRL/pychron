@@ -56,12 +56,12 @@ class BlanksEditor(InterpolationEditor):
             cname = 'blanks'
             self.info('Attempting to save corrections to database')
 
-            n = len(self.unknowns)
+            n = len(self.analyses)
             prog = None
             if n > 1:
                 prog = self.processor.open_progress(n)
 
-            for unk in self.unknowns:
+            for unk in self.analyses:
                 if prog:
                     prog.change_message('Saving blanks for {}'.format(unk.record_id))
 
@@ -100,14 +100,14 @@ class BlanksEditor(InterpolationEditor):
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
 
-        for ui, v, e in zip(self.sorted_unknowns, p_uys, p_ues):
+        for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
             ui.set_temporary_blank(iso, v, e)
 
         return p_uys, p_ues
 
     def _get_current_values(self, iso):
         return zip(*[self._get_isotope(ui, iso, 'blank')
-                     for ui in self.unknowns])
+                     for ui in self.analyses])
 
     def _get_baseline_corrected(self, analysis, k):
         if k in analysis.isotopes:

@@ -15,15 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
-from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
-from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+from pychron.processing.tasks.analysis_edit.panes import ControlsPane
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
+from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
@@ -31,6 +34,12 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     iso_evo_editor_count = 1
     id = 'pychron.analysis_edit.isotope_evolution',
     auto_select_analysis = False
+    tool_bars = [SToolBar(DatabaseSaveAction(),
+                          FindAssociatedAction(),
+                              image_size=(16, 16)),
+                     SToolBar(
+                         SavePDFFigureAction())
+                    ]
 
     def _default_layout_default(self):
         return TaskLayout(
@@ -50,16 +59,10 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         self.controls_pane = ControlsPane()
         self.plot_editor_pane = PlotEditorPane()
 
-        panes = [
-
-            self.unknowns_pane,
-            self.controls_pane,
-            self.plot_editor_pane,
-            self._create_browser_pane()
-        ]
-        ps = self._create_db_panes()
-        if ps:
-            panes.extend(ps)
+        panes = [self.unknowns_pane,
+                 self.controls_pane,
+                 self.plot_editor_pane,
+                 self._create_browser_pane()]
 
         return panes
 
@@ -193,22 +196,23 @@ class IsotopeEvolutionTask(AnalysisEditTask):
 
         doc = ep.doc('iso_fits')
         projects = doc['projects']
-        unks=(ai for proj in projects
-                                       for si in db.get_samples(project=proj)
-                                       for ln in si.labnumbers
-                                       for ai in ln.analyses)
-        found=[]
+        unks = (ai for proj in projects \
+                for si in db.get_samples(project=proj) \
+                for ln in si.labnumbers \
+                for ai in ln.analyses)
+        found = []
         while 1:
-            u=[]
+            u = []
             for _ in xrange(100):
                 try:
                     u.append(unks.next())
                 except StopIteration:
                     pass
             if u:
-                self.active_editor.unknowns=u
+                self.active_editor.set_items(u)
+                # self.active_editor.unknowns=u
                 # self.active_editor.unknowns.append(unks.next())
-                found=self.find_associated_analyses(found=found)
+                found = self.find_associated_analyses(found=found)
                 fits = doc['fit_isotopes']
                 filters = doc['filter_isotopes']
 

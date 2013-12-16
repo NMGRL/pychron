@@ -231,7 +231,7 @@ class SystemMonitorEditor(SeriesEditor):
 
         ans = self.processor.analysis_series(ms,
                                              **kw)
-        self.unknowns = ans
+        self.analyses = ans
 
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':

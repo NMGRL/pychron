@@ -39,7 +39,7 @@ class InterpolationEditor(GraphEditor):
     show_current = Bool(True)
 
     default_reference_analysis_type = 'air'
-    sorted_unknowns = Property(depends_on='unknowns[]')
+    sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
 
     @on_trait_change('references[]')
@@ -79,24 +79,23 @@ class InterpolationEditor(GraphEditor):
         end = max(marxs, mauxs)
         return start, end
 
-    def _update_unknowns_hook(self):
+    def _update_analyses_hook(self):
         if self.auto_find:
             self._find_references()
 
     def _find_references(self):
-    #         ans = set([ai for ui in self._unknowns
-    #                 for ai in self.processor.find_associated_analyses(ui)])
-        print 'find rerefas'
+
+        self.debug('find references')
         ans = []
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
-            n=len(self.unknowns)
+            n=len(self.analyses)
             prog=None
             if n>1:
                 prog=proc.open_progress(n)
 
-            for ui in self.unknowns:
+            for ui in self.analyses:
                 if prog:
                     prog.change_message('Finding associated analyses for {}'.format(ui.record_id))
 
@@ -136,7 +135,7 @@ class InterpolationEditor(GraphEditor):
     def _rebuild_graph(self):
         graph = self.graph
 
-        uxs = [ui.timestamp for ui in self.unknowns]
+        uxs = [ui.timestamp for ui in self.analyses]
         rxs = [ui.timestamp for ui in self.references]
 
         display_xs = asarray(map(convert_timestamp, rxs[:]))
@@ -160,7 +159,7 @@ class InterpolationEditor(GraphEditor):
             fit = fit.fit.lower()
             c_uys, c_ues = None, None
 
-            if self.unknowns and self.show_current:
+            if self.analyses and self.show_current:
                 c_uys, c_ues = self._get_current_values(iso)
 
             r_ys, r_es = None, None
@@ -186,7 +185,7 @@ class InterpolationEditor(GraphEditor):
                                          marker_size=3,
                                          bind_id=-1,
                                          add_inspector=False)
-                self._add_inspector(s, self.sorted_unknowns)
+                self._add_inspector(s, self.sorted_analyses)
                 self._add_error_bars(s, c_ues)
 
                 graph.set_series_label('Unknowns-Current', plotid=i)
@@ -279,13 +278,13 @@ class InterpolationEditor(GraphEditor):
     def _update_metadata(self, obj, name, old, new):
         meta = obj.metadata
         selections = meta.get('selections', [])
-        ans = self.sorted_unknowns
+        ans = self.sorted_analyses
         for i, ai in enumerate(ans):
             ai.temp_status = i in selections
 
     @cached_property
-    def _get_sorted_unknowns(self):
-        return sorted(self.unknowns, key=lambda x: x.timestamp)
+    def _get_sorted_analyses(self):
+        return sorted(self.analyses, key=lambda x: x.timestamp)
 
     @cached_property
     def _get_sorted_references(self):

@@ -15,7 +15,6 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from chaco.scatterplot import ScatterPlot
 from traits.api import Instance, Any, Bool, \
     List, Str, Property, Dict, Callable
 from traitsui.api import View, Item
@@ -111,7 +110,7 @@ class Graph(Viewable, ContextMenuMixin):
     editor_enabled = True
 
     line_inspectors_write_metadata = False
-    add_context_menu=Bool(True)
+    add_context_menu = Bool(True)
 
     plot_editor = Any
 
@@ -154,84 +153,84 @@ class Graph(Viewable, ContextMenuMixin):
 
             pc.tools.append(menu)
 
-    def _assemble_plot_metadata(self, plot):
-        meta = dict()
-        pmeta = dict()
-        if isinstance(plot, ScatterPlot):
-            attrs = ['color', 'marker_size', 'marker']
-        else:
-            attrs = ['color', 'line_width', 'line_style']
-
-        for ai in attrs:
-            v = getattr(plot, ai)
-            #            if ai == 'color':
-            #                print ai, v, type(v)
-            #                if isinstance(v, str):
-            #                    v = color_table[v]
-            #                else:
-            #                    v=map(lambda x:x*255, v)
-
-            meta[ai] = v
-
-        meta['plot'] = pmeta
-
-        return meta
-
-    def _assemble_value_axis_metadata(self, v):
-        vmeta = dict()
-        vattrs = ['title_spacing', 'tick_visible', 'tick_label_formatter']
-
-        for ai in vattrs:
-            vmeta[ai] = getattr(v, ai)
-        return vmeta
-
-    def dump_metadata(self):
-        ps = []
-
-        for p in self.plots:
-            d = dict()
-            d['value_axis'] = self._assemble_value_axis_metadata(p.value_axis)
-            d['xlimits'] = p.index_range.low, p.index_range.high
-            for k, pp in p.plots.iteritems():
-                pp = pp[0]
-                d[k] = self._assemble_plot_metadata(pp)
-
-            ps.append(d)
-
-        return ps
-
-    def load_metadata(self, metas):
-        return
-
-        self.debug('loading metadata')
-
-        for i, meta in enumerate(metas):
-            #print meta.keys()
-            if not meta:
-                continue
-            try:
-                plot = self.plots[i]
-            except IndexError:
-                continue
-
-            plots = plot.plots
-            for k, d in meta.iteritems():
-                obj = None
-                if k == 'value_axis':
-                    obj = plot.value_axis
-                elif k in plots:
-                    obj = plots[k][0]
-
-                if obj:
-                    for ki, di in d.iteritems():
-                        if 'color' in ki:
-                            d[ki] = map(lambda x: x * 255, d[ki])
-                    obj.trait_set(**d)
-
-            mi_, ma_ = meta['xlimits']
-            self.set_x_limits(min_=mi_, max_=ma_, plotid=i)
-
-        self.redraw()
+    # def _assemble_plot_metadata(self, plot):
+    #     meta = dict()
+    #     pmeta = dict()
+    #     if isinstance(plot, ScatterPlot):
+    #         attrs = ['color', 'marker_size', 'marker']
+    #     else:
+    #         attrs = ['color', 'line_width', 'line_style']
+    #
+    #     for ai in attrs:
+    #         v = getattr(plot, ai)
+    #         #            if ai == 'color':
+    #         #                print ai, v, type(v)
+    #         #                if isinstance(v, str):
+    #         #                    v = color_table[v]
+    #         #                else:
+    #         #                    v=map(lambda x:x*255, v)
+    #
+    #         meta[ai] = v
+    #
+    #     meta['plot'] = pmeta
+    #
+    #     return meta
+    #
+    # def _assemble_value_axis_metadata(self, v):
+    #     vmeta = dict()
+    #     vattrs = ['title_spacing', 'tick_visible', 'tick_label_formatter']
+    #
+    #     for ai in vattrs:
+    #         vmeta[ai] = getattr(v, ai)
+    #     return vmeta
+    #
+    # def dump_metadata(self):
+    #     ps = []
+    #
+    #     for p in self.plots:
+    #         d = dict()
+    #         d['value_axis'] = self._assemble_value_axis_metadata(p.value_axis)
+    #         d['xlimits'] = p.index_range.low, p.index_range.high
+    #         for k, pp in p.plots.iteritems():
+    #             pp = pp[0]
+    #             d[k] = self._assemble_plot_metadata(pp)
+    #
+    #         ps.append(d)
+    #
+    #     return ps
+    #
+    # def load_metadata(self, metas):
+    #     return
+    #
+    #     self.debug('loading metadata')
+    #
+    #     for i, meta in enumerate(metas):
+    #         #print meta.keys()
+    #         if not meta:
+    #             continue
+    #         try:
+    #             plot = self.plots[i]
+    #         except IndexError:
+    #             continue
+    #
+    #         plots = plot.plots
+    #         for k, d in meta.iteritems():
+    #             obj = None
+    #             if k == 'value_axis':
+    #                 obj = plot.value_axis
+    #             elif k in plots:
+    #                 obj = plots[k][0]
+    #
+    #             if obj:
+    #                 for ki, di in d.iteritems():
+    #                     if 'color' in ki:
+    #                         d[ki] = map(lambda x: x * 255, d[ki])
+    #                 obj.trait_set(**d)
+    #
+    #         mi_, ma_ = meta['xlimits']
+    #         self.set_x_limits(min_=mi_, max_=ma_, plotid=i)
+    #
+    #     self.redraw()
 
     def add_point_inspector(self, scatter, convert_index=None):
         point_inspector = PointInspector(scatter,
@@ -257,14 +256,14 @@ class Graph(Viewable, ContextMenuMixin):
             if startswith is True title only has to start with iso
         """
         if startswith:
-            is_equal=lambda x: x.startswith(iso)
+            is_equal = lambda x: x.startswith(iso)
         else:
-            is_equal= lambda x: x.__eq__(iso)
+            is_equal = lambda x: x.__eq__(iso)
 
-        plot=None
+        plot = None
         for po in self.plots:
             if is_equal(po.y_axis.title):
-                plot=po
+                plot = po
                 break
 
         return plot
@@ -1149,12 +1148,15 @@ class Graph(Viewable, ContextMenuMixin):
     def refresh(self):
         pass
 
+    def invalidate_and_redraw(self):
+        self.plotcontainer._layout_needed = True
+        self.plotcontainer.invalidate_and_redraw()
+
     def redraw(self, force=True):
-        '''
-        '''
+        """
+        """
         if force:
-            self.plotcontainer._layout_needed = True
-            self.plotcontainer.invalidate_and_redraw()
+            self.invalidate_and_redraw()
         else:
             self.plotcontainer.request_redraw()
 
@@ -1236,12 +1238,11 @@ class Graph(Viewable, ContextMenuMixin):
         self._add_line_inspector(plot, axis='y', color=color)
 
     def _plot_factory(self, legend_kw=None, **kw):
-        '''
-        '''
+        """
+        """
         p = Plot(data=ArrayPlotData(),
-                 use_backbuffer=True,
-                 **kw
-        )
+                 # use_backbuffer=True,
+                 **kw)
 
         vis = kw['show_legend'] if 'show_legend' in kw else False
 
@@ -1322,8 +1323,8 @@ class Graph(Viewable, ContextMenuMixin):
         writer.writerows(rows)
 
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
-        '''
-        '''
+        """
+        """
         if x is None:
             x = array([])
         if y is None:
@@ -1397,8 +1398,8 @@ class Graph(Viewable, ContextMenuMixin):
         return plot, (xname, yname), kw
 
     def _save_(self, type_='pic', path=None):
-        '''
-        '''
+        """
+        """
         if path is None:
             dlg = FileDialog(action='save as')
             if dlg.open() == OK:
@@ -1430,10 +1431,9 @@ class Graph(Viewable, ContextMenuMixin):
                     #                    path = ''.join((base, DEFAULT_IMAGE_EXT))
 
     def render_to_pdf(self, canvas=None):
-        '''
+        """
             make a new PDFgc but dont save it
-            
-        '''
+        """
         return self._render_to_pdf(save=False, filename='/Users/ross/Sandbox/aaa.pdf', canvas=canvas)
 
 
@@ -1450,24 +1450,24 @@ class Graph(Viewable, ContextMenuMixin):
         gc = PdfPlotGraphicsContext(filename=filename,
                                     pdf_canvas=canvas)
         pc = self.plotcontainer
-        print pc
+
         #pc.do_layout(force=True)
-        gc.render_component(pc,valign='center')
+        # pc.use_backbuffer=False
+        gc.render_component(pc, valign='center')
         if save:
             gc.save()
+            # pc.use_backbuffer=True
 
         return gc
 
-    #        pc.bgcolor = ob
-
     def _render_to_pic(self, filename):
-        '''
-        '''
+        """
+        """
         p = self.plotcontainer
         gc = PlotGraphicsContext((int(p.outer_width), int(p.outer_height)))
-        p.use_backbuffer = False
+        # p.use_backbuffer = False
         gc.render_component(p)
-        p.use_backbuffer = True
+        # p.use_backbuffer = True
         gc.save(filename)
 
     def _render_to_clipboard(self):

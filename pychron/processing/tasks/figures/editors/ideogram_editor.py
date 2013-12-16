@@ -29,9 +29,9 @@ class IdeogramEditor(FigureEditor):
     basename = 'ideo'
 
     def get_component(self, ans, plotter_options):
-        meta = None
-        if self.figure_model:
-            meta = self.figure_model.dump_metadata()
+        # meta = None
+        # if self.figure_model:
+        #     meta = self.figure_model.dump_metadata()
 
         if plotter_options is None:
             pom = IdeogramOptionsManager()
@@ -43,8 +43,8 @@ class IdeogramEditor(FigureEditor):
         model.analyses = ans
         iv = FigureContainer(model=model)
 
-        if meta:
-            model.load_metadata(meta)
+        # if meta:
+        #     model.load_metadata(meta)
 
         return model, iv.component
 

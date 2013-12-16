@@ -192,6 +192,7 @@ class GraphEditor(HasTraits):
         fn = getattr(self, 'global_{}_font'.format(f))
         fs = getattr(self, 'global_{}_font_size'.format(f))
         font = '{} {}'.format(fn, fs)
+        print 'asdaSD', font
         for po in g.plots:
             setattr(po.x_axis, key, font)
             setattr(po.y_axis, key, font)
