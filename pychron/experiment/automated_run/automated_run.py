@@ -1611,10 +1611,10 @@ anaylsis_type={}
 
     def _save_signal_data(self, dbhist, analysis, dbdet, iso, m, kind):
 
-        self.debug('saving data {} {} xs={}'.format(iso.name,kind, len(m.xs)))
+        self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
 
         db=self.db
-        dbiso=db.add_isotope(analysis, iso.name, dbdet)
+        dbiso=db.add_isotope(analysis, iso.name, dbdet, kind=kind)
 
         data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
         db.add_signal(dbiso, data)
