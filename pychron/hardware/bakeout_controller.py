@@ -45,23 +45,23 @@ BLANK_SCRIPT = NULL_STR
 
 
 class BakeoutController(WatlowEZZone):
-    '''
-        
+    """
+
         bakeout controller can be operated in one of two modes.
-        
+
         Mode 1 is used when no script is specified and both a valid setpoint and duration are set.
-        The controller will open loop set to the setpoint. After duration minutes have passed the 
+        The controller will open loop set to the setpoint. After duration minutes have passed the
         controller sets to 0
-        
+
         Mode 2 is used when a script is set.
         The controller uses a BakeoutTimerScript to heat and cool ramp to setpoints.
-        
+
         psuedo script
         goto_setpoint('heat')
         maintain()
         goto_setpoint('cool')
-        
-    '''
+
+    """
     duration = Property(Float(enter_set=True, auto_set=False),
                         depends_on='_duration')
     _duration = Float
@@ -87,9 +87,9 @@ class BakeoutController(WatlowEZZone):
 
     record_process = Bool(False)
 
-    max_output = Property(Float(enter_set=True, auto_set=False),
-                          depends_on='_max_output')
-    _max_output = Float(100)
+    # max_output = Property(Float(enter_set=True, auto_set=False),
+    #                       depends_on='_max_output')
+    # _max_output = Float(100)
     _duration_timeout = False
 
     _timer = None
@@ -110,8 +110,11 @@ class BakeoutController(WatlowEZZone):
     _check_temp_minutes = 2
     _check_temp_threshold = 40
     _check_start_minutes = 5
+    default_output = 2
+
     #    (depends_on='_ok_to_run')
     #    _ok_to_run = Bool(False)
+
 
 
     def initialization_hook(self):
@@ -120,9 +123,9 @@ class BakeoutController(WatlowEZZone):
             they are not necessary for the bakeout manager currently
         '''
         # read the current max output setting
-        p = self.read_high_power_scale()
-        if p:
-            self._max_output = p
+        # p = self.read_high_power_scale()
+        # if p:
+        #     self._max_output = p
 
             #    def isAlive(self):
             #        return self.alive
@@ -399,20 +402,6 @@ Add {}'.format(sd)):
     def _get_state_label(self):
     #        return 'Stop' if self.isAlive() else 'Start'
         return 'Stop' if self.isActive() else 'Start'
-
-    def _validate_max_output(self, v):
-        try:
-            return float(v)
-        except Exception:
-            pass
-
-    def _set_max_output(self, v):
-        self._max_output = v
-        self.set_high_power_scale(v)
-        self.read_high_power_scale()
-
-    def _get_max_output(self):
-        return self._max_output
 
     def _get_duration(self):
         return self._duration
