@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, Property, Bool
-from traitsui.api import Item, Group, HGroup, UItem
+from traitsui.api import Item, Group, HGroup, UItem, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -36,6 +36,19 @@ class SpectrumOptions(AgeOptions):
     plateau_steps = Property(Str)
     _plateau_steps = Str
     plot_option_name = 'age_spectrum'
+    display_extract_value=Bool(False)
+    display_step=Bool(False)
+
+    def _get_info_group(self):
+        g = VGroup(
+                HGroup(Item('show_info', label='Display Info'),
+                   Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                   Item('show_error_type_info', label='Error Type', enabled_when='show_info')
+                    ),
+                HGroup(Item('display_step'), Item('display_extract_value')),
+                show_border=True, label='Info')
+
+        return g
 
     def _get_plateau_steps(self):
         return self._plateau_steps
@@ -56,6 +69,8 @@ class SpectrumOptions(AgeOptions):
         attrs = super(SpectrumOptions, self)._get_dump_attrs()
         return attrs + ['step_nsigma',
                         'force_plateau',
+                        'display_extract_value',
+                        'display_step',
                         '_plateau_steps']
 
     def _get_groups(self):

@@ -15,13 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Array, Int, Float
+from traits.api import Array, Int, Float
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
 from numpy import where, array
 from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
-from enable.colors import color_table
 #============= local library imports  ==========================
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -107,9 +106,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     gc.set_fill_color((0.75, 0, 0))
                 else:
                     c = comp.color
-                    if isinstance(c, str):
-                        c = color_table[c]
-
+                    # if isinstance(c, str):
+                    #     c = color_table[c]
+                    c=(0,0,0,0.25)
                     gc.set_fill_color(c)
                 gc.rect(x, y, w + 1, h)
                 gc.fill_path()

@@ -32,6 +32,7 @@ from pychron.processing.plotters.arar_figure import BaseArArFigure
 # from numpy.core.numeric import Inf
 # from pychron.processing.plotters.point_move_tool import PointMoveTool
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
+from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay
 from pychron.processing.argon_calculations import find_plateaus, age_equation
@@ -116,8 +117,7 @@ class Spectrum(BaseArArFigure):
                                   (25, miages),
                                   font='modern 10',
                                   label_position='bottom right',
-                                  append=False
-        )
+                                  append=False)
 
         self._set_y_limits(miages, maages, pad='0.1')
 
@@ -147,6 +147,14 @@ class Spectrum(BaseArArFigure):
                                   nsigma=ns)
         ds.overlays.append(sp)
 
+        lo= SpectrumLabelOverlay(component=ds,
+                                 nsigma=ns,
+                                 spectrum=self,
+                                 display_extract_value=self.options.display_extract_value,
+                                 display_step=self.options.display_step)
+
+        ds.overlays.append(lo)
+
         if value_scale == 'log':
             p.value_axis.tick_generator = SparseLogTicks()
         else:
@@ -159,8 +167,7 @@ class Spectrum(BaseArArFigure):
     def _add_plateau_overlay(self, lp, bounds, age):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
-                            y=age
-        )
+                            y=age)
         lp.overlays.append(ov)
 
         tool = PlateauTool(component=ov)

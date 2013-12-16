@@ -171,16 +171,16 @@ class PlotterOptions(BasePlotterOptions):
             label='X')
         return v
 
+    def _get_info_group(self):
+        return Group()
+
     def _get_main_group(self):
         main_grp = Group(
             VGroup(
                 HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
                        Item('title', springy=True, enabled_when='not auto_generate_title',
                             tooltip='User specified plot title')),
-                HGroup(Item('show_info',label='Display Info'),
-                       Item('show_mean_info', label='Mean',enabled_when='show_info'),
-                       Item('show_error_type_info',label='Error Type',enabled_when='show_info'),
-                       show_border=True, label='Info'),
+                self._get_info_group(),
                 self._get_aux_plots_group(),
                 HGroup(Item('x_filter_str', label='X Filter'))
                 ),

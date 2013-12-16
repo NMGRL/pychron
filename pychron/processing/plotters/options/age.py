@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Bool, Enum
-
+from traitsui.api import Item, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -32,14 +32,21 @@ class AgeOptions(PlotterOptions):
     show_mean_info=Bool(True)
     show_error_type_info=Bool(True)
 
+    def _get_info_group(self):
+        g = HGroup(Item('show_info', label='Display Info'),
+                   Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                   Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
+                   show_border=True, label='Info'),
+
+        return g
+
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
         attrs += ['include_j_error',
                   'include_irradiation_error',
                   'include_decay_error',
                   'nsigma',
-                  'show_info', 'show_mean_info','show_error_type_info'
-        ]
+                  'show_info', 'show_mean_info','show_error_type_info']
         return attrs
 
 
