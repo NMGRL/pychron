@@ -45,7 +45,7 @@ class DataCollector(Loggable):
     #grpname = Str
 
     is_baseline = Bool(False)
-    for_peak_hop=Bool(False)
+    for_peak_hop = Bool(False)
     fits = List
     series_idx = Int
     #total_counts = CInt
@@ -58,7 +58,7 @@ class DataCollector(Loggable):
     _evt = None
     _warned_no_fit = None
 
-    collection_kind=Enum(('sniff','signal','baseline'))
+    collection_kind = Enum(('sniff', 'signal', 'baseline'))
 
     def _detectors_changed(self):
         self._idx_func = self._get_idx_func()
@@ -167,15 +167,15 @@ class DataCollector(Loggable):
             self._update_isotopes(x, keys, signals)
 
     def _update_baseline_peak_hop(self, x, keys, signals):
-        a=self.arar_age
+        a = self.arar_age
         for iso in self.arar_age.isotopes.itervalues():
             signal = signals[keys.index(iso.detector)]
-            a.append_data(iso, x, signal, 'baseline')
+            a.append_data(iso.name, x, signal, 'baseline')
 
     def _update_isotopes(self, x, keys, signals):
-        a=self.arar_age
+        a = self.arar_age
 
-        kind=self.collection_kind
+        kind = self.collection_kind
         for dn in keys:
             dn = self._get_detector(dn)
             if dn:
@@ -254,7 +254,7 @@ class DataCollector(Loggable):
         else:
             self._plot_data_(i, x, keys, signals)
 
-        graph=self.plot_panel.isotope_graph
+        graph = self.plot_panel.isotope_graph
         graph.refresh()
 
     #===============================================================================
