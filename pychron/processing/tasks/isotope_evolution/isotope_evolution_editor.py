@@ -162,7 +162,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             db.add_isotope_result(dbiso, fit_hist,
                                   signal_=v, signal_err=e)
 
-            self.debug('adding {} fit {} - {}'.format(kind, name, fit))
+            # self.debug('adding {} fit {} - {}'.format(kind, name, fit))
 
         return fit_hist
 

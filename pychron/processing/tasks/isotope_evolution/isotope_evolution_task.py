@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import traceback
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
@@ -206,13 +207,14 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             for _ in xrange(100):
                 try:
                     u.append(unks.next())
-                except StopIteration:
-                    pass
+                except (Exception, StopIteration), e:
+                    self.debug(traceback.print_exception())
+
             if u:
-                self.active_editor.set_items(u)
+                self.active_editor.set_items(u, use_cache=False)
                 # self.active_editor.unknowns=u
                 # self.active_editor.unknowns.append(unks.next())
-                found = self.find_associated_analyses(found=found)
+                found = self.find_associated_analyses(found=found, use_cache=False)
                 fits = doc['fit_isotopes']
                 filters = doc['filter_isotopes']
 

@@ -95,10 +95,11 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def set_items(self, unks, is_append=False):
+    def set_items(self, unks, is_append=False, use_cache=True):
         ans = self.processor.make_analyses(unks,
                                             calculate_age=self.calculate_age,
-                                            unpack=self.unpack_peaktime)
+                                            unpack=self.unpack_peaktime,
+                                            use_cache=use_cache)
 
         if is_append:
             pans = self.analyses

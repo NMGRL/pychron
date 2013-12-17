@@ -64,7 +64,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items=ans
 
-    def find_associated_analyses(self, found=None):
+    def find_associated_analyses(self, found=None, use_cache=True):
 
         if self.active_editor:
             unks = self.active_editor.analyses
@@ -97,27 +97,26 @@ class AnalysisEditTask(BaseBrowserTask):
                     self.debug("{} {}".format(ms, ed))
                     for atype in ('blank_unknown', 'blank_air', 'blank_cocktail',
                                   'air', 'cocktail'):
-                        self.debug('find {}'.format(atype))
                         for i in range(10):
                             td = timedelta(hours=6 * (i + 1))
                             lpost, hpost = min(ts) - td, max(ts) + td
 
                             ans = db.get_date_range_analyses(lpost, hpost,
                                                              atype=atype,
-                                                             spectrometer=ms,
-                                                             # extract_device=ed if atype == 'blank_unknown' else None
-                            )
+                                                             spectrometer=ms)
 
-                            self.debug('{} to {}. nanalyses={}'.format(lpost, hpost, len(ans) if ans else 0))
                             if ans:
+                                self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
                                 ans = [ai for ai in ans if ai.uuid not in uuids]
+                                self.debug('new ans {}'.format(len(ans)))
                                 tans.extend(ans)
                                 uuids.extend([ai.uuid for ai in ans])
                                 break
 
                 prog.close()
                 #ans=self.manager.make_analyses(ans)
-                self.active_editor.analyses.extend(tans)
+                # self.debug('append items {}'.format(len(ans)))
+                self.active_editor.set_items(tans, is_append=True, use_cache=use_cache)
                 return uuids
 
     def recall(self, records):

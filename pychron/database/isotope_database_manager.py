@@ -21,7 +21,6 @@ from traits.api import Instance, String, Property, Event, \
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.codetools.simple_timeit import simple_timer
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.helpers.iterfuncs import partition
 from pychron.ui.progress_dialog import myProgressDialog
@@ -119,7 +118,9 @@ class IsotopeDatabaseManager(Loggable):
     def make_analyses(self, ans, calculate_age=True,
                       progress=None,
                       unpack=False,
-                      exclude=None, **kw):
+                      exclude=None,
+                      use_cache=True,
+                      **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
             the majority of the load time is in _construct_analysis
@@ -135,13 +136,13 @@ class IsotopeDatabaseManager(Loggable):
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
 
                 if no_db_ans:
-                    cached_ans, no_db_ans = partition(no_db_ans,
-                                                      lambda x: x.uuid in ANALYSIS_CACHE)
-                    cached_ans = list(cached_ans)
+                    # cached_ans, no_db_ans = partition(no_db_ans,
+                    #                                   lambda x: x.uuid in ANALYSIS_CACHE)
+                    # cached_ans = list(cached_ans)
+                    #
+                    # db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
-                    db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
-
-                    no_db_ans = list(no_db_ans)
+                    # no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
                         #progress = None
@@ -165,6 +166,7 @@ class IsotopeDatabaseManager(Loggable):
                                                        progress=progress,
                                                        calculate_age=calculate_age,
                                                        unpack=unpack,
+                                                       use_cache=use_cache,
                                                        **kw)
                             if a:
                                 db_ans.append(a)
@@ -288,22 +290,24 @@ class IsotopeDatabaseManager(Loggable):
     def _analysis_factory(self, rec, progress=None,
                           calculate_age=False,
                           unpack=False,
-                          exclude=None, **kw):
+                          exclude=None,
+                          use_cache=True,**kw):
 
 
         if isinstance(rec, (Analysis, DBAnalysis)):
             if progress:
                 progress.increment()
-            self._add_to_cache(rec)
-
+            # self._add_to_cache(rec)
             return rec
 
         else:
             a = self._construct_analysis(rec, calculate_age, unpack, progress)
-            self._add_to_cache(a)
+            if use_cache:
+                self._add_to_cache(a)
+
             return a
 
-    def _construct_analysis(self, rec, calculate_age, unpack, prog):
+    def _construct_analysis(self, rec, calculate_age, unpack,  prog):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
