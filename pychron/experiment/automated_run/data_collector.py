@@ -176,6 +176,7 @@ class DataCollector(Loggable):
         a = self.arar_age
 
         kind = self.collection_kind
+
         for dn in keys:
             dn = self._get_detector(dn)
             if dn:
@@ -203,18 +204,18 @@ class DataCollector(Loggable):
     def _plot_data_(self, i, x, keys, signals):
         nfs = self.get_fit_block(i)
         idx_func = self._idx_func
-        for dn in keys:
+        for i, dn in enumerate(keys):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
                 pi = idx_func(iso, dn.name)
                 signal = signals[keys.index(dn.name)]
+                # print iso, dn.name, pi
                 self._set_plot_data(pi, iso, nfs, x, signal)
 
     def _set_plot_data(self, pi, iso, nfs, x, signal):
         graph = self.plot_panel.isotope_graph
         np = len(graph.plots)
-        # print iso, dn.name, pi
         try:
             fi = nfs[pi]
         except IndexError:
@@ -236,13 +237,14 @@ class DataCollector(Loggable):
                         update_y_limits=True,
                         ypadding='0.1')
 
-        miso = self.arar_age.isotopes[iso]
-        if self.is_baseline:
-            miso.baseline.fit = fi
-        else:
-            miso.fit = fi
-
         if fi:
+            if iso in self.arar_age.isotopes:
+                miso = self.arar_age.isotopes[iso]
+                if self.is_baseline:
+                    miso.baseline.fit = fi
+                else:
+                    miso.fit = fi
+
             graph.set_fit(fi, plotid=pi, series=0)
 
     def _plot_data(self, i, x, keys, signals):
@@ -360,16 +362,18 @@ class DataCollector(Loggable):
                     return 'break'
 
     def _get_idx_func(self):
-        original_idx = [(di.name, di.isotope) for di in self.detectors]
+        # original_idx = [(di.name, di.isotope) for di in self.detectors]
         # print original_idx
         def idx_func(isot, detname):
-            idx = next((i for i, (n, ii) in enumerate(original_idx)
-                        if ii == isot), None)
-
-            if idx is None:
-                idx = next((i for i, (n, ii) in enumerate(original_idx)
-                            if n == detname), None)
-            return idx
+            # idx = next((i for i, (n, ii) in enumerate(original_idx)
+            #             if ii == isot), None)
+            #
+            # if idx is None:
+            #     idx = next((i for i, (n, ii) in enumerate(original_idx)
+            #                 if n == detname), None)
+            # return idx
+            graph=self.plot_panel.isotope_graph
+            return next((i for i,p in enumerate(graph.plots) if p.y_axis.title==isot), None)
 
         return idx_func
 

@@ -737,7 +737,7 @@ class PyScript(Loggable):
             wd.join()
 
             if self.manager:
-                self.manager.wait_group.pop()
+                self.manager.wait_group.pop(wd)
 
             if wd.is_canceled():
                 self.cancel()

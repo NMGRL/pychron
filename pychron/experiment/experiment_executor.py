@@ -691,7 +691,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         time.sleep(0.1)
         wc.reset()
         wc.start()
-        wg.pop()
+        wg.pop(wc)
 
     def _set_extract_state(self, state, flash, color='green'):
 

@@ -49,16 +49,20 @@ class WaitGroup(HasTraits):
                  )
         return v
 
-
     def _controls_default(self):
         return [WaitControl()]
 
     def _active_control_default(self):
         return self.controls[0]
 
-    def pop(self):
+    def pop(self, control=None):
         if len(self.controls) > 1:
-            self.controls.pop()
+            if control:
+                if control in self.controls:
+                    self.controls.remove(control)
+            else:
+                self.controls.pop()
+
             self.active_control = self.controls[-1]
 
     def stop(self):

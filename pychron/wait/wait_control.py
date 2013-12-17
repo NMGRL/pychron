@@ -111,6 +111,7 @@ class WaitControl(Loggable):
     def _continue(self):
         self._continued = True
         self._end()
+        self.current_time = 0
 
     def _end(self):
         self.message = ''

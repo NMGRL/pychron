@@ -295,7 +295,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         tb, vb = spec.get_signal_data(iso, odet)
 
-        baseline = spec.get_baseline_uvalue(odet)
+        baseline = spec.get_baseline_uvalue(iso)
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
@@ -321,10 +321,10 @@ class MassSpecDatabaseImporter(Loggable):
                               dbdet)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
-        self.debug('add baseline dbdet= {}. original det= {}'.format(dbdet.Label, odet))
-
+        iso=dbiso.Label
+        self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
         det = dbdet.Label
-        tb, vb = spec.get_baseline_data(dbiso.Label, odet)
+        tb, vb = spec.get_baseline_data(iso, odet)
         blob = self._build_timeblob(tb, vb)
 
         db = self.db
@@ -335,11 +335,11 @@ class MassSpecDatabaseImporter(Loggable):
         if spec.is_peak_hop:
             det = spec.peak_hop_detector
 
-        bs = spec.get_baseline_uvalue(odet)
+        bs = spec.get_baseline_uvalue(iso)
 
         sem = bs.std_dev / (ncnts) ** 0.5
 
-        bfit = spec.get_baseline_fit(odet)
+        bfit = spec.get_baseline_fit(iso)
 
         infoblob = self._make_infoblob(bs.nominal_value, sem)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,

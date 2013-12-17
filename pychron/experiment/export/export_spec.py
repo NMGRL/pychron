@@ -93,19 +93,20 @@ class ExportSpec(Loggable):
         return self.data_manager.open_file(self.data_path)
 
     def iter_isotopes(self):
-        def _iter():
-            dm = self.data_manager
-            hfile = dm._frame
-            root = dm._frame.root
-            signal = root.signal
-            for isogroup in hfile.listNodes(signal):
-                for dettable in hfile.listNodes(isogroup):
-                    iso = isogroup._v_name
-                    det = dettable.name
-                    self.debug('iter_isotopes yield: {} {}'.format(iso, det))
-                    yield iso, det
-
-        return _iter()
+        return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
+        # def _iter():
+        #     dm = self.data_manager
+        #     hfile = dm._frame
+        #     root = dm._frame.root
+        #     signal = root.signal
+        #     for isogroup in hfile.listNodes(signal):
+        #         for dettable in hfile.listNodes(isogroup):
+        #             iso = isogroup._v_name
+        #             det = dettable.name
+        #             self.debug('iter_isotopes yield: {} {}'.format(iso, det))
+        #             yield iso, det
+        #
+        # return _iter()
 
     def get_blank_uvalue(self, iso):
         try:
@@ -142,8 +143,8 @@ class ExportSpec(Loggable):
             det is the original detector not the mass spec fooling detector
         """
         self.debug('get baseline data {} {}'.format(iso, det))
-        if self.is_peak_hop and det == self.peak_hop_detector:
-            iso = None
+        # if self.is_peak_hop and det == self.peak_hop_detector:
+        #     iso = None
 
         return self._get_data('baseline', iso, det)
 
@@ -151,26 +152,33 @@ class ExportSpec(Loggable):
         self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
 
-    def get_baseline_uvalue(self, det):
-        vb = []
+    def get_baseline_uvalue(self, iso):
+        try:
+            v=self.isotopes[iso].baseline.uvalue
+        except KeyError:
+            v=ufloat(0,0)
+        return v
 
-        dm = self.data_manager
-        hfile = dm._frame
-        root = dm._frame.root
-        v, e = 0, 0
-        if hasattr(root, 'baseline'):
-            baseline = root.baseline
-            for isogroup in hfile.listNodes(baseline):
-                for dettable in hfile.listNodes(isogroup):
-                    if dettable.name == det:
-                        vb = [r['value'] for r in dettable.iterrows()]
-                        break
-
-            vb = array(vb)
-            v = vb.mean()
-            e = vb.std()
-
-        return ufloat(v, e)
+    # def get_baseline_uvalue(self, det):
+        # vb = []
+        #
+        # dm = self.data_manager
+        # hfile = dm._frame
+        # root = dm._frame.root
+        # v, e = 0, 0
+        # if hasattr(root, 'baseline'):
+        #     baseline = root.baseline
+        #     for isogroup in hfile.listNodes(baseline):
+        #         for dettable in hfile.listNodes(isogroup):
+        #             if dettable.name == det:
+        #                 vb = [r['value'] for r in dettable.iterrows()]
+        #                 break
+        #
+        #     vb = array(vb)
+        #     v = vb.mean()
+        #     e = vb.std()
+        #
+        # return ufloat(v, e)
 
     def _get_baseline_detector(self, iso, det):
         if self.is_peak_hop:
@@ -180,32 +188,44 @@ class ExportSpec(Loggable):
         return det
 
     def _get_data(self, group, iso, det, verbose=True):
-        dm = self.data_manager
-        hfile = dm._frame
-        root = hfile.root
-
         try:
-            group = getattr(root, group)
-            if iso is None:
-                tab = next((di for ii in hfile.listNodes(group)
-                            for di in hfile.listNodes(ii)
-                            if di.name == det))
-            else:
-                isog = getattr(group, iso)
-                tab = getattr(isog, det)
+            iso = self.isotopes[iso]
+            if group!='signal':
+                iso=getattr(iso, group)
+            t, v = iso.xs, iso.ys
 
-            data = [(row['time'], row['value'])
-                    for row in tab.iterrows()]
-            t, v = zip(*data)
-        except (NoSuchNodeError, AttributeError, StopIteration):
-            import traceback
-
-            if verbose:
-                self.debug(traceback.format_exc())
-
+        except KeyError:
             t, v = [0, ], [0, ]
 
+        self.debug('Get data {} {} len t={}'.format(group, iso, len(t)))
         return t, v
+        #
+        # dm = self.data_manager
+        # hfile = dm._frame
+        # root = hfile.root
+        #
+        # try:
+        #     group = getattr(root, group)
+        #     if iso is None:
+        #         tab = next((di for ii in hfile.listNodes(group)
+        #                     for di in hfile.listNodes(ii)
+        #                     if di.name == det))
+        #     else:
+        #         isog = getattr(group, iso)
+        #         tab = getattr(isog, det)
+        #
+        #     data = [(row['time'], row['value'])
+        #             for row in tab.iterrows()]
+        #     t, v = zip(*data)
+        # except (NoSuchNodeError, AttributeError, StopIteration):
+        #     import traceback
+        #
+        #     if verbose:
+        #         self.debug(traceback.format_exc())
+        #
+        #     t, v = [0, ], [0, ]
+        #
+        # return t, v
 
     @property
     def record_id(self):
