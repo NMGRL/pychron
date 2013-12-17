@@ -144,11 +144,9 @@ class MeasurementPyScript(ValvePyScript):
                                         mass,
                                         detector,
                                         settling_time=settling_time,
-                                        series=self._series_count,
-        ):
-        #
+                                        series=self._series_count):
             self.cancel()
-        self._series_count += 1
+        self._series_count += 2
 
     @count_verbose_skip
     @command_register

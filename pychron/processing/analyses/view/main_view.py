@@ -187,7 +187,7 @@ class MainView(HasTraits):
         if niso and diso:
             try:
                 return niso.ic_corrected_value() / diso.ic_corrected_value(), diso.ic_factor / niso.ic_factor
-            except ZeroDivisionError:
+            except (ZeroDivisionError, TypeError):
                 pass
         return ufloat(0, 1e-20), 1
 
