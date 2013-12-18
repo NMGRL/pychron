@@ -195,7 +195,7 @@ class TagTableView(Loggable):
                  HGroup(
                      icon_button_editor('add_tag_button', 'add', tooltip='Add a tag'),
                      icon_button_editor('delete_tag_button', 'delete', tooltip='Delete selected tags'),
-                     icon_button_editor('save_button', 'database_save', tooltip='Save changes to the database')),
+                     icon_button_editor('save_button', 'database_save', tooltip='Save changes from the "Tag" table to the database')),
                  UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
                                                      multi_select=True,
                                                      operations=['delete'])),

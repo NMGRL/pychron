@@ -231,7 +231,7 @@ class AutomatedRun(Loggable):
 
         fits=dict([f.split(':') for f in fits])
         for k, iso in isotopes.iteritems():
-            iso.fit=fits[k]
+            iso.set_fit_blocks(fits[k])
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
@@ -243,41 +243,7 @@ class AutomatedRun(Loggable):
 
         fits = dict([f.split(':') for f in fits])
         for k, iso in isotopes.iteritems():
-            iso.baseline.fit = fits[iso.detector]
-
-    # def py_set_regress_fits(self, fits):
-    #     """
-    #         fits can be
-    #         1. 'linear'
-    #         2. ('linear',)
-    #         3. ('linear', 'linear')
-    #         4. [(0,100,'linear'),(100,None, 'parabolic')]
-    #     """
-        # def make_fits(fi):
-        #     if isinstance(fi, str):
-        #         fi = [fi, ] * n
-        #     elif isinstance(fi, tuple):
-        #         if len(fi) == 1:
-        #             fi = [fi[0], ] * n
-        #
-        #     return list(fi)
-        #
-        # n = len(self._active_detectors)
-        #
-        # if isinstance(fits, tuple):
-        #     if isinstance(fits[0], tuple):
-        #         self.fits = [(sli, make_fits(fs)) for sli, fs in fits]
-        #     else:
-        #         self.fits = [(None, make_fits(fits))]
-        # else:
-        #
-        #     fits = make_fits(fits)
-        #     self.fits = [(None, fits)]
-        #
-        # self.debug('=============== Fit Blocks =============')
-        # for i, fb in enumerate(self.fits):
-        #     self.debug('{:02n} {}'.format(i + 1, fb))
-        # self.debug('========================================')
+            iso.baseline.set_fit_blocks(fits[iso.detector])
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -308,7 +274,7 @@ class AutomatedRun(Loggable):
                                self._get_data_writer(gn),
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions, 'black')
+                               check_conditions, self.experiment_executor.signal_color)
         return result
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
@@ -351,7 +317,7 @@ class AutomatedRun(Loggable):
                                writer,
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions, 'grey')
+                               check_conditions, self.experiment_executor.sniff_color)
 
         return result
 
@@ -396,7 +362,7 @@ class AutomatedRun(Loggable):
                                starttime_offset,
                                series,
                                check_conditions,
-                               'blue'
+                               self.experiment_executor.baseline_color
                                )
 
         if self.plot_panel:
@@ -1339,7 +1305,7 @@ anaylsis_type={}
                              data_writer,
                              ncounts,
                              starttime, starttime_offset,
-                             series, check_conditions, 'red')
+                             series, check_conditions, 'black')
 
     def _get_data_generator(self):
         def gen():
@@ -1908,22 +1874,22 @@ anaylsis_type={}
                                                 msg='Could not save {} to Mass Spec database'.format(self.runid))
 
     def _export_spec_factory(self):
-        dc = self.collector
-        fb = dc.get_fit_block(-1, self.fits)
+        # dc = self.collector
+        # fb = dc.get_fit_block(-1, self.fits)
 
         rs_name, rs_text = self._assemble_script_blob()
         rid = self.runid
 
         # blanks = self.get_previous_blanks()
 
-        dkeys = [d.name for d in self._active_detectors]
-        sf = dict(zip(dkeys, fb))
+        # dkeys = [d.name for d in self._active_detectors]
+        # sf = dict(zip(dkeys, fb))
         p = self._current_data_frame
 
         exp = ExportSpec(rid=rid,
                          runscript_name=rs_name,
                          runscript_text=rs_text,
-                         signal_fits=sf,
+                         # signal_fits=sf,
                          spectrometer=self.spec.mass_spectrometer.capitalize(),
                          # blanks=blanks,
                          data_path=p,

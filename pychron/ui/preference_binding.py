@@ -35,6 +35,7 @@ class ColorPreferenceBinding(PreferenceBinding):
 def color_bind_preference(*args, **kw):
     return bind_preference(factory=ColorPreferenceBinding, *args, **kw)
 
+
 # Factory function for creating bindings.
 def bind_preference(obj, trait_name, preference_path,
                     factory=None,

@@ -18,7 +18,7 @@
 from traits.api import Event, Button, String, \
     Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change
 # from traitsui.api import View, Item
-from apptools.preferences.preference_binding import bind_preference
+# from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 
@@ -53,6 +53,7 @@ from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.helpers.filetools import add_extension, to_bool
 from pychron.globals import globalv
+from pychron.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -130,6 +131,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     _prev_baselines = Dict
     _err_message = None
 
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
+
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
@@ -179,6 +184,22 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         bind_preference(self.massspec_importer.db, 'host', '{}.massspec_host'.format(prefid))
         bind_preference(self.massspec_importer.db, 'username', '{}.massspec_username'.format(prefid))
         bind_preference(self.massspec_importer.db, 'password', '{}.massspec_password'.format(prefid))
+
+
+        prefid='pychron.experiment'
+        #auto save
+        bind_preference(self, 'use_auto_save',
+                        '{}.use_auto_save'.format(prefid))
+        bind_preference(self, 'auto_save_delay',
+                        '{}.auto_save_delay'.format(prefid))
+
+        #colors
+        color_bind_preference(self, 'signal_color',
+                        '{}.signal_color'.format(prefid))
+        color_bind_preference(self, 'sniff_color',
+                        '{}.sniff_color'.format(prefid))
+        color_bind_preference(self, 'baseline_color',
+                        '{}.baseline_color'.format(prefid))
 
     def isAlive(self):
         return self._alive

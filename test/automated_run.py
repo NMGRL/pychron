@@ -15,118 +15,144 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pychron.ui import set_toolkit
+set_toolkit('qt4')
 import unittest
-from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.experiment.automated_run.condition import TruncationCondition
-from test.database import isotope_manager_factory
+from pychron.processing.isotope import Isotope
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-class AutomatedRunTest(unittest.TestCase):
-    def setUp(self):
-        self.arun = AutomatedRun()
+class FitBlockTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.fits= ('Ar41:(,10,average), (10,,cubic)',
+                   'Ar40:parabolic',
+                   'Ar39AX:parabolic',
+                   'Ar39CDD:parabolic',
+                   'Ar38:linear',
+                   'Ar37:linear',
+                   'Ar36:parabolic')
 
-        db = isotope_manager_factory().db
-        db.connect()
-        self.arun.db = db
+    def testAr40Fit(self):
+        iso=Isotope()
 
-    def testFits1(self):
-        fits = 'linear'
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
+        fits = dict([f.split(':') for f in self.fits])
 
-        self.assertListEqual(self.arun.fits, [(None, ['linear', 'linear', 'linear'])])
+        iso.set_fit_blocks(fits['Ar41'])
+        self.assertEqual(iso.get_fit(0), 'average')
+        self.assertEqual(iso.get_fit(-1), 'cubic')
+        self.assertEqual(iso.get_fit(100), 'cubic')
 
-    def testFits2(self):
-        fits = ('linear', 'linear', 'parabolic')
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
+#
+# class AutomatedRunTest(unittest.TestCase):
+#     def setUp(self):
+#         self.arun = AutomatedRun()
+#
+#         # db = isotope_manager_factory().db
+#         # db.connect()
+#         # self.arun.db = db
+#
+#     def testFits1(self):
+#         fits = 'linear'
+#         dets = ['H2', 'H1', 'AX']
+#
+#         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+#         self.arun.py_set_fits(fits)
+#
+#         self.assertEqual('linear', self.arun.arar_age.isotopes['Ar40'])
+        # self.arun._active_detectors = dets
+        # self.arun.py_set_regress_fits(fits)
 
-        self.assertListEqual(self.arun.fits, [(None, ['linear', 'linear', 'parabolic'])])
+        # self.assertListEqual(self.arun.fits, [(None, ['linear', 'linear', 'linear'])])
 
-    def testFits3(self):
-        fits = (
-            ((0, 100), ('linear', 'linear', 'parabolic')),
-        )
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
-        self.assertListEqual(self.arun.fits,
-                             [((0, 100), ['linear', 'linear', 'parabolic'])])
-
-    def testGetFitBlock1(self):
-        fits = ('linear', 'linear', 'parabolic')
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
-        fits = self.arun._get_fit_block(10, self.arun.fits)
-        self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
-
-    def testGetFitBlock2(self):
-        fits = (
-            ((0, 100), ('linear', 'linear', 'parabolic')),
-        )
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
-        fits = self.arun._get_fit_block(150, self.arun.fits)
-        self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
-
-    def testGetFitBlock3(self):
-        fits = (
-            ((0, 100), ('linear', 'linear', 'parabolic')),
-            ((100,), ('linear', 'linear', 'linear')),
-        )
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
-        fits = self.arun._get_fit_block(10, self.arun.fits)
-        self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
-
-    def testGetFitBlock4(self):
-        fits = (
-            ((0, 100), ('linear', 'linear', 'linear')),
-            ((100, None), ('linear', 'linear', 'parabolic')),
-        )
-        dets = ['H2', 'H1', 'AX']
-        #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
-        self.arun._active_detectors = dets
-        self.arun.py_set_regress_fits(fits)
-        #         print 'fffff', self.arun.fits
-        fits = self.arun._get_fit_block(10, self.arun.fits)
-        self.assertListEqual(fits, ['linear', 'linear', 'linear'])
-
-
-    @unittest.skip('check iteration')
-    def testCheckIteration(self):
-        arun = self.arun
-        attr = 'age'
-        comp = '>'
-        value = 10
-        start_count = 0
-        frequency = 1
-
-        conditions = [
-            TruncationCondition(attr, comp, value,
-                                start_count,
-                                frequency)
-        ]
-
-        cnt = 1
-        arun.labnumber = '61311'
-        arun.analysis_type = 'unknown'
-        arun.start()
-
-        result = arun._check_conditions(conditions, cnt)
-        self.assertEqual(result, True)
+    # def testFits2(self):
+    #     fits = ('linear', 'linear', 'parabolic')
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #
+    #     self.assertListEqual(self.arun.fits, [(None, ['linear', 'linear', 'parabolic'])])
+    #
+    # def testFits3(self):
+    #     fits = (
+    #         ((0, 100), ('linear', 'linear', 'parabolic')),
+    #     )
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #     self.assertListEqual(self.arun.fits,
+    #                          [((0, 100), ['linear', 'linear', 'parabolic'])])
+    #
+    # def testGetFitBlock1(self):
+    #     fits = ('linear', 'linear', 'parabolic')
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #     fits = self.arun._get_fit_block(10, self.arun.fits)
+    #     self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
+    #
+    # def testGetFitBlock2(self):
+    #     fits = (
+    #         ((0, 100), ('linear', 'linear', 'parabolic')),
+    #     )
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #     fits = self.arun._get_fit_block(150, self.arun.fits)
+    #     self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
+    #
+    # def testGetFitBlock3(self):
+    #     fits = (
+    #         ((0, 100), ('linear', 'linear', 'parabolic')),
+    #         ((100,), ('linear', 'linear', 'linear')),
+    #     )
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #     fits = self.arun._get_fit_block(10, self.arun.fits)
+    #     self.assertListEqual(fits, ['linear', 'linear', 'parabolic'])
+    #
+    # def testGetFitBlock4(self):
+    #     fits = (
+    #         ((0, 100), ('linear', 'linear', 'linear')),
+    #         ((100, None), ('linear', 'linear', 'parabolic')),
+    #     )
+    #     dets = ['H2', 'H1', 'AX']
+    #     #         self.arun.py_activate_detectors(('H2', 'H1', 'AX'))
+    #     self.arun._active_detectors = dets
+    #     self.arun.py_set_regress_fits(fits)
+    #     #         print 'fffff', self.arun.fits
+    #     fits = self.arun._get_fit_block(10, self.arun.fits)
+    #     self.assertListEqual(fits, ['linear', 'linear', 'linear'])
+    #
+    #
+    # @unittest.skip('check iteration')
+    # def testCheckIteration(self):
+    #     arun = self.arun
+    #     attr = 'age'
+    #     comp = '>'
+    #     value = 10
+    #     start_count = 0
+    #     frequency = 1
+    #
+    #     conditions = [
+    #         TruncationCondition(attr, comp, value,
+    #                             start_count,
+    #                             frequency)
+    #     ]
+    #
+    #     cnt = 1
+    #     arun.labnumber = '61311'
+    #     arun.analysis_type = 'unknown'
+    #     arun.start()
+    #
+    #     result = arun._check_conditions(conditions, cnt)
+    #     self.assertEqual(result, True)
 
 #     def testTermination(self):
 #         grpname = 'signal'

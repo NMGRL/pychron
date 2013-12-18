@@ -21,7 +21,6 @@ from traits.api import Any, List, CInt, Int, Bool, Enum
 #============= standard library imports ========================
 import time
 from threading import Event, Timer
-from numpy import Inf
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 # from pychron.ui.gui import invoke_in_main_thread
@@ -59,9 +58,6 @@ class DataCollector(Loggable):
     _warned_no_fit = None
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
-
-    def _detectors_changed(self):
-        self._idx_func = self._get_idx_func()
 
     def wait(self):
         st = time.time()
@@ -194,21 +190,15 @@ class DataCollector(Loggable):
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
     def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
-        # idx_func = self._idx_func
-        # nfs = self.get_fit_block(i)
         for k, v in self.arar_age.isotopes.iteritems():
-            # pi = idx_func(iso.name, iso.detector)
             signal = signals[keys.index(v.detector)]
             self._set_plot_data(i, k, v.detector, x, signal)
 
     def _plot_data_(self, cnt, x, keys, signals):
-        # nfs = self.get_fit_block(i)
-        # idx_func = self._idx_func
         for i, dn in enumerate(keys):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                # pi = idx_func(iso, dn.name)
                 signal = signals[keys.index(dn.name)]
                 self._set_plot_data(cnt, iso, dn.name, x, signal)
 
@@ -227,21 +217,6 @@ class DataCollector(Loggable):
 
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
-        # np = len(graph.plots)
-        # try:
-        #     fi = nfs[pi]
-        # except (IndexError, TypeError):
-        #     print pi, nfs
-        #     if not iso.name in self._warned_no_fit:
-        #         self.warning('No fit defined for {}, idx={}'.format(iso.name, pi))
-        #         self._warned_no_fit.append(iso.name)
-        #     return
-
-        # if pi >= np:
-        #     graph.new_plot()
-        #     graph.new_series(type='scatter',
-        #                      marker='circle',
-        #                      plotid=pi)
 
         graph.add_datum((x, signal),
                         series=self.series_idx,
@@ -250,14 +225,6 @@ class DataCollector(Loggable):
                         ypadding='0.1')
 
         if fit:
-
-            # if iso in self.arar_age.isotopes:
-            #     miso = self.arar_age.isotopes[iso]
-            # if self.is_baseline:
-            #     iso.baseline.fit = fi
-            # else:
-            #     iso.fit = fi
-
             graph.set_fit(fit, plotid=pid, series=self.series_idx)
 
     def _plot_data(self, i, x, keys, signals):
@@ -275,35 +242,6 @@ class DataCollector(Loggable):
     #===============================================================================
     #
     #===============================================================================
-    def get_fit_block(self, iter_cnt, fits=None):
-        if fits is None:
-            fits = self.fits
-        return self._get_fit_block(iter_cnt, fits)
-
-    def _get_fit_block(self, iter_cnt, fits):
-        midx = None
-        me = -Inf
-        for i, (sli, fs) in enumerate(fits):
-            if sli:
-                s, e = sli
-                if s is None:
-                    s = 0
-                if e is None:
-                    e = Inf
-
-                if iter_cnt < 0:
-                    if me < e:
-                        me = e
-                        midx = i
-                else:
-                    if iter_cnt > s and iter_cnt < e:
-                        break
-
-        if midx is not None:
-            fs = fits[midx]
-
-        #        self.debug('fs {}'.format(fs))
-        return fs
 
     #===============================================================================
     # checks
@@ -373,23 +311,5 @@ class DataCollector(Loggable):
                 action_condition.perform(self.measurement_script)
                 if not action_condition.resume:
                     return 'break'
-
-    def _get_idx_func(self):
-        # original_idx = [(di.name, di.isotope) for di in self.detectors]
-        # print original_idx
-        def idx_func(isot, detname):
-            # idx = next((i for i, (n, ii) in enumerate(original_idx)
-            #             if ii == isot), None)
-            #
-            # if idx is None:
-            #     idx = next((i for i, (n, ii) in enumerate(original_idx)
-            #                 if n == detname), None)
-            # return idx
-            graph=self.plot_panel.isotope_graph
-            return next((i for i,p in enumerate(graph.plots)
-                         if p.y_axis.title in (isot, '{}{}'.format(isot, detname))), None)
-
-
-        return idx_func
 
         #============= EOF =============================================

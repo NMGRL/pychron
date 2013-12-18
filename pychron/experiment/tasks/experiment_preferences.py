@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password
+    Bool, Password, Color
 from traitsui.api import View, Item, Group, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
@@ -32,7 +32,6 @@ class ExperimentPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
-    use_auto_figure = Bool
     use_notifications = Bool
     notifications_port = Int
 
@@ -42,44 +41,44 @@ class ExperimentPreferences(BasePreferencesHelper):
     irradiation_prefix = Str
     monitor_name = Str
 
+    baseline_color=Color
+    sniff_color=Color
+    signal_color=Color
+
 
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'
 
     def traits_view(self):
-        auto_figure_grp = Group(
-            Item('use_auto_figure'),
-            VGroup(
+        notification_grp =VGroup(
                 Item('use_notifications'),
                 Item('notifications_port',
                      enabled_when='use_notifications',
                      label='Port'),
+                label='Notifications')
 
-                label='Notifications'
-            ),
-            label='Auto Figure'
-        )
         editor_grp = Group(
             Item('use_auto_save',
-                 tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'
-            ),
+                 tooltip='If "Use auto save" experiment queue saved after "timeout" seconds'),
             Item('auto_save_delay',
                  label='Auto save timeout (s)',
-                 tooltip='If experiment queue is not saved then wait "timeout" seconds before saving or canceling'
-            ),
-            label='Editor'
-        )
+                 tooltip='If experiment queue is not saved then wait "timeout" seconds before saving or canceling'),
+            label='Editor')
+
         irradiation_grp = Group(Item('irradiation_prefix',
                                      label='Irradiation Prefix'),
                                 Item('monitor_name'),
                                 label='Irradiations')
-
+        color_group=Group(Item('sniff_color',label='Sniff'),
+                          Item('baseline_color',label='Baseline'),
+                          Item('signal_color',label='Signal'),
+                        label='Colors')
         return View(
-            auto_figure_grp,
+            color_group,
+            notification_grp,
             editor_grp,
-            irradiation_grp,
-        )
+            irradiation_grp)
 
 
 class ConsolePreferences(BaseConsolePreferences):

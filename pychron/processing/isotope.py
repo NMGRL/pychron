@@ -16,17 +16,19 @@
 
 #============= enthought library imports =======================
 from itertools import izip
+import re
 from traits.api import HasTraits, Str, Float, Property, Instance, \
-    Array, String, Either, Dict, cached_property, Event
+    Array, String, Either, Dict, cached_property, Event, List
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
-from numpy import array
+from numpy import array, Inf
 from pychron.regression.mean_regressor import MeanRegressor
 from pychron.regression.ols_regressor import PolynomialRegressor
 import struct
 #============= local library imports  ==========================
 #logger = new_logger('isotopes')
+
 
 def fit_abbreviation(fit):
     f = ''
@@ -98,6 +100,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     fit = String
     fit_abbreviation = Property(depends_on='fit')
+    fit_blocks=List
 
     filter_outliers_dict = Dict
 
@@ -114,8 +117,40 @@ class IsotopicMeasurement(BaseMeasurement):
 
         super(IsotopicMeasurement, self).__init__(*args, **kw)
 
+    def set_fit_blocks(self, fit):
+        if re.match(r'\([\w\d\s,]*\)', fit):
+            fs=[]
+            for m in re.finditer(r'\([\w\d\s,]*\)', fit):
+                a=m.group(0)
+                a=a[1:-1]
+                s,e,f=map(str.strip, a.split(','))
+
+                if s is '':
+                    s=-1
+                else:
+                    s=int(s)
+
+                if e is '':
+                    e=Inf
+                else:
+                    e=int(e)
+
+                fs.append((s,e,f))
+
+            self.fit_blocks=fs
+        else:
+            self.fit=fit
+
     def get_fit(self, cnt):
-        return self.fit
+        if self.fit_blocks:
+            if cnt<0:
+                return self.fit_blocks[-1][2]
+            else:
+                for s,e,f in self.fit_blocks:
+                    if s<cnt<e:
+                        return f
+        else:
+            return self.fit
 
     def set_fit(self, fit):
         if fit is not None:

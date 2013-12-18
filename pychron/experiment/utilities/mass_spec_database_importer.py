@@ -306,7 +306,7 @@ class MassSpecDatabaseImporter(Loggable):
         # mass spec also doesnt propagate baseline errors
 
         signal = spec.get_signal_uvalue(iso, det)
-        sfit = spec.get_signal_fit(iso, det)
+        sfit = spec.get_signal_fit(iso)
 
         if runtype == 'Blank':
             ublank = signal - baseline

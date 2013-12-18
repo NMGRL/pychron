@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from numpy import array
-from tables import NoSuchNodeError
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Instance, Dict, Bool
 from uncertainties import ufloat
@@ -34,9 +32,6 @@ class ExportSpec(Loggable):
     irradpos = CStr
 
     isotopes=Dict
-    # blanks = Dict
-    # signal_fits = Dict
-    # signal_intercepts = Dict
 
     spectrometer = Str
     extract_device = Str
@@ -128,9 +123,9 @@ class ExportSpec(Loggable):
 
         return ps
 
-    def get_signal_fit(self, iso, det):
+    def get_signal_fit(self, iso):
         try:
-            f = self.signal_fits[det]
+            f=self.isotopes[iso].get_fit(-1)
         except KeyError:
             f = 'linear'
         return f
