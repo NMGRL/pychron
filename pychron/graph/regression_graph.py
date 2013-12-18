@@ -271,7 +271,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
-            # r.trait_set(yserr=es, trait_change_notify=False)
+            yserr=scatter.yerror.get_data()
+            r.trait_set(yserr=yserr, trait_change_notify=False)
         else:
             if r is None or not isinstance(r, PolynomialRegressor):
                 r = PolynomialRegressor()
