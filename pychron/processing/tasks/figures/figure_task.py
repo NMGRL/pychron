@@ -436,12 +436,12 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # handlers
     #===============================================================================
-    @on_trait_change('plotter_options_pane:pom:plotter_options:[+, aux_plots:+]')
-    def _options_update(self, name, new):
+    @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
+    def _options_update(self, obj, name,old, new):
         if name == 'initialized':
             return
-
-        self.active_editor.rebuild()
+        if self.plotter_options_pane.pom.plotter_options.auto_refresh or name=='refresh_plot_needed':
+            self.active_editor.rebuild()
 
     def _active_editor_changed(self):
         if self.active_editor:

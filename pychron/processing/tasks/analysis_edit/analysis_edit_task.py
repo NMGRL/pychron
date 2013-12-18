@@ -220,7 +220,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
                 self.analysis_table.refresh_needed=True
                 self.unknowns_pane.refresh_needed = True
-                self.active_editor.rebuild(refresh_data=False)
+                self.active_editor.rebuild()
 
     def prepare_destroy(self):
         if self.unknowns_pane:

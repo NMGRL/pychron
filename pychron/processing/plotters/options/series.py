@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, Item, TableEditor
+from traitsui.api import View, Item, TableEditor, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -63,7 +63,7 @@ class SeriesOptions(BasePlotterOptions):
                                                 deletable=False,
                                                 reorderable=False
                              ))
-        v = View(aux_plots_grp)
+        v = View(VGroup(self._get_refresh_group(), aux_plots_grp))
         return v
 
 

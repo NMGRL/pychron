@@ -48,7 +48,6 @@ class PlotterOptions(BasePlotterOptions):
     auto_generate_title = Bool
     #     data_type = Str('database')
 
-
     xtick_font = Property
     xtick_font_size = Enum(*SIZES)
     xtick_font_name = Enum(*FONTS)
@@ -95,8 +94,7 @@ class PlotterOptions(BasePlotterOptions):
             spring,
             Item('{}{}_font_name'.format(axis, name), show_label=False),
             Item('{}{}_font_size'.format(axis, name), show_label=False),
-            Spring(width=125, springy=False)
-        )
+            Spring(width=125, springy=False))
         return hg
 
     def _get_dump_attrs(self):
@@ -177,6 +175,7 @@ class PlotterOptions(BasePlotterOptions):
     def _get_main_group(self):
         main_grp = Group(
             VGroup(
+                self._get_refresh_group(),
                 HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
                        Item('title', springy=True, enabled_when='not auto_generate_title',
                             tooltip='User specified plot title')),
