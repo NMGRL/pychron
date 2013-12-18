@@ -103,8 +103,7 @@ class Loggable(HasTraits):
         dialog = myMessageDialog(
             parent=None, message=str(msg),
             title=title,
-            severity='warning'
-        )
+            severity='warning')
         #         if sound:
         #             from pychron.helpers.media import loop_sound
         #             evt = loop_sound(sound)

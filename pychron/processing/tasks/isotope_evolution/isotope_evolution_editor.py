@@ -271,10 +271,14 @@ class IsotopeEvolutionEditor(GraphEditor):
                     else:
                         xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
-                    ma = max(max(xs), ma)
+                    if len(xs):
+                        ma = max(max(xs), ma)
+                    else:
+                        if not self.comfirmation_dialog('No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
+                            break
                     i += 1
 
-            if set_x_flag:
+            if set_x_flag and ma>-Inf:
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 
