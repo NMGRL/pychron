@@ -125,6 +125,7 @@ class IsotopeDatabaseManager(Loggable):
             loading the analysis' signals appears to be the most expensive operation.
             the majority of the load time is in _construct_analysis
         """
+
         if exclude:
             ans = self.filter_analysis_tag(ans, exclude)
 

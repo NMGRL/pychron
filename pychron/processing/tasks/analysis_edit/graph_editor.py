@@ -95,6 +95,11 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
+    def filter_invalid_analyses(self):
+        f=lambda x: not x.tag=='invalid'
+        self.analyses=filter(f, self.analyses)
+        self.rebuild()
+
     def set_items(self, unks, is_append=False, use_cache=True):
         ans = self.processor.make_analyses(unks,
                                             calculate_age=self.calculate_age,

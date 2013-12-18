@@ -198,6 +198,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if not items:
             items = [i for i in self.unknowns_pane.items
                      if i.is_temp_omitted()]
+            self.debug('Temp omitted analyses {}'.format(len(items)))
 
             if not items:
                 items=self.analysis_table.selected
@@ -207,20 +208,22 @@ class AnalysisEditTask(BaseBrowserTask):
         else:
             a = self._get_tagname(items)
             if a:
-                tag, items=a
                 db = self.manager.db
-                name = tag.name
-                with db.session_ctx():
-                    for it in items:
-                        self.debug('setting {} tag= {}'.format(it.record_id, name))
+                tag, items=a
+                if tag:
+                    name = tag.name
+                    with db.session_ctx():
+                        for it in items:
+                            self.debug('setting {} tag= {}'.format(it.record_id, name))
 
-                        ma = db.get_analysis_uuid(it.uuid)
-                        ma.tag = name
-                        it.set_tag(tag)
+                            ma = db.get_analysis_uuid(it.uuid)
+                            ma.tag = name
+                            it.set_tag(tag)
 
-                self.analysis_table.refresh_needed=True
-                self.unknowns_pane.refresh_needed = True
-                self.active_editor.rebuild()
+                    self.analysis_table.refresh_needed = True
+                    self.unknowns_pane.refresh_needed = True
+
+                    self.active_editor.filter_invalid_analyses()
 
     def prepare_destroy(self):
         if self.unknowns_pane:
