@@ -248,7 +248,12 @@ class Graph(Viewable, ContextMenuMixin):
     def update_group_attribute(self, plot, attr, value, dataid=0):
         pass
 
-    def get_plot_by_ytitle(self, iso, startswith=False):
+    def get_plotid_by_ytitle(self, *args, **kw):
+        plot= self.get_plot_by_ytitle(*args, **kw)
+        if plot is not None:
+            return self.plots.index(plot)
+
+    def get_plot_by_ytitle(self, txt, startswith=False):
         """
             iso: str
 
@@ -256,9 +261,9 @@ class Graph(Viewable, ContextMenuMixin):
             if startswith is True title only has to start with iso
         """
         if startswith:
-            is_equal = lambda x: x.startswith(iso)
+            is_equal = lambda x: x.startswith(txt)
         else:
-            is_equal = lambda x: x.__eq__(iso)
+            is_equal = lambda x: x.__eq__(txt)
 
         plot = None
         for po in self.plots:
@@ -772,8 +777,8 @@ class Graph(Viewable, ContextMenuMixin):
         plot.overlays.append(guide_overlay)
 
     def new_plot(self, add=True, **kw):
-        '''
-        '''
+        """
+        """
         p = self._plot_factory(**kw)
 
         self.plots.append(p)
@@ -789,7 +794,10 @@ class Graph(Viewable, ContextMenuMixin):
 
         pc = self.plotcontainer
         if add:
-            pc.add(p)
+            if not isinstance(add, bool):
+                pc.insert(add, p)
+            else:
+                pc.add(p)
 
         zoom = kw['zoom'] if 'zoom' in kw  else False
         pan = kw['pan'] if 'pan' in kw else False
@@ -852,8 +860,8 @@ class Graph(Viewable, ContextMenuMixin):
                    colors=None,
                    color_map_name='hot',
                    **kw):
-        '''
-        '''
+        """
+        """
 
         if plotid is None:
             plotid = len(self.plots) - 1
@@ -1009,11 +1017,11 @@ class Graph(Viewable, ContextMenuMixin):
                   **kw):
 
         #         def add(datum):
-        # print 'adding data',plotid, series, self.series
-        #try:
-        names = self.series[plotid][series]
-        #except:
-        #    print series, self.series[plotid]
+        # print 'adding data',plotid, series, len(self.series[plotid])
+        try:
+            names = self.series[plotid][series]
+        except IndexError:
+           print 'adding data', plotid, series, self.series[plotid]
 
         plot = self.plots[plotid]
 

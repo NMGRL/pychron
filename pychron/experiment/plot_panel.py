@@ -223,7 +223,7 @@ class PlotPanel(Loggable):
 
     refresh_age = True
 
-    _plot_keys = List
+    #_plot_keys = List
 
     def set_peak_center_graph(self, graph):
         self.peak_center_graph = graph
@@ -245,25 +245,25 @@ class PlotPanel(Loggable):
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
 
-    def set_detectors(self, isos, dets):
-        """
-            isos: list of str
-            dets: list of str
-            set the detector for each isotope
-        """
-        a = self.arar_age
-        g=self.isotope_graph
-        for iso, det in zip(isos, dets):
-            try:
-                a.set_isotope_detector(det, iso=iso)
-            except KeyError:
-                self.debug('isotope {} not in ArArAge.isotopes. keys={}'.format(iso, ','.join(a.isotopes.keys())))
-                continue
-
-            #set plot labels
-            plot=g.get_plot_by_ytitle(iso, startswith=True)
-            if plot:
-                plot.y_axis.title=iso
+    # def set_detectors(self, isos, dets):
+    #     """
+    #         isos: list of str
+    #         dets: list of str
+    #         set the detector for each isotope
+    #     """
+    #     a = self.arar_age
+    #     g=self.isotope_graph
+    #     for iso, det in zip(isos, dets):
+    #         try:
+    #             a.set_isotope_detector(det, iso=iso)
+    #         except KeyError:
+    #             self.debug('isotope {} not in ArArAge.isotopes. keys={}'.format(iso, ','.join(a.isotopes.keys())))
+    #             continue
+    #
+    #         #set plot labels
+    #         plot=g.get_plot_by_ytitle(iso, startswith=True)
+    #         if plot:
+    #             plot.y_axis.title=iso
 
     def create(self, dets):
         """
@@ -278,16 +278,17 @@ class PlotPanel(Loggable):
         self.selected_graph = g
 
         self.detectors = dets
-        self._plot_keys = []
         for det in dets:
-            p=g.new_plot(
-                # ytitle='{} {} (fA)'.format(det.isotope, det.name),
-                xtitle='time (s)',
-                padding_left=70,
-                padding_right=10)
-            p.y_axis.title_spacing=50
+            self.new_plot()
 
-            self._plot_keys.append((det.name, det.isotope))
+    def new_plot(self, **kw):
+        g=self.isotope_graph
+        plot = g.new_plot(xtitle='time (s)',padding_left=70,
+                          padding_right=10,
+                          **kw)
+
+        plot.y_axis.title_spacing = 50
+        return plot
 
     def _get_ncounts(self):
         return self._ncounts
@@ -336,13 +337,19 @@ class PlotPanel(Loggable):
         self.graph_container.label = new
 
     @on_trait_change('isotope_graph:regression_results')
-    def _update_display(self, new):
+    def _update_display(self, obj, name, old, new):
         if new:
             arar_age = self.arar_age
 
-            for (detname, iso), reg in zip(self._plot_keys, new):
+            # for (detname, iso), reg in zip(self._plot_keys, new):
+            # for i, reg in enumerate(new):
+            for plot, reg in new:
                 if reg is None:
                     continue
+
+                # print i, len(obj.plots), reg
+                # plot=obj.plots[i]
+                iso=plot.y_axis.title
                 if isinstance(reg, float):
                     vv, ee = reg, 0
                 else:
@@ -352,9 +359,11 @@ class PlotPanel(Loggable):
                 v = vv, ee
                 if self.is_baseline:
                     if self.is_peak_hop:
-                        for ii in self.arar_age.isotopes.itervalues():
+
+                        detname=self.arar_age.isotopes[iso].detector
+                        for k, ii in self.arar_age.isotopes.iteritems():
                             if ii.detector == detname:
-                                arar_age.set_baseline(ii.name, v)
+                                arar_age.set_baseline(k, v)
                     else:
                         arar_age.set_baseline(iso, v)
                 else:

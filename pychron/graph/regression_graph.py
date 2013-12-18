@@ -108,21 +108,21 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def set_fit(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
+        for idx in range(series, -1, -1):
+            key = 'data{}'.format(idx)
+            if plot.plots.has_key(key):
+                scatter = plot.plots[key][0]
+                if scatter.fit != fi:
+                    lkey = 'line{}'.format(idx)
+                    if plot.plots.has_key(lkey):
+                        line = plot.plots[lkey][0]
+                        line.regressor = None
 
-        key = 'data{}'.format(series)
-        #         print plot.plots.keys(), key, plot.plots.has_key(key), fi
-        if plot.plots.has_key(key):
-            scatter = plot.plots[key][0]
-            if scatter.fit != fi:
-                lkey = 'line{}'.format(series)
-                if plot.plots.has_key(lkey):
-                    line = plot.plots[lkey][0]
-                    line.regressor = None
-
-                scatter.fit = fi
-                scatter.index.metadata['selections'] = []
-                scatter.index.metadata['filtered'] = None
-                self.redraw()
+                    scatter.fit = fi
+                    scatter.index.metadata['selections'] = []
+                    scatter.index.metadata['filtered'] = None
+                    self.redraw()
+                break
 
     def get_fit(self, plotid=0, series=0):
         try:
@@ -186,11 +186,11 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 fls=[ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
                     r = self._plot_regression(plot, si, fl)
-                    regs.append(r)
+                    regs.append((plot, r))
             except ValueError,e:
                 try:
                     si=ps[ks[0]][0]
-                    regs.append(si.value.get_data()[-1])
+                    regs.append((plot,si.value.get_data()[-1]))
                 except IndexError:
                     break
         self.regressors = regs

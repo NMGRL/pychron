@@ -296,9 +296,11 @@ class InterpolationEditor(GraphEditor):
 
         #necessary to handle user excluding points
         gen = self._graph_generator()
-        for i, (fit, reg) in enumerate(zip(gen, new)):
+        for fit, (plotobj, reg) in zip(gen,new):
             iso = fit.name
-            plotobj = self.graph.plots[i]
+        # for i, (fit, reg) in enumerate(zip(gen, new)):
+        #     iso = fit.name
+        #     plotobj = self.graph.plots[i]
 
             scatter = plotobj.plots['Unknowns-predicted'][0]
             xs = scatter.index.get_data()

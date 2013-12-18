@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
+from itertools import groupby
 from traits.api import Any, Str, Int, List, Property, \
     Event, Instance, Bool, HasTraits, Float
 #============= standard library imports ========================
@@ -225,40 +226,58 @@ class AutomatedRun(Loggable):
         else:
             self._activate_detectors(dets)
 
-    def py_set_regress_fits(self, fits, series=0):
-        """
-            fits can be
-            1. 'linear'
-            2. ('linear',)
-            3. ('linear', 'linear')
-            4. ((0,100,'linear'),(100,None, 'parabolic')]
-        """
+    def py_set_fits(self, fits):
+        isotopes=self.arar_age.isotopes
 
-        def make_fits(fi):
-            if isinstance(fi, str):
-                fi = [fi, ] * n
-            elif isinstance(fi, tuple):
-                if len(fi) == 1:
-                    fi = [fi[0], ] * n
+        fits=dict([f.split(':') for f in fits])
+        for k, iso in isotopes.iteritems():
+            iso.fit=fits[k]
 
-            return list(fi)
+    def py_set_baseline_fits(self, fits):
+        isotopes = self.arar_age.isotopes
+        if len(fits) == 1:
+            fs=[]
+            for di in self._active_detectors:
+                fs.append('{}:{}'.format(di.name, fits[0]))
+            fits=fs
 
-        n = len(self._active_detectors)
+        fits = dict([f.split(':') for f in fits])
+        for k, iso in isotopes.iteritems():
+            iso.baseline.fit = fits[iso.detector]
 
-        if isinstance(fits, tuple):
-            if isinstance(fits[0], tuple):
-                self.fits = [(sli, make_fits(fs)) for sli, fs in fits]
-            else:
-                self.fits = [(None, make_fits(fits))]
-        else:
-
-            fits = make_fits(fits)
-            self.fits = [(None, fits)]
-
-        self.debug('=============== Fit Blocks =============')
-        for i, fb in enumerate(self.fits):
-            self.debug('{:02n} {}'.format(i + 1, fb))
-        self.debug('========================================')
+    # def py_set_regress_fits(self, fits):
+    #     """
+    #         fits can be
+    #         1. 'linear'
+    #         2. ('linear',)
+    #         3. ('linear', 'linear')
+    #         4. [(0,100,'linear'),(100,None, 'parabolic')]
+    #     """
+        # def make_fits(fi):
+        #     if isinstance(fi, str):
+        #         fi = [fi, ] * n
+        #     elif isinstance(fi, tuple):
+        #         if len(fi) == 1:
+        #             fi = [fi[0], ] * n
+        #
+        #     return list(fi)
+        #
+        # n = len(self._active_detectors)
+        #
+        # if isinstance(fits, tuple):
+        #     if isinstance(fits[0], tuple):
+        #         self.fits = [(sli, make_fits(fs)) for sli, fs in fits]
+        #     else:
+        #         self.fits = [(None, make_fits(fits))]
+        # else:
+        #
+        #     fits = make_fits(fits)
+        #     self.fits = [(None, fits)]
+        #
+        # self.debug('=============== Fit Blocks =============')
+        # for i, fb in enumerate(self.fits):
+        #     self.debug('{:02n} {}'.format(i + 1, fb))
+        # self.debug('========================================')
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -271,7 +290,6 @@ class AutomatedRun(Loggable):
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
     def py_data_collection(self, ncounts, starttime, starttime_offset, series=0):
-        mem_log('pre data collection')
         if not self._alive:
             return
 
@@ -279,12 +297,8 @@ class AutomatedRun(Loggable):
             self.plot_panel.is_baseline = False
 
         gn = 'signal'
-        fits = self.fits
-        if not fits:
-            fits = [(None, ['linear', ] * len(self._active_detectors))]
 
-        self.fits = fits
-        self._build_tables(gn, fits)
+        self._build_tables(gn)
         check_conditions = True
 
         self._add_truncate_condition()
@@ -293,15 +307,13 @@ class AutomatedRun(Loggable):
         result = self._measure(gn,
                                self._get_data_writer(gn),
                                ncounts, starttime, starttime_offset,
-                               series, fits,
+                               series,
                                check_conditions)
-        mem_log('post data collection')
         return result
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
                          delay=None):
-        mem_log('pre equilibration')
         evt = TEvent()
         if not self._alive:
             evt.set()
@@ -316,11 +328,9 @@ class AutomatedRun(Loggable):
                                do_post_equilibration=do_post_equilibration))
         t.start()
 
-        mem_log('post equilibration')
         return evt
 
     def py_sniff(self, ncounts, starttime, starttime_offset, series=0):
-        mem_log('pre sniff')
         if not self._alive:
             return
         p = self.plot_panel
@@ -329,7 +339,6 @@ class AutomatedRun(Loggable):
             p.is_baseline = False
             p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
 
-        fits = [(None, ['', ] * len(self._active_detectors))]
         gn = 'sniff'
 
         self._build_tables(gn)
@@ -341,15 +350,13 @@ class AutomatedRun(Loggable):
         result = self._measure(gn,
                                writer,
                                ncounts, starttime, starttime_offset,
-                               series, fits,
+                               series,
                                check_conditions)
-        mem_log('post sniff')
 
         return result
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, nintegrations=5, settling_time=4,
-                     fit='average_SEM'):
+                     series=0, settling_time=4):
 
         if not self._alive:
             return
@@ -375,7 +382,6 @@ class AutomatedRun(Loggable):
             self.plot_panel.is_baseline = True
 
         gn = 'baseline'
-        fits = [(None, [fit, ] * len(self._active_detectors))]
 
         self._build_tables(gn)
 
@@ -388,7 +394,7 @@ class AutomatedRun(Loggable):
                                self._get_data_writer(gn),
                                ncounts, starttime,
                                starttime_offset,
-                               series, fits,
+                               series,
                                check_conditions)
 
         if self.plot_panel:
@@ -398,11 +404,53 @@ class AutomatedRun(Loggable):
         self.multi_collector.is_baseline = False
         return result
 
-    def py_define_hops(self, hops):
+    def py_define_hops(self, hopstr):
+        """
+            set the detector each isotope
+            add additional isotopes and associated plots if necessary
+        """
+        if self.plot_panel is None:
+            self.warning('Need to call "define_hops(...)" after "activate_detectors(...)"')
+            return
+
         self.plot_panel.is_peak_hop = True
 
-        for iso, det in parse_hops(hops, ret='iso,det'):
-            self.arar_age.set_isotope_detector(det, iso)
+        key=lambda x: x[0]
+        hops=parse_hops(hopstr, ret='iso,det')
+        hops=sorted(hops, key=key)
+        a=self.arar_age
+        g=self.plot_panel.isotope_graph
+        for iso, dets in groupby(hops, key=key):
+            dets = list(dets)
+            add_detector = len(dets) > 1
+
+            plot=g.get_plot_by_ytitle(iso)
+            for _, di in dets:
+                name = iso
+                if iso in a.isotopes:
+                    ii = a.isotopes[iso]
+                    ii.detector = di
+                    a.isotopes.pop(iso)
+                else:
+                    ii=a.isotope_factory(name=iso, detector=di)
+                    pid = g.plots.index(plot)
+                    plot=self.plot_panel.new_plot(add=pid+1)
+                    pid=g.plots.index(plot)
+                    g.new_series(kind='scatter', fit=None, plotid=pid)
+                    g.new_series(kind='scatter',
+                                 marker_size=1.25,
+                                 fit='linear',
+                                 add_inspector=False,
+                                 add_tools=False,
+                                 plotid=pid)
+
+                if add_detector:
+                    name = '{}{}'.format(name, di)
+
+                a.isotopes[name] = ii
+                plot.y_axis.title=name
+
+        self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, starttime, starttime_offset,
                     series=0, group='signal'):
@@ -411,25 +459,14 @@ class AutomatedRun(Loggable):
             return
 
         is_baseline = False
-        # is_baseline = group == 'baseline'
-
         self.peak_hop_collector.is_baseline = is_baseline
 
         if self.plot_panel:
             self.plot_panel.trait_set(is_baseline=is_baseline,
-                                      _ncycles=cycles,
-            )
+                                      _ncycles=cycles)
 
         self.save_as_peak_hop = True
         self.is_peak_hop = True
-
-        fits = self.fits
-        if not fits:
-            fits = [(None, ['linear', ] * len(self._active_detectors))]
-        if is_baseline:
-            fits = [(None, ['average', ] * len(self._active_detectors))]
-
-        self.fits = fits
 
         self._build_peak_hop_tables(group, hops)
         writer = self._get_data_writer(group)
@@ -439,21 +476,12 @@ class AutomatedRun(Loggable):
 
         ret = self._peak_hop(cycles, counts, hops, group, writer,
                              starttime, starttime_offset, series,
-                             fits, check_conditions)
+                             check_conditions)
 
-        # if is_baseline:
-        #     if self.plot_panel:
-        #         bs = dict([(iso.name, iso.baseline.uvalue) for iso in
-        #                    self.arar_age.isotopes.values()])
-        #         self.experiment_executor._prev_baselines = bs
-
-        #dont set PlotPanel.is_peak_hop to False until after the baselines are collected
-        # self.trait_set(is_peak_hop=False, trait_change_notify=False)
         self.is_peak_hop = False
         return ret
 
     def py_peak_center(self, detector=None, save=True, **kw):
-        mem_log('pre peak center')
         if not self._alive:
             return
         ion = self.ion_optics_manager
@@ -498,8 +526,6 @@ class AutomatedRun(Loggable):
                     attrs.center_signal = ys[1]
                     attrs.high_signal = ys[2]
                     tab.flush()
-
-        mem_log('post peak center')
 
     def py_coincidence_scan(self):
         sm = self.spectrometer_manager
@@ -557,14 +583,14 @@ class AutomatedRun(Loggable):
     # run termination
     #===============================================================================
     def cancel_run(self, state='canceled'):
-        '''
+        """
             terminate the measurement script immediately
-            
+
             do post termination
                 post_eq and post_meas
             don't save run
-            
-        '''
+
+        """
         #self.multi_collector.canceled = True
         self.collector.canceled = True
 
@@ -1223,8 +1249,7 @@ anaylsis_type={}
 
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
-                     do_post_equilibration=True
-    ):
+                     do_post_equilibration=True):
 
         elm = self.extraction_line_manager
         if elm:
@@ -1293,7 +1318,7 @@ anaylsis_type={}
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
-                  fits, check_conditions):
+                  check_conditions):
         """
             ncycles: int
             hops: list of tuples
@@ -1316,7 +1341,7 @@ anaylsis_type={}
                              data_writer,
                              ncounts,
                              starttime, starttime_offset,
-                             series, fits, check_conditions)
+                             series, check_conditions)
 
     def _get_data_generator(self):
         def gen():
@@ -1329,7 +1354,7 @@ anaylsis_type={}
 
     def _measure(self, grpname, data_writer,
                  ncounts, starttime, starttime_offset,
-                 series, fits, check_conditions):
+                 series, check_conditions):
 
         mem_log('pre measure')
         if not self.spectrometer_manager:
@@ -1360,7 +1385,6 @@ anaylsis_type={}
 
             collection_kind=grpname,
             series_idx=series,
-            fits=fits,
             check_conditions=check_conditions,
             ncounts=ncounts,
             period_ms=period * 1000,
@@ -1372,8 +1396,7 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
-            invoke_in_main_thread(self._setup_isotope_graph,
-                                  fits, starttime_offset)
+            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset)
 
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
@@ -1382,7 +1405,7 @@ anaylsis_type={}
         mem_log('post measure')
         return True
 
-    def _setup_isotope_graph(self, fits, starttime_offset):
+    def _setup_isotope_graph(self, starttime_offset):
         """
             execute in main thread is necessary.
             set the graph limits and construct the necessary series
@@ -1405,28 +1428,38 @@ anaylsis_type={}
 
         graph.set_x_limits(min_=min_, max_=max_)
 
-        nfs = self.collector.get_fit_block(0, fits)
+        # nfs = self.collector.get_fit_block(0, fits)
         series=self.collector.series_idx
-
-        for pi, (fi, dn) in enumerate(zip(nfs, self._active_detectors)):
-            #only add if this plot doesnt the series
+        for k, iso in self.arar_age.isotopes.iteritems():
+            idx=graph.get_plotid_by_ytitle(k)
             try:
-                graph.series[pi][series]
+                graph.series[idx][series]
             except IndexError:
                 graph.new_series(marker='circle',
                                  type='scatter',
                                  marker_size=1.25,
-                                 fit=fi,
-                                 plotid=pi,
+                                 fit=iso.get_fit(0),
+                                 plotid=idx,
                                  add_inspector=False,
                                  add_tools=False)
+
+        # for pi, (fi, dn) in enumerate(zip(nfs, self._active_detectors)):
+        #     #only add if this series doesnt exist for this plot
+        #     try:
+        #         graph.series[pi][series]
+        #     except IndexError:
+        #         graph.new_series(marker='circle',
+        #                          type='scatter',
+        #                          marker_size=1.25,
+        #                          fit=fi,
+        #                          plotid=pi,
+        #                          add_inspector=False,
+        #                          add_tools=False)
         return graph
 
-
-        #===============================================================================
-        # save
-        #===============================================================================
-
+    #===============================================================================
+    # save
+    #===============================================================================
     def _pre_extraction_save(self):
         d = get_datetime()
         self._timestamp = d
@@ -2123,7 +2156,7 @@ anaylsis_type={}
         setattr(tab.attrs, attr, value)
         tab.flush()
 
-    def _build_tables(self, gn, fits=None):
+    def _build_tables(self, gn):
         dm = self.data_manager
 
         with dm.open_file(self._current_data_frame):

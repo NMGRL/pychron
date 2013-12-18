@@ -30,7 +30,6 @@ class AutomatedRunAnalysisView(MainView):
     def load(self, ar):
         an = ar.arar_age
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
-
         self._irradiation_str = ar.spec.irradiation
         self._j = an.j
 

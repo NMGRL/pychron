@@ -91,7 +91,7 @@ class PeakHopCollector(DataCollector):
             return
 
         #update the iso/det in plotpanel
-        self.plot_panel.set_detectors(isos, dets)
+        # self.plot_panel.set_detectors(isos, dets)
 
         detector = dets[0]
         isotope = isos[0]

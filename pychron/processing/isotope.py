@@ -114,6 +114,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
         super(IsotopicMeasurement, self).__init__(*args, **kw)
 
+    def get_fit(self, cnt):
+        return self.fit
+
     def set_fit(self, fit):
         if fit is not None:
             self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
@@ -301,5 +304,8 @@ class Isotope(BaseIsotope):
             v = v - self.blank.uvalue
 
         return v - self.background.uvalue
+
+
+
 
 #============= EOF =============================================

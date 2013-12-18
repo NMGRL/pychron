@@ -120,14 +120,15 @@ class ArArAge(Loggable):
 
     #def get_signal_value(self, k):
     #    return self._get_arar_result_attr(k)
-    def append_data(self, iso, x, signal, kind):
-        if iso in self.isotopes:
-            ii = self.isotopes[iso]
-            if kind in ('sniff', 'baseline'):
-                ii = getattr(ii, kind)
-            ii.xs = hstack((ii.xs, (x,)))
-            ii.ys = hstack((ii.ys, (signal,)))
-            # print iso, kind, len(ii.xs)
+    def append_data(self, iso, det, x, signal, kind):
+        for i in (iso, '{}{}'.format(iso,det)):
+            if i in self.isotopes:
+                ii = self.isotopes[i]
+                if kind in ('sniff', 'baseline'):
+                    ii = getattr(ii, kind)
+                ii.xs = hstack((ii.xs, (x,)))
+                ii.ys = hstack((ii.ys, (signal,)))
+                break
 
         else:
             self.debug('failed appending data for {}. not a current isotope {}'.format(iso, self.isotope_keys))
@@ -143,6 +144,9 @@ class ArArAge(Loggable):
     def clear_error_components(self):
         for iso in self.isotopes.itervalues():
             iso.age_error_component = 0
+
+    def isotope_factory(self, **kw):
+        return Isotope(**kw)
 
     def set_isotope_detector(self, det, iso=None):
         if iso:

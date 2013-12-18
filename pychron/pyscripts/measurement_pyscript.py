@@ -265,13 +265,27 @@ class MeasurementPyScript(ValvePyScript):
             # wait for inlet to open
             evt.wait()
 
+    # @verbose_skip
+    # @command_register
+    # def regress(self, *fits):
+    #     if not fits:
+    #         fits = 'linear'
+    #
+    #     self._automated_run_call('py_set_regress_fits', fits)
+
     @verbose_skip
     @command_register
-    def regress(self, *fits):
+    def set_fits(self, *fits):
         if not fits:
             fits = 'linear'
+        self._automated_run_call('py_set_fits', fits)
 
-        self._automated_run_call('py_set_regress_fits', fits)
+    @verbose_skip
+    @command_register
+    def set_baseline_fits(self, *fits):
+        if not fits:
+            fits = 'average_SEM'
+        self._automated_run_call('py_set_baseline_fits', fits)
 
     @verbose_skip
     @command_register
