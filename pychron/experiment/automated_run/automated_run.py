@@ -308,7 +308,7 @@ class AutomatedRun(Loggable):
                                self._get_data_writer(gn),
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions)
+                               check_conditions, 'black')
         return result
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
@@ -351,7 +351,7 @@ class AutomatedRun(Loggable):
                                writer,
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions)
+                               check_conditions, 'grey')
 
         return result
 
@@ -395,7 +395,9 @@ class AutomatedRun(Loggable):
                                ncounts, starttime,
                                starttime_offset,
                                series,
-                               check_conditions)
+                               check_conditions,
+                               'blue'
+                               )
 
         if self.plot_panel:
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
@@ -434,15 +436,11 @@ class AutomatedRun(Loggable):
                 else:
                     ii=a.isotope_factory(name=iso, detector=di)
                     pid = g.plots.index(plot)
+                    n=len(plot.plots)
                     plot=self.plot_panel.new_plot(add=pid+1)
                     pid=g.plots.index(plot)
-                    g.new_series(kind='scatter', fit=None, plotid=pid)
-                    g.new_series(kind='scatter',
-                                 marker_size=1.25,
-                                 fit='linear',
-                                 add_inspector=False,
-                                 add_tools=False,
-                                 plotid=pid)
+                    for i in range(n):
+                        g.new_series(kind='scatter', fit=None, plotid=pid)
 
                 if add_detector:
                     name = '{}{}'.format(name, di)
@@ -1341,7 +1339,7 @@ anaylsis_type={}
                              data_writer,
                              ncounts,
                              starttime, starttime_offset,
-                             series, check_conditions)
+                             series, check_conditions, 'red')
 
     def _get_data_generator(self):
         def gen():
@@ -1354,7 +1352,7 @@ anaylsis_type={}
 
     def _measure(self, grpname, data_writer,
                  ncounts, starttime, starttime_offset,
-                 series, check_conditions):
+                 series, check_conditions, color):
 
         mem_log('pre measure')
         if not self.spectrometer_manager:
@@ -1396,7 +1394,7 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
-            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset)
+            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color)
 
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
@@ -1405,7 +1403,7 @@ anaylsis_type={}
         mem_log('post measure')
         return True
 
-    def _setup_isotope_graph(self, starttime_offset):
+    def _setup_isotope_graph(self, starttime_offset, color):
         """
             execute in main thread is necessary.
             set the graph limits and construct the necessary series
@@ -1436,6 +1434,7 @@ anaylsis_type={}
                 graph.series[idx][series]
             except IndexError:
                 graph.new_series(marker='circle',
+                                 color=color,
                                  type='scatter',
                                  marker_size=1.25,
                                  fit=iso.get_fit(0),
