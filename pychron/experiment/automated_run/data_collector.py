@@ -210,12 +210,11 @@ class DataCollector(Loggable):
                 iso = dn.isotope
                 pi = idx_func(iso, dn.name)
                 signal = signals[keys.index(dn.name)]
-                # print iso, dn.name, pi
                 self._set_plot_data(pi, iso, nfs, x, signal)
 
     def _set_plot_data(self, pi, iso, nfs, x, signal):
         graph = self.plot_panel.isotope_graph
-        np = len(graph.plots)
+        # np = len(graph.plots)
         try:
             fi = nfs[pi]
         except IndexError:
@@ -224,13 +223,12 @@ class DataCollector(Loggable):
                 self._warned_no_fit.append(iso)
             return
 
-        if pi >= np:
-            graph.new_plot()
-            graph.new_series(type='scatter',
-                             marker='circle',
-                             plotid=pi)
+        # if pi >= np:
+        #     graph.new_plot()
+        #     graph.new_series(type='scatter',
+        #                      marker='circle',
+        #                      plotid=pi)
 
-        #print i, x, pi, dn
         graph.add_datum((x, signal),
                         series=self.series_idx,
                         plotid=pi,
@@ -245,7 +243,7 @@ class DataCollector(Loggable):
                 else:
                     miso.fit = fi
 
-            graph.set_fit(fi, plotid=pi, series=0)
+            graph.set_fit(fi, plotid=pi, series=self.series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:

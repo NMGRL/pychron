@@ -1406,16 +1406,20 @@ anaylsis_type={}
         graph.set_x_limits(min_=min_, max_=max_)
 
         nfs = self.collector.get_fit_block(0, fits)
-        # update fits
-        for pi, (fi, dn) in enumerate(zip(nfs, self._active_detectors)):
-            graph.new_series(marker='circle',
-                             type='scatter',
-                             marker_size=1.25,
-                             fit=fi,
-                             plotid=pi,
-                             add_inspector=False,
-                             add_tools=False)
+        series=self.collector.series_idx
 
+        for pi, (fi, dn) in enumerate(zip(nfs, self._active_detectors)):
+            #only add if this plot doesnt the series
+            try:
+                graph.series[pi][series]
+            except IndexError:
+                graph.new_series(marker='circle',
+                                 type='scatter',
+                                 marker_size=1.25,
+                                 fit=fi,
+                                 plotid=pi,
+                                 add_inspector=False,
+                                 add_tools=False)
         return graph
 
 

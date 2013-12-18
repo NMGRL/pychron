@@ -177,15 +177,17 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         for plot in self.plots:
             ps = plot.plots
             ks = ps.keys()
+
             try:
                 scatters, idxes = zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')])
-                idx = idxes[0]
-                fls = (ps[kk][0] for kk in ks if kk == 'fit{}'.format(idx))
+                # idx = idxes[0]
+                # fls = [ps[kk][0] for kk in ks if kk == 'fit{}'.format(idx)]
 
+                fls=[ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
                     r = self._plot_regression(plot, si, fl)
                     regs.append(r)
-            except ValueError:
+            except ValueError,e:
                 try:
                     si=ps[ks[0]][0]
                     regs.append(si.value.get_data()[-1])

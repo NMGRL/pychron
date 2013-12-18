@@ -1009,7 +1009,7 @@ class Graph(Viewable, ContextMenuMixin):
                   **kw):
 
         #         def add(datum):
-        #print plotid, series, self.series
+        # print 'adding data',plotid, series, self.series
         #try:
         names = self.series[plotid][series]
         #except:

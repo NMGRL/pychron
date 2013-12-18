@@ -157,9 +157,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._update_graph()
 
     def update_metadata(self, obj, name, old, new):
-        '''
+        """
             fired when the index metadata changes e.i user selection
-        '''
+        """
         #         sel = obj.metadata.get('selections', None)
         #
         #         if sel:
@@ -279,8 +279,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     sel = list(csel - fpts)
 
             nmeta = dict(selections=sel,
-                         filtered=None
-            )
+                         filtered=None)
             index.trait_set(metadata=nmeta)
 
         else:

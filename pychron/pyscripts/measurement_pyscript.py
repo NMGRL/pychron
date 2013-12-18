@@ -157,7 +157,6 @@ class MeasurementPyScript(ValvePyScript):
         self._baseline_series = series
         self._series_count += 2
 
-
     @count_verbose_skip
     @command_register
     def load_hops(self, p, *args, **kw):
