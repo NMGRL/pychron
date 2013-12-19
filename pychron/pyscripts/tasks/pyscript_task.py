@@ -21,6 +21,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
+from pychron.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, \
     BakeoutEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
@@ -148,40 +149,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if self._current_script:
             self._current_script.cancel()
 
-    #def activated(self):
-    #    from pyface.timer.do_later import do_later
-    #    do_later(self.window.reset_layout)
-
     def _default_directory_default(self):
         return paths.scripts_dir
 
-#     def _default_layout_default(self):
-#         return TaskLayout(
-#                           id='pychron.pyscript',
-#                           left=Splitter(
-#
-#                                         PaneItem('pychron.pyscript.control',
-#                                           height=100),
-#
-#                                         PaneItem('pychron.pyscript.commands_editor',
-#                                           height=100,
-#                                           width=510,
-#                                           ),
-# #                                      Tabbed(
-#                                             PaneItem('pychron.pyscript.editor',
-#                                               width=510,
-#                                               ),
-# #                                             PaneItem('pychron.pyscript.commands',
-# #                                               width=525,
-# #                                               ),
-#                                         orientation='vertical',
-#                                      ),
-# #                                 ),
-#                           right=PaneItem('pychron.pyscript.commands',
-#                                          width=175),
-# #                          top=PaneItem('pychron.pyscript.description'),
-# #                           bottom=
-#                           )
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
@@ -194,20 +164,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 self.control_pane,
                 DescriptionPane(model=self)
                 ]
-
-    @on_trait_change('commands_pane:command_object')
-    def _update_selected(self, new):
-        self.command_editor_pane.command_object = new
-        if new:
-            self.description=new.description
-
-    def _active_editor_changed(self):
-        if self.active_editor:
-            self.commands_pane.name = self.active_editor.kind
-
-            self.commands_pane.command_objects = self.active_editor.commands.command_objects
-            self.commands_pane.commands = self.active_editor.commands.script_commands
-            self.editor_pane.editor = self.active_editor.editor
 
     def _save_file(self, path):
         self.active_editor.dump(path)
@@ -251,19 +207,50 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             klass = ExtractionEditor
 
         editor = klass(path=path,
-                       auto_detab=self.auto_detab,
-                       )
+                       auto_detab=self.auto_detab)
 
         super(PyScriptTask, self)._open_editor(editor)
 
+    @on_trait_change('commands_pane:command_object')
+    def _update_selected(self, new):
+        self.command_editor_pane.command_object = new
+        if new:
+            self.description = new.description
+
+    def _active_editor_changed(self):
+        if self.active_editor:
+            self.commands_pane.name = self.active_editor.kind
+
+            self.commands_pane.command_objects = self.active_editor.commands.command_objects
+            self.commands_pane.commands = self.active_editor.commands.script_commands
+            self.editor_pane.editor = self.active_editor.editor
+
     @on_trait_change('_current_script:trace_line')
-    def _update_lineno(self, new):
+    def _handle_lineno(self, new):
         self.active_editor.highlight_line = new
 
-    # def _get_description(self):
-    #     if self.selected:
-    #         return self.selected.description
-    #     return ''
+    @on_trait_change('active_editor:selected_gosub')
+    def _handle_selected_gosub(self, new):
+        self.debug('selected gosub {}'.format(new))
+        gname=new[7:-2]
+        self._open_gosub(gname)
+        self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
+
+    def _open_gosub(self, new):
+        for editor in self.editor_area.editors:
+            if editor.name==new:
+                self.activate_editor(editor)
+                break
+        else:
+            p=self.active_editor.path
+            new=new.replace('/',':')
+            paths=new.split(':')
+            p=os.path.join(os.path.dirname(p), *paths)
+            p=add_extension(p, '.py')
+            if os.path.isfile(p):
+                self._open_file(p)
+            else:
+                self.warning_dialog('Gosub does not exist {}'.format(p))
 
     def _get_example(self):
         if self.selected:

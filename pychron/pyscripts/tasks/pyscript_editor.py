@@ -41,6 +41,7 @@ from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget
 
 class myCodeWidget(AdvancedCodeWidget):
     commands = None
+    on_selected_gosub=None
 
     def __init__(self, parent, commands=None, *args, **kw):
         super(myCodeWidget, self).__init__(parent, *args, **kw)
@@ -50,6 +51,57 @@ class myCodeWidget(AdvancedCodeWidget):
         #setup lexer
         lexer = PyScriptLexer(commands)
         self.code.highlighter._lexer = lexer
+
+        self.code.mouseDoubleClickEvent=self.mouseDoubleClickEvent
+        # self.code.mouseMoveEvent=self.mouseMoveEvent
+        # self.code.keyPressEvent=self.keyPressEvent
+        # self.code.keyReleaseEvent=self.keyReleaseEvent
+
+        self.code.setMouseTracking(True)
+
+    # def enterEvent(self, e):
+    #     # self.grabMouse()
+    #
+    # def leaveEvent(self, e):
+    #     # self.releaseMouse()
+    def mouseDoubleClickEvent(self, event):
+        if self.on_selected_gosub:
+            cur = self.code.cursorForPosition(event.pos())
+            line=self._over_gosub(event, cur)
+            if line:
+                self.on_selected_gosub(line.strip())
+
+    def _over_gosub(self, event, cursor):
+        # if event.modifiers() & QtCore.Qt.ControlModifier:
+
+        cursor.select(QTextCursor.WordUnderCursor)
+        if cursor.selectedText() == 'gosub':
+            self.code.setTextCursor(cursor)
+
+            cursor.select(QTextCursor.LineUnderCursor)
+            line = cursor.selectedText()
+            # self.code.setCursor(QCursor(Qt.ArrowCursor))
+            # QApplication.setOverrideCursor(QCursor(Qt.ArrowCursor))
+            return line
+        # else:
+        #     self.code.setCursor(QCursor(Qt.IBeamCursor))
+            # QApplication.restoreOverrideCursor()
+
+    # def keyPressEvent(self, event):
+    #     super(myCodeWidget, self).keyPressEvent(event)
+    #     cur = self.code.textCursor()
+    #     self._over_gosub(event, cur)
+    #
+    # def keyReleaseEvent(self, event):
+    #     print 'release'
+    #     super(myCodeWidget, self).keyReleaseEvent(event)
+    #     cur=self.code.textCursor()
+    #     self._over_gosub(event,cur)
+    #
+    # def mouseMoveEvent(self, event):
+    #     cur= self.code.cursorForPosition(event.pos())
+    #     self._over_gosub(event, cur)
+
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat('traits-ui-tabular-editor'):
@@ -160,6 +212,7 @@ class PyScriptEditor(Editor):
     auto_detab = Bool(True)
     highlight_line = Int
     trace_delay = Int  # ms
+    selected_gosub=String
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -205,7 +258,12 @@ class PyScriptEditor(Editor):
         # Load the editor's contents.
         self.load()
 
+        control.on_selected_gosub=self._on_selected_gosub
+
         return control
+
+    def _on_selected_gosub(self, gs):
+        self.selected_gosub=gs
 
     def _on_dirty_changed(self, dirty):
         self.dirty = dirty
