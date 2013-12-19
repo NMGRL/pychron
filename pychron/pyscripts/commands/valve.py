@@ -16,19 +16,49 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Property, cached_property
-from traitsui.api import Item, EnumEditor
+from traitsui.api import Item, EnumEditor, VGroup
 #============= standard library imports ========================
 import os
+import re
 #============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
 from pychron.extraction_line.valve_parser import ValveParser
 
 
+name_re=re.compile(r'''name\s*=\s*["']+\w+["']''')
+desc_re=re.compile(r'''description\s*=\s*["']+[\w\s]+["']''')
+attr_re=re.compile(r'''["']+[\w\s]+["']''')
+
 class ValveCommand(Command):
     valve = Str
     valve_names = Property
     valve_name_dict = Property
+
+    def load_str(self, txt):
+        m = name_re.match(txt)
+        if m:
+            a = self._extract_attr(m)
+            if a:
+                self.valve = a
+                return
+
+        m = desc_re.match(txt)
+        if m:
+            a = self._extract_attr(m)
+            v = next((k for k, v in self.valve_name_dict.iteritems() if v == a), None)
+            if v:
+                self.valve = v
+                return
+
+        if attr_re.match(txt):
+            self.valve = txt[1:-1]
+
+    def _extract_attr(self, m):
+        name = m.group(0)
+        a = attr_re.findall(name)[0]
+        if a:
+            return a[1:-1]
 
     def _get_valve_name_dict(self):
         return dict(self.valve_names)
@@ -46,7 +76,9 @@ class ValveCommand(Command):
         return valves
 
     def _get_view(self):
-        return Item('valve', editor=EnumEditor(name='valve_name_dict'))
+        return VGroup(Item('valve', editor=EnumEditor(name='valve_name_dict')),
+                      Item('valve', style='readonly', label='Name')
+                      )
 
     def _to_string(self):
         return self._keywords([('name', self.valve),

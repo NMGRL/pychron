@@ -38,15 +38,15 @@ class myCodeWidget(CodeWidget):
 
         if event.modifiers() & Qt.ControlModifier:
             QApplication.setOverrideCursor(QCursor(Qt.PointingHandCursor))
-            self.setMouseTracking(True)
+            # self.setMouseTracking(True)
 
     def keyReleaseEvent(self, event):
         super(myCodeWidget, self).keyReleaseEvent(event)
-        self.setMouseTracking(False)
+        # self.setMouseTracking(False)
         QApplication.restoreOverrideCursor()
 
     def clear_selected(self):
-        self.setMouseTracking(False)
+        # self.setMouseTracking(False)
         self.clear_underline()
         QApplication.restoreOverrideCursor()
 
@@ -87,6 +87,7 @@ class myCodeWidget(CodeWidget):
             self.modified_select.emit(line.strip())
             self.clear_selected()
 
+        self._current_pos=None
         super(myCodeWidget, self).mousePressEvent(event)
 
     def get_current_line(self):
@@ -133,6 +134,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         #set lexer manually instead of by name
         lexer = PyScriptLexer(commands)
         self.code.highlighter._lexer = lexer
+        self.code.setMouseTracking(True)
 
         #AdvanceCodeWidget
         #=====================================
