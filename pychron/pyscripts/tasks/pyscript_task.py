@@ -244,22 +244,24 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     @on_trait_change('active_editor:selected_gosub')
     def _handle_selected_gosub(self, new):
-        self.debug('selected gosub {}'.format(new))
 
-        root=os.path.dirname(self.active_editor.path)
-        self._open_pyscipt(new, root)
-        self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
+        self.debug('selected gosub {}'.format(new))
+        if new:
+            root=os.path.dirname(self.active_editor.path)
+            self._open_pyscipt(new, root)
+            # self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
 
     def _open_pyscipt(self, new, root):
+        new = new.replace('/', ':')
+        new = add_extension(new, '.py')
+        paths = new.split(':')
+
         for editor in self.editor_area.editors:
-            if editor.name==new:
+            if editor.name==paths[-1]:
                 self.activate_editor(editor)
                 break
         else:
-            new=new.replace('/',':')
-            paths=new.split(':')
             p=os.path.join(root, *paths)
-            p=add_extension(p, '.py')
 
             if os.path.isfile(p):
                 self._open_file(p)

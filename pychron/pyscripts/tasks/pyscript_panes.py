@@ -18,10 +18,11 @@
 import os
 from traits.api import List, Instance, Str, Property, Any, String, Button
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
-    HGroup, spring, VSplit
+    HGroup, spring, VSplit, Label
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.ui.custom_label_editor import CustomLabel
 from pychron.ui.tabular_editor import myTabularEditor
 
 # from pychron.pyscripts.commands.core import ICommand
@@ -173,20 +174,23 @@ class ScriptBrowserPane(TraitsDockPane):
     dclicked = Any
     directory_dclicked = Any
     selected_directory = String
+    selected_directory_name = Property(depends_on='selected_directory')
+    up_directory_name = Property(depends_on='selected_directory')
     directories = List
     name = 'Browser'
     up_button = Button
+    forward_button = Button
 
     def _up_button_fired(self):
         self.root = os.path.dirname(self.root)
 
     def _root_changed(self):
-        # root=os.path.dirname(self.path)
         root = self.root
 
         ps = [p for p in os.listdir(root)]
         self.items = filter(lambda x: not (x.startswith('.') or os.path.isdir(os.path.join(root, x))), ps)
         self.directories = filter(lambda x: os.path.isdir(os.path.join(root, x)), ps)
+        self.selected_directory = self.root
 
     def _directory_dclicked_changed(self):
         if self.selected_directory:
@@ -194,18 +198,27 @@ class ScriptBrowserPane(TraitsDockPane):
             self.root = p
 
     def traits_view(self):
-        v = View(VGroup(HGroup(icon_button_editor('up_button', 'arrow_left', tooltip='Go back one directory'), spring),
-                        VSplit(UItem('directories',
-                                     editor=TabularEditor(selected='selected_directory',
-                                                          dclicked='directory_dclicked',
-                                                          editable=False,
-                                                          adapter=ScriptBrowserAdapter()),
-                                     height=0.25),
+        v = View(VGroup(HGroup(icon_button_editor('up_button', 'arrow_left', tooltip='Go back one directory'),
+                               CustomLabel('up_directory_name', size=14, color='maroon'), spring),
+                        VSplit(VGroup(UItem('directories',
+                                            editor=TabularEditor(selected='selected_directory',
+                                                                 dclicked='directory_dclicked',
+                                                                 editable=False,
+                                                                 adapter=ScriptBrowserAdapter()),
+                                            height=0.25),
+                                      HGroup(Label('Current Dir.'), CustomLabel('selected_directory_name',
+                                                                                size=14, color='maroon'))),
                                UItem('items', editor=TabularEditor(selected='selected',
                                                                    dclicked='dclicked',
                                                                    editable=False,
                                                                    adapter=ScriptBrowserAdapter()),
                                      height=0.75))))
         return v
+
+    def _get_up_directory_name(self):
+        return os.path.basename(os.path.dirname(self.root))
+
+    def _get_selected_directory_name(self):
+        return os.path.basename(self.root)
 
 #============= EOF =============================================

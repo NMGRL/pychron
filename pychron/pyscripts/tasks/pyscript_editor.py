@@ -231,6 +231,7 @@ class PyScriptEditor(Editor):
         return control
 
     def _on_selected_gosub(self, gs):
+        self.selected_gosub=''
         self.selected_gosub=gs
 
     def _on_dirty_changed(self, dirty):
