@@ -37,6 +37,7 @@ class OpenPyScriptAction(Action):
                                                              ))
             task = win.active_task
             test_path='/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+            test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
             if task.open(path=test_path):
                 win.open()
 

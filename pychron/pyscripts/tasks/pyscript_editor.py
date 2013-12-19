@@ -19,12 +19,9 @@ import os
 import time
 
 from traits.api import HasTraits, Property, Bool, Event, \
-    Unicode, Any, List, String, cached_property, Int
+    Unicode, List, String, cached_property, Int
 from pyface.tasks.api import Editor
 from PySide.QtGui import QTextCursor, QTextFormat, QTextEdit
-
-from pychron.pyscripts.parameter_editor import MeasurementParameterEditor, \
-    ParameterEditor
 
 # from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
@@ -69,39 +66,17 @@ class myCodeWidget(AdvancedCodeWidget):
             cur = self.code.cursorForPosition(event.pos())
             line=self._over_gosub(event, cur)
             if line:
-                self.on_selected_gosub(line.strip())
+                self.on_selected_gosub(line)
 
     def _over_gosub(self, event, cursor):
-        # if event.modifiers() & QtCore.Qt.ControlModifier:
-
         cursor.select(QTextCursor.WordUnderCursor)
         if cursor.selectedText() == 'gosub':
-            self.code.setTextCursor(cursor)
-
+            # self.code.setTextCursor(cursor)
             cursor.select(QTextCursor.LineUnderCursor)
             line = cursor.selectedText()
-            # self.code.setCursor(QCursor(Qt.ArrowCursor))
-            # QApplication.setOverrideCursor(QCursor(Qt.ArrowCursor))
-            return line
-        # else:
-        #     self.code.setCursor(QCursor(Qt.IBeamCursor))
-            # QApplication.restoreOverrideCursor()
 
-    # def keyPressEvent(self, event):
-    #     super(myCodeWidget, self).keyPressEvent(event)
-    #     cur = self.code.textCursor()
-    #     self._over_gosub(event, cur)
-    #
-    # def keyReleaseEvent(self, event):
-    #     print 'release'
-    #     super(myCodeWidget, self).keyReleaseEvent(event)
-    #     cur=self.code.textCursor()
-    #     self._over_gosub(event,cur)
-    #
-    # def mouseMoveEvent(self, event):
-    #     cur= self.code.cursorForPosition(event.pos())
-    #     self._over_gosub(event, cur)
-
+            line=line.strip()
+            return line[7:-2]
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat('traits-ui-tabular-editor'):
@@ -204,7 +179,7 @@ class PyScriptEditor(Editor):
     name = Property(Unicode, depends_on='path')
 
     tooltip = Property(Unicode, depends_on='path')
-    editor = Any
+    # editor = Any
     suppress_change = False
     kind = String
     commands = Property(depends_on='kind')
@@ -242,14 +217,7 @@ class PyScriptEditor(Editor):
 
         self.control = control = myCodeWidget(parent,
                                               commands=self.commands)
-        #        self.control = control = AdvancedCodeWidget(parent)
         self._show_line_numbers_changed()
-
-        # Install event filter to trap key presses.
-        #        event_filter = PythonEditorEventFilter(self, self.control)
-        #        event_filter.control = self.control
-        #        self.control.installEventFilter(event_filter)
-        #        self.control.code.installEventFilter(event_filter)
 
         # Connect signals for text changes.
         control.code.modificationChanged.connect(self._on_dirty_changed)
@@ -270,16 +238,9 @@ class PyScriptEditor(Editor):
 
     def _on_text_changed(self):
     #        if not self.suppress_change:
-        self.editor.parse(self.getText())
+    #     self.editor.parse(self.getText())
         self.changed = True
         self.dirty = True
-
-    #    @on_trait_change('editor:body')
-    #    def _on_body_change(self):
-    #        if self.editor.body:
-    #            self.suppress_change = True
-    #            self.setText(self.editor.body)
-    #            self.suppress_change = False
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
@@ -327,32 +288,29 @@ class PyScriptEditor(Editor):
                 fp.write(txt)
 
     save = dump
-    #    def save(self, path):
-    #        self.dump(path)
+
     def _detab(self, txt):
         return txt.replace('\t', ' ' * 4)
 
 
 class MeasurementEditor(PyScriptEditor):
-#    editor = Instance(MeasurementParameterEditor, ())
     kind = 'Measurement'
 
-    def _editor_default(self):
-        return MeasurementParameterEditor(editor=self)
+    # def _editor_default(self):
+    #     return MeasurementParameterEditor(editor=self)
 
 
 class ExtractionEditor(PyScriptEditor):
-#    editor = Instance(ParameterEditor, ())
     kind = 'Extraction'
 
-    def _editor_default(self):
-        return ParameterEditor(editor=self)
+    # def _editor_default(self):
+    #     return ParameterEditor(editor=self)
 
 
 class BakeoutEditor(PyScriptEditor):
     kind = 'Bakeout'
 
-    def _editor_default(self):
-        return ParameterEditor(editor=self)
+    # def _editor_default(self):
+    #     return ParameterEditor(editor=self)
 
 #============= EOF =============================================
