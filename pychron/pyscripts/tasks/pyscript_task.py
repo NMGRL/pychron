@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.action.schema import SToolBar
 from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
@@ -22,6 +23,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.helpers.filetools import add_extension
+from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, \
     BakeoutEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
@@ -51,6 +53,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     trace_delay = Int(50)
 
     description=String
+
+    tool_bars = [SToolBar(JumpToGosubAction()),]
 
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
@@ -256,6 +260,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.debug('selected command {}'.format(new))
         if new:
             self.commands_pane.set_command(new)
+
+    def jump_to_gosub(self):
+        root = os.path.dirname(self.active_editor.path)
+        name=self.active_editor.get_active_gosub()
+        if name:
+            self._open_pyscipt(name, root)
 
     def _open_pyscipt(self, new, root):
         new = new.replace('/', ':')

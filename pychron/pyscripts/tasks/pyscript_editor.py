@@ -137,6 +137,12 @@ class PyScriptEditor(Editor):
 
         return control
 
+    def get_active_gosub(self):
+        line=self.control.code.get_current_line()
+        cmd = self._get_command(line)
+        if cmd == 'gosub':
+            return line[7:-2]
+
     @on_trait_change('commands:command_objects:[+]')
     def handle_command_edit(self, obj, name, old, new):
         if old:

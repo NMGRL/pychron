@@ -89,11 +89,18 @@ class myCodeWidget(CodeWidget):
 
         super(myCodeWidget, self).mousePressEvent(event)
 
+    def get_current_line(self):
+        cursor=self.textCursor()
+        cursor.select(QTextCursor.LineUnderCursor)
+        line = cursor.selectedText()
+        return line.strip()
+
     def _get_line_cursor(self, pos):
         cursor = self.cursorForPosition(pos)
         cursor.select(QTextCursor.LineUnderCursor)
         line = cursor.selectedText()
         return cursor, line
+
 
     def mouseDoubleClickEvent(self, event):
         self.clear_selected()
