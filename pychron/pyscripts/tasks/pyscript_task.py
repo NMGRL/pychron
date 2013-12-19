@@ -251,6 +251,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self._open_pyscipt(new, root)
             # self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
 
+    @on_trait_change('active_editor:selected_command')
+    def _handle_selected_command(self, new):
+        self.debug('selected command {}'.format(new))
+        if new:
+            self.commands_pane.set_command(new)
+
     def _open_pyscipt(self, new, root):
         new = new.replace('/', ':')
         new = add_extension(new, '.py')

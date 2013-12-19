@@ -45,6 +45,8 @@ class Command(HasTraits):
     example = Str
     name = Property
     #    implements(ICommand)
+    def load_str(self, txt):
+        pass
 
     def _get_name(self):
         return self._get_command()
@@ -52,8 +54,7 @@ class Command(HasTraits):
     def to_string(self):
         m = '{}({})'.format(
             self._get_command(),
-            self._to_string()
-        )
+            self._to_string())
         return m
 
     #        return self.indent(m)
@@ -85,7 +86,6 @@ class Command(HasTraits):
         ts = '    ' * n
         return '{}{}'.format(ts, m)
 
-
     def get_text(self):
         ok = True
         if hasattr(self, '_get_view'):
@@ -99,8 +99,7 @@ class Command(HasTraits):
     def traits_view(self):
         v = View(self._get_view(),
                  title=self.__class__.__name__,
-                 buttons=OKCancelButtons
-        )
+                 buttons=OKCancelButtons)
         return v
 
     def help_view(self):
@@ -110,23 +109,17 @@ class Command(HasTraits):
     def _get_view(self):
         return Item()
 
-    #        raise NotImplementedError
-
     def _get_help_view(self):
         return VGroup(
             Group(
                 readonly('description'),
                 show_border=True,
-                label='Description',
-            ),
+                label='Description'),
             Group(
                 readonly('example',
-                         height=100
-                ),
+                         height=100),
                 show_border=True,
-                label='Example',
-            ),
-        )
+                label='Example'))
 
 
 class Wait(Command):
@@ -149,6 +142,8 @@ class Info(Command):
     def _to_string(self):
         return self._keyword('message', self.message)
 
+    def load_str(self, txt):
+        self.message=txt.replace("'",'').replace('"','')
 
 class Sleep(Command):
     duration = Float
@@ -162,6 +157,12 @@ class Sleep(Command):
     def _to_string(self):
         return self._keyword('duration', self.duration,
                              number=True)
+
+    def load_str(self, txt):
+        try:
+            self.duration=float(txt)
+        except (ValueError, TypeError):
+            pass
 
 
 class Gosub(Command):

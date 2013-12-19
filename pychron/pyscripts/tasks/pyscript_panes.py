@@ -131,6 +131,16 @@ class CommandsPane(TraitsDockPane):
     command_object = Any
     command_objects = List
 
+    def set_command(self, line):
+        args=line.split('(')
+        cmd=args[0]
+        if cmd:
+            self.selected_command=cmd
+            s='('.join(args[1:])
+            s=s[:-1]
+            self.command_object.load_str(s)
+
+
     def _selected_command_changed(self):
         if self.selected_command:
             obj = next((ci for ci in self.command_objects
