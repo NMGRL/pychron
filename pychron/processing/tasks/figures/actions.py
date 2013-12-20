@@ -46,8 +46,7 @@ class OpenFigureAction(TaskAction):
     method = 'open_figure'
     name = 'Open Figure'
     image = ImageResource(name='page_white_database.png',
-                          search_path=paths.icon_search_path
-    )
+                          search_path=paths.icon_search_path)
 
 
 class NewIdeogramAction(TaskAction):

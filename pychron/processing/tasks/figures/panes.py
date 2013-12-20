@@ -15,19 +15,27 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, Str, List
-from traitsui.api import View, Item, EnumEditor, UItem, InstanceEditor
+from traits.api import Any
+from traitsui.api import View, UItem, InstanceEditor, TabularEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+
+
+class FigureAdapter(TabularAdapter):
+    columns=[('Name', 'name')]
+
+
 class FigureSelectorPane(TraitsDockPane):
+    id='pychron.processing.figures.saved_figures'
     name = 'Saved Figures'
-    figure = Str
-    figures = List
 
     def traits_view(self):
-        v = View(Item('figure',
-                      editor=EnumEditor(name='figures')))
+        v = View(UItem('figures',editor=TabularEditor(adapter=FigureAdapter(),
+                                                      editable=False,
+                                                      selected='selected_figure',
+                                                      dclicked='dclicked_figure')))
         return v
 
 

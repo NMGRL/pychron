@@ -15,39 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Event
+from traits.api import HasTraits, Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.graph.graph import Graph
-from pychron.graph.regression_graph import StackedRegressionGraph
-from pychron.graph.stacked_graph import StackedGraph
 
-
-class AnalysisGraph(Graph):
-    tag=Event
-    save_db=Event
-
-    def get_contextual_menu_save_actions(self):
-        s=super(AnalysisGraph,self).get_contextual_menu_save_actions()
-        s.extend([('Database','_save_to_database', {})])
-        return s
-
-    def get_child_context_menu_actions(self):
-        return [self.action_factory('Set tag', '_set_tag')]
-
-    def _save_to_database(self):
-        print 'save to database'
-        self.save_db=True
-
-    def _set_tag(self):
-        self.tag=True
-
-class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
-    pass
-
-class AnalysisStackedRegressionGraph(AnalysisGraph, StackedRegressionGraph):
-    pass
-
+class DBFigure(HasTraits):
+    name=Str
 #============= EOF =============================================
 

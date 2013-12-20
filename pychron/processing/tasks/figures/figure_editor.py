@@ -38,14 +38,18 @@ class FigureEditor(GraphEditor):
     figure_model = Any
 
     tag=Event
+    save_db_figure=Event
 
     def _null_component(self):
         self.component = BasePlotContainer()
 
-
     @on_trait_change('figure_model:panels:graph:tag')
     def _handle_tag(self, new):
         self.tag=new
+
+    @on_trait_change('figure_model:panels:graph:save_db')
+    def _handle_save_db(self, new):
+        self.save_db_figure=new
 
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):

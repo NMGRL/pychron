@@ -115,7 +115,7 @@ class gen_SampleTable(Base, NameMixin):
     material_id = foreignkey('gen_MaterialTable')
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
-
+    figures = relationship('proc_FigureSamplesTable', backref='sample')
 
 class gen_SensitivityTable(Base, BaseMixin):
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')

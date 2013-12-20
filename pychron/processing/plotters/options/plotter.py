@@ -98,9 +98,10 @@ class PlotterOptions(BasePlotterOptions):
         return hg
 
     def _get_dump_attrs(self):
-        attrs = ['title', 'auto_generate_title',
+        attrs = super(PlotterOptions, self)._get_dump_attrs()
+        attrs += ['title', 'auto_generate_title',
                  #                  'data_type',
-                 'aux_plots',
+
                  'xtick_font_size',
                  'xtick_font_name',
                  'xtitle_font_size',
@@ -111,6 +112,7 @@ class PlotterOptions(BasePlotterOptions):
                  'ytitle_font_name',
                  'x_filter_str'
         ]
+
         return attrs
 
     #===============================================================================

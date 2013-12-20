@@ -63,19 +63,46 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksTable, proc_BackgroundsTable, proc_BlanksHistoryTable, proc_BackgroundsHistoryTable, \
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
-    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable
+    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, proc_FigureSamplesTable
 
 # @todo: change rundate and runtime to DateTime columns
 
 class IsotopeAdapter(DatabaseAdapter):
-    '''
-        new style adapter 
+    """
+        new style adapter
         be careful with super methods you use they may deprecate
-        
+
         using decorators is the new model
-    '''
+    """
 
     selector_klass = IsotopeAnalysisSelector
+
+    def get_project_figures(self, projects):
+        if not hasattr(projects, '__iter__'):
+            projects=(projects,)
+
+        with self.session_ctx() as sess:
+            q = sess.query(proc_FigureTable)
+            q = q.join(gen_ProjectTable)
+            q = q.filter(gen_ProjectTable.name.in_(projects))
+            try:
+                return q.all()
+            except NoResultFound:
+                pass
+
+    def get_sample_figures(self, samples):
+        if not hasattr(samples, '__iter__'):
+            samples = (samples,)
+
+        with self.session_ctx() as sess:
+            q = sess.query(proc_FigureTable)
+            q = q.join(proc_FigureSamplesTable)
+            q = q.join(gen_SampleTable)
+            q = q.filter(gen_SampleTable.name.in_(samples))
+            try:
+                return q.all()
+            except NoResultFound:
+                pass
 
     def get_preceeding(self, post, ms, atype='blank_unknown'):
         with self.session_ctx() as sess:
@@ -572,11 +599,22 @@ class IsotopeAdapter(DatabaseAdapter):
         item = gen_ExtractionDeviceTable(name=name, **kw)
         return self._add_unique(item, 'extraction_device', name, )
 
+    def add_figure_sample(self, figure, sample, project):
+
+        sample=self.get_sample(sample, project=project)
+        if sample:
+            obj=proc_FigureSamplesTable()
+            self._add_item(obj)
+
+            obj.figure=figure
+            obj.sample=sample
+            return obj
+
     def add_figure(self, project=None, **kw):
         fig = proc_FigureTable(
             user=self.save_username,
             **kw)
-        project = self.get_project(project, )
+        project = self.get_project(project)
         if project:
             fig.project = project
 

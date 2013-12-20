@@ -221,6 +221,12 @@ class proc_FigurePrefTable(Base, BaseMixin):
     xbounds = Column(String(80))
     ybounds = Column(String(80))
     options_pickle = Column(BLOB)
+    kind='ideo'
+
+
+class proc_FigureSamplesTable(Base, BaseMixin):
+    figure_id = foreignkey('proc_FigureTable')
+    sample_id = foreignkey('gen_SampleTable')
 
 
 class proc_FigureTable(Base, NameMixin):
@@ -228,6 +234,7 @@ class proc_FigureTable(Base, NameMixin):
     user = stringcolumn()
     project_id = foreignkey('gen_ProjectTable')
 
+    samples = relationship('proc_FigureSamplesTable', backref='figure')
     analyses = relationship('proc_FigureAnalysisTable', backref='figure')
     preference = relationship('proc_FigurePrefTable', backref='figure',
                               uselist=False)

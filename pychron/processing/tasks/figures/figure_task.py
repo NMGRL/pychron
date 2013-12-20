@@ -15,21 +15,21 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import on_trait_change, Instance
+from traits.api import on_trait_change, Instance, List, Event, Any
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 from itertools import groupby
-import cPickle as pickle
 #============= local library imports  ==========================
 from pychron.processing.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
-    OpenFigureAction, NewIdeogramAction, NewSpectrumAction, \
+    NewIdeogramAction, NewSpectrumAction, \
     AddTextBoxAction, SavePDFFigureAction
 
 import weakref
@@ -39,10 +39,12 @@ from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
+from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
+
 
 
 class FigureTask(AnalysisEditTask):
@@ -53,7 +55,7 @@ class FigureTask(AnalysisEditTask):
         SToolBar(
             SavePDFFigureAction(),
             SaveFigureAction(),
-            OpenFigureAction(),
+            # OpenFigureAction(),
             name='Figure',
             image_size=(16, 16)),
         SToolBar(
@@ -73,6 +75,9 @@ class FigureTask(AnalysisEditTask):
 
     auto_select_analysis = False
 
+    figures=List
+    selected_figure=Any
+    dclicked_figure=Event
     #===============================================================================
     # task protocol
     #===============================================================================
@@ -86,20 +91,67 @@ class FigureTask(AnalysisEditTask):
     def create_dock_panes(self):
         panes = super(FigureTask, self).create_dock_panes()
         self.plotter_options_pane = PlotterOptionsPane()
-        self.figure_selector_pane = FigureSelectorPane()
-
-        #fs = [fi.name for fi in self.manager.db.get_figures()]
-        #if fs:
-        #    self.figure_selector_pane.trait_set(figures=fs, figure=fs[0])
+        self.figure_selector_pane = FigureSelectorPane(model=self)
 
         return panes + [self.plotter_options_pane,
-                        self.figure_selector_pane,
-                        #MultiSelectAnalysisBrowser(model=self)
-        ]
+                        self.figure_selector_pane]
 
     def _create_control_pane(self):
         pass
 
+    def _selected_projects_changed(self, new):
+        self._load_project_figures(new)
+        super(FigureTask, self)._selected_projects_changed(new)
+
+    def _selected_samples_changed(self, new):
+        self._load_sample_figures(new)
+        super(FigureTask, self)._selected_samples_changed(new)
+
+    def _load_project_figures(self, new):
+        if new:
+            db=self.manager.db
+            with db.session_ctx():
+                proj=[p.name for p in new]
+                figs=db.get_project_figures(proj)
+                self.figures=[DBFigure(name=f.name or '', id=f.id) for f in figs]
+
+    def _load_sample_figures(self, new):
+        if new:
+            db = self.manager.db
+            with db.session_ctx():
+                sam = [p.name for p in new]
+                figs = db.get_sample_figures(sam)
+                self.figures = [DBFigure(name=f.name or '', id=f.id) for f in figs]
+
+    def _dclicked_figure_changed(self):
+        sf=self.selected_figure
+        if sf:
+            db=self.manager.db
+            with db.session_ctx():
+                db_fig=db.get_figure(sf.name)
+
+                ans = [a.analysis for a in db_fig.analyses]
+                self.active_editor.set_items(ans)
+
+                blob=db_fig.preference.options_pickle
+                kind=db_fig.preference.kind
+                if self.active_editor.basename==kind:
+                    self.active_editor.plotter_options_manager.load_yaml(blob)
+                else:
+                    #open new editor of this kind
+                    pass
+
+                # try:
+                #     po=pickle.loads(db_fig.preference.options_pickle)
+                #     po.initialize()
+                #     self.active_editor.plotter_options_manager.plotter_options=po
+                # except (pickle.PickleError,ImportError):
+                #     db_fig.preference.options_pickle
+                #     self.debug('failed loading preferences for {}'.format(sf))
+
+                self.active_editor.rebuild()
+
+                # print db_fig.preference
     #===============================================================================
     # grouping
     #===============================================================================
@@ -230,8 +282,8 @@ class FigureTask(AnalysisEditTask):
     def save_figure(self):
         self._save_figure()
 
-    def open_figure(self):
-        self._open_figure()
+    # def open_figure(self):
+    #     self._open_figure()
 
     def set_interpreted_age(self):
         key=lambda x: x.group_id
@@ -265,24 +317,30 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # db persistence
     #===============================================================================
-    def _open_figure(self, name=None):
-        if name is None:
-            name = self.figure_selector_pane.figure
+    # def _open_figure(self, name=None):
+    #     if name is None:
+    #         name = self.figure_selector_pane.figure
+    #
+    #     if not name:
+    #         return
+    #
+    #     db = self.manager.db
+    #
+    #     # get the name of the figure for the user
+    #     fig = db.get_figure(name)
+    #     if not fig:
+    #         return
+    #         # load options
+    #
+    #     # load analyses
+    #     items = [self._record_view_factory(ai.analysis) for ai in fig.analyses]
+    #     self.unknowns_pane.items = items
 
-        if not name:
-            return
+    def _get_sample_obj(self, s):
+        return next((sr for sr in self.samples if sr.name==s), None)
 
-        db = self.manager.db
-
-        # get the name of the figure for the user
-        fig = db.get_figure(name)
-        if not fig:
-            return
-            # load options
-
-        # load analyses
-        items = [self._record_view_factory(ai.analysis) for ai in fig.analyses]
-        self.unknowns_pane.items = items
+    def _get_project_obj(self, p):
+        return next((sr for sr in self.projects if sr.name == p), None)
 
     def _save_figure(self):
         db = self.manager.db
@@ -290,7 +348,44 @@ class FigureTask(AnalysisEditTask):
             return
 
         with db.session_ctx():
-            figure = db.add_figure()
+            #use dialog to ask user for figure name and associated project
+            dlg = SaveFigureDialog(projects=self.projects,
+                                   samples=self.samples)
+
+            # if self.selected_projects:
+            #     dlg.selected_project = self.selected_projects[0]
+            #
+            projects=list(set([ai.project for ai in self.active_editor.analyses]))
+            if projects:
+                proj=self._get_project_obj(projects[0])
+                if proj:
+                    dlg.selected_project=proj
+
+            samples=list(set([ai.sample for ai in self.active_editor.analyses]))
+            # print samples
+            ss=[self._get_sample_obj(si) for si in samples]
+            # print ss
+            ss=filter(lambda x:not x is None, ss)
+            # print ss
+            dlg.selected_samples=ss
+
+            while 1:
+                info = dlg.edit_traits(kind='livemodal')
+                if not info.result:
+                    return
+                if dlg.name:
+                    break
+                else:
+                    if not self.confirmation_dialog('Need to set the name of a "figure" to save. Continue?'):
+                        return
+
+            project=None
+            if dlg.selected_project:
+                project=dlg.selected_project.name
+
+            figure = db.add_figure(project=project, name=dlg.name)
+            for si in dlg.selected_samples:
+                db.add_figure_sample(figure, si.name, project)
 
             for ai in self.active_editor.analyses:
                 dban = db.get_analysis_uuid(ai.uuid)
@@ -305,26 +400,13 @@ class FigureTask(AnalysisEditTask):
                     self.debug('{} not in database'.format(aid))
 
             po = self.active_editor.plotter_options_manager.plotter_options
+            blob=po.dump_yaml(self.active_editor.basename)
+            # blob = pickle.dumps(po)
+            pref=db.add_figure_preference(figure, options_pickle=blob)
+            figure.preference=pref
 
-            #             refg = self.active_editor.graphs[0]
 
-            panel = self.active_editor._model.panels[0]
-            refg = panel.graph
-
-            r = refg.plots[0].index_mapper.range
-            xbounds = '{}, {}'.format(r.low, r.high)
-            ys = []
-            for pi in refg.plots:
-                r = pi.value_mapper.range
-                ys.append('{},{}'.format(r.low, r.high))
-
-            ybounds = '|'.join(ys)
-
-            blob = pickle.dumps(po)
-            db.add_figure_preference(figure,
-                                     xbounds=xbounds,
-                                     ybounds=ybounds,
-                                     options_pickle=blob)
+            self._load_project_figures([dlg.selected_project])
 
     #===============================================================================
     #
@@ -459,6 +541,10 @@ class FigureTask(AnalysisEditTask):
     def _handle_graph_tag(self, new):
         self.set_tag()
 
+    @on_trait_change('active_editor:save_db_figure')
+    def _handle_save_db_figure(self):
+        self._save_figure()
+
     #===========================================================================
     # browser protocol
     #===========================================================================
@@ -485,6 +571,7 @@ class FigureTask(AnalysisEditTask):
             left=HSplitter(
                 PaneItem('pychron.browser'),
                 Tabbed(
+                    PaneItem('pychron.processing.figures.saved_figures'),
                     PaneItem('pychron.analysis_edit.unknowns'),
                     PaneItem('pychron.processing.figures.plotter_options'),
                     PaneItem('pychron.plot_editor'))))

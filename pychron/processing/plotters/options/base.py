@@ -22,6 +22,7 @@ import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+import yaml
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotters.options.option import PlotterOption
 from pychron.pychron_constants import NULL_STR
@@ -40,6 +41,36 @@ class BasePlotterOptions(HasTraits):
         super(BasePlotterOptions, self).__init__(*args, **kw)
         if not clean:
             self._load(root)
+
+    def initialize(self):
+        for po in self.aux_plots:
+            po.initialized = True
+
+    def dump_yaml(self, kind):
+        """
+            return a yaml blob
+        """
+        d = dict(kind=kind)
+        for attr in self._get_dump_attrs():
+            obj=getattr(self, attr)
+            if attr == 'aux_plots':
+                ap=[ai.dump_yaml() for ai in obj]
+                d[attr] = ap
+            else:
+                d[attr] = obj
+        return yaml.dump(d)
+
+    def load_yaml(self, blob):
+        d=yaml.load(blob)
+        for k,v in d.itervalues():
+            if k=='aux_plots':
+                ap=[]
+                for vi in v:
+                    pp=self.plot_option_klass(**vi)
+                    ap.append(pp)
+                self.trait_set(**{k:ap})
+            else:
+                self.trait_set(**{k: v})
 
     def get_aux_plots(self):
         return reversed([pi
@@ -61,7 +92,7 @@ class BasePlotterOptions(HasTraits):
     # persistence
     #===============================================================================
     def _get_dump_attrs(self):
-        return ('auto_refresh',)
+        return ['auto_refresh','aux_plots']
 
     def dump(self, root):
         self._dump(root)
@@ -84,6 +115,7 @@ class BasePlotterOptions(HasTraits):
             attrs = self._get_dump_attrs()
             for t in attrs:
                 d[t] = getattr(self, t)
+
             try:
                 pickle.dump(d, fp)
             except (pickle.PickleError, TypeError, EOFError, TraitError):
@@ -107,6 +139,8 @@ class BasePlotterOptions(HasTraits):
                 po = klass(height=0)
                 po.trait_set(name=name, trait_change_notfiy=False)
                 self.aux_plots.append(po)
+
+        self.initialize()
 
     def __repr__(self):
         return self.name

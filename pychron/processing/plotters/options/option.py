@@ -41,10 +41,20 @@ class PlotterOption(HasTraits):
 
     normalize = None
     use_time_axis = False
+    initialized=False
+    def dump_yaml(self):
+        d=dict()
+        attrs=('use', 'scale','height','x_error','y_error', 'show_labels','filter_str')
+        for attr in attrs:
+            d[attr]=getattr(self, attr)
+
+        return d
 
     def _name_changed(self):
-        if self.name != NULL_STR:
-            self.use = True
+        if self.initialized:
+            if self.name != NULL_STR:
+                self.use = True
+                print 'setting use true', self.name
 
     def _get_plot_name(self):
         if self.name in self.names:
