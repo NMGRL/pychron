@@ -321,28 +321,13 @@ class AutomatedRunFactory(Loggable):
                                     extract_group_cnt=extract_group_cnt)
 
         if auto_increment_id:
-            self._labnumber = increment_value(self.labnumber)
+            v=increment_value(self.labnumber)
+            invoke_in_main_thread(self.trait_set, _labnumber=v)
 
         if auto_increment_position:
             pos = self.position
             if pos:
                 self.position = increment_position(pos)
-                #if ',' in pos:
-                #    spos = map(int, pos.split(','))
-                #    increment = spos[-1] - spos[0] + 1
-                #    self.position = increment_value(pos, increment)
-                #else:
-                #    s = None
-                #    if SLICE_REGEX.match(pos):
-                #        s, e = map(int, pos.split('-'))
-                #    elif SSLICE_REGEX.match(pos) or PSLICE_REGEX.match(pos):
-                #        s, e = map(int, pos.split(':'))[:2]
-                #
-                #    if s is not None:
-                #        d = e - s
-                #        ns = e + 1
-                #        ne = ns + d
-                #        self.position = '{}-{}'.format(ns, ne)
 
         return arvs, freq
 
