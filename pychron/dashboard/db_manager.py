@@ -15,35 +15,45 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import Instance
+from datetime import datetime
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.dashboard.tasks.server.server import DashboardServer
-from pychron.dashboard.tasks.server.task import DashboardServerTask
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.database.adapters.dashboard_adapter import DashboardAdapter
+from pychron.database.isotope_database_manager import BaseIsotopeDatabaseManager
 
 
-class DashboardServerPlugin(BaseTaskPlugin):
-    dashboard_server = Instance(DashboardServer)
-
-    def _tasks_default(self):
-        return [TaskFactory(id='pychron.dashboard.server',
-                            name='Dashboard Server',
-                            accelerator='Ctrl+4',
-                            factory=self._factory)]
-
-    def _factory(self):
-        f = DashboardServerTask(server=self.dashboard_server)
-        return f
+class DashboardDBManager(BaseIsotopeDatabaseManager):
+    _db_klass=DashboardAdapter
 
     def start(self):
-        self.dashboard_server = DashboardServer(application=self.application)
-        s = self.dashboard_server
-        s.activate()
+        db=self.db
+        with db.session_ctx():
+            db.add_time_table(start=datetime.now())
 
     def stop(self):
-        self.dashboard_server.deactivate()
+        db=self.db
+        with db.session_ctx():
+            tt=db.get_last_time_table()
+            tt.end=datetime.now()
+
+    def publish_device(self, new):
+        db = self.db
+        with db.session_ctx():
+            tt = db.get_last_time_table()
+
+            for dev in tt.devices:
+                if dev.name==new.name:
+                    nb, fmt=new.new_scan_blob(dev.scan_blob)
+                    dev.scan_blob=nb
+                    dev.scan_fmt=fmt
+                    break
+            else:
+                db.add_device(new.name)
+
+            tt.end=datetime.now()
+
+
 
 #============= EOF =============================================
+

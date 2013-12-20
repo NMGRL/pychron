@@ -16,8 +16,8 @@
 
 #============= enthought library imports =======================
 import weakref
-from traits.api import Instance, String, Property, Event, \
-    cached_property
+from traits.api import String, Property, Event, \
+    cached_property, Any
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -38,26 +38,19 @@ ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 500
 
 
-class IsotopeDatabaseManager(Loggable):
-    db = Instance(IsotopeAdapter)
-
-    irradiation = String
-    level = String
-
-    irradiations = Property(depends_on='saved, updated')
-    levels = Property(depends_on='irradiation, saved, updated')
-
-    saved = Event
-    updated = Event
+class BaseIsotopeDatabaseManager(Loggable):
+    db = Any
+    _db_klass = Any
 
     def __init__(self, bind=True, connect=True, warn=True, *args, **kw):
-        super(IsotopeDatabaseManager, self).__init__(*args, **kw)
+        super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
         if bind:
             try:
                 self.bind_preferences()
             except AttributeError:
                 import traceback
+
                 traceback.print_exc()
 
         if connect:
@@ -105,6 +98,47 @@ class IsotopeDatabaseManager(Loggable):
             bind_preference(self.db, 'password', '{}.password'.format(prefid))
 
         bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
+
+    def open_progress(self, n=2):
+        return self._open_progress(n)
+
+    def _open_progress(self, n):
+
+        pd = myProgressDialog(max=n - 1,
+                              #dialog_size=(0,0, 550, 15),
+                              can_cancel=True,
+                              can_ok=True)
+        pd.open()
+        pd.on_trait_change(self._progress_closed, 'closed')
+        return pd
+
+    def _progress_closed(self):
+        if self.application:
+            win = self.application.windows[-1]
+            win.activate()
+
+    def _db_factory(self):
+        db = self._db_klass(application=self.application)
+        return db
+
+    #===============================================================================
+    # defaults
+    #===============================================================================
+    def _db_default(self):
+        return self._db_factory()
+
+
+class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
+    _db_klass=IsotopeAdapter
+
+    irradiation = String
+    level = String
+
+    irradiations = Property(depends_on='saved, updated')
+    levels = Property(depends_on='irradiation, saved, updated')
+
+    saved = Event
+    updated = Event
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
@@ -192,9 +226,6 @@ class IsotopeDatabaseManager(Loggable):
 
         return self.db.get_irradiation_level(irradiation, level)
 
-    def open_progress(self, n=2):
-        return self._open_progress(n)
-
     #===============================================================================
     # private
     #===============================================================================
@@ -226,21 +257,6 @@ class IsotopeDatabaseManager(Loggable):
                 msg = 'loading {}'.format(ai.record_id)
                 #                 self.debug(msg)
                 f(ai, msg)
-
-    def _open_progress(self, n):
-
-        pd = myProgressDialog(max=n - 1,
-                              #dialog_size=(0,0, 550, 15),
-                              can_cancel=True,
-                              can_ok=True)
-        pd.open()
-        pd.on_trait_change(self._progress_closed, 'closed')
-        return pd
-
-    def _progress_closed(self):
-        if self.application:
-            win = self.application.windows[-1]
-            win.activate()
 
     def _add_arar(self, meas_analysis, analysis):
 
@@ -292,23 +308,23 @@ class IsotopeDatabaseManager(Loggable):
                           calculate_age=False,
                           unpack=False,
                           exclude=None,
-                          use_cache=True,**kw):
+                          use_cache=True, **kw):
 
 
         if isinstance(rec, (Analysis, DBAnalysis)):
             if progress:
                 progress.increment()
-            # self._add_to_cache(rec)
+                # self._add_to_cache(rec)
             return rec
 
         else:
             a = self._construct_analysis(rec, calculate_age, unpack, progress)
-            if use_cache:
-                self._add_to_cache(a)
+            # if use_cache:
+            #     self._add_to_cache(a)
 
             return a
 
-    def _construct_analysis(self, rec, calculate_age, unpack,  prog):
+    def _construct_analysis(self, rec, calculate_age, unpack, prog):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -362,12 +378,6 @@ class IsotopeDatabaseManager(Loggable):
 
         return ai
 
-
-    def _db_factory(self):
-
-        db = IsotopeAdapter(application=self.application)
-        return db
-
     #===============================================================================
     # property get/set
     #===============================================================================
@@ -412,10 +422,5 @@ class IsotopeDatabaseManager(Loggable):
     def _irradiation_changed(self):
         self.level = ''
 
-    #===============================================================================
-    # defaults
-    #===============================================================================
-    def _db_default(self):
-        return self._db_factory()
 
 #============= EOF =============================================

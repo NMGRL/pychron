@@ -15,35 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import Instance
 
 #============= standard library imports ========================
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, DateTime, BLOB, String
 #============= local library imports  ==========================
-from pychron.dashboard.tasks.server.server import DashboardServer
-from pychron.dashboard.tasks.server.task import DashboardServerTask
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.database.core.base_orm import BaseMixin, NameMixin
+from util import Base, foreignkey
 
 
-class DashboardServerPlugin(BaseTaskPlugin):
-    dashboard_server = Instance(DashboardServer)
+class dash_TimeTable(Base, BaseMixin):
+    start=Column(DateTime)
+    end=Column(DateTime)
+    devices=relationship('dash_DeviceTable')
 
-    def _tasks_default(self):
-        return [TaskFactory(id='pychron.dashboard.server',
-                            name='Dashboard Server',
-                            accelerator='Ctrl+4',
-                            factory=self._factory)]
 
-    def _factory(self):
-        f = DashboardServerTask(server=self.dashboard_server)
-        return f
-
-    def start(self):
-        self.dashboard_server = DashboardServer(application=self.application)
-        s = self.dashboard_server
-        s.activate()
-
-    def stop(self):
-        self.dashboard_server.deactivate()
-
+class dash_DeviceTable(Base, NameMixin):
+    time_table_id=foreignkey('dash_TimeTable')
+    scan_blob=Column(BLOB)
+    scan_fmt=Column(String(40))
 #============= EOF =============================================
+

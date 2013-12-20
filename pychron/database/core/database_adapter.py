@@ -465,16 +465,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             r = self._query_all(q)
             return r
 
-    def _retrieve_first(self, table, value, key='name', order_by=None):
-        if not isinstance(value, (str, int, unicode, long, float)):
-            return value
+    def _retrieve_first(self, table, value=None, key='name', order_by=None):
+        if value is not None:
+            if not isinstance(value, (str, int, unicode, long, float)):
+                return value
 
         sess = self.get_session()
         if sess is None:
             return
 
         q = sess.query(table)
-        q = q.filter(getattr(table, key) == value)
+        if value is not None:
+            q = q.filter(getattr(table, key) == value)
+
         try:
             if order_by is not None:
                 q = q.order_by(order_by)

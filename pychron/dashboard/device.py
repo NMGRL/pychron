@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import struct
 from traits.api import HasTraits, Str, Either, Float, Property, Bool, List, Instance, \
     Event
 from traitsui.api import View, Item, ListEditor, InstanceEditor, UItem, VGroup, HGroup
@@ -118,6 +119,24 @@ class DashboardDevice(Loggable):
             self.publish_event = '{} {}'.format(tag, new)
             pv.last_value = new
             pv.last_time = time.time()
+
+    def new_scan_blob(self, blob, fmt):
+        new_args = [a for v in self.values
+                    for a in (v.last_time, v.last_value)]
+        if blob:
+            step = 4 * fmt.count('f')
+            args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
+            ns=[]
+            for blobv, lastv in zip(args, new_args):
+                blobv.append(lastv)
+                ns.append(blobv)
+            blob = ''.join([struct.pack(fmt, v) for v in zip(*ns)])
+        else:
+
+            fmt = '>{}'.format('f' * len(new_args))
+            blob = struct.pack(fmt, new_args)
+
+        return blob, fmt
 
     def traits_view(self):
         hgrp = HGroup(UItem('use'), UItem('name', style='readonly'))

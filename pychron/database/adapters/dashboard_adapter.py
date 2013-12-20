@@ -15,35 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from envisage.ui.tasks.task_factory import TaskFactory
-from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.dashboard.tasks.server.server import DashboardServer
-from pychron.dashboard.tasks.server.task import DashboardServerTask
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.orms.isotope.dash import dash_TimeTable, dash_DeviceTable
 
 
-class DashboardServerPlugin(BaseTaskPlugin):
-    dashboard_server = Instance(DashboardServer)
+class DashboardAdapter(DatabaseAdapter):
+    def add_time_table(self, start):
+        obj=dash_TimeTable(start=start)
+        self._add_item(obj)
 
-    def _tasks_default(self):
-        return [TaskFactory(id='pychron.dashboard.server',
-                            name='Dashboard Server',
-                            accelerator='Ctrl+4',
-                            factory=self._factory)]
+    def add_device(self, time_table, device_name):
+        obj=dash_DeviceTable(name=device_name, time_table=time_table)
+        return obj
 
-    def _factory(self):
-        f = DashboardServerTask(server=self.dashboard_server)
-        return f
-
-    def start(self):
-        self.dashboard_server = DashboardServer(application=self.application)
-        s = self.dashboard_server
-        s.activate()
-
-    def stop(self):
-        self.dashboard_server.deactivate()
+    def get_last_time_table(self):
+        return self._retrieve_first(dash_TimeTable, order_by=dash_TimeTable.start.desc())
 
 #============= EOF =============================================
+

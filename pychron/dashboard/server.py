@@ -24,7 +24,8 @@ from traits.api import Instance, on_trait_change, List, Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.dashboard.tasks.server.device import DashboardDevice
+from pychron.dashboard.db_manager import DashboardDBManager
+from pychron.dashboard.device import DashboardDevice
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.helpers.filetools import to_bool
 from pychron.loggable import Loggable
@@ -36,7 +37,7 @@ from pychron.xml.xml_parser import XMLParser
 class DashboardServer(Loggable):
     devices = List
     selected_device = Instance(DashboardDevice)
-
+    db_manager=Instance(DashboardDBManager, ())
     notifier = Instance(Notifier, ())
 
     url = Str
@@ -46,11 +47,32 @@ class DashboardServer(Loggable):
     def activate(self):
         self._load_devices()
         if self.devices:
+            self.setup_database()
             self.setup_notifier()
             self.start_poll()
 
-    def notifier_default(self):
-        return Notifier()
+    def deactivate(self):
+        self.db_manager.stop()
+
+    def setup_database(self):
+        self.db_manager.start()
+
+    def setup_notifier(self):
+        parser = self._get_parser()
+
+        port = 8100
+        elem = parser.get_elements('port')
+        if elem is not None:
+            try:
+                port = int(elem[0].text.strip())
+            except ValueError:
+                pass
+
+        self.notifier.port = port
+        host = gethostbyname(gethostname())
+        self.url = '{}:{}'.format(host, port)
+        #add a config request handler
+        self.notifier.add_request_handler('config', self._handle_config)
 
     def start_poll(self):
         self.info('starting dashboard poll')
@@ -123,7 +145,6 @@ class DashboardServer(Loggable):
 
         return ret
 
-
     def _handle_config(self):
         """
             return a pickled dictionary string
@@ -154,26 +175,11 @@ class DashboardServer(Loggable):
         parser = XMLParser(p)
         return parser
 
-    def setup_notifier(self):
-        parser = self._get_parser()
-
-        port = 8100
-        elem = parser.get_elements('port')
-        if elem is not None:
-            try:
-                port = int(elem[0].text.strip())
-            except ValueError:
-                pass
-
-        self.notifier.port = port
-        host = gethostbyname(gethostname())
-        self.url = '{}:{}'.format(host, port)
-        #add a config request handler
-        self.notifier.add_request_handler('config', self._handle_config)
-
     @on_trait_change('devices:publish_event')
-    def _handle_publish(self, new):
+    def _handle_publish(self, obj, name, old, new):
         self.notifier.send_message(new)
+
+        self.db_manager.publish_device(obj)
 
     @on_trait_change('devices:values:+')
     def _value_changed(self, obj, name, old, new):
@@ -181,5 +187,6 @@ class DashboardServer(Loggable):
             return
 
         print obj, name, old, new
+
 
 #============= EOF =============================================
