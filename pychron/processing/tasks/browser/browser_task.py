@@ -196,6 +196,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         app=self.window.application
         win, task, is_open = app.get_open_task('pychron.advanced_query')
+        task.set_append_replace_enabled(True)
         if is_open:
             win.activate()
         else:

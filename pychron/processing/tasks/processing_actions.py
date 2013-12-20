@@ -202,5 +202,16 @@ class SetInterpretedAgeAction(FigureTaskAction):
     #accelerator = 'Ctrl+t'
     method = 'set_interpreted_age'
 
+
+class OpenAdvancedQueryAction(Action):
+    name='Find Analysis...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.advanced_query')
+        task.set_append_replace_enabled(False)
+
+
+
 #============= EOF =============================================
 

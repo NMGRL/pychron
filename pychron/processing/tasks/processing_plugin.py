@@ -31,7 +31,7 @@ from pychron.processing.tasks.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -97,6 +97,7 @@ Install to enable MS Excel export''')
 
         return [
             self._make_task_extension([('recall_action', RecallAction, 'MenuBar/File'),
+                                       ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                                        ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
                                        ('reduction_group', reduction_group, 'MenuBar/Data'),
                                        ('figure_group', figure_group, 'MenuBar/Data'),
@@ -107,6 +108,7 @@ Install to enable MS Excel export''')
                                        ('tag', TagAction, 'MenuBar/Data'),
                                        ('database_save', DatabaseSaveAction, 'MenuBar/Data'),
                                        ('grouping_group', grouping_group, 'MenuBar/Data'),
+
                                        ('easy_group', lambda: SGroup(id='Easy', name='Easy'), 'MenuBar/Tools'),
                                        ('easy_import', EasyImportAction, 'MenuBar/Tools/Easy'),
                                        ('easy_figures', EasyFiguresAction, 'MenuBar/Tools/Easy'),

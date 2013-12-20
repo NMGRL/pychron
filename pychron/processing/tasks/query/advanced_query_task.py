@@ -29,6 +29,10 @@ class AdvancedQueryTask(BaseManagerTask):
     name='Advanced Query'
     data_selector=Instance(DataSelector)
 
+    def set_append_replace_enabled(self, v):
+        self.data_selector.replace_enabled=v
+        self.data_selector.append_enabled=v
+
     def activated(self):
         selector=self.manager.db.selector
         selector.load_recent()

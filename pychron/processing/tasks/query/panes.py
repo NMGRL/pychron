@@ -18,7 +18,7 @@
 from pyface.image_resource import ImageResource
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, Item, EnumEditor, TableEditor, VGroup, spring, HGroup,\
+from traitsui.api import View, Item, EnumEditor, TableEditor, VGroup, spring, HGroup, \
     UItem, VSplit, ButtonEditor
 
 #============= standard library imports ========================
@@ -61,6 +61,7 @@ class ResultsAdapter(TabularAdapter):
 def selector_name(name):
     return 'object.selector.{}'.format(name)
 
+
 class AdvancedQueryPane(TraitsTaskPane):
     id = 'pychron.search.query'
     name = 'Advanced Query'
@@ -76,39 +77,28 @@ class AdvancedQueryPane(TraitsTaskPane):
                  editor=myTabularEditor(adapter=ResultsAdapter(),
                                         selected=selector_name('selected'),
                                         scroll_to_row=selector_name('scroll_to_row'),
-                                        #                                                            update='update',
                                         column_clicked=selector_name('column_clicked'),
                                         multi_select=True,
                                         operations=['move'],
                                         editable=True,
                                         drag_external=True,
                                         dclicked=selector_name('dclicked'),
-                                        key_pressed=selector_name('key_pressed')
-                 ),
-                 show_label=False,
-                 #                                     height=0.75
-            ),
-            label='Results'
-        )
+                                        key_pressed=selector_name('key_pressed')),
+                 show_label=False),
+            label='Results')
         return grp
 
     def _query_edit_view(self):
         v = View(HGroup(
             UItem('parameter',
-                  editor=EnumEditor(name='parameters')
-            ),
+                  editor=EnumEditor(name='parameters')),
             UItem('comparator',
-                  editor=EnumEditor(name='comparisons')
-            ),
+                  editor=EnumEditor(name='comparisons')),
             UItem('criterion'),
             UItem('criterion',
                   width=-25,
-                  editor=EnumEditor(name='criteria')
-            )
-
-        ),
-                 height=125
-        )
+                  editor=EnumEditor(name='criteria'))),
+                 height=125)
         return v
 
     def _table_editor(self):
@@ -118,32 +108,23 @@ class AdvancedQueryPane(TraitsTaskPane):
             ObjectColumn(name='parameter',
                          editor=EnumEditor(name='parameters'),
                          label='Param.',
-                         width=125
-            ),
+                         width=125),
             ObjectColumn(name='comparator',
                          editor=EnumEditor(name='comparisons'),
                          label='',
-                         width=50
-            ),
-            #                 ObjectColumn(name='criterion'),
+                         width=50),
             ObjectColumn(name='criterion',
                          editor=EnumEditor(name='criteria'),
                          label='Value',
-                         width=125
-            ),
-        ]
+                         width=125)]
 
         editor = TableEditor(columns=cols,
                              deletable=True,
                              show_toolbar=True,
                              sortable=False,
                              selected=selector_name('selected_query'),
-                             #                              selection_mode='row',
                              edit_view=self._query_edit_view(),
-                             #                              auto_size=True
-                             row_factory=self.model.database_selector.query_factory,
-                             #                              auto_add=True
-        )
+                             row_factory=self.model.database_selector.query_factory)
 
         return editor
 
@@ -152,19 +133,10 @@ class AdvancedQueryPane(TraitsTaskPane):
         query_itm = Item(selector_name('queries'), show_label=False,
                          style='custom',
                          editor=editor,
-                         #                                    editor=ListEditor(mutable=False,
-                         #                                                   style='custom',
-                         #                                                   editor=InstanceEditor()),
-                         #                              height=0.25,
-                         visible_when='kind=="Database"',
-        )
+                         visible_when='kind=="Database"')
         return query_itm
 
     def traits_view(self):
-    #         editor = ListEditor(mutable=False,
-    #                           style='custom',
-    #                           editor=InstanceEditor())
-    #
         grp = HGroup(
             UItem('kind'),
             UItem('open_button',
@@ -190,14 +162,15 @@ class AdvancedQueryPane(TraitsTaskPane):
                   editor=EnumEditor(name=selector_name('analysis_types'))),
             visible_when='kind=="Database"')
 
-        results_grp=VSplit(self._results_group(),
-                           VGroup(grp,filter_grp,self._query_group()))
-        button_grp=HGroup(icon_button_editor('append_button','add', tooltip='Append'),
-                          icon_button_editor('replace_button','arrow_refresh',tooltip='Replace'))
+        results_grp = VSplit(self._results_group(),
+                             VGroup(grp, filter_grp, self._query_group()))
+
+        button_grp = HGroup(icon_button_editor('append_button', 'add',
+                                               visible_when='append_enabled', tooltip='Append'),
+                            icon_button_editor('replace_button', 'arrow_refresh',
+                                               visible_when='replace_enabled', tooltip='Replace'))
         v = View(VGroup(button_grp, results_grp))
         return v
-
-
 
 
 #============= EOF =============================================

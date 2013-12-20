@@ -405,7 +405,6 @@ class FigureTask(AnalysisEditTask):
             pref=db.add_figure_preference(figure, options=blob)
             figure.preference=pref
 
-
             self._load_project_figures([dlg.selected_project])
 
     #===============================================================================
