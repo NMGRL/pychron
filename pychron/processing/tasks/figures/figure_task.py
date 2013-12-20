@@ -133,7 +133,7 @@ class FigureTask(AnalysisEditTask):
                 ans = [a.analysis for a in db_fig.analyses]
                 self.active_editor.set_items(ans)
 
-                blob=db_fig.preference.options_pickle
+                blob=db_fig.preference.options
                 kind=db_fig.preference.kind
                 if self.active_editor.basename==kind:
                     self.active_editor.plotter_options_manager.load_yaml(blob)
@@ -402,7 +402,7 @@ class FigureTask(AnalysisEditTask):
             po = self.active_editor.plotter_options_manager.plotter_options
             blob=po.dump_yaml(self.active_editor.basename)
             # blob = pickle.dumps(po)
-            pref=db.add_figure_preference(figure, options_pickle=blob)
+            pref=db.add_figure_preference(figure, options=blob)
             figure.preference=pref
 
 

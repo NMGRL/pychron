@@ -44,7 +44,7 @@ class PlotterOption(HasTraits):
     initialized=False
     def dump_yaml(self):
         d=dict()
-        attrs=('use', 'scale','height','x_error','y_error', 'show_labels','filter_str')
+        attrs=('use','name', 'scale','height','x_error','y_error', 'show_labels','filter_str')
         for attr in attrs:
             d[attr]=getattr(self, attr)
 

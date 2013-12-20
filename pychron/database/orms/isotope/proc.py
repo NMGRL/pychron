@@ -220,8 +220,8 @@ class proc_FigurePrefTable(Base, BaseMixin):
     figure_id = foreignkey('proc_FigureTable')
     xbounds = Column(String(80))
     ybounds = Column(String(80))
-    options_pickle = Column(BLOB)
-    kind='ideo'
+    options = Column(BLOB)
+    kind=Column(String(40))
 
 
 class proc_FigureSamplesTable(Base, BaseMixin):
