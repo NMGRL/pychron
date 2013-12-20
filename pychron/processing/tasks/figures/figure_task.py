@@ -455,22 +455,26 @@ class FigureTask(AnalysisEditTask):
         if self.unknowns_pane:
             self.unknowns_pane.refresh_needed = True
 
+    @on_trait_change('active_editor:tag')
+    def _handle_graph_tag(self, new):
+        self.set_tag()
+
     #===========================================================================
     # browser protocol
     #===========================================================================
-    def _dclicked_sample_changed(self, new):
-        # if self.unknowns_pane.items:
-        #     ans = self._get_sample_analyses(self.selected_samples)
-        #     ans = self.manager.make_analyses(ans)
-        #     self.new_ideogram(ans, set_ans=False)
-        #
-        # else:
-        #     ans = self._get_sample_analyses(self.selected_samples)
-        # self.unknowns_pane.items = ans
-
-        if self.active_editor:
-            ans = self._get_sample_analyses(self.selected_samples)
-            self.active_editor.set_items(ans)
+    # def _dclicked_sample_changed(self, new):
+    #     # if self.unknowns_pane.items:
+    #     #     ans = self._get_sample_analyses(self.selected_samples)
+    #     #     ans = self.manager.make_analyses(ans)
+    #     #     self.new_ideogram(ans, set_ans=False)
+    #     #
+    #     # else:
+    #     #     ans = self._get_sample_analyses(self.selected_samples)
+    #     # self.unknowns_pane.items = ans
+    #
+    #     if self.active_editor:
+    #         ans = self._get_sample_analyses(self.selected_samples)
+    #         self.active_editor.set_items(ans)
 
     #===============================================================================
     # defaults

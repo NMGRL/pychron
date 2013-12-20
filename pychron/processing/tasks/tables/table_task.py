@@ -118,8 +118,8 @@ class TableTask(BaseBrowserTask):
         self._open_editor(editor)
 
 
-    def _dclicked_sample_changed(self, new):
-        self._append_table()
+    # def _dclicked_sample_changed(self, new):
+    #     self._append_table()
         #         man = self.manager
         #         ans = [ai for ai in self.analyses
         # #                 if not ai.step

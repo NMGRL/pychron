@@ -88,8 +88,8 @@ def fmt(data):
 
 
 class Graph(Viewable, ContextMenuMixin):
-    ''' 
-    '''
+    """
+    """
     name = Str
     plotcontainer = Instance(BasePlotContainer)
     container_dict = Dict
@@ -106,8 +106,8 @@ class Graph(Viewable, ContextMenuMixin):
     width = 300
     height = 300
     resizable = True
-    crosshairs_enabled = False
-    editor_enabled = True
+    # crosshairs_enabled = False
+    # editor_enabled = True
 
     line_inspectors_write_metadata = False
     add_context_menu = Bool(True)

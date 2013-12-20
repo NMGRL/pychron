@@ -18,10 +18,10 @@
 from traits.api import HasTraits, Any, on_trait_change, List, Int
 #============= standard library imports ========================
 from itertools import groupby
-from pychron.graph.stacked_graph import StackedGraph
 from numpy.core.numeric import Inf
 
 #============= local library imports  ==========================
+from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
 class FigurePanel(HasTraits):
@@ -31,7 +31,7 @@ class FigurePanel(HasTraits):
     plot_options = Any
     _index_attr = None
     equi_stack = False
-    graph_klass = StackedGraph
+    graph_klass = AnalysisStackedGraph
     graph_spacing = Int
     meta = Any
 
@@ -46,11 +46,11 @@ class FigurePanel(HasTraits):
               for gid, ais in groupby(ans, key=key)]
         return gs
 
-    def dump_metadata(self):
-        return self.graph.dump_metadata()
-
-    def load_metadata(self, md):
-        self.graph.load_metadata(md)
+    # def dump_metadata(self):
+    #     return self.graph.dump_metadata()
+    #
+    # def load_metadata(self, md):
+    #     self.graph.load_metadata(md)
 
     def make_graph(self):
 

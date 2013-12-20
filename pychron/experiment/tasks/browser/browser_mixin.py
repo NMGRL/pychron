@@ -235,8 +235,9 @@ class BrowserMixin(ColumnSorterMixin):
         self.selected_projects = []
         self.selected_samples = []
 
-    def _get_sample_analyses(self, samples, limit=500,
-                             page=None, page_width=None,
+    def _get_sample_analyses(self, samples,
+                             # limit=500,
+                             # page=None, page_width=None,
                              include_invalid=False):
         db = self.manager.db
         with db.session_ctx():
@@ -245,17 +246,17 @@ class BrowserMixin(ColumnSorterMixin):
 
             low_post=min(lps) if lps else None
 
-            o = None
-            if page_width:
-                if page>0:
-                    page-=1
-                o = page * page_width
-                limit = page_width
+            # o = None
+            # if page_width:
+            #     if page>0:
+            #         page-=1
+            #     o = page * page_width
+            #     limit = page_width
 
             ans, tc = db.get_labnumber_analyses(lns,
                                                 low_post=low_post,
-                                                limit=limit,
-                                                offset=o,
+                                                # limit=limit,
+                                                # offset=o,
                                                 include_invalid=include_invalid)
             prog=None
             n=len(ans)
@@ -266,10 +267,10 @@ class BrowserMixin(ColumnSorterMixin):
             if prog:
                 prog.close()
 
-            if page_width:
-                return ans, tc
-            else:
-                return ans
+            # if page_width:
+            #     return ans, tc
+            # else:
+            return ans
 
     def _record_view_factory(self, ai, progress=None, **kw):
 

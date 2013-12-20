@@ -142,7 +142,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def prepare_destroy(self):
         self.dump_browser_selection()
-        self.analysis_table.dump()
+        # self.analysis_table.dump()
 
     def activated(self):
         self.load_projects()
@@ -156,7 +156,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
-        self.analysis_table.load()
+        # self.analysis_table.load()
 
     def _set_db(self):
         #self.analysis_table.db = self.manager.db
@@ -252,36 +252,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self._selected_samples_changed(self.selected_samples)
 
     def _dclicked_sample_changed(self):
-        ans = self._get_sample_analyses(self.selected_samples,
-                                        include_invalid=not self.analysis_table.omit_invalid)
         if self.active_editor:
+            ans=self.analysis_table.analyses
             self.active_editor.set_items(ans)
-            #self.active_editor.unknowns = ans
-            #self.unknowns_pane.items = self.active_editor.unknowns
 
     def _selected_samples_changed(self, new):
         if new:
-            self._set_page(-1, reset_page=True)
+            # self._set_page(-1, reset_page=True)
+            ans = self._get_sample_analyses(self.selected_samples,
+                                            include_invalid=not self.analysis_table.omit_invalid)
 
+            self.analysis_table.set_analyses(ans)
             ans=self.analysis_table.analyses
             if ans and self.auto_select_analysis:
                 self.analysis_table.selected = ans[0]
 
-    @on_trait_change('analysis_table:page')
-    def _page_changed(self, new):
-        self._set_page(new)
+    # @on_trait_change('analysis_table:page')
+    # def _page_changed(self, new):
+    #     self._set_page(new)
 
-    def _set_page(self, page, reset_page=False):
-        if not self.analysis_table.no_update:
-            include_invalid = not self.analysis_table.omit_invalid
-            page_width = self.analysis_table.page_width
-
-            ans, tc = self._get_sample_analyses(self.selected_samples,
-                                                include_invalid=include_invalid,
-                                                page_width=page_width,
-                                                page=page)
-
-            self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
+    # def _set_page(self, page, reset_page=False):
+    #     if not self.analysis_table.no_update:
+    #         include_invalid = not self.analysis_table.omit_invalid
+    #         page_width = self.analysis_table.page_width
+    #
+    #         ans, tc = self._get_sample_analyses(self.selected_samples,
+    #                                             include_invalid=include_invalid,
+    #                                             page_width=page_width,
+    #                                             page=page)
+    #
+    #         self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)

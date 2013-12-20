@@ -20,7 +20,7 @@ from traits.api import HasTraits, List, Property, cached_property, Str, Bool
 from numpy import array
 #============= local library imports  ==========================
 from uncertainties import ufloat
-from pychron.processing.analysis import Marker
+# from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS
 from pychron.stats.core import calculate_mswd, calculate_weighted_mean
@@ -82,8 +82,8 @@ class AnalysisGroup(HasTraits):
 
     def _get_values(self, attr):
         vs = (getattr(ai, attr) for ai in self.analyses
-              if not isinstance(ai, Marker) and \
-                not ai.is_omitted())
+              # if not isinstance(ai, Marker) and \
+                if not ai.is_omitted())
                  #ai.temp_status == 0 and not ai.tag)
 
         vs = [vi for vi in vs if vi is not None]

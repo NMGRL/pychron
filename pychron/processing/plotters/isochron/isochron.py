@@ -43,8 +43,7 @@ class OffsetPlotLabel(PlotLabel):
 
 
 class Isochron(BaseArArFigure):
-    pass
-
+    _omit_key = 'omit_iso'
 
 class InverseIsochron(Isochron):
 #     xmi = Float

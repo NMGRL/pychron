@@ -56,6 +56,8 @@ class BaseArArFigure(HasTraits):
     refresh_unknowns_table = Event
     _suppress_table_update = False
 
+    _omit_key=None
+
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
                        orientation=orientation)
@@ -114,26 +116,16 @@ class BaseArArFigure(HasTraits):
     def replot(self, *args, **kw):
         pass
 
-    def _get_omitted(self, ans, omit=None):
-        #def test(a):
-        #    r = ai.temp_status
-        #    if omit:
-        #        r = r or getattr(ai, omit)
-        #    #print ai.aliquot, r, omit, ai.filter_omit
-        #    return r or ai.filter_omit #or ai.tag == 'omit'
-
+    def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
-                if ai.is_omitted(omit)]
+                if ai.is_omitted(omit, include_value_filtered)]
 
     def _set_selected(self, ans, sel):
-        #print self.group_id, sel
         for i, a in enumerate(ans):
-            if not a.filter_omit:
+            if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
                 a.temp_status = 1 if i in sel else 0
 
         self.refresh_unknowns_table = True
-        #if not self._suppress_table_update:
-        #    self.refresh_unknowns_table = True
 
     def _filter_metadata_changes(self, obj, func, ans):
         sel = obj.metadata.get('selections', [])
@@ -182,24 +174,7 @@ class BaseArArFigure(HasTraits):
             def gen():
                 for ai in self.sorted_analyses:
                     yield ai.get_value(attr)
-
-        #elif attr in self.sorted_analyses[0].isotopes:
-        #    def gen():
-        #        for ai in self.sorted_analyses:
-        #            if attr in ai.isotopes:
-        #                yield ai.isotopes[attr].get_intensity()
-        #elif attr in self.sorted_analyses[0].computed:
-        #    def gen():
-        #        for ai in self.sorted_analyses:
-        #            yield ai.computed[attr]
-        #else:
-        #    def gen():
-        #        for ai in self.sorted_analyses:
-        #            yield getattr(ai, attr)
-
         return gen()
-
-        #return (getattr(ai, attr) for ai in self.sorted_analyses)
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
                       pid=0, pad=None):

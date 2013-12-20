@@ -56,6 +56,7 @@ class DataCollector(Loggable):
     _alive = False
     _evt = None
     _warned_no_fit = None
+    _warned_no_det = None
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
 
@@ -81,6 +82,7 @@ class DataCollector(Loggable):
 
         self._truncate_signal = False
         self._warned_no_fit = []
+        self._warned_no_det = []
 
         st = time.time()
         if self.starttime is None:
@@ -165,8 +167,9 @@ class DataCollector(Loggable):
     def _update_baseline_peak_hop(self, x, keys, signals):
         a = self.arar_age
         for iso in self.arar_age.isotopes.itervalues():
-            signal = signals[keys.index(iso.detector)]
-            a.append_data(iso.name, iso.detector, x, signal, 'baseline')
+            signal=self._get_signal(keys, signals, iso.detector)
+            if signal is not None:
+                a.append_data(iso.name, iso.detector, x, signal, 'baseline')
 
     def _update_isotopes(self, x, keys, signals):
         a = self.arar_age
@@ -177,8 +180,19 @@ class DataCollector(Loggable):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                signal = signals[keys.index(dn.name)]
-                a.append_data(iso, dn.name, x, signal, kind)
+                signal = self._get_signal(keys, signals, dn.name)
+                if signal is not None:
+                    a.append_data(iso, dn.name, x, signal, kind)
+
+    def _get_signal(self, keys, signals, det):
+        try:
+            return signals[keys.index(det)]
+        except ValueError:
+            if not det in self._warned_no_det:
+                self.warning('Detector {} is not available'.format(det))
+                self._warned_no_det.append(det)
+                self.canceled=True
+                self.stop()
 
     def _get_detector(self, d):
         if isinstance(d, str):

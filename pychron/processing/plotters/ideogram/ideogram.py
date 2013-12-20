@@ -45,6 +45,8 @@ class Ideogram(BaseArArFigure):
     x_grid_visible = False
     y_grid_visible = False
 
+    _omit_key='omit_ideo'
+
     def plot(self, plots):
         """
             plot data on plots
@@ -61,7 +63,8 @@ class Ideogram(BaseArArFigure):
             return
 
         omit = self._get_omitted(self.sorted_analyses,
-                                 omit='omit_ideo')
+                                 omit='omit_ideo',
+                                 include_value_filtered=False)
         omit=set(omit)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
@@ -70,7 +73,8 @@ class Ideogram(BaseArArFigure):
                 omit=omit.union(set(omits))
 
         for i, ai in enumerate(self.sorted_analyses):
-            ai.filter_omit = i in omit
+            # print ai.record_id, i in omit
+            ai.value_filter_omit = i in omit
 
         graph.set_x_limits(min_=self.xmi, max_=self.xma,
                            pad='0.05')

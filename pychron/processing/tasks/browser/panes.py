@@ -172,24 +172,24 @@ class BrowserPane(TraitsDockPane):
                   #                                           )
                   width=300),
             HGroup(
-                Item(make_name('page_width'),
-                     label='N',
-                     tooltip='Page Width. Number of analyses to display per page'),
-
+                # Item(make_name('page_width'),
+                #      label='N',
+                #      tooltip='Page Width. Number of analyses to display per page'),
+                #
                 spring,
-
-                icon_button_editor(make_name('backward'),
-                                   'control_rewind',
-                                   #enabled_when=make_name('backward_enabled'),
-                                   tooltip='Backward one page'),
-                icon_button_editor(make_name('forward'),
-                                   'control_fastforward',
-                                   #enabled_when=make_name('forward_enabled'),
-                                   tooltip='Forwad 1 page'),
-                UItem(make_name('page'),
-                      tooltip='Current page'),
-                UItem(make_name('npages'),
-                      format_str='%02i', style='readonly'),
+                #
+                # icon_button_editor(make_name('backward'),
+                #                    'control_rewind',
+                #                    #enabled_when=make_name('backward_enabled'),
+                #                    tooltip='Backward one page'),
+                # icon_button_editor(make_name('forward'),
+                #                    'control_fastforward',
+                #                    #enabled_when=make_name('forward_enabled'),
+                #                    tooltip='Forwad 1 page'),
+                # UItem(make_name('page'),
+                #       tooltip='Current page'),
+                # UItem(make_name('npages'),
+                #       format_str='%02i', style='readonly'),
                 Item(make_name('omit_invalid'))
             ),
             defined_when=self.analyses_defined,

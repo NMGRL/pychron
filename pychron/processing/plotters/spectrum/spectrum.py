@@ -50,11 +50,12 @@ class Spectrum(BaseArArFigure):
 
     #     index_key = 'age'
     #     ytitle = 'Relative Probability'
+    _omit_key = 'omit_spec'
 
     def plot(self, plots):
-        '''
+        """
             plot data on plots
-        '''
+        """
         graph = self.graph
 
         #self._plot_age_spectrum(graph.plots[0], 0)

@@ -48,24 +48,29 @@ class Analysis(ArArAge):
     aliquot_step_str = Str
 
     temp_status = Int
-    filter_omit = Bool
+    value_filter_omit = Bool
+    table_filter_omit = Bool
     tag = Str
 
     omit_ideo = False
     omit_spec = False
     omit_iso = False
 
-    def is_temp_omitted(self):
-        return self.temp_status or self.filter_omit
+    def is_temp_omitted(self, include_value_filtered=True):
+        return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
 
-    def is_omitted(self, omit_key=None):
+    def is_tag_omitted(self, omit_key):
+        if omit_key:
+            return getattr(self, omit_key)
+
+    def is_omitted(self, omit_key=None, include_value_filtered=True):
         omit=False
         if omit_key:
             omit= getattr(self, omit_key)
             #print ai.aliquot, r, omit, ai.filter_omit
         #return r or ai.filter_omit #or ai.tag == 'omit'
         #omit=False
-        return self.is_temp_omitted() or omit
+        return self.is_temp_omitted(include_value_filtered) or omit
 
     def flush(self, *args, **kw):
         """
@@ -674,7 +679,8 @@ class DBAnalysis(Analysis):
     def _get_status_text(self):
         r = 'OK'
 
-        if self.temp_status != 0 or self.filter_omit:
+        if self.is_omitted():
+        # if self.temp_status != 0 or self.filter_omit:
             r = 'Omitted'
 
         return r

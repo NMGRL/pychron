@@ -52,7 +52,7 @@ class Filter(HasTraits):
             n=0
             for i in items:
                 if func(i):
-                    i.filter_omit = True
+                    i.table_filter_omit = True
                     n+=1
             return items, n
         else:

@@ -228,6 +228,7 @@ class AnalysisEditTask(BaseBrowserTask):
     def prepare_destroy(self):
         if self.unknowns_pane:
             self.unknowns_pane.dump()
+
         super(AnalysisEditTask, self).prepare_destroy()
 
     def create_dock_panes(self):
@@ -312,6 +313,14 @@ class AnalysisEditTask(BaseBrowserTask):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _dclicked_sample_changed(self):
+        if self.unknowns_pane:
+            self.debug('Dumping UnknownsPane selection')
+            self.unknowns_pane.dump_selection()
+            self.unknowns_pane.load_previous_selections()
+
+        super(AnalysisEditTask,self)._dclicked_sample_changed()
+
     def _active_editor_changed(self):
         if self.active_editor:
             if self.controls_pane:
@@ -322,8 +331,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 self.controls_pane.tool = tool
 
             if self.unknowns_pane:
-                if hasattr(self.unknowns_pane, 'previous_selections'):
-                    self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
+                # if hasattr(self.unknowns_pane, 'previous_selections'):
+                #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
                 if hasattr(self.active_editor, 'analyses'):
                     #if self.active_editor.unknowns:
                     self.unknowns_pane.items = self.active_editor.analyses
@@ -414,7 +423,6 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
-
         is_append = name == 'append_button'
 
         if self.active_editor:

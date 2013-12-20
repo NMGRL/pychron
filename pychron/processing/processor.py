@@ -28,7 +28,7 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, gen_ExtractionDeviceTable
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-from pychron.processing.analysis import Analysis
+# from pychron.processing.analysis import Analysis
 # from pychron.processing.plotters.spectrum import Spectrum
 # from pychron.processing.plotters.ideogram import Ideogram
 # from pychron.processing.plotters.inverse_isochron import InverseIsochron
@@ -56,8 +56,8 @@ class Processor(IsotopeDatabaseManager):
             find atype analyses +/- delta hours (12 hours default)
             if atype is None use "blank_{analysis.analysis_type}"
         """
-        if not isinstance(analysis, Analysis):
-            analysis = self.make_analysis(analysis)
+        # if not isinstance(analysis, Analysis):
+        #     analysis = self.make_analysis(analysis)
             #             analysis.load_isotopes()
 
         ms = analysis.mass_spectrometer

@@ -31,8 +31,8 @@ class ContextMenuMixin(HasTraits):
         pass
 
     def action_factory(self, name, func, **kw):
-        '''
-        '''
+        """
+        """
         a = Action(name=name, on_perform=getattr(self, func),
                    #                   visible_when='0',
                    **kw)
@@ -40,16 +40,16 @@ class ContextMenuMixin(HasTraits):
         return a
 
     def get_contextual_menu_save_actions(self):
-        '''
-        '''
+        """
+        """
         return [
             # ('Clipboard', '_render_to_clipboard', {}),
             ('PDF', 'save_pdf', {}),
             ('PNG', 'save_png', {})]
 
     def contextual_menu_contents(self):
-        '''
-        '''
+        """
+        """
         save_actions = []
         for n, f, kw in self.get_contextual_menu_save_actions():
             save_actions.append(self.action_factory(n, f, **kw))
@@ -72,73 +72,72 @@ class ContextMenuMixin(HasTraits):
         #
         #        export_menu = Menu(name='Export',
         #                         *export_actions)
-        contents = [save_menu,
-                    #                    crosshairs_action, export_menu
-        ]
+        contents = [save_menu,]
+        c=self.get_child_context_menu_actions()
+        if c:
+            contents.extend(c)
 
-        if self.editor_enabled:
-            pa = self.action_factory('Show Plot Editor', 'show_plot_editor')
-            pa.enabled = self.selected_plot is not None
-            contents += [pa]
-            contents += [self.action_factory('Show Graph Editor', 'show_graph_editor')]
+        # if self.editor_enabled:
+        #     pa = self.action_factory('Show Plot Editor', 'show_plot_editor')
+        #     pa.enabled = self.selected_plot is not None
+        #     contents += [pa]
+        #     contents += [self.action_factory('Show Graph Editor', 'show_graph_editor')]
 
         return contents
 
+    def get_child_context_menu_actions(self):
+        return
+
     def get_contextual_menu(self):
-        '''
-        '''
+        """
+        """
         ctx_menu = MenuManager(*self.contextual_menu_contents())
 
         return ctx_menu
 
-        #        menu = Menu(*self.contextual_menu_contents(),
-
-#                    _id= -1
-#                    )
-#        return menu
 
 
-class IsotopeContextMenuMixin(ContextMenuMixin):
-    def set_status_omit(self):
-        '''
-            override this method in a subclass 
-        '''
-        pass
-
-    def set_status_include(self):
-        '''
-            override this method in a subclass 
-        '''
-        pass
-
-    def recall_analysis(self):
-        '''
-            override this method in a subclass 
-        '''
-        pass
-
-    def contextual_menu_contents(self):
-
-        contents = super(IsotopeContextMenuMixin, self).contextual_menu_contents()
-        contents.append(self.action_factory('Edit Analyses', 'edit_analyses'))
-        actions = []
-        if hasattr(self, 'selected_analysis'):
-            if self.selected_analysis:
-                actions.append(self.action_factory('Recall', 'recall_analysis'))
-                if self.selected_analysis.status == 0:
-                    actions.append(self.action_factory('Omit', 'set_status_omit'))
-                else:
-                    actions.append(self.action_factory('Include', 'set_status_include'))
-                actions.append(self.action_factory('Void', 'set_status_void'))
-
-                contents.append(MenuManager(name='Analysis', *actions))
-
-                #        contents.append(MenuManager(
-                #                             self.action_factory('Recall', 'recall_analysis', enabled=enabled),
-                #                             self.action_factory('Omit', 'set_status_omit', enabled=enabled),
-                #                             self.action_factory('Include', 'set_status_include', enabled=enabled),
-                #                             name='Analysis'))
-        return contents
+# class IsotopeContextMenuMixin(ContextMenuMixin):
+#     def set_status_omit(self):
+#         '''
+#             override this method in a subclass
+#         '''
+#         pass
+#
+#     def set_status_include(self):
+#         '''
+#             override this method in a subclass
+#         '''
+#         pass
+#
+#     def recall_analysis(self):
+#         '''
+#             override this method in a subclass
+#         '''
+#         pass
+#
+#     def contextual_menu_contents(self):
+#
+#         contents = super(IsotopeContextMenuMixin, self).contextual_menu_contents()
+#         contents.append(self.action_factory('Edit Analyses', 'edit_analyses'))
+#         actions = []
+#         if hasattr(self, 'selected_analysis'):
+#             if self.selected_analysis:
+#                 actions.append(self.action_factory('Recall', 'recall_analysis'))
+#                 if self.selected_analysis.status == 0:
+#                     actions.append(self.action_factory('Omit', 'set_status_omit'))
+#                 else:
+#                     actions.append(self.action_factory('Include', 'set_status_include'))
+#                 actions.append(self.action_factory('Void', 'set_status_void'))
+#
+#                 contents.append(MenuManager(name='Analysis', *actions))
+#
+#                 #        contents.append(MenuManager(
+#                 #                             self.action_factory('Recall', 'recall_analysis', enabled=enabled),
+#                 #                             self.action_factory('Omit', 'set_status_omit', enabled=enabled),
+#                 #                             self.action_factory('Include', 'set_status_include', enabled=enabled),
+#                 #                             name='Analysis'))
+#         return contents
 
 
 class RegressionContextMenuMixin(ContextMenuMixin):

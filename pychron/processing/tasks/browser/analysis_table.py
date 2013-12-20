@@ -15,15 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import math
-import os
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Int, Property, Event
-import apptools.sweet_pickle as pickle
+    Event
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.tasks.browser.table_configurer import TableConfigurer
-from pychron.paths import paths
 
 
 class AnalysisTable(HasTraits):
@@ -42,47 +38,47 @@ class AnalysisTable(HasTraits):
     omit_invalid = Bool(True)
     configure_analysis_table = Button
 
-    forward = Button
-    backward = Button
-    page_width = Int(100)
-    page = Int(1, enter_set=True, auto_set=False)
-
-    forward_enabled = Bool
-    backward_enabled = Bool
-    n_all_analyses = Int
-    npages = Property(depends_on='n_all_analyses,page_width')
+    # forward = Button
+    # backward = Button
+    # page_width = Int(1000)
+    # page = Int(1, enter_set=True, auto_set=False)
+    #
+    # forward_enabled = Bool
+    # backward_enabled = Bool
+    # n_all_analyses = Int
+    # npages = Property(depends_on='n_all_analyses,page_width')
 
     no_update = False
     scroll_to_row=Event
     refresh_needed=Event
 
-    def load(self):
-        p = os.path.join(paths.hidden_dir, 'analysis_table')
-        if os.path.isfile(p):
-            d={}
-            with open(p, 'r') as fp:
-                try:
-                   d=pickle.load(fp)
-                except (pickle.PickleError, OSError, EOFError):
-                    pass
+    # def load(self):
+    #     p = os.path.join(paths.hidden_dir, 'analysis_table')
+    #     if os.path.isfile(p):
+    #         d={}
+    #         with open(p, 'r') as fp:
+    #             try:
+    #                d=pickle.load(fp)
+    #             except (pickle.PickleError, OSError, EOFError):
+    #                 pass
+    #
+    #         self.trait_set(**d)
+    #
+    # def dump(self):
+    #     p=os.path.join(paths.hidden_dir, 'analysis_table')
+    #     with open(p,'w') as fp:
+    #         pickle.dump({'page_width':self.page_width}, fp)
 
-            self.trait_set(**d)
-
-    def dump(self):
-        p=os.path.join(paths.hidden_dir, 'analysis_table')
-        with open(p,'w') as fp:
-            pickle.dump({'page_width':self.page_width}, fp)
-
-    def _forward_fired(self):
-        if self.page < self.npages:
-            self.page += 1
-            #if self.oanalyses:
-            #    self.page+=1
-
-    def _backward_fired(self):
-        p = self.page
-        p -= 1
-        self.page = max(1, p)
+    # def _forward_fired(self):
+    #     if self.page < self.npages:
+    #         self.page += 1
+    #         #if self.oanalyses:
+    #         #    self.page+=1
+    #
+    # def _backward_fired(self):
+    #     p = self.page
+    #     p -= 1
+    #     self.page = max(1, p)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):
         self.analyses = ans
@@ -91,14 +87,14 @@ class AnalysisTable(HasTraits):
             tc=len(ans)
 
         self.n_all_analyses = tc
-        if reset_page:
-            self.no_update = True
-            if page<0:
-                self.page=self.npages
-                self.scroll_to_row=self.page_width
-            else:
-                self.page = 1
-            self.no_update = False
+        # if reset_page:
+        #     self.no_update = True
+        #     if page<0:
+        #         self.page=self.npages
+        #         self.scroll_to_row=self.page_width
+        #     else:
+        #         self.page = 1
+        #     self.no_update = False
 
     def _analysis_filter_changed(self, new):
         if new:
@@ -117,11 +113,11 @@ class AnalysisTable(HasTraits):
                             title='Configure Analysis Table')
         c.edit_traits()
 
-    def _get_npages(self):
-        try:
-            return int(math.ceil(self.n_all_analyses / float(self.page_width)))
-        except ZeroDivisionError:
-            return 0
+    # def _get_npages(self):
+    #     try:
+    #         return int(math.ceil(self.n_all_analyses / float(self.page_width)))
+    #     except ZeroDivisionError:
+    #         return 0
 
     def _get_analysis_filter_parameter(self):
         p = self.analysis_filter_parameter

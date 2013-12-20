@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
-    List
+    List, Event
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 #============= standard library imports ========================
@@ -35,11 +35,17 @@ class FigureEditor(GraphEditor):
     tool = Any
 
     annotation_tool = Any
-
     figure_model = Any
+
+    tag=Event
 
     def _null_component(self):
         self.component = BasePlotContainer()
+
+
+    @on_trait_change('figure_model:panels:graph:tag')
+    def _handle_tag(self, new):
+        self.tag=new
 
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):

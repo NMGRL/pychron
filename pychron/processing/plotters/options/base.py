@@ -51,7 +51,6 @@ class BasePlotterOptions(HasTraits):
         return v
 
     def _refresh_plot_fired(self):
-        print 'asdfasdf'
         self.refresh_plot_needed=True
 
     def _get_refresh_group(self):

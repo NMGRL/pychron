@@ -53,6 +53,7 @@ class InterpolationTask(AnalysisEditTask):
 
     @on_trait_change('references_pane:[append_button, replace_button]')
     def _append_references(self, obj, name, old, new):
+
         is_append = name == 'append_button'
         if self.active_editor:
             refs = None
