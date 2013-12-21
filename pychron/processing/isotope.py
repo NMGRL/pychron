@@ -54,6 +54,7 @@ class BaseMeasurement(HasTraits):
         super(BaseMeasurement, self).__init__(*args, **kw)
 
         if dbrecord and unpack:
+            print 'unpack isotopes'
             try:
                 if unpacker is None:
                     unpacker = lambda x: x.signal.data

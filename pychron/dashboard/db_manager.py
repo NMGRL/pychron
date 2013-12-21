@@ -24,35 +24,53 @@ from pychron.database.isotope_database_manager import BaseIsotopeDatabaseManager
 
 
 class DashboardDBManager(BaseIsotopeDatabaseManager):
-    _db_klass=DashboardAdapter
+    _db_klass = DashboardAdapter
 
     def start(self):
-        db=self.db
+        db = self.db
         with db.session_ctx():
-            db.add_time_table(start=datetime.now())
+            self.info('Created new dashboard time table')
+            return db.add_time_table(start=datetime.now())
 
     def stop(self):
-        db=self.db
+        db = self.db
         with db.session_ctx():
-            tt=db.get_last_time_table()
-            tt.end=datetime.now()
+            tt = db.get_last_time_table()
+            tt.end = datetime.now()
 
     def publish_device(self, new):
         db = self.db
         with db.session_ctx():
             tt = db.get_last_time_table()
+            tt=self._rollover_time_table(tt)
+            if tt is not None:
+                for dev in tt.devices:
+                    if dev.name == new.name:
+                        nb = new.append_scan_blob(dev.scan_blob,
+                                                  dev.scan_fmt)
+                        dev.scan_blob = nb
+                        break
+                else:
+                    dev = db.add_device(tt, new.name)
 
-            for dev in tt.devices:
-                if dev.name==new.name:
-                    nb, fmt=new.new_scan_blob(dev.scan_blob)
-                    dev.scan_blob=nb
-                    dev.scan_fmt=fmt
-                    break
-            else:
-                db.add_device(new.name)
+                    dev.scan_meta = new.dump_meta()
+                    dev.scan_fmt = new.get_scan_fmt()
+                    dev.scan_blob = new.append_scan_blob()
 
-            tt.end=datetime.now()
+                tt.end = datetime.now()
 
+    def _rollover_time_table(self, tt, n=24):
+        """
+            if the duration of this time table is >N hours create a new time table
+
+        """
+
+        if tt.end:
+            delta=tt.end-tt.start
+            if delta.seconds*3600>n:
+                tt= self.start()
+
+        return tt
 
 
 #============= EOF =============================================

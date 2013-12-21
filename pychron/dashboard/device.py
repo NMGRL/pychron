@@ -23,6 +23,7 @@ from traitsui.api import View, Item, ListEditor, InstanceEditor, UItem, VGroup, 
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
+import yaml
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.helpers.datetime_tools import convert_timestamp
 from pychron.loggable import Loggable
@@ -103,8 +104,8 @@ class DashboardDevice(Loggable):
 
         if period == 'on_change':
             self.debug('bind to {}'.format(n))
-
-            self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), n)
+            if self._device:
+                self._device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d), n)
             #self._device.on_trait_change(lambda new: self._push_value(pv, new), n)
 
         self.values.append(pv)
@@ -120,23 +121,38 @@ class DashboardDevice(Loggable):
             pv.last_value = new
             pv.last_time = time.time()
 
-    def new_scan_blob(self, blob, fmt):
+    def dump_meta(self):
+        d=[]
+
+        for pv in self.values:
+            dd=dict(((a,getattr(pv, a))
+                        for a in ('name', 'tag', 'enabled', 'func_name', 'period', 'timeout')))
+            d.append(dd)
+        return yaml.dump(d)
+
+    def get_scan_fmt(self):
+        n=len(self.values) *2
+        fmt = '>{}'.format('f' * n)
+        return fmt
+
+    def append_scan_blob(self, blob=None, fmt=None):
         new_args = [a for v in self.values
                     for a in (v.last_time, v.last_value)]
+
         if blob:
             step = 4 * fmt.count('f')
             args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in xrange(0, len(blob), step)])
             ns=[]
             for blobv, lastv in zip(args, new_args):
+                blobv=list(blobv)
                 blobv.append(lastv)
                 ns.append(blobv)
-            blob = ''.join([struct.pack(fmt, v) for v in zip(*ns)])
+            blob = ''.join([struct.pack(fmt, *v) for v in zip(*ns)])
         else:
-
             fmt = '>{}'.format('f' * len(new_args))
-            blob = struct.pack(fmt, new_args)
+            blob = struct.pack(fmt, *new_args)
 
-        return blob, fmt
+        return blob
 
     def traits_view(self):
         hgrp = HGroup(UItem('use'), UItem('name', style='readonly'))

@@ -100,12 +100,13 @@ class DashboardServer(Loggable):
                 continue
 
             dev_name = dname.text.strip()
-
-            device = app.get_service(ICoreDevice,
-                                     query='name=="{}"'.format(dev_name))
-            if device is None:
-                self.warning('no device named "{}" available'.format(dev_name))
-                continue
+            device=None
+            if app:
+                device = app.get_service(ICoreDevice,
+                                         query='name=="{}"'.format(dev_name))
+                if device is None:
+                    self.warning('no device named "{}" available'.format(dev_name))
+                    continue
 
             enabled = dev.find('use')
             if enabled is not None:

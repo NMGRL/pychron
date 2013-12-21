@@ -27,12 +27,13 @@ from util import Base, foreignkey
 class dash_TimeTable(Base, BaseMixin):
     start=Column(DateTime)
     end=Column(DateTime)
-    devices=relationship('dash_DeviceTable')
+    devices=relationship('dash_DeviceTable', backref='time_table')
 
 
 class dash_DeviceTable(Base, NameMixin):
     time_table_id=foreignkey('dash_TimeTable')
     scan_blob=Column(BLOB)
-    scan_fmt=Column(String(40))
+    scan_fmt=Column(String(32))
+    scan_meta=Column(BLOB)
 #============= EOF =============================================
 
