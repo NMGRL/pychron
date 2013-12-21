@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any, Either, Bool
+    Date, Any, Either, Bool, List
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -26,6 +26,7 @@ from collections import namedtuple
 from pychron.helpers.isotope_utils import extract_mass
 from pychron.helpers.logger_setup import new_logger
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
+from pychron.processing.analyses.changes import FitChange, BlankChange
 from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.summary import AnalysisSummary
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
@@ -90,8 +91,8 @@ class Analysis(ArArAge):
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
     def _sync(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         return
 
     def _analysis_summary_default(self):
@@ -156,6 +157,9 @@ class DBAnalysis(Analysis):
 
     status_text = Property
     age_string = Property
+
+    blank_changes=List
+    fit_changes=List
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -289,7 +293,13 @@ class DBAnalysis(Analysis):
         self._sync_extraction(meas_analysis)
         self._sync_analysis_info(meas_analysis)
 
+        self._sync_changes(meas_analysis)
         self.analysis_type = self._get_analysis_type(meas_analysis)
+
+    def _sync_changes(self, meas_analysis):
+
+        self.blank_changes=[BlankChange(bi) for bi in meas_analysis.blanks_histories]
+        self.fit_changes=[FitChange(fi) for fi in meas_analysis.fit_histories]
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction

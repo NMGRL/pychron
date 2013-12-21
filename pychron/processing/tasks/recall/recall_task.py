@@ -77,6 +77,9 @@ class RecallTask(AnalysisEditTask):
     #         self.active_editor.analysis_view = an.analysis_view
     #         self.controls_pane.tool = an.analysis_view.selection_tool
     #         self.active_editor.model = an
+    def _active_editor_changed(self):
+        if self.active_editor:
+            self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
 
     def _dclicked_sample_changed(self):
         pass

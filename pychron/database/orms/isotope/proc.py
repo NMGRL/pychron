@@ -251,14 +251,11 @@ class proc_FigureAnalysisTable(Base, BaseMixin):
 
 
 class proc_FitHistoryTable(Base, HistoryMixin):
-    fits = relationship('proc_FitTable', backref='history',
-                        #                        uselist=False
-    )
+    fits = relationship('proc_FitTable', backref='history')
     results = relationship('proc_IsotopeResultsTable', backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_fits',
-                            uselist=False
-    )
+                            uselist=False)
 
 
 class proc_FitTable(Base, BaseMixin):
@@ -270,6 +267,10 @@ class proc_FitTable(Base, BaseMixin):
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)
 
+    def make_summary(self):
+        f=self.fit[:1].upper()
+        s='{}{}'.format(self.isotope.molecular_weight.name, f)
+        return s
 
 class proc_SelectedHistoriesTable(Base, BaseMixin):
     analysis_id = foreignkey('meas_AnalysisTable')

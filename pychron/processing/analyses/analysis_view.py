@@ -23,6 +23,7 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= local library imports  ==========================
 
 from pychron.processing.analyses.view.experiment_view import ExperimentView
+from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.main_view import MainView
 
 
@@ -57,11 +58,12 @@ class AnalysisView(HasTraits):
         self.analysis_id = analysis_id
 
         main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-
         experiment_view = ExperimentView(an)
+        history_view=HistoryView(an)
 
         subviews = [main_view,
                     experiment_view,
+                    history_view,
                     ]
 
         self.selection_tool = ViewSelection(subviews=subviews,
