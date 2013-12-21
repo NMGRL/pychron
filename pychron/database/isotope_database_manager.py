@@ -149,11 +149,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def make_analysis(self, ai, **kw):
         return self.make_analyses((ai,), **kw)[0]
 
-    def make_analyses(self, ans, calculate_age=True,
+    def make_analyses(self, ans,
                       progress=None,
-                      unpack=False,
                       exclude=None,
-                      use_cache=True,
+                      # calculate_age=True,
+                      # unpack=False,
+                      # use_cache=True,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -199,9 +200,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                             a = self._analysis_factory(ai,
                                                        progress=progress,
-                                                       calculate_age=calculate_age,
-                                                       unpack=unpack,
-                                                       use_cache=use_cache,
+                                                       # calculate_age=calculate_age,
+                                                       # unpack=unpack,
+                                                       # use_cache=use_cache,
                                                        **kw)
                             if a:
                                 db_ans.append(a)
@@ -305,9 +306,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
     def _analysis_factory(self, rec, progress=None,
-                          calculate_age=False,
-                          unpack=False,
-                          exclude=None,
                           use_cache=True, **kw):
 
         if isinstance(rec, (Analysis, DBAnalysis)):
@@ -317,13 +315,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             return rec
 
         else:
-            a = self._construct_analysis(rec, calculate_age, unpack, progress)
+            a = self._construct_analysis(rec, progress, **kw)
             if use_cache:
                 self._add_to_cache(a)
 
             return a
 
-    def _construct_analysis(self, rec, calculate_age, unpack, prog):
+    def _construct_analysis(self, rec, prog, calculate_age=False, unpack=False,load_changes=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -360,7 +358,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             #ai.sync_arar(meas_analysis)
 
             if calculate_age:
-                ai.sync(meas_analysis, unpack=False)
+                ai.sync(meas_analysis, unpack=False, load_changes=load_changes)
                 ai.calculate_age(force=True)
             #elif not ai.persisted_age:
             #    ai.sync(meas_analysis, unpack=True)
@@ -370,10 +368,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             #    ai.sync(meas_analysis, unpack=True)
             #    ai.calculate_age(force=True)
             else:
-                ai.sync(meas_analysis, unpack=unpack)
+                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
 
         else:
-            ai.sync(meas_analysis, unpack=unpack)
+            ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
 
         return ai
 

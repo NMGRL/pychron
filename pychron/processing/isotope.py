@@ -179,37 +179,36 @@ class IsotopicMeasurement(BaseMeasurement):
     def _set_value(self, v):
         self._value = v
 
-    #@cached_property
     def _get_value(self):
-        if self.xs is not None and len(self.xs) > 1:  # and self.ys is not None:
+        if len(self.xs) > 1:  # and self.ys is not None:
             v = self.regressor.predict(0)
             return v
         else:
             return self._value
 
-    #@cached_property
     def _get_error(self):
-        if self.xs is not None and len(self.xs) > 1:
+        if len(self.xs) > 1:
             v = self.regressor.predict_error(0)
             return v
         else:
             return self._error
 
-    #@cached_property
+    @cached_property
     def _get_regressor(self):
-        try:
-            if 'average' in self.fit.lower():
-                reg = self._mean_regressor_factory()
-            else:
-                reg = PolynomialRegressor(xs=self.xs,
-                                          ys=self.ys,
-                                          degree=self.fit,
-                                          filter_outliers_dict=self.filter_outliers_dict)
-
-        except Exception, e:
-            reg = PolynomialRegressor(xs=self.xs, ys=self.ys,
+        # print '{} getting regerssior'.format(self.name)
+        # try:
+        if 'average' in self.fit.lower():
+            reg = self._mean_regressor_factory()
+        else:
+            reg = PolynomialRegressor(xs=self.xs,
+                                      ys=self.ys,
                                       degree=self.fit,
                                       filter_outliers_dict=self.filter_outliers_dict)
+
+        # except Exception, e:
+        #     reg = PolynomialRegressor(xs=self.xs, ys=self.ys,
+        #                               degree=self.fit,
+        #                               filter_outliers_dict=self.filter_outliers_dict)
 
         reg.calculate()
 

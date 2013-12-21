@@ -148,6 +148,10 @@ class TableFilter(HasTraits):
         items = self.items
         o = len(items)
         nf=0
+
+        for i in items:
+            i.table_filter_omit=False
+
         for fi in self.filters:
             items, filtered = fi.apply_filter(items, self.omit)
             nf+=filtered

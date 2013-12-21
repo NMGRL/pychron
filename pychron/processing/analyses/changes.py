@@ -30,7 +30,9 @@ class Change(HasTraits):
 
 
 class BlankChange(Change):
-    pass
+    def _make_summary(self, dbrecord):
+        s=''
+        self.summary=s
 
 
 class FitChange(Change):

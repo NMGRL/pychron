@@ -139,7 +139,8 @@ class AnalysisEditTask(BaseBrowserTask):
         if records:
             ans = self.manager.make_analyses(records,
                                          unpack=True,
-                                         calculate_age=True)
+                                         calculate_age=True,
+                                         load_changes=True)
 
             if ans:
                 for rec in ans:
