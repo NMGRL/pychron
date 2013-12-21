@@ -77,6 +77,15 @@ class IsotopeAdapter(DatabaseAdapter):
 
     selector_klass = IsotopeAnalysisSelector
 
+    def get_interpreted_age_histories(self, labnumbers):
+        with self.session_ctx() as sess:
+            q=sess.query(proc_InterpretedAgeHistoryTable)
+            q=q.filter(proc_InterpretedAgeHistoryTable.identifier.in_(labnumbers))
+            try:
+                return q.all()
+            except NoResultFound:
+                pass
+
     def get_project_figures(self, projects):
         if not hasattr(projects, '__iter__'):
             projects=(projects,)
@@ -1325,6 +1334,8 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_sensitivity(self, sid):
         return self._retrieve_item(gen_SensitivityTable, sid, key='id')
 
+    def get_interpreted_age_history(self, sid):
+        return self._retrieve_item(proc_InterpretedAgeHistoryTable, sid, key='id')
     #===============================================================================
     # ##getters multiple
     #===============================================================================

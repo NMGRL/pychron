@@ -64,7 +64,7 @@ class InitializationParser(XMLParser):
         #ver = '_exp_uv'
         #ver= '_spec'
         # ver='_diode'
-        #ver = '_dash'
+        # ver = '_dash'
         #ver = '_dash_client'
         #ver = ''
         p = os.path.join(paths.setup_dir, 'initialization{}.xml'.format(ver))

@@ -197,6 +197,13 @@ class SmartProjectAction(Action):
         task.process_project_file()
 
 
+class OpenInterpretedAgeAction(Action):
+    name='Browse Interpreted Ages'
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.processing.interpreted_age')
+
+
 class SetInterpretedAgeAction(FigureTaskAction):
     name = 'Set Interpreted Age...'
     #accelerator = 'Ctrl+t'

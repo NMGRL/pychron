@@ -31,7 +31,7 @@ from pychron.processing.tasks.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -101,7 +101,8 @@ Install to enable MS Excel export''')
                                        ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
                                        ('reduction_group', reduction_group, 'MenuBar/Data'),
                                        ('figure_group', figure_group, 'MenuBar/Data'),
-                                       ('interpreted_age', SetInterpretedAgeAction, 'MenuBar/Data'),
+                                       ('set_interpreted_age', SetInterpretedAgeAction, 'MenuBar/Data'),
+                                       ('browse_interpreted_age', OpenInterpretedAgeAction, 'MenuBar/Data'),
 
                                        ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/Tools'),
                                        ('data', data_menu, 'MenuBar', {'before': 'Tools', 'after': 'View'}),
@@ -155,6 +156,9 @@ Install to enable MS Excel export''')
 
             ('pychron.processing.figures',
              self._figure_task_factory, 'Figures'),
+            ('pychron.processing.interpreted_age',
+             self._interpreted_age_task_factory, 'Interpeted Age'),
+
             # ('pychron.processing.publisher', self._publisher_task_factory, 'Publisher'),
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
@@ -230,6 +234,10 @@ Install to enable MS Excel export''')
         from pychron.processing.tasks.tables.table_task import TableTask
 
         return TableTask(manager=self._processor_factory())
+
+    def _interpreted_age_task_factory(self):
+        from pychron.processing.tasks.interpreted_age.interpreted_age_task import InterpretedAgeTask
+        return InterpretedAgeTask(manager=self._processor_factory())
 
     def _preferences_panes_default(self):
         return [

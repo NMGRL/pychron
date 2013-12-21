@@ -1,0 +1,40 @@
+#===============================================================================
+# Copyright 2013 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#===============================================================================
+
+#============= enthought library imports =======================
+
+#============= standard library imports ========================
+#============= local library imports  ==========================
+from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
+
+
+class InterpretedAgeTask(BaseBrowserTask):
+    id = 'pychron.processing.interpreted_age'
+
+    def create_dock_panes(self):
+        panes = [self._create_browser_pane(analyses_defined='0')]
+
+        return panes
+
+    def _selected_samples_changed(self):
+        if not self.active_editor:
+            editor=InterpretedAgeEditor(processor=self.manager)
+            self._open_editor(editor)
+
+        self.active_editor.set_samples(self.selected_samples)
+#============= EOF =============================================
+

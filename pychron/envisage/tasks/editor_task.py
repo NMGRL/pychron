@@ -26,11 +26,11 @@ from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLine
 # from pyface.confirmation_dialog import ConfirmationDialog
 
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane
-# class EditorTask(BaseManagerTask, Loggable):
+
+
 class BaseEditorTask(BaseManagerTask):
     active_editor = Property(Instance(IEditor),
-                             depends_on='editor_area.active_editor'
-    )
+                             depends_on='editor_area.active_editor')
     editor_area = Instance(IEditorAreaPane)
 
     def activate_editor(self, editor):
