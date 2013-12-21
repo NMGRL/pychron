@@ -356,11 +356,10 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.rebuild()
         else:
             if not obj._no_update:
-                if new:
-                    if self.active_editor:
-                        self.active_editor.set_items(self.unknowns_pane.items)
-                    if self.plot_editor_pane:
-                        self.plot_editor_pane.analyses = self.unknowns_pane.items
+                if self.active_editor:
+                    self.active_editor.set_items(self.unknowns_pane.items)
+                if self.plot_editor_pane:
+                    self.plot_editor_pane.analyses = self.unknowns_pane.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):

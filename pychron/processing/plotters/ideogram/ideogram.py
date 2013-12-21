@@ -59,7 +59,7 @@ class Ideogram(BaseArArFigure):
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                    for ai in self._get_xs(key=self.index_key)]).T
-        except ValueError:
+        except (ValueError, AttributeError):
             return
 
         omit = self._get_omitted(self.sorted_analyses,
@@ -96,14 +96,14 @@ class Ideogram(BaseArArFigure):
         try:
             return max([ai.nominal_value + ai.std_dev
                     for ai in self._unpack_attr(attr)])
-        except ValueError:
+        except (AttributeError,ValueError):
             return 0
 
     def min_x(self, attr):
         try:
             return min([ai.nominal_value - ai.std_dev
                     for ai in self._unpack_attr(attr)])
-        except ValueError:
+        except (AttributeError,ValueError):
             return 0
 
 

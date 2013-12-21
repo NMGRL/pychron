@@ -400,12 +400,12 @@ class FigureTask(AnalysisEditTask):
                     self.debug('{} not in database'.format(aid))
 
             po = self.active_editor.plotter_options_manager.plotter_options
-            blob=po.dump_yaml(self.active_editor.basename)
+            blob=po.dump_yaml()
             # blob = pickle.dumps(po)
-            pref=db.add_figure_preference(figure, options=blob)
+            pref=db.add_figure_preference(figure, options=blob, kind=self.active_editor.basename)
             figure.preference=pref
 
-            self._load_project_figures([dlg.selected_project])
+            self._load_sample_figures(dlg.selected_samples)
 
     #===============================================================================
     #

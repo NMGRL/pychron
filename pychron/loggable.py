@@ -47,8 +47,8 @@ NAME_WIDTH = 40
 
 
 class Loggable(HasTraits):
-    '''
-    '''
+    """
+    """
     application = Any
     logger = Any  # (transient=True)
     name = String
@@ -150,8 +150,8 @@ class Loggable(HasTraits):
         self.info(msg)
 
     def warning(self, msg, decorate=True):
-        '''
-        '''
+        """
+        """
 
         if self.logger is not None:
             if self.use_warning_display:
@@ -164,14 +164,14 @@ class Loggable(HasTraits):
                     gWarningDisplay.add_text(
                         '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
 
-            if decorate:
-                msg = '****** {}'.format(msg)
+            # if decorate:
+            #     msg = '****** {}'.format(msg)
             self._log_('warning', msg)
 
     def info(self, msg, decorate=True, dolater=False, color=None):
-        '''
+        """
 
-        '''
+        """
         if self.logger is not None:
             if self.use_logger_display:
                 from pychron.displays.gdisplays import gLoggerDisplay
@@ -185,8 +185,8 @@ class Loggable(HasTraits):
                                                                           msg))
                     gLoggerDisplay.add_text(args, color=color)
 
-            if decorate:
-                msg = '====== {}'.format(msg)
+            # if decorate:
+            #     msg = '====== {}'.format(msg)
 
             self._log_('info', msg)
 
@@ -198,11 +198,11 @@ class Loggable(HasTraits):
         gMessageDisplay.close_ui()
 
     def debug(self, msg, decorate=True):
-        '''
-        '''
-
-        if decorate:
-            msg = '++++++ {}'.format(msg)
+        # '''
+        # '''
+        #
+        # if decorate:
+        #     msg = '++++++ {}'.format(msg)
 
         self._log_('debug', msg)
 
@@ -226,8 +226,11 @@ class Loggable(HasTraits):
         if isinstance(msg, (list, tuple)):
             msg=','.join(map(str, msg))
 
+        msg=self._post_process_msg(msg)
         func(msg, extra=extras)
 
+    def _post_process_msg(self, msg):
+        return msg
         #        func(msg)
 
 #============= EOF =============================================

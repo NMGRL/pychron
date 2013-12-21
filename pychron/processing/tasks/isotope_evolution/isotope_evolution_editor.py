@@ -72,7 +72,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             if fits and filters:
                 self._save_fit_dict(unk, meas_analysis, fits, filters)
             else:
-                self._save_fit(unk, meas_analysis, fits, filters)
+                self._save_fit(unk, meas_analysis)
 
             #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
             #proc.save_arar(unk, meas_analysis)

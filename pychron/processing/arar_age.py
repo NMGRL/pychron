@@ -17,7 +17,8 @@
 
 #============= enthought library imports =======================
 from copy import copy
-from traits.api import Dict, Property, Instance, Float, Str, List, Either
+from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either
+from pychron.helpers.logger_setup import new_logger
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -30,7 +31,7 @@ from pychron.processing.isotope import Isotope
 from pychron.loggable import Loggable
 from pychron.helpers.isotope_utils import sort_isotopes
 
-
+logger=new_logger('ArArAge')
 arar_constants = None
 
 
@@ -78,12 +79,17 @@ class ArArAge(Loggable):
     ar37decayfactor = Float
 
     arar_constants = Instance(ArArConstants)
+    logger=logger
 
     moles_Ar40 = Float
 
     _missing_isotope_warned = False
     _kca_warning = False
     _kcl_warning = False
+
+    def __init__(self, *args, **kw):
+        HasTraits.__init__(self, *args, **kw)
+        self.logger=logger
 
     def clear_isotopes(self):
         for iso in self.isotopes:
@@ -128,10 +134,10 @@ class ArArAge(Loggable):
                     ii = getattr(ii, kind)
                 ii.xs = hstack((ii.xs, (x,)))
                 ii.ys = hstack((ii.ys, (signal,)))
-                break
+                return True
 
-        else:
-            self.debug('failed appending data for {}. not a current isotope {}'.format(iso, self.isotope_keys))
+        # else:
+        #     self.debug('failed appending data for {}. not a current isotope {}'.format(iso, self.isotope_keys))
 
     def clear_baselines(self):
         for k in self.isotopes:
@@ -234,6 +240,12 @@ class ArArAge(Loggable):
     def get_computed_value(self, key):
         return self.computed.get(key, ufloat(0, 0))
 
+    # def warning(self, *args, **kw):
+    #     self.logger.warning(*args, **kw)
+    #
+    # def debug(self, *args, **kw):
+    #     self.logger.debug(*args, **kw)
+
     def _calculate_kca(self):
         #self.debug('calculated kca')
 
@@ -320,7 +332,11 @@ class ArArAge(Loggable):
         self.F_err = f.std_dev
         self.F_err_wo_irrad = f_wo_irrad.std_dev
 
-        j = copy(self.j)
+        if self.j is not None:
+            j = copy(self.j)
+        else:
+            j = ufloat(1e-4,1e-7)
+
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
@@ -332,7 +348,10 @@ class ArArAge(Loggable):
         j.std_dev = 0
         self.age_err_wo_j = float(age.std_dev)
 
-        j = copy(self.j)
+        if self.j is not None:
+            j = copy(self.j)
+        else:
+            j = ufloat(1e-4, 1e-7)
         age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 

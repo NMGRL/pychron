@@ -129,6 +129,7 @@ class GraphEditor(BaseUnknownsEditor):
             self._set_name()
             self._update_analyses_hook()
         else:
+            self.debug('analyses changed {}'.format(ans))
             self._null_component()
             self.component_changed = True
 

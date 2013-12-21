@@ -46,11 +46,11 @@ class BasePlotterOptions(HasTraits):
         for po in self.aux_plots:
             po.initialized = True
 
-    def dump_yaml(self, kind):
+    def dump_yaml(self):
         """
             return a yaml blob
         """
-        d = dict(kind=kind)
+        d = dict()
         for attr in self._get_dump_attrs():
             obj=getattr(self, attr)
             if attr == 'aux_plots':
@@ -63,14 +63,17 @@ class BasePlotterOptions(HasTraits):
     def load_yaml(self, blob):
         d=yaml.load(blob)
         for k,v in d.iteritems():
-            if k=='aux_plots':
-                ap=[]
-                for vi in v:
-                    pp=self.plot_option_klass(**vi)
-                    ap.append(pp)
-                self.trait_set(**{k:ap})
-            else:
-                self.trait_set(**{k: v})
+            try:
+                if k=='aux_plots':
+                    ap=[]
+                    for vi in v:
+                        pp=self.plot_option_klass(**vi)
+                        ap.append(pp)
+                    self.trait_set(**{k:ap})
+                else:
+                    self.trait_set(**{k: v})
+            except TraitError, e:
+                print e
 
     def get_aux_plots(self):
         return reversed([pi

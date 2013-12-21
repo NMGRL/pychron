@@ -121,11 +121,11 @@ class Communicator(ConfigLoadable):
         else:
             msg = '{} ===>> {}'.format(cmd, re)
 
-        self.info(msg, decorate=False)
+        self.info(msg)
 
     def _remove_eol(self, re):
-        '''
-        '''
+        """
+        """
 
         if re is not None:
             return str(re).rstrip()

@@ -45,6 +45,7 @@ class OffsetPlotLabel(PlotLabel):
 class Isochron(BaseArArFigure):
     _omit_key = 'omit_iso'
 
+
 class InverseIsochron(Isochron):
 #     xmi = Float
 #     xma = Float
@@ -79,12 +80,6 @@ class InverseIsochron(Isochron):
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None):
         scatter = self._add_aux_plot(ys, title, vk, pid)
 
-    #         self._add_error_bars(scatter, self.xes, 'x', 1,
-    #                              visible=po.x_error)
-    #         if es:
-    #             self._add_error_bars(scatter, es, 'y', 1,
-    #                              visible=po.y_error)
-
     def _add_plot(self, xs, ys, es, plotid, value_scale='linear'):
         pass
 
@@ -100,13 +95,13 @@ class InverseIsochron(Isochron):
         self._ref_age_units = refiso.arar_constants.age_units
 
         try:
-            age, reg, data=calculate_isochron(analyses)
+            age, reg, data = calculate_isochron(analyses)
         except TypeError:
             return
 
-        xs, ys, xerrs, yerrs=data
+        xs, ys, xerrs, yerrs = data
         self._cached_data = data
-        self._age=age
+        self._age = age
 
         graph = self.graph
         graph.set_x_title('39Ar/40Ar')
@@ -148,7 +143,6 @@ class InverseIsochron(Isochron):
 
         self._add_info(plot, reg, text_color=scatter.color)
 
-
     #===============================================================================
     # overlays
     #===============================================================================
@@ -188,7 +182,7 @@ class InverseIsochron(Isochron):
         #if R > 0:
         #    age = age_equation(j, R, arar_constants=self._ref_constants)
 
-        age=self._age
+        age = self._age
         v = age.nominal_value
         e = age.std_dev
         mse_age = e * mswd ** 0.5
@@ -225,7 +219,6 @@ class InverseIsochron(Isochron):
         self.suppress = True
 
         om = self._get_omitted(self.sorted_analyses)
-        print 'replaot', id(self), om, self.group_id
         self._rebuild_iso(om)
         self.suppress = False
 
@@ -262,15 +255,11 @@ class InverseIsochron(Isochron):
             if self._plot_label:
                 self._add_info(self.graph.plots[0], reg, label=self._plot_label)
 
-
     def update_graph_metadata(self, obj, name, old, new):
         if obj:
             self._filter_metadata_changes(obj, self._rebuild_iso, self.analyses)
 
-            #
-
-            #===============================================================================
-
+    #===============================================================================
     # utils
     #===============================================================================
     def _get_age_errors(self, ans):

@@ -169,7 +169,8 @@ class DataCollector(Loggable):
         for iso in self.arar_age.isotopes.itervalues():
             signal=self._get_signal(keys, signals, iso.detector)
             if signal is not None:
-                a.append_data(iso.name, iso.detector, x, signal, 'baseline')
+                if not a.append_data(iso.name, iso.detector, x, signal, 'baseline'):
+                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso, a.isotope_keys))
 
     def _update_isotopes(self, x, keys, signals):
         a = self.arar_age
@@ -182,7 +183,8 @@ class DataCollector(Loggable):
                 iso = dn.isotope
                 signal = self._get_signal(keys, signals, dn.name)
                 if signal is not None:
-                    a.append_data(iso, dn.name, x, signal, kind)
+                    if not a.append_data(iso, dn.name, x, signal, kind):
+                        self.debug('{} - failed appending data for {}. not a current isotope {}'.format(kind, iso, a.isotope_keys))
 
     def _get_signal(self, keys, signals, det):
         try:

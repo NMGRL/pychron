@@ -171,13 +171,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
 
                 if no_db_ans:
-                    # cached_ans, no_db_ans = partition(no_db_ans,
-                    #                                   lambda x: x.uuid in ANALYSIS_CACHE)
-                    # cached_ans = list(cached_ans)
-                    #
-                    # db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
+                    cached_ans, no_db_ans = partition(no_db_ans,
+                                                      lambda x: x.uuid in ANALYSIS_CACHE)
+                    cached_ans = list(cached_ans)
 
-                    # no_db_ans = list(no_db_ans)
+                    db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
+
+                    no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
                         #progress = None
@@ -310,17 +310,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                           exclude=None,
                           use_cache=True, **kw):
 
-
         if isinstance(rec, (Analysis, DBAnalysis)):
             if progress:
                 progress.increment()
-                # self._add_to_cache(rec)
+                self._add_to_cache(rec)
             return rec
 
         else:
             a = self._construct_analysis(rec, calculate_age, unpack, progress)
-            # if use_cache:
-            #     self._add_to_cache(a)
+            if use_cache:
+                self._add_to_cache(a)
 
             return a
 
@@ -361,7 +360,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             #ai.sync_arar(meas_analysis)
 
             if calculate_age:
-                ai.sync(meas_analysis, unpack=True)
+                ai.sync(meas_analysis, unpack=False)
                 ai.calculate_age(force=True)
             #elif not ai.persisted_age:
             #    ai.sync(meas_analysis, unpack=True)

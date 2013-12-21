@@ -54,9 +54,9 @@ class PlotterOptionsManager(HasTraits):
         self.plotter_options=po
         po.initialize()
 
-    def dump_yaml(self, kind):
+    def dump_yaml(self):
         po=self.plotter_options
-        return po.dump_yaml(kind)
+        return po.dump_yaml()
 
     def _get_persistence_root(self):
         return os.path.join(paths.plotter_options_dir, self.persistence_name)
