@@ -15,12 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str
+from traits.api import HasTraits, Str, List
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class DBFigure(HasTraits):
     name=Str
+    project=Str
+    samples=List
+    kind=Str
 #============= EOF =============================================
 

@@ -75,6 +75,7 @@ class FigureTask(AnalysisEditTask):
 
     auto_select_analysis = False
 
+    figures_help='Double-click to open'
     figures=List
     selected_figure=Any
     dclicked_figure=Event
@@ -113,7 +114,7 @@ class FigureTask(AnalysisEditTask):
             with db.session_ctx():
                 proj=[p.name for p in new]
                 figs=db.get_project_figures(proj)
-                self.figures=[DBFigure(name=f.name or '', id=f.id) for f in figs]
+                self.figures=[self._dbfigure_factory(f) for f in figs]
 
     def _load_sample_figures(self, new):
         if new:
@@ -121,7 +122,15 @@ class FigureTask(AnalysisEditTask):
             with db.session_ctx():
                 sam = [p.name for p in new]
                 figs = db.get_sample_figures(sam)
-                self.figures = [DBFigure(name=f.name or '', id=f.id) for f in figs]
+                self.figures = [self._dbfigure_factory(f) for f in figs]
+
+    def _dbfigure_factory(self, f):
+        dbf= DBFigure(name=f.name or '',
+                      project=f.project.name,
+                      samples=[s.sample.name for s in f.samples],
+                      kind=f.preference.kind,
+                      id=f.id)
+        return dbf
 
     def _dclicked_figure_changed(self):
         sf=self.selected_figure
