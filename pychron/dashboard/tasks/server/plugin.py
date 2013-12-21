@@ -20,7 +20,7 @@ from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.dashboard.tasks.server.server import DashboardServer
+from pychron.dashboard.server import DashboardServer
 from pychron.dashboard.tasks.server.task import DashboardServerTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 

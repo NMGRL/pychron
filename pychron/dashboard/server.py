@@ -179,7 +179,6 @@ class DashboardServer(Loggable):
     @on_trait_change('devices:publish_event')
     def _handle_publish(self, obj, name, old, new):
         self.notifier.send_message(new)
-
         self.db_manager.publish_device(obj)
 
     @on_trait_change('devices:values:+')

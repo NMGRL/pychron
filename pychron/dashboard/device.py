@@ -118,7 +118,7 @@ class DashboardDevice(Loggable):
         if pv.enabled:
             tag = pv.tag
             self.publish_event = '{} {}'.format(tag, new)
-            pv.last_value = new
+            pv.last_value = float(new)
             pv.last_time = time.time()
 
     def dump_meta(self):

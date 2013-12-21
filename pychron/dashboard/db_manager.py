@@ -67,7 +67,7 @@ class DashboardDBManager(BaseIsotopeDatabaseManager):
 
         if tt.end:
             delta=tt.end-tt.start
-            if delta.seconds*3600>n:
+            if delta.seconds>n*3600:
                 tt= self.start()
 
         return tt
