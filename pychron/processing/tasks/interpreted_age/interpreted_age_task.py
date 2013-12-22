@@ -18,12 +18,30 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pyface.tasks.action.schema import SToolBar
+from pyface.tasks.action.task_action import TaskAction
+from pychron.processing.tables.summary_table_pdf_writer import SummaryTablePDFWriter
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 
 
+class SavePDFTablesAction(TaskAction):
+    name='Save Tables'
+    method='save_pdf_tables'
+
 class InterpretedAgeTask(BaseBrowserTask):
     id = 'pychron.processing.interpreted_age'
+    tool_bars = [SToolBar(SavePDFTablesAction())]
+    def save_pdf_tables(self):
+        # p=self.save_file_dialog()
+        p='/Users/ross/Sandbox/interpreted_age.pdf'
+        if p:
+            w=SummaryTablePDFWriter()
+            items=self.active_editor.interpreted_ages
+            title='Foo'
+            w.build(p, items, title)
+
+        self.view_pdf(p)
 
     def create_dock_panes(self):
         panes = [self._create_browser_pane(analyses_defined='0')]

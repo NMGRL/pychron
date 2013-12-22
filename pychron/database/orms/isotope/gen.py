@@ -77,7 +77,7 @@ class gen_LabTable(Base, BaseMixin):
 
     irradiation_id = foreignkey('irrad_PositionTable')
     selected_flux_id = foreignkey('flux_HistoryTable')
-    #selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
+    selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
     note = stringcolumn(140)
 
     analyses = relationship('meas_AnalysisTable',

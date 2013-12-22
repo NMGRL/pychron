@@ -50,17 +50,17 @@ class Summary(AnalysisGroup):
     #     age = Float
     #     age_error = Float
     irradiation = Str
-    age_type = Str
+    age_kind = Str
 
 
 class StepHeatingSummary(Summary):
-    age_type = Str('Plateau')
-    age_types = List(['Plateau', 'Isochron', 'Integrated'])
+    age_kind = Str('Plateau')
+    age_kinds = List(['Plateau', 'Isochron', 'Integrated'])
 
 
 class FusionSummary(Summary):
-    age_type = Str('Weighted Mean')
-    age_types = List(['Weighted Mean', ])
+    age_kind = Str('Weighted Mean')
+    age_kinds = List(['Weighted Mean', ])
 
 
 class TableTask(BaseBrowserTask):
@@ -296,13 +296,13 @@ class TableTask(BaseBrowserTask):
     #===============================================================================
     # handlers
     #===============================================================================
-    @on_trait_change('editor:age_type')
+    @on_trait_change('editor:age_kind')
     def _edit_handler(self, obj, name, old, new):
         ae = self.active_editor
         if isinstance(ae, SummaryTableEditor):
             if ae.selected:
                 for si in ae.selected:
-                    si.age_type = new
+                    si.age_kind = new
 
                 ae.refresh_needed = True
 
@@ -310,8 +310,8 @@ class TableTask(BaseBrowserTask):
     def _update_selected(self, new):
         if new:
             ref = new[0]
-            if hasattr(ref, 'age_types'):
-                self.editor.age_types = ref.age_types
+            if hasattr(ref, 'age_kinds'):
+                self.editor.age_kinds = ref.age_kinds
 
 
 #============= EOF =============================================

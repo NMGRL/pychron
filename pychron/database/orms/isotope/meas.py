@@ -58,15 +58,13 @@ class meas_AnalysisTable(Base, BaseMixin):
                  ForeignKey('proc_TagTable.name'), default='ok')
 
     # meas relationships
-    isotopes = relationship('meas_IsotopeTable', backref='analysis',
-                            #                             lazy='subquery'
-    )
+    isotopes = relationship('meas_IsotopeTable', backref='analysis')
     peak_center = relationship('meas_PeakCenterTable', backref='analysis', uselist=False)
 
     # proc relationships
     blanks_histories = relationship('proc_BlanksHistoryTable', backref='analysis')
     blanks_sets = relationship('proc_BlanksSetTable', backref='analysis')
-    #interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
+    interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
 
     backgrounds_histories = relationship('proc_BackgroundsHistoryTable', backref='analysis')
     backgrounds_sets = relationship('proc_BackgroundsSetTable', backref='analysis')

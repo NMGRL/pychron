@@ -15,8 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Property, Int, Str
-from traitsui.api import View, Item
+from traits.api import Property, Int, Str
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.helpers.formatting import floatfmt
 #============= standard library imports ========================
@@ -27,7 +26,7 @@ class SummaryTabularAdapter(TabularAdapter):
                ('L#', 'identifier'),
                ('Irradiation', 'irradiation'),
                ('Material', 'material'),
-               ('type', 'age_type'),
+               ('type', 'age_kind'),
                ('N', 'nanalyses'),
                ('MSWD', 'mswd'),
                ('K/Ca', 'kca'),
@@ -43,7 +42,7 @@ class SummaryTabularAdapter(TabularAdapter):
     identifier_width = Int(60)
     irradiation_width = Int(90)
     material_width = Int(100)
-    age_type_width = Int(115)
+    age_kind_width = Int(115)
     nanalyses_width = Int(25)
 
     mswd_width = Int(75)

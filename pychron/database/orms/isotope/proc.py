@@ -94,29 +94,29 @@ class proc_ArArTable(Base, BaseMixin):
 
 class proc_InterpretedAgeSetTable(Base, BaseMixin):
     pass
-    #interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
-    #analysis_id = foreignkey('meas_AnalysisTable')
-    #forced_plateau_step = Column(Boolean)
+    interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+    forced_plateau_step = Column(Boolean)
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
     pass
-    #create_date = Column(DateTime, default=func.now())
-    #user = stringcolumn()
+    create_date = Column(DateTime, default=func.now())
+    user = stringcolumn()
     #
-    #interpreted_ages = relationship('proc_InterpretedAgeTable', backref='history')
-    #identifier = stringcolumn(80)
-    #selected = relationship('gen_LabTable',
-    #                        backref='selected_interpreted_age',
-    #                        uselist=False)
+    interpreted_age = relationship('proc_InterpretedAgeTable', backref='history', uselist=False)
+    identifier = stringcolumn(80)
+    selected = relationship('gen_LabTable',
+                           backref='selected_interpreted_age',
+                           uselist=False)
 
 class proc_InterpretedAgeTable(Base, BaseMixin):
     pass
-    #history_id = foreignkey('proc_InterpretedAgeHistoryTable')
-    #age_kind = stringcolumn(32)
-    #age = Column(Float)
-    #age_err = Column(Float)
-    #sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
+    history_id = foreignkey('proc_InterpretedAgeHistoryTable')
+    age_kind = stringcolumn(32)
+    age = Column(Float)
+    age_err = Column(Float)
+    sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 
 class proc_BlanksSetTable(Base, BaseMixin):

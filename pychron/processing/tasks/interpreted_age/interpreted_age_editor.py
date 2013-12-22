@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, List, Date, Str, Long, Float, Button
+from traits.api import HasTraits, Any, List, Date, Str, Long, Float, Button, Int
 from traitsui.api import View, Item, EnumEditor, HGroup, spring, UItem, VGroup, TabularEditor, InstanceEditor
 
 #============= standard library imports ========================
@@ -30,14 +30,22 @@ from pychron.processing.tasks.browser.panes import AnalysisAdapter
 class InterpretedAge(HasTraits):
     create_date = Date
     id = Long
-    age = Float
-    age_err = Float
-    kind = Str
+
     sample = Str
     identifier = Str
+    material=Str
+    irradiation=Str
+
+    age = Float
+    age_err = Float
+    age_kind = Str
+    mswd=Float
+    nanalyses=Int
+    weighted_kca=Float
+
 
     def traits_view(self):
-        return View(HGroup(Item('kind', style='readonly'),
+        return View(HGroup(Item('age_kind', style='readonly', show_label=False),
                            Item('age', style='readonly'),
                            Item('age_err', style='readonly')))
 
@@ -49,6 +57,7 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('Age', 'age'),
                ('Error', 'age_err')]
 
+    font='arial 10'
 
 class InterpretedAgeEditor(BaseTraitsEditor):
     selected_history = Any
@@ -75,23 +84,41 @@ class InterpretedAgeEditor(BaseTraitsEditor):
 
                 self.histories = [self._interpreted_age_factory(db, hi) for hi in histories]
 
-                self.history_names = [str(hi.create_date) for hi in histories]
+                self.history_names = [hi.name for hi in self.histories]
                 if self.history_names:
                     self.selected_history_name = self.history_names[-1]
 
     def _interpreted_age_factory(self, db, hi):
         dbln = db.get_labnumber(hi.identifier)
         sample=None
-        if dbln and dbln.sample:
-            sample=dbln.sample.name
+        irrad=None
+        material=None
+        if dbln:
+            if dbln.sample:
+                sample=dbln.sample.name
+                dbmat=dbln.sample.material
+                if dbmat:
+                    material=dbmat.name
 
+            pos=dbln.irradiation_position
+            if pos:
+                level = pos.level
+                irrad = level.irradiation
+                irrad='{}{} {}'.format(irrad.name, level.name, pos.position)
+
+        n=len(hi.interpreted_age.sets)
         it = InterpretedAge(create_date=hi.create_date,
                             id=hi.id,
                             age=hi.interpreted_age.age,
                             age_err=hi.interpreted_age.age_err,
                             kind=hi.interpreted_age.age_kind,
                             identifier=hi.identifier,
-                            sample=sample or '')
+                            sample=sample or '',
+                            irradiation=irrad or '',
+                            material=material or '',
+                            nanalyses=n,
+                            name='{} - {}'.format(hi.create_date, hi.interpreted_age.age_kind)
+                            )
 
         return it
 
@@ -104,7 +131,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
 
             db = self.processor.db
 
-            hist = next((hi for hi in self.histories if str(hi.create_date) == self.selected_history_name), None)
+            hist = next((hi for hi in self.histories if hi.name == self.selected_history_name), None)
             self.selected_history = hist
             with db.session_ctx():
                 dbhist = db.get_interpreted_age_history(hist.id)
