@@ -15,23 +15,23 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import Instance
 #============= standard library imports ========================
 from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate
 from reportlab.lib.units import inch
-from reportlab.platypus.tables import Table, TableStyle
 from reportlab.platypus.paragraph import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from reportlab.platypus.frames import Frame
 from reportlab.platypus.flowables import Spacer, PageBreak
-from reportlab.lib import colors
-from pychron.pdf.items import Anchor, Row
+from pychron.pdf.items import Anchor
 from reportlab.lib.pagesizes import landscape, letter
 from pychron.helpers.formatting import floatfmt
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from pychron.pdf.options import BasePDFOptions
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -60,26 +60,24 @@ class NumberedCanvas(canvas.Canvas):
 
 class BasePDFWriter(Loggable):
     _footnotes = None
-    orientation = 'portrait'
-    col_widths = None
-    left_margin = 0.25
-    right_margin = 0.25
-    top_margin = 1
-    bottom_margin = 0.25
 
-    use_alternating_background = True
-    show_page_numbers = False
+    options=Instance(BasePDFOptions)
+    _options_klass=BasePDFOptions
+
+    def _options_default(self):
+        return self._options_klass()
 
     def _new_base_doc_template(self, path):
         pagesize = letter
-        if self.orientation == 'landscape':
+        opt=self.options
+        if opt.orientation == 'landscape':
             pagesize = landscape(letter)
 
         doc = BaseDocTemplate(path,
-                              leftMargin=self.left_margin * inch,
-                              rightMargin=self.right_margin * inch,
-                              topMargin=self.top_margin * inch,
-                              bottomMargin=self.bottom_margin * inch,
+                              leftMargin=opt.left_margin * inch,
+                              rightMargin=opt.right_margin * inch,
+                              topMargin=opt.top_margin * inch,
+                              bottomMargin=opt.bottom_margin * inch,
                               pagesize=pagesize
                               #                                   _pageBreakQuick=0,
                               #                                   showBoundary=1
@@ -99,81 +97,13 @@ class BasePDFWriter(Loggable):
         for ti in templates:
             doc.addPageTemplates(ti)
 
-        if self.show_page_numbers:
+        if self.options.show_page_numbers:
             doc.build(flowables, canvasmaker=NumberedCanvas)
         else:
             doc.build(flowables)
 
     def _build(self, *args, **kw):
         raise NotImplementedError
-
-    def _set_row_heights(self, t, data):
-        pass
-
-    def _set_col_widths(self, t, rows, col_widths):
-        cs = col_widths
-        if cs is None:
-            cs = self.col_widths
-
-        if cs:
-            cn = len(cs)
-            dn = max([len(di) for di in rows])
-            #             dn = len(data[0])
-            if cn < dn:
-                cs.extend([30 for _ in range(dn - cn)])
-
-            t._argW = cs
-
-            #         if extend_last:
-            #             print t._argW
-            #             tw = sum(t._argW)
-            #             d = self._doc
-            #             aw = d.width - self._doc.leftMargin - self._doc.rightMargin
-            #             print tw, aw
-            #             t._argW[-1] = aw - tw
-
-
-    def _new_table(self, style, data, hAlign='LEFT',
-                   col_widths=None, extend_last=False, *args, **kw):
-
-        # set spans
-        for idx, ri in enumerate(data):
-            for s, e in ri.spans:
-                style.add('SPAN', (s, idx), (e, idx))
-
-        # render rows
-        rows = [di.render() if hasattr(di, 'render') else di
-                for di in data]
-
-        t = Table(rows, hAlign=hAlign,
-                  style=style,
-                  *args, **kw)
-
-        self._set_col_widths(t, rows, col_widths)
-        self._set_row_heights(t, data)
-
-        return t
-
-    def _new_style(self, header_line_idx=None, header_line_width=1,
-                   header_line_color='black',
-                   debug_grid=False):
-
-        ts = TableStyle()
-        if debug_grid:
-            ts.add('GRID', (0, 0), (-1, -1), 1, colors.red)
-
-        if isinstance(header_line_color, str):
-            try:
-                header_line_color = getattr(colors, header_line_color)
-            except AttributeError:
-                header_line_color = colors.black
-
-        if header_line_idx is not None:
-            ts.add('LINEBELOW', (0, header_line_idx),
-                   (-1, header_line_idx),
-                   header_line_width, header_line_color)
-
-        return ts
 
     def _new_paragraph(self, t, s='Normal', **skw):
         style = getSampleStyleSheet()[s]
@@ -211,38 +141,6 @@ class BasePDFWriter(Loggable):
         self._footnotes.append(tag(tagName, tagText))
         return para
 
-    def _new_line(self, style, idx, weight=1.5,
-                  start=0, end=-1,
-                  color='black',
-                  cmd='LINEBELOW'):
-
-        style.add(cmd, (start, idx), (end, idx),
-                  weight, getattr(colors, color))
-
-    def _new_row(self, obj, attrs, default_fontsize=6):
-        row = Row()
-        for args in attrs:
-            if len(args) == 3:
-                attr, fmt, fontsize = args
-            else:
-                attr, fmt = args
-                fontsize = default_fontsize
-
-            #if attr in ARGON_KEYS:
-            if attr in obj.isotopes:
-                v = obj.isotopes[attr].get_intensity()
-            else:
-                v = getattr(obj, attr)
-
-            #self.debug('{} {}'.format(attr, v))
-            row.add_item(value=v, fmt=fmt, fontsize=fontsize)
-
-        return row
-
-    def _get_idxs(self, rows, klass):
-        return [(i, v) for i, v in enumerate(rows)
-                if isinstance(v, klass)]
-
     def _fmt_attr(self, v, key='nominal_value', n=5, scale=1, **kw):
         if v is None:
             return ''
@@ -268,5 +166,7 @@ class BasePDFWriter(Loggable):
 
     def _value(self, **kw):
         return lambda x: self._fmt_attr(x, key='nominal_value', **kw)
+
+
 
 #============= EOF =============================================

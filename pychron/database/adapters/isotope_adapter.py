@@ -77,10 +77,13 @@ class IsotopeAdapter(DatabaseAdapter):
 
     selector_klass = IsotopeAnalysisSelector
 
-    def get_interpreted_age_histories(self, labnumbers):
+    def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:
             q=sess.query(proc_InterpretedAgeHistoryTable)
-            q=q.filter(proc_InterpretedAgeHistoryTable.identifier.in_(labnumbers))
+
+            attr=getattr(proc_InterpretedAgeHistoryTable, key)
+            q=q.filter(attr.in_(values))
+
             try:
                 return q.all()
             except NoResultFound:
@@ -1178,9 +1181,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
-
-    def get_interpreted_age_history(self, value):
-        return self._retrieve_item(proc_InterpretedAgeHistoryTable, value)
 
     def get_blank(self, value):
         return self._retrieve_item(proc_BlanksTable, value)

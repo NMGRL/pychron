@@ -19,7 +19,7 @@
 # from traitsui.api import View, Item
 #============= standard library imports ========================
 # from reportlab.platypus.flowables import PageBreak, Flowable
-from reportlab.platypus.doctemplate import PageTemplate, FrameBreak
+from reportlab.platypus.doctemplate import FrameBreak
 # from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 from reportlab.lib import colors
@@ -30,10 +30,10 @@ from reportlab.platypus.frames import Frame
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer
-from pychron.pdf.base_pdf_writer import BasePDFWriter
+from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
 
 
-class LoadingPDFWriter(BasePDFWriter):
+class LoadingPDFWriter(BasePDFTableWriter):
 
     def _build(self, doc, positions, component, meta):
 

@@ -25,11 +25,11 @@ from reportlab.lib.units import inch
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
 from pychron.entry.level import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
-from pychron.pdf.base_pdf_writer import BasePDFWriter
+from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.pdf.items import Row
 
 
-class IrradiationPDFWriter(BasePDFWriter):
+class IrradiationPDFWriter(BasePDFTableWriter):
     page_break_between_levels = Bool(True)
     show_page_numbers = True
 

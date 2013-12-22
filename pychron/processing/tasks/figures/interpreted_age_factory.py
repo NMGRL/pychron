@@ -39,6 +39,7 @@ class InterpretedAgeFactory(Loggable):
         editor=TableEditor(columns=cols)
         v=View(Item('groups', show_label=False, editor=editor),
                resizable=True,
+               title='Set Interpreted Age',
                kind='livemodal',
                buttons=['OK','Cancel'])
 

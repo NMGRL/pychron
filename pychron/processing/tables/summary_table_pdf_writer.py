@@ -18,8 +18,8 @@
 from traits.api import Int, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.base_pdf_writer import BasePDFWriter
 from pychron.helpers.formatting import floatfmt
+from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
@@ -32,7 +32,7 @@ def DefaultInt(value=40):
 
 
 
-class SummaryTablePDFWriter(BasePDFWriter):
+class SummaryTablePDFWriter(BasePDFTableWriter):
     notes_template = Str('summary_table.temp')
 
     def _build(self, doc, samples, title):
@@ -75,11 +75,12 @@ class SummaryTablePDFWriter(BasePDFWriter):
             r = self._make_interpreted_age_row(sam)
             data.append(r)
 
-            if self.use_alternating_background:
+            if self.options.use_alternating_background:
                 idx = cnt + i
                 if i % 2 != 0:
+
                     style.add('BACKGROUND', (0, idx), (-1, idx),
-                              colors.lightgrey)
+                              self.options.get_alternating_background())
 
         idx = len(data) - 1
         self._new_line(style, idx)
@@ -129,6 +130,10 @@ class SummaryTablePDFWriter(BasePDFWriter):
         # row.add_item(value=self._error(n=1)(interpreted_age.weighted_kca))
         # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
         # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
+        row.add_item(value=floatfmt(interpreted_age.wtd_kca, n=4))
+        row.add_item(value=floatfmt(interpreted_age.wtd_kca_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age_err, n=4))
 
         return row
 

@@ -296,7 +296,7 @@ class FigureTask(AnalysisEditTask):
 
     def set_interpreted_age(self):
         key=lambda x: x.group_id
-        unks=sorted(self.active_editor.unknowns, key=key)
+        unks=sorted(self.active_editor.analyses, key=key)
         ias=[]
         ok='omit_{}'.format(self.active_editor.basename)
         for gid, ans in groupby(unks, key=key):
@@ -317,7 +317,10 @@ class FigureTask(AnalysisEditTask):
                         hist=db.add_interpreted_age_history(ln)
                         ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
                                                   age_err=g.preferred_age_error or 0,
-                                                  age_kind=g.preferred_age_kind)
+                                                  age_kind=g.preferred_age_kind,
+                                                  wtd_kca=float(g.weighted_kca.nominal_value),
+                                                  wtd_kca_err=float(g.weighted_kca.std_dev),
+                                                  mswd=float(g.mswd))
                         for ai in g.analyses:
                             ai=db.get_analysis_uuid(ai.uuid)
                             db.add_interpreted_age_set(ia, ai)

@@ -116,6 +116,9 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
     age_kind = stringcolumn(32)
     age = Column(Float)
     age_err = Column(Float)
+    wtd_kca = Column(Float)
+    wtd_kca_err = Column(Float)
+    mswd=Column(Float)
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 

@@ -402,7 +402,8 @@ class BaseManagerTask(BaseTask):
         return True
 
     def view_pdf(self, p):
-        self.view_file(p, application='Adobe Reader')
+        # self.view_file(p, application='Adobe Reader')
+        self.view_file(p, application='Preview')
 
     def view_xls(self, p):
         application = 'Microsoft Office 2011/Microsoft Excel'

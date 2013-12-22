@@ -77,8 +77,7 @@ class AnalysisGroup(HasTraits):
 
     @cached_property
     def _get_nanalyses(self):
-        return len([ai for ai in self.analyses
-                    if ai.temp_status == 0 and not ai.tag])
+        return len([ai for ai in self.analyses if not ai.is_omitted()])
 
     def _get_values(self, attr):
         vs = (getattr(ai, attr) for ai in self.analyses
