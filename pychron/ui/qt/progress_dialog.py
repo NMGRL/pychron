@@ -33,6 +33,11 @@ class myProgressDialog(ProgressDialog):
     width = Int(400)
     height = Int(10)
     _user_accepted = Bool(False)
+    close_at_end=Bool(True)
+
+    def soft_close(self):
+        if self.close_at_end:
+            self.close()
 
     def close(self):
         try:

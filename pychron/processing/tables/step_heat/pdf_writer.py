@@ -24,7 +24,7 @@ from pychron.helpers.formatting import floatfmt
 from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from pychron.processing.tables.pdf_writer import TablePDFWriter
+from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
 
 
 def DefaultInt(value=40):
@@ -42,7 +42,7 @@ def extract_text(txt):
     return 'X' * t
 
 
-class StepHeatTablePDFWriter(TablePDFWriter):
+class StepHeatPDFTableWriter(IsotopePDFTableWriter):
     def _calculate_col_widths(self, *rows):
         def get_width(pa):
             if pa.frags:
@@ -117,12 +117,10 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             data.append(r)
             bdata.append(b)
 
-            if self.use_alternating_background:
+            if self.options.use_alternating_background:
                 idx = cnt + i
                 if idx % 2 == 0:
-                    style.add('BACKGROUND', (0, idx), (-1, idx),
-                              colors.lightgrey,
-                    )
+                    style.add('BACKGROUND', (0, idx), (-1, idx), self.options.alternating_background)
                     #         data.extend([self._make_analysis_row(ai)
                     #                      for ai in analyses])
 

@@ -99,13 +99,14 @@ class BaseIsotopeDatabaseManager(Loggable):
 
         bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
 
-    def open_progress(self, n=2):
-        return self._open_progress(n)
+    def open_progress(self, n=2, **kw):
+        return self._open_progress(n, **kw)
 
-    def _open_progress(self, n):
+    def _open_progress(self, n, close_at_end=True):
 
         pd = myProgressDialog(max=n - 1,
                               #dialog_size=(0,0, 550, 15),
+                              close_at_end=close_at_end,
                               can_cancel=True,
                               can_ok=True)
         pd.open()
@@ -152,9 +153,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def make_analyses(self, ans,
                       progress=None,
                       exclude=None,
-                      # calculate_age=True,
-                      # unpack=False,
-                      # use_cache=True,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -181,7 +179,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
-                        #progress = None
                         if n > 1:
                             if progress is not None:
                                 if progress.max < (n + progress.get_value()):
@@ -200,21 +197,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                             a = self._analysis_factory(ai,
                                                        progress=progress,
-                                                       # calculate_age=calculate_age,
-                                                       # unpack=unpack,
-                                                       # use_cache=use_cache,
                                                        **kw)
                             if a:
                                 db_ans.append(a)
-
-                                #time.sleep(10)
-
-                        #db_ans.extend([self._analysis_factory(ai,
-                        #                                      progress=progress,
-                        #                                      calculate_age=calculate_age,
-                        #                                      unpack=unpack,
-                        #                                      **kw)
-                        #               for ai in no_db_ans])
 
                         if progress:
                             progress.on_trait_change(self._progress_closed,

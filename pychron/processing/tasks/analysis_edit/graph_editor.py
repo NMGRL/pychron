@@ -100,11 +100,12 @@ class GraphEditor(BaseUnknownsEditor):
         self.analyses=filter(f, self.analyses)
         self.rebuild()
 
-    def set_items(self, unks, is_append=False, use_cache=True):
+    def set_items(self, unks, is_append=False, use_cache=True, progress=None):
         ans = self.processor.make_analyses(unks,
                                             calculate_age=self.calculate_age,
                                             unpack=self.unpack_peaktime,
-                                            use_cache=use_cache)
+                                            use_cache=use_cache,
+                                            progress=progress)
 
         if is_append:
             pans = self.analyses

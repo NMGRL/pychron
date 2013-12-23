@@ -32,7 +32,7 @@ def DefaultInt(value=40):
 
 
 
-class SummaryTablePDFWriter(BasePDFTableWriter):
+class SummaryPDFTableWriter(BasePDFTableWriter):
     notes_template = Str('summary_table.temp')
 
     def _build(self, doc, samples, title):

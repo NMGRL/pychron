@@ -21,14 +21,14 @@
 #============= local library imports  ==========================
 from pychron.processing.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.csv_writer import StepHeatTableCSVWriter
-from pychron.processing.tables.step_heat.pdf_writer import StepHeatTablePDFWriter
+from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
 from pychron.processing.tasks.tables.editors.arar_table_editor import ArArTableEditor
 from pychron.processing.tasks.tables.editors.step_heat.step_heat_adapter import StepHeatTableAdapter, StepHeatGroupTableAdapter
 
 
 class StepHeatTableEditor(ArArTableEditor):
-    pdf_writer_klass = StepHeatTablePDFWriter
+    pdf_writer_klass = StepHeatPDFTableWriter
     xls_writer_klass = StepHeatTableXLSWriter
     csv_writer_klass = StepHeatTableCSVWriter
 

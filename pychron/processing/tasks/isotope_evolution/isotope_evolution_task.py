@@ -193,7 +193,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     def do_easy_fit(self):
         self._do_easy(self._do_easy_fit)
 
-    def _do_easy_fit(self, db, ep):
+    def _do_easy_fit(self, db, ep, prog):
 
         doc = ep.doc('iso_fits')
         projects = doc['projects']
@@ -204,22 +204,25 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         found = []
         while 1:
             u = []
-            for _ in xrange(100):
+
+            for _ in xrange(200):
                 try:
                     u.append(unks.next())
                 except (Exception, StopIteration), e:
-                    self.debug(traceback.print_exception())
+                    self.debug(traceback.print_exc())
+                    break
 
             if u:
-                self.active_editor.set_items(u, use_cache=False)
-                # self.active_editor.unknowns=u
-                # self.active_editor.unknowns.append(unks.next())
-                found = self.find_associated_analyses(found=found, use_cache=False)
+                self.active_editor.set_items(u, use_cache=False, progress=prog)
+
+                found = self.find_associated_analyses(found=found, use_cache=False, progress=prog)
                 fits = doc['fit_isotopes']
                 filters = doc['filter_isotopes']
 
-                self.active_editor.save_fits(fits, filters)
+                self.active_editor.save_fits(fits, filters, progress=prog)
                 db.sess.commit()
+            else:
+                break
 
         return True
 

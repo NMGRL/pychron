@@ -15,33 +15,57 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Int
-from traitsui.api import View, Item
+from traits.api import Int, Str
 from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 #============= standard library imports ========================
-from PySide.QtGui import QProgressBar
+from PySide.QtGui import QProgressBar, QVBoxLayout, QLabel
 #============= local library imports  ==========================
 
 class _ProgressEditor(Editor):
+    max=Int
+    message=Str
     def init(self, parent):
-        self.control = self._create_control()
+        self.control = self._create_control(parent)
         self.control.setMaximum(self.factory.max)
         self.control.setMinimum(self.factory.min)
+        if self.factory.max_name:
+            self.sync_value(self.factory.max_name,'max',mode='from')
+        if self.factory.message_name:
+            self.sync_value(self.factory.message_name, 'message', mode='from')
 
-    def _create_control(self):
+    def _max_changed(self):
+        print 'max',self.max
+        self.control.setMaximum(self.max)
+
+    def _message_changed(self, m):
+        print 'message',m
+        self._message_control.setText(m)
+
+    def _create_control(self, parent):
+        print parent
+        layout=QVBoxLayout()
         pb = QProgressBar()
+
+        self._message_control=QLabel()
+        self._message_control.setText('     ')
+        layout.addWidget(self._message_control)
+        layout.addWidget(pb)
+        parent.addLayout(layout, 0,0)
+
         return pb
 
     def update_editor(self):
+        print 'update editor',self.value
         self.control.setValue(self.value)
-
 
 
 class ProgressEditor(BasicEditorFactory):
     klass = _ProgressEditor
     min = Int
     max = Int
+    max_name=Str
+    message_name=Str
 
 
 #============= EOF =============================================

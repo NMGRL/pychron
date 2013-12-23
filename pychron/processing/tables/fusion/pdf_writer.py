@@ -21,15 +21,14 @@ from traits.api import Int
 from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from pychron.processing.tables.pdf_writer import TablePDFWriter
+from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
 
 
 def DefaultInt(value=40):
     return Int(value)
 
 
-class FusionTablePDFWriter(TablePDFWriter):
-
+class FusionPDFTableWriter(IsotopePDFTableWriter):
 
     def _build(self, doc, ans, means, title):
 

@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 import os
 from traits.api import HasTraits, Any, List, Date, Str, Long, \
     Float, Button, Int, Instance, on_trait_change
@@ -28,8 +29,11 @@ import yaml
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.helpers.iterfuncs import partition
 from pychron.pdf.options import PDFTableOptions
-from pychron.processing.tables.summary_table_pdf_writer import SummaryTablePDFWriter
+from pychron.processing.analysis_group import StepHeatAnalysisGroup
+from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
+from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.ui.custom_label_editor import CustomLabel
 
@@ -93,9 +97,49 @@ class InterpretedAgeEditor(BaseTraitsEditor):
 
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
+        self.save_analysis_data_table(p)
+
+    def save_analysis_data_table(self, p):
+        w=StepHeatPDFTableWriter()
+
+        ans=[]
+        db=self.processor.db
+        with db.session_ctx():
+            for ia in self.interpreted_ages:
+                hid=db.get_interpreted_age_history(ia.id)
+                dbia=hid.interpreted_age
+                ans.extend([si.analysis for si in dbia.sets])
+
+            ans=self.processor.make_analyses(ans, calculate_age=True)
+        '''
+            group the analyses by labnumber
+            then partition into step heat and fusion
+        '''
+
+        gs=[]
+        key = lambda x: x.labnumber
+        ans=sorted(ans, key=key)
+        for ln, ais in groupby(ans, key=key):
+            gs.append((ln, list(ais)))
+
+        stepheat, fusion=partition(gs, lambda x: x[1][0].step!='')
+        stepheat=list(stepheat)
+        fusion=list(fusion)
+        ans=[ai for _,ais in stepheat
+                for ai in ais]
+        groups=[StepHeatAnalysisGroup(sample=ais[0].sample,
+                                      analyses=ais) for ln, ais in stepheat]
+        # key = lambda x: x.sample
+        # groups=[StepHeatAnalysisGroup(sample=sam, analyses=list(ais))
+        #         for sam, ais in groupby(ans, key=key)]
+        #
+        # ans = groupby(ans, key=key)
+        head, ext=os.path.splitext(p)
+        p='{}.step_heat_data{}'.format(head, ext)
+        w.build(p, ans, groups, title=self.get_title())
 
     def save_summary_table(self, p):
-        w = SummaryTablePDFWriter()
+        w = SummaryPDFTableWriter()
         items = self.interpreted_ages
         title = self.get_title()
 

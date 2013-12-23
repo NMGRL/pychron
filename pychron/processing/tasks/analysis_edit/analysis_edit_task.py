@@ -64,7 +64,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items=ans
 
-    def find_associated_analyses(self, found=None, use_cache=True):
+    def find_associated_analyses(self, found=None, use_cache=True, progress=None):
 
         if self.active_editor:
             unks = self.active_editor.analyses
@@ -81,13 +81,15 @@ class AnalysisEditTask(BaseBrowserTask):
                     uuids=found
 
                 ngroups = len(list(groupby(unks, key=key)))
-                prog = self.manager.open_progress(ngroups + 1)
+                if progress is None:
+                    progress = self.manager.open_progress(ngroups + 1)
+                else:
+                    progress.increase_max(ngroups+1)
 
                 for ln, ais in groupby(unks, key=key):
                     msg = 'find associated analyses for labnumber {}'.format(ln)
                     self.debug(msg)
-                    if prog:
-                        prog.change_message(msg)
+                    progress.change_message(msg)
 
                     ais = list(ais)
                     ts = [get_datetime(ai.timestamp) for ai in ais]
@@ -113,10 +115,10 @@ class AnalysisEditTask(BaseBrowserTask):
                                 uuids.extend([ai.uuid for ai in ans])
                                 break
 
-                prog.close()
-                #ans=self.manager.make_analyses(ans)
-                # self.debug('append items {}'.format(len(ans)))
-                self.active_editor.set_items(tans, is_append=True, use_cache=use_cache)
+                progress.soft_close()
+
+                self.active_editor.set_items(tans, is_append=True,
+                                             use_cache=use_cache, progress=progress)
                 return uuids
 
     def recall(self, records):
@@ -469,13 +471,16 @@ class AnalysisEditTask(BaseBrowserTask):
     def _do_easy(self, func):
         ep = EasyParser()
         db = self.manager.db
+
+        prog=self.manager.open_progress(n=10, close_at_end=False)
         with db.session_ctx() as sess:
-            ok = func(db, ep)
+            ok = func(db, ep, prog)
             if not ok:
                 sess.rollback()
 
         if ok:
             self.information_dialog('Changes saved to the database')
+        prog.close()
 
 
 

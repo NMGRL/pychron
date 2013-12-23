@@ -28,7 +28,6 @@ from pychron.loggable import Loggable
 
 doc_mapping = ['setup', 'import', 'iso_fits', 'blanks', 'disc', 'figures', 'tables']
 
-
 class EasyParser(Loggable):
     _docs = List
     _ndocs = Int

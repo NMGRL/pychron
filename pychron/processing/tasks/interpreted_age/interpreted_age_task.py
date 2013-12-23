@@ -51,6 +51,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             self.active_editor.save_pdf_tables(p)
 
         self.view_pdf(p)
+        self.view_pdf('/Users/ross/Sandbox/interpreted_age.step_heat_data.pdf')
 
     def create_dock_panes(self):
         panes = [self._create_browser_pane(analyses_defined='0')]

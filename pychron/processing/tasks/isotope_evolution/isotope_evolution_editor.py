@@ -60,13 +60,17 @@ class IsotopeEvolutionEditor(GraphEditor):
     def save(self):
         self._save(None, None)
 
-    def _save(self, fits, filters):
+    def _save(self, fits, filters, progress):
         proc = self.processor
-        prog = proc.open_progress(n=len(self.analyses))
+        n=len(self.analyses)
+        if progress is None:
+            progress = proc.open_progress(n=n)
+        else:
+            progress.increase_max(n)
 
         db = proc.db
         for unk in self.analyses:
-            prog.change_message('{} Saving fits'.format(unk.record_id))
+            progress.change_message('Saving Fits {}'.format(unk.record_id))
 
             meas_analysis = db.get_analysis_uuid(unk.uuid)
             if fits and filters:
@@ -76,10 +80,10 @@ class IsotopeEvolutionEditor(GraphEditor):
 
             #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
             #proc.save_arar(unk, meas_analysis)
-        prog.close()
+        progress.soft_close()
 
-    def save_fits(self, fits, filters):
-        self._save(fits, filters)
+    def save_fits(self, fits, filters, progress=None):
+        self._save(fits, filters, progress)
 
     def _save_fit_dict(self, unk, meas_analysis, fits, filters):
         fit_hist = None
@@ -97,9 +101,16 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if 'if n' in fit:
                     fit = eval(fit, {'n': iso.n})
                 elif 'if x' in fit:
-                    fit = eval(fit, {'x': iso.xs[-1]})
+                    if len(iso.xs):
+                        fit = eval(fit, {'x': iso.xs[-1]})
+                    else:
+                        fit='linear'
+
                 elif 'if d' in fit:
-                    fit = eval(fit, {'d': iso.xs[-1] - iso.xs[0]})
+                    if len(iso.xs):
+                        fit = eval(fit, {'d': iso.xs[-1] - iso.xs[0]})
+                    else:
+                        fit = 'linear'
 
                 fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                              name, fit, filter_d)

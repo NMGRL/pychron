@@ -15,10 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Str
-from traitsui.api import View, UItem
 import os
 import cPickle as pickle
+
+from traits.api import Str
+from traitsui.api import View, UItem
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -26,7 +28,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.ui.tabular_editor import myTabularEditor
 from pychron.processing.tasks.tables.editors.base_table_editor import BaseTableEditor
 from pychron.processing.tasks.tables.editors.summary_adapter import SummaryTabularAdapter
-from pychron.processing.tables.summary_table_pdf_writer import SummaryTablePDFWriter
+from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 
 
 class SummaryTableEditor(BaseTableEditor, ColumnSorterMixin):
@@ -35,7 +37,7 @@ class SummaryTableEditor(BaseTableEditor, ColumnSorterMixin):
     def make_table(self, title):
         samples = self.items
         uab = self.use_alternating_background
-        t = SummaryTablePDFWriter(
+        t = SummaryPDFTableWriter(
                                   use_alternating_background=uab,
                                   notes_template=self.notes_template
                                   )
