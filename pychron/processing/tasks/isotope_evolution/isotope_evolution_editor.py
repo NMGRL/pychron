@@ -23,10 +23,10 @@ from numpy import Inf, polyfit
 
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.helpers.fits import convert_fit
+from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-#from pychron.ui.thread import Thread
+#from pychron.core.ui.thread import Thread
 
 
 class IsotopeEvolutionEditor(GraphEditor):

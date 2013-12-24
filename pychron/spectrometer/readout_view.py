@@ -18,7 +18,7 @@
 from traits.api import HasTraits, Str, List, Any, Property, Event, cached_property, \
     Button
 from traitsui.api import View, Item, HGroup, spring
-from pychron.helpers.traitsui_shortcuts import listeditor
+from pychron.core.helpers.traitsui_shortcuts import listeditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

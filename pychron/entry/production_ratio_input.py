@@ -22,7 +22,7 @@ from traits.trait_errors import TraitError
 
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.saveable import Saveable
-from pychron.helpers.traitsui_shortcuts import instance_item
+from pychron.core.helpers.traitsui_shortcuts import instance_item
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

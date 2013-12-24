@@ -34,7 +34,7 @@ from numpy import array, hstack, Inf
 import csv
 import math
 #=============local library imports  ==========================
-from pychron.helpers.color_generators import colorname_generator as color_generator
+from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 from editors.plot_editor import PlotEditor
 from guide_overlay import GuideOverlay

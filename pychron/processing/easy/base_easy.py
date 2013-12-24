@@ -20,7 +20,7 @@ import os
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.helpers.iterfuncs import partition
+from pychron.core.helpers.iterfuncs import partition
 from pychron.paths import paths
 
 

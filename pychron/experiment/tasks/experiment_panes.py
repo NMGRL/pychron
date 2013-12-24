@@ -24,12 +24,12 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-# from pychron.ui.tabular_editor import myTabularEditor
+# from pychron.core.ui.tabular_editor import myTabularEditor
 # from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
 #============= standard library imports ========================

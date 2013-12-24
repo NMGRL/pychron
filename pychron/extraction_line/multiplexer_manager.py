@@ -21,7 +21,7 @@ from traitsui.api import Item, HGroup, spring
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 class HeaderLabel(CustomLabel):
     color = 'maroon'

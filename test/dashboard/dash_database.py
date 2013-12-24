@@ -1,7 +1,7 @@
 from datetime import datetime
 import unittest
 from pychron.paths import paths, build_directories
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 
 paths.build('_unittest')

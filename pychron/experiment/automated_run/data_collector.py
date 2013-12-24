@@ -23,11 +23,11 @@ import time
 from threading import Event, Timer
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
-# from pychron.codetools.memory_usage import mem_log
-from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.codetools.memory_usage import mem_log
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DataCollector(Loggable):

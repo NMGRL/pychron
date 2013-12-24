@@ -20,7 +20,7 @@ from traitsui.api import View, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.ui.text_editor import myTextEditor
+from pychron.core.ui.text_editor import myTextEditor
 
 
 class ExperimentView(HasTraits):

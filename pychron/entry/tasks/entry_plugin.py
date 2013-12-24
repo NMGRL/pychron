@@ -22,7 +22,7 @@ from pyface.action.group import Group
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction
+from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction
 from pychron.entry.molecular_weight_factory import MolecularWeightFactory
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -39,18 +39,18 @@ class EntryPlugin(BaseTaskPlugin):
         return [
             TaskExtension(task_id='pychron.entry.labnumber',
                           actions=[
+                              SchemaAddition(id='import_sample_metadata',
+                                             factory=ImportSampleMetadataAction,
+                                             path='MenuBar/Tools',),
                               SchemaAddition(factory=lambda: Group(SaveLabbookPDFAction(),
                                                                    MakeIrradiationTemplateAction()),
-                                             path='MenuBar/Tools'
-                              )]),
-
+                                             path='MenuBar/Tools')]),
             TaskExtension(
                 actions=[
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
                                    path='MenuBar/Edit',
-                                   absolute_position='first'
-                    ),
+                                   absolute_position='first',),
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
                                    path='MenuBar/Edit',
@@ -58,8 +58,7 @@ class EntryPlugin(BaseTaskPlugin):
                     SchemaAddition(id='molecular_weight_entry',
                                    factory=AddMolecularWeightAction,
                                    path='MenuBar/Edit',
-                                   absolute_position='first'
-                                   )])]
+                                   absolute_position='first')])]
 
     def _tasks_default(self):
         return [TaskFactory(id='pychron.entry.labnumber',

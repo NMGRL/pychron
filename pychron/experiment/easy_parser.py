@@ -22,7 +22,7 @@ from traits.api import List, Int
 #============= local library imports  ==========================
 import yaml
 from pychron.paths import paths
-from pychron.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 

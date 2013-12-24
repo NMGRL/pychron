@@ -2,11 +2,11 @@ __author__ = 'ross'
 
 import unittest
 
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 
 from logging import getLogger
 

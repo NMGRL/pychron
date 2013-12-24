@@ -29,7 +29,7 @@ from pychron.graph.stacked_graph import StackedGraph
 
 from multiprocessing import Pool
 from pychron.data_processing.regression.ols import OLS
-from pychron.stats import calculate_mswd
+from pychron.core.stats import calculate_mswd
 
 
 def mcalculate_mswd(d):

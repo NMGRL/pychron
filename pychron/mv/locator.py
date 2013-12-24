@@ -15,9 +15,8 @@
 
 #============= enthought library imports =======================
 from traits.api import Float
-from pyface.timer.do_later import do_later
 
-# from pychron.geometry.centroid import centroid
+# from pychron.core.geometry.centroid import centroid
 #============= standard library imports ========================
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
@@ -28,7 +27,7 @@ from skimage.draw import polygon
 from scipy import ndimage
 from skimage.exposure import rescale_intensity
 #============= local library imports  ==========================
-# from pychron.geometry.centroid.calculate_centroid import calculate_centroid
+# from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
 from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
@@ -36,7 +35,7 @@ from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
     draw_polygons
 from pychron.mv.target import Target
 # from pychron.image.image import StandAloneImage
-from pychron.geometry.geometry import approximate_polygon_center, \
+from pychron.core.geometry.geometry import approximate_polygon_center, \
     calc_length
 
 from skimage import feature
@@ -323,7 +322,8 @@ class Locator(Loggable):
             http://en.wikipedia.org/wiki/Total_variation_denoising
         '''
 
-        from skimage.filter import denoise_tv_chambolle, denoise_tv_bregman
+        from skimage.filter import denoise_tv_chambolle
+
         img = denoise_tv_chambolle(img, weight=weight) * 255
 
         return img.astype('uint8')

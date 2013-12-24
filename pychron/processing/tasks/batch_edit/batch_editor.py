@@ -19,7 +19,7 @@ from traits.api import HasTraits, List, Property, Button, Float, Str, Bool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.loggable import Loggable
 
 

@@ -29,7 +29,7 @@ from pychron.hardware.core.communicators.ethernet_communicator import EthernetCo
 from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient,\
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 import os
 from pychron.paths import paths
 

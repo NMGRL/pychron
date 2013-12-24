@@ -21,7 +21,7 @@ import os
 import yaml
 from git import Repo
 #============= local library imports  ==========================
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.loggable import Loggable
 from pychron.paths import paths
 

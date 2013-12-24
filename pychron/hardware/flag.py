@@ -21,7 +21,7 @@ from traitsui.api import View, Item, HGroup, spring
 from threading import Timer as OneShotTimer
 from time import time
 #============= local library imports  ==========================
-from pychron.helpers.timer import Timer as PTimer
+from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
 
 def convert_to_bool(v):

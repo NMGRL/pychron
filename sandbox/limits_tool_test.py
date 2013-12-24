@@ -7,7 +7,7 @@ from numpy import *
 d = os.path.dirname(os.getcwd())
 sys.path.append(d)
 
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 

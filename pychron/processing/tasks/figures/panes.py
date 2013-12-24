@@ -21,7 +21,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class FigureAdapter(TabularAdapter):

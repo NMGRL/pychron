@@ -28,7 +28,7 @@ from traitsui.item import UItem
 from traitsui.table_column import ObjectColumn
 from traitsui.view import View
 from pychron.processing.fits.fit import Fit
-from pychron.ui.table_editor import myTableEditor
+from pychron.core.ui.table_editor import myTableEditor
 
 
 class FitSelector(HasTraits):

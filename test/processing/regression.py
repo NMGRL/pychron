@@ -21,10 +21,10 @@
 from unittest import TestCase
 import numpy as np
 #============= local library imports  ==========================
-from pychron.regression.mean_regressor import WeightedMeanRegressor
-from pychron.regression.ols_regressor import PolynomialRegressor
-from pychron.regression.wls_regressor import WeightedPolynomialRegressor
-# from pychron.regression.york_regressor import YorkRegressor
+from pychron.core.regression.mean_regressor import WeightedMeanRegressor
+from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+# from pychron.core.regression.york_regressor import YorkRegressor
 
 class WeightedMeanRegressionTest(TestCase):
     def setUp(self):

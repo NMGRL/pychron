@@ -21,7 +21,7 @@ import time
 from traits.api import Property, String, Float, Any, Int, List
 from traitsui.api import View, Item, VGroup
 
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================

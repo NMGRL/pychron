@@ -24,9 +24,9 @@ import random
 from datetime import datetime
 #=============local library imports  ==========================
 from i_core_device import ICoreDevice
-# from pychron.helpers.timer import Timer
+# from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-# from pychron.helpers.datetime_tools import generate_datetimestamp
+# from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
 from pychron.has_communicator import HasCommunicator

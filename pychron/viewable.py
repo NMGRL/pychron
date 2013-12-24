@@ -24,7 +24,7 @@ from traitsui.api import Handler
 #============= local library imports  ==========================
 from pychron.utils import IsQt
 from pychron.loggable import Loggable
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 # class ViewableHandler(Controller):

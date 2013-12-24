@@ -17,8 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Enum, Property, \
     Str, Any, Button, List, Bool, Int
-from traitsui.api import View, Item, InstanceEditor, UItem, ListStrEditor, \
-    Group, HGroup
+from traitsui.api import View, Item, InstanceEditor, UItem, Group, HGroup
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 #============= standard library imports ========================
@@ -34,9 +33,9 @@ from pychron.database.database_connection_spec import DBConnectionSpec
 import csv
 from pychron.database.records.isotope_record import IsotopeRecordView
 from threading import Thread
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.ui.progress_dialog import myProgressDialog
+from pychron.core.ui.progress_dialog import myProgressDialog
 
 class ExportedAdapter(TabularAdapter):
     columns = [('', 'n'), ('RID', 'rid')]
@@ -316,7 +315,7 @@ class ExportManager(IsotopeDatabaseManager):
         return klass()
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('em')
 
     em = ExportManager()

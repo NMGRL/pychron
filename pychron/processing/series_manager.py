@@ -22,7 +22,7 @@ import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import re
 #============= local library imports  ==========================
-from pychron.helpers.traitsui_shortcuts import listeditor
+from pychron.core.helpers.traitsui_shortcuts import listeditor
 from pychron.pychron_constants import FIT_TYPES
 import os
 from pychron.paths import paths

@@ -20,7 +20,7 @@ from numpy import array
 #============= local library imports  ==========================
 from unittest import TestCase
 
-from pychron.regression.regressors.polynomial import PolynomialRegressor
+from pychron.core.regression.regressors.polynomial import PolynomialRegressor
 class StatsTests(TestCase):
     def setUp(self):
 #        self.m = 10

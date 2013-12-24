@@ -1,4 +1,4 @@
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -7,7 +7,7 @@ from pychron.paths import paths
 paths.build('_unittest')
 #build_directories(paths)
 
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('packager')
 

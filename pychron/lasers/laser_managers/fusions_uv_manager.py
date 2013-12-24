@@ -32,7 +32,7 @@ from pychron.monitors.fusions_uv_laser_monitor import FusionsUVLaserMonitor
 from pychron.lasers.laser_managers.uv_gas_handler_manager import UVGasHandlerManager
 from pychron.lasers.stage_managers.stage_map import UVStageMap
 from pychron.lasers.laser_managers.laser_script_executor import UVLaserScriptExecutor
-from pychron.geometry.geometry import calc_point_along_line
+from pychron.core.geometry.geometry import calc_point_along_line
 from pychron.paths import paths
 from threading import Thread
 

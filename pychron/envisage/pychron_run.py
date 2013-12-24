@@ -21,7 +21,7 @@ from envisage.api import Plugin
 #============= local library imports  ==========================
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
-from pychron.helpers.logger_setup import new_logger
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
 

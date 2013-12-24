@@ -24,9 +24,9 @@ import numpy as np
 #============= local library imports  ==========================
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_dir
+from pychron.core.helpers.filetools import unique_dir
 from pychron.graph.graph import Graph
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 class DeflectionCalibraiton(HasTraits):
     def do_calibration(self):
         self.info('Deflection Calibration')

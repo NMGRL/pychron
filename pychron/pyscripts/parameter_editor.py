@@ -26,7 +26,7 @@ import re
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 from pychron.paths import paths

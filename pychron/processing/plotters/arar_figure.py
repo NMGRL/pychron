@@ -26,8 +26,8 @@ from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
-from pychron.stats.core import calculate_mswd, validate_mswd
-from pychron.helpers.formatting import floatfmt
+from pychron.core.stats.core import calculate_mswd, validate_mswd
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.flow_label import FlowDataLabel
 from chaco.tools.broadcaster import BroadcasterTool
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \

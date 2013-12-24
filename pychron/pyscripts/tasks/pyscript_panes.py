@@ -22,8 +22,8 @@ from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 # from pychron.pyscripts.commands.core import ICommand
 #============= standard library imports ========================

@@ -22,8 +22,8 @@ from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.led_editor import LED
-from pychron.helpers.filetools import list_directory
+from pychron.core.ui.led_editor import LED
+from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================

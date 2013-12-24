@@ -402,7 +402,7 @@ class DataLoader(Loggable):
         return True
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('dataloader')
     d = DataLoader()
     path = '/Users/Ross/Pychrondata_beta/data/modeling/ShapFurnace.txt'

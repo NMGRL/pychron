@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Color, Button, Float, Property, Bool
+from traits.api import Str, Color, Button, Float, Bool
 from traitsui.api import View, Item, VGroup, HGroup, \
     Spring, UItem, spring, RangeEditor
 #============= standard library imports ========================
@@ -23,8 +23,8 @@ from threading import Event
 import time
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.helpers.timer import Timer
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.helpers.timer import Timer
 
 class WaitControl(Loggable):
     page_name = Str('Wait')

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Property, Int, Str
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class SummaryTabularAdapter(TabularAdapter):

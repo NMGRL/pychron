@@ -15,8 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool
-from traitsui.api import View, Item, TableEditor
+from traits.api import Str, Int, Bool
 #============= standard library imports ========================
 import httplib
 import os
@@ -25,7 +24,7 @@ from cStringIO import StringIO
 from pychron.loggable import Loggable
 from apptools.preferences.preference_binding import bind_preference
 from pychron.paths import paths
-from pychron.xml.xml_parser import XMLParser
+from pychron.core.xml.xml_parser import XMLParser
 # from pychron.regex import make_image_regex
 
 class MediaClient(Loggable):

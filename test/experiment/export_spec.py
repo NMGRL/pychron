@@ -1,4 +1,4 @@
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -7,11 +7,11 @@ from pychron.paths import paths, build_directories
 paths.build('_unittest')
 build_directories(paths)
 
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('export_spec')
 from pychron.experiment.export.export_spec import ExportSpec
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes
 
 import unittest
 

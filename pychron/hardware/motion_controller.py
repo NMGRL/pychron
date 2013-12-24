@@ -22,7 +22,7 @@ from traitsui.api import View, VGroup, Item, RangeEditor
 import os
 import time
 #============= local library imports  ==========================
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
 # from pychron.hardware.utilities import limit_frequency

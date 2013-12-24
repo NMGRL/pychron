@@ -27,11 +27,11 @@ from traits.api import Instance, on_trait_change, List, Str
 from pychron.dashboard.db_manager import DashboardDBManager
 from pychron.dashboard.device import DashboardDevice
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 from pychron.loggable import Loggable
 from pychron.messaging.notify.notifier import Notifier
 from pychron.paths import paths
-from pychron.xml.xml_parser import XMLParser
+from pychron.core.xml.xml_parser import XMLParser
 
 
 class DashboardServer(Loggable):

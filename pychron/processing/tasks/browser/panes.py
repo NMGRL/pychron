@@ -26,7 +26,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= local library imports  ==========================
 from pychron.experiment.tasks.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 class AnalysisAdapter(BrowserAdapter):

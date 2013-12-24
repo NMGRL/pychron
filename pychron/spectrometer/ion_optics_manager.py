@@ -27,11 +27,11 @@ from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.spectrometer.detector import Detector
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
-from pychron.ui.thread import Thread
+from pychron.core.ui.thread import Thread
 from pychron.paths import paths
 import os
-from pychron.helpers.isotope_utils import sort_isotopes
-# from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.helpers.isotope_utils import sort_isotopes
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class PeakCenterConfigHandler(Handler):

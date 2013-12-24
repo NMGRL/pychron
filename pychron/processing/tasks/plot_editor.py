@@ -28,7 +28,7 @@ from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, Enum
 # from pyface.timer.do_later import do_later
 # from traitsui.editors.range_editor import RangeEditor
 # from numpy.core.numeric import Inf
-# from pychron.ui.double_spinner import DoubleSpinnerEditor
+# from pychron.core.ui.double_spinner import DoubleSpinnerEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class EFloat(Float):

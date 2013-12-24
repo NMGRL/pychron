@@ -32,7 +32,7 @@ from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 from pychron.graph.plot_record import PlotRecord
 import time
 from pychron.hardware.meter_calibration import MeterCalibration
-from pychron.helpers.filetools import parse_file
+from pychron.core.helpers.filetools import parse_file
 
 sensor_map = {'62': 'off',
               '95': 'thermocouple',
@@ -1250,7 +1250,7 @@ class WatlowEZZone(CoreDevice):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('watlowezzone')
     w = WatlowEZZone(name='temperature_controller',

@@ -22,10 +22,10 @@ from pychron.loading.component_flowable import ComponentFlowable
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from itertools import groupby
-from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.pdf.items import Row, Superscript, Subscript
-from pychron.stats.core import calculate_weighted_mean
-from pychron.helpers.formatting import floatfmt
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Row, Superscript, Subscript
+from pychron.core.stats.core import calculate_weighted_mean
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.argon_calculations import calculate_flux
 class FluxPDFWriter(BasePDFTableWriter):
     monitor_age = 28.02e6

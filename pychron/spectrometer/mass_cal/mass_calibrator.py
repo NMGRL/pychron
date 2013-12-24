@@ -26,12 +26,12 @@ import os
 from threading import Thread
 import struct
 #============= local library imports  ==========================
-from pychron.helpers.filetools import unique_path
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
-from pychron.stats.peak_detection import find_peaks, calculate_peak_center
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center
+from pychron.core.ui.gui import invoke_in_main_thread
 
 DELTA_TOOLTIP = """The minimum difference between a peak and
 the following points, before a peak may be considered a peak"""

@@ -26,7 +26,7 @@ from scipy import optimize
 #============= local library imports  ==========================
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
-from pychron.ui.qt.color_square_editor import ColorSquareEditor
+from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
 
 
 charge = 1.6021764874e-19

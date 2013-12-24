@@ -24,7 +24,7 @@ from traitsui.api import View, UItem
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.processing.analysis_group import AnalysisGroup
 from pychron.processing.tasks.tables.editors.base_table_editor import BaseTableEditor
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 class ArArTableEditor(BaseTableEditor, ColumnSorterMixin):

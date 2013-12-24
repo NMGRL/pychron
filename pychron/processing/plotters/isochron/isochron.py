@@ -22,13 +22,13 @@ from chaco.array_data_source import ArrayDataSource
 from numpy import array, linspace, delete
 #============= local library imports  ==========================
 
-from pychron.helpers.formatting import calc_percent_error, floatfmt
+from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.processing.argon_calculations import calculate_isochron
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
-from pychron.regression.new_york_regressor import ReedYorkRegressor
-from pychron.stats import validate_mswd
+from pychron.core.regression.new_york_regressor import ReedYorkRegressor
+from pychron.core.stats import validate_mswd
 
 N = 500
 

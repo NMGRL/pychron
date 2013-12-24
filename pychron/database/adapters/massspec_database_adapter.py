@@ -864,7 +864,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #                     ).filter_by(AnalysisID=a_id).all()
 #        return p,sess
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('ia')
     ia = MassSpecDatabaseAdapter()
     ia.connect()

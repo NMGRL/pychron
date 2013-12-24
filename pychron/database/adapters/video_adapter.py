@@ -42,7 +42,7 @@ class VideoAdapter(PathDatabaseAdapter):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('vid')
     db = VideoAdapter(name=paths.co2laser_db, kind='sqlite')
     db.connect()

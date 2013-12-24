@@ -1,4 +1,4 @@
-from pychron.stats import calculate_mswd2
+from pychron.core.stats import calculate_mswd2
 from test.processing.standard_data import pearson
 
 __author__ = 'ross'

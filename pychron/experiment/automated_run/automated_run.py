@@ -41,7 +41,7 @@ from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnal
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
-from pychron.helpers.datetime_tools import get_datetime
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import convert_identifier, \
     make_runid, get_analysis_type, convert_extract_device
@@ -54,9 +54,9 @@ from pychron.experiment.automated_run.condition import TruncationCondition, \
     ActionCondition, TerminationCondition
 from pychron.processing.arar_age import ArArAge
 from pychron.experiment.export.export_spec import ExportSpec
-from pychron.ui.gui import invoke_in_main_thread
-from pychron.codetools.memory_usage import mem_log
-from pychron.codetools.file_log import file_log
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.codetools.memory_usage import mem_log
+from pychron.core.codetools.file_log import file_log
 from pychron.experiment.automated_run.multi_collector import MultiCollector
 from pychron.processing.analyses.analysis import DBAnalysis
 
@@ -1024,7 +1024,7 @@ anaylsis_type={}
     #===============================================================================
     #     def _plot_panel_closed(self):
     #         if self.measuring:
-    #             from pychron.ui.thread import Thread as mThread
+    #             from pychron.core.ui.thread import Thread as mThread
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
     def _set_active_detectors(self, dets):

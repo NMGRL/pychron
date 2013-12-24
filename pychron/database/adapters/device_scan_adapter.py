@@ -62,7 +62,7 @@ class DeviceScanAdapter(PathDatabaseAdapter):
 
 if __name__ == '__main__':
 
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('dvs')
 
     from pychron.paths import paths

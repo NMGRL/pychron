@@ -19,7 +19,7 @@ from traits.api import HasTraits, Property, List, String
 #============= standard library imports ========================
 from numpy import poly1d
 from scipy import optimize
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 
 #============= local library imports  ==========================
 

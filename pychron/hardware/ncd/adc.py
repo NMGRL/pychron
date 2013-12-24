@@ -25,7 +25,7 @@
 import math
 import struct
 
-#from pychron.ui import set_toolkit
+#from pychron.core.ui import set_toolkit
 #set_toolkit('qt4')
 #paths.build('_dev')
 #logging_setup('prox')

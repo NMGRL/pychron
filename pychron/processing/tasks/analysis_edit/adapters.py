@@ -17,8 +17,8 @@
 #============= enthought library imports =======================
 from traits.api import Int, Property
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.helpers.color_generators import colornames
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.color_generators import colornames
+from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
 #============= standard library imports ========================
 #============= local library imports  ==========================

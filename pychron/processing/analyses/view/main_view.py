@@ -21,11 +21,11 @@ from traitsui.api import View, UItem, HGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, CompuatedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 class MainView(HasTraits):

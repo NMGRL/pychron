@@ -350,8 +350,8 @@ class PointsProgrammer(Manager):
 #
 #            poly = [(pi.x * 1000, pi.y * 1000) for pi in pp.points]
 #
-#            from pychron.geometry.polygon_offset import polygon_offset
-#            from pychron.geometry.scan_line import make_raster_polygon
+#            from pychron.core.geometry.polygon_offset import polygon_offset
+#            from pychron.core.geometry.scan_line import make_raster_polygon
 #            use_offset = True
 #            if use_offset:
 #                opoly = polygon_offset(poly, -10)
@@ -383,10 +383,10 @@ class PointsProgrammer(Manager):
 
 # def _plot_raster(self, poly, scan_size, scale):
 #        use_convex_hull = False
-#        from pychron.geometry.scan_line import raster
-#        from pychron.geometry.convex_hull import convex_hull
-#        from pychron.geometry.polygon_offset import polygon_offset
-#        from pychron.geometry.geometry import sort_clockwise
+#        from pychron.core.geometry.scan_line import raster
+#        from pychron.core.geometry.convex_hull import convex_hull
+#        from pychron.core.geometry.polygon_offset import polygon_offset
+#        from pychron.core.geometry.geometry import sort_clockwise
 #
 #        poly = sort_clockwise(poly, poly)
 #        poly = array(poly)

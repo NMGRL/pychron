@@ -97,4 +97,9 @@ class MakeIrradiationTemplateAction(TaskAction):
                           search_path=paths.icon_search_path)
     method = 'make_irradiation_load_template'
 
+
+class ImportSampleMetadataAction(TaskAction):
+    name='Import Sample Metadata...'
+    method='import_sample_metadata'
+
 #============= EOF =============================================

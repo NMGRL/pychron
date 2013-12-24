@@ -38,8 +38,8 @@ from pychron.database.orms.isotope.irrad import irrad_PositionTable, irrad_Irrad
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, gen_LabTable
 
 from pychron.processing.tasks.blanks.blanks_editor import BlanksEditor
-from pychron.ui.gui import invoke_in_main_thread
-# from pychron.helpers.filetools import unique_path
+from pychron.core.ui.gui import invoke_in_main_thread
+# from pychron.core.helpers.filetools import unique_path
 # from pychron.processing.tasks.smart_project.blanks_pdf_writer import BlanksPDFWrtier
 from pychron.processing.tasks.smart_project.smart_blanks import SmartBlanks
 from pychron.processing.tasks.smart_project.smart_isotope_fits import SmartIsotopeFits

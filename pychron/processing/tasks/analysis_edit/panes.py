@@ -27,8 +27,8 @@ import hashlib
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
 from pychron.paths import paths
 # from pychron.processing.analysis import Marker

@@ -24,9 +24,9 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
-from pychron.regression.interpolation_regressor import InterpolationRegressor
+from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from chaco.array_data_source import ArrayDataSource
-from pychron.helpers.datetime_tools import convert_timestamp
+from pychron.core.helpers.datetime_tools import convert_timestamp
 #============= local library imports  ==========================
 
 

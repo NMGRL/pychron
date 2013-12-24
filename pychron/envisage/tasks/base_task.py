@@ -33,12 +33,12 @@ from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
 from pyface.confirmation_dialog import ConfirmationDialog
-from pychron.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class WindowGroup(Group):

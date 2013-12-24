@@ -23,10 +23,11 @@ import apptools.sweet_pickle as pickle
 import os
 import time
 #============= local library imports  ==========================
+from pychron.lasers.pattern.patterns import Pattern
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from pychron.lasers.stage_managers.pattern.patterns import Pattern
-from pychron.ui.thread import Thread
+
+from pychron.core.ui.thread import Thread
 
 class PatternManager(Manager):
     kind = Property(Enum(
@@ -353,7 +354,7 @@ class PatternManager(Manager):
                  )
         return v
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('pattern')
     paths.build('_test')
     pm = PatternManager()

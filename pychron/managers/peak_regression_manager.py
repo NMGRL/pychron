@@ -36,8 +36,8 @@
 # from pychron.paths import paths
 # from pychron.graph.regression_graph import RegressionGraph
 # from pychron.data_processing.regression.regressor import Regressor
-# from pychron.helpers.filetools import unique_path
-# from pychron.helpers.data_tools import add_sub_error_prop#, mult_div_error_prop
+# from pychron.core.helpers.filetools import unique_path
+# from pychron.core.helpers.data_tools import add_sub_error_prop#, mult_div_error_prop
 #
 # class RegressionItem(HasTraits):
 #    fit_type = Enum('linear', 'parabolic', 'average +/- SD', 'average +/- SEM', 'cubic', 'exponential')

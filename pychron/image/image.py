@@ -17,8 +17,7 @@
 
 
 #=============enthought library imports=======================
-from traits.api import HasTraits, Any, List, Int, Bool, on_trait_change, \
-    Event
+from traits.api import HasTraits, Any, List, Int, Bool
 #=============standard library imports ========================
 # import wx
 from numpy import asarray, flipud, ndarray
@@ -26,7 +25,7 @@ from pychron.globals import globalv
 # from pychron.image.pyopencv_image_helper import colorspace
 #=============local library imports  ==========================
 from cv_wrapper import load_image, asMat, get_size, grayspace, resize, \
-    save_image, draw_lines, colorspace
+    save_image, draw_lines
 from cv_wrapper import swap_rb as cv_swap_rb
 from cv_wrapper import flip as cv_flip
 # try:
@@ -52,7 +51,7 @@ from cv_wrapper import flip as cv_flip
 # from numpy.core.numeric import zeros
 # import Image as PILImage
 
-# from pychron.helpers.memo import memoized
+# from pychron.core.helpers.memo import memoized
 class Image(HasTraits):
     '''
     '''

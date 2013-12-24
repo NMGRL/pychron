@@ -23,7 +23,7 @@ from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
 from pychron.pychron_constants import ALPHAS
-from pychron.stats.core import calculate_mswd, calculate_weighted_mean
+from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean
 
 def AGProperty():
     return Property(depends_on='analyses:[status,temp_status]')

@@ -25,7 +25,7 @@ import time
 #============= local library imports  ==========================
 import yaml
 from pychron.hardware.core.i_core_device import ICoreDevice
-from pychron.helpers.datetime_tools import convert_timestamp
+from pychron.core.helpers.datetime_tools import convert_timestamp
 from pychron.loggable import Loggable
 
 

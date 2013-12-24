@@ -27,19 +27,19 @@ from apptools.preferences.preference_binding import bind_preference
 # from pychron.database.adapters.power_adapter import PowerAdapter
 # from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # from pychron.database.data_warehouse import DataWarehouse
-# from pychron.helpers.timer import Timer
+# from pychron.core.helpers.timer import Timer
 from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
 from pychron.hardware.fiber_light import FiberLight
-# from pychron.helpers.paths import co2laser_db_root, co2laser_db, diodelaser_db
+# from pychron.core.helpers.paths import co2laser_db_root, co2laser_db, diodelaser_db
 # from pychron.progress_dialog import myProgressDialog
 # from pychron.lasers.power.power_calibration_manager import PowerCalibrationManager
 
 from laser_manager import LaserManager
 # from pychron.lasers.laser_managers.brightness_pid_manager import BrightnessPIDManager
 # from pychron.viewable import Viewable
-from pychron.helpers.filetools import to_bool
-from pychron.ui.thread import Thread
-# from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.helpers.filetools import to_bool
+from pychron.core.ui.thread import Thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.lasers.laser_managers.degas_manager import DegasManager
 
 
@@ -195,7 +195,7 @@ class FusionsLaserManager(LaserManager):
             motor = self.laser_controller.get_motor(name)
             if motor is not None:
                 n = 4
-                from pychron.ui.progress_dialog import myProgressDialog
+                from pychron.core.ui.progress_dialog import myProgressDialog
 
                 pd = myProgressDialog(max=n, size=(550, 15))
                 pd.open()

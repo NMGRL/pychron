@@ -29,13 +29,13 @@ import yaml
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.helpers.iterfuncs import partition
-from pychron.pdf.options import PDFTableOptions
+from pychron.core.helpers.iterfuncs import partition
+from pychron.core.pdf.options import PDFTableOptions
 from pychron.processing.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class InterpretedAge(HasTraits):

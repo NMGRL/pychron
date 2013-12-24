@@ -21,7 +21,7 @@ from pyface.file_dialog import FileDialog
 from pychron.processing.tasks.editor import BaseUnknownsEditor
 from pychron.processing.tasks.tables.editors.base_adapter import TableBlank, \
     TableSeparator
-from pychron.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 #============= standard library imports ========================

@@ -23,7 +23,7 @@ import ftplib as ftp
 from pychron.loggable import Loggable
 import shutil
 from zipfile import ZipFile, ZIP_DEFLATED
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 
 class Repository(Loggable):
     root = Str

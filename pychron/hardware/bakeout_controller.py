@@ -23,13 +23,13 @@ from traitsui.api import View, Item, spring, HGroup, Label, VGroup, Spring, \
 import time
 import os
 #============= local library imports  ==========================
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.paths import paths
 from watlow_ezzone import WatlowEZZone
 from pychron.pychron_constants import NULL_STR
 from pychron.pyscripts.bakeout_pyscript import BakeoutPyScript
-from pychron.ui.led_editor import LEDEditor, ButtonLED
-# from pychron.ui.led_editor import ButtonLED, LEDEditor
+from pychron.core.ui.led_editor import LEDEditor, ButtonLED
+# from pychron.core.ui.led_editor import ButtonLED, LEDEditor
 
 # class BakeoutMonitor():
 #    pass

@@ -28,13 +28,10 @@ from enable.component import Component
 #============= standard library imports ========================
 import Image
 from numpy import array
-from cStringIO import StringIO
 import os
 import httplib
 #============= local library imports  ==========================
-from pychron.loggable import Loggable
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.database.adapters.isotope_adapter import IsotopeAdapter
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
 
@@ -271,7 +268,7 @@ class ImageBrowser(IsotopeDatabaseManager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('image_viewer')
     im = ImageBrowser(cache_dir='/Users/ross/Sandbox/cache')
     im.load_remote_directory('')

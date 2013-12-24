@@ -30,7 +30,7 @@ from reportlab.platypus.frames import Frame
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from reportlab.platypus.flowables import Spacer
-from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 
 
 class LoadingPDFWriter(BasePDFTableWriter):

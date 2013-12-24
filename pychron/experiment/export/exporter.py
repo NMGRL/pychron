@@ -88,7 +88,7 @@ class MassSpecExporter(Exporter):
 class XMLExporter(Exporter):
     def __init__(self, destination, *args, **kw):
         super(XMLExporter, self).__init__(*args, **kw)
-        from pychron.xml.xml_parser import XMLParser
+        from pychron.core.xml.xml_parser import XMLParser
 
         xmlp = XMLParser()
         self._parser = xmlp

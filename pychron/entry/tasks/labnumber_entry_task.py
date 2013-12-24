@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
@@ -95,6 +96,14 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.manager.make_irradiation_load_template(path)
             #self.information_dialog('Template saved to {}'.format(p))
             self.view_xls(path)
+
+    def import_sample_metadata(self):
+        path='/Users/ross/Programming/git/dissertation/data/minnabluff/sample.xls'
+        if not os.path.isfile(path):
+            path=self.open_file_dialog()
+
+        if path:
+            self.manager.import_sample_metadata(path)
 
     def _manager_default(self):
         return LabnumberEntry(application=self.application)

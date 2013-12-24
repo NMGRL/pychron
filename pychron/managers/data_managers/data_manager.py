@@ -24,9 +24,9 @@ import os
 
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.managers.manager import Manager
-from pychron.helpers.datetime_tools import generate_datetimestamp, time_generator
+from pychron.core.helpers.datetime_tools import generate_datetimestamp, time_generator
 
 
 class DataManager(Manager):

@@ -21,7 +21,7 @@ from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
 from pychron.experiment.easy_parser import EasyParser
-from pychron.helpers.datetime_tools import get_datetime
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane

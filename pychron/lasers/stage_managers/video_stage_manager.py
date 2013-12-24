@@ -27,10 +27,10 @@ from threading import Thread, Timer
 
 import os
 #============= local library imports  ==========================
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths
 # from pychron.machine_vision.autofocus_manager import AutofocusManager
-from pychron.helpers.archiver import Archiver
+from pychron.core.helpers.archiver import Archiver
 from pychron.image.video_server import VideoServer
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
@@ -38,14 +38,14 @@ from pychron.canvas.canvas2D.camera import Camera
 # from pychron.machine_vision.mosaic_manager import MosaicManager
 
 # from camera_calibration_manager import CameraCalibrationManager
-from pychron.ui.media.sounds import play_sound
+from pychron.core.ui.media.sounds import play_sound
 from stage_manager import StageManager
 # from video_component_editor import VideoComponentEditor
-# from pychron.helpers.media import play_sound
+# from pychron.core.helpers.media import play_sound
 # from pychron.mv.autocenter_manager import AutoCenterManager
 # from pychron.mv.focus.autofocus_manager import AutoFocusManager
-from pychron.ui.stage_component_editor import VideoComponentEditor
-# from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.stage_component_editor import VideoComponentEditor
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 try:
     from pychron.canvas.canvas2D.video_laser_tray_canvas import VideoLaserTrayCanvas
@@ -212,7 +212,7 @@ class VideoStageManager(StageManager):
 
         self._update_zoom(0)
 
-    #        from pychron.helpers.media import load_sound, play_sound
+    #        from pychron.core.helpers.media import load_sound, play_sound
     #        load_sound('shutter')
     #        play_sound('shutter')
     def autocenter(self, *args, **kw):
@@ -712,7 +712,7 @@ class VideoStageManager(StageManager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     name = 'co2'
     logging_setup('stage_manager')

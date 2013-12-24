@@ -23,7 +23,7 @@ from numpy import linspace, polyfit
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.helpers.parsers.learner_parser import LearnerParser
+from pychron.core.helpers.parsers.learner_parser import LearnerParser
 
 class LearnerValve(HasTraits):
     name = Str

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -34,7 +34,7 @@ from pychron.paths import paths
 # from pychron.graph.graph import Graph
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-# from pychron.regression.ols_regressor import PolynomialRegressor
+# from pychron.core.regression.ols_regressor import PolynomialRegressor
 
 class CalibrationPoint(HasTraits):
     x = Float
@@ -382,7 +382,7 @@ if __name__ == '__main__':
 
     build_version('_dev')
 
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('magnet')
     m = Magnet()

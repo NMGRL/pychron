@@ -24,7 +24,7 @@ from traitsui.api import View, UItem, VGroup
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class DashboardCentralPane(TraitsTaskPane):

@@ -22,11 +22,11 @@ from traitsui.api import View, Item
 import struct
 from numpy import array
 #============= local library imports  ==========================
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.loggable import Loggable
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.regression.ols_regressor import PolynomialRegressor
-from pychron.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor
 from uncertainties import ufloat
 from pychron.experiment.utilities.info_blob import encode_infoblob
 import time
@@ -508,7 +508,7 @@ class MassSpecDatabaseImporter(Loggable):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('db_import')
     d = MassSpecDatabaseImporter()
@@ -516,7 +516,7 @@ if __name__ == '__main__':
     d.configure_traits()
 
     #============= EOF ====================================
-    #        from pychron.codetools.simple_timeit import timethis
+    #        from pychron.core.codetools.simple_timeit import timethis
     #        for ((det, isok), si, bi, ublank, signal, baseline, sfit, bfit) in spec.iter():
     #            self.debug('msi {} {} {} {} {} {}'.format(det, isok, signal.nominal_value,
     #                                                      baseline.nominal_value, sfit, bfit))

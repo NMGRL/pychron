@@ -15,10 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Event, Property, Bool
-from traitsui.api import View, Item
 from threading import Thread
-# from pychron.ui.thread import Thread
+
+from traits.api import HasTraits, Event, Property, Bool
+
+# from pychron.core.ui.thread import Thread
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

@@ -16,12 +16,15 @@
 
 #============= enthought library imports =======================
 
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from reportlab.lib.units import inch
 from datetime import datetime
+
+from reportlab.lib.units import inch
 from reportlab.lib import colors
-from pychron.loading.component_flowable import ComponentFlowable
 from reportlab.platypus.flowables import PageBreak
+
+from pychron.core.pdf.base_pdf_writer import BasePDFWriter
+from pychron.loading.component_flowable import ComponentFlowable
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

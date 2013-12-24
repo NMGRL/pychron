@@ -15,13 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Float, Event, String, Bool, Any, Enum, Property, cached_property
-from traitsui.api import View, Item, VGroup, HGroup, spring, Group
+from traits.api import Float, Event, String, Any, Enum, Property, cached_property
+from traitsui.api import View, Item, VGroup, HGroup
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.lasers.stage_managers.calibration.free_calibrator import FreeCalibrator
 from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
 import os

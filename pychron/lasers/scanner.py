@@ -25,11 +25,11 @@ import yaml
 #============= local library imports  ==========================
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 from pychron.application_controller import ApplicationController
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.thread import Thread
+from pychron.core.ui.thread import Thread
 
 
 class ScannerController(ApplicationController):

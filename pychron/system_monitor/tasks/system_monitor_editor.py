@@ -29,9 +29,9 @@ from pychron.processing.plotter_options_manager import SystemMonitorOptionsManag
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.system_monitor.tasks.connection_spec import ConnectionSpec
 from pychron.system_monitor.tasks.controls import SystemMonitorControls
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.processing.utils.grouping import group_analyses_by_key
-from pychron.ui.preference_binding import color_bind_preference
+from pychron.core.ui.preference_binding import color_bind_preference
 
 """
     subscribe to pyexperiment

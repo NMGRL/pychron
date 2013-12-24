@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Int, Bool
-from pychron.helpers.filetools import list_directory
+from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================

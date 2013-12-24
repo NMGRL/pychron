@@ -15,28 +15,29 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from chaco.default_colormaps import color_map_name_dict
 import math
+
+from chaco.default_colormaps import color_map_name_dict
 from traits.api import HasTraits, Instance, on_trait_change, Button, Float, Str, \
     Dict, Property, Event, Int, Bool, List
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
     VGroup, VSplit, EnumEditor, Item, HGroup
+
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 #============= standard library imports ========================
-from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, cos, \
-    hstack
+from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, cos
 
 #============= local library imports  ==========================
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
-from pychron.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
+from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
 
 
 def make_grid(r, n):

@@ -25,7 +25,7 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.queue.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class ExperimentQueue(BaseExperimentQueue):

@@ -20,7 +20,7 @@ from pychron.pychron_constants import IC_ANALYSIS_TYPE_MAP
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 #============= standard library imports ========================
 from numpy import array
-from pychron.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.isotope_utils import sort_detectors
 #============= local library imports  ==========================
 from pychron.processing.tasks.detector_calibration.detector_calibration_tool import DetectorCalibrationTool
 

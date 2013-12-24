@@ -22,8 +22,8 @@ from numpy import max
 #============= local library imports  ==========================
 from magnet_scan import MagnetScan
 from pychron.graph.graph import Graph
-from pychron.stats.peak_detection import calculate_peak_center
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.stats.peak_detection import calculate_peak_center
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class PeakCenter(MagnetScan):

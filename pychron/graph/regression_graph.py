@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
@@ -28,17 +28,17 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.time_series_graph import TimeSeriesGraph
 from pychron.graph.stacked_graph import StackedGraph
-from pychron.helpers.fits import convert_fit
-from pychron.regression.ols_regressor import PolynomialRegressor
-from pychron.regression.mean_regressor import MeanRegressor
+from pychron.core.helpers.fits import convert_fit
+from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-from pychron.regression.wls_regressor import WeightedPolynomialRegressor
-from pychron.regression.least_squares_regressor import LeastSquaresRegressor
-from pychron.regression.base_regressor import BaseRegressor
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 
 

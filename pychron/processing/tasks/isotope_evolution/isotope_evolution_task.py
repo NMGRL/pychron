@@ -91,7 +91,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     #    #self.debug('refit disabled')
     #    #return
     #    #
-    #    #from pychron.ui.thread import Thread
+    #    #from pychron.core.ui.thread import Thread
     #    #
     #    #if not self._refit_thread or not self._refit_thread.isRunning():
     #    #    pd = self.manager.open_progress()

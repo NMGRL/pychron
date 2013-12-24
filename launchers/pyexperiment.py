@@ -18,7 +18,6 @@
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
 #============= standard library imports ========================
-import os
 #============= local library imports  ==========================
 
 version_id = ''
@@ -32,13 +31,13 @@ def main():
         entry point
     """
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # build directories
     build_directories(paths)
 
-#    from pychron.helpers.paths import hidden_dir
+#    from pychron.core.helpers.paths import hidden_dir
 #    path = os.path.join(hidden_dir, 'version_info')
 #    a = VersionInfoDisplay(local_path=path,
 #                           src_path=os.path.join(SRC_DIR,

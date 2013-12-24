@@ -23,7 +23,7 @@ from pychron.processing.tasks.figures.panes import PlotterOptionsPane
 from pychron.processing.tasks.figures.figure_task import FigureTask
 from pychron.processing.tasks.figures.auto_figure_panes import AutoFigureControlPane
 from pychron.messaging.notify.subscriber import Subscriber
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.processing.tasks.figures.editors.series_editor import AutoSeriesEditor
 from pychron.processing.tasks.figures.editors.spectrum_editor import AutoSpectrumEditor
 from pychron.processing.tasks.figures.editors.ideogram_editor import AutoIdeogramEditor

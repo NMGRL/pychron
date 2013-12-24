@@ -23,18 +23,18 @@ from traitsui.api import View, Item, HGroup
 #=============standard library imports ========================
 from threading import Thread
 #=============local library imports  ==========================
+from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
 from pychron.image.image import Image
 from manager import Manager
 from pychron.canvas.canvas2D.video_canvas import VideoCanvas
-from pychron.lasers.stage_managers.video_component_editor import VideoComponentEditor
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths
 
 
 class VideoManager(Manager):
-    '''
-    '''
+    """
+    """
     video = Instance(Video, ())
     image = Instance(Image, ())
 
@@ -277,7 +277,7 @@ class VideoManager(Manager):
 #                         )
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('video')
     vm = VideoManager()

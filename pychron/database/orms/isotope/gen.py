@@ -18,7 +18,7 @@
 #============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-    ForeignKey, BLOB, Float, Boolean, DateTime
+    ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
 #============= local library imports  ==========================
@@ -101,8 +101,7 @@ class gen_MolecularWeightTable(Base, NameMixin):
 
 association_table = Table('association', Base.metadata,
                           Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
-                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')),
-)
+                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')))
 
 
 class gen_ProjectTable(Base, NameMixin):
@@ -116,6 +115,16 @@ class gen_SampleTable(Base, NameMixin):
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
     figures = relationship('proc_FigureSamplesTable', backref='sample')
+
+    igsn=Column(CHAR(9))
+    location=stringcolumn(80)
+    lat=Column(Float)
+    long=Column(Float)
+    elevation=Column(Float)
+    note=Column(BLOB)
+
+    alt_name=stringcolumn(80)
+    lithology=stringcolumn(80)
 
 class gen_SensitivityTable(Base, BaseMixin):
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')

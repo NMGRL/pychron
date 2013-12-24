@@ -32,15 +32,15 @@ from traits.api import HasTraits, Any, String
 #============= standard library imports ========================
 # import wx
 #============= local library imports  ==========================
-# from pychron.helpers.logger_setup import add_console
+# from pychron.core.helpers.logger_setup import add_console
 from pychron.globals import globalv
-from pychron.helpers.color_generators import colorname_generator
-from pychron.helpers.logger_setup import new_logger
+from pychron.core.helpers.color_generators import colorname_generator
+from pychron.core.helpers.logger_setup import new_logger
 from threading import current_thread
-from pychron.ui.thread import currentThreadName
+from pychron.core.ui.thread import currentThreadName
 
-from pychron.ui.dialogs import myConfirmationDialog, myMessageDialog
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
+from pychron.core.ui.gui import invoke_in_main_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
@@ -105,7 +105,7 @@ class Loggable(HasTraits):
             title=title,
             severity='warning')
         #         if sound:
-        #             from pychron.helpers.media import loop_sound
+        #             from pychron.core.helpers.media import loop_sound
         #             evt = loop_sound(sound)
         #             dialog.close = lambda: self._close_warning(evt)
 

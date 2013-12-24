@@ -22,8 +22,8 @@ from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.helpers.iterfuncs import partition
-from pychron.ui.progress_dialog import myProgressDialog
+from pychron.core.helpers.iterfuncs import partition
+from pychron.core.ui.progress_dialog import myProgressDialog
 # from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
 # from pychron.processing.analysis import Analysis, NonDBAnalysis
 from pychron.processing.analyses.analysis import DBAnalysis, Analysis
@@ -31,7 +31,7 @@ from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 # from pychron.pychron_constants import NULL_STR
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}

@@ -24,7 +24,7 @@ from traitsui.api import View, Item, UItem, VGroup, \
 # from pychron.canvas.canvas2D.raster_canvas import RasterCanvas
 from enable.component_editor import ComponentEditor
 from pychron.lasers.power.power_mapper import PowerMapper
-from pychron.ui.thread import Thread
+from pychron.core.ui.thread import Thread
 from pychron.lasers.power.power_map_processor import PowerMapProcessor
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # from pychron.graph.graph import Graph

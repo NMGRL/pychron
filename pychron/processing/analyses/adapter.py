@@ -16,9 +16,9 @@
 
 #============= enthought library imports =======================
 
-from pychron.ui.text_table import TextTableAdapter, BoldCell, TextCell, TextRow, \
+from pychron.core.ui.text_table import TextTableAdapter, BoldCell, TextCell, TextRow, \
     TextTable, SimpleTextTableAdapter, HeaderRow
-from pychron.helpers.formatting import errorfmt, floatfmt, pfloatfmt, \
+from pychron.core.helpers.formatting import errorfmt, floatfmt, pfloatfmt, \
     calc_percent_error
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 #============= standard library imports ========================

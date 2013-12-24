@@ -25,7 +25,7 @@ from pychron.canvas.canvas2D.overlays.extraction_line_overlay import ExtractionL
 from pychron.canvas.canvas2D.scene.primitives.primitives import BorderLine
 from pychron.canvas.scene_viewer import SceneCanvas
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
-from pychron.canvas.canvas2D.scene.primitives.valves import Valve, RoughValve, \
+from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, \
     BaseValve
 import weakref
 from pychron.paths import paths
@@ -275,7 +275,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if isinstance(item, RoughValve) and not state:
             event.handled = True
 
-            from pychron.ui.dialogs import myConfirmationDialog
+            from pychron.core.ui.dialogs import myConfirmationDialog
             from pyface.api import NO
 
             dlg = myConfirmationDialog(

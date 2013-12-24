@@ -35,7 +35,7 @@ from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, Das
 from pychron.system_monitor.tasks.system_monitor_editor import SystemMonitorEditor
 
 from traitsui.api import View, Item, EnumEditor
-from pychron.ui.preference_binding import bind_preference
+from pychron.core.ui.preference_binding import bind_preference
 
 
 class SystemMonitorTask(FigureTask):

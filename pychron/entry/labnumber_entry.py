@@ -26,10 +26,11 @@ from pyface.image_resource import ImageResource
 import os
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.entry.irradiation_loader import XLSIrradiationLoader
+from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.labnumber_generator import LabnumberGenerator
+from pychron.entry.loaders.sample_loader import SampleLoader
 from pychron.paths import paths
 from pychron.entry.irradiation import Irradiation
 from pychron.entry.level import Level, load_holder_canvas, iter_geom
@@ -92,6 +93,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def set_selected_sample(self, new):
         self.selected_sample = new
         #self.canvas.selected_samples=new
+
+    def import_sample_metadata(self, p):
+        sample_loader=SampleLoader()
+        sample_loader.do_import(self, p)
 
     def make_labbook(self, out):
         """
@@ -616,7 +621,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build('_experiment')
 

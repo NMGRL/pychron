@@ -15,12 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, on_trait_change
-from traitsui.api import View, Item
+from traits.api import on_trait_change
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 #============= standard library imports ========================
-from numpy import array
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes
 #============= local library imports  ==========================
 
 class DiscriminationEditor(InterpolationEditor):

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 #============= standard library imports ========================
 import re
 #============= local library imports  ==========================

@@ -29,7 +29,7 @@ import time
 from sqlalchemy.orm.exc import NoResultFound
 import os
 #============= local library imports  ==========================
-# from pychron.ui.thread import Thread as uThread
+# from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
 from pychron.displays.display import DisplayController
 from pychron.experiment.utilities.identifier import convert_extract_device
@@ -46,14 +46,14 @@ from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_Mas
 
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.codetools.memory_usage import mem_available, mem_log
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.codetools.memory_usage import mem_available, mem_log
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.helpers.filetools import add_extension, to_bool
+from pychron.core.helpers.filetools import add_extension, to_bool
 from pychron.globals import globalv
-from pychron.ui.preference_binding import bind_preference, color_bind_preference
+from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -445,7 +445,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     #             self._do_runA(run)
     #        self._do_runA(run)
     #        gc.collect()
-    #         from pychron.codetools.memory_usage import count_instances
+    #         from pychron.core.codetools.memory_usage import count_instances
     #         self._prev = count_instances(group='sqlalchemy', prev=self._prev)
 
     def _do_runA(self, run):

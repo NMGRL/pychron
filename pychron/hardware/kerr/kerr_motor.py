@@ -28,11 +28,11 @@ from kerr_device import KerrDevice
 from pychron.hardware.core.data_helper import make_bitarray
 import time
 from pychron.globals import globalv
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.hardware.linear_mapper import LinearMapper
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.consumer_mixin import ConsumerMixin
-from pychron.ui.qt.progress_editor import ProgressEditor
+from pychron.core.ui.qt.progress_editor import ProgressEditor
 # from pyface.progress_dialog import ProgressDialog
 
 SIGN = ['negative', 'positive']

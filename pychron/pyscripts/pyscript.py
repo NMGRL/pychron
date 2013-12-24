@@ -29,10 +29,10 @@ from pychron.loggable import Loggable
 
 from Queue import Empty, LifoQueue
 # from pychron.globals import globalv
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 import sys
 # import bdb
-# from pychron.ui.thread import Thread
+# from pychron.core.ui.thread import Thread
 import weakref
 from pychron.globals import globalv
 from pychron.wait.wait_control import WaitControl
@@ -799,7 +799,7 @@ if __name__ == '__main__':
         def close_valve(self, *args, **kw):
             self.info('close valve')
 
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('pscript')
     #    execute_script(t)

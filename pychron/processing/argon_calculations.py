@@ -25,13 +25,13 @@ from uncertainties import ufloat, umath
 from numpy import array
 
 from pychron.processing.arar_constants import ArArConstants
-from pychron.stats.core import calculate_weighted_mean
+from pychron.core.stats.core import calculate_weighted_mean
 
 #============= local library imports  ==========================
 
 
 def calculate_isochron(analyses):
-    from pychron.regression.new_york_regressor import ReedYorkRegressor
+    from pychron.core.regression.new_york_regressor import ReedYorkRegressor
 
     ref=analyses[0]
     ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),

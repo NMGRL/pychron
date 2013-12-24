@@ -24,7 +24,7 @@
 # import math
 # from numpy import array
 ##============= local library imports  ==========================
-# from pychron.geometry.convex_hull import convex_hull
+# from pychron.core.geometry.convex_hull import convex_hull
 #
 #
 # def calc_rotation(x1, y1, x2, y2):

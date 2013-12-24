@@ -24,10 +24,10 @@ from traits.api import Str
 # from pychron.pychron_constants import FIT_TYPES
 # from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
 from pychron.graph.regression_graph import StackedRegressionGraph
-# from pychron.regression.interpolation_regressor import InterpolationRegressor
-# from pychron.regression.ols_regressor import OLSRegressor
-# from pychron.regression.mean_regressor import MeanRegressor
-# from pychron.helpers.datetime_tools import convert_timestamp
+# from pychron.core.regression.interpolation_regressor import InterpolationRegressor
+# from pychron.core.regression.ols_regressor import OLSRegressor
+# from pychron.core.regression.mean_regressor import MeanRegressor
+# from pychron.core.helpers.datetime_tools import convert_timestamp
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 

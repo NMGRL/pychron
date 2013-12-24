@@ -22,14 +22,14 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
-from pychron.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, \
     BakeoutEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane
 from pychron.paths import paths
-from pychron.ui.preference_binding import bind_preference
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 import os
 from pychron.execute_mixin import ExecuteMixin

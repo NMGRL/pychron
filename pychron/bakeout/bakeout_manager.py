@@ -16,7 +16,7 @@
 #===============================================================================
 
 #============= enthought library imports  ==========================
-from traits.api import Array, Instance, Bool, Button, Event, \
+from traits.api import Instance, Bool, Button, Event, \
     Float, Str, Property, List, on_trait_change, Dict, Any, cached_property
 
 #============= standard library imports  ==========================
@@ -31,21 +31,21 @@ from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.paths import paths
 from pychron.graph.time_series_graph import TimeSeriesStackedGraph, \
     TimeSeriesStreamStackedGraph
-from pychron.helpers.datetime_tools import generate_datestamp
+from pychron.core.helpers.datetime_tools import generate_datestamp
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.graph.graph import Graph
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.granville_phillips.micro_ion_controller import MicroIonController
 from pychron.managers.data_managers.data_manager import DataManager
-from pychron.helpers.archiver import Archiver
+from pychron.core.helpers.archiver import Archiver
 from pychron.database.adapters.bakeout_adapter import BakeoutAdapter
 from pychron.database.data_warehouse import DataWarehouse
 import datetime
 from pychron.bakeout.classifier import Classifier
 from pychron.utils import get_display_size
 from Queue import Queue
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 BATCH_SET_BAUDRATE = False
 BAUDRATE = '38400'

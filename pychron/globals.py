@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 
 
 class Globals(object):

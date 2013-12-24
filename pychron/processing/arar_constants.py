@@ -19,7 +19,7 @@ from apptools.preferences.preference_binding import PreferenceBinding
 from traits.api import HasTraits, Property, Float, Enum, Str, List, Either
 from uncertainties import ufloat
 
-from pychron.ui.preference_binding import bind_preference
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
 #=============local library imports  ==========================

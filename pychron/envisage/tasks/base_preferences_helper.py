@@ -34,7 +34,7 @@ from traitsui.list_str_adapter import ListStrAdapter
 #                 style='custom',
 #                 editor=ButtonEditor(image=image, **editor_kw),
 #                 **kw)
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class FavoritesAdapter(ListStrAdapter):

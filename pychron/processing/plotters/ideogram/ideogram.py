@@ -25,8 +25,8 @@ from numpy import linspace, pi, exp, zeros, ones, array, arange, \
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import MeanIndicatorOverlay
-from pychron.stats.peak_detection import find_peaks
-from pychron.stats.core import calculate_weighted_mean
+from pychron.core.stats.peak_detection import find_peaks
+from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.plotters.point_move_tool import OverlayMoveTool
 
 N = 500

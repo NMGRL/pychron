@@ -15,18 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance
-from traitsui.api import View, Item, UItem
+from traits.api import Instance
+from traitsui.api import View, UItem
 from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
 from chaco.plot import Plot
 from chaco.array_plot_data import ArrayPlotData
-from numpy import zeros, ones, asarray
-from matplotlib import cm
-from chaco.default_colormaps import hot, gray
-from scipy.ndimage.interpolation import zoom
+from numpy import ones, asarray
+from chaco.default_colormaps import hot
 from pychron.image.cv_wrapper import grayspace
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.viewable import Viewable
 #============= standard library imports ========================
 #============= local library imports  ==========================

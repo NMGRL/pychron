@@ -20,7 +20,7 @@ from traitsui.api import View, Item, TableEditor
 #============= standard library imports ========================
 from threading import Event, Lock
 #============= local library imports  ==========================
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
 from pychron.viewable import Viewable

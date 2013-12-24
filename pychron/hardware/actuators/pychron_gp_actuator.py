@@ -19,7 +19,7 @@ import time
 
 #========== local library imports =============
 from gp_actuator import GPActuator
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 
 
 

@@ -215,7 +215,7 @@ Are you sure you want to save ?'''.format(is_are, n, e_es))
         return v
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('scripts')
 #    s = ScriptManager(kind='ExtractionLine')

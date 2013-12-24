@@ -17,14 +17,14 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits , Float, Any, Button, Bool, List
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, \
-    TabularEditor, VGroup, UItem
+    VGroup, UItem
 #============= standard library imports ========================
 from numpy import polyfit, linspace
 #============= local library imports  ==========================
 from spectrometer_task import SpectrometerTask
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.graph.guide_overlay import GuideOverlay
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 class ResultsAdapter(TabularAdapter):
     columns = [('N', 'cnt'), ('Endpoints', 'endpoints'), ('Linear', 'linear')]

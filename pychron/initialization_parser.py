@@ -22,8 +22,8 @@ import os
 import sys
 import inspect
 #============= local library imports  ==========================
-from pychron.helpers.filetools import to_bool
-from pychron.xml.xml_parser import XMLParser
+from pychron.core.helpers.filetools import to_bool
+from pychron.core.xml.xml_parser import XMLParser
 from pychron.paths import paths
 
 lower = lambda x: x.lower() if x else None

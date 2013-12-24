@@ -20,7 +20,7 @@ from traitsui.api import View, Item, HGroup, VGroup, spring, Label
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
-from pychron.helpers.traitsui_shortcuts import listeditor
+from pychron.core.helpers.traitsui_shortcuts import listeditor
 
 
 class Dosage(HasTraits):

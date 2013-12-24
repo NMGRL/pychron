@@ -19,7 +19,7 @@
 # from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
-# from pychron.pdf.base_pdf_writer import BasePDFWriter
+# from pychron.core.pdf.base_pdf_writer import BasePDFWriter
 # from pychron.loading.component_flowable import ComponentFlowable
 # from reportlab.platypus.flowables import PageBreak
 from pychron.processing.tasks.smart_project.interpolation_pdf_writer import InterpolationPDFWriter

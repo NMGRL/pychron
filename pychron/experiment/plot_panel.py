@@ -21,17 +21,17 @@ from traitsui.api import View, UItem, VGroup, HGroup, spring
 from pychron.graph.graph import Graph
 
 from pychron.graph.regression_graph import StackedRegressionGraph
-# from pychron.helpers.traitsui_shortcuts import instance_item
+# from pychron.core.helpers.traitsui_shortcuts import instance_item
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pychron_constants import PLUSMINUS
 #from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
-# from pychron.helpers.formatting import floatfmt
-from pychron.ui.text_table import MultiTextTableAdapter
+# from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.text_table import MultiTextTableAdapter
 # from pychron.database.records.ui.analysis_summary import SignalAdapter
 from pychron.loggable import Loggable
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.gui import invoke_in_main_thread
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

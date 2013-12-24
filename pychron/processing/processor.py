@@ -33,7 +33,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_Measurem
 # from pychron.processing.plotters.ideogram import Ideogram
 # from pychron.processing.plotters.inverse_isochron import InverseIsochron
 # from pychron.processing.plotters.series import Series
-from pychron.helpers.iterfuncs import partition
+from pychron.core.helpers.iterfuncs import partition
 # from pychron.processing.plotters import plotter_options
 
 
@@ -296,7 +296,7 @@ class Processor(IsotopeDatabaseManager):
     #        pass
 
     #def preceeding_blank_correct(self, analysis, keys=None, pd=None):
-    #    from pychron.regression.interpolation_regressor import InterpolationRegressor
+    #    from pychron.core.regression.interpolation_regressor import InterpolationRegressor
     #
     #    if not isinstance(analysis, Analysis):
     #        analysis = self.make_analysis(analysis)

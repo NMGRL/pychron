@@ -19,10 +19,10 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-# from pychron.ui.thread import Thread
+# from pychron.core.ui.thread import Thread
 from threading import Thread
 from Queue import Queue, Empty
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 class ConsumerMixin(object):
     def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False):

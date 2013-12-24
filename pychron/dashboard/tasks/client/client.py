@@ -21,7 +21,7 @@ from traits.api import HasTraits, List, Float, Property, Str, Bool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.helpers.datetime_tools import convert_timestamp
+from pychron.core.helpers.datetime_tools import convert_timestamp
 from pychron.messaging.notify.subscriber import Subscriber
 
 CONFIG = '''(lp0

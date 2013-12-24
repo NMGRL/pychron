@@ -34,9 +34,9 @@ from pychron.experiment.script.script import Script
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class UpdateSelectedCTX(object):

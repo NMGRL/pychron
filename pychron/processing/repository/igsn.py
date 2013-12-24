@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Button, Bool, Property, Event
+from traits.api import Str, Button, Property, Event
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -56,11 +56,11 @@ class IGSN(HTTPRepository):
         self.post('', form)
 
     def _handle_post(self, resp):
-        '''
+        """
             parse resp
-            
+
             the new igsn should be in the response
-        '''
+        """
         new_igsn = 'foodat'
         self.new_igsn = new_igsn
 #============= EOF =============================================

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     from helpers import build_version
     build_version('_bakeout', egg_path=True)
     from pychron.envisage.bakedpy_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('bakeout', level='DEBUG')
     launch()
@@ -52,8 +52,8 @@ if __name__ == '__main__':
 # #    globalv.show_infos = False
 # #    globalv.show_warnings = False
 #
-# #    from pychron.helpers.logger_setup import logging_setup
-#    from pychron.helpers.logger_setup import logging_setup
+# #    from pychron.core.helpers.logger_setup import logging_setup
+#    from pychron.core.helpers.logger_setup import logging_setup
 #    from pychron.bakeout.bakeout_manager import BakeoutManager
 #
 #    logging_setup('bakeout', level='DEBUG')

@@ -27,7 +27,7 @@ from pychron.managers.manager import Manager
 # from pychron.hardware.newport.newport_motion_controller import NewportMotionController
 from pychron.hardware.motion_controller import MotionController
 from pychron.paths import paths
-from pychron.helpers.filetools import parse_file
+from pychron.core.helpers.filetools import parse_file
 
 # class MotionControllerManagerHandler(Handler):
 #    def closed(self, info, is_ok):

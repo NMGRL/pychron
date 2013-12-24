@@ -41,7 +41,7 @@ def main():
     '''
 
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # import application

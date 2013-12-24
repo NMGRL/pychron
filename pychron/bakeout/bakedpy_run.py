@@ -19,14 +19,13 @@
 from envisage.core_plugin import CorePlugin
 from envisage.ui.tasks.tasks_plugin import TasksPlugin
 #============= standard library imports ========================
-import os
 #============= local library imports  ==========================
 # from pychron.bakeout.plugins.bakedpy_plugin import BakedpyPlugin
 # from pychron.bakeout.plugins.bakedpy_ui_plugin import BakedpyUIPlugin
 # from pychron.envisage.bakedpy_application import Bakedpy
 from pychron.bakeout.tasks.bakeout_plugin import BakeoutPlugin
 
-from pychron.helpers.logger_setup import new_logger
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.bakeout.bakedpy_application import Bakedpy
 from pychron.pyscripts.tasks.pyscript_plugin import PyScriptPlugin
 from pychron.logger.tasks.logger_plugin import LoggerPlugin

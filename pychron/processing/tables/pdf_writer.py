@@ -20,8 +20,8 @@ from traits.api import Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.pdf.items import Superscript, Subscript, Row, NamedParameter
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Superscript, Subscript, Row, NamedParameter
 
 
 class IsotopePDFTableWriter(BasePDFTableWriter):

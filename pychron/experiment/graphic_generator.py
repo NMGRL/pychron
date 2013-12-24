@@ -32,7 +32,7 @@ from pychron.paths import paths
 from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
 import math
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 #============= local library imports  ==========================
 class myDataLabel(DataLabel):
     label_position = Any

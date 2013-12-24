@@ -29,8 +29,8 @@ import os
 import shutil
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_path
-from pychron.helpers.datetime_tools import generate_datetimestamp
+from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.datetime_tools import generate_datetimestamp
 
 #============= views ===================================
 class LaserShot(HasTraits):

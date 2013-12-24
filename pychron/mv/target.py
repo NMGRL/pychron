@@ -19,11 +19,11 @@ from traits.api import HasTraits, cached_property, Property, Tuple, Any, Float
 #============= standard library imports ========================
 # from numpy import array
 #============= local library imports  ==========================
-# from pychron.geometry.convex_hull import convex_hull_area
-# from pychron.geometry.centroid import calculate_centroid
-# from pychron.codetools.simple_timeit import timethis
-# from pychron.geometry.convex_hull import convex_hull_area
-# from pychron.geometry.centroid.calculate_centroid import calculate_centroid
+# from pychron.core.geometry.convex_hull import convex_hull_area
+# from pychron.core.geometry.centroid import calculate_centroid
+# from pychron.core.codetools.simple_timeit import timethis
+# from pychron.core.geometry.convex_hull import convex_hull_area
+# from pychron.core.geometry.centroid.calculate_centroid import calculate_centroid
 
 class Target(HasTraits):
     poly_points = Any

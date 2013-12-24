@@ -26,7 +26,7 @@ from threading import Event
 #============= local library imports  ==========================
 from spectrometer_task import SpectrometerTask
 from pychron.globals import globalv
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 def multi_peak_generator(values):

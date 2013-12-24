@@ -21,7 +21,7 @@
 from datetime import timedelta
 #============= local library imports  ==========================
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.smart_project.detector_intercalibration_pdf_writer import DetectorIntercalibrationPDFWriter
 
 class SmartDetectorIntercalibration(BaseSmarter):

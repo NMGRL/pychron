@@ -18,7 +18,7 @@
 from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
+from pychron.core.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter

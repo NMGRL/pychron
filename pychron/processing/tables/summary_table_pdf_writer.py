@@ -18,9 +18,9 @@
 from traits.api import Int, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.helpers.formatting import floatfmt
-from pychron.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.pdf.items import Row, FootNoteRow, FooterRow
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 import os

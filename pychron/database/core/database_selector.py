@@ -27,11 +27,11 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import Query, compile_query
 from pychron.viewable import Viewable
 
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 # from pychron.database.core.base_results_adapter import BaseResultsAdapter
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.column_sorter_mixin import ColumnSorterMixin
 
 

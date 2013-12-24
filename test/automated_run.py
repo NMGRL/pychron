@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 import unittest
 from pychron.processing.isotope import Isotope

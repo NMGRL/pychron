@@ -17,11 +17,11 @@
 #============= enthought library imports =======================
 from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
-# from pychron.ui.custom_label_editor import CustomLabel
-# from pychron.geometry.geometry import calculate_reference_frame_center, calc_length
+# from pychron.core.ui.custom_label_editor import CustomLabel
+# from pychron.core.geometry.geometry import calculate_reference_frame_center, calc_length
 from pychron.lasers.stage_managers.calibration.calibrator import TrayCalibrator
-from pychron.geometry.reference_point import ReferencePoint
-from pychron.geometry.affine import calculate_rigid_transform
+from pychron.core.geometry.reference_point import ReferencePoint
+from pychron.core.geometry.affine import calculate_rigid_transform
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

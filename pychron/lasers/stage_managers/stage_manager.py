@@ -29,21 +29,21 @@ from numpy import array, asarray
 from pychron.experiment.utilities.position_regex import POINT_REGEX, XY_REGEX, TRANSECT_REGEX
 from pychron.managers.manager import Manager
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
-# from pychron.helpers.color_generators import colors8i as colors
+# from pychron.core.helpers.color_generators import colors8i as colors
 
 from pychron.hardware.motion_controller import MotionController
 from pychron.paths import paths
 import pickle
 # from pychron.lasers.stage_managers.stage_visualizer import StageVisualizer
 from pychron.lasers.points.points_programmer import PointsProgrammer
-# from pychron.geometry.scan_line import make_scan_lines
-from pychron.geometry.geometry import sort_clockwise
-from pychron.geometry.convex_hull import convex_hull
-from pychron.geometry.polygon_offset import polygon_offset
+# from pychron.core.geometry.scan_line import make_scan_lines
+from pychron.core.geometry.geometry import sort_clockwise
+from pychron.core.geometry.convex_hull import convex_hull
+from pychron.core.geometry.polygon_offset import polygon_offset
 from pychron.lasers.stage_managers.calibration.tray_calibration_manager import TrayCalibrationManager
-from pychron.ui.stage_component_editor import LaserComponentEditor
-from pychron.ui.thread import Thread
-from pychron.ui.preference_binding import bind_preference, ColorPreferenceBinding
+from pychron.core.ui.stage_component_editor import LaserComponentEditor
+from pychron.core.ui.thread import Thread
+from pychron.core.ui.preference_binding import bind_preference, ColorPreferenceBinding
 
 from pychron.managers.motion_controller_managers.motion_controller_manager \
     import MotionControllerManager
@@ -633,7 +633,7 @@ class StageManager(Manager):
                 find_min=False,
                 start_callback=None, end_callback=None, verbose=False):
 
-        from pychron.geometry.scan_line import raster
+        from pychron.core.geometry.scan_line import raster
 
         lines = raster(points, step=step, find_min=find_min)
 
@@ -1296,7 +1296,7 @@ class StageManager(Manager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('stage_manager')
     name = 'diode'

@@ -25,7 +25,7 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
-from pychron.helpers.filetools import to_bool
+from pychron.core.helpers.filetools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
 from pychron.paths import paths
 

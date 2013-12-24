@@ -15,14 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, Int, Instance, Event
-from traitsui.api import View, Item
-from pychron.loggable import Loggable
 import time
+
+from traits.api import Any, Int, Instance, Event
+
+from pychron.loggable import Loggable
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from numpy import exp, mgrid, linspace, hstack, array, rot90
-from pychron.helpers.datetime_tools import generate_datestamp
+from pychron.core.helpers.datetime_tools import generate_datestamp
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.consumer_mixin import ConsumerMixin
 import random
@@ -31,7 +33,7 @@ from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.graph import Graph
 from chaco.plot_containers import HPlotContainer
 from pychron.paths import paths
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 
 def power_generator(nsteps):

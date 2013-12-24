@@ -18,7 +18,7 @@
 #============= enthought library imports =======================
 from copy import copy
 from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either
-from pychron.helpers.logger_setup import new_logger
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -29,7 +29,7 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 
 from pychron.loggable import Loggable
-from pychron.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.isotope_utils import sort_isotopes
 
 logger=new_logger('ArArAge')
 arar_constants = None

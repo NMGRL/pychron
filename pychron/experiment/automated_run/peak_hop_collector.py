@@ -21,7 +21,7 @@ from traits.api import List, Int, Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.data_collector import DataCollector
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 def parse_hops(hops, ret=None):

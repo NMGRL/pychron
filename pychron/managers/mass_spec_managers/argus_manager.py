@@ -31,7 +31,7 @@ from traitsui.api import View, Item, HGroup, VGroup, spring
 from pychron.managers.manager import Manager
 import random
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
-from pychron.helpers.color_generators import colorname_generator
+from pychron.core.helpers.color_generators import colorname_generator
 from threading import Thread, Condition
 import time
 colorname_gen = colorname_generator()

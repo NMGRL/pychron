@@ -19,7 +19,7 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.easy_parser import EasyParser
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
 

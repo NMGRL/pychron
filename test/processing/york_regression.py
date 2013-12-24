@@ -21,7 +21,7 @@
 import unittest
 import numpy as np
 #============= local library imports  ==========================
-from pychron.regression.new_york_regressor import NewYorkRegressor, ReedYorkRegressor
+from pychron.core.regression.new_york_regressor import NewYorkRegressor, ReedYorkRegressor
 
 
 class NewYorkRegressionTest(unittest.TestCase):

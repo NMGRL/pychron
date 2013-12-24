@@ -18,12 +18,12 @@
 # from traits.api import HasTraits, Str, Property, cached_property, Float, Array, Int
 ##============= standard library imports ========================
 # from numpy import array, delete
-# #from pychron.regression.regressor import Regressor
+# #from pychron.core.regression.regressor import Regressor
 # from uncertainties import ufloat
-# from pychron.regression.mean_regressor import MeanRegressor
-# from pychron.regression.ols_regressor import PolynomialRegressor
+# from pychron.core.regression.mean_regressor import MeanRegressor
+# from pychron.core.regression.ols_regressor import PolynomialRegressor
 # import struct
-# from pychron.regression.interpolation_regressor import InterpolationRegressor
+# from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 # from pychron.pychron_constants import INTERPOLATE_TYPES
 #
 ##============= local library imports  ==========================

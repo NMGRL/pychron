@@ -21,7 +21,7 @@
 ##=============standard library imports ========================
 # from pylab import *
 ##=============local library imports  ==========================
-# from pychron.helpers.logger_setup import setup
+# from pychron.core.helpers.logger_setup import setup
 # from ctypes_opencv import cvCreateImage, cvGetSize, cvAcc, cvRunningAvg, \
 #    cvLoadImage, cvCreateCameraCapture, cvQueryFrame, cvSaveImage
 # from managers.video_manager import VideoManager

@@ -20,17 +20,17 @@ from traitsui.api import View, UItem
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 # from pychron.graph.graph import Graph
-# from pychron.regression.least_squares_regressor import LeastSquaresRegressor
+# from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
 #============= standard library imports ========================
 # import math
-from numpy import average, asarray, cos, linspace, pi, array, max, min, zeros, \
+from numpy import array, max, min, zeros, \
     mgrid
 # import struct
 # from collections import namedtuple
 # from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 # from pychron.graph.error_bar_overlay import ErrorBarOverlay
-from pychron.regression.ols_regressor import MultipleLinearRegressor
-# from pychron.ui.mpl_editor import MPLFigureEditor
+from pychron.core.regression.ols_regressor import MultipleLinearRegressor
+# from pychron.core.ui.mpl_editor import MPLFigureEditor
 from pychron.processing.tasks.flux.flux_editor import FluxEditor
 #============= local library imports  ==========================
 class FluxTool(HasTraits):
