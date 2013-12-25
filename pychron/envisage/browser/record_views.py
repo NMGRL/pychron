@@ -30,6 +30,7 @@ class RecordView(HasTraits):
 
 
 class SampleRecordView(RecordView):
+
     name = Str
     material = Str
     project = Str
@@ -39,15 +40,25 @@ class SampleRecordView(RecordView):
     elevation=Float
     lithology=Str
 
-
+    alt_name=Str
     low_post=Date #
 
     def _create(self, dbrecord):
-        self.name = dbrecord.name
         if dbrecord.material:
             self.material = dbrecord.material.name
         if dbrecord.project:
             self.project = dbrecord.project.name
+
+        for attr in ('name','lat',('lon','long'),
+                     'elevation','lithology','location','igsn'):
+            if isinstance(attr, tuple):
+                attr,dbattr=attr
+            else:
+                dbattr=attr
+
+            v=getattr(dbrecord, dbattr)
+            if v is not None:
+                setattr(self, attr, v)
 
 
 class ProjectRecordView(RecordView):

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Float, Str
+from traits.api import HasTraits, Float, Str, Any, List
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -39,5 +39,15 @@ class SamplePoint(Point):
 class AgePoint(SamplePoint):
     age=Float
     age_error=Float
+    age_kind=Str
+    interpreted_age=Any
+    interpreted_ages=List
+
+    def _interpreted_age_changed(self):
+        self.age=self.interpreted_age.age
+        self.age_error=self.interpreted_age.age
+        self.age_kind=self.interpreted_age.kind
+
+
 #============= EOF =============================================
 

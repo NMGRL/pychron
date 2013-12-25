@@ -37,6 +37,9 @@ from os import path, mkdir
 
 
 class Paths():
+
+    disseration = '/Users/ross/Programming/git/dissertation'
+
     version = None
     root = None
     bundle_root = None

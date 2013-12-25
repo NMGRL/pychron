@@ -26,6 +26,7 @@ from traitsui.api import View, Item, EnumEditor, HGroup, spring, \
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 import yaml
+from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
@@ -38,30 +39,6 @@ from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 
 
-class InterpretedAge(HasTraits):
-    create_date = Date
-    id = Long
-
-    sample = Str
-    identifier = Str
-    material = Str
-    irradiation = Str
-
-    age = Float
-    age_err = Float
-    wtd_kca = Float
-    wtd_kca_err = Float
-
-    age_kind = Str
-    mswd = Float
-    nanalyses = Int
-
-    def traits_view(self):
-        return View(HGroup(Item('age_kind', style='readonly', show_label=False),
-                           Item('age', style='readonly'),
-                           Item('age_err', style='readonly')))
-
-
 class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Sample', 'sample'),
                ('Identifier', 'identifier'),
@@ -72,8 +49,6 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('MSWD', 'mswd')]
 
     font = 'arial 10'
-
-
 
 
 class InterpretedAgeEditor(BaseTraitsEditor):
@@ -169,7 +144,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
             with db.session_ctx():
                 histories = db.get_interpreted_age_histories(lns)
 
-                self.histories = [self._interpreted_age_factory(db, hi) for hi in histories]
+                self.histories = [db.interpreted_age_factory(hi) for hi in histories]
 
                 self.history_names = [hi.name for hi in self.histories]
                 if self.history_names:
@@ -196,7 +171,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
             ias=[]
             for hid in d['ids']:
                 hist=db.get_interpreted_age_history(hid)
-                ias.append(self._interpreted_age_factory(db, hist))
+                ias.append(db.interpreted_age_factory(hist))
 
         self.interpreted_ages=ias
 
@@ -205,42 +180,6 @@ class InterpretedAgeEditor(BaseTraitsEditor):
 
     def _generate_title(self):
         return 'Table 1. Ar/Ar Summary Table'
-
-    def _interpreted_age_factory(self, db, hi):
-        dbln = db.get_labnumber(hi.identifier)
-        sample = None
-        irrad = None
-        material = None
-        if dbln:
-            if dbln.sample:
-                sample = dbln.sample.name
-                dbmat = dbln.sample.material
-                if dbmat:
-                    material = dbmat.name
-
-            pos = dbln.irradiation_position
-            if pos:
-                level = pos.level
-                irrad = level.irradiation
-                irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
-        ia=hi.interpreted_age
-        n = len(ia.sets)
-        it = InterpretedAge(create_date=hi.create_date,
-                            id=hi.id,
-                            age=ia.age,
-                            age_err=ia.age_err,
-                            wtd_kca=ia.wtd_kca or 0,
-                            wtd_kca_err=ia.wtd_kca_err or 0,
-                            mswd=ia.mswd,
-                            kind=ia.age_kind,
-                            identifier=hi.identifier,
-                            sample=sample or '',
-                            irradiation=irrad or '',
-                            material=material or '',
-                            nanalyses=n,
-                            name='{} - {}'.format(hi.create_date, ia.age_kind))
-
-        return it
 
     @on_trait_change('interpreted_ages[]')
     def _interpreted_ages_changed(self):

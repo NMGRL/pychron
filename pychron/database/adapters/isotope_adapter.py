@@ -15,6 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import Long, HasTraits, Date, Float, Str, Int
+from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
@@ -67,6 +69,30 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
 
 # @todo: change rundate and runtime to DateTime columns
 
+class InterpretedAge(HasTraits):
+    create_date = Date
+    id = Long
+
+    sample = Str
+    identifier = Str
+    material = Str
+    irradiation = Str
+
+    age = Float
+    age_err = Float
+    wtd_kca = Float
+    wtd_kca_err = Float
+
+    age_kind = Str
+    mswd = Float
+    nanalyses = Int
+
+    def traits_view(self):
+        return View(HGroup(Item('age_kind', style='readonly', show_label=False),
+                           Item('age', style='readonly'),
+                           Item('age_err', style='readonly')))
+
+
 class IsotopeAdapter(DatabaseAdapter):
     """
         new style adapter
@@ -76,6 +102,41 @@ class IsotopeAdapter(DatabaseAdapter):
     """
 
     selector_klass = IsotopeAnalysisSelector
+    def interpreted_age_factory(self, hi):
+        dbln = self.get_labnumber(hi.identifier)
+        sample = None
+        irrad = None
+        material = None
+        if dbln:
+            if dbln.sample:
+                sample = dbln.sample.name
+                dbmat = dbln.sample.material
+                if dbmat:
+                    material = dbmat.name
+
+            pos = dbln.irradiation_position
+            if pos:
+                level = pos.level
+                irrad = level.irradiation
+                irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
+        ia = hi.interpreted_age
+        n = len(ia.sets)
+        it = InterpretedAge(create_date=hi.create_date,
+                            id=hi.id,
+                            age=ia.age,
+                            age_err=ia.age_err,
+                            wtd_kca=ia.wtd_kca or 0,
+                            wtd_kca_err=ia.wtd_kca_err or 0,
+                            mswd=ia.mswd,
+                            kind=ia.age_kind,
+                            identifier=hi.identifier,
+                            sample=sample or '',
+                            irradiation=irrad or '',
+                            material=material or '',
+                            nanalyses=n,
+                            name='{} - {}'.format(hi.create_date, ia.age_kind))
+
+        return it
 
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:

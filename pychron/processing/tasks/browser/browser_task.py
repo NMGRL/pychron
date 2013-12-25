@@ -89,56 +89,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #    self.samples = s
     #    self.osamples = s
     #    self.trait_set(selected_sample=sel)
-    def load_browser_selection(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
-        p=os.path.join(paths.hidden_dir, 'browser_selection')
-        if os.path.isfile(p):
-            try:
-                with open(p, 'rb') as fp:
-                    sel=pickle.load(fp)
-            except (pickle.PickleError, EOFError, OSError),e:
-                self.debug('Failed loaded previous browser selection. {}'.format(e))
-                return
 
-            self._load_browser_selection(sel)
-
-    def _load_browser_selection(self, selection):
-        def load(attr, values):
-            def get(n):
-                return next((p for p in values if p.name==n), None)
-            try:
-                sel=selection[attr]
-            except KeyError:
-                return
-
-            vs=[get(pp) for pp in sel]
-            vs=[pp for pp in vs if pp is not None]
-            setattr(self, 'selected_{}'.format(attr), vs)
-
-        load('projects', self.projects)
-        load('samples', self.samples)
-
-    def dump_browser_selection(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
-
-        ps=[]
-        if self.selected_projects:
-            ps=[p.name for p in self.selected_projects]
-
-        ss=[]
-        if self.selected_samples:
-            ss=[p.name for p in self.selected_samples]
-
-        obj=dict(projects=ps,
-                 samples=ss)
-
-        p=os.path.join(paths.hidden_dir, 'browser_selection')
-        try:
-            with open(p, 'wb') as fp:
-                pickle.dump(obj, fp)
-        except (pickle.PickleError, EOFError, OSError),e:
-            self.debug('Failed dumping previous browser selection. {}'.format(e))
-            return
 
     def prepare_destroy(self):
         self.dump_browser_selection()

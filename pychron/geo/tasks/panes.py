@@ -28,20 +28,36 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class PointsAdapter(TabularAdapter):
-    columns=[('Name','name')]
+    columns = [('Name', 'sample'), ('N', 'y'), ('E', 'x')]
+
+
+def active_point(s):
+    return 'object.active_point.{}'.format(s)
 
 
 class GeoPane(TraitsTaskPane):
     def traits_view(self):
-        v=View(VGroup(HGroup(icon_button_editor('append_button'),
-                      icon_button_editor('replace_button')),
-                      UItem('points', editor=myTabularEditor(adapter=PointsAdapter()))))
+        active_point_grp= HGroup(UItem(active_point('sample'),
+                                       style='readonly', width=100),
+                                 Item(active_point('age')),
+                                      Item(active_point('age_error'), label=u'\u00b11\u03c3'),
+                                      Item(active_point('interpreted_age'),
+                                           editor=EnumEditor(name=active_point('interpreted_ages'))))
+
+        v = View(VGroup(HGroup(icon_button_editor('append_button', 'add'),
+                               icon_button_editor('replace_button', 'arrow_refresh', )),
+                        UItem('points', editor=myTabularEditor(adapter=PointsAdapter(),
+                                                               operations=['move', 'delete'],
+                                                               selected='selected_point',
+                                                               dclicked='dclicked_point')),
+                        active_point_grp))
         return v
 
 
 class BrowserPane(TraitsDockPane):
-    id='pychron.geo.browser'
+    id = 'pychron.geo.browser'
     sample_tabular_adapter = Instance(SampleAdapter, ())
+
     def traits_view(self):
         project_grp = VGroup(
             HGroup(Label('Filter'),
@@ -90,7 +106,7 @@ class BrowserPane(TraitsDockPane):
             sample_grp,
             label='Project/Sample')
 
-        v=View(grp)
+        v = View(grp)
         return v
 
 #============= EOF =============================================
