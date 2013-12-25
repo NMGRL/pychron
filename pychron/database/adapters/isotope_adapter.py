@@ -1370,15 +1370,19 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_script(self, value):
         return self._retrieve_item(meas_ScriptTable, value, key='hash', )
 
-    def get_sample(self, value, project=None, material=None):
-        kw = dict()
+    def get_sample(self, value, project=None, material=None, **kw):
+        if 'joins' not in kw:
+            kw['joins']=[]
+        if 'filters' not in kw:
+            kw['filters']=[]
+
         if project:
-            kw['joins'] = [gen_ProjectTable]
-            kw['filters'] = [gen_ProjectTable.name == project]
+            kw['joins'] += [gen_ProjectTable]
+            kw['filters'] += [gen_ProjectTable.name == project]
 
         if material:
-            kw['joins'] = [gen_MaterialTable]
-            kw['filters'] = [gen_MaterialTable.name == material]
+            kw['joins'] += [gen_MaterialTable]
+            kw['filters'] += [gen_MaterialTable.name == material]
 
         return self._retrieve_item(gen_SampleTable, value, **kw)
 

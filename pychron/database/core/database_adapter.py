@@ -494,7 +494,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             return []
 
     def _retrieve_item(self, table, value, key='name', last=None,
-                       joins=None, filters=None, options=None):
+                       joins=None, filters=None, options=None, verbose=True):
     #         sess = self.get_session()
     #         if sess is None:
     #             return
@@ -546,11 +546,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 except StatementError:
                     self.debug(traceback.format_exc())
                     s.rollback()
+                    continue
                     #                 return __retrieve()
 
                 except MultipleResultsFound:
-                    self.debug(
-                        'multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
+                    if verbose:
+                        self.debug('multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
                                                                                           value))
                     try:
                         if hasattr(table, 'id'):
@@ -558,11 +559,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         return q.limit(1).all()[-1]
 
                     except (SQLAlchemyError, IndexError, AttributeError), e:
-                        self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
+                        if verbose:
+                            self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
+                        break
 
                 except NoResultFound:
-                    self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
-
+                    if verbose:
+                        self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
+                    break
         # no longer true: __retrieve is recursively called if a StatementError is raised
         # use retry loop instead
         with self.session_ctx() as s:
