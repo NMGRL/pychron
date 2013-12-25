@@ -25,7 +25,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor, spacer
 from pychron.entry.irradiated_position import IrradiatedPositionAdapter
-from pychron.experiment.tasks.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 
 
 class IrradiationEditorPane(TraitsDockPane):

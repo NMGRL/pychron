@@ -27,7 +27,7 @@ from pychron.database.orms.isotope.gen import gen_MassSpectrometerTable, gen_Lab
     gen_AnalysisTypeTable
 from pychron.database.orms.isotope.meas import meas_MeasurementTable, meas_AnalysisTable, meas_ExtractionTable
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.experiment.tasks.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
 from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable

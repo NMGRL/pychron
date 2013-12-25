@@ -20,7 +20,7 @@ from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.tasks.browser.adapters import ProjectAdapter, SampleAdapter
+from pychron.envisage.browser.adapters import ProjectAdapter, SampleAdapter
 
 
 class SaveFigureDialog(HasTraits):

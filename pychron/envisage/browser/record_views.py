@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date
+from traits.api import HasTraits, Str, Date, Float
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -34,6 +34,11 @@ class SampleRecordView(RecordView):
     material = Str
     project = Str
     labnumber = Str
+    lat=Float
+    lon=Float
+    elevation=Float
+    lithology=Str
+
 
     low_post=Date #
 

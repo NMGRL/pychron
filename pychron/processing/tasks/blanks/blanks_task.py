@@ -65,19 +65,20 @@ class BlanksTask(InterpolationTask):
     def do_easy_blanks(self):
         self._do_easy(self._easy_blanks)
 
-    def _easy_blanks(self, db, ep):
+    def _easy_blanks(self, db, ep, prog):
         doc = ep.doc('blanks')
         fits = doc['blank_fit_isotopes']
         projects = doc['projects']
 
-        ans = [ai for proj in projects
+        unks = [ai for proj in projects
                for si in db.get_samples(project=proj)
                for ln in si.labnumbers
-               for ai in ln.analyses][:10]
+               for ai in ln.analyses]
 
-        prog = self.manager.open_progress(len(ans) + 1)
+        # prog = self.manager.open_progress(len(ans) + 1)
         #bin analyses
-        for ais in self._bin_analyses(ans):
+        prog.increase_max(len(unks))
+        for ais in self._bin_analyses(unks):
             if prog.canceled:
                 return
             elif prog.accepted:
@@ -100,7 +101,7 @@ class BlanksTask(InterpolationTask):
                     else:
                         pass
 
-        prog.increment()
+        prog.close()
         return True
 
     def _preceeding_correct(self, db, fi, ai, hist):
@@ -109,10 +110,10 @@ class BlanksTask(InterpolationTask):
         if pa:
             an_pa = self.manager.make_analysis(pa)
             iso = fi['name']
-            print an_pa.record_id
+            # print an_pa.record_id
             if iso in an_pa.isotopes:
                 blank = an_pa.isotopes[iso].get_corrected_value()
-                print iso, blank.nominal_value, blank.std_dev
+                # print iso, blank.nominal_value, blank.std_dev
 
                 dbblank = db.add_blanks(hist,
                                         isotope=iso,

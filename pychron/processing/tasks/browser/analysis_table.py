@@ -19,7 +19,7 @@ from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
     Event
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.tasks.browser.table_configurer import TableConfigurer
+from pychron.envisage.browser.table_configurer import TableConfigurer
 
 
 class AnalysisTable(HasTraits):

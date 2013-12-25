@@ -23,8 +23,8 @@ from datetime import timedelta, datetime
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
-from pychron.experiment.tasks.browser.record_views import ProjectRecordView, SampleRecordView
-from pychron.experiment.tasks.browser.table_configurer import SampleTableConfigurer
+from pychron.envisage.browser.record_views import ProjectRecordView, SampleRecordView
+from pychron.envisage.browser.table_configurer import SampleTableConfigurer
 
 
 DEFAULT_SPEC = 'Spectrometer'

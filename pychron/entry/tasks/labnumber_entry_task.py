@@ -22,7 +22,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.importer.import_manager import ImportManager
-from pychron.experiment.tasks.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.entry.project_entry import ProjectEntry
 from pychron.entry.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry

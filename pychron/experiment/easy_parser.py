@@ -34,11 +34,13 @@ class EasyParser(Loggable):
 
     def __init__(self, name=None, *args, **kw):
         super(EasyParser, self).__init__(*args, **kw)
-        if name is None:
-            name = 'minna_bluff_prj3'
+        # if name is None:
+        #     name = 'minna_bluff_prj3'
 
-        name = add_extension(name, '.yaml')
-        p = os.path.join(paths.processed_dir, name)
+        # name = add_extension(name, '.yaml')
+        # p = os.path.join(paths., name)
+        p='/Users/ross/Programming/git/dissertation/data/minnabluff/preceeding_blank_unknowns.yaml'
+
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 md = yaml.load_all(fp)
@@ -48,6 +50,7 @@ class EasyParser(Loggable):
             self.warning_dialog('Invalid EasyParser file. {}'.format(self._path))
 
     def doc(self, idx):
+
         if isinstance(idx, str):
             try:
                 idx = doc_mapping.index(idx)
@@ -55,6 +58,7 @@ class EasyParser(Loggable):
                 self.warning_dialog('Invalid Document index {}. ndocs={}'.format(idx, ','.join(doc_mapping)))
                 return
 
+        print self._docs, idx
         try:
             return self._docs[idx]
         except IndexError:

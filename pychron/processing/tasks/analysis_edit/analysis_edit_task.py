@@ -111,8 +111,9 @@ class AnalysisEditTask(BaseBrowserTask):
                                 self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
                                 ans = [ai for ai in ans if ai.uuid not in uuids]
                                 self.debug('new ans {}'.format(len(ans)))
-                                tans.extend(ans)
-                                uuids.extend([ai.uuid for ai in ans])
+                                if ans:
+                                    tans.extend(ans)
+                                    uuids.extend([ai.uuid for ai in ans])
                                 break
 
                 progress.soft_close()

@@ -65,9 +65,7 @@ PACKAGE_DICT = dict(
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
-
-
-)
+    GeoPlugin='pychron.geo.tasks.geo_plugin')
 
 
 def get_module_name(klass):

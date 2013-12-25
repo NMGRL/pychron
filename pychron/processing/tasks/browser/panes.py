@@ -24,7 +24,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from traitsui.list_str_adapter import ListStrAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.tasks.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
+from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.core.ui.tabular_editor import myTabularEditor
 

@@ -15,18 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import HasTraits
+from traitsui.api import View, Item
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 
-class Point(object):
-    x = None
-    y = None
-
-
-class Polygon(object):
-    points = None
-
+class GeoProcessor(IsotopeDatabaseManager):
+    pass
 #============= EOF =============================================
 
