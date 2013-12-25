@@ -22,7 +22,7 @@ from traitsui.api import View, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
-from pychron.processing.analysis_group import AnalysisGroup
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.tasks.tables.editors.base_table_editor import BaseTableEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 

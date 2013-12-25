@@ -32,7 +32,7 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.pdf.options import PDFTableOptions
-from pychron.processing.analysis_group import StepHeatAnalysisGroup
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter

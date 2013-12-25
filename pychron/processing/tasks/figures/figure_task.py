@@ -22,7 +22,7 @@ from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 from itertools import groupby
 #============= local library imports  ==========================
-from pychron.processing.analysis_group import InterpretedAge
+from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory

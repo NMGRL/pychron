@@ -61,7 +61,7 @@ class EasyManager(Loggable):
     func=Callable
 
     def wait_for_user(self):
-
+        pass
 
     def _execute_button_fired(self):
         self._stopped = False

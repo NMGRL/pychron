@@ -40,7 +40,7 @@ from pychron.processing.tasks.tables.editors.summary_table_editor import Summary
 
 from traits.api import Str, List
 from pyface.timer.do_later import do_later
-from pychron.processing.analysis_group import AnalysisGroup
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 from traits.has_traits import on_trait_change
 
 
