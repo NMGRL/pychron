@@ -177,7 +177,7 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
-    def get_preceeding(self, post, ms, atype='blank_unknown'):
+    def get_preceding(self, post, ms, atype='blank_unknown'):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(meas_MeasurementTable)

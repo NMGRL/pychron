@@ -30,11 +30,11 @@ class SmartBlanks(BaseSmarter):
     def simple_fit_blanks(self, n, ans, kind, dry_run):
         '''
             ans: analysis generator
-            fit with preceeding or bracketing
+            fit with preceding or bracketing
         '''
         man = self.processor
-        if kind == 'preceeding':
-            func = man.preceeding_blank_correct
+        if kind == 'preceding':
+            func = man.preceding_blank_correct
 
         fn = float(n)
         st = time.time()

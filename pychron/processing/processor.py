@@ -170,13 +170,13 @@ class Processor(IsotopeDatabaseManager):
             #        return ans
 
             #     def auto_blank_fit(self, irradiation, level, kind):
-            #         if kind == 'preceeding':
+            #         if kind == 'preceding':
             #             '''
             #             1. supply a list of labnumbers/ supply level and extract labnumbers (with project minnabluff)
             #             2. get all analyses for the labnumbers
             #             3. sort analyses by run date
             #             4. calculate blank
-            #                 1. preceeding/bracketing
+            #                 1. preceding/bracketing
             #                     get max 2 predictors
             #
             #                 2. fit
@@ -195,7 +195,7 @@ class Processor(IsotopeDatabaseManager):
             #                         ]
             #             pd = self.open_progress(n=len(ans))
             #             for ai in ans:
-            #                 self.preceeding_blank_correct(ai, pd=pd)
+            #                 self.preceding_blank_correct(ai, pd=pd)
             #             db.commit()
 
     #def refit_isotopes(self, meas_analysis, pd=None, fits=None, keys=None, verbose=False):
@@ -272,7 +272,7 @@ class Processor(IsotopeDatabaseManager):
     #    if pd is not None:
     #        pd.increment()
 
-    #def _get_preceeding_analysis(self, ms, post, atype):
+    #def _get_preceding_analysis(self, ms, post, atype):
     #    if isinstance(post, float):
     #        post = datetime.datetime.fromtimestamp(post)
     #
@@ -295,14 +295,14 @@ class Processor(IsotopeDatabaseManager):
     #    except NoResultFound:
     #        pass
 
-    #def preceeding_blank_correct(self, analysis, keys=None, pd=None):
+    #def preceding_blank_correct(self, analysis, keys=None, pd=None):
     #    from pychron.core.regression.interpolation_regressor import InterpolationRegressor
     #
     #    if not isinstance(analysis, Analysis):
     #        analysis = self.make_analysis(analysis)
     #        #             analysis.load_isotopes()
     #
-    #    msg = 'applying preceeding blank for {}'.format(analysis.record_id)
+    #    msg = 'applying preceding blank for {}'.format(analysis.record_id)
     #    if pd is not None:
     #        pd.change_message(msg)
     #        pd.increment()
@@ -315,10 +315,10 @@ class Processor(IsotopeDatabaseManager):
     #    #         delta = -5
     #    atype = 'blank_{}'.format(analysis.analysis_type)
     #
-    #    an = self._get_preceeding_analysis(ms, post, atype)
+    #    an = self._get_preceding_analysis(ms, post, atype)
     #
     #    if not an:
-    #        self.warning('no preceeding blank for {}'.format(analysis.record_id))
+    #        self.warning('no preceding blank for {}'.format(analysis.record_id))
     #        return
     #
     #    ai = self.make_analyses(an)
@@ -330,7 +330,7 @@ class Processor(IsotopeDatabaseManager):
     #    kind = 'blanks'
     #    history = self.add_history(an, kind)
     #
-    #    fit = 'preceeding'
+    #    fit = 'preceding'
     #
     #    reg = InterpolationRegressor(kind=fit)
     #    for key in keys:

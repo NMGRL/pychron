@@ -900,7 +900,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             return True
 
         with self.db.session_ctx():
-            dbr = self._get_preceeding_blank_or_background(inform=inform)
+            dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
                 if dbr is None:
                     return
@@ -932,8 +932,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         return True
 
-    def _get_preceeding_blank_or_background(self, inform=True):
-        msg = '''First "{}" not preceeded by a blank. 
+    def _get_preceding_blank_or_background(self, inform=True):
+        msg = '''First "{}" not preceded by a blank.
 If "Yes" use last "blank_{}" 
 Last Run= {}
 
@@ -955,13 +955,13 @@ If "No" select from database
             anidx = aruns.index(an)
             #find first blank_
             #if idx > than an idx need a blank
-            nopreceeding = True
+            nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
 
             if ban:
-                nopreceeding = aruns.index(ban) > anidx
+                nopreceding = aruns.index(ban) > anidx
 
-            if anidx == 0 or nopreceeding:
+            if anidx == 0 or nopreceding:
                 pdbr = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                        exp.extract_device,
                                        last=True)

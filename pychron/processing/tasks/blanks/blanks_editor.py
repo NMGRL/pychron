@@ -190,7 +190,7 @@ class BlanksEditor(InterpolationEditor):
         #             if r_es and r_ys:
         #                 reg = None
         #                 # plot references
-        #                 if fit in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+        #                 if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
         #                     reg = InterpolationRegressor(xs=r_xs,
         #                                                  ys=r_ys,
         #                                                  yserr=r_es,

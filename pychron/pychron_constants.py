@@ -41,8 +41,8 @@ SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 FIT_TYPES = ['linear', 'parabolic', 'cubic',
              'average_SD',
              'average_SEM']
-INTERPOLATE_TYPES = ['Preceeding', 'Bracketing Interpolate', 'Bracketing Average']
-FIT_TYPES_INTERPOLATE = FIT_TYPES + ['Preceeding', 'Bracketing Interpolate', 'Bracketing Average']
+INTERPOLATE_TYPES = ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
+FIT_TYPES_INTERPOLATE = FIT_TYPES + ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
 DELIMITERS = {',': 'comma', '\t': 'tab', ' ': 'space'}
 AGE_SCALARS = {'Ma': 1e6, 'ka': 1e3, 'a': 1}
 

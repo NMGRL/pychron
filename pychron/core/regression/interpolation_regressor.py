@@ -40,7 +40,7 @@ class InterpolationRegressor(BaseRegressor):
         xs = asarray(xs)
         return [func(xi, attr) for xi in xs]
 
-    def preceeding_predictors(self, timestamp, attr='value'):
+    def preceding_predictors(self, timestamp, attr='value'):
         xs = self.xs
         ys = self.ys
 

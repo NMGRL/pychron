@@ -147,15 +147,15 @@ Here is an example "Easy" configuration file
 
     blank_fit_isotopes:
       - name: Ar40
-        fit: preceeding
+        fit: preceding
       - name: Ar39
-        fit: preceeding
+        fit: preceding
       - name: Ar38
-        fit: preceeding
+        fit: preceding
       - name: Ar37
-        fit: preceeding
+        fit: preceding
       - name: Ar36
-        fit: preceeding
+        fit: preceding
 
     ---
     #=========================================================================================

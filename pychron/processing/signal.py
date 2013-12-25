@@ -159,7 +159,7 @@
 #
 #
 #
-# #def preceeding_predictors(xs, ys, es, tm, attr='value'):
+# #def preceding_predictors(xs, ys, es, tm, attr='value'):
 # #
 # #    ti = where(xs < tm)[0][0]
 # #    if attr == 'value':
@@ -224,8 +224,8 @@
 # #            xsyses = zip(xs, ys, es)
 # #            xsyses = array(sorted(xsyses, key=lambda x: x[0]))
 # #            xs, ys, es = zip(*xsyses)
-# #            if fit == 'preceeding':
-# #                return preceeding_predictors(xs, ys, es, tm)
+# #            if fit == 'preceding':
+# #                return preceding_predictors(xs, ys, es, tm)
 # #            elif fit == 'bracketing interpolate':
 # #                return bracketing_interpolate_predictors(xs, ys, es, tm)
 # #            elif fit == 'bracketing average':
@@ -260,8 +260,8 @@
 # #            xsyses = zip(xs, ys, es)
 # #            xsyses = array(sorted(xsyses, key=lambda x: x[0]))
 # #            xs, ys, es = zip(*xsyses)
-# #            if fit == 'preceeding':
-# #                return preceeding_predictors(xs, ys, es, tm, attr='error')
+# #            if fit == 'preceding':
+# #                return preceding_predictors(xs, ys, es, tm, attr='error')
 # #            elif fit == 'bracketing interpolate':
 # #                return bracketing_interpolate_predictors(xs, ys, es, tm, attr='error')
 # #            elif fit == 'bracketing average':
@@ -285,8 +285,8 @@
 # #                        except TypeError, e:
 # #                            n = 2
 # #                            #could not compute confidence interval
-# #                            #use preceeding error
-# ##                            n = preceeding_predictors(ts=ts, *args, attr='error')
+# #                            #use preceding error
+# ##                            n = preceding_predictors(ts=ts, *args, attr='error')
 # #                except IndexError:
 # #                    n = 0.1
 # #

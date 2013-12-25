@@ -42,6 +42,10 @@ class InterpolationEditor(GraphEditor):
     sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
 
+
+    def find_references(self):
+        self._find_references()
+
     @on_trait_change('references[]')
     def _update_references(self):
     #         self.make_references()
@@ -193,7 +197,7 @@ class InterpolationEditor(GraphEditor):
             if r_ys:
                 reg = None
                 # plot references
-                if fit in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+                if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                     reg = InterpolationRegressor(xs=r_xs,
                                                  ys=r_ys,
                                                  yserr=r_es,

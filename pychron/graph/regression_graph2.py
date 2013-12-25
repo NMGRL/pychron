@@ -442,7 +442,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     f = 'averageSD'
                 #                if not (f.endswith('sd') or f.endswith('sem')):
                 #                    f = 'averageSD'
-                #            elif f in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+                #            elif f in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 #                f = f
             else:
                 f = None

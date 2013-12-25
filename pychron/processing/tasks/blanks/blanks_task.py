@@ -17,6 +17,9 @@
 #============= enthought library imports =======================
 # from traits.api import HasTraits
 from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter, Tabbed
+from pychron.core.helpers.iterfuncs import partition
+from pychron.easy_parser import EasyParser
+from pychron.processing.easy.easy_manager import EasyManager
 
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 #============= standard library imports ========================
@@ -62,10 +65,21 @@ class BlanksTask(InterpolationTask):
     #
     #    self._load_references(new)
 
-    def do_easy_blanks(self):
-        self._do_easy(self._easy_blanks)
 
-    def _easy_blanks(self, db, ep, prog):
+    def do_easy_blanks(self):
+        manager=EasyManager()
+        ep = EasyParser()
+        db = self.manager.db
+
+        with db.session_ctx() as sess:
+            ok = self._easy_blanks(db, ep, manager)
+            if not ok:
+                sess.rollback()
+
+        if ok:
+            self.information_dialog('Changes saved to the database')
+
+    def _easy_blanks(self, db, ep, manager):
         doc = ep.doc('blanks')
         fits = doc['blank_fit_isotopes']
         projects = doc['projects']
@@ -75,37 +89,45 @@ class BlanksTask(InterpolationTask):
                for ln in si.labnumbers
                for ai in ln.analyses]
 
+        prog=manager.progress
         # prog = self.manager.open_progress(len(ans) + 1)
         #bin analyses
         prog.increase_max(len(unks))
-        for ais in self._bin_analyses(unks):
-            if prog.canceled:
-                return
-            elif prog.accepted:
-                break
 
-            for ai in ais:
+        preceding_fits, non_preceding_fits=map(list,partition(fits, lambda x: x['fit']=='preceding'))
+        if preceding_fits:
+            for ai in unks:
                 if prog.canceled:
                     return
                 elif prog.accepted:
                     break
                 l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
-                prog.change_message('Save preceeding blank for {}-{:02n}{}'.format(l, a, s))
+                prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
                 hist = db.add_history(ai, 'blanks')
-
                 ai.selected_histories.selected_blanks = hist
+                for fi in preceding_fits:
+                    self._preceding_correct(db, fi, ai, hist)
 
-                for fi in fits:
-                    if fi['fit'] == 'preceeding':
-                        self._preceeding_correct(db, fi, ai, hist)
-                    else:
-                        pass
+        if non_preceding_fits:
+            for ais in self._bin_analyses(unks):
+                if prog.canceled:
+                    return
+                elif prog.accepted:
+                    break
 
-        prog.close()
+                self.active_editor.set_items(ais)
+                self.active_editor.find_references()
+
+                if self.manager.wait_for_user():
+                    db.sess.commit()
+                else:
+                    return False
+
+
         return True
 
-    def _preceeding_correct(self, db, fi, ai, hist):
-        pa = db.get_preceeding(ai.analysis_timestamp,
+    def _preceding_correct(self, db, fi, ai, hist):
+        pa = db.get_preceding(ai.analysis_timestamp,
                                ai.measurement.mass_spectrometer.name)
         if pa:
             an_pa = self.manager.make_analysis(pa)
@@ -119,7 +141,7 @@ class BlanksTask(InterpolationTask):
                                         isotope=iso,
                                         user_value=float(blank.nominal_value),
                                         user_error=float(blank.std_dev),
-                                        fit='preceeding')
+                                        fit='preceding')
 
                 db.add_blanks_set(dbblank, pa)
 
@@ -127,7 +149,7 @@ class BlanksTask(InterpolationTask):
                 self.warning('{} does not have iso {}'.format(an_pa.record_id, iso))
 
         else:
-            self.warning('No preceeding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
+            self.warning('No preceding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
                                                                          ai.aliquot, ai.step))
 
     def _bin_analyses(self, ans):
