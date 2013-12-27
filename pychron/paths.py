@@ -142,6 +142,7 @@ class Paths():
     # files
     #===========================================================================
     backup_recovery_file = None
+    last_experiment = None
 
     def set_search_paths(self, app_rec=None):
         self.app_resources = app_rec
@@ -282,8 +283,9 @@ class Paths():
         # files
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
-
+        self.last_experiment=join(self.hidden_dir, 'last_experiment')
         self.set_search_paths()
+
 
 
 paths = Paths()

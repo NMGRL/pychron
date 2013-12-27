@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import on_trait_change, Bool, Instance
+from traits.api import on_trait_change, Bool, Instance, Event
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
@@ -56,6 +56,7 @@ class ExperimentEditorTask(EditorTask):
     syslogger = Instance('pychron.experiment.sys_log.SysLogger')
 
     # analysis_health = Instance(AnalysisHealth)
+    last_experiment_changed = Event
 
     def new_pattern(self):
         pm = PatternMakerView()
@@ -227,11 +228,15 @@ class ExperimentEditorTask(EditorTask):
 
         return txt, is_uv
 
+    def _set_last_experiment(self, p):
+        with open(paths.last_experiment, 'w') as fp:
+            fp.write(p)
+        self.last_experiment_changed=True
+
     def open(self, path=None):
 
         #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
 #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
         if not os.path.isfile(path):
             path = None
 
@@ -502,6 +507,7 @@ class ExperimentEditorTask(EditorTask):
             # if successful open an auto figure task
             if self.manager.execute_queues(qs):
                 self._show_pane(self.wait_pane)
+                self._set_last_experiment(self.active_editor.path)
             else:
                 self.warning('experiment queue did not start properly')
 
