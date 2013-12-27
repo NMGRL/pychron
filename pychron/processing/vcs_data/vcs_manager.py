@@ -15,45 +15,35 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
 
 #============= standard library imports ========================
-import yaml
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path
 from pychron.loggable import Loggable
-from pychron.paths import paths
 
 
-class Packager(Loggable):
-    def package(self, ans):
-        yans = []
-        for ai in ans:
-            d = {'labnumber': ai.labnumber,
-                 'aliquot': ai.aliquot,
-                 'step': ai.step}
-
-            isos = []
-            for iso in ai.isotopes.itervalues():
-                i = {'name': iso.name,
-                     'detector': iso.detector,
-                     'data': iso.pack()}
-                isos.append(i)
-
-            d['isotopes'] = isos
-
-            yans.append(d)
-
-        root=os.path.join(paths.data_dir, 'vcs')
-
-        p, _ = unique_path(root, 'data')
-
-        with open(p, 'w') as fp:
-            yaml.dump_all(yans, fp)
-
-        # self._add_to_repo(root,p)
+class VCSManager(Loggable):
+    """
+         manage access to data sourced in git repos
+         create local and remote repositories
+    """
+    pass
 
 
+class IsotopeVCSManager(VCSManager):
+    """
+        add analyses to local repository
+            create a line-oriented file for each analysis
+            repo organization
+                -project
+                 -.git
+                 -sample
+                  -labnumber
+                   -analysis.txt
 
+        track changes
+        push changes to remote repo
+
+    """
+    pass
 #============= EOF =============================================
 
