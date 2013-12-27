@@ -24,6 +24,15 @@ from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 #============= standard library imports ========================
 #============= local library imports  ==========================
+class no_auto_find_ctx(object):
+    def __init__(self, obj):
+        self.obj=obj
+
+    def __enter__(self):
+        self.obj.auto_find=False
+
+    def __exit__(self, *args):
+        self.obj.auto_find=True
 
 
 class BlanksTask(InterpolationTask):
@@ -67,19 +76,26 @@ class BlanksTask(InterpolationTask):
 
 
     def do_easy_blanks(self):
-        manager=EasyManager()
-        ep = EasyParser()
-        db = self.manager.db
 
-        with db.session_ctx() as sess:
-            ok = self._easy_blanks(db, ep, manager)
-            if not ok:
-                sess.rollback()
+        manager=EasyManager(db=self.manager.db,
+                            func=self._easy_blanks)
 
-        if ok:
-            self.information_dialog('Changes saved to the database')
+        manager.execute()
+        manager.edit_traits()
 
-    def _easy_blanks(self, db, ep, manager):
+        # with db.session_ctx() as sess:
+        #     ok=manager.execute(self._easy_blanks)
+        #
+        #     # ok = self._easy_blanks(db, ep, manager)
+        #     if not ok:
+        #         sess.rollback()
+        #
+        # if ok:
+        #     self.information_dialog('Changes saved to the database')
+
+    def _easy_blanks(self, ep, manager):
+        db=self.manager.db
+
         doc = ep.doc('blanks')
         fits = doc['blank_fit_isotopes']
         projects = doc['projects']
@@ -108,21 +124,24 @@ class BlanksTask(InterpolationTask):
                 for fi in preceding_fits:
                     self._preceding_correct(db, fi, ai, hist)
 
-        if non_preceding_fits:
-            for ais in self._bin_analyses(unks):
-                if prog.canceled:
-                    return
-                elif prog.accepted:
-                    break
+        with no_auto_find_ctx(self.active_editor):
+            if non_preceding_fits:
+                for ais in self._bin_analyses(unks):
+                    if prog.canceled:
+                        return
+                    elif prog.accepted:
+                        break
 
-                self.active_editor.set_items(ais)
-                self.active_editor.find_references()
+                    self.active_editor.set_items(ais, progress=prog)
+                    self.active_editor.find_references(progress=prog)
 
-                if self.manager.wait_for_user():
-                    db.sess.commit()
-                else:
-                    return False
+                    #set isotope fits
 
+                    #refresh graph
+                    self.active_editor.rebuild_graph()
+
+                    if not manager.wait_for_user():
+                        return
 
         return True
 

@@ -35,15 +35,14 @@ class _ProgressEditor(Editor):
             self.sync_value(self.factory.message_name, 'message', mode='from')
 
     def _max_changed(self):
-        print 'max',self.max
+        # print 'max',self.max
         self.control.setMaximum(self.max)
 
     def _message_changed(self, m):
-        print 'message',m
+        # print 'message',m
         self._message_control.setText(m)
 
     def _create_control(self, parent):
-        print parent
         layout=QVBoxLayout()
         pb = QProgressBar()
 
@@ -56,7 +55,6 @@ class _ProgressEditor(Editor):
         return pb
 
     def update_editor(self):
-        print 'update editor',self.value
         self.control.setValue(self.value)
 
 

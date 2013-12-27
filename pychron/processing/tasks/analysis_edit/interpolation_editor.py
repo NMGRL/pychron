@@ -43,8 +43,8 @@ class InterpolationEditor(GraphEditor):
     sorted_references = Property(depends_on='references[]')
 
 
-    def find_references(self):
-        self._find_references()
+    def find_references(self, **kw):
+        self._find_references(**kw)
 
     @on_trait_change('references[]')
     def _update_references(self):
@@ -87,21 +87,24 @@ class InterpolationEditor(GraphEditor):
         if self.auto_find:
             self._find_references()
 
-    def _find_references(self):
+    def _find_references(self, progress=None):
 
-        self.debug('find references')
+        self.debug('find references {}'.format(progress))
         ans = []
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
             n=len(self.analyses)
-            prog=None
+
             if n>1:
-                prog=proc.open_progress(n)
+                if progress is None:
+                    progress=proc.open_progress(n)
+                else:
+                    progress.increase_max(n)
 
             for ui in self.analyses:
-                if prog:
-                    prog.change_message('Finding associated analyses for {}'.format(ui.record_id))
+                if progress:
+                    progress.change_message('Finding associated analyses for {}'.format(ui.record_id))
 
                 for ai in proc.find_associated_analyses(ui,
                                                         atype=self.default_reference_analysis_type,
@@ -109,12 +112,13 @@ class InterpolationEditor(GraphEditor):
                     if not ai.uuid in uuids:
                         uuids.append(ai.uuid)
                         ans.append(ai)
-            if prog:
-                prog.close()
 
             ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
-            ans = self.processor.make_analyses(ans)
+            ans = self.processor.make_analyses(ans, progress=progress)
             self.references = ans
+
+            if progress:
+                progress.soft_close()
             #self.task.references_pane.items = ans
 
     def _get_current_values(self, *args, **kw):

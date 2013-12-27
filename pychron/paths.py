@@ -24,8 +24,6 @@ make sure directory exists and build if not
 """
 from os import path, mkdir
 
-
-
 # host_url = 'https://arlab.googlecode.com/svn'
 # project_root = 'trunk'
 
@@ -37,8 +35,7 @@ from os import path, mkdir
 
 
 class Paths():
-
-    disseration = '/Users/ross/Programming/git/dissertation'
+    dissertation = '/Users/ross/Programming/git/dissertation'
 
     version = None
     root = None
@@ -147,7 +144,7 @@ class Paths():
     backup_recovery_file = None
 
     def set_search_paths(self, app_rec=None):
-        self.app_resources=app_rec
+        self.app_resources = app_rec
         self.set_icon_search_path()
         self.set_sound_search_path()
 
@@ -157,7 +154,7 @@ class Paths():
 
     def set_sound_search_path(self):
         self.sound_search_path = [self.sounds,
-                                 self.app_resources]
+                                  self.app_resources]
 
     def build(self, version):
         self.version = version
@@ -287,7 +284,8 @@ class Paths():
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
 
         self.set_search_paths()
-        
+
+
 paths = Paths()
 paths.build('_beta')
 

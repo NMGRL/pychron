@@ -13,8 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from threading import Thread
+# from threading import Thread
+import time
 from pychron.core.ui import set_toolkit
+from pychron.core.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.thread import Thread
+from pychron.core.ui.thread import Thread
+from pychron.easy_parser import EasyParser
 
 set_toolkit('qt4')
 
@@ -36,6 +41,9 @@ class Progress(HasTraits):
 
     canceled=Bool
     accepted=Bool
+
+    def get_value(self):
+        return self.value
 
     def soft_close(self):
         pass
@@ -60,27 +68,63 @@ class EasyManager(Loggable):
     cancel_button = Button
     func=Callable
 
-    def wait_for_user(self):
-        pass
+    _finished=False
+    canceled=False
+    accepted=False
+    _ready_to_continue = Bool(True)
+    continue_button=Button
 
-    def _execute_button_fired(self):
-        self._stopped = False
+    def is_finished(self):
+        return self._finished or self.canceled
+
+    def _continue_button_fired(self):
+        self._ready_to_continue=True
+
+    def wait_for_user(self):
+        self.progress.increase_max(1)
+        self.progress.change_message('Waiting for user')
+        self.debug('waiting for user')
+        self._ready_to_continue=False
+        while not self.canceled:
+            if self._ready_to_continue:
+                break
+            time.sleep(0.1)
+        return True
+
+    def ok_continue(self):
+        return not self.is_finished()
+
+    def execute(self):
+        self.canceled = False
         t = Thread(target=self._execute)
         t.start()
+        self._t=t
 
     def _stop_button_fired(self):
-        self._stopped = True
+        self.accepted=True
 
     def _execute(self):
-        self._func()
+        ep=EasyParser()
+        with self.db.session_ctx() as sess:
+            ok=self.func(ep, self)
+            if not ok:
+                sess.rollback()
+        if ok:
+            self.information_dialog('Changes saved to database')
+        else:
+            self.warning_dialog('Failed saving changes to database')
 
     def traits_view(self):
         v = View(VGroup(
-            HGroup(icon_button_editor('execute_button', 'play'),
-                   icon_button_editor('stop_button', 'stop')),
+            HGroup(icon_button_editor('stop_button', 'stop'),
+                   icon_button_editor('continue_button', 'arrow_right',
+                                      enabled_when='not _ready_to_continue')),
             UItem('object.progress.value', editor=ProgressEditor(max_name='object.progress.max',
                                                         message_name='object.progress.message'))),
-                 resizable=True)
+                 resizable=True,
+                 width=500,
+                 title='Easy Manager'
+                 )
         return v
 
 
