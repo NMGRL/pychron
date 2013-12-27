@@ -22,7 +22,6 @@ from traits.api import List, Int
 #============= local library imports  ==========================
 import yaml
 from pychron.paths import paths
-from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 
@@ -40,7 +39,7 @@ class EasyParser(Loggable):
         # name = add_extension(name, '.yaml')
         # p = os.path.join(paths., name)
 
-        p=os.path.join(paths.dissertation, 'data','minnabluff','blank_j.yaml')
+        p=os.path.join(paths.dissertation, 'data','minnabluff','disc_j.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 md = yaml.load_all(fp)
