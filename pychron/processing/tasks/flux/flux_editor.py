@@ -117,7 +117,7 @@ class FluxEditor(GraphEditor):
         self.monitor_positions[identifier] = pos
         self.positions_dirty = True
 
-    def _dump_tool(self):
+    def _get_dump_tool(self):
         pass
 
     @on_trait_change('monitor_positions:[use, j, jerr]')

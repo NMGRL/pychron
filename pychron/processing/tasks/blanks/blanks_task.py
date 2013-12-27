@@ -16,23 +16,29 @@
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
+import os
 from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter, Tabbed
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.easy_parser import EasyParser
+from pychron.paths import r_mkdir
 from pychron.processing.easy.easy_manager import EasyManager
 
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 #============= standard library imports ========================
 #============= local library imports  ==========================
-class no_auto_find_ctx(object):
+class no_auto_ctx(object):
     def __init__(self, obj):
         self.obj=obj
 
     def __enter__(self):
         self.obj.auto_find=False
+        self.obj.update_on_analyses=False
 
     def __exit__(self, *args):
         self.obj.auto_find=True
+        self.obj.update_on_analyses=True
 
 
 class BlanksTask(InterpolationTask):
@@ -76,12 +82,14 @@ class BlanksTask(InterpolationTask):
 
 
     def do_easy_blanks(self):
+        if self.active_editor:
+            manager=EasyManager(db=self.manager.db,
+                                func=self._easy_blanks)
 
-        manager=EasyManager(db=self.manager.db,
-                            func=self._easy_blanks)
-
-        manager.execute()
-        manager.edit_traits()
+            manager.execute()
+            manager.edit_traits()
+        else:
+            self.warning_dialog('No active tab. Please open a blank tab to use Easy Blanks')
 
         # with db.session_ctx() as sess:
         #     ok=manager.execute(self._easy_blanks)
@@ -124,7 +132,12 @@ class BlanksTask(InterpolationTask):
                 for fi in preceding_fits:
                     self._preceding_correct(db, fi, ai, hist)
 
-        with no_auto_find_ctx(self.active_editor):
+        #make figure root dir
+        if doc['save_figures']:
+            root = doc['figure_root']
+            r_mkdir(root)
+
+        with no_auto_ctx(self.active_editor):
             if non_preceding_fits:
                 for ais in self._bin_analyses(unks):
                     if prog.canceled:
@@ -135,13 +148,20 @@ class BlanksTask(InterpolationTask):
                     self.active_editor.set_items(ais, progress=prog)
                     self.active_editor.find_references(progress=prog)
 
-                    #set isotope fits
-
                     #refresh graph
-                    self.active_editor.rebuild_graph()
+                    invoke_in_main_thread(self.active_editor.rebuild_graph)
 
                     if not manager.wait_for_user():
                         return
+
+                    #save a figure
+                    if doc['save_figures']:
+                        a,b='foo','bar'
+                        title='{}_{}'.format(a,b)
+                        p=os.path.join(root, add_extension(title,'.pdf'))
+                        self.active_editor.save_file(p)
+
+                    self.active_editor.dump_tool()
 
         return True
 

@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import List, on_trait_change, Instance, Bool, \
     Property, cached_property
+from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -31,7 +32,7 @@ from pychron.core.helpers.datetime_tools import convert_timestamp
 
 
 class InterpolationEditor(GraphEditor):
-    tool = Instance(InterpolationFitSelector, ())
+    tool_klass=InterpolationFitSelector
     references = List
     #     _references = List
 
@@ -177,9 +178,8 @@ class InterpolationEditor(GraphEditor):
             p = graph.new_plot(
                 ytitle=iso,
                 xtitle='Time (hrs)',
-                padding=[80, 5, 5, 40],
-                #                                show_legend='ur' if i == 0 else False
-            )
+                padding=[80, 10, 5, 30])
+            p.y_axis.title_spacing=60
             p.value_range.tight_bounds = False
 
             if c_ues and c_uys:
@@ -201,6 +201,7 @@ class InterpolationEditor(GraphEditor):
             if r_ys:
                 reg = None
                 # plot references
+
                 if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                     reg = InterpolationRegressor(xs=r_xs,
                                                  ys=r_ys,
@@ -305,17 +306,18 @@ class InterpolationEditor(GraphEditor):
         #necessary to handle user excluding points
         gen = self._graph_generator()
         for fit, (plotobj, reg) in zip(gen,new):
-            iso = fit.name
-        # for i, (fit, reg) in enumerate(zip(gen, new)):
-        #     iso = fit.name
-        #     plotobj = self.graph.plots[i]
+            if issubclass(type(reg), BaseRegressor):
+                iso = fit.name
+            # for i, (fit, reg) in enumerate(zip(gen, new)):
+            #     iso = fit.name
+            #     plotobj = self.graph.plots[i]
 
-            scatter = plotobj.plots['Unknowns-predicted'][0]
-            xs = scatter.index.get_data()
+                scatter = plotobj.plots['Unknowns-predicted'][0]
+                xs = scatter.index.get_data()
 
-            p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
-            scatter.value.set_data(p_uys)
-            scatter.yerror.set_data(p_ues)
+                p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
+                scatter.value.set_data(p_uys)
+                scatter.yerror.set_data(p_ues)
 
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]

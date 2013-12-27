@@ -31,7 +31,8 @@ from pychron.processing.tasks.editor import BaseUnknownsEditor
 
 
 class GraphEditor(BaseUnknownsEditor):
-    tool = Instance(FitSelector, ())
+    tool = Any
+    tool_klass = FitSelector
     graph = Any
     processor = Any
 
@@ -51,6 +52,7 @@ class GraphEditor(BaseUnknownsEditor):
     auto_plot = Property
     update_on_analyses = True
 
+
     def prepare_destroy(self):
         self.dump_tool()
 
@@ -59,25 +61,33 @@ class GraphEditor(BaseUnknownsEditor):
             p = os.path.join(paths.hidden_dir, self.pickle_path)
             self.debug('dumping tool {}, {}'.format(self.tool, p))
             with open(p, 'w') as fp:
-                tool = self._dump_tool()
+                tool = self._get_dump_tool()
                 pickle.dump(tool, fp)
 
-    def _dump_tool(self):
-        return self.tool.fits
+    def _get_dump_tool(self):
+        return dict(fits=self.tool.fits, auto_update=self.tool.auto_update)
 
-    def load_tool(self):
+    def load_tool(self, tool=None):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
         if os.path.isfile(p):
+            self.debug('loading tool')
             with open(p, 'r') as fp:
                 try:
                     obj = pickle.load(fp)
-                    self._load_tool(obj)
-                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError):
+                    self._load_tool(obj, tool=tool)
+                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError),e:
+                    self.debug('exception loading tool {}'.format(e))
                     return
 
-    def _load_tool(self, fits):
+    def _load_tool(self, tooldict, tool):
+        if tool is None:
+            tool=self.tool
+
+        tool.auto_update=tooldict['auto_update']
+
+        fits=tooldict['fits']
         for fi in fits:
-            ff = next((fo for fo in self.tool.fits if fo.name == fi.name), None)
+            ff = next((fo for fo in tool.fits if fo.name == fi.name), None)
             if ff:
                 self.debug('setting fit {} {} {}'.format(fi.name, fi.fit, fi.use))
                 ff.trait_set(fit=fi.fit,
@@ -244,6 +254,10 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_auto_plot(self):
         return len(self.analyses) == 1 or self.update_on_analyses
 
+    def _tool_default(self):
+        t=self.tool_klass()
+        self.load_tool(t)
+        return t
 #============= EOF =============================================
 # def _gather_unknowns(self, refresh_data,
     #                      exclude='invalid',

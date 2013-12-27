@@ -290,13 +290,21 @@ paths = Paths()
 paths.build('_beta')
 
 
-def rec_make(pi):
-    if pi and not path.exists(pi):
+# def rec_make(pi):
+#     if pi and not path.exists(pi):
+#         try:
+#             mkdir(pi)
+#         except OSError:
+#             rec_make(path.split(pi)[0])
+#             mkdir(pi)
+
+def r_mkdir(p):
+    if p and not path.isdir(p):
         try:
-            mkdir(pi)
+            mkdir(p)
         except OSError:
-            rec_make(path.split(pi)[0])
-            mkdir(pi)
+            r_mkdir(path.dirname(p))
+            mkdir(p)
 
 
 def build_directories(paths):
@@ -305,6 +313,6 @@ def build_directories(paths):
 #    import copy
     for l in dir(paths):
         if l.endswith('_dir'):
-            rec_make(getattr(paths, l))
+            r_mkdir(getattr(paths, l))
 
 #============= EOF ==============================================

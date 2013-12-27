@@ -25,7 +25,6 @@ from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 
 
 class IsoEvoFitSelector(FilterFitSelector):
-    plot_button = Button('Plot')
 
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
@@ -33,25 +32,10 @@ class IsoEvoFitSelector(FilterFitSelector):
 
         super(IsoEvoFitSelector, self).load_fits(keys + bs, fits + bfs)
 
-    def _plot_button_fired(self):
-        self.update_needed = True
-
-    def _auto_update_changed(self):
-        self.update_needed = True
-
-    def traits_view(self):
-        v = View(
-            HGroup(icon_button_editor('plot_button','chart_curve_go',
-                         tooltip='Replot the isotope evolutions. \
-This may take awhile if many analyses are selected'),
-                   icon_button_editor('save_event', 'database_save',
-                                      tooltip='Save fits to database'),
-                   spring,
-                   Item('auto_update',
-                        label='Auto Plot',
-                        tooltip='Should the plot refresh after each change ie. "fit" or "show". \
-It is not advisable to use this option with many analyses')),
-            self._get_fit_group())
-        return v
+    # def traits_view(self):
+    #     v = View(
+    #         self
+    #         self._get_fit_group())
+    #     return v
 
         #============= EOF =============================================

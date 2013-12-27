@@ -39,8 +39,8 @@ class Progress(HasTraits):
     max = Int
     message = Str
 
-    canceled=Bool
-    accepted=Bool
+    canceled = Bool
+    accepted = Bool
 
     def get_value(self):
         return self.value
@@ -66,29 +66,29 @@ class EasyManager(Loggable):
     execute_button = Button
     stop_button = Button
     cancel_button = Button
-    func=Callable
+    func = Callable
 
-    _finished=False
-    canceled=False
-    accepted=False
+    _finished = False
+    canceled = False
+    accepted = False
     _ready_to_continue = Bool(True)
-    continue_button=Button
+    continue_button = Button
 
     def is_finished(self):
         return self._finished or self.canceled
 
     def _continue_button_fired(self):
-        self._ready_to_continue=True
+        self._ready_to_continue = True
 
     def wait_for_user(self):
         self.progress.increase_max(1)
         self.progress.change_message('Waiting for user')
         self.debug('waiting for user')
-        self._ready_to_continue=False
-        while not self.canceled:
+        self._ready_to_continue = False
+        while not (self.canceled or self.accepted):
             if self._ready_to_continue:
                 break
-            time.sleep(0.1)
+            time.sleep(0.05)
         return True
 
     def ok_continue(self):
@@ -98,15 +98,15 @@ class EasyManager(Loggable):
         self.canceled = False
         t = Thread(target=self._execute)
         t.start()
-        self._t=t
+        self._t = t
 
     def _stop_button_fired(self):
-        self.accepted=True
+        self.accepted = True
 
     def _execute(self):
-        ep=EasyParser()
+        ep = EasyParser()
         with self.db.session_ctx() as sess:
-            ok=self.func(ep, self)
+            ok = self.func(ep, self)
             if not ok:
                 sess.rollback()
         if ok:
@@ -120,11 +120,10 @@ class EasyManager(Loggable):
                    icon_button_editor('continue_button', 'arrow_right',
                                       enabled_when='not _ready_to_continue')),
             UItem('object.progress.value', editor=ProgressEditor(max_name='object.progress.max',
-                                                        message_name='object.progress.message'))),
+                                                                 message_name='object.progress.message'))),
                  resizable=True,
                  width=500,
-                 title='Easy Manager'
-                 )
+                 title='Easy Manager')
         return v
 
 

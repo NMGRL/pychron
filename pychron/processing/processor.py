@@ -68,12 +68,14 @@ class Processor(IsotopeDatabaseManager):
         if atype is None:
             atype = 'blank_{}'.format(analysis.analysis_type)
 
-        post = post - timedelta(hours=delta)
-        return self._filter_analyses(ms, post, delta, limit, atype, **kw)
-        #br = self._find_analyses(ms, post, -delta, atype, **kw)
-        #ar = self._find_analyses(ms, post, delta, atype, **kw)
-        #return br + ar
+        dt=timedelta(hours=delta)
+        lpost=post-dt
+        hpost=post+dt
 
+        return self._filter_analyses(ms, lpost, hpost, limit, atype, **kw)
+        # br = self._find_analyses(ms, post, -delta, atype, **kw)
+        # ar = self._find_analyses(ms, post, delta, atype, **kw)
+        # return br + ar
 
     def group_level(self, level, irradiation=None, monitor_filter=None):
         if monitor_filter is None:
@@ -490,14 +492,20 @@ class Processor(IsotopeDatabaseManager):
         if delta < 0:
             step = -step
 
+        if isinstance(post, float):
+            post = datetime.fromtimestamp(post)
+
         for i in range(maxtries):
-            rs = self._filter_analyses(ms, post, delta + i * step, 5, atype, **kw)
+            win = timedelta(hours=delta+i*step)
+            lpost=post-win
+            hpost=post+win
+            rs = self._filter_analyses(ms, lpost, hpost, 5, atype, **kw)
             if rs:
                 return rs
         else:
             return []
 
-    def _filter_analyses(self, ms, post, delta, lim, at, exclude_uuids=None, filter_hook=None):
+    def _filter_analyses(self, ms, lpost, hpost, lim, at, exclude_uuids=None, filter_hook=None):
         """
             ms= spectrometer
             post= timestamp
@@ -516,20 +524,20 @@ class Processor(IsotopeDatabaseManager):
         q = q.join(gen_AnalysisTypeTable)
         q = q.join(gen_MassSpectrometerTable)
 
-        win = timedelta(hours=delta)
-        if isinstance(post, float):
-            post = datetime.fromtimestamp(post)
-
-        dt = post + win
-        if delta < 0:
-            a, b = dt, post
-        else:
-            a, b = post, dt
+        # win = timedelta(hours=delta)
+        # if isinstance(post, float):
+        #     post = datetime.fromtimestamp(post)
+        #
+        # dt = post + win
+        # if delta < 0:
+        #     a, b = dt, post
+        # else:
+        #     a, b = post, dt
 
         q = q.filter(and_(
             gen_AnalysisTypeTable.name == at,
-            meas_AnalysisTable.analysis_timestamp >= a,
-            meas_AnalysisTable.analysis_timestamp <= b,
+            meas_AnalysisTable.analysis_timestamp >= lpost,
+            meas_AnalysisTable.analysis_timestamp <= hpost,
             gen_MassSpectrometerTable.name == ms))
 
         if filter_hook:
