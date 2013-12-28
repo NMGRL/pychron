@@ -17,7 +17,7 @@
 #=============enthought library imports=======================
 from apptools.preferences.preference_binding import PreferenceBinding
 from traits.api import HasTraits, Property, Float, Enum, Str, List, Either
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
@@ -139,6 +139,18 @@ class ArArConstants(HasTraits):
             pass
 
         super(ArArConstants, self).__init__(*args, **kw)
+
+    def to_dict(self):
+        d=dict()
+        for ai in ('fixed_k3739','atm4036','atm4038',
+                   'lambda_Cl36','lambda_Ar37','lambda_Ar39','lambda_k',):
+
+            v=getattr(self, ai)
+            d[ai]=nominal_value(v)
+            d['{}_err'.format(ai)]=float(std_dev(v))
+
+        d['abundance_sensitivity']=self.abundance_sensitivity
+        return d
 
     def _get_fixed_k3739(self):
         return self._get_ufloat('k3739')

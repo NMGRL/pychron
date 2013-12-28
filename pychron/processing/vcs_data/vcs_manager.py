@@ -21,6 +21,7 @@ import paramiko
 from traits.api import Instance, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
 import yaml
 
 from pychron.loggable import Loggable
@@ -137,14 +138,16 @@ class IsotopeVCSManager(VCSManager):
         p = os.path.join(p, '{}.yaml'.format(an.record_id))
         if not os.path.isfile(p):
             with open(p, 'w') as fp:
-                yaml.dump(d, fp)
+                yaml.dump(d, fp, indent=4, default_flow_style=False)
 
             self.repo_manager.add(p, commit=commit)
             return True
 
     #private
     def _generate_analysis_dict(self, ai):
-
+        """
+            convert types to float,int,dict,list, etc
+        """
         d = dict([(k, getattr(ai, k)) for k in ('labnumber', 'aliquot',
                                                 'step', 'timestamp', 'tag',
                                                 'sample','project','material')])
@@ -159,10 +162,27 @@ class IsotopeVCSManager(VCSManager):
                     'baseline': float(iso.baseline.value),
                     'baseline_error': float(iso.baseline.error),
                     'fit':iso.fit,
-                    'filter_outliers':dict(iso.filter_outliers_dict)}
+                    'filter_outliers':dict(iso.filter_outliers_dict),
+                    }
 
         isos = [func(ii) for ii in ai.isotopes.itervalues()]
         d['isotopes'] = isos
+
+        d['j']=float(ai.j.nominal_value)
+        d['j_err']=float(ai.j.std_dev)
+
+        d['constants']=ai.arar_constants.to_dict()
+        d['production_ratios']=dict(ai.production_ratios)
+
+        ifc=ai.interference_corrections
+        nifc=dict()
+        for k,v in ifc.iteritems():
+            nifc[k]=nominal_value(v)
+            nifc['{}_err'.format(k)]=float(std_dev(v))
+
+        d['interfence_corrections']=nifc
+        d['chron_segments']=[dict(zip(('power','duration','dt'), ci)) for ci in ai.chron_segments]
+        d['irradiation_time']=ai.irradiation_time
 
         return d
 

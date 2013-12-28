@@ -50,6 +50,7 @@ class ConsumerMixin(object):
 
     def start(self):
         if self._consumer:
+            self._consumer.setDaemon(1)
             self._consumer.start()
 
     def stop(self):
