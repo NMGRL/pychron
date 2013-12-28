@@ -28,7 +28,7 @@ from pychron.loggable import Loggable
 
 class RepoManager(Loggable):
     """
-        manager a local git repository
+        manage a local git repository
 
     """
 
@@ -41,30 +41,61 @@ class RepoManager(Loggable):
         repo=self._add_repo(localpath)
         self._repo=repo
 
-    def set_remote(self, remotepath, remotename, name='origin', repo=None):
+    def create_remote(self, host, repo_name, name='origin', repo=None, user='git'):
         repo=self._get_repo(repo)
         if repo:
-            repo.create_remote(name, 'git@{}:{}.git'.format(remotepath,remotename))
+            url='{}@{}:{}'.format(user, host, repo_name)
+            repo.create_remote(name, url)
 
-    def update_local(self, repo=None):
+    #git protocol
+    def update(self, repo=None, remote='origin'):
+        remote=self._get_remote(repo, remote)
+        if remote:
+            remote.fetch()
+            remote.pull()
+
+    def push(self, repo=None, remote='origin'):
+        remote = self._get_remote(repo, remote)
+        if remote:
+            remote.push()
+
+    def commit(self, msg, repo):
+        index=self._get_repo_index(repo)
+        if index:
+            index.commit(msg)
+
+    def add(self, p, msg=None):
+        if msg is None:
+            msg='added {}'.format(p)
+
+        self._add_to_repo(p, msg)
+
+    def has_uncommitted(self, repo=None):
+        return len(self._get_uncommited_changes(repo))
+
+    #private
+    def _get_uncommited_changes(self, repo):
+        index=self._get_repo_index(repo)
+        return index.diff(None)
+
+    def _add_to_repo(self, p, msg, repo=None):
+        # repo=self._get_repo(repo)
+        # if repo:
+        index=self._get_repo_index(repo)
+        if index:
+            name = os.path.basename(p)
+            index.add([name])
+            index.commit(msg)
+
+    def _get_remote(self,repo, remote):
         repo=self._get_repo(repo)
         if repo:
-            repo.fetch()
-            repo.pull()
+            return getattr(repo.remotes, remote)
 
-    def publish_local(self, repo=None):
+    def _get_repo_index(self, repo):
         repo=self._get_repo(repo)
         if repo:
-            repo.push()
-
-    def _add_to_repo(self, p, repo=None):
-
-        repo=self._get_repo(repo)
-
-        name = os.path.basename(p)
-        index = repo.index
-        index.add([name])
-        index.commit('added {}'.format(p))
+            return repo.index
 
     def _get_repo(self, repo):
         if repo is None:
