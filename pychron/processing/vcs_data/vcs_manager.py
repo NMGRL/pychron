@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 import os
 import paramiko
 from traits.api import Instance, Str
@@ -33,7 +34,7 @@ class VCSManager(Loggable):
          create local and remote repositories
     """
     #root location of all repositories
-    root=Str
+    root = Str
 
 
 class IsotopeVCSManager(VCSManager):
@@ -51,10 +52,10 @@ class IsotopeVCSManager(VCSManager):
         push changes to remote repo
 
     """
-    repo_manager=Instance(RepoManager, ())
+    repo_manager = Instance(RepoManager, ())
 
     def set_repo(self, name):
-        p=os.path.join(paths.vcs_dir, name)
+        p = os.path.join(paths.vcs_dir, name)
 
         #make or use existing repo
         self.init_repo(p)
@@ -63,7 +64,7 @@ class IsotopeVCSManager(VCSManager):
         self.add_readme(p)
 
     def add_readme(self, p):
-        p=os.path.join(p, 'README')
+        p = os.path.join(p, 'README')
         if not os.path.isfile(p):
             with open(p, 'w') as fp:
                 fp.write('README for PROJECT <{}>\n\n\n'
@@ -72,49 +73,60 @@ class IsotopeVCSManager(VCSManager):
             self.repo_manager.add(p, msg='init commit')
 
     def init_repo(self, path, auto_add_remote=False):
-        rm=self.repo_manager
+        rm = self.repo_manager
         rm.add_repo(path)
 
         if auto_add_remote:
             host = ''
 
-            rp=self.add_remote_repo(host, os.path.basename(path))
+            rp = self.add_remote_repo(host, os.path.basename(path))
             rm.create_remote(host, rp)
 
     def add_remote_repo(self, host, name):
         #use ssh to make a new remote repo
         client = paramiko.SSHClient()
 
-        user=''
-        pwd=''
+        user = ''
+        pwd = ''
         client.connect(host, username=user, password=pwd)
 
-        root='/usr/data/pychron'
-        p='{}.git'.format(name)
+        root = '/usr/data/pychron'
+        p = '{}.git'.format(name)
 
-        cmds=('cd {}'.format(root),
-              'mkdir {}.git'.format(name),
-              'cd {}.git'.format(name),
-              'git init --bare')
+        cmds = ('cd {}'.format(root),
+                'mkdir {}.git'.format(name),
+                'cd {}.git'.format(name),
+                'git init --bare')
 
-        cmd=';'.join(cmds)
+        cmd = ';'.join(cmds)
         client.exec_command(cmd)
         return os.path.join(root, p)
 
     def commit_change(self, msg):
-        rm=self.repo_manager
+        rm = self.repo_manager
         rm.commit(msg)
 
     #Isotope protocol
     def add_analyses(self, ans):
-        for ai in ans:
-            self._add_analysis(ai)
+        key=lambda x: x.project
+        ans=sorted(ans, key=key)
+        for proj, ais in groupby(ans, key=key):
+            self.set_repo(proj)
+            ais=list(ais)
+            added=any([self._add_analysis(ai, commit=False) for ai in ais])
+            if added:
+                s=ais[0]
+                e=ais[-1]
+                self.repo_manager.commit('added analyses {}({}) to {}({}) to project= {}'.format(s.record_id, s.sample,
+                                                                                                 e.record_id, e.sample,
+                                                                                                 proj))
 
     def add_analysis(self, an):
+        self.set_repo(an.project)
         self._add_analysis(an)
 
-    def _add_analysis(self, an):
-        d=self._generate_analysis_dict(an)
+    def _add_analysis(self, an, commit=True):
+        d = self._generate_analysis_dict(an)
 
         #make necessary file structure
 
@@ -127,29 +139,32 @@ class IsotopeVCSManager(VCSManager):
             with open(p, 'w') as fp:
                 yaml.dump(d, fp)
 
-            self.repo_manager.add(p)
+            self.repo_manager.add(p, commit=commit)
+            return True
 
     #private
     def _generate_analysis_dict(self, ai):
 
-        d=dict([(k, getattr(ai, k)) for k in ('labnumber','aliquot','step','timestamp')])
+        d = dict([(k, getattr(ai, k)) for k in ('labnumber', 'aliquot',
+                                                'step', 'timestamp', 'tag',
+                                                'sample','project','material')])
 
-        isos = []
-        for iso in ai.isotopes.itervalues():
-            i = {'name': iso.name,
-                 'detector': iso.detector,
-                 'discrimination': iso.discrimination.nominal_value,
-                 'discrimination_error': iso.discrimination.std_dev,
-                 #'data': iso.pack(),
-                 'blank':iso.blank.value,
-                 'blank_error':iso.blank.error,
-                 'baseline':iso.baseline.value,
-                 'baseline_error':iso.baseline.error,
-                 }
-            isos.append(i)
+        def func(iso):
+            return {'name': iso.name,
+                    'detector': iso.detector,
+                    'discrimination': float(iso.discrimination.nominal_value),
+                    'discrimination_error': float(iso.discrimination.std_dev),
+                    'blank': float(iso.blank.value),
+                    'blank_error': float(iso.blank.error),
+                    'baseline': float(iso.baseline.value),
+                    'baseline_error': float(iso.baseline.error),
+                    'fit':iso.fit,
+                    'filter_outliers':dict(iso.filter_outliers_dict)}
 
+        isos = [func(ii) for ii in ai.isotopes.itervalues()]
         d['isotopes'] = isos
 
         return d
+
 #============= EOF =============================================
 

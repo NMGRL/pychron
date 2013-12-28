@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import String, Property, Event, \
-    cached_property, Any, Instance
+    cached_property, Any, Instance, Bool
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import weakref
@@ -87,7 +87,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         elif inform:
             self.warning_dialog('Not Database available')
 
-    def bind_preferences(self, connect=False):
+    def bind_preferences(self):
         if self.db is None:
             self.db = self._db_factory()
 
@@ -142,7 +142,15 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     saved = Event
     updated = Event
 
+    use_vcs=Bool
     vcs = Instance(IsotopeVCSManager, ())
+
+    def bind_preferences(self):
+        super(IsotopeDatabaseManager, self).bind_preferences()
+
+        prefid='pychron.vcs'
+        bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
+
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
@@ -217,6 +225,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         # if progress:
                         #     progress.on_trait_change(self._progress_closed,
                         #                              'closed', remove=True)
+
+                if self.use_vcs:
+                    self.vcs.add_analyses(db_ans)
+
                 return db_ans
 
     def get_level(self, level, irradiation=None):
@@ -362,11 +374,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         if not synced:
             ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
-
-        #add to vcs
-        vcs=self.vcs
-        vcs.set_repo(ai.project)
-        vcs.add_analysis(ai)
 
         return ai
 

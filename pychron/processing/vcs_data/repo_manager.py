@@ -61,16 +61,20 @@ class RepoManager(Loggable):
         if remote:
             remote.push()
 
-    def commit(self, msg, repo):
+    def commit(self, msg, repo=None):
         index=self._get_repo_index(repo)
         if index:
             index.commit(msg)
 
-    def add(self, p, msg=None):
+    def add(self, p, msg=None, **kw):
         if msg is None:
-            msg='added {}'.format(p)
+            name=p.replace(self.root,'')
+            if name.startswith('/'):
+                name=name[1:]
 
-        self._add_to_repo(p, msg)
+            msg='added {}'.format(name)
+
+        self._add_to_repo(p, msg, **kw)
 
     def has_uncommitted(self, repo=None):
         return len(self._get_uncommited_changes(repo))
@@ -80,14 +84,15 @@ class RepoManager(Loggable):
         index=self._get_repo_index(repo)
         return index.diff(None)
 
-    def _add_to_repo(self, p, msg, repo=None):
+    def _add_to_repo(self, p, msg, repo=None, commit=True):
         # repo=self._get_repo(repo)
         # if repo:
         index=self._get_repo_index(repo)
         if index:
             # name = os.path.basename(p)
             index.add([p])
-            index.commit(msg)
+            if commit:
+                index.commit(msg)
 
     def _get_remote(self,repo, remote):
         repo=self._get_repo(repo)

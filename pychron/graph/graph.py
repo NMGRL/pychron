@@ -36,7 +36,7 @@ import math
 #=============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
-from editors.plot_editor import PlotEditor
+# from editors.plot_editor import PlotEditor
 from guide_overlay import GuideOverlay
 
 from tools.contextual_menu_tool import ContextualMenuTool
@@ -114,7 +114,7 @@ class Graph(Viewable, ContextMenuMixin):
 
     plot_editor = Any
 
-    plot_editor_klass = PlotEditor
+    # plot_editor_klass = PlotEditor
 
     graph_editor = Any
     autoupdate = Bool(False)
@@ -938,18 +938,18 @@ class Graph(Viewable, ContextMenuMixin):
         '''
         self._show_plot_editor()
 
-    def _show_plot_editor(self, **kw):
-        '''
-        '''
-        p = self.plot_editor
-        if p is None or not p.plot == self.selected_plot:
-            p = self.plot_editor_klass(plot=self.selected_plot,
-                                       graph=self,
-                                       **kw
-            )
-            self.plot_editor = p
-
-            p.edit_traits(parent=self._control)
+    # def _show_plot_editor(self, **kw):
+    #     '''
+    #     '''
+    #     p = self.plot_editor
+    #     if p is None or not p.plot == self.selected_plot:
+    #         p = self.plot_editor_klass(plot=self.selected_plot,
+    #                                    graph=self,
+    #                                    **kw
+    #         )
+    #         self.plot_editor = p
+    #
+    #         p.edit_traits(parent=self._control)
 
     def auto_update(self, *args, **kw):
         '''
