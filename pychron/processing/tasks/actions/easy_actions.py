@@ -40,6 +40,11 @@ class EasyDiscriminationAction(TaskAction):
     name = 'Easy Disc.'
 
 
+class EasyICAction(TaskAction):
+    method = 'do_easy_ic'
+    name = 'Easy Disc.'
+
+
 class EasyFiguresAction(Action):
     name = 'Easy Figures'
 

@@ -31,7 +31,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
     auto_find = False
     pickle_path = 'ic_fits'
 
-    def save(self):
+    def save(self, progress=None):
         if not any([si.valid for si in self.tool.fits]):
             return
 
@@ -39,14 +39,13 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         with db.session_ctx():
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
-            prog=None
             n=len(self.analyses)
             if n>1:
-                prog=self.processor.open_progress(n=n)
+                progress=progress.increase_max(n)
 
             for unk in self.analyses:
-                if prog:
-                    prog.change_message('Saving ICs for {}'.format(unk.record_id))
+                if progress:
+                    progress.change_message('Saving ICs for {}'.format(unk.record_id))
 
                 meas_analysis = db.get_analysis_uuid(unk.uuid)
 
@@ -61,8 +60,11 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
                 unk.sync_detector_info(meas_analysis)
 
-            if prog:
-                prog.close()
+            if self.auto_plot:
+                self.rebuild_graph()
+
+            # if progress:
+            #     progress.soft_close()
 
                 #if not si.use:
                 #    self.debug('using previous value {} {}'.format(unk.record_id, si.name))

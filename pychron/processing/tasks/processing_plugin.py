@@ -26,7 +26,7 @@ from pyface.tasks.action.schema import SMenu, SGroup
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction
 from pychron.processing.tasks.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
@@ -121,6 +121,9 @@ Install to enable MS Excel export''')
                                       task_id='pychron.analysis_edit.blanks'),
             self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/Tools/Easy')],
                                       task_id='pychron.analysis_edit.discrimination'),
+            self._make_task_extension([('easy_ic', EasyICAction , 'MenuBar/Tools/Easy')],
+                                      task_id='pychron.analysis_edit.ic_factor'),
+
         ]
 
     def _meta_task_factory(self, i, f, n, task_group=None,

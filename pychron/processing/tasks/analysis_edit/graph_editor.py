@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from reportlab.lib.pagesizes import letter
-from traits.api import Any, List, on_trait_change, Instance, Property, Event, File
+from traits.api import Any, List, on_trait_change, Property, Event, File
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import asarray
@@ -52,6 +52,9 @@ class GraphEditor(BaseUnknownsEditor):
     auto_plot = Property
     update_on_analyses = True
 
+    def make_title(self):
+        names=[ai.record_id for ai in self.analyses]
+        return self._grouped_name(names)
 
     def prepare_destroy(self):
         self.dump_tool()

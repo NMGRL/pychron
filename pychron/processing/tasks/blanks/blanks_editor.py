@@ -46,7 +46,7 @@ class BlanksEditor(InterpolationEditor):
     def do_fit(self, ans):
         pass
 
-    def save(self):
+    def save(self, progress=None):
 
         if not any([si.valid for si in self.tool.fits]):
             return
@@ -57,13 +57,12 @@ class BlanksEditor(InterpolationEditor):
             self.info('Attempting to save corrections to database')
 
             n = len(self.analyses)
-            prog = None
             if n > 1:
-                prog = self.processor.open_progress(n)
+                progress.increase_max(n)
 
             for unk in self.analyses:
-                if prog:
-                    prog.change_message('Saving blanks for {}'.format(unk.record_id))
+                if progress:
+                    progress.change_message('Saving blanks for {}'.format(unk.record_id))
 
                 meas_analysis = db.get_analysis_uuid(unk.uuid)
 
@@ -81,7 +80,8 @@ class BlanksEditor(InterpolationEditor):
                                                         self._clean_references(), cname)
                 unk.sync(meas_analysis)
 
-            self.rebuild_graph()
+            if self.auto_plot:
+                self.rebuild_graph()
 
             #     def _update_unknowns_hook(self):
             #         '''

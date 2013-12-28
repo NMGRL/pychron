@@ -21,24 +21,11 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter, Tabbed
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.easy_parser import EasyParser
 from pychron.paths import r_mkdir
-from pychron.processing.easy.easy_manager import EasyManager
 
-from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
+from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, bin_analyses, no_auto_ctx
 #============= standard library imports ========================
 #============= local library imports  ==========================
-class no_auto_ctx(object):
-    def __init__(self, obj):
-        self.obj=obj
-
-    def __enter__(self):
-        self.obj.auto_find=False
-        self.obj.update_on_analyses=False
-
-    def __exit__(self, *args):
-        self.obj.auto_find=True
-        self.obj.update_on_analyses=True
 
 
 class BlanksTask(InterpolationTask):
@@ -80,28 +67,10 @@ class BlanksTask(InterpolationTask):
     #
     #    self._load_references(new)
 
-
     def do_easy_blanks(self):
-        if self.active_editor:
-            manager=EasyManager(db=self.manager.db,
-                                func=self._easy_blanks)
+        self._do_easy_func()
 
-            manager.execute()
-            manager.edit_traits()
-        else:
-            self.warning_dialog('No active tab. Please open a blank tab to use Easy Blanks')
-
-        # with db.session_ctx() as sess:
-        #     ok=manager.execute(self._easy_blanks)
-        #
-        #     # ok = self._easy_blanks(db, ep, manager)
-        #     if not ok:
-        #         sess.rollback()
-        #
-        # if ok:
-        #     self.information_dialog('Changes saved to the database')
-
-    def _easy_blanks(self, ep, manager):
+    def _easy_func(self, ep, manager):
         db=self.manager.db
 
         doc = ep.doc('blanks')
@@ -139,7 +108,7 @@ class BlanksTask(InterpolationTask):
 
         with no_auto_ctx(self.active_editor):
             if non_preceding_fits:
-                for ais in self._bin_analyses(unks):
+                for ais in bin_analyses(unks):
                     if prog.canceled:
                         return
                     elif prog.accepted:
@@ -156,13 +125,13 @@ class BlanksTask(InterpolationTask):
 
                     #save a figure
                     if doc['save_figures']:
-                        a,b='foo','bar'
-                        title='{}_{}'.format(a,b)
+                        title=self.active_editor.make_title()
                         p=os.path.join(root, add_extension(title,'.pdf'))
                         self.active_editor.save_file(p)
 
-                    self.active_editor.dump_tool()
+                    self.active_editor.save(progress=prog)
 
+                    self.active_editor.dump_tool()
         return True
 
     def _preceding_correct(self, db, fi, ai, hist):
@@ -191,32 +160,7 @@ class BlanksTask(InterpolationTask):
             self.warning('No preceding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
                                                                          ai.aliquot, ai.step))
 
-    def _bin_analyses(self, ans):
-        ans = iter(sorted(ans, key=lambda x: x.analysis_timestamp))
 
-        def _bin():
-            ai = ans.next()
-            pt = ai.analysis_timestamp
-            g = [ai]
-            tol = 60 * 60
-            cnt = 0
-            while 1:
-                try:
-                    ai = ans.next()
-                    dev = ai.analysis_timestamp - pt
-                    pt = ai.analysis_timestamp
-                    if dev.total_seconds() > tol:
-                        yield g
-                        g = [ai]
-                    else:
-                        g.append(ai)
-
-                except StopIteration:
-                    break
-
-            yield g
-
-        return _bin()
 
 
 #============= EOF =============================================

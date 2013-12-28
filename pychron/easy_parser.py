@@ -25,7 +25,7 @@ from pychron.paths import paths
 from pychron.loggable import Loggable
 
 
-doc_mapping = ['setup', 'import', 'iso_fits', 'blanks', 'disc', 'figures', 'tables']
+doc_mapping = ['setup', 'import', 'iso_fits', 'blanks', 'disc','ic', 'figures', 'tables']
 
 class EasyParser(Loggable):
     _docs = List

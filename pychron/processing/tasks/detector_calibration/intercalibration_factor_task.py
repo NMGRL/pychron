@@ -15,12 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from traits.api import on_trait_change
 from pyface.tasks.task_layout import TaskLayout, VSplitter, PaneItem, \
     HSplitter, Tabbed
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.iterfuncs import partition
+from pychron.paths import r_mkdir
+from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx, bin_analyses
+from zobs.wx.gui import invoke_in_main_thread
 
 
 class IntercalibrationFactorTask(InterpolationTask):
@@ -66,5 +71,71 @@ class IntercalibrationFactorTask(InterpolationTask):
                 ans = self.manager.make_analyses(ans)
                 self.references_pane.items = ans
 
+    def do_easy_ic(self):
+        self._do_easy_func()
+
+    def _easy_func(self, ep, manager):
+        print ep, manager
+        db = self.manager.db
+
+        doc = ep.doc('ic')
+        fits = doc['fits']
+        projects = doc['projects']
+
+        unks = [ai for proj in projects
+                for si in db.get_samples(project=proj)
+                for ln in si.labnumbers
+                for ai in ln.analyses]
+
+        prog = manager.progress
+        prog.increase_max(len(unks))
+
+        preceding_fits, non_preceding_fits = map(list, partition(fits, lambda x: x['fit'] == 'preceding'))
+        if preceding_fits:
+            self.debug('preceding fits for ic_factors not implemented')
+            # for ai in unks:
+            #     if prog.canceled:
+            #         return
+            #     elif prog.accepted:
+            #         break
+            #     l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
+            #     prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
+            #     hist = db.add_history(ai, 'blanks')
+            #     ai.selected_histories.selected_blanks = hist
+            #     for fi in preceding_fits:
+            #         self._preceding_correct(db, fi, ai, hist)
+
+        #make figure root dir
+        if doc['save_figures']:
+            root = doc['figure_root']
+            r_mkdir(root)
+
+        if non_preceding_fits:
+            with no_auto_ctx(self.active_editor):
+                for ais in bin_analyses(unks):
+                    if prog.canceled:
+                        return
+                    elif prog.accepted:
+                        break
+
+                    self.active_editor.set_items(ais, progress=prog)
+                    self.active_editor.find_references(progress=prog)
+
+                    #refresh graph
+                    invoke_in_main_thread(self.active_editor.rebuild_graph)
+
+                    if not manager.wait_for_user():
+                        return
+
+                    #save a figure
+                    if doc['save_figures']:
+                        title = self.active_editor.make_title()
+                        p = os.path.join(root, add_extension(title, '.pdf'))
+                        self.active_editor.save_file(p)
+
+                    self.active_editor.save(progress=prog)
+                    self.active_editor.dump_tool()
+
+        return True
 
 #============= EOF =============================================

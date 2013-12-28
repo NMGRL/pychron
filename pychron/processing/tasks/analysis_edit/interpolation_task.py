@@ -18,12 +18,53 @@
 from datetime import timedelta
 from traits.api import on_trait_change
 from traits.api import Any
+from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
+
+
+def bin_analyses(ans):
+    ans = iter(sorted(ans, key=lambda x: x.analysis_timestamp))
+
+    def _bin():
+        ai = ans.next()
+        pt = ai.analysis_timestamp
+        g = [ai]
+        tol = 60 * 60
+        while 1:
+            try:
+                ai = ans.next()
+                dev = ai.analysis_timestamp - pt
+                pt = ai.analysis_timestamp
+                if dev.total_seconds() > tol:
+                    yield g
+                    g = [ai]
+                else:
+                    g.append(ai)
+
+            except StopIteration:
+                break
+
+        yield g
+
+    return _bin()
+
+
+class no_auto_ctx(object):
+    def __init__(self, obj):
+        self.obj=obj
+
+    def __enter__(self):
+        self.obj.auto_find=False
+        self.obj.update_on_analyses=False
+
+    def __exit__(self, *args):
+        self.obj.auto_find=True
+        self.obj.update_on_analyses=True
 
 
 class InterpolationTask(AnalysisEditTask):
@@ -116,5 +157,18 @@ class InterpolationTask(AnalysisEditTask):
             ans = [self._record_view_factory(ai) for ai in ans]
             self.danalysis_table.set_analyses(ans)
             return ans
+
+    def _do_easy_func(self):
+        if self.active_editor:
+            manager = EasyManager(db=self.manager.db,
+                                  func=self._easy_func)
+
+            manager.execute()
+            manager.edit_traits()
+        else:
+            self.warning_dialog('No active tab')
+
+    def _easy_func(self):
+        raise NotImplementedError
 
 #============= EOF =============================================
