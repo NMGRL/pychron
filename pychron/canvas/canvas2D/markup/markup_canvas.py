@@ -187,18 +187,6 @@ class MarkupCanvas(BaseDataCanvas):
         pass
 
     def _menu_factory(self, event):
-        import wx
-        popup_menu = wx.Menu()
-        panel = event.window.control
-
-        for en, name in [(True, 'Foo')]:
-            item = popup_menu.Append(-1, name)
-            item.Enable(en)
-            panel.Bind(wx.EVT_MENU, getattr(self, 'On{}'.format(name)), item)
-
-        pos = event.x, panel.Size[1] - event.y
-        panel.PopupMenu(popup_menu, pos)
-        popup_menu.Destroy()
         self.invalidate_and_redraw()
 
     def OnFoo(self, event):

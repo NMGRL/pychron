@@ -15,23 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import weakref
 from traits.api import String, Property, Event, \
-    cached_property, Any
+    cached_property, Any, Instance
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
+import weakref
 #============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
 # from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
 # from pychron.processing.analysis import Analysis, NonDBAnalysis
-from pychron.processing.analyses.analysis import DBAnalysis, Analysis
+from pychron.processing.analyses.analysis import DBAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 # from pychron.pychron_constants import NULL_STR
 # from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
 
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
@@ -110,7 +111,7 @@ class BaseIsotopeDatabaseManager(Loggable):
                               can_cancel=True,
                               can_ok=True)
         pd.open()
-        pd.on_trait_change(self._progress_closed, 'closed')
+        # pd.on_trait_change(self._progress_closed, 'closed')
         return pd
 
     def _progress_closed(self):
@@ -130,7 +131,7 @@ class BaseIsotopeDatabaseManager(Loggable):
 
 
 class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
-    _db_klass=IsotopeAdapter
+    _db_klass = IsotopeAdapter
 
     irradiation = String
     level = String
@@ -140,6 +141,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     saved = Event
     updated = Event
+
+    vcs = Instance(IsotopeVCSManager, ())
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
@@ -167,15 +170,24 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         with self.db.session_ctx():
             if ans:
+                #partition into DBAnalysis vs IsotopeRecordView
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
 
                 if no_db_ans:
+                    #partition into cached and non cached analyses
                     cached_ans, no_db_ans = partition(no_db_ans,
                                                       lambda x: x.uuid in ANALYSIS_CACHE)
+
                     cached_ans = list(cached_ans)
 
+                    #add analyses from cache to db_ans
                     db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
+                    #increment value in cache_count
+                    for ci in cached_ans:
+                        self._add_to_cache(ci)
+
+                    #load remaining analyses
                     no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
@@ -190,20 +202,21 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                             if progress:
                                 if progress.canceled:
                                     self.debug('canceling make analyses')
-                                    return []
+                                    db_ans=[]
+                                    break
                                 elif progress.accepted:
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._analysis_factory(ai,
-                                                       progress=progress,
-                                                       **kw)
+                            a = self._analysis_factory(ai, progress=progress, **kw)
                             if a:
                                 db_ans.append(a)
 
                         if progress:
-                            progress.on_trait_change(self._progress_closed,
-                                                     'closed', remove=True)
+                            progress.soft_close()
+                        # if progress:
+                        #     progress.on_trait_change(self._progress_closed,
+                        #                              'closed', remove=True)
                 return db_ans
 
     def get_level(self, level, irradiation=None):
@@ -293,20 +306,21 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def _analysis_factory(self, rec, progress=None,
                           use_cache=True, **kw):
 
-        if isinstance(rec, (Analysis, DBAnalysis)):
-            if progress:
-                progress.increment()
-                self._add_to_cache(rec)
-            return rec
+        # if isinstance(rec, (Analysis, DBAnalysis)):
+        #     if progress:
+        #         progress.increment()
+        #         self._add_to_cache(rec)
+        #     return rec
 
-        else:
-            a = self._construct_analysis(rec, progress, **kw)
-            if use_cache:
-                self._add_to_cache(a)
+        # else:
 
-            return a
+        a = self._construct_analysis(rec, progress, **kw)
+        if use_cache:
+            self._add_to_cache(a)
 
-    def _construct_analysis(self, rec, prog, calculate_age=False, unpack=False,load_changes=False):
+        return a
+
+    def _construct_analysis(self, rec, prog, calculate_age=False, unpack=False, load_changes=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -339,24 +353,20 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         ai = DBAnalysis(group_id=group_id,
                         graph_id=graph_id)
 
+        synced=False
         if atype in ('unknown', 'cocktail'):
-            #ai.sync_arar(meas_analysis)
-
             if calculate_age:
                 ai.sync(meas_analysis, unpack=False, load_changes=load_changes)
                 ai.calculate_age(force=True)
-            #elif not ai.persisted_age:
-            #    ai.sync(meas_analysis, unpack=True)
-            #    ai.calculate_age()
-            #    self._add_arar(meas_analysis, ai)
-            #elif calculate_age:
-            #    ai.sync(meas_analysis, unpack=True)
-            #    ai.calculate_age(force=True)
-            else:
-                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
+                synced=True
 
-        else:
+        if not synced:
             ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
+
+        #add to vcs
+        vcs=self.vcs
+        vcs.set_repo(ai.project)
+        vcs.add_analysis(ai)
 
         return ai
 

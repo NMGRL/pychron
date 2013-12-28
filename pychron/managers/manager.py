@@ -458,19 +458,10 @@ class Manager(Viewable, RPCable):
             return dlg.path
 
 
-#    def _led_editor_factory(self, window, editor):
-#        '''
-#        '''
-#        import wx
-#
-#        p = wx.Panel(window, -1)
-#        p.Add()
-#        return p
-
     def _led_factory(self, name, color='green'):
-        '''
+        """
 
-        '''
+        """
         i = Item(name, show_label=False)
         return i
 

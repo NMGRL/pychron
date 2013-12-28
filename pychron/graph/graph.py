@@ -920,17 +920,18 @@ class Graph(Viewable, ContextMenuMixin):
         return renderer[0], plotobj
 
     def show_graph_editor(self):
-        '''
-        '''
-        from editors.graph_editor import GraphEditor
-
-        g = self.graph_editor
-        if g is None:
-            print self
-            g = GraphEditor(graph=self)
-            self.graph_editor = g
-
-        g.edit_traits(parent=self._control)
+        """
+        """
+        pass
+        # from editors.graph_editor import GraphEditor
+        #
+        # g = self.graph_editor
+        # if g is None:
+        #     print self
+        #     g = GraphEditor(graph=self)
+        #     self.graph_editor = g
+        #
+        # g.edit_traits(parent=self._control)
 
     def show_plot_editor(self):
         '''

@@ -15,24 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, on_trait_change
+from traits.api import Any
 # from traits.etsconfig.etsconfig import ETSConfig
 from traits.api import Instance
-from traitsui.api import View, Item
 from enable.window import Window
 # from enable.component_editor import _ComponentEditor
 from pyface.tasks.editor import Editor
-from pychron.graph.graph import Graph
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager, \
-    PlotterOptionsManager
+from pychron.processing.plotter_options_manager import PlotterOptionsManager
 #============= standard library imports ========================
 #============= local library imports  ==========================
-# if ETSConfig.toolkit == 'wx':
-#    from traitsui.wx.editor import Editor
-# elif ETSConfig.toolkit == 'qt4':
-#    from traitsui.qt4.editor import Editor
-# else:
-#    Editor = object
+
 
 class ProcessingEditor(Editor):
     component = Any

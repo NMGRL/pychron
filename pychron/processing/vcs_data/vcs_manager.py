@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 import os
 import paramiko
-from traits.api import Instance
+from traits.api import Instance, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import yaml
+
 from pychron.loggable import Loggable
-from pychron.paths import r_mkdir
+from pychron.paths import r_mkdir, paths
 from pychron.processing.vcs_data.repo_manager import RepoManager
 
 
@@ -31,7 +32,8 @@ class VCSManager(Loggable):
          manage access to data sourced in git repos
          create local and remote repositories
     """
-    pass
+    #root location of all repositories
+    root=Str
 
 
 class IsotopeVCSManager(VCSManager):
@@ -51,9 +53,28 @@ class IsotopeVCSManager(VCSManager):
     """
     repo_manager=Instance(RepoManager, ())
 
+    def set_repo(self, name):
+        p=os.path.join(paths.vcs_dir, name)
+
+        #make or use existing repo
+        self.init_repo(p)
+
+        #add readme if none exists
+        self.add_readme(p)
+
+    def add_readme(self, p):
+        p=os.path.join(p, 'README')
+        if not os.path.isfile(p):
+            with open(p, 'w') as fp:
+                fp.write('README for PROJECT <{}>\n\n\n'
+                         '**file created by Pychron\'s VCSManager'.format(os.path.basename(p)))
+
+            self.repo_manager.add(p, msg='init commit')
+
     def init_repo(self, path, auto_add_remote=False):
         rm=self.repo_manager
         rm.add_repo(path)
+
         if auto_add_remote:
             host = ''
 
@@ -84,6 +105,7 @@ class IsotopeVCSManager(VCSManager):
         rm=self.repo_manager
         rm.commit(msg)
 
+    #Isotope protocol
     def add_analyses(self, ans):
         for ai in ans:
             self._add_analysis(ai)
@@ -107,6 +129,7 @@ class IsotopeVCSManager(VCSManager):
 
             self.repo_manager.add(p)
 
+    #private
     def _generate_analysis_dict(self, ai):
 
         d=dict([(k, getattr(ai, k)) for k in ('labnumber','aliquot','step','timestamp')])

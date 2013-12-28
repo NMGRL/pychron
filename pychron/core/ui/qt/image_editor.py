@@ -30,8 +30,6 @@ from pychron.core.ui.gui import invoke_in_main_thread
 #=============standard library imports ========================
 
 # import math
-# import wx
-# from wx._core import EVT_PAINT
 #=============local library imports  ==========================
 # from ctypes_opencv import  cvCreateImage, CvSize, cvAddS, CvScalar, \
 # CvRect, cvSetImageROI, cvResize, cvResetImageROI

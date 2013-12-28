@@ -125,9 +125,6 @@ def new_logger(name):
 #        '''
 #        if self.output is not None:
 #            msg = '{record.name}{record.message}'.format(record=record)
-# #            import wx
-# #            print type(self.output._display), not isinstance(self.output._display, wx._core._wxPyDeadObject)
-# #            if not isinstance(self.output._display, wx._core._wxPyDeadObject):
 #
 #            do_later(self.output.add_text, color='red' if record.levelno > 20 else 'black',
 #                                 msg=msg,

@@ -21,15 +21,17 @@ from enable.component_editor import ComponentEditor, _ComponentEditor
 from enable.window import Window as EWindow
 from PySide.QtCore import Qt
 #============= standard library imports ========================
-# from wx import EVT_KEY_UP
 
 #============= local library imports  ==========================
+
+
 class Window(EWindow):
     on_key_release = None
 
     def _on_key_released(self, event):
         if self.on_key_release:
             self.on_key_release(event)
+
 
 class _LaserComponentEditor(_ComponentEditor):
     keyboard_focus = Event
@@ -64,9 +66,9 @@ class _LaserComponentEditor(_ComponentEditor):
         '''
         ekey = event.key()
         for sk, n in ((Qt.Key_Left, 'left'),
-                    (Qt.Key_Right, 'right'),
-                    (Qt.Key_Up, 'up'),
-                    (Qt.Key_Down, 'down')):
+                      (Qt.Key_Right, 'right'),
+                      (Qt.Key_Up, 'up'),
+                      (Qt.Key_Down, 'down')):
 
             if ekey == sk:
                 if hasattr(self.value, 'key_released'):
@@ -76,7 +78,9 @@ class _LaserComponentEditor(_ComponentEditor):
     def _keyboard_focus_changed(self):
         self.control.setFocus()
 
+
 class LaserComponentEditor(ComponentEditor):
     klass = _LaserComponentEditor
     keyboard_focus = Str
+
 #============= EOF =============================================

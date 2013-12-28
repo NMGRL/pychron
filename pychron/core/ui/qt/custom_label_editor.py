@@ -22,12 +22,11 @@ from traits.api import HasTraits, Str, Int, Color, \
 from traitsui.api import View, UItem
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
-# from traitsui.wx.basic_editor_factory import BasicEditorFactory
-# import wx
 #============= standard library imports ========================
 import random
 from PySide.QtGui import QLabel
 #============= local library imports  ==========================
+
 
 class _CustomLabelEditor(Editor):
 #    txtctrl = Any

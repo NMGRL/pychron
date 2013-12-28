@@ -170,13 +170,14 @@ class Image(HasTraits):
         try:
             return frame.to_wx_bitmap()
         except AttributeError:
-            import wx
-            if frame is not None:
-#                self._frame = frame
-                return wx.BitmapFromBuffer(frame.width,
-                                       frame.height,
-                                       frame.data_as_string()
-                                        )
+            pass
+#             import wx
+#             if frame is not None:
+# #                self._frame = frame
+#                 return wx.BitmapFromBuffer(frame.width,
+#                                        frame.height,
+#                                        frame.data_as_string()
+#                                         )
 
     def modify_frame(self, frame, vflip=None, hflip=None , gray=False, swap_rb=None,
                   clone=False, croprect=None, size=None):

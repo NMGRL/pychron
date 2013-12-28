@@ -14,12 +14,9 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 from traits.api import Any, Int, Str, Event
 #============= standard library imports ========================
-# from wx import EVT_IDLE, EVT_PAINT
 from PySide.QtCore import QTimer
 from stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 #============= local library imports  ==========================
@@ -31,7 +28,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
     """
     playTimer = Any
     fps = Int
-    stop_timer=Event
+    stop_timer = Event
 
     def init(self, parent):
         """
@@ -83,6 +80,6 @@ class VideoComponentEditor(LaserComponentEditor):
     """
     """
     klass = _VideoComponentEditor
-    stop_timer=Str
+    stop_timer = Str
 
 #============= EOF ====================================

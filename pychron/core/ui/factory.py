@@ -20,9 +20,10 @@ from traits.etsconfig.api import ETSConfig
 #============= local library imports  ==========================
 def toolkit_factory(name, klass):
     if ETSConfig.toolkit == 'wx':
-        pkg = 'pychron.core.ui.wx'
+        raise NotImplementedError('wx backend is not available')
     else:
         pkg = 'pychron.core.ui.qt'
+
     mod = __import__('{}.{}'.format(pkg, name), fromlist=[klass])
     return getattr(mod, klass)
 #============= EOF =============================================

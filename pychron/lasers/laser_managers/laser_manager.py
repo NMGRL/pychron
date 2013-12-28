@@ -510,22 +510,3 @@ if __name__ == '__main__':
 
 #    lm.set_laser_power(10)
 #============= EOF ====================================
-#        import wx
-#        ls = self._get_optional_window_labels()
-#        if ls:
-#            for li in ls:
-#                w = wx.FindWindowByLabel(li)
-#                if w is not None:
-#                    w.Destroy()
-#
-#    def _get_optional_window_labels(self):
-#        labels = []
-#
-#        hl = self._get_optional_window_labels_hook()
-#        if hl:
-#            labels += hl
-#
-#        return labels
-#
-#    def _get_optional_window_labels_hook(self):
-#        pass

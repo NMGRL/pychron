@@ -16,12 +16,12 @@
 
 #============= enthought library imports =======================
 
-from traits.api import Any
+from traits.api import Any, Directory
 
 #============= standard library imports ========================
 import os
 from git import Repo
-from git.utils import is_git_dir
+
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -33,6 +33,7 @@ class RepoManager(Loggable):
     """
 
     _repo=Any
+    root=Directory
 
     def add_repo(self, localpath):
         """
@@ -40,6 +41,7 @@ class RepoManager(Loggable):
         """
         repo=self._add_repo(localpath)
         self._repo=repo
+        self.root=localpath
 
     def create_remote(self, host, repo_name, name='origin', repo=None, user='git'):
         repo=self._get_repo(repo)
@@ -83,8 +85,8 @@ class RepoManager(Loggable):
         # if repo:
         index=self._get_repo_index(repo)
         if index:
-            name = os.path.basename(p)
-            index.add([name])
+            # name = os.path.basename(p)
+            index.add([p])
             index.commit(msg)
 
     def _get_remote(self,repo, remote):
@@ -108,7 +110,7 @@ class RepoManager(Loggable):
             os.mkdir(root)
 
         gitdir=os.path.join(root, '.git')
-        if not is_git_dir(gitdir):
+        if not os.path.isdir(gitdir):
             repo = Repo.init(root)
         else:
             repo = Repo(root)

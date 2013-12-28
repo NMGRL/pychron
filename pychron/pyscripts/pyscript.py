@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Any, Bool, Property, Int
-from pyface.confirmation_dialog import confirm  # from pyface.wx.dialog import confirmation
+from pyface.confirmation_dialog import confirm
 #============= standard library imports ========================
 import time
 import os

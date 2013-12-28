@@ -72,14 +72,6 @@ class SelectorHandler(Handler):
 
         # #        if info.initialized:
 
-#        import wx
-#        for control in info.ui.control.GetChildren()[0].GetChildren():
-#            if isinstance(control, wx.Button):
-#                if control.GetLabel() == 'Search':
-#                    control.Bind(wx.EVT_KEY_DOWN, info.object.onKeyDown)
-#                    control.SetFocus()
-#                    info.ui.control.SetDefaultItem(control)
-#                    break
 
 class DatabaseSelector(Viewable, ColumnSorterMixin):
     records = List

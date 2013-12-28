@@ -18,21 +18,8 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, String
 
-# from pyface.message_dialog import information, warning as nonmodal_warning, \
-#     MessageDialog
-# from pyface.confirmation_dialog import confirm, ConfirmationDialog
-# from pyface.api import confirm
-#
-# from traits.etsconfig.api import ETSConfig
-# if ETSConfig.toolkit == 'wx':
-#    from pyface.wx.dialog import confirmation, warning
-
-
-
 #============= standard library imports ========================
-# import wx
 #============= local library imports  ==========================
-# from pychron.core.helpers.logger_setup import add_console
 from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger

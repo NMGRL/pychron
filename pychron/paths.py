@@ -130,6 +130,7 @@ class Paths():
     default_cache = None
     loading_dir = None
     power_map_dir = None
+    vcs_dir=None
     # initialization_dir = None
     # device_creator_dir = None
 
@@ -261,7 +262,7 @@ class Paths():
         self.video_dir = join(data_dir, 'videos')
         self.stage_visualizer_dir = join(data_dir, 'stage_visualizer')
 
-        self.arar_dir = join(data_dir, 'arar')
+        # self.arar_dir = join(data_dir, 'arar')
 
         self.isotope_dir = join(self.data_dir, 'isotopes')
         self.workspace_root_dir = join(self.data_dir, 'workspaces')
@@ -273,6 +274,7 @@ class Paths():
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
+        self.vcs_dir=join(self.data_dir, 'vcs')
         #==============================================================================
         # lovera exectuables
         #==============================================================================

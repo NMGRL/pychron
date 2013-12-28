@@ -77,12 +77,7 @@ def change_intensity(color, fac):
 #         self.blink = False
 #
 #
-# #        self.timer = wx.Timer(self)
-# #        self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
 #
-# #        self.connect()
-# #        self.Bind(wx.EVT_PAINT, self.OnPaint, self)
-# #        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeft, self)
 #
 #         self._obj = obj
 #         s = self._obj.shape
