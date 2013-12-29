@@ -177,7 +177,7 @@ class IsotopeVCSManager(VCSManager):
         """
         d = dict([(k, getattr(ai, k)) for k in ('labnumber', 'aliquot',
                                                 'step', 'timestamp', 'tag',
-                                                'sample','project','material')])
+                                                'sample','project','material','mass_spectrometer')])
 
         def func(iso):
             return {'name': iso.name,
@@ -186,6 +186,8 @@ class IsotopeVCSManager(VCSManager):
                     'discrimination_error': float(iso.discrimination.std_dev),
                     'ic_factor': float(iso.ic_factor.nominal_value),
                     'ic_factor_error': float(iso.ic_factor.std_dev),
+                    'value':float(iso.value),
+                    'error':float(iso.error),
                     'blank': float(iso.blank.value),
                     'blank_error': float(iso.blank.error),
                     'baseline': float(iso.baseline.value),

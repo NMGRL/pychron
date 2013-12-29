@@ -26,7 +26,7 @@ from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
 # from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
 # from pychron.processing.analysis import Analysis, NonDBAnalysis
-from pychron.processing.analyses.analysis import DBAnalysis
+from pychron.processing.analyses.analysis import DBAnalysis, VCSAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
@@ -369,7 +369,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         meas_analysis = self.db.get_analysis_uuid(rec.uuid)
 
-        ai = DBAnalysis(group_id=group_id,
+        klass=DBAnalysis
+        if self.use_vcs:
+            klass=VCSAnalysis
+
+        ai = klass(group_id=group_id,
                         graph_id=graph_id)
 
         synced=False

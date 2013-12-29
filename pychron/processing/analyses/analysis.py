@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
     Date, Any, Either, Bool, List
 #============= standard library imports ========================
@@ -23,8 +24,10 @@ from datetime import datetime
 from uncertainties import ufloat
 from collections import namedtuple
 #============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.paths import paths
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
 from pychron.processing.analyses.changes import FitChange, BlankChange
 from pychron.processing.arar_age import ArArAge
@@ -254,8 +257,29 @@ class DBAnalysis(Analysis):
             copy values from meas_AnalysisTable
             and other associated tables
         """
+
+        self._sync_meas_analysis_attributes(meas_analysis)
+        self._sync_analysis_info(meas_analysis)
+
+        # copy related table attrs
+        self._sync_experiment(meas_analysis)
+        self._sync_irradiation(meas_analysis.labnumber)
+
+        #this is the dominant time sink
+        self._sync_isotopes(meas_analysis, unpack)
+
+        self._sync_detector_info(meas_analysis)
+        self._sync_extraction(meas_analysis)
+
+        if load_changes:
+            self._sync_changes(meas_analysis)
+
+        self.analysis_type = self._get_analysis_type(meas_analysis)
+
+    def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
         nocast = lambda x: x
+
         attrs = [
             ('labnumber', 'labnumber', lambda x: x.identifier),
             ('aliquot', 'aliquot', int),
@@ -279,23 +303,6 @@ class DBAnalysis(Analysis):
             tag = meas_analysis.tag_item
             self.set_tag(tag)
 
-        #self.tag = tag or ''
-        #if self.tag:
-        #    self.temp_status = 1
-        # copy related table attrs
-        self._sync_experiment(meas_analysis)
-        self._sync_irradiation(meas_analysis.labnumber)
-
-        #this is the dominant time sink
-        self._sync_isotopes(meas_analysis, unpack)
-
-        self._sync_detector_info(meas_analysis)
-        self._sync_extraction(meas_analysis)
-        self._sync_analysis_info(meas_analysis)
-        if load_changes:
-            self._sync_changes(meas_analysis)
-
-        self.analysis_type = self._get_analysis_type(meas_analysis)
 
     def _sync_changes(self, meas_analysis):
 
@@ -356,18 +363,13 @@ class DBAnalysis(Analysis):
                 if st is not None and en is not None:
                     dur = en - st
                     dt = analts - st
-                    #                             dt = 45
                     segments.append((1, convert_days(dur), convert_days(dt)))
 
-            decay_time = 0
             d_o = doses[0][0]
             it = 0
             if d_o is not None:
                 it = time.mktime(d_o.timetuple())
 
-                #decay_time = convert_days(analts - d_o)
-
-            #self.decay_time=decay_time
             self.irradiation_time = it
             self.chron_segments = segments
 
@@ -413,7 +415,6 @@ class DBAnalysis(Analysis):
                 if v is None:
                     v = ''
                 setattr(self, attr, v)
-
 
     def _sync_view(self, av=None):
         if av is None:
@@ -702,24 +703,77 @@ class DBAnalysis(Analysis):
     def _post_process_msg(self, msg):
         msg = '{} {}'.format(self.record_id, msg)
         return msg
-        #def __getattr__(self, attr):
-        #    lattr = attr.lower()
-        #    #         print attr, ISOREGEX.match(attr)
-        #    #         if ISOREGEX.match(attr):
-        #    if '/' in attr:
-        #        #treat as ratio
-        #        n, d = attr.split('/')
-        #        return getattr(self, n) / getattr(self, d)
-        #
-        #    if lattr in ('ar40', 'ar39', 'ar38', 'ar37', 'ar36'):
-        #        return getattr(self, attr.capitalize())
-        #
-        #    if ISOREGEX.match(attr):
-        #        if attr in self.isotopes:
-        #            return self.isotopes[attr].uvalue
-        #
-        #    self.debug('no attribute {}'.format(attr))
-        #    raise AttributeError
+
+
+class VCSAnalysis(DBAnalysis):
+    """
+        uses local data with db metadata
+    """
+    _ydict=None
+    def _load_file(self):
+        p=os.path.join(paths.vcs_dir, self.project, self.labnumber,'{}.yaml'.format(self.record_id))
+        if os.path.isfile(p):
+            yd=yaml.load(p)
+            self._ydict=yd
+
+    def _sync(self, meas_analysis, unpack=False, load_changes=False):
+        """
+            if unpack is true load original signal data from db
+        """
+        self._sync_meas_analysis_attributes(meas_analysis)
+        self._sync_analysis_info(meas_analysis)
+        self.analysis_type = self._get_analysis_type(meas_analysis)
+        self._sync_extraction(meas_analysis)
+        self._sync_experiment(meas_analysis)
+
+        use_local=not unpack
+        if not unpack:
+            if not self._load_file():
+                use_local=False
+
+        if use_local:
+            self._sync_irradiation(meas_analysis.labnumber)
+            self._sync_isotopes(meas_analysis, unpack)
+            self._sync_detector_info(meas_analysis)
+        else:
+            super(VCSAnalysis, self)._sync_irradiation(meas_analysis.labnumber)
+            super(VCSAnalysis, self)._sync_isotopes(meas_analysis, unpack)
+            super(VCSAnalysis, self)._sync_detector_info(meas_analysis)
+
+        if load_changes:
+            self._sync_changes(meas_analysis)
+
+        self._ydict=None
+        del self._ydict
+
+    def _sync_irradiation(self, ln):
+        pass
+
+    #this is the dominant time sink
+    def _sync_isotopes(self, meas_analysis, unpack):
+        """
+            load from isotopes from file
+        """
+        isos={}
+
+        for iso in self._ydict['isotopes']:
+            ii= Isotope(name=iso['name'], detector=iso['detector'],
+                        ic_factor=self._to_ufloat(iso, 'ic_factor'),
+                        discrimination=self._to_ufloat(iso, 'discrimination'))
+
+            ii.trait_set(_value=iso['value'], _error=iso['error'])
+
+            ii.set_blank(iso['blank'], iso['blank_error'])
+            ii.set_baseline(iso['baseline'], iso['baseline_error'])
+
+            iso[iso['name']]=ii
+        self.isotopes=isos
+
+    def _to_ufloat(self, obj, attr):
+        return ufloat(obj[attr], obj['{}_error'.format(attr)])
+
+    def _sync_detector_info(self, meas_analysis):
+        pass
 
 
 if __name__ == '__main__':

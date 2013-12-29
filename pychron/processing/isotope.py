@@ -339,7 +339,10 @@ class Isotope(BaseIsotope):
 
         return v - self.background.uvalue
 
+    def set_blank(self, v, e):
+        self.blank=Blank(_value=v, _error=e)
 
-
+    def set_baseline(self, v, e):
+        self.baseline=Baseline(_value=v, _error=e)
 
 #============= EOF =============================================
