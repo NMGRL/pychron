@@ -24,6 +24,7 @@ from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
+from uncertainties import ufloat
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, gen_ExtractionDeviceTable
 
@@ -428,8 +429,6 @@ class Processor(IsotopeDatabaseManager):
     def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, predictors):
         n, d = fit_obj.name.split('/')
 
-
-
         iso=analysis.get_isotope(detector=d)
         if not iso:
             self.debug('************************* {} no detector {}'.format(analysis.record_id, d))
@@ -443,6 +442,10 @@ class Processor(IsotopeDatabaseManager):
             return
 
         ic_v, ic_e = map(float, ic)
+
+        #copy temp ic_factor to ic_factor
+        iso.ic_factor=ufloat(ic_v, ic_e)
+
         db = self.db
         item = db.add_detector_intercalibration(history,
                                                 detector=d,

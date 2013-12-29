@@ -62,7 +62,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                         self.processor.apply_correction(history, unk, si,
                                                         self._clean_references(), cname)
 
-                unk.sync_detector_info(meas_analysis)
+                # unk.sync_detector_info(meas_analysis)
 
             if self.auto_plot:
                 self.rebuild_graph()
@@ -70,16 +70,6 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             fits=','.join(('{} {}'.format(fi.name,fi.fit) for fi in self.tool.fits))
             self.processor.update_vcs_analyses(self.analyses,
                                                'Update detector intercalibration fits={}'.format(fits))
-                # if progress:
-                #     progress.soft_close()
-
-                #if not si.use:
-                #    self.debug('using previous value {} {}'.format(unk.record_id, si.name))
-                #    self.processor.apply_fixed_value_correction(phistory, history, si, cname)
-                #else:
-                #    self.debug('saving {} {}'.format(unk.record_id, si.name))
-                #    self.processor.apply_correction(history, unk, si,
-                #                                    self.references, cname)
 
     def _tool_default(self):
         with self.processor.db.session_ctx():

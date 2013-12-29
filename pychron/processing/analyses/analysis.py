@@ -228,8 +228,8 @@ class DBAnalysis(Analysis):
         """
         self._sync_irradiation(ln)
 
-    def sync_detector_info(self, meas_analysis):
-        self._sync_detector_info(meas_analysis)
+    def sync_detector_info(self, meas_analysis, **kw):
+        self._sync_detector_info(meas_analysis, **kw)
 
     # def sync_arar(self, meas_analysis):
     #     # self.debug('not using db arar')
@@ -427,7 +427,7 @@ class DBAnalysis(Analysis):
         self.project = self._get_project(meas_analysis)
         self.mass_spectrometer = self._get_mass_spectrometer(meas_analysis)
 
-    def _sync_detector_info(self, meas_analysis):
+    def _sync_detector_info(self, meas_analysis, **kw):
 
         #disc_idx=['Ar36','Ar37','Ar38','Ar39','Ar40']
 
@@ -786,7 +786,7 @@ class VCSAnalysis(DBAnalysis):
     def _to_ufloat(self, obj, attr):
         return ufloat(obj[attr], obj['{}_err'.format(attr)])
 
-    def _sync_detector_info(self, meas_analysis):
+    def _sync_detector_info(self, meas_analysis, **kw):
         pass
 
 
