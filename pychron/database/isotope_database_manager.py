@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import String, Property, Event, \
-    cached_property, Any, Instance, Bool
+    cached_property, Any, Bool
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import weakref
@@ -32,7 +32,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 # from pychron.pychron_constants import NULL_STR
 # from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
+
 
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
@@ -143,13 +143,20 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     updated = Event
 
     use_vcs=Bool
-    vcs = Instance(IsotopeVCSManager, ())
+    vcs = Any
 
     def bind_preferences(self):
         super(IsotopeDatabaseManager, self).bind_preferences()
 
         prefid='pychron.vcs'
         bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
+        self._use_vcs_changed()
+
+    def _use_vcs_changed(self):
+        if self.use_vcs:
+            from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
+            if not self.vcs:
+                self.vcs=IsotopeVCSManager()
 
     def update_vcs_analysis(self, an, msg):
         if self.use_vcs:
