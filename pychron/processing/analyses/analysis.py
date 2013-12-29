@@ -747,30 +747,44 @@ class VCSAnalysis(DBAnalysis):
         del self._ydict
 
     def _sync_irradiation(self, ln):
-        pass
+        cs=[]
+        for ci in self._ydict['chron_segments']:
+            cs.append((ci['power'], ci['duration'], ci['dt']))
 
-    #this is the dominant time sink
+        self.chron_segments= cs
+        self.production_ratios=self._ydict['production_ratios']
+
+        ifc=self._ydict['interference_corrections']
+        nifc=dict()
+        for k in ifc:
+            if k.endswith('_err'):
+                continue
+            nifc[k]=self._to_ufloat(ifc, k)
+
+        self.interference_corrections=nifc
+
     def _sync_isotopes(self, meas_analysis, unpack):
         """
-            load from isotopes from file
+            load isotopes from file
         """
         isos={}
 
         for iso in self._ydict['isotopes']:
-            ii= Isotope(name=iso['name'], detector=iso['detector'],
+            ii= Isotope(name=iso['name'],
+                        detector=iso['detector'],
                         ic_factor=self._to_ufloat(iso, 'ic_factor'),
                         discrimination=self._to_ufloat(iso, 'discrimination'))
 
             ii.trait_set(_value=iso['value'], _error=iso['error'])
 
-            ii.set_blank(iso['blank'], iso['blank_error'])
-            ii.set_baseline(iso['baseline'], iso['baseline_error'])
+            ii.set_blank(iso['blank'], iso['blank_err'])
+            ii.set_baseline(iso['baseline'], iso['baseline_err'])
 
             iso[iso['name']]=ii
         self.isotopes=isos
 
     def _to_ufloat(self, obj, attr):
-        return ufloat(obj[attr], obj['{}_error'.format(attr)])
+        return ufloat(obj[attr], obj['{}_err'.format(attr)])
 
     def _sync_detector_info(self, meas_analysis):
         pass
