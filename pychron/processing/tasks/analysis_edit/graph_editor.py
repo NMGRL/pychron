@@ -210,7 +210,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_component(self):
         return self.graph.plotcontainer
 
-    def save_file(self, path, force_layout=False):
+    def save_file(self, path, force_layout=True):
         _, tail = os.path.splitext(path)
         if tail not in ('.pdf', '.png'):
             path = '{}.pdf'.format(path)
@@ -221,7 +221,6 @@ class GraphEditor(BaseUnknownsEditor):
             chaco becomes less responsive after saving if 
             use_backbuffer is false and using pdf 
         '''
-
         c.do_layout(size=letter, force=force_layout)
 
         _, tail = os.path.splitext(path)
@@ -231,12 +230,15 @@ class GraphEditor(BaseUnknownsEditor):
             gc = PdfPlotGraphicsContext(filename=path)
             gc.render_component(c, valign='center')
             gc.save()
+
         else:
             from chaco.plot_graphics_context import PlotGraphicsContext
 
             gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
             gc.render_component(c)
             gc.save(path)
+
+        self.rebuild_graph()
 
     def _compress_analyses(self, ans):
         if not ans:

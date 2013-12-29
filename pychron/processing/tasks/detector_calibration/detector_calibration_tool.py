@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Str, List, Property, DelegatesTo, Float, \
-    Enum, on_trait_change
+    Enum, on_trait_change, String
 from traitsui.api import View, Item, UItem, EnumEditor, VGroup
 
 #============= standard library imports ========================
@@ -31,7 +31,7 @@ class DetectorCalibrationTool(HasTraits):
     detectors = List
     target_detector = Str
     target_detectors = Property(depends_on='reference_detector')
-    analysis_type = Str
+    analysis_type = String
     analysis_types = List
 
     fits = DelegatesTo('fit_selector')
@@ -43,6 +43,9 @@ class DetectorCalibrationTool(HasTraits):
     @on_trait_change('standard_ratio, error_calc')
     def _handle_change(self, name, new):
         self.update_needed = True
+
+    def set_analysis_type(self, atype):
+        self._analysis_type_changed(atype)
 
     def _analysis_type_changed(self, new):
         if new:

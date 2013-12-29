@@ -61,14 +61,6 @@ class IntercalibrationFactorTask(InterpolationTask):
     def _handle_analysis_type(self, obj, name, old, new):
         if name == 'analysis_type':
             self._set_analysis_type(new)
-            # records = self.unknowns_pane.items
-            # # if records is None:
-            # #     records = self.analysis_table.selected
-            #
-            # if records:
-            #     ans = self._load_references(records, new)
-            #     ans = self.manager.make_analyses(ans)
-            #     self.references_pane.items = ans
 
     def _set_analysis_type(self, new, progress=None):
         records = self.unknowns_pane.items
@@ -92,7 +84,7 @@ class IntercalibrationFactorTask(InterpolationTask):
                     for si in db.get_samples(project=proj)
                         for ln in si.labnumbers
                             for ai in ln.analyses
-                                if ai.measurement.mass_spectrometer.name.lower() in ('jan','obama')][:20]
+                                if ai.measurement.mass_spectrometer.name.lower() in ('jan','obama')]
 
         prog = manager.progress
         prog.increase_max(len(unks))
@@ -128,11 +120,7 @@ class IntercalibrationFactorTask(InterpolationTask):
                 self.active_editor.set_items(ais, progress=prog)
                 self._set_analysis_type(atype, progress=prog)
 
-                # self.active_editor.tool.analysis_type=atype
-                # self.active_editor.find_references(progress=prog)
-
-                #refresh graph
-                # invoke_in_main_thread(self.active_editor.rebuild_graph)
+                self.active_editor.tool.trait_set(analysis_type=atype)
 
                 if not manager.wait_for_user():
                     return
