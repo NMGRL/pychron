@@ -151,6 +151,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         prefid='pychron.vcs'
         bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
 
+    def update_vcs_analysis(self, an, msg):
+        if self.use_vcs:
+            self.vcs.update_analysis(an, msg)
+
+    def update_vcs_analyses(self, ans, msg):
+        if self.use_vcs:
+            self.vcs.update_analyses(ans, msg)
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):

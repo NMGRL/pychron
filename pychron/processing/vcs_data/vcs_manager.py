@@ -108,10 +108,40 @@ class IsotopeVCSManager(VCSManager):
         rm.commit(msg)
 
     #Isotope protocol
+    def update_analyses(self, ans, msg):
+        for proj, ais in self._groupby_project(ans):
+
+            self.set_repo(proj)
+
+            ais=list(ais)
+            for ai in ais:
+                self._update_analysis(ai)
+
+            s=ans[0]
+            e=ans[-1]
+            self.commit_change('{} project={} {}({}) - {}({})'.format(msg, proj, s.record_id, s.sample, e.record_id, e.sample))
+
+    def update_analysis(self, an, msg):
+        self._update_analysis(an)
+        self.commit_change(msg)
+
+    def _update_analysis(self,an):
+        root = self.repo_manager.root
+        p = os.path.join(root, an.sample, an.labnumber)
+        p = os.path.join(p, '{}.yaml'.format(an.record_id))
+        d = self._generate_analysis_dict(an)
+        with open(p, 'w') as fp:
+            yaml.dump(d, fp, indent=4, default_flow_style=False)
+
+        self.repo_manager.add(p, commit=False)
+
+    def _groupby_project(self, ans):
+        key = lambda x: x.project
+        ans = sorted(ans, key=key)
+        return groupby(ans, key=key)
+
     def add_analyses(self, ans):
-        key=lambda x: x.project
-        ans=sorted(ans, key=key)
-        for proj, ais in groupby(ans, key=key):
+        for proj, ais in self._groupby_project(ans):
             self.set_repo(proj)
             ais=list(ais)
             added=any([self._add_analysis(ai, commit=False) for ai in ais])
@@ -127,16 +157,13 @@ class IsotopeVCSManager(VCSManager):
         self._add_analysis(an)
 
     def _add_analysis(self, an, commit=True):
-        d = self._generate_analysis_dict(an)
-
-        #make necessary file structure
-
-        root = self.repo_manager.root
-        p = os.path.join(root, an.sample, an.labnumber)
-        r_mkdir(p)
-
-        p = os.path.join(p, '{}.yaml'.format(an.record_id))
+        root = os.path.join(self.repo_manager.root, an.sample, an.labnumber)
+        p = os.path.join(root, '{}.yaml'.format(an.record_id))
         if not os.path.isfile(p):
+            #make necessary file structure
+            r_mkdir(root)
+
+            d = self._generate_analysis_dict(an)
             with open(p, 'w') as fp:
                 yaml.dump(d, fp, indent=4, default_flow_style=False)
 
@@ -157,6 +184,8 @@ class IsotopeVCSManager(VCSManager):
                     'detector': iso.detector,
                     'discrimination': float(iso.discrimination.nominal_value),
                     'discrimination_error': float(iso.discrimination.std_dev),
+                    'ic_factor': float(iso.ic_factor.nominal_value),
+                    'ic_factor_error': float(iso.ic_factor.std_dev),
                     'blank': float(iso.blank.value),
                     'blank_error': float(iso.blank.error),
                     'baseline': float(iso.baseline.value),

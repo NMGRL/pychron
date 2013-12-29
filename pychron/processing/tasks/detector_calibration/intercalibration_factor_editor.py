@@ -31,17 +31,21 @@ class IntercalibrationFactorEditor(InterpolationEditor):
     auto_find = False
     pickle_path = 'ic_fits'
 
+    def _get_dump_tool(self):
+        return self.tool.fits
+
     def save(self, progress=None):
         if not any([si.valid for si in self.tool.fits]):
             return
 
         db = self.processor.db
+
         with db.session_ctx():
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
             n=len(self.analyses)
             if n>1:
-                progress=progress.increase_max(n)
+                progress.increase_max(n)
 
             for unk in self.analyses:
                 if progress:
@@ -54,7 +58,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 history = self.processor.add_history(meas_analysis, cname)
                 for si in self.tool.fits:
                     if si.valid:
-                        self.debug('saving {} {}'.format(unk.record_id, si.name))
+                        # self.debug('saving {} {}'.format(unk.record_id, si.name))
                         self.processor.apply_correction(history, unk, si,
                                                         self._clean_references(), cname)
 
@@ -63,8 +67,11 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             if self.auto_plot:
                 self.rebuild_graph()
 
-            # if progress:
-            #     progress.soft_close()
+            fits=','.join(('{} {}'.format(fi.name,fi.fit) for fi in self.tool.fits))
+            self.processor.update_vcs_analyses(self.analyses,
+                                               'Update detector intercalibration fits={}'.format(fits))
+                # if progress:
+                #     progress.soft_close()
 
                 #if not si.use:
                 #    self.debug('using previous value {} {}'.format(unk.record_id, si.name))

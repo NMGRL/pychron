@@ -40,9 +40,6 @@ class DetectorCalibrationTool(HasTraits):
     standard_ratio = Float(enter_set=True, auto_set=False)
     error_calc = Enum('SD', 'SEM')
 
-    def _get_dump_tool(self):
-        return self.fits
-
     @on_trait_change('standard_ratio, error_calc')
     def _handle_change(self, name, new):
         self.update_needed = True

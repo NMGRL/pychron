@@ -16,7 +16,6 @@
 # from threading import Thread
 import time
 from pychron.core.ui import set_toolkit
-from pychron.core.ui.gui import invoke_in_main_thread
 # from pychron.core.ui.thread import Thread
 from pychron.core.ui.thread import Thread
 from pychron.easy_parser import EasyParser
@@ -25,7 +24,7 @@ set_toolkit('qt4')
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Button, Instance, Callable, Bool
-from traitsui.api import View, Item, UItem, VGroup, HGroup
+from traitsui.api import View, UItem, VGroup, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -53,6 +52,7 @@ class Progress(HasTraits):
 
     def change_message(self, m, auto_increment=True):
         self.message = m
+        # invoke_in_main_thread(self.trait_set, message=m)
         if auto_increment:
             self.value += 1
 

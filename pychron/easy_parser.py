@@ -39,7 +39,7 @@ class EasyParser(Loggable):
         # name = add_extension(name, '.yaml')
         # p = os.path.join(paths., name)
 
-        p=os.path.join(paths.dissertation, 'data','minnabluff','disc_unknowns.yaml')
+        p=os.path.join(paths.dissertation, 'data','minnabluff','ic_j.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 md = yaml.load_all(fp)
@@ -57,7 +57,6 @@ class EasyParser(Loggable):
                 self.warning_dialog('Invalid Document index {}. ndocs={}'.format(idx, ','.join(doc_mapping)))
                 return
 
-        print self._docs, idx
         try:
             return self._docs[idx]
         except IndexError:
