@@ -64,6 +64,7 @@ class EasyManager(Loggable):
     progress = Instance(Progress, ())
 
     execute_button = Button
+    skip_button = Button
     stop_button = Button
     cancel_button = Button
     func = Callable
@@ -71,6 +72,7 @@ class EasyManager(Loggable):
     _finished = False
     canceled = False
     accepted = False
+    _skip=False
     _ready_to_continue = Bool(True)
     continue_button = Button
 
@@ -80,7 +82,15 @@ class EasyManager(Loggable):
     def _continue_button_fired(self):
         self._ready_to_continue = True
 
+    def _skip_button_fired(self):
+        self._skip=True
+        self._ready_to_continue=True
+
+    def was_skipped(self):
+        return self._skip
+
     def wait_for_user(self):
+        self._skip=False
         self.progress.increase_max(1)
         self.progress.change_message('Waiting for user')
         self.debug('waiting for user')
@@ -118,7 +128,10 @@ class EasyManager(Loggable):
         v = View(VGroup(
             HGroup(icon_button_editor('stop_button', 'stop'),
                    icon_button_editor('continue_button', 'arrow_right',
+                                      enabled_when='not _ready_to_continue'),
+                   icon_button_editor('skip_button', 'arrow_turn_right',
                                       enabled_when='not _ready_to_continue')),
+
             UItem('object.progress.value', editor=ProgressEditor(max_name='object.progress.max',
                                                                  message_name='object.progress.message'))),
                  resizable=True,

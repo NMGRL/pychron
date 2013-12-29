@@ -22,7 +22,6 @@ from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
 from pychron.easy_parser import EasyParser
 from pychron.core.helpers.datetime_tools import get_datetime
-from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
@@ -199,14 +198,16 @@ class AnalysisEditTask(BaseBrowserTask):
             analyses selected in figure e.g temp_status!=0
 
         """
-        items = self.unknowns_pane.selected
-        if not items:
-            items = [i for i in self.unknowns_pane.items
-                     if i.is_temp_omitted()]
-            self.debug('Temp omitted analyses {}'.format(len(items)))
-
+        items=None
+        if self.unknowns_pane:
+            items = self.unknowns_pane.selected
             if not items:
-                items=self.analysis_table.selected
+                items = [i for i in self.unknowns_pane.items
+                         if i.is_temp_omitted()]
+                self.debug('Temp omitted analyses {}'.format(len(items)))
+
+        if not items:
+            items=self.analysis_table.selected
 
         if not items:
             self.warning_dialog('No analyses selected to Tag')
@@ -226,7 +227,8 @@ class AnalysisEditTask(BaseBrowserTask):
                             it.set_tag(tag)
 
                     self.analysis_table.refresh_needed = True
-                    self.unknowns_pane.refresh_needed = True
+                    if self.unknowns_pane:
+                        self.unknowns_pane.refresh_needed = True
 
                     self.active_editor.filter_invalid_analyses()
 

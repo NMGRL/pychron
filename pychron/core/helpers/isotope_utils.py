@@ -41,15 +41,26 @@ def sort_isotopes(keys, reverse=True, key=None):
 
 
 def sort_detectors(idets):
-    dets = ['', ] * len(idets)
-    edets = []
-    for det in idets:
+    def f(det):
         if det in DETECTOR_MAP:
-            dets[DETECTOR_MAP[det]] = det
+            return DETECTOR_MAP[det]
         else:
-            edets.append(det)
+            return 0
 
-    dets.extend(edets)
+    dets=sorted(idets, key=f)
+    # dets = ['', ] * len(idets)
+    # edets = []
+
+    # for det in idets:
+    #     if det in DETECTOR_MAP:
+    #         try:
+    #             dets[DETECTOR_MAP[det]] = det
+    #         except IndexError:
+    #             dets.append(det)
+    #     else:
+    #         edets.append(det)
+    #
+    # dets.extend(edets)
     return dets
 
 #============= EOF =============================================

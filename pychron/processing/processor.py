@@ -427,7 +427,16 @@ class Processor(IsotopeDatabaseManager):
 
     def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, predictors):
         n, d = fit_obj.name.split('/')
-        ic = analysis.get_isotope(detector=d).temporary_ic_factor
+
+
+
+        iso=analysis.get_isotope(detector=d)
+        if not iso:
+            self.debug('************************* {} no detector {}'.format(analysis.record_id, d))
+            return
+
+        ic=iso.temporary_ic_factor
+        # ic = analysis.get_isotope(detector=d).temporary_ic_factor
         if ic is None:
             self.debug('************************* no ic factor for {} {}'.format(analysis.record_id,
                                                                                  fit_obj))

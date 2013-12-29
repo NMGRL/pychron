@@ -48,8 +48,7 @@ class IntercalibrationFactorTask(InterpolationTask):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import IntercalibrationFactorEditor
 
         editor = IntercalibrationFactorEditor(name='ICFactor {:03n}'.format(self.ic_factor_editor_count),
-                                              processor=self.manager
-        )
+                                              processor=self.manager)
         self._open_editor(editor)
         self.ic_factor_editor_count += 1
 
@@ -78,13 +77,26 @@ class IntercalibrationFactorTask(InterpolationTask):
         doc = ep.doc('ic')
         # fits = doc['fits']
         projects = doc['projects']
-        atype=doc['atype']
+        atype = doc['atype']
 
-        unks = [ai for proj in projects
+        identifiers = doc.get('identifiers')
+        if identifiers:
+            # unks = [ai for proj in projects
+            #         for si in db.get_samples(project=proj)
+            #         for ln in si.labnumbers
+            #         if str(ln.identifier) in identifiers
+            #         for ai in ln.analyses
+            #         if ai.measurement.mass_spectrometer.name.lower() in ('jan', 'obama')]
+            unks = [ai for ln in identifiers
+                    for ai in db.get_labnumber(ln).analyses
+                        if not ai.tag=='invalid']
+
+        else:
+            unks = [ai for proj in projects
                     for si in db.get_samples(project=proj)
-                        for ln in si.labnumbers
-                            for ai in ln.analyses
-                                if ai.measurement.mass_spectrometer.name.lower() in ('jan','obama')]
+                    for ln in si.labnumbers
+                    for ai in ln.analyses
+                    if ai.measurement.mass_spectrometer.name.lower() in ('jan', 'obama') and not ai.tag=='invalid']
 
         prog = manager.progress
         prog.increase_max(len(unks))
@@ -92,17 +104,17 @@ class IntercalibrationFactorTask(InterpolationTask):
         # preceding_fits, non_preceding_fits = map(list, partition(fits, lambda x: x['fit'] == 'preceding'))
         # if preceding_fits:
         #     self.debug('preceding fits for ic_factors not implemented')
-            # for ai in unks:
-            #     if prog.canceled:
-            #         return
-            #     elif prog.accepted:
-            #         break
-            #     l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
-            #     prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
-            #     hist = db.add_history(ai, 'blanks')
-            #     ai.selected_histories.selected_blanks = hist
-            #     for fi in preceding_fits:
-            #         self._preceding_correct(db, fi, ai, hist)
+        # for ai in unks:
+        #     if prog.canceled:
+        #         return
+        #     elif prog.accepted:
+        #         break
+        #     l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
+        #     prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
+        #     hist = db.add_history(ai, 'blanks')
+        #     ai.selected_histories.selected_blanks = hist
+        #     for fi in preceding_fits:
+        #         self._preceding_correct(db, fi, ai, hist)
 
         #make figure root dir
         if doc['save_figures']:
@@ -125,14 +137,15 @@ class IntercalibrationFactorTask(InterpolationTask):
                 if not manager.wait_for_user():
                     return
 
-                #save a figure
-                if doc['save_figures']:
-                    title = self.active_editor.make_title()
-                    p = os.path.join(root, add_extension(title, '.pdf'))
-                    self.active_editor.save_file(p)
+                if not manager.was_skipped():
+                    #save a figure
+                    if doc['save_figures']:
+                        title = self.active_editor.make_title()
+                        p = os.path.join(root, add_extension(title, '.pdf'))
+                        self.active_editor.save_file(p)
 
-                self.active_editor.save(progress=prog)
-                self.active_editor.dump_tool()
+                    self.active_editor.save(progress=prog)
+                    self.active_editor.dump_tool()
 
         return True
 
