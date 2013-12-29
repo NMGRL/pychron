@@ -24,14 +24,10 @@ import weakref
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
-# from pychron.database.records.isotope_record import IsotopeRecord, IsotopeRecordView
-# from pychron.processing.analysis import Analysis, NonDBAnalysis
 from pychron.processing.analyses.analysis import DBAnalysis, VCSAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
-# from pychron.pychron_constants import NULL_STR
-# from pychron.core.ui.gui import invoke_in_main_thread
 
 
 ANALYSIS_CACHE = {}
@@ -178,6 +174,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def make_analyses(self, ans,
                       progress=None,
                       exclude=None,
+                      use_cache=True,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -230,8 +227,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._analysis_factory(ai, progress=progress, **kw)
+                            a = self._construct_analysis(ai, progress, **kw)
                             if a:
+                                if use_cache:
+                                    self._add_to_cache(a)
                                 db_ans.append(a)
 
                         if progress:
@@ -254,65 +253,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     #===============================================================================
     # private
     #===============================================================================
-    def _load_analyses(self, ans, func=None, progress=None, unpack=True):
-
-        if not ans:
-            return
-
-        if func is None:
-        #             @simple_timer('load')
-            def func(x):
-            #                 x.load_isotopes(unpack=unpack)
-                x.calculate_age()
-
-        if len(ans) == 1:
-            func(ans[0])
-
-        else:
-            if progress:
-                def f(ai, msg):
-                    progress.change_message(msg)
-                    func(ai)
-
-            else:
-                def f(ai, msg):
-                    func(ai)
-
-            for ai in ans:
-                msg = 'loading {}'.format(ai.record_id)
-                #                 self.debug(msg)
-                f(ai, msg)
-
-    def _add_arar(self, meas_analysis, analysis):
-
-        db = self.db
-        with db.session_ctx() as sess:
-            hist = db.add_arar_history(meas_analysis)
-            #a, e=age.nominal_value, age.std_dev
-            d = dict()
-            attrs = ['k39', 'ca37', 'cl36', 'rad40',
-                     'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
-
-            for a in attrs:
-                v = getattr(analysis, a)
-                ek = '{}_err'.format(a)
-                d[a] = float(v.nominal_value)
-                d[ek] = float(v.std_dev)
-
-            age_scalar = analysis.arar_constants.age_scalar
-            d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
-
-            age = analysis.age
-            d['age'] = age.nominal_value * age_scalar
-            d['age_err'] = age.std_dev * age_scalar
-
-            db.add_arar(hist, **d)
-
-            meas_analysis.selected_histories.selected_arar = hist
-            sess.commit()
-            #hist.selected=analysis.selected_histories
-            #analysis.selected_histories.selected_arar=hist
-
     def _add_to_cache(self, rec):
         if not rec.uuid in ANALYSIS_CACHE:
             #self.debug('Adding {} to cache'.format(rec.record_id))
@@ -328,23 +268,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ANALYSIS_CACHE.pop(k)
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
-
-    def _analysis_factory(self, rec, progress=None,
-                          use_cache=True, **kw):
-
-        # if isinstance(rec, (Analysis, DBAnalysis)):
-        #     if progress:
-        #         progress.increment()
-        #         self._add_to_cache(rec)
-        #     return rec
-
-        # else:
-
-        a = self._construct_analysis(rec, progress, **kw)
-        if use_cache:
-            self._add_to_cache(a)
-
-        return a
 
     def _construct_analysis(self, rec, prog, calculate_age=False, unpack=False, load_changes=False):
         atype = None
@@ -400,14 +323,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     #===============================================================================
     @cached_property
     def _get_irradiations(self):
-    #         self.irradiation = NULL_STR
-    #        r = ['NM-Test', 'NM-100', 'NM-200']
-    #         r = [NULL_STR] +
         r = []
         db = self.db
         if db and db.connected:
             with db.session_ctx():
-            #             with self.db.session_() as sess:
                 r = [str(ri.name) for ri in db.get_irradiations()
                      if ri.name]
 
@@ -418,8 +337,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     @cached_property
     def _get_levels(self):
-
-    #         self.level = NULL_STR
         r = []
         if self.db and self.db.connected:
 
@@ -441,3 +358,32 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
 
 #============= EOF =============================================
+# def _add_arar(self, meas_analysis, analysis):
+#
+#         db = self.db
+#         with db.session_ctx() as sess:
+#             hist = db.add_arar_history(meas_analysis)
+#             #a, e=age.nominal_value, age.std_dev
+#             d = dict()
+#             attrs = ['k39', 'ca37', 'cl36', 'rad40',
+#                      'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
+#
+#             for a in attrs:
+#                 v = getattr(analysis, a)
+#                 ek = '{}_err'.format(a)
+#                 d[a] = float(v.nominal_value)
+#                 d[ek] = float(v.std_dev)
+#
+#             age_scalar = analysis.arar_constants.age_scalar
+#             d['age_err_wo_j'] = analysis.age_error_wo_j * age_scalar
+#
+#             age = analysis.age
+#             d['age'] = age.nominal_value * age_scalar
+#             d['age_err'] = age.std_dev * age_scalar
+#
+#             db.add_arar(hist, **d)
+#
+#             meas_analysis.selected_histories.selected_arar = hist
+#             sess.commit()
+#             #hist.selected=analysis.selected_histories
+#             #analysis.selected_histories.selected_arar=hist
