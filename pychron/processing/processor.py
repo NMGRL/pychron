@@ -457,7 +457,6 @@ class Processor(IsotopeDatabaseManager):
                 dbr = db.get_analysis_uuid(pi.uuid)
                 db.add_detector_intercalibration_set(item, dbr)
 
-
     def _apply_blanks_correction(self, history, analysis, fit_obj, predictors):
         if not fit_obj.name in analysis.isotopes:
             return
@@ -473,6 +472,7 @@ class Processor(IsotopeDatabaseManager):
         '''
         if hasattr(ss, 'temporary_blank'):
             blank = ss.temporary_blank
+            ss.blank = blank
         else:
             blank = ss.blank
 

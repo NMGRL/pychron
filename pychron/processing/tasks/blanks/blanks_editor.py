@@ -58,7 +58,10 @@ class BlanksEditor(InterpolationEditor):
 
             n = len(self.analyses)
             if n > 1:
-                progress.increase_max(n)
+                if progress is None:
+                    progress=self.processor.open_progress(n)
+                else:
+                    progress.increase_max(n)
 
             for unk in self.analyses:
                 if progress:
@@ -78,10 +81,17 @@ class BlanksEditor(InterpolationEditor):
 
                         self.processor.apply_correction(history, unk, si,
                                                         self._clean_references(), cname)
-                unk.sync(meas_analysis)
+                # unk.sync(meas_analysis)
 
             if self.auto_plot:
                 self.rebuild_graph()
+
+            fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
+            self.processor.update_vcs_analyses(self.analyses,
+                                               'Update blanks fits={}'.format(fits))
+
+            if progress:
+                progress.soft_close()
 
             #     def _update_unknowns_hook(self):
             #         '''

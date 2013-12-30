@@ -45,7 +45,10 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             self.info('Attempting to save corrections to database')
             n=len(self.analyses)
             if n>1:
-                progress.increase_max(n)
+                if progress is None:
+                    progress=self.processor.open_progress(n)
+                else:
+                    progress.increase_max(n)
 
             for unk in self.analyses:
                 if progress:
@@ -70,6 +73,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             fits=','.join(('{} {}'.format(fi.name,fi.fit) for fi in self.tool.fits))
             self.processor.update_vcs_analyses(self.analyses,
                                                'Update detector intercalibration fits={}'.format(fits))
+            if progress:
+                progress.soft_close()
 
     def _tool_default(self):
         with self.processor.db.session_ctx():
