@@ -151,6 +151,7 @@ class PlateauOverlay(BasePlateauOverlay):
     plateau_label=PlotLabel
     info_txt=Str
     label_visible=True
+    label_offset=None
 
     def hittest(self, pt, threshold=7):
         x, y = pt
@@ -207,9 +208,15 @@ class PlateauOverlay(BasePlateauOverlay):
         if self.layout_needed or not self.plateau_label:
             p=self.plateau_label
         else:
+            ox, oy= self.component.map_screen([(0, self.y + self.label_offset)])[0]
+            # print self.label_offset, self.y, oy, y
+            # ox,oy=self.component.map_screen([self.y+self.label_offset])[0]
+            # print oy, self.label_offset, y,self.y
+            # oy=10
+
             p=PlotLabel(text=self.info_txt,
                         x=x1+(x2-x1)*0.5,
-                        y=y+10)
+                        y=oy+15)
             self.plateau_label=p
 
         return p

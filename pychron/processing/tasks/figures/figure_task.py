@@ -395,27 +395,30 @@ class FigureTask(AnalysisEditTask):
             if dlg.selected_project:
                 project=dlg.selected_project.name
 
-            figure = db.add_figure(project=project, name=dlg.name)
-            for si in dlg.selected_samples:
-                db.add_figure_sample(figure, si.name, project)
+            samples=[si.name for si in dlg.selected_samples]
+            self.active_editor.save_figure(dlg.name, project, samples)
 
-            for ai in self.active_editor.analyses:
-                dban = db.get_analysis_uuid(ai.uuid)
-                aid = ai.record_id
-                if dban:
-                    db.add_figure_analysis(figure, dban,
-                                           status=ai.temp_status and ai.status,
-                                           graph=ai.graph_id,
-                                           group=ai.group_id)
-                    self.debug('adding analysis {} to figure'.format(aid))
-                else:
-                    self.debug('{} not in database'.format(aid))
-
-            po = self.active_editor.plotter_options_manager.plotter_options
-            blob=po.dump_yaml()
-            # blob = pickle.dumps(po)
-            pref=db.add_figure_preference(figure, options=blob, kind=self.active_editor.basename)
-            figure.preference=pref
+            # figure = db.add_figure(project=project, name=dlg.name)
+            # for si in dlg.selected_samples:
+            #     db.add_figure_sample(figure, si.name, project)
+            #
+            # for ai in self.active_editor.analyses:
+            #     dban = db.get_analysis_uuid(ai.uuid)
+            #     aid = ai.record_id
+            #     if dban:
+            #         db.add_figure_analysis(figure, dban,
+            #                                status=ai.temp_status and ai.status,
+            #                                graph=ai.graph_id,
+            #                                group=ai.group_id)
+            #         self.debug('adding analysis {} to figure'.format(aid))
+            #     else:
+            #         self.debug('{} not in database'.format(aid))
+            #
+            # po = self.active_editor.plotter_options_manager.plotter_options
+            # blob=po.dump_yaml()
+            # # blob = pickle.dumps(po)
+            # pref=db.add_figure_preference(figure, options=blob, kind=self.active_editor.basename)
+            # figure.preference=pref
 
             self._load_sample_figures(dlg.selected_samples)
 

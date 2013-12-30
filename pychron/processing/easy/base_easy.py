@@ -15,23 +15,29 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.core.helpers.iterfuncs import partition
-from pychron.paths import paths
+from pychron.easy_parser import EasyParser
 
 
 class BaseEasy(IsotopeDatabaseManager):
-    def _make_root(self, ep):
-        sdoc = ep.doc('setup')
-        ep_root = sdoc['root']
-        root = os.path.join(paths.processed_dir, ep_root)
-        if not os.path.isdir(root):
-            os.mkdir(root)
-        return root
+    def make(self):
+        ep = EasyParser()
+        self._make(ep)
+        self.information_dialog('Easy make finished')
+
+    def _make(self, *args, **kw):
+        raise NotImplementedError
+
+    # def _make_root(self, ep):
+    #     sdoc = ep.doc('setup')
+    #     ep_root = sdoc['root']
+    #     root = os.path.join(paths.processed_dir, ep_root)
+    #     if not os.path.isdir(root):
+    #         os.mkdir(root)
+    #     return root
 
     def _save_fusion(self, editor, root, ident):
         pass
@@ -42,57 +48,57 @@ class BaseEasy(IsotopeDatabaseManager):
 
     #    editor.save_file(p, force_layout=True)
 
-    def _make(self, projects, root,
-              fusion_editor,
-              step_heat_editor, tag):
-        db = self.db
-        with db.session_ctx():
-            lns = [ln for proj in projects
-                   for si in db.get_samples(project=proj)
-                   for ln in si.labnumbers]
-
-            n = len(lns) + sum([len(li.analyses) for li in lns])
-            prog = self.open_progress(n)
-
-            for li in lns:
-                #make dir for labnumber
-                ident = li.identifier
-                ln_root = os.path.join(root, ident)
-                if not os.path.isdir(ln_root):
-                    os.mkdir(ln_root)
-
-                prog.change_message('Making {} for {}'.format(tag, ident))
-
-                #group by stepheat vs fusion
-                pred = lambda x: bool(x.step)
-                ans = sorted(li.analyses, key=pred)
-                stepheat, fusion = map(list, partition(ans, pred))
-
-                #print 'ss',stepheat
-                #print 'sff',fusion
-
-                apred = lambda x: x.aliquot
-                stepheat = sorted(stepheat, key=apred)
-                if stepheat:
-                    unks = self.make_analyses(stepheat, progress=prog)
-                    step_heat_editor.set_items(unks)
-                    self._save_step_heat(step_heat_editor, ln_root, ident)
-
-
-                if fusion:
-                    unks = self.make_analyses(fusion, progress=prog)
-                    fusion_editor.set_items(unks)
-                    #fusion_editor.unknowns = unks
-
-                    self._save_fusion(fusion_editor, ln_root, ident)
-
-            prog.increment()
-            try:
-                prog.close()
-            except AttributeError:
-                #progress already closed
-                pass
-
-            self.info('easy make finished')
+    # def _make(self, projects, root,
+    #           fusion_editor,
+    #           step_heat_editor, tag):
+    #     db = self.db
+    #     with db.session_ctx():
+    #         lns = [ln for proj in projects
+    #                for si in db.get_samples(project=proj)
+    #                for ln in si.labnumbers]
+    #
+    #         n = len(lns) + sum([len(li.analyses) for li in lns])
+    #         prog = self.open_progress(n)
+    #
+    #         for li in lns:
+    #             #make dir for labnumber
+    #             ident = li.identifier
+    #             ln_root = os.path.join(root, ident)
+    #             if not os.path.isdir(ln_root):
+    #                 os.mkdir(ln_root)
+    #
+    #             prog.change_message('Making {} for {}'.format(tag, ident))
+    #
+    #             #group by stepheat vs fusion
+    #             pred = lambda x: bool(x.step)
+    #             ans = sorted(li.analyses, key=pred)
+    #             stepheat, fusion = map(list, partition(ans, pred))
+    #
+    #             #print 'ss',stepheat
+    #             #print 'sff',fusion
+    #
+    #             apred = lambda x: x.aliquot
+    #             stepheat = sorted(stepheat, key=apred)
+    #             if stepheat:
+    #                 unks = self.make_analyses(stepheat, progress=prog)
+    #                 step_heat_editor.set_items(unks)
+    #                 self._save_step_heat(step_heat_editor, ln_root, ident)
+    #
+    #
+    #             if fusion:
+    #                 unks = self.make_analyses(fusion, progress=prog)
+    #                 fusion_editor.set_items(unks)
+    #                 #fusion_editor.unknowns = unks
+    #
+    #                 self._save_fusion(fusion_editor, ln_root, ident)
+    #
+    #         prog.increment()
+    #         try:
+    #             prog.close()
+    #         except AttributeError:
+    #             #progress already closed
+    #             pass
+    #
+    #         self.info('easy make finished')
 
 #============= EOF =============================================

@@ -52,7 +52,7 @@ class EasyFiguresAction(Action):
         from pychron.processing.easy.figures import EasyFigures
 
         e = EasyFigures()
-        e.make_figures()
+        e.make()
 
 
 class EasyTablesAction(Action):
@@ -62,5 +62,5 @@ class EasyTablesAction(Action):
         from pychron.processing.easy.tables import EasyTables
 
         e = EasyTables()
-        e.make_tables()
+        e.make()
 

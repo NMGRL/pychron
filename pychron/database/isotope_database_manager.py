@@ -269,7 +269,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
-    def _construct_analysis(self, rec, prog, calculate_age=False, unpack=False, load_changes=False):
+    def _construct_analysis(self, rec, prog, calculate_age=True, unpack=False, load_changes=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)

@@ -74,11 +74,10 @@ class Spectrum(BaseArArFigure):
             plateau_age, platbounds, plateau_mswd, valid_mswd, nplateau_steps = args
 
         # if not isinstance(plateau_age, int):
-            pa = plateau_age.nominal_value
-            info_txt=self._build_label_text(pa, plateau_age.std_dev,
+            info_txt=self._build_label_text(plateau_age.nominal_value, plateau_age.std_dev,
                                             plateau_mswd, valid_mswd, nplateau_steps)
 
-            self._add_plateau_overlay(spec, platbounds, pa, info_txt)
+            self._add_plateau_overlay(spec, platbounds, plateau_age, info_txt)
 
         tga = self._calculate_total_gas_age(self.sorted_analyses)
 
@@ -145,13 +144,13 @@ class Spectrum(BaseArArFigure):
     #===============================================================================
     # overlays
     #===============================================================================
-    def _add_plateau_overlay(self, lp, bounds, age, info_txt):
-
+    def _add_plateau_overlay(self, lp, bounds, plateau_age, info_txt):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
                             label_visible=self.options.display_plateau_info,
-                            y=age)
+                            label_offset=plateau_age.std_dev*self.options.step_nsigma,
+                            y=plateau_age.nominal_value)
 
         lp.overlays.append(ov)
 

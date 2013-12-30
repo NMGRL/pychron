@@ -40,6 +40,34 @@ class FigureEditor(GraphEditor):
     tag=Event
     save_db_figure=Event
 
+    def save_figure(self, name, project, samples):
+        db=self.processor.db
+        with db.session_ctx():
+            # figure = db.add_figure(project=project, name=dlg.name)
+            # for si in dlg.selected_samples:
+            #     db.add_figure_sample(figure, si.name, project)
+            figure = db.add_figure(project=project, name=name)
+            for si in samples:
+                db.add_figure_sample(figure, si, project)
+
+            for ai in self.analyses:
+                dban = db.get_analysis_uuid(ai.uuid)
+                aid = ai.record_id
+                if dban:
+                    db.add_figure_analysis(figure, dban,
+                                           status=ai.temp_status and ai.status,
+                                           graph=ai.graph_id,
+                                           group=ai.group_id)
+                    self.debug('adding analysis {} to figure'.format(aid))
+                else:
+                    self.debug('{} not in database'.format(aid))
+
+            po = self.plotter_options_manager.plotter_options
+            blob = po.dump_yaml()
+            # blob = pickle.dumps(po)
+            pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
+            figure.preference = pref
+
     def _null_component(self):
         self.component = BasePlotContainer()
 
