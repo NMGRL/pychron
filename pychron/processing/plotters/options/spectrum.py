@@ -16,12 +16,12 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, Property, Bool
-from traitsui.api import Item, Group, HGroup, UItem, VGroup
+from traitsui.api import Item, Group, HGroup, UItem, VGroup, EnumEditor
 
 #============= standard library imports ========================
+import re
 #============= local library imports  ==========================
 
-import re
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOption
 
@@ -35,18 +35,20 @@ class SpectrumOptions(AgeOptions):
     force_plateau = Bool(False)
     plateau_steps = Property(Str)
     _plateau_steps = Str
-    plot_option_name = 'age_spectrum'
-    display_extract_value=Bool(False)
-    display_step=Bool(False)
+    plot_option_name = 'Age'
+    display_extract_value = Bool(False)
+    display_step = Bool(False)
+    display_plateau_info = Bool(True)
 
     def _get_info_group(self):
         g = VGroup(
-                HGroup(Item('show_info', label='Display Info'),
+            HGroup(Item('show_info', label='Display Info'),
                    Item('show_mean_info', label='Mean', enabled_when='show_info'),
                    Item('show_error_type_info', label='Error Type', enabled_when='show_info')
-                    ),
-                HGroup(Item('display_step'), Item('display_extract_value')),
-                show_border=True, label='Info')
+            ),
+            HGroup(Item('display_step'), Item('display_extract_value'),
+                   Item('display_plateau_info')),
+            show_border=True, label='Info')
 
         return g
 
@@ -71,27 +73,27 @@ class SpectrumOptions(AgeOptions):
                         'force_plateau',
                         'display_extract_value',
                         'display_step',
+                        'display_plateau_info',
                         '_plateau_steps']
 
     def _get_groups(self):
 
-        plat_grp = Group(
-            HGroup(
-                Item('force_plateau',
-                     tooltip='Force a plateau over provided steps'
-                ),
-                UItem('plateau_steps',
-                      enabled_when='force_plateau',
-                      tooltip='Enter start and end steps. e.g A-C '
-                ),
-            ),
-            label='Plateau'
-        )
+        plat_grp = Group(HGroup(
+            Item('force_plateau',
+                 tooltip='Force a plateau over provided steps'),
+            UItem('plateau_steps',
+                  enabled_when='force_plateau',
+                  tooltip='Enter start and end steps. e.g A-C ')), label='Plateau')
 
+        error_grp=Group(Item('step_nsigma',
+                             editor=EnumEditor(values=[1,2,3]),
+                             label='NSigma'),
+                        label='Error')
         g = Group(
             plat_grp,
-            label='Calculations'
-        )
+            error_grp,
+            label='Options')
+
         return (g, )
 
-    #============= EOF =============================================
+        #============= EOF =============================================

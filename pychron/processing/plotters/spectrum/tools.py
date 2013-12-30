@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Array, Int, Float
+from chaco.plot_label import PlotLabel
+from traits.api import Array, Int, Float,Str
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
 from numpy import where, array
@@ -147,6 +148,10 @@ class PlateauOverlay(BasePlateauOverlay):
     y = Float
     dragged = False
 
+    plateau_label=PlotLabel
+    info_txt=Str
+    label_visible=True
+
     def hittest(self, pt, threshold=7):
         x, y = pt
         pts = self._get_line()
@@ -188,4 +193,24 @@ class PlateauOverlay(BasePlateauOverlay):
                 gc.lines([(x1, y - 10), (x1, y + 10)])
                 gc.lines([(x2, y - 10), (x2, y + 10)])
                 gc.draw_path()
+
+                #draw label
+                # w, h, _, _ = gc.get_full_text_extent(self.plateau_label)
+                # tx=x1+(w-(x2-x1)/2.0)
+                # ty=y+5
+                # gc.set_text_position(tx,ty)
+                if self.label_visible:
+                    label = self._get_plateau_label(x1, x2, y)
+                    label.overlay(component, gc)
+
+    def _get_plateau_label(self, x1, x2, y):
+        if self.layout_needed or not self.plateau_label:
+            p=self.plateau_label
+        else:
+            p=PlotLabel(text=self.info_txt,
+                        x=x1+(x2-x1)*0.5,
+                        y=y+10)
+            self.plateau_label=p
+
+        return p
 #============= EOF =============================================

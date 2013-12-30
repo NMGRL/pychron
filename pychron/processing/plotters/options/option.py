@@ -78,11 +78,9 @@ class FitPlotterOption(PlotterOption):
 
 
 class SpectrumPlotOption(PlotterOption):
-    names = List([NULL_STR, 'StackedAnalysis #', 'Analysis #',
-                       '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
+    names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
-    _plot_names = List(['', 'analysis_number_stacked', 'analysis_number', 'radiogenic_yield',
-                    'kca', 'kcl', 'moles_k39', 'age_spectrum'])
+    _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
     #            'radiogenic_yield': 'Radiogenic 40Ar',

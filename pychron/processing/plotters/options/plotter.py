@@ -77,9 +77,9 @@ class PlotterOptions(BasePlotterOptions):
     #        return True
 
     def construct_plots(self, plist):
-        '''
+        """
             plist is a list of dictionaries
-        '''
+        """
         ps = [self.plot_option_klass(**pi) for pi in plist]
         self.aux_plots = ps
 
@@ -177,7 +177,7 @@ class PlotterOptions(BasePlotterOptions):
     def _get_main_group(self):
         main_grp = Group(
             VGroup(
-                self._get_refresh_group(),
+                # self._get_refresh_group(),
                 HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
                        Item('title', springy=True, enabled_when='not auto_generate_title',
                             tooltip='User specified plot title')),
@@ -230,7 +230,7 @@ class PlotterOptions(BasePlotterOptions):
         if grps:
             g.content.extend(grps)
 
-        v = View(g)
+        v = View(VGroup(self._get_refresh_group(),g))
         return v
 
 #============= EOF =============================================

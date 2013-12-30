@@ -23,7 +23,7 @@ from pychron.processing.plotters.options.option import InverseIsochronPlotOption
 
 
 class InverseIsochronOptions(AgeOptions):
-    plot_option_name = 'inverse_isochron'
+    plot_option_name = 'Inv. Isochron'
     plot_option_klass = InverseIsochronPlotOption
 
 
