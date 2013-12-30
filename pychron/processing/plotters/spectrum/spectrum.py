@@ -19,18 +19,20 @@ from traits.api import Array
 #============= standard library imports ========================
 from numpy import hstack, array
 #============= local library imports  ==========================
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay
-from pychron.processing.argon_calculations import find_plateaus, age_equation
 
 
 class Spectrum(BaseArArFigure):
 
     xs = Array
     _omit_key = 'omit_spec'
+
+    _analysis_group_klass = StepHeatAnalysisGroup
 
     def plot(self, plots):
         """
@@ -68,20 +70,28 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title('Age ({})'.format(au))
 
         spec = self._add_plot(xs, ys, es, pid, po)
-
-        args = self._get_plateau(self.sorted_analyses)
-        if args:
-            plateau_age, platbounds, plateau_mswd, valid_mswd, nplateau_steps = args
+        ag=self.analysis_group
+        if ag.plateau_age:
+        # args = self._get_plateau(self.sorted_analyses)
+        # if args:
+        #     plateau_age, platbounds, plateau_mswd, valid_mswd, nplateau_steps = args
 
         # if not isinstance(plateau_age, int):
+            plateau_age=ag.plateau_age
+            plateau_mswd, valid_mswd, nsteps=ag.get_plateau_mswd_tuple()
+            platbounds=ag.plateau_steps
+
             info_txt=self._build_label_text(plateau_age.nominal_value, plateau_age.std_dev,
-                                            plateau_mswd, valid_mswd, nplateau_steps)
+                                            plateau_mswd, valid_mswd, nsteps)
 
             self._add_plateau_overlay(spec, platbounds, plateau_age, info_txt)
 
-        tga = self._calculate_total_gas_age(self.sorted_analyses)
-
-        text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
+        # tga = self._calculate_total_gas_age(self.sorted_analyses)
+        # print tga
+        tga=ag.integrated_age
+        mswd =ag.get_mswd_tuple()
+        text = self._build_integrated_age_label(tga, *mswd)
+        # text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
 
         ys, es = array(ys), array(es)
         ns = self.options.step_nsigma
@@ -208,49 +218,57 @@ class Spectrum(BaseArArFigure):
                              for ai in ans])
         return array(ages), array(errors)
 
-    def _get_plateau(self, analyses, exclude=None):
-        if exclude is None:
-            exclude = []
-
-        ages, errors = self._get_age_errors(self.sorted_analyses)
-        k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
-
-        # provide 1s errors
-        platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
-        n = 0
-        if platbounds is not None and len(platbounds):
-            n = platbounds[1] - platbounds[0] + 1
-
-        if n > 1:
-            ans = []
-
-            for j, ai in enumerate(analyses):
-                if j not in exclude and platbounds[0] <= j <= platbounds[1]:
-                    ans.append(ai)
-                    #            ans=[ai for (j,ai) in analyses if]
-                    #            ans = analyses[platbounds[0]:platbounds[1]]
-
-            ages, errors = self._get_age_errors(ans)
-            mswd, valid, n = self._get_mswd(ages, errors)
-            plateau_age = self._calculate_total_gas_age(ans)
-            return plateau_age, platbounds, mswd, valid, n
+    # def _get_plateau(self, analyses, exclude=None):
+        # if exclude is None:
+        #     exclude = []
+        #
+        # ages, errors = self._get_age_errors(self.sorted_analyses)
+        # k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
+        #
+        # # provide 1s errors
+        # platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
+        # n = 0
+        # if platbounds is not None and len(platbounds):
+        #     n = platbounds[1] - platbounds[0] + 1
+        #
+        # if n > 1:
+        #     ans = []
+        #
+        #     for j, ai in enumerate(analyses):
+        #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
+        #             ans.append(ai)
+        #             #            ans=[ai for (j,ai) in analyses if]
+        #             #            ans = analyses[platbounds[0]:platbounds[1]]
+        #
+        #     ages, errors = self._get_age_errors(ans)
+        #     mswd, valid, n = self._get_mswd(ages, errors)
+        #     plateau_age = self._calculate_total_gas_age(ans)
+        #     return plateau_age, platbounds, mswd, valid, n
         # else:
         #     return 0, array([0, 0]), 0, 0, 0
 
-    def _calculate_total_gas_age(self, analyses):
-        """
-            sum the corrected rad40 and k39 values
-
-            not necessarily the same as isotopic recombination
-
-        """
-
-        rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
-        rad40 = sum(rad40)
-        k39 = sum(k39)
-
-        j = a.j
-        return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
+    # def _calculate_total_gas_age(self, analyses):
+    #     """
+    #         sum the corrected rad40 and k39 values
+    #
+    #         not necessarily the same as isotopic recombination
+    #
+    #     """
+    #     rad40, k39 = zip(*[(a.get_computed_value('rad40'),
+    #                         a.get_computed_value('k39')) for a in analyses])
+    #
+    #     rad40 = sum(rad40)
+    #     k39 = sum(k39)
+    #
+    #     j = a.j
+    #     return age_equation(rad40 / k39, j, a.arar_constants)
+    #
+    #     # rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
+    #     # rad40 = sum(rad40)
+    #     # k39 = sum(k39)
+    #     #
+    #     # j = a.j
+    #     # return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
 
     def _calculate_spectrum(self,
                             excludes=None,

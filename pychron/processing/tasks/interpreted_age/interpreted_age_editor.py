@@ -17,9 +17,8 @@
 #============= enthought library imports =======================
 from itertools import groupby
 import os
-from traits.api import HasTraits, Any, List, Date, Str, Long, \
-    Float, Button, Int, Instance, on_trait_change
-from traitsui.api import View, Item, EnumEditor, HGroup, spring, \
+from traits.api import Any, List, Str, Button, Instance, on_trait_change
+from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
 
 #============= standard library imports ========================
@@ -188,8 +187,9 @@ class InterpretedAgeEditor(BaseTraitsEditor):
     def _selected_history_name_changed(self):
         if self.selected_history_name:
             def func(a):
-                ir = IsotopeRecordView()
-                ir.create(a)
+                # print a, a.plateau_step
+                ir = IsotopeRecordView(is_plateau_step=a.plateau_step)
+                ir.create(a.analysis)
                 return ir
 
             db = self.processor.db
@@ -202,7 +202,8 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 dbhist = db.get_interpreted_age_history(hist.id)
                 s = dbhist.interpreted_age.sets
 
-                self.analyses = [func(a.analysis) for a in s]
+                self.analyses = [func(a) for a in s]
+
 
     def _append_button_fired(self):
         self.interpreted_ages.append(self.selected_history)

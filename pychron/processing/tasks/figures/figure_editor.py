@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
     List, Event
@@ -22,6 +23,7 @@ from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 
@@ -40,7 +42,7 @@ class FigureEditor(GraphEditor):
     tag=Event
     save_db_figure=Event
 
-    def save_figure(self, name, project, samples):
+    def save_figure(self, name, project, samples, add_interpreted=False):
         db=self.processor.db
         with db.session_ctx():
             # figure = db.add_figure(project=project, name=dlg.name)
@@ -67,6 +69,57 @@ class FigureEditor(GraphEditor):
             # blob = pickle.dumps(po)
             pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
             figure.preference = pref
+
+            if add_interpreted:
+                ias=self.get_interpreted_ages()
+
+                for ia in ias:
+                    if ia.plateau_age:
+                        ia.preferred_age_kind='Plateau'
+                    else:
+                        ia.preferred_age_kind='Integrated'
+
+                self.add_interpreted_ages(ias)
+
+    def add_interpreted_ages(self, ias):
+        db = self.processor.db
+        with db.session_ctx():
+            for g in ias:
+                if g.use:
+                    ln = db.get_labnumber(g.identifier)
+                    if not ln:
+                        continue
+
+                    self.add_interpreted_age(ln, g)
+
+    def add_interpreted_age(self, ln, ia):
+        db=self.processor.db
+        with db.session_ctx():
+            hist=db.add_interpreted_age_history(ln)
+            db_ia=db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
+                                      age_err=ia.preferred_age_error or 0,
+                                      age_kind=ia.preferred_age_kind,
+                                      wtd_kca=float(ia.weighted_kca.nominal_value),
+                                      wtd_kca_err=float(ia.weighted_kca.std_dev),
+                                      mswd=float(ia.preferred_mswd))
+
+            for ai in ia.analyses:
+                plateau_step=ia.get_is_plateau_step(ai)
+
+                ai=db.get_analysis_uuid(ai.uuid)
+
+                db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
+
+    def get_interpreted_ages(self):
+        key = lambda x: x.group_id
+        unks = sorted(self.analyses, key=key)
+        ias = []
+        ok = 'omit_{}'.format(self.basename)
+        for gid, ans in groupby(unks, key=key):
+            ans = filter(lambda x: not x.is_omitted(ok), ans)
+            ias.append(InterpretedAge(analyses=ans, use=True))
+
+        return ias
 
     def _null_component(self):
         self.component = BasePlotContainer()

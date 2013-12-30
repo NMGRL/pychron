@@ -50,6 +50,13 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
+    def get_bg_color( self, object, trait, row, column = 0):
+        color = 'white'
+        if self.item.is_plateau_step:
+            color='lightgreen'
+
+        return color
+
 
 class BrowserPane(TraitsDockPane):
     name = 'Browser'

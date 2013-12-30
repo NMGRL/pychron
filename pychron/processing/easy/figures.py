@@ -119,7 +119,7 @@ class EasyFigures(BaseEasy):
         editor.save_file(p)
         if self._save_db_figure:
             editor.save_figure('EasyFigure {}'.format(ln.identifier),
-                               ln.sample.project.name, [ln.sample.name])
+                               ln.sample.project.name, [ln.sample.name], add_interpreted=True)
 
 
 #============= EOF =============================================

@@ -437,9 +437,8 @@ class Ideogram(BaseArArFigure):
         return x.age
 
     def _calculate_stats(self, ages, errors, xs, ys):
-        mswd, valid_mswd, n = self._get_mswd(ages, errors)
-        #         mswd = calculate_mswd(ages, errors)
-        #         valid_mswd = validate_mswd(mswd, len(ages))
+        mswd, valid_mswd, n =self.analysis_group.get_mswd_tuple()
+
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
             delta = 1

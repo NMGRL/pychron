@@ -43,6 +43,9 @@ class IsotopeRecordView(HasTraits):
     temp_status = 0
 
     record_id = ''
+
+    is_plateau_step=False
+
     def set_tag(self, tag):
         self.tag=tag.name
 

@@ -93,10 +93,10 @@ class proc_ArArTable(Base, BaseMixin):
 
 
 class proc_InterpretedAgeSetTable(Base, BaseMixin):
-    pass
     interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
     analysis_id = foreignkey('meas_AnalysisTable')
     forced_plateau_step = Column(Boolean)
+    plateau_step=Column(Boolean)
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):

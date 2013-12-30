@@ -1,24 +1,24 @@
-from traits.api import HasTraits, Float, Property, cached_property, List, Button, Str, File, Any
-from traitsui.api import View, Item, ListEditor, InstanceEditor, Label, HGroup, Group, TabularEditor
-from uncertainties import ufloat, umath
-import xlrd
 import math
 from copy import deepcopy
 
+from traits.api import HasTraits, Property, List, Button, Str, File, Any
+from traitsui.api import View, Item, HGroup, TabularEditor
+from uncertainties import ufloat, umath
+import xlrd
 from traitsui.tabular_adapter import TabularAdapter
 
 
 def calculate_decay_factor(dc, segments):
-    '''
-        McDougall and Harrison 
+    """
+        McDougall and Harrison
         p.75 equation 3.22
-        
+
         the book suggests using ti==analysis_time-end of irradiation segment_i
-        
+
         mass spec uses ti==analysis_time-start of irradiation segment_i
-        
+
         using start seems more appropriate
-    '''
+    """
 
     a = sum([pi * ti for pi, ti, _ in segments])
 

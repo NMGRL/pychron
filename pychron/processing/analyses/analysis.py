@@ -54,6 +54,7 @@ class Analysis(ArArAge):
 
     aliquot_step_str = Str
 
+    is_plateau_step=False
     temp_status = Int
     value_filter_omit = Bool
     table_filter_omit = Bool

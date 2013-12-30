@@ -24,9 +24,9 @@ from chaco.tools.data_label_tool import DataLabelTool
 #============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
+from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
-from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.flow_label import FlowDataLabel
 from chaco.tools.broadcaster import BroadcasterTool
@@ -39,6 +39,8 @@ from pychron.graph.tools.point_inspector import PointInspectorOverlay
 class BaseArArFigure(HasTraits):
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
+    analysis_group = Property(depends_on='analyses')
+    _analysis_group_klass=AnalysisGroup
 
     group_id = Int
     padding = Tuple((60, 10, 5, 40))
@@ -153,11 +155,11 @@ class BaseArArFigure(HasTraits):
 
         return sel
 
-    def _get_mswd(self, ages, errors):
-        mswd = calculate_mswd(ages, errors)
-        n = len(ages)
-        valid_mswd = validate_mswd(mswd, n)
-        return mswd, valid_mswd, n
+    # def _get_mswd(self, ages, errors):
+    #     mswd = calculate_mswd(ages, errors)
+    #     n = len(ages)
+    #     valid_mswd = validate_mswd(mswd, n)
+    #     return mswd, valid_mswd, n
 
     def _cmp_analyses(self, x):
         return x.timestamp
@@ -343,4 +345,7 @@ class BaseArArFigure(HasTraits):
                       key=self._cmp_analyses,
                       reverse=self._reverse_sorted_analyses)
 
+    @cached_property
+    def _get_analysis_group(self):
+        return self._analysis_group_klass(analyses=self.analyses)
         #============= EOF =============================================

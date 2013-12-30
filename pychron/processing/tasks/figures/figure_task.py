@@ -22,7 +22,6 @@ from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 from itertools import groupby
 #============= local library imports  ==========================
-from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -75,10 +74,10 @@ class FigureTask(AnalysisEditTask):
 
     auto_select_analysis = False
 
-    figures_help='Double-click to open'
-    figures=List
-    selected_figure=Any
-    dclicked_figure=Event
+    figures_help = 'Double-click to open'
+    figures = List
+    selected_figure = Any
+    dclicked_figure = Event
     #===============================================================================
     # task protocol
     #===============================================================================
@@ -110,11 +109,11 @@ class FigureTask(AnalysisEditTask):
 
     def _load_project_figures(self, new):
         if new:
-            db=self.manager.db
+            db = self.manager.db
             with db.session_ctx():
-                proj=[p.name for p in new]
-                figs=db.get_project_figures(proj)
-                self.figures=[self._dbfigure_factory(f) for f in figs]
+                proj = [p.name for p in new]
+                figs = db.get_project_figures(proj)
+                self.figures = [self._dbfigure_factory(f) for f in figs]
 
     def _load_sample_figures(self, new):
         if new:
@@ -125,26 +124,26 @@ class FigureTask(AnalysisEditTask):
                 self.figures = [self._dbfigure_factory(f) for f in figs]
 
     def _dbfigure_factory(self, f):
-        dbf= DBFigure(name=f.name or '',
-                      project=f.project.name,
-                      samples=[s.sample.name for s in f.samples],
-                      kind=f.preference.kind,
-                      id=f.id)
+        dbf = DBFigure(name=f.name or '',
+                       project=f.project.name,
+                       samples=[s.sample.name for s in f.samples],
+                       kind=f.preference.kind,
+                       id=f.id)
         return dbf
 
     def _dclicked_figure_changed(self):
-        sf=self.selected_figure
+        sf = self.selected_figure
         if sf:
-            db=self.manager.db
+            db = self.manager.db
             with db.session_ctx():
-                db_fig=db.get_figure(sf.name)
+                db_fig = db.get_figure(sf.name)
 
                 ans = [a.analysis for a in db_fig.analyses]
                 self.active_editor.set_items(ans)
 
-                blob=db_fig.preference.options
-                kind=db_fig.preference.kind
-                if self.active_editor.basename==kind:
+                blob = db_fig.preference.options
+                kind = db_fig.preference.kind
+                if self.active_editor.basename == kind:
                     self.active_editor.plotter_options_manager.load_yaml(blob)
                 else:
                     #open new editor of this kind
@@ -161,6 +160,7 @@ class FigureTask(AnalysisEditTask):
                 self.active_editor.rebuild()
 
                 # print db_fig.preference
+
     #===============================================================================
     # grouping
     #===============================================================================
@@ -235,9 +235,9 @@ class FigureTask(AnalysisEditTask):
         if tklass is None:
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
-#            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-#                import FusionTableEditor as tklass
-             
+            #            from pychron.processing.tasks.tables.editors.fusion_table_editor \
+        #                import FusionTableEditor as tklass
+
         return self._new_figure(ans, name, klass, tklass,
                                 set_ans=set_ans,
                                 add_iso=add_iso,
@@ -266,7 +266,7 @@ class FigureTask(AnalysisEditTask):
         if tklass is None:
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
-                
+
         feditor = self._new_figure(ans, name, klass, tklass,
                                    add_iso=False)
 
@@ -295,35 +295,31 @@ class FigureTask(AnalysisEditTask):
     #     self._open_figure()
 
     def set_interpreted_age(self):
-        key=lambda x: x.group_id
-        unks=sorted(self.active_editor.analyses, key=key)
-        ias=[]
-        ok='omit_{}'.format(self.active_editor.basename)
-        for gid, ans in groupby(unks, key=key):
-            ans=filter(lambda x: not x.is_omitted(ok), ans)
-            ias.append(InterpretedAge(analyses=ans, use=True))
+        ias=self.active_editor.get_interpreted_ages()
 
-        iaf=InterpretedAgeFactory(groups=ias)
-        info=iaf.edit_traits()
+        iaf = InterpretedAgeFactory(groups=ias)
+        info = iaf.edit_traits()
         if info.result:
-            for g in iaf.groups:
-                db=self.manager.db
-                if g.use:
-                    with db.session_ctx():
-                        ln=db.get_labnumber(g.identifier)
-                        if not ln:
-                            continue
-
-                        hist=db.add_interpreted_age_history(ln)
-                        ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
-                                                  age_err=g.preferred_age_error or 0,
-                                                  age_kind=g.preferred_age_kind,
-                                                  wtd_kca=float(g.weighted_kca.nominal_value),
-                                                  wtd_kca_err=float(g.weighted_kca.std_dev),
-                                                  mswd=float(g.mswd))
-                        for ai in g.analyses:
-                            ai=db.get_analysis_uuid(ai.uuid)
-                            db.add_interpreted_age_set(ia, ai)
+            self.active_editor.add_interpreted_ages(ias.groups)
+            # db = self.manager.db
+            # with db.session_ctx():
+            #     for g in iaf.groups:
+            #         if g.use:
+            #             ln = db.get_labnumber(g.identifier)
+            #             if not ln:
+            #                 continue
+            #
+            #             self.active_editor.add_interpreted_age(ln, g)
+                        # hist=db.add_interpreted_age_history(ln)
+                        # ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
+                        #                           age_err=g.preferred_age_error or 0,
+                        #                           age_kind=g.preferred_age_kind,
+                        #                           wtd_kca=float(g.weighted_kca.nominal_value),
+                        #                           wtd_kca_err=float(g.weighted_kca.std_dev),
+                        #                           mswd=float(g.mswd))
+                        # for ai in g.analyses:
+                        #     ai=db.get_analysis_uuid(ai.uuid)
+                        #     db.add_interpreted_age_set(ia, ai)
 
 
     #===============================================================================
@@ -349,7 +345,7 @@ class FigureTask(AnalysisEditTask):
     #     self.unknowns_pane.items = items
 
     def _get_sample_obj(self, s):
-        return next((sr for sr in self.samples if sr.name==s), None)
+        return next((sr for sr in self.samples if sr.name == s), None)
 
     def _get_project_obj(self, p):
         return next((sr for sr in self.projects if sr.name == p), None)
@@ -367,19 +363,19 @@ class FigureTask(AnalysisEditTask):
             # if self.selected_projects:
             #     dlg.selected_project = self.selected_projects[0]
             #
-            projects=list(set([ai.project for ai in self.active_editor.analyses]))
+            projects = list(set([ai.project for ai in self.active_editor.analyses]))
             if projects:
-                proj=self._get_project_obj(projects[0])
+                proj = self._get_project_obj(projects[0])
                 if proj:
-                    dlg.selected_project=proj
+                    dlg.selected_project = proj
 
-            samples=list(set([ai.sample for ai in self.active_editor.analyses]))
+            samples = list(set([ai.sample for ai in self.active_editor.analyses]))
             # print samples
-            ss=[self._get_sample_obj(si) for si in samples]
+            ss = [self._get_sample_obj(si) for si in samples]
             # print ss
-            ss=filter(lambda x:not x is None, ss)
+            ss = filter(lambda x: not x is None, ss)
             # print ss
-            dlg.selected_samples=ss
+            dlg.selected_samples = ss
 
             while 1:
                 info = dlg.edit_traits(kind='livemodal')
@@ -391,11 +387,11 @@ class FigureTask(AnalysisEditTask):
                     if not self.confirmation_dialog('Need to set the name of a "figure" to save. Continue?'):
                         return
 
-            project=None
+            project = None
             if dlg.selected_project:
-                project=dlg.selected_project.name
+                project = dlg.selected_project.name
 
-            samples=[si.name for si in dlg.selected_samples]
+            samples = [si.name for si in dlg.selected_samples]
             self.active_editor.save_figure(dlg.name, project, samples)
 
             # figure = db.add_figure(project=project, name=dlg.name)
@@ -533,10 +529,10 @@ class FigureTask(AnalysisEditTask):
     # handlers
     #===============================================================================
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
-    def _options_update(self, obj, name,old, new):
+    def _options_update(self, obj, name, old, new):
         if name == 'initialized':
             return
-        if self.plotter_options_pane.pom.plotter_options.auto_refresh or name=='refresh_plot_needed':
+        if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
             self.active_editor.rebuild()
 
     def _active_editor_changed(self):
@@ -590,36 +586,36 @@ class FigureTask(AnalysisEditTask):
                     PaneItem('pychron.processing.figures.plotter_options'),
                     PaneItem('pychron.plot_editor'))))
 
-#============= EOF =============================================
-# def _append_figure(self, klass):
-    #     """
-    #         if selected_samples append all analyses
-    #         else append selected analyses
-    #
-    #     """
-    #     return
-    #
-    #     if isinstance(self.active_editor, klass):
-    #         sa = self.analysis_table.selected
-    #         if sa:
-    #             ts = self.manager.make_analyses(sa)
-    #         else:
-    #             ts = [ai for si in self.selected_sample
-    #                   for ai in self._get_sample_analyses(si)]
-    #
-    #         ans = self.manager.make_analyses(ts)
-    #         if ans:
-    #             pans = self.active_editor.analyses
-    #             uuids = [p.uuid for p in pans]
-    #             fans = [ai for ai in ans if ai.uuid not in uuids]
-    #
-    #             pans.extend(fans)
-    #             self.active_editor.trait_set(unknowns=pans)
-    #
-    #         gid = 0
-    #         for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
-    #             for ai in gans:
-    #                 ai.group_id = gid
-    #             gid += 1
-    #
-    #         self.active_editor.rebuild(compress_groups=False)
+        #============= EOF =============================================
+        # def _append_figure(self, klass):
+        #     """
+        #         if selected_samples append all analyses
+        #         else append selected analyses
+        #
+        #     """
+        #     return
+        #
+        #     if isinstance(self.active_editor, klass):
+        #         sa = self.analysis_table.selected
+        #         if sa:
+        #             ts = self.manager.make_analyses(sa)
+        #         else:
+        #             ts = [ai for si in self.selected_sample
+        #                   for ai in self._get_sample_analyses(si)]
+        #
+        #         ans = self.manager.make_analyses(ts)
+        #         if ans:
+        #             pans = self.active_editor.analyses
+        #             uuids = [p.uuid for p in pans]
+        #             fans = [ai for ai in ans if ai.uuid not in uuids]
+        #
+        #             pans.extend(fans)
+        #             self.active_editor.trait_set(unknowns=pans)
+        #
+        #         gid = 0
+        #         for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
+        #             for ai in gans:
+        #                 ai.group_id = gid
+        #             gid += 1
+        #
+        #         self.active_editor.rebuild(compress_groups=False)

@@ -88,9 +88,12 @@ class InterpretedAge(HasTraits):
     nanalyses = Int
 
     def traits_view(self):
-        return View(HGroup(Item('age_kind', style='readonly', show_label=False),
+        return View(HGroup(Item('age_kind',
+                                style='readonly', show_label=False),
                            Item('age', style='readonly'),
-                           Item('age_err', style='readonly')))
+                           Item('age_err', style='readonly'),
+                           Item('mswd', style='readonly', label='MSWD'),
+                           ))
 
 
 class IsotopeAdapter(DatabaseAdapter):
@@ -128,7 +131,7 @@ class IsotopeAdapter(DatabaseAdapter):
                             wtd_kca=ia.wtd_kca or 0,
                             wtd_kca_err=ia.wtd_kca_err or 0,
                             mswd=ia.mswd,
-                            kind=ia.age_kind,
+                            age_kind=ia.age_kind,
                             identifier=hi.identifier,
                             sample=sample or '',
                             irradiation=irrad or '',
