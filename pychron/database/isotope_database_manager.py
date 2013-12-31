@@ -24,6 +24,7 @@ import weakref
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
+
 from pychron.processing.analyses.analysis import DBAnalysis, VCSAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
@@ -139,7 +140,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     updated = Event
 
     use_vcs=Bool
+    use_offline_database=Bool
     vcs = Any
+    offline_bridge=Any
 
     def bind_preferences(self):
         super(IsotopeDatabaseManager, self).bind_preferences()
@@ -147,6 +150,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         prefid='pychron.vcs'
         bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
         self._use_vcs_changed()
+        self._use_offline_database_changed()
+
+    def _use_offline_database_changed(self):
+        if self.use_offline_database:
+            from pychron.database.offline_bridge import OfflineBridge
+            if not self.offline_bridge:
+                self.offline_bridge=OfflineBridge()
 
     def _use_vcs_changed(self):
         if self.use_vcs:
@@ -244,7 +254,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     self.vcs.add_analyses(db_ans)
 
                 if self.use_offline_database:
-                    self.offline_db.add_analyses(db, db_ans)
+                    self.offline_bridge.add_analyses(db, db_ans)
 
                 return db_ans
 
