@@ -26,7 +26,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class OfflinePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.vcs'
+    preferences_path = 'pychron.offline'
     use_offline_database=Bool
     database_path= File
 

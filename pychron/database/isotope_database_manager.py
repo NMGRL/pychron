@@ -228,15 +228,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         if n > 1:
                             if progress is not None:
                                 if progress.max < (n + progress.get_value()):
-                                    progress.increase_max(n)
+                                    progress.increase_max(n+2)
                             else:
-                                progress = self._open_progress(n)
-
+                                progress = self._open_progress(n+2)
+                        new_ans=[]
                         for i, ai in enumerate(no_db_ans):
                             if progress:
                                 if progress.canceled:
                                     self.debug('canceling make analyses')
                                     db_ans=[]
+                                    new_ans=[]
                                     break
                                 elif progress.accepted:
                                     self.debug('accepting {}/{} analyses'.format(i, n))
@@ -246,19 +247,30 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                             if a:
                                 if use_cache:
                                     self._add_to_cache(a)
-                                db_ans.append(a)
+                                new_ans.append(a)
 
-                        if progress:
-                            progress.soft_close()
-                        # if progress:
-                        #     progress.on_trait_change(self._progress_closed,
-                        #                              'closed', remove=True)
+                                # if progress:
+                                #     progress.on_trait_change(self._progress_closed,
+                                #                              'closed', remove=True)
 
-                if self.use_vcs:
-                    self.vcs.add_analyses(db_ans)
+                        db_ans.extend(new_ans)
 
-                if self.use_offline_database:
-                    self.offline_bridge.add_analyses(db, db_ans)
+                        self.debug('use vcs {}'.format(self.use_vcs))
+                        if self.use_vcs:
+                            if progress:
+                                progress.increase_max(2)
+                                progress.change_message('Adding analyses to vcs')
+                            self.vcs.add_analyses(new_ans)
+
+                        self.debug('use offline database {}'.format(self.use_offline_database))
+                        if self.use_offline_database:
+                            if progress:
+                                progress.increase_max(2)
+                                progress.change_message('Transfering analyses for offline usage')
+                            self.offline_bridge.add_analyses(db, new_ans)
+
+                if progress:
+                    progress.soft_close()
 
                 return db_ans
 

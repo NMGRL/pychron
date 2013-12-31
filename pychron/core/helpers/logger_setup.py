@@ -109,9 +109,37 @@ def new_logger(name):
 #    l.addHandler(handler)
 
     return l
-#    '''
-#    '''
-#    return l
+
+
+def wrap(items, width=40, indent=90, delimiter=','):
+    """
+        wrap a list
+    """
+    if isinstance(items, str):
+        items=items.split(delimiter)
+
+    gcols=iter(items)
+    t=0
+    rs=[]
+    r=[]
+
+    while 1:
+        try:
+            c=gcols.next()
+            t+=1+len(c)
+            if t<width:
+                r.append(c)
+            else:
+                rs.append(','.join(r))
+                r=[c]
+                t=len(c)
+
+        except StopIteration:
+            rs.append(','.join(r))
+            break
+
+    return ',\n{}'.format(' '*indent).join(rs)
+
 #============================== EOF ===================================
 # LOGGER_LIST = []
 
