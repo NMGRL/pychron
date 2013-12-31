@@ -54,7 +54,6 @@ class FigureTask(AnalysisEditTask):
         SToolBar(
             SavePDFFigureAction(),
             SaveFigureAction(),
-            # OpenFigureAction(),
             name='Figure',
             image_size=(16, 16)),
         SToolBar(
@@ -149,17 +148,7 @@ class FigureTask(AnalysisEditTask):
                     #open new editor of this kind
                     pass
 
-                # try:
-                #     po=pickle.loads(db_fig.preference.options_pickle)
-                #     po.initialize()
-                #     self.active_editor.plotter_options_manager.plotter_options=po
-                # except (pickle.PickleError,ImportError):
-                #     db_fig.preference.options_pickle
-                #     self.debug('failed loading preferences for {}'.format(sf))
-
                 self.active_editor.rebuild()
-
-                # print db_fig.preference
 
     #===============================================================================
     # grouping
@@ -291,9 +280,6 @@ class FigureTask(AnalysisEditTask):
     def save_figure(self):
         self._save_figure()
 
-    # def open_figure(self):
-    #     self._open_figure()
-
     def set_interpreted_age(self):
         ias=self.active_editor.get_interpreted_ages()
 
@@ -301,48 +287,6 @@ class FigureTask(AnalysisEditTask):
         info = iaf.edit_traits()
         if info.result:
             self.active_editor.add_interpreted_ages(ias.groups)
-            # db = self.manager.db
-            # with db.session_ctx():
-            #     for g in iaf.groups:
-            #         if g.use:
-            #             ln = db.get_labnumber(g.identifier)
-            #             if not ln:
-            #                 continue
-            #
-            #             self.active_editor.add_interpreted_age(ln, g)
-                        # hist=db.add_interpreted_age_history(ln)
-                        # ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
-                        #                           age_err=g.preferred_age_error or 0,
-                        #                           age_kind=g.preferred_age_kind,
-                        #                           wtd_kca=float(g.weighted_kca.nominal_value),
-                        #                           wtd_kca_err=float(g.weighted_kca.std_dev),
-                        #                           mswd=float(g.mswd))
-                        # for ai in g.analyses:
-                        #     ai=db.get_analysis_uuid(ai.uuid)
-                        #     db.add_interpreted_age_set(ia, ai)
-
-
-    #===============================================================================
-    # db persistence
-    #===============================================================================
-    # def _open_figure(self, name=None):
-    #     if name is None:
-    #         name = self.figure_selector_pane.figure
-    #
-    #     if not name:
-    #         return
-    #
-    #     db = self.manager.db
-    #
-    #     # get the name of the figure for the user
-    #     fig = db.get_figure(name)
-    #     if not fig:
-    #         return
-    #         # load options
-    #
-    #     # load analyses
-    #     items = [self._record_view_factory(ai.analysis) for ai in fig.analyses]
-    #     self.unknowns_pane.items = items
 
     def _get_sample_obj(self, s):
         return next((sr for sr in self.samples if sr.name == s), None)

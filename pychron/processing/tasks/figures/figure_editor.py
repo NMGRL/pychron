@@ -42,7 +42,7 @@ class FigureEditor(GraphEditor):
     tag=Event
     save_db_figure=Event
 
-    def save_figure(self, name, project, samples, add_interpreted=False):
+    def save_figure(self, name, project, samples):
         db=self.processor.db
         with db.session_ctx():
             # figure = db.add_figure(project=project, name=dlg.name)
@@ -70,16 +70,6 @@ class FigureEditor(GraphEditor):
             pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
             figure.preference = pref
 
-            if add_interpreted:
-                ias=self.get_interpreted_ages()
-
-                for ia in ias:
-                    if ia.plateau_age:
-                        ia.preferred_age_kind='Plateau'
-                    else:
-                        ia.preferred_age_kind='Integrated'
-
-                self.add_interpreted_ages(ias)
 
     def add_interpreted_ages(self, ias):
         db = self.processor.db

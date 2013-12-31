@@ -45,6 +45,8 @@ class EasyFigures(BaseEasy):
         doc = ep.doc('figures')
 
         self._save_db_figure=doc['save_db_figure']
+        self._save_interpreted=doc['save_interpreted']
+
         projects = doc['projects']
         identifiers = doc.get('identifiers')
 
@@ -108,8 +110,18 @@ class EasyFigures(BaseEasy):
         setattr(self, '_{}_editor'.format(editor_name), editor)
 
     #save
-    def _save_step_heat(self, *args):
-        self._save('{}_step_heat_figure', *args)
+    def _save_step_heat(self,editor, *args):
+        self._save('{}_step_heat_figure', editor, *args)
+
+        if self._save_interpreted:
+            ias = editor.get_interpreted_ages()
+            for ia in ias:
+                if ia.plateau_age:
+                    ia.preferred_age_kind = 'Plateau'
+                else:
+                    ia.preferred_age_kind = 'Integrated'
+
+            editor.add_interpreted_ages(ias)
 
     def _save_fusion(self, *args):
         self._save('{}_fusion_figure', *args)
@@ -119,7 +131,7 @@ class EasyFigures(BaseEasy):
         editor.save_file(p)
         if self._save_db_figure:
             editor.save_figure('EasyFigure {}'.format(ln.identifier),
-                               ln.sample.project.name, [ln.sample.name], add_interpreted=True)
+                               ln.sample.project.name, [ln.sample.name])
 
 
 #============= EOF =============================================
