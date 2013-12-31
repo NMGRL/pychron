@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-
+# from pychron.core.ui import set_toolkit
+# set_toolkit('qt4')
 #============= enthought library imports =======================
 import os
 from sqlalchemy import Table
@@ -21,8 +22,10 @@ from sqlalchemy.ext.declarative import declarative_base
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from sqlalchemy.orm.exc import NoResultFound
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.orms.isotope.util import Base
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import paths
 
 
@@ -41,11 +44,13 @@ class OfflineBridge(IsotopeAdapter):
     """
     kind = 'sqlite'
 
-    def init(self):
+    def init(self, p=None):
         #create a default db
-        p = os.path.join(paths.hidden_dir, 'data.db')
-        self.path = p
+        if p is None:
+            p = os.path.join(paths.hidden_dir, 'data.db')
 
+        self.path = p
+        self.connect()
         if not os.path.isfile(p):
             metadata=Base.metadata
             self.create_all(metadata)
@@ -57,18 +62,26 @@ class OfflineBridge(IsotopeAdapter):
         src = db.sess
         with self.session_ctx() as dest:
             for ai in ans:
-                self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
-                self._copy_table(dest, src, ai.labnumber.sample_id, 'gen_sampletable')
-                self._copy_table(dest, src, ai.labnumber.sample.project_id, 'gen_projecttable')
-                self._copy_table(dest, src, ai.labnumber.sample.material_id, 'gen_materialtable')
+                if not self.get_analysis_uuid(ai.uuid):
+                    ln=ai.labnumber
+                    if ln:
+                        self.debug('copying analysis {}'.format(make_runid(ln.identifier, ai.aliquot, ai.step)))
 
-                self._copy_table(dest, src, ai.labnumber.irradiation_id, 'irrad_positiontable')
-                self._copy_table(dest, src, ai.labnumber.irradiation_position.level_id, 'irrad_leveltable')
-                self._copy_table(dest, src, ai.labnumber.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
+                        self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
+                        self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
 
-                self._copy_table(dest, src, ai.id, 'meas_analysistable')
-                self._copy_table(dest, src, ai.measurement_id, 'meas_measurementtable')
-                self._copy_table(dest, src, ai.extraction_id, 'meas_extractiontable')
+                        sample=ln.sample
+                        if sample:
+                            self._copy_table(dest, src, sample.project_id, 'gen_projecttable')
+                            self._copy_table(dest, src, sample.material_id, 'gen_materialtable')
+
+                        self._copy_table(dest, src, ln.irradiation_id, 'irrad_positiontable')
+                        self._copy_table(dest, src, ln.irradiation_position.level_id, 'irrad_leveltable')
+                        self._copy_table(dest, src, ln.irradiation_position.level.irradiation_id, 'irrad_irradiationtable')
+
+                        self._copy_table(dest, src, ai.id, 'meas_analysistable')
+                        self._copy_table(dest, src, ai.measurement_id, 'meas_measurementtable')
+                        self._copy_table(dest, src, ai.extraction_id, 'meas_extractiontable')
 
     def _copy_table(self, dest, src, pid, tn):
         meta = Base.metadata
@@ -78,10 +91,16 @@ class OfflineBridge(IsotopeAdapter):
         self.debug('Transferring records Columns={}'.format(','.join(columns)))
         q=src.query(table)
         q=q.filter(table.id==pid)
-        for record in q.all():
+
+        try:
+            record=q.one()
             data = dict([(str(column), getattr(record, column)) for column in columns])
             dest.merge(nrec(**data))
+        except NoResultFound:
+            pass
 
-
+# if __name__=='__main__':
+#     o=OfflineBridge()
+#     o.init('/Users/ross/Sandbox/data.db')
 #============= EOF =============================================
 

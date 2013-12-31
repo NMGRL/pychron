@@ -150,6 +150,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         prefid='pychron.vcs'
         bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
         self._use_vcs_changed()
+
+        prefid = 'pychron.offline'
+        bind_preference(self, 'use_offline_database', '{}.use_offline_database'.format(prefid))
         self._use_offline_database_changed()
 
     def _use_offline_database_changed(self):
@@ -157,6 +160,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             from pychron.database.offline_bridge import OfflineBridge
             if not self.offline_bridge:
                 self.offline_bridge=OfflineBridge()
+                self.offline_bridge.init()
 
     def _use_vcs_changed(self):
         if self.use_vcs:

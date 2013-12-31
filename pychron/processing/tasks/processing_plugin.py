@@ -38,10 +38,11 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
 from pychron.processing.tasks.actions.vcs_actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
-from pychron.processing.tasks.processing_preferences import ProcessingPreferencesPane
+from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
+from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
-from pychron.processing.tasks.vcs_preferences import VCSPreferencesPane
+from pychron.processing.tasks.preferences.vcs_preferences import VCSPreferencesPane
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -264,6 +265,8 @@ Install to enable MS Excel export''')
     def _preferences_panes_default(self):
         return [
             ProcessingPreferencesPane,
-            VCSPreferencesPane]
+            VCSPreferencesPane,
+            OfflinePreferencesPane,
+            ]
 
         #============= EOF =============================================

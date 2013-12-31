@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import pickle
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button
@@ -28,7 +26,6 @@ from pychron.database.orms.isotope.gen import gen_MassSpectrometerTable, gen_Lab
 from pychron.database.orms.isotope.meas import meas_MeasurementTable, meas_AnalysisTable, meas_ExtractionTable
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
-from pychron.paths import paths
 from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -74,6 +71,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     days_pad = Int(0)
     hours_pad = Int(18)
 
+    datasource_url=String
     #clear_selection_button = Button
 
     browser_pane = Any
@@ -103,15 +101,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_mass_spectrometers()
             self._load_analysis_types()
             self._load_extraction_devices()
-        self._set_db()
+
+        self.datasource_url='{}:{}'.format(db.host, db.name)
+        # self._set_db()
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
         # self.analysis_table.load()
 
-    def _set_db(self):
+    # def _set_db(self):
         #self.analysis_table.db = self.manager.db
-        self.danalysis_table.db = self.manager.db
+        # self.danalysis_table.db = self.manager.db
 
     def _load_mass_spectrometers(self):
         db = self.manager.db

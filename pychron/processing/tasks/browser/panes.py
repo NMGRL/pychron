@@ -17,13 +17,14 @@
 #============= enthought library imports =======================
 from traits.api import Int, Str, Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup, Label, spring, \
-    VSplit, TabularEditor, EnumEditor, Group, DateEditor, Heading
+    VSplit, TabularEditor, EnumEditor, DateEditor, Heading
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
 # from traitsui.list_str_adapter import ListStrAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -114,7 +115,8 @@ class BrowserPane(TraitsDockPane):
             project_grp,
             sample_grp,
             self._get_analysis_group(),
-            label='Project/Sample')
+            # label='Project/Sample'
+        )
 
         return grp
 
@@ -204,14 +206,21 @@ class BrowserPane(TraitsDockPane):
         return analysis_grp
 
     def traits_view(self):
+        # main_grp= Group(
+        #     self._get_browser_group(),
+        #     self._get_date_group(),
+        #     layout='tabbed')
+
+        main_grp= self._get_browser_group()
+
         v = View(
             VGroup(
                 HGroup(icon_button_editor('advanced_query', 'application_form_magnify',
-                                          tooltip='Advanced Query')),
-                Group(
-                    self._get_browser_group(),
-                    self._get_date_group(),
-                    layout='tabbed')))
+                                          tooltip='Advanced Query'),
+                       spring,
+                       CustomLabel('datasource_url', color='maroon'),
+                       spring),
+                main_grp))
 
         return v
 
