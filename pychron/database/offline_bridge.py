@@ -77,14 +77,6 @@ class OfflineBridge(IsotopeAdapter):
                         ai=db.get_analysis_uuid(ai.uuid)
                         ln=db.get_labnumber(ln)
 
-                        # self._copy_table(dest, src, ai.lab_id, 'gen_labtable', gen_LabTable)
-                        # self._copy_table(dest, src, ln.sample_id, 'gen_sampletable', gen_SampleTable)
-                        #
-                        # sample=ln.sample
-                        # if sample:
-                        #     self._copy_table(dest, src, sample.project_id, 'gen_projecttable', gen_ProjectTable)
-                        #     self._copy_table(dest, src, sample.material_id, 'gen_materialtable', gen_MaterialTable)
-
                         self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
                         self._copy_table(dest, src, ln.sample_id, 'gen_sampletable')
 
@@ -113,8 +105,6 @@ class OfflineBridge(IsotopeAdapter):
             if dq.one():
                 return
         except NoResultFound:
-            # dq = dest.query(dtable)
-            # print dq.all()
             meta.bind = src.bind
 
             table = Table(tn, meta, autoload=True)
