@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from PySide import QtGui, QtCore
-from PySide.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont
+from PySide.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
 from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
 
 #============= standard library imports ========================
@@ -27,12 +27,24 @@ from traitsui.qt4.editor import Editor
 class DiffGutter(LineNumberWidget):
     start=1
     end=4
-    tag='+'
+
     anti_tag='-'
+    adjust_width=0
+
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setFont(self.font)
+
+        # painter.setPen(QColor(200, 0, 100))#light grey
         painter.fillRect(event.rect(), self.background_color)
+
+        p=QPen()
+        p.setColor(QColor(100,100,100))
+        painter.setPen(p)
+
+        rect=event.rect()
+        rect.adjust(0,-1, self.adjust_width,1)
+        painter.drawRect(rect)
 
         cw = self.parent()
         block = cw.firstVisibleBlock()
@@ -47,13 +59,11 @@ class DiffGutter(LineNumberWidget):
                 if blocknum>0:
                     text=block.text()
                     if not text.startswith(self.anti_tag):
-                        painter.setPen(QtCore.Qt.black)
                         painter.drawText(0, top, self.width() - 2,
                                          self.fontMetrics().height(),
                                          QtCore.Qt.AlignRight, str(lineno))
                         lineno+=1
                 else:
-                    painter.setPen(QtCore.Qt.black)
                     painter.drawText(0, top, self.width() - 2,
                                      self.fontMetrics().height(),
                                      QtCore.Qt.AlignRight, '...')
@@ -74,6 +84,7 @@ class PatchWidget(QPlainTextEdit):
         self.bline_number_widget = DiffGutter(self)
         self.bline_number_widget.min_char_width=3
         self.bline_number_widget.anti_tag='-'
+        self.bline_number_widget.adjust_width=-1
 
         font =QFont()
         self.set_font(font)
@@ -149,13 +160,18 @@ class _PatchEditor(Editor):
 
     def _set_highlighting(self, txt):
         lines=txt.split('\n')
+        ss=[]
         for idx, li in enumerate(lines):
             if li.startswith('+') and not li.startswith('+++'):
-                self._highlight(idx, 'addition')
+                sel=self._highlight(idx, 'addition')
+                ss.append(sel)
             elif li.startswith('-') and not li.startswith('---'):
-                self._highlight(idx, 'deletion')
+                sel=self._highlight(idx, 'deletion')
+                ss.append(sel)
             else:
                 self._fade(idx)
+
+        self.control.setExtraSelections(ss)
 
     def _fade(self, lineno):
         cursor = self._get_line_cursor(lineno)
@@ -175,14 +191,31 @@ class _PatchEditor(Editor):
         elif kind=='deletion':
             color=QColor(255, 228, 228) #light red
 
-        cursor=self._get_line_cursor(lineno)
+        selection = QTextEdit.ExtraSelection()
+        selection.format.setBackground(color)
+        selection.format.setProperty(
+            QTextFormat.FullWidthSelection, True)
 
-        fmt = cursor.charFormat()
-        fmt.setBackground(color)
+        ctrl = self.control
+        doc = ctrl.document()
+        block = doc.findBlockByLineNumber(lineno)
+        pos = block.position()
+        cursor = ctrl.textCursor()
+        cursor.setPosition(pos)
+        selection.cursor=cursor
 
-        cursor.beginEditBlock()
-        cursor.setCharFormat(fmt)
-        cursor.endEditBlock()
+        # ex=ctrl.extraSelections()
+        # ex.append(selection)
+
+        # ctrl.setExtraSelections(ex)
+        return selection
+
+        # cursor=self._get_line_cursor(lineno)
+
+        # fmt = cursor.charFormat()
+        # cursor.beginEditBlock()
+        # cursor.setCharFormat(fmt)
+        # cursor.endEditBlock()
 
     def _get_line_cursor(self, lineno):
         ctrl = self.control
