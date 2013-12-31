@@ -305,7 +305,7 @@ class BaseTask(Task, Loggable):
         grps = self._view_groups()
         view_menu = SMenu(
             *grps,
-            id='View', name='&View')
+            id='view.menu', name='&View')
         return view_menu
 
     def _edit_menu(self):
@@ -342,7 +342,7 @@ class BaseTask(Task, Loggable):
         return file_menu
 
     def _tools_menu(self):
-        tools_menu = SMenu(id='Tools', name='Tools')
+        tools_menu = SMenu(id='tools.menu', name='Tools')
         return tools_menu
 
     def _window_menu(self):

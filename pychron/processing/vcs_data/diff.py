@@ -15,30 +15,22 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool
-from traitsui.api import View, Item, Group
-from envisage.ui.tasks.preferences_pane import PreferencesPane
-
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+from traits.api import HasTraits, Str, Bool
+from traitsui.api import View, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-
-class VCSPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.vcs'
-    use_vcs=Bool
-
-
-class VCSPreferencesPane(PreferencesPane):
-    model_factory = VCSPreferences
-    category = 'Database'
-
+class Diff(HasTraits):
+    """
+        represents a uncommited change
+    """
+    use=Bool
+    name=Str
+    patch=Str
     def traits_view(self):
-        a=Group(Item('use_vcs'), label='VCS')
-        return View(a)
+        v=View(UItem('patch', style='custom'))
+        return v
 
+#============= EOF =============================================
 
-
-
-    #============= EOF =============================================

@@ -33,7 +33,8 @@ from pyface.tasks.action.task_action import TaskAction
 #===============================================================================
 
 class myTaskAction(TaskAction):
-    task_ids=List
+    task_ids = List
+
     def _task_changed(self):
         if self.task:
             if self.task.id in self.task_ids:
@@ -62,8 +63,10 @@ class myTaskAction(TaskAction):
         else:
             self.enabled = bool(self.object)
 
+
 class FigureTaskAction(myTaskAction):
-    task_ids=List(['pychron.processing.figures',])
+    task_ids = List(['pychron.processing.figures', ])
+
 
 class GroupAction(FigureTaskAction):
     pass
@@ -198,7 +201,8 @@ class SmartProjectAction(Action):
 
 
 class OpenInterpretedAgeAction(Action):
-    name='Browse Interpreted Ages'
+    name = 'Browse Interpreted Ages'
+
     def perform(self, event):
         app = event.task.window.application
         task = app.open_task('pychron.processing.interpreted_age')
@@ -211,13 +215,12 @@ class SetInterpretedAgeAction(FigureTaskAction):
 
 
 class OpenAdvancedQueryAction(Action):
-    name='Find Analysis...'
+    name = 'Find Analysis...'
 
     def perform(self, event):
         app = event.task.window.application
         task = app.open_task('pychron.advanced_query')
         task.set_append_replace_enabled(False)
-
 
 
 #============= EOF =============================================

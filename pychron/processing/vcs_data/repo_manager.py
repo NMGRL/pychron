@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from cStringIO import StringIO
 
 from traits.api import Any, Directory
 
 #============= standard library imports ========================
 import os
-from git import Repo
+from git import Repo, Diff
+# from dulwich.repo import Repo
 
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -76,13 +78,27 @@ class RepoManager(Loggable):
 
         self._add_to_repo(p, msg, **kw)
 
-    def has_uncommitted(self, repo=None):
-        return len(self._get_uncommited_changes(repo))
+    #repo manager protocol
+    def get_local_changes(self, repo=None):
+        repo=self._get_repo(repo)
+        diff_str=repo.git.diff( '--full-index')
+        patches=map(str.strip, diff_str.split('diff --git'))
+        patches=['\n'.join(p.split('\n')[2:]) for p in patches[1:]]
+
+        diff_str=StringIO(diff_str)
+        diff_str.seek(0)
+        index=Diff._index_from_patch_format(repo, diff_str)
+
+        return index, patches
+
+    def get_untracked(self):
+        return self._repo.untracked_files
+
+    def is_dirty(self, repo=None):
+        repo=self._get_repo(repo)
+        return repo.is_dirty()
 
     #private
-    def _get_uncommited_changes(self, repo):
-        index=self._get_repo_index(repo)
-        return index.diff(None)
 
     def _add_to_repo(self, p, msg, repo=None, commit=True):
         # repo=self._get_repo(repo)
@@ -106,8 +122,9 @@ class RepoManager(Loggable):
 
     def _get_repo(self, repo):
         if repo is None:
+            # repo=self.root
             repo = self._repo
-
+        # repo=Repo(repo)
         return repo
 
     def _add_repo(self, root):

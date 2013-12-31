@@ -26,6 +26,7 @@ import yaml
 
 from pychron.loggable import Loggable
 from pychron.paths import r_mkdir, paths
+from pychron.processing.vcs_data.diff import Diff
 from pychron.processing.vcs_data.repo_manager import RepoManager
 
 
@@ -54,6 +55,27 @@ class IsotopeVCSManager(VCSManager):
 
     """
     repo_manager = Instance(RepoManager, ())
+
+    def is_dirty(self):
+        rm=self.repo_manager
+        return rm.is_dirty()
+
+    def get_untracked(self):
+        rm=self.repo_manager
+        return rm.get_untracked()
+
+    def get_diffs(self):
+        rm = self.repo_manager
+
+        ds=[]
+
+        diffs, patches=rm.get_local_changes()
+        for di, p in zip(diffs, patches):
+            ds.append(Diff(name=os.path.basename(di.a_blob.path),
+                           patch=p,
+                           use=True))
+
+        return ds
 
     def set_repo(self, name):
         p = os.path.join(paths.vcs_dir, name)

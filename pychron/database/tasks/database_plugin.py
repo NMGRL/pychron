@@ -18,7 +18,6 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 #from pychron.database.tasks.actions import UpdateDatabaseAction
-from pychron.database.tasks.vcs_preferences import VCSPreferencesPane
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, MassSpecConnectionPane
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -27,7 +26,6 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 class DatabasePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [ConnectionPreferencesPane,
-                VCSPreferencesPane,
                 MassSpecConnectionPane,
                 ]
 
