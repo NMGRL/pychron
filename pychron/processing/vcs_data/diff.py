@@ -28,6 +28,7 @@ class Diff(HasTraits):
     use=Bool
     name=Str
     patch=Str
+    path=Str
     def traits_view(self):
         v=View(UItem('patch', style='custom'))
         return v

@@ -45,11 +45,14 @@ class RepoManager(Loggable):
         self._repo=repo
         self.root=localpath
 
-    def create_remote(self, host, repo_name, name='origin', repo=None, user='git'):
+    def create_remote(self, url, name='origin', repo=None):
         repo=self._get_repo(repo)
         if repo:
-            url='{}@{}:{}'.format(user, host, repo_name)
-            repo.create_remote(name, url)
+            #only create remote if doesnt exist
+            if not hasattr(repo.remotes, name):
+            #     url='{}:jir812@{}:{}.git'.format(user, host, repo_name)
+                repo.create_remote(name, url)
+                pass
 
     #git protocol
     def update(self, repo=None, remote='origin'):
@@ -59,9 +62,14 @@ class RepoManager(Loggable):
             remote.pull()
 
     def push(self, repo=None, remote='origin'):
-        remote = self._get_remote(repo, remote)
-        if remote:
-            remote.push()
+        repo=self._get_repo(repo)
+
+        rr = self._get_remote(repo, remote)
+        if rr:
+        #     print remote, remote.url
+            # remote.push()
+
+            repo.git.push(remote,'master')
 
     def commit(self, msg, repo=None):
         index=self._get_repo_index(repo)

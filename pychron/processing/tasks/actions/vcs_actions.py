@@ -50,5 +50,10 @@ class CommitVCSAction(TaskAction):
     name='Commit'
     method='commit'
 
+
+class ShareVCSAction(TaskAction):
+    name='Share'
+    method='share'
+
 #============= EOF =============================================
 

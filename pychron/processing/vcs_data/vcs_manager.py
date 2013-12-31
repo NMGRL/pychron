@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from itertools import groupby
 import os
+import subprocess
 import paramiko
 from traits.api import Instance, Str
 #============= standard library imports ========================
@@ -72,6 +73,7 @@ class IsotopeVCSManager(VCSManager):
         diffs, patches=rm.get_local_changes()
         for di, p in zip(diffs, patches):
             ds.append(Diff(name=os.path.basename(di.a_blob.path),
+                           path=di.a_blob.path,
                            patch=p,
                            use=True))
 
@@ -95,35 +97,50 @@ class IsotopeVCSManager(VCSManager):
 
             self.repo_manager.add(p, msg='init commit')
 
-    def init_repo(self, path, auto_add_remote=False):
+    def init_repo(self, path):
         rm = self.repo_manager
         rm.add_repo(path)
 
-        if auto_add_remote:
-            host = ''
+    def create_remote(self, *args, **kw):
+        """
+            add remote url alias
+        """
+        rm=self.repo_manager
+        rm.create_remote(*args,**kw)
 
-            rp = self.add_remote_repo(host, os.path.basename(path))
-            rm.create_remote(host, rp)
+    # def remote_repo_exists(self, path, host='localhost'):
+    #     if host == 'localhost':
+    #         return os.path.isdir(path)
+    #     else:
+    #         client = paramiko.SSHClient()
+    #         # client.connect(host, username=user, password=pwd)
+    #         stdin, stdout, stderr = client.exec_command('cd {}'.format(path))
+    #         return not 'No such file or directory' in stdout.readall()
 
-    def add_remote_repo(self, host, name):
-        #use ssh to make a new remote repo
-        client = paramiko.SSHClient()
+    def create_remote_repo(self, path, host='localhost'):
+        """
+            create a bare repo on the server
+        """
+        if host=='localhost':
+            if not os.path.isdir(path):
+                os.mkdir(path)
+                subprocess.call(['git','--bare', 'init',path])
+        else:
 
-        user = ''
-        pwd = ''
-        client.connect(host, username=user, password=pwd)
+            client = paramiko.SSHClient()
+            # client.connect(host, username=user, password=pwd)
 
-        root = '/usr/data/pychron'
-        p = '{}.git'.format(name)
+            stdin, stdout, stderr=client.exec_command('mkdir {}'.format(path))
+            if not 'File exists' in stdout.readall():
+                client.exec_command('git --bare init {}'.format(path))
 
-        cmds = ('cd {}'.format(root),
-                'mkdir {}.git'.format(name),
-                'cd {}.git'.format(name),
-                'git init --bare')
+    def add(self, p, **kw):
+        rm = self.repo_manager
+        rm.add(p, **kw)
 
-        cmd = ';'.join(cmds)
-        client.exec_command(cmd)
-        return os.path.join(root, p)
+    def push(self, **kw):
+        rm=self.repo_manager
+        rm.push(**kw)
 
     def commit_change(self, msg):
         rm = self.repo_manager
