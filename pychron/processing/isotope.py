@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from binascii import hexlify
 from itertools import izip
 import re
 from traits.api import HasTraits, Str, Float, Property, Instance, \
@@ -65,12 +66,15 @@ class BaseMeasurement(HasTraits):
             self.xs = array(xs)
             self.ys = array(ys)
 
-    def pack(self, endianness=None):
+    def pack(self, endianness=None, as_hex=True):
         if endianness is None:
             endianness = self.endianness
 
         fmt = '{}ff'.format(endianness)
-        return ''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
+        txt=''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
+        if as_hex:
+            txt=hexlify(txt)
+        return txt
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:

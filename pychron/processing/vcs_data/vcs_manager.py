@@ -233,6 +233,7 @@ class IsotopeVCSManager(VCSManager):
                     'baseline_err': float(iso.baseline.error),
                     'fit':iso.fit,
                     'filter_outliers':dict(iso.filter_outliers_dict),
+                    'data':iso.pack()
                     }
 
         isos = [func(ii) for ii in ai.isotopes.itervalues()]
