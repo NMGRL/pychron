@@ -92,6 +92,19 @@ class proc_ArArTable(Base, BaseMixin):
     rad40_err = Column(Float)
 
 
+class proc_InterpretedAgeGroupHistoryTable(Base, BaseMixin):
+    project_id=foreignkey('gen_ProjectTable')
+    name=stringcolumn(80)
+    create_date=Column(DateTime)
+
+    interpreted_ages=relationship('proc_InterpretedAgeGroupSetTable')
+
+
+class proc_InterpretedAgeGroupSetTable(Base, BaseMixin):
+    interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
+    group_id=foreignkey('proc_InterpretedAgeGroupHistoryTable')
+
+
 class proc_InterpretedAgeSetTable(Base, BaseMixin):
     interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
     analysis_id = foreignkey('meas_AnalysisTable')
