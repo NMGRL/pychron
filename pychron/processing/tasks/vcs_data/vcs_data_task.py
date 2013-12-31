@@ -24,7 +24,7 @@ from traits.api import List, Str, Instance, Any
 #============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.processing.tasks.actions.vcs_actions import PushVCSAction, PullVCSAction, CommitVCSAction, ShareVCSAction
+from pychron.processing.tasks.actions.vcs_actions import CommitVCSAction, ShareVCSAction
 from pychron.processing.tasks.vcs_data.panes import VCSCentralPane
 from pychron.processing.vcs_data.diff import Diff
 from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
@@ -35,8 +35,7 @@ class VCSDataTask(BaseManagerTask):
     diffs=List
     selected_diff=Any
 
-    tool_bars = [SToolBar(PushVCSAction(),
-                          PullVCSAction(),
+    tool_bars = [SToolBar(
                           CommitVCSAction(),
                           ShareVCSAction())]
 
@@ -45,6 +44,8 @@ class VCSDataTask(BaseManagerTask):
     vcs=Instance(IsotopeVCSManager, ())
 
     commit_message=Str
+    prev_commit_message=Str
+    prev_commit_messages=List
 
     def prepare_destroy(self):
         if self.commit_message:
@@ -59,13 +60,27 @@ class VCSDataTask(BaseManagerTask):
     def activated(self):
         p = os.path.join(paths.hidden_dir, 'commit_messages')
         self._commit_messages=[]
+        self.prev_commit_messages=[]
+
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 try:
                     ms=pickle.load(fp)
                     self._commit_messages=ms
+
                 except pickle.PickleError:
                     pass
+
+        if self._commit_messages:
+
+            self.prev_commit_messages=[ci[:10] for ci in self._commit_messages]
+            self.prev_commit_message=self.prev_commit_messages[-1]
+            # self.commit_message=self._commit_messages[-1]
+
+    def _prev_commit_message_changed(self):
+        if self.prev_commit_message:
+            idx=self.prev_commit_messages.index(self.prev_commit_message)
+            self.commit_message=self._commit_messages[idx]
 
     def create_central_pane(self):
         return VCSCentralPane(model=self)

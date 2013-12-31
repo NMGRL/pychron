@@ -15,25 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool
-from traitsui.api import View, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.ui.patch_editor import PatchEditor
+from pychron.core.ui.factory import toolkit_factory
 
-
-class Diff(HasTraits):
-    """
-        represents a uncommited change
-    """
-    use=Bool
-    name=Str
-    patch=Str
-    path=Str
-    def traits_view(self):
-        v=View(UItem('patch', style='custom', editor=PatchEditor()))
-        return v
-
+PatchEditor = toolkit_factory('patch_editor', 'PatchEditor')
 #============= EOF =============================================
-

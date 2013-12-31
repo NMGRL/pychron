@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem, TableEditor, HGroup, EnumEditor, HSplit, InstanceEditor, VGroup
+from traitsui.api import View, Item, UItem, TableEditor, HGroup, EnumEditor, HSplit, InstanceEditor, VGroup, spring
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -27,18 +27,21 @@ from traitsui.table_column import ObjectColumn
 class VCSCentralPane(TraitsTaskPane):
     def traits_view(self):
         cols = [CheckboxColumn(name='use'),
-                ObjectColumn(name='name', editable=False),
-        ]
+                ObjectColumn(name='name', editable=False)]
         editor = TableEditor(columns=cols,
-                             selected='selected_diff')
+                             selected='selected_diff',
+                             sortable=False
+                             )
 
         v = View(
             VGroup(
                 HGroup(Item('selected_repository', editor=EnumEditor(name='repositories'),
                             label='Repo'), ),
                 HSplit(UItem('diffs', editor=editor),
-                       UItem('selected_diff', style='custom', editor=InstanceEditor()))),
-                UItem('commit_message', style='custom')
+                       UItem('selected_diff', style='custom', editor=InstanceEditor())),
+                VGroup(
+                    HGroup(spring, UItem('prev_commit_message', editor=EnumEditor(name='prev_commit_messages'))),
+                    UItem('commit_message', style='custom'), label='Commit', show_border=True)),
             )
         return v
 
