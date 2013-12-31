@@ -187,7 +187,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if not ans:
             return []
 
-        with self.db.session_ctx():
+        db=self.db
+        with db.session_ctx():
             if ans:
                 #partition into DBAnalysis vs IsotopeRecordView
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
@@ -241,6 +242,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                 if self.use_vcs:
                     self.vcs.add_analyses(db_ans)
+
+                if self.use_offline_database:
+                    self.offline_db.add_analyses(db, db_ans)
 
                 return db_ans
 

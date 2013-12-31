@@ -32,20 +32,6 @@ import weakref
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
 
-# Session = sessionmaker()
-
-# def create_url(kind, user, hostname, db, password=None):
-
-#    if kind == 'mysql':
-#        if password is not None:
-#            url = 'mysql://{}:{}@{}/{}?connect_timeout=3'.format(user, password, hostname, db)
-#        else:
-#            url = 'mysql://{}@{}/{}?connect_timeout=3'.format(user, hostname, db)
-#    else:
-#        url = 'sqlite:///{}'.format(db)
-#
-#    return url
-
 class SessionCTX(object):
     _close_at_exit = True
     _commit = True
@@ -94,8 +80,8 @@ class SessionCTX(object):
 
 
 class DatabaseAdapter(Loggable):
-    '''
-    '''
+    """
+    """
     sess = None
 
     sess_stack = 0
@@ -123,6 +109,13 @@ class DatabaseAdapter(Loggable):
 
     url = Property(depends_on='connection_parameters_changed')
 
+    path=Str
+
+    def create_all(self, metadata):
+        if self.kind=='sqlite':
+            with self.session_ctx() as sess:
+                metadata.create_all(sess.bind)
+
     def session_ctx(self, sess=None, commit=True):
         if sess is None:
             sess = self.sess
@@ -138,19 +131,6 @@ class DatabaseAdapter(Loggable):
 
     def isConnected(self):
         return self.connected
-
-    #     def reset(self):
-    #         if self.sess:
-    #             self.info('clearing current session. uncommitted changes will be deleted')
-    #             self.sess.flush()
-    #             self.sess.close()
-    #
-    #             self.sess.remove()
-    #             self.sess = None
-
-    #             import gc
-    #             gc.collect()
-
 
     def connect(self, test=True, force=False, warn=True):
         if force:
@@ -194,58 +174,15 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         self.connection_parameters_changed = False
         return self.connected
 
-    #     def new_session(self):
-    # #         sess = self.session_factory()
-    #         sess = scoped_session(Session)
-    #         return sess
-
     def initialize_database(self):
         pass
 
-    #     def get_query(self, table):
-    #         sess = self.get_session()
-    #         if sess:
-    #             q = sess.query(table)
-    #             return q
-
     def get_session(self):
-    #         '''
-    #         '''
         sess = self.sess
         if sess is None:
             sess = self.session_factory()
 
         return sess
-
-    # #             if self.session_factory is not None:
-    #             self.sess = self.new_session()
-    #
-    #         return self.sess
-
-    #     def expire(self):
-    #         if self.sess is not None:
-    #             self.sess.expire_all()
-    #
-    #     def delete(self, item):
-    #         if self.sess is not None:
-    #             self.sess.delete(item)
-    #
-    #     def commit(self):
-    #         if self.sess is not None:
-    #             self.sess.commit()
-    #
-    #     def flush(self):
-    #         if self.sess is not None:
-    #             self.sess.flush()
-    #
-    #     def rollback(self):
-    #         if self.sess is not None:
-    #             self.sess.rollback()
-    #
-    #     def close(self):
-    #         if self.sess is not None:
-    #             self.sess.close()
-
 
     def get_migrate_version(self):
         return True
@@ -291,7 +228,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             else:
                 url = 'mysql+{}://{}@{}/{}?connect_timeout=3'.format(driver, user, host, name)
         else:
-            url = 'sqlite:///{}'.format(name)
+            url = 'sqlite:///{}'.format(self.path)
 
         return url
 
