@@ -25,5 +25,6 @@ class DBFigure(HasTraits):
     project=Str
     samples=List
     kind=Str
+
 #============= EOF =============================================
 

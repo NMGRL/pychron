@@ -22,6 +22,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class FigureAdapter(TabularAdapter):
@@ -29,7 +30,7 @@ class FigureAdapter(TabularAdapter):
                ('Samples', 'samples'), ('Kind', 'kind')]
     samples_text = Property
 
-    font='arial 10'
+    font = 'arial 10'
 
     def _get_samples_text(self):
         return ', '.join(self.item.samples)
@@ -41,12 +42,16 @@ class FigureSelectorPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(VGroup(
-            HGroup(CustomLabel('figures_help',color='maroon'),spring,
-                   UItem('figure_kind')),
-                        UItem('figures', editor=TabularEditor(adapter=FigureAdapter(),
-                                                       editable=False,
-                                                       selected='selected_figure',
-                                                       dclicked='dclicked_figure'))))
+            HGroup(CustomLabel('figures_help', color='maroon'), spring,
+                   icon_button_editor('delete_figure_button', 'delete',
+                                      enabled_when='selected_figures'),
+                   UItem('figure_kind'),
+                   ),
+            UItem('figures', editor=TabularEditor(adapter=FigureAdapter(),
+                                                  editable=False,
+                                                  multi_select=True,
+                                                  selected='selected_figures',
+                                                  dclicked='dclicked_figure'))))
         return v
 
 

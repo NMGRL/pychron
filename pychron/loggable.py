@@ -101,13 +101,18 @@ class Loggable(HasTraits):
         dialog.open()
     
     def confirmation_dialog(self, msg, return_retval=False, 
-                            cancel=False, title='', timeout=None):
-    
+                            cancel=False, title='', timeout=None, size=None):
+
+        if size is None:
+            size=(-1,-1)
+
         dlg = myConfirmationDialog(
             cancel=cancel,
             message=msg,
             title=title,
-            style='modal')
+            style='modal',
+            size=size)
+
         retval = dlg.open(timeout)
         if return_retval:
             return retval

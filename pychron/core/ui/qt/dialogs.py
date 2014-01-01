@@ -17,11 +17,14 @@
 import time
 from threading import Event
 
+from PySide import QtCore
+from PySide.QtGui import QSizePolicy
 from pyface.api import OK, YES
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
 from pyface.message_dialog import MessageDialog
 
 from pychron.core.ui.gui import invoke_in_main_thread
+
 
 #from pyface.confirmation_dialog import ConfirmationDialog
 
@@ -86,23 +89,35 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 
 
 class _ConfirmationDialog(ConfirmationDialog):
-    pass
-    #def _create_control(self, parent):
-    #    dlg=super(_ConfirmationDialog, self)._create_control(parent)
-    #
-    #    layout = QtGui.QVBoxLayout()
-    #    layout.addWidget(dlg)
-    #
-    #    #self._timeout_message=QLabel()
-    #    #layout.addWidget(self._timeout_message)
-    #
-    #    #dlg.add
-    #    #dlg.setLayout(layout)
-    #    return dlg
+
+    def _create_control(self, parent):
+       dlg=super(_ConfirmationDialog, self)._create_control(parent)
+       dlg.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+       if self.size != (-1,-1):
+            dlg.resize(*self.size)
+            dlg.event=self._handle_evt
+
+       return dlg
+
+    def _handle_evt(self, evt):
+        return True
+
+    def _show_modal(self):
+        self.control.setWindowModality(QtCore.Qt.ApplicationModal)
+        retval = self.control.exec_()
+        clicked_button = self.control.clickedButton()
+        if clicked_button in self._button_result_map:
+            retval = self._button_result_map[clicked_button]
+        # else:
+        #     retva
+            # retval = _RESULT_MAP[retval]
+        return retval
 
 
 class myConfirmationDialog(myMessageMixin, _ConfirmationDialog):
     pass
+
 
 
 
