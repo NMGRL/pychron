@@ -22,16 +22,30 @@ from numpy import max
 #============= local library imports  ==========================
 
 class FlowDataLabel(DataLabel):
-    '''
+    """
         this label repositions itself if doesn't fit within the
         its component bounds.
-        
-        
-    '''
+
+
+    """
     constrain_x = Bool(True)
     constrain_y = Bool(True)
-    def do_layout(self, size=None, force=False):
-        DataLabel.do_layout(self, size=size, force=force)
+    # def _draw(self, gc, **kw):
+    #     self.font='modern 18'
+    #     gc.set_font(self.font)
+    #     print 'draw', self.font
+    #     super(FlowDataLabel, self)._draw(gc,**kw)
+
+    def overlay(self, component, gc, *args, **kw):
+
+        # face name was getting set to "Helvetica" by reportlab during pdf generation
+        # set face_name back to "" to prevent font display issue. see issue #72
+        self.font.face_name=''
+
+        super(FlowDataLabel, self).overlay(component, gc, *args, **kw)
+
+    def do_layout(self, **kw):
+        DataLabel.do_layout(self, **kw)
 
         ws, hs = self._cached_line_sizes.T
         if self.constrain_x:

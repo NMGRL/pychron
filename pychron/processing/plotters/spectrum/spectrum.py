@@ -62,6 +62,7 @@ class Spectrum(BaseArArFigure):
 
     def _plot_age_spectrum(self, po, plot, pid):
         graph = self.graph
+        op = self.options
 
         xs, ys, es, c39s = self._calculate_spectrum()
         self.xs = c39s
@@ -72,11 +73,6 @@ class Spectrum(BaseArArFigure):
         spec = self._add_plot(xs, ys, es, pid, po)
         ag=self.analysis_group
         if ag.plateau_age:
-        # args = self._get_plateau(self.sorted_analyses)
-        # if args:
-        #     plateau_age, platbounds, plateau_mswd, valid_mswd, nplateau_steps = args
-
-        # if not isinstance(plateau_age, int):
             plateau_age=ag.plateau_age
             plateau_mswd, valid_mswd, nsteps=ag.get_plateau_mswd_tuple()
             platbounds=ag.plateau_steps
@@ -94,23 +90,26 @@ class Spectrum(BaseArArFigure):
         # text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
 
         ys, es = array(ys), array(es)
-        ns = self.options.step_nsigma
+        ns = op.step_nsigma
         yl = (ys - es * ns)[::-1]
         yu = ys + es * ns
 
         miages = min(yl)
         maages = max(yu)
 
-        dl = self._add_data_label(spec, text,
-                                  (25, miages),
-                                  font='modern 10',
-                                  label_position='bottom right',
-                                  append=False)
+
+        if op.display_integrated_info:
+            fs=op.integrated_font_size
+            if not fs:
+                fs=10
+
+            self._add_data_label(spec, text,
+                                      (25, miages),
+                                      font='modern {}'.format(fs),
+                                      label_position='bottom right',
+                                      append=False)
 
         self._set_y_limits(miages, maages, pad='0.1')
-
-    #         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
-    #         plot.index_mapper.on_trait_change(d, 'updated')
 
     def _add_plot(self, xs, ys, es, plotid, po, value_scale='linear'):
         graph = self.graph
@@ -131,7 +130,9 @@ class Spectrum(BaseArArFigure):
         ds.errors = es
 
         ns = self.options.step_nsigma
-        sp = SpectrumErrorOverlay(component=ds, spectrum=self,
+        sp = SpectrumErrorOverlay(component=ds,
+                                  spectrum=self,
+                                  alpha=max(min(1.0, self.options.envelope_alpha), 0.0),
                                   nsigma=ns)
         ds.overlays.append(sp)
 
@@ -139,7 +140,7 @@ class Spectrum(BaseArArFigure):
             lo= SpectrumLabelOverlay(component=ds,
                                      nsigma=ns,
                                      spectrum=self,
-
+                                     font_size=self.options.step_label_font_size,
                                      display_extract_value=self.options.display_extract_value,
                                      display_step=self.options.display_step)
 
@@ -158,7 +159,9 @@ class Spectrum(BaseArArFigure):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
+
                             label_visible=self.options.display_plateau_info,
+                            label_font_size=self.options.plateau_font_size,
                             label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             y=plateau_age.nominal_value)
 

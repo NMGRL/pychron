@@ -27,7 +27,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
     display_extract_value=Bool(True)
     display_step=Bool(True)
     nsigma=Int
-
+    font_size=Int
     _cached_labels=List
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         labels=self._get_labels()
@@ -65,6 +65,7 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
                 txt=self._assemble_text(ui)
                 labels.append(PlotLabel(text=txt,
+                                        font='modern {}'.format(self.font_size),
                                         x=x,
                                         y=y))
 

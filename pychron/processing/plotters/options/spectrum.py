@@ -15,8 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool
-from traitsui.api import Item, Group, HGroup, UItem, VGroup, EnumEditor
+from traits.api import Str, Int, Property, Bool, Enum, Float
+from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring
 
 #============= standard library imports ========================
 import re
@@ -39,18 +39,24 @@ class SpectrumOptions(AgeOptions):
     display_extract_value = Bool(False)
     display_step = Bool(False)
     display_plateau_info = Bool(True)
+    display_integrated_info = Bool(True)
 
-    def _get_info_group(self):
-        g = VGroup(
-            HGroup(Item('show_info', label='Display Info'),
-                   Item('show_mean_info', label='Mean', enabled_when='show_info'),
-                   Item('show_error_type_info', label='Error Type', enabled_when='show_info')
-            ),
-            HGroup(Item('display_step'), Item('display_extract_value'),
-                   Item('display_plateau_info')),
-            show_border=True, label='Info')
+    plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
+    integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
+    step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
+    envelope_alpha = Float
 
-        return g
+    # def _get_info_group(self):
+    #     g = VGroup(
+    #         HGroup(Item('show_info', label='Display Info'),
+    #                Item('show_mean_info', label='Mean', enabled_when='show_info'),
+    #                Item('show_error_type_info', label='Error Type', enabled_when='show_info')
+    #         ),
+    #         HGroup(Item('display_step'), Item('display_extract_value'),
+    #                Item('display_plateau_info')),
+    #         show_border=True, label='Info')
+
+    # return g
 
     def _get_plateau_steps(self):
         return self._plateau_steps
@@ -74,6 +80,11 @@ class SpectrumOptions(AgeOptions):
                         'display_extract_value',
                         'display_step',
                         'display_plateau_info',
+                        'display_integrated_info',
+                        'plateau_font_size',
+                        'integrated_font_size',
+                        'step_label_font_size',
+                        'envelope_alpha',
                         '_plateau_steps']
 
     def _get_groups(self):
@@ -83,15 +94,50 @@ class SpectrumOptions(AgeOptions):
                  tooltip='Force a plateau over provided steps'),
             UItem('plateau_steps',
                   enabled_when='force_plateau',
-                  tooltip='Enter start and end steps. e.g A-C ')), label='Plateau')
+                  tooltip='Enter start and end steps. e.g A-C ')),
+                         show_border=True,
+                         label='Plateau')
 
-        error_grp=Group(Item('step_nsigma',
-                             editor=EnumEditor(values=[1,2,3]),
-                             label='NSigma'),
-                        label='Error')
+        error_grp = Group(HGroup(Item('step_nsigma',
+                                      editor=EnumEditor(values=[1, 2, 3]),
+                                      tooltip='Set the size of the error envelope in standard deviations',
+                                      label='N. Sigma'),
+                                 Item('envelope_alpha',
+                                      label='Opacity',
+                                      tooltip='Set the opacity (alpha-value) for the error envelope')),
+                          show_border=True,
+                          label='Error Envelope')
+
+        display_grp = Group(HGroup(UItem('show_info',
+                                         tooltip='Show general info in the upper right corner'),
+                                   Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                                   Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
+                                   label='General'),
+                            HGroup(Item('display_step', label='Step'),
+                                   Item('display_extract_value', label='Power/Temp'),
+                                   spring,
+                                   Item('step_label_font_size', label='Size'),
+                                   label='Labels'),
+                            HGroup(UItem('display_plateau_info',
+                                         tooltip='Display plateau info'),
+                                   spring,
+                                   Item('plateau_font_size', label='Size',
+                                        enabled_when='display_plateau_info'),
+                                   label='Plateau'),
+                            HGroup(UItem('display_integrated_info',
+                                         tooltip='Display integrated age info'),
+                                   spring,
+                                   Item('integrated_font_size', label='Size',
+                                        enabled_when='display_integrated_info'),
+                                   label='Integrated'),
+                            show_border=True,
+                            label='Display')
         g = Group(
+            self._get_title_group(),
             plat_grp,
             error_grp,
+            display_grp,
+            # self._get_info_group(),
             label='Options')
 
         return (g, )

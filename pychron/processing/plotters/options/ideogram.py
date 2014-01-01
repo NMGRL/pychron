@@ -66,11 +66,18 @@ class IdeogramOptions(AgeOptions):
             Item('include_decay_error'),
             label='Calculations')
 
-        g2=Group(Item('display_mean_indicator', label='Display Mean'),
-                 Item('display_mean', label='Display Mean Value'),
+        g2=Group(HGroup(Item('display_mean_indicator', label='Indicator'),
+                        Item('display_mean', label='Value'),
+                        label='Mean'),
+
+                 HGroup(Item('show_info', label='Show'),
+                        Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                        Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
+                        label='Info'),
                  label='Display')
 
-        return VGroup(g,g2,label='Options'),
+        return VGroup(self._get_title_group(),
+                      g,g2,label='Options'),
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()

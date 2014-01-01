@@ -300,8 +300,7 @@ class BaseArArFigure(HasTraits):
                               # setting the arrow to visible causes an error when reading with illustrator
                               # if the arrow is not drawn
                               arrow_visible=False,
-                              **kw
-        )
+                              **kw)
         s.overlays.append(label)
         tool = DataLabelTool(label)
         if append:

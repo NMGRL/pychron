@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from chaco.plot_label import PlotLabel
+from enable.colors import color_table
 from traits.api import Array, Int, Float,Str
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
@@ -77,6 +78,8 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
 class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)
+    alpha=Float
+
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
         with gc:
@@ -107,10 +110,12 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     gc.set_fill_color((0.75, 0, 0))
                 else:
                     c = comp.color
-                    # if isinstance(c, str):
-                    #     c = color_table[c]
-                    c=(0,0,0,0.25)
+                    if isinstance(c, str):
+                        c = color_table[c]
+
+                    c=c[0],c[1],c[2],self.alpha
                     gc.set_fill_color(c)
+
                 gc.rect(x, y, w + 1, h)
                 gc.fill_path()
 
@@ -152,6 +157,7 @@ class PlateauOverlay(BasePlateauOverlay):
     info_txt=Str
     label_visible=True
     label_offset=None
+    label_font_size=10
 
     def hittest(self, pt, threshold=7):
         x, y = pt
@@ -215,6 +221,7 @@ class PlateauOverlay(BasePlateauOverlay):
             # oy=10
 
             p=PlotLabel(text=self.info_txt,
+                        font='modern {}'.format(self.label_font_size),
                         x=x1+(x2-x1)*0.5,
                         y=oy+15)
             self.plateau_label=p
