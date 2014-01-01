@@ -258,16 +258,17 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         self.debug('use vcs {}'.format(self.use_vcs))
                         if self.use_vcs:
                             if progress:
-                                progress.increase_max(2)
+                                progress.increase_max(len(new_ans)+1)
                                 progress.change_message('Adding analyses to vcs')
-                            self.vcs.add_analyses(new_ans)
+
+                            self.vcs.add_analyses(new_ans, progress=progress)
 
                         self.debug('use offline database {}'.format(self.use_offline_database))
                         if self.use_offline_database:
                             if progress:
-                                progress.increase_max(2)
+                                progress.increase_max(len(new_ans)+1)
                                 progress.change_message('Transfering analyses for offline usage')
-                            self.offline_bridge.add_analyses(db, new_ans)
+                            self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
                 if progress:
                     progress.soft_close()

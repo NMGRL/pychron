@@ -179,11 +179,11 @@ class IsotopeVCSManager(VCSManager):
         ans = sorted(ans, key=key)
         return groupby(ans, key=key)
 
-    def add_analyses(self, ans):
+    def add_analyses(self, ans, **kw):
         for proj, ais in self._groupby_project(ans):
             self.set_repo(proj)
             ais=list(ais)
-            added=any([self._add_analysis(ai, commit=False) for ai in ais])
+            added=any([self._add_analysis(ai, commit=False, **kw) for ai in ais])
             if added:
                 s=ais[0]
                 e=ais[-1]
@@ -195,10 +195,12 @@ class IsotopeVCSManager(VCSManager):
         self.set_repo(an.project)
         self._add_analysis(an)
 
-    def _add_analysis(self, an, commit=True):
+    def _add_analysis(self, an, commit=True, progress=None):
         root = os.path.join(self.repo_manager.root, an.sample, an.labnumber)
         p = os.path.join(root, '{}.yaml'.format(an.record_id))
         if not os.path.isfile(p):
+            if progress:
+                progress.change_message('Adding vcs analysis {}'.format(an.record_id))
             #make necessary file structure
             r_mkdir(root)
 

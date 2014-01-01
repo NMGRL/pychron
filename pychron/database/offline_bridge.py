@@ -59,7 +59,7 @@ class OfflineBridge(IsotopeAdapter):
             metadata=Base.metadata
             self.create_all(metadata)
 
-    def add_analyses(self, db, ans):
+    def add_analyses(self, db, ans, progress):
         self.debug('adding analyses')
         self.debug('source={}'.format(db.url))
         self.debug('dest={}'.format(self.path))
@@ -69,6 +69,8 @@ class OfflineBridge(IsotopeAdapter):
         with self.session_ctx() as dest:
             for ai in ans:
                 if not self.get_analysis_uuid(ai.uuid):
+                    if progress:
+                        progress.change_message('Transfering analysis {}'.format(ai.record_id))
                     ln=ai.labnumber
                     if ln:
                         self.debug('copying analysis {}'.format(ai.record_id))
