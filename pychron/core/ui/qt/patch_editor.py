@@ -25,8 +25,7 @@ from traitsui.qt4.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 class DiffGutter(LineNumberWidget):
-    start=1
-    end=4
+    start=0
 
     anti_tag='-'
     adjust_width=0
@@ -53,7 +52,7 @@ class DiffGutter(LineNumberWidget):
             cw.contentOffset()).top()
         bottom = top + int(cw.blockBoundingRect(block).height())
 
-        lineno=1
+        lineno=self.start
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 if blocknum>0:
@@ -79,10 +78,10 @@ class PatchWidget(QPlainTextEdit):
     def __init__(self, *args, **kw):
         super(PatchWidget, self).__init__(*args, **kw)
         self.aline_number_widget = DiffGutter(self)
-        self.aline_number_widget.min_char_width=3
+        # self.aline_number_widget.min_char_width=3
         self.aline_number_widget.anti_tag='+'
         self.bline_number_widget = DiffGutter(self)
-        self.bline_number_widget.min_char_width=3
+        # self.bline_number_widget.min_char_width=3
         self.bline_number_widget.anti_tag='-'
         self.bline_number_widget.adjust_width=-1
 
@@ -96,6 +95,10 @@ class PatchWidget(QPlainTextEdit):
         self.aline_number_widget.set_font(font)
         self.bline_number_widget.set_font(font)
         self.update_line_number_width()
+
+    def set_gutter_starts(self, a, b):
+        self.aline_number_widget.start=a
+        self.bline_number_widget.start=b
 
     def update_line_number_width(self, nblocks=0):
         """ Update the width of the line number widget.
@@ -150,16 +153,32 @@ class _PatchEditor(Editor):
         return ctrl
 
     def update_editor(self):
+        def extract_bounds(line):
+            """
+                @@ -1,4 +1,4 @@
+            """
+            line=line[3:-3]
+            a, b=line.split(' ')
+
+            sa,ea=a.split(',')
+            sb,eb=b.split(',')
+
+            return (int(sa[1:]), int(ea)), (int(sb), int(eb))
 
         #remove first two lines of patch.
         # this display the file names
-        value='\n'.join(self.value.split('\n')[2:])
+        lines=self.value.split('\n')
 
+        a,b=extract_bounds(lines[2])
+        print a,b
+        self.control.set_gutter_starts(a[0],b[0])
+
+        value='\n'.join(lines[2:])
         self.control.setPlainText(value)
-        self._set_highlighting(value)
 
-    def _set_highlighting(self, txt):
-        lines=txt.split('\n')
+        self._set_highlighting(lines)
+
+    def _set_highlighting(self, lines):
         ss=[]
         for idx, li in enumerate(lines):
             if li.startswith('+') and not li.startswith('+++'):
