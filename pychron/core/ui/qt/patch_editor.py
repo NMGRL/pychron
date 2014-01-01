@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from difflib import ndiff
 from PySide import QtGui, QtCore
 from PySide.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
 from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
@@ -157,8 +158,10 @@ class _PatchEditor(Editor):
             """
                 @@ -1,4 +1,4 @@
             """
-            line=line[3:-3]
-            a, b=line.split(' ')
+            args=line.split('@@')
+            line=args[1]
+
+            a, b=line.strip().split(' ')
 
             sa,ea=a.split(',')
             sb,eb=b.split(',')
@@ -166,31 +169,63 @@ class _PatchEditor(Editor):
             return (int(sa[1:]), int(ea)), (int(sb), int(eb))
 
         #remove first two lines of patch.
-        # this display the file names
+        # these display the file names
         lines=self.value.split('\n')
 
         a,b=extract_bounds(lines[2])
-        print a,b
         self.control.set_gutter_starts(a[0],b[0])
 
         value='\n'.join(lines[2:])
         self.control.setPlainText(value)
 
-        self._set_highlighting(lines)
+        self._set_text_highlighting(lines[2:])
+        self._set_line_highlighting(lines[2:])
 
-    def _set_highlighting(self, lines):
+    def _set_line_highlighting(self, lines):
         ss=[]
         for idx, li in enumerate(lines):
-            if li.startswith('+') and not li.startswith('+++'):
+            if li.startswith('+'):
                 sel=self._highlight(idx, 'addition')
                 ss.append(sel)
-            elif li.startswith('-') and not li.startswith('---'):
+            elif li.startswith('-'):
                 sel=self._highlight(idx, 'deletion')
                 ss.append(sel)
             else:
                 self._fade(idx)
 
         self.control.setExtraSelections(ss)
+
+    def _set_text_highlighting(self, lines):
+        has_deletion=False
+        for idx, li in enumerate(lines):
+            if li.startswith('-'):
+                has_deletion=True
+                a=li
+            if has_deletion and li.startswith('+'):
+                #find diff
+                b=li
+
+                for i, s in enumerate(ndiff(a,b)):
+                    if s[0] == ' ':
+                        continue
+                    elif s[0] == '-':
+                        if not s[-1] in ('-', '+'):
+                            self._set_diff(idx - 2, i, QColor(200,0, 0))
+                    elif s[0] == '+':
+                        if not s[-1] in ('-','+'):
+                            self._set_diff(idx-1, i, QColor(0,200,0))
+
+    def _set_diff(self, lineno, start, color):
+        cursor = self._get_line_cursor(lineno)
+        fmt = cursor.charFormat()
+        fmt.setForeground(color)
+        fmt.setFontUnderline(True)
+        cp = cursor.position()
+
+        cursor.setPosition(cp + start)
+        cursor.setPosition(cp + start + 1, mode=QTextCursor.KeepAnchor)
+
+        cursor.mergeCharFormat(fmt)
 
     def _fade(self, lineno):
         cursor = self._get_line_cursor(lineno)
@@ -200,7 +235,7 @@ class _PatchEditor(Editor):
         color.setAlphaF(0.5)
         fmt.setForeground(color)
         cursor.beginEditBlock()
-        cursor.setCharFormat(fmt)
+        cursor.mergeCharFormat(fmt)
         cursor.endEditBlock()
 
     def _highlight(self, lineno, kind):
@@ -223,18 +258,7 @@ class _PatchEditor(Editor):
         cursor.setPosition(pos)
         selection.cursor=cursor
 
-        # ex=ctrl.extraSelections()
-        # ex.append(selection)
-
-        # ctrl.setExtraSelections(ex)
         return selection
-
-        # cursor=self._get_line_cursor(lineno)
-
-        # fmt = cursor.charFormat()
-        # cursor.beginEditBlock()
-        # cursor.setCharFormat(fmt)
-        # cursor.endEditBlock()
 
     def _get_line_cursor(self, lineno):
         ctrl = self.control
@@ -246,10 +270,8 @@ class _PatchEditor(Editor):
         cursor = ctrl.textCursor()
         cursor.setPosition(pos)
         cursor.select(QTextCursor.LineUnderCursor)
-        # cursor.select(QTextCursor.BlockUnderCursor)
         return cursor
 
-    #
 
 class PatchEditor(BasicEditorFactory):
     klass=_PatchEditor
