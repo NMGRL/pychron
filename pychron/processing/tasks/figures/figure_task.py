@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import on_trait_change, Instance, List, Event, Any
+from traits.api import on_trait_change, Instance, List, Event, Any, Enum
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
@@ -74,7 +74,10 @@ class FigureTask(AnalysisEditTask):
     auto_select_analysis = False
 
     figures_help = 'Double-click to open'
+    figure_kind = Enum('All','Ideogram','Spectrum','Inv Iso')
     figures = List
+    ofigures = List
+
     selected_figure = Any
     dclicked_figure = Event
     #===============================================================================
@@ -112,7 +115,9 @@ class FigureTask(AnalysisEditTask):
             with db.session_ctx():
                 proj = [p.name for p in new]
                 figs = db.get_project_figures(proj)
-                self.figures = [self._dbfigure_factory(f) for f in figs]
+                self.ofigures = [self._dbfigure_factory(f) for f in figs]
+                self.figures= self.ofigures
+                self._figure_kind_changed()
 
     def _load_sample_figures(self, new):
         if new:
@@ -120,7 +125,9 @@ class FigureTask(AnalysisEditTask):
             with db.session_ctx():
                 sam = [p.name for p in new]
                 figs = db.get_sample_figures(sam)
-                self.figures = [self._dbfigure_factory(f) for f in figs]
+                self.ofigures = [self._dbfigure_factory(f) for f in figs]
+                self.figures=self.ofigures
+                self._figure_kind_changed()
 
     def _dbfigure_factory(self, f):
         dbf = DBFigure(name=f.name or '',
@@ -472,6 +479,14 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _figure_kind_changed(self):
+        if self.figure_kind:
+            if self.figure_kind=='All':
+                self.figures=self.ofigures
+            else:
+                kind=self.figure_kind[:4].lower()
+                self.figures=filter(lambda x:x.kind==kind, self.ofigures)
+
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
     def _options_update(self, obj, name, old, new):
         if name == 'initialized':

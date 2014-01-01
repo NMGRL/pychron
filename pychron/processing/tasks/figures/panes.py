@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Any, Property
-from traitsui.api import View, UItem, InstanceEditor, TabularEditor, VGroup
+from traitsui.api import View, UItem, InstanceEditor, TabularEditor, VGroup, HGroup, spring
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -40,7 +40,9 @@ class FigureSelectorPane(TraitsDockPane):
     name = 'Saved Figures'
 
     def traits_view(self):
-        v = View(VGroup(CustomLabel('figures_help',color='maroon'),
+        v = View(VGroup(
+            HGroup(CustomLabel('figures_help',color='maroon'),spring,
+                   UItem('figure_kind')),
                         UItem('figures', editor=TabularEditor(adapter=FigureAdapter(),
                                                        editable=False,
                                                        selected='selected_figure',
