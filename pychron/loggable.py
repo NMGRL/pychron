@@ -33,6 +33,27 @@ color_name_gen = colorname_generator()
 NAME_WIDTH = 40
 
 
+def confirmation_dialog(msg, return_retval=False,
+                        cancel=False, title='', timeout=None, size=None):
+
+    if size is None:
+        size = (-1, -1)
+
+    dlg = myConfirmationDialog(
+        cancel=cancel,
+        message=msg,
+        title=title,
+        style='modal',
+        size=size)
+
+    retval = dlg.open(timeout)
+    if return_retval:
+        return retval
+    else:
+        from pyface.api import YES
+
+        return retval == YES
+
 class Loggable(HasTraits):
     """
     """
@@ -100,26 +121,8 @@ class Loggable(HasTraits):
         #         print current_thread()
         dialog.open()
     
-    def confirmation_dialog(self, msg, return_retval=False, 
-                            cancel=False, title='', timeout=None, size=None):
-
-        if size is None:
-            size=(-1,-1)
-
-        dlg = myConfirmationDialog(
-            cancel=cancel,
-            message=msg,
-            title=title,
-            style='modal',
-            size=size)
-
-        retval = dlg.open(timeout)
-        if return_retval:
-            return retval
-        else:
-            from pyface.api import YES
-
-            return retval == YES
+    def confirmation_dialog(self,*args, **kw):
+        return confirmation_dialog(*args, **kw)
 
     def information_dialog(self, msg, title='Information'):
         dlg = myMessageDialog(parent=None, message=msg,
