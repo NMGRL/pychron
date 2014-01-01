@@ -1282,8 +1282,8 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_extraction_device(self, value):
         return self._retrieve_item(gen_ExtractionDeviceTable, value, )
 
-    def get_figure(self, value):
-        return self._retrieve_item(proc_FigureTable, value, )
+    def get_figure(self, value, **kw):
+        return self._retrieve_item(proc_FigureTable, value, **kw)
 
     def get_irradiation_chronology(self, value):
         return self._retrieve_item(irrad_ChronologyTable, value, )

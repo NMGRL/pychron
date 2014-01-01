@@ -419,6 +419,21 @@ class FigureTask(AnalysisEditTask):
             self.active_editor.save_figure(dlg.name, project, samples)
             self._load_sample_figures(dlg.selected_samples)
 
+    def _delete_figures(self, figs):
+        db=self.manager.db
+        with db.session_ctx() as sess:
+            for fi in figs:
+                dbfig=db.get_figure(fi.id, key='id')
+
+                sess.delete(dbfig.preference)
+                for si in dbfig.samples:
+                    sess.delete(si)
+
+                for ai in dbfig.analyses:
+                    sess.delete(ai)
+
+                sess.delete(dbfig)
+
     #===============================================================================
     # handlers
     #===============================================================================
@@ -438,8 +453,11 @@ class FigureTask(AnalysisEditTask):
             n=len(self.selected_figures)
             if self.confirmation_dialog('Are you sure you want to delete these figures?\n\n{}'.format(fs),
                                         size=(600, 120+10*n)):
-
-                print self.selected_figures
+                self._delete_figures(self.selected_figures)
+                if self.selected_samples:
+                    self._load_sample_figures(self.selected_samples)
+                else:
+                    self._load_project_figures(self.selected_projects)
 
     def _figure_kind_changed(self):
         self.selected_figures=[]
@@ -456,7 +474,7 @@ class FigureTask(AnalysisEditTask):
             db = self.manager.db
             with db.session_ctx():
                 sf = sf[0]
-                db_fig = db.get_figure(sf.name)
+                db_fig = db.get_figure(sf.id, key='id')
 
                 ans = [a.analysis for a in db_fig.analyses]
                 self.active_editor.set_items(ans)

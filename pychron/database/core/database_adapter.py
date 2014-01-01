@@ -336,16 +336,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         return nitem
 
-
-    #         def func(s):
-    # test if already exists
-    #                 self.flush()
-    #                 self.debug('add unique flush')
-
-    #            self.info('{}= {} already exists'.format(attr, name))
-    #         return nitem
-
-
     def _get_path_keywords(self, path, args):
         n = os.path.basename(path)
         r = os.path.dirname(path)
