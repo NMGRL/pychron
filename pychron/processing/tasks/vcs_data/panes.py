@@ -37,8 +37,10 @@ class VCSCentralPane(TraitsTaskPane):
             VGroup(
                 HGroup(Item('selected_repository', editor=EnumEditor(name='repositories'),
                             label='Repo'), ),
-                HSplit(UItem('diffs', editor=editor),
-                       UItem('selected_diff', style='custom', editor=InstanceEditor())),
+                HSplit(UItem('diffs', editor=editor, width=0.25),
+                       UItem('selected_diff', style='custom',
+                             width=0.75,
+                             editor=InstanceEditor())),
                 VGroup(
                     HGroup(spring, UItem('prev_commit_message', editor=EnumEditor(name='prev_commit_messages'))),
                     UItem('commit_message', style='custom'), label='Commit', show_border=True)),

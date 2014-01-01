@@ -168,18 +168,20 @@ class _PatchEditor(Editor):
 
             return (int(sa[1:]), int(ea)), (int(sb), int(eb))
 
-        #remove first two lines of patch.
-        # these display the file names
-        lines=self.value.split('\n')
+        if self.value:
+            #remove first two lines of patch.
+            # these display the file names
+            lines=self.value.split('\n')
+            a,b=extract_bounds(lines[2])
+            self.control.set_gutter_starts(a[0],b[0])
 
-        a,b=extract_bounds(lines[2])
-        self.control.set_gutter_starts(a[0],b[0])
+            value='\n'.join(lines[2:])
+            self.control.setPlainText(value)
 
-        value='\n'.join(lines[2:])
-        self.control.setPlainText(value)
-
-        self._set_text_highlighting(lines[2:])
-        self._set_line_highlighting(lines[2:])
+            self._set_text_highlighting(lines[2:])
+            self._set_line_highlighting(lines[2:])
+        else:
+            self.control.setPlainText('')
 
     def _set_line_highlighting(self, lines):
         ss=[]
