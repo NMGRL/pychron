@@ -29,7 +29,7 @@ except ImportError:
     except ImportError:
         from pyface.message_dialog import warning
 
-        warning('statsmodels is required but was not found')
+        warning(None, 'statsmodels is required but was not found')
 
 
 #============= local library imports  ==========================

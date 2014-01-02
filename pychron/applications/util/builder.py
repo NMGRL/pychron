@@ -27,19 +27,31 @@ class Builder(object):
     root = None #path to working directory
     dest = None #path to pychron.app/Contents
     version = None
-    app_name=None
     icon_name=None
     launcher_name=None
+
+    _package_name='pychron'
+
+    def run(self):
+        if self.root:
+            if self.dest is None:
+                self.dest=os.path.join(self.root,
+                                       'launchers','{}.app'.format(self.launcher_name),'Contents')
+
+        self.make_egg()
+        self.copy_resources()
+        self.make_argv()
 
     def make_egg(self):
         from setuptools import setup, find_packages
 
         pkgs = find_packages(self.root,
-                             exclude=('launchers', 'tests',
-                                      'app_utils'))
+                             exclude=('app_utils','docs','launchers',
+                                      'migration','test','qtegra',
+                                      'sandbox','zobs'))
 
-        app_name=self.app_name
-        setup(name=app_name,
+        pkg_name=self._package_name
+        setup(name=pkg_name,
               script_args=('bdist_egg',),
               version=self.version,
               packages=pkgs)
@@ -48,7 +60,7 @@ class Builder(object):
         # make the .pth file
         with open(os.path.join(self.dest,
                                'Resources',
-                               '{}.pth'.format(app_name)), 'w') as fp:
+                               '{}.pth'.format(pkg_name)), 'w') as fp:
             fp.write('{}\n'.format(eggname))
 
         # remove build dir
@@ -57,7 +69,7 @@ class Builder(object):
         shutil.rmtree(p)
 
     def _get_eggname(self):
-        eggname = '{}-{}-py2.7.egg'.format(self.app_name, self.version)
+        eggname = '{}-{}-py2.7.egg'.format(self._package_name, self.version)
         return eggname
 
     def copy_resources(self):
@@ -70,18 +82,18 @@ class Builder(object):
 
         icon_name = self.icon_name
         if icon_name is None:
-            icon_name = '{}_icon.icns'.format(self.app_name)
+            icon_name = '{}_icon.icns'.format(self.launcher_name)
 
         dest=self.dest
         root=self.root
 
-        self.set_plist(dest, self.app_name, icon_name)
+        self.set_plist(dest, self.launcher_name, icon_name)
 
         icon_file = os.path.join(self.root,'resources', 'apps', icon_name)
         self.copy_resource(icon_file)
 
         for ni, nd in (('splash', 'splashes'), ('about', 'abouts')):
-            sname = '{}_{}.png'.format(ni, self.name)
+            sname = '{}_{}.png'.format(ni, self.launcher_name)
             self.copy_resource(os.path.join(root, 'resources', nd, sname), name='{}.png'.format(ni))
 
         #copy entire icons dir
@@ -95,8 +107,8 @@ class Builder(object):
 
     def make_argv(self):
         argv = '''
-    import os
-    execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
+import os
+execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
     '''.format(self.launcher_name)
 
         p = self._resource_path('__argvemulator_{}.py'.format(self.launcher_name))
@@ -108,11 +120,12 @@ class Builder(object):
         tree = plistlib.readPlist(info_plist)
 
         tree['CFBundleIconFile'] = icon_name
-        tree['CFBundleDisplayName'] = bundle_name
+        # tree['CFBundleDisplayName'] = bundle_name
         tree['CFBundleName'] = bundle_name
         plistlib.writePlist(tree, info_plist)
 
     def copy_resource(self, src, name=None):
+        print os.path.isfile(src), src
         if os.path.isfile(src):
             if name is None:
                 name = os.path.basename(src)

@@ -22,6 +22,7 @@ from traits.api import List, on_trait_change
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron import version
 from pychron.applications.util.builder import Builder
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.loggable import confirmation_dialog
@@ -96,9 +97,8 @@ class UpdatePlugin(Plugin):
             builder.app_name='pychron'
             builder.launcher_name='pyexperiment'
             builder.root=self._get_working_directory()
-
-            builder.make_egg()
-            builder.copy_resources()
+            builder.version=version.__version__
+            builder.run()
 
     def _out_of_date(self):
         logger.info('updates are available')
