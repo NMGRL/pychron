@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import stat
 from traits.api import List, on_trait_change
 from envisage.plugin import Plugin
 
@@ -85,7 +86,15 @@ class UpdatePlugin(Plugin):
         logger.debug('stopping update plugin')
         if self._build_required:
             logger.debug('building new version')
-            self._build_update()
+            dest = self._build_update()
+            if dest:
+                #get executable
+                mos=os.path.join(dest, 'MacOS')
+                for p in os.listdir(mos):
+                    if p !='python':
+                        pp=os.path.join(mos, p)
+                        if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
+                            os.execl(pp)
 
     #private
     def _build_update(self):
@@ -110,6 +119,7 @@ class UpdatePlugin(Plugin):
             logger.debug('dest={}'.format(builder.dest))
             logger.debug('root={}'.format(builder.root))
             builder.run()
+        return dest
 
     def _out_of_date(self):
         logger.info('updates are available')

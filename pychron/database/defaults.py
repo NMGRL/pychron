@@ -16,8 +16,6 @@
 import struct
 import os
 
-from pyface.message_dialog import warning
-
 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 from pychron.paths import paths
 
@@ -83,20 +81,21 @@ def load_isotopedb_defaults(db):
             )
 
         mdir = os.path.join(paths.setup_dir, 'irradiation_tray_maps')
-        if not os.path.isdir(mdir):
-            warning(None, 'No irradiation_tray_maps directory. add to .../setupfiles')
-
-        else:
-            for p, name in iterdir(mdir, exclude=('.zip',)):
-                _load_irradiation_map(db, p, name)
+        mdir=paths.irradiation_tray_maps_dir
+        # if not os.path.isdir(mdir):
+        #     if information(None, 'No irradiation_tray_maps directory. add to .../setupfiles'):
+        #         try:
+        #             os.mkdir(mdir)
+        #         except OSError,e:
+        #             warning(None, 'Failed making {}: error={}'.format(mdir, e))
+        #
+        # else:
+        for p, name in iterdir(mdir, exclude=('.zip',)):
+            _load_irradiation_map(db, p, name)
 
         mdir = paths.map_dir
-        if not os.path.isdir(mdir):
-            warning(None, 'No irradiation_tray_maps directory. add to .../setupfiles')
-
-        else:
-            for p, name in iterdir(mdir):
-                _load_tray_map(db, p, name)
+        for p, name in iterdir(mdir):
+            _load_tray_map(db, p, name)
 
         for t in ('ok', 'invalid'):
             db.add_tag(t, user='default')

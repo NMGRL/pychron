@@ -110,8 +110,9 @@ class Paths():
 
     block_dir = None
     heating_schedule_dir = None
-    map_dir = map_dir = None
+    map_dir = None
     user_points_dir = None
+    irradiation_tray_maps_dir=None
     #==============================================================================
     # data
     #==============================================================================
@@ -250,6 +251,8 @@ class Paths():
         self.block_dir = join(setup_dir, 'blocks')
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
+
+        self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         #==============================================================================
         # data
         #==============================================================================

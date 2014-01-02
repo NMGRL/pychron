@@ -119,12 +119,18 @@ class Builder(object):
         dst='/Applications/{}_{}.app'.format(self.launcher_name, self.version)
 
         i = 1
-        while os.path.exists(dst):
-            name = dst[:-4]
-            bk = '{}_{:03d}bk.app'.format(name, i)
-            print '{} already exists. backing it up as {}'.format(dst, bk)
-            dst=bk
-            i += 1
+        if os.path.exists(dst):
+            while 1:
+                name = dst[:-4]
+                bk = '{}_{:03d}bk.app'.format(name, i)
+
+                if not os.path.exists(os.path.join(os.path.dirname(dst), bk)):
+                    os.rename(dst, bk)
+                    break
+
+                # print '{} already exists. backing it up as {}'.format(p, bk)
+                # p=bk
+                i += 1
 
 
             # try:
