@@ -85,6 +85,7 @@ def build_pychron(wd, name):
     builder.version=ver.__version__
     builder.run()
 
+    builder.move()
 
 def install_dependencies(wd):
     """

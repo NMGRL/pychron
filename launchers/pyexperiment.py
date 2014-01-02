@@ -20,10 +20,9 @@ ETSConfig.toolkit = "qt4"
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-version_id = ''
-setup_version_id='_dev'
+
 from helpers import build_version
-build_version(version_id, setup_ver=setup_version_id)
+build_version()
 
 
 def main():

@@ -20,10 +20,15 @@ import os
 import sys
 #============= local library imports  ==========================
 
-def build_version(ver, setup_ver=None,debug=False):
+def build_version(ver=None, setup_ver=None,debug=False):
+
+    if ver is None:
+        from version import version_id
+        ver=version_id
 
     if setup_ver is None:
-        setup_ver = ver
+        from version import setup_version_id
+        setup_ver=setup_version_id
 
     root = os.path.dirname(__file__)
     #    if debug_path:

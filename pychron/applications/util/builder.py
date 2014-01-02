@@ -105,6 +105,20 @@ class Builder(object):
         helper = os.path.join(self.root, 'launchers', 'helpers.py')
         self.copy_resource(helper)
 
+        #copy version
+
+        version = os.path.join(self.root, 'launchers', 'version.py')
+        self.copy_resource(version)
+
+    def move(self):
+        """
+            move app to /Applications
+        """
+        name='{}.app'.format(self.launcher_name)
+        src=os.path.join(self.root, 'launchers', name)
+        dst='/Applications/{}'.format(name)
+        shutil.move(src, dst)
+
     def make_argv(self):
         argv = '''
 import os
