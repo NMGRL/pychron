@@ -22,12 +22,38 @@ import buildtools
 import os
 import subprocess
 import imp
+import time
 
-import MacOS
 from pychron.applications.util.builder import Builder
 
+DEFAULT_INIT='''<root>
+  <globals>
+  </globals>
+  <plugins>
+    <general>
+      <plugin enabled="true">Database</plugin>
+      <plugin enabled="true">Geo</plugin>
+      <plugin enabled="false">Experiment</plugin>
+      <plugin enabled="true">Processing</plugin>
+      <plugin enabled="true">PyScript</plugin>
+      <plugin enabled="true">ArArConstants</plugin>
+      <plugin enabled="true">Entry</plugin>
+      <plugin enabled="true">SystemMonitor</plugin>
+    </general>
+    <hardware>
+    </hardware>
+    <data>
+    </data>
+    <social>
+      <plugin enabled="false">Email</plugin>
+      <plugin enabled="false">Twitter</plugin>
+    </social>
+  </plugins>
+</root>
+'''
 
-def install(name):
+
+def install(name, setup_version='_install'):
     """
         make Pychrondata
         make .hidden
@@ -41,35 +67,45 @@ def install(name):
     """
 
     #setup application directory
-    p = os.path.join(os.path.expanduser('~'), 'Pychrondata_install')
-    wd = os.path.join(p, 'hidden', 'updates')
+    root = os.path.join(os.path.expanduser('~'), 'Pychrondata{}'.format(setup_version))
+    wd = os.path.join(root, '.hidden', 'updates')
     #clone src code
-    url = 'https://github.com/NMGRL/pychron.git'
+    repo_name='pychron'
+    url = 'https://github.com/NMGRL/{}.git'.format(repo_name)
 
-    if not os.path.isdir(p):
-        # #backup the previous version
-        # ct = datetime.now().strftime('%m-%d-%y')
-        # dst='{}-{}'.format(p, ct)
-        # if os.path.isdir(dst):
-        #     shutil.rmtree(dst)
-        #
-        # os.rename(p, dst)
+    if not os.path.isdir(root):
+        os.mkdir(root)
+        os.mkdir(os.path.join(root, '.hidden'))
+        os.mkdir(wd)
 
-        os.mkdir(p)
-        os.mkdir(os.path.join(p, 'hidden'))
-        # os.mkdir(wd)
         os.chdir(wd)
         subprocess.call(['git', 'clone', url])
+        time.sleep(2)
     else:
-        os.chdir(wd)
+        os.chdir(os.path.join(wd, repo_name))
         subprocess.call(['git', 'pull'])
 
-    # subprocess.Popen(['git', 'clone', url, wd])
     #install dependencies using pip
     # install_dependencies(wd)
-    #
+
     #build
+    wd=os.path.join(wd, repo_name)
     build_pychron(wd, name)
+
+    #install setup files
+    add_setup_files(root)
+
+
+def add_setup_files(root, overwrite=False):
+    setup_dir=os.path.join(root, 'setupfiles')
+    if not os.path.isdir(setup_dir):
+        os.mkdir(setup_dir)
+
+    p=os.path.join(setup_dir, 'initialization.xml')
+    if not os.path.isfile(p) or overwrite:
+        with open(p,'w') as fp:
+            fp.write(DEFAULT_INIT)
+
 
 def build_pychron(wd, name):
     filename = os.path.join(wd, 'launchers', '{}.py'.format(name))
@@ -110,13 +146,9 @@ def build_app(filename):
     verbose = None
     destroot = ''
 
-    cr, tp = MacOS.GetCreatorAndType(filename)
-    if tp == 'APPL':
-        buildtools.update(template, filename, dstfilename)
-    else:
-        buildtools.process(template, filename, dstfilename, 1,
-                           rsrcname=rsrcfilename, others=extras, raw=raw,
-                           progress=verbose, destroot=destroot)
+    buildtools.process(template, filename, dstfilename, 1,
+                       rsrcname=rsrcfilename, others=extras, raw=raw,
+                       progress=verbose, destroot=destroot)
 
 
 if __name__ == '__main__':

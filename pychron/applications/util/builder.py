@@ -116,7 +116,28 @@ class Builder(object):
         """
         name='{}.app'.format(self.launcher_name)
         src=os.path.join(self.root, 'launchers', name)
-        dst='/Applications/{}'.format(name)
+        dst='/Applications/{}_{}.app'.format(self.launcher_name, self.version)
+
+        i = 1
+        while os.path.exists(dst):
+            name = dst[:-4]
+            bk = '{}_{:03d}bk.app'.format(name, i)
+            print '{} already exists. backing it up as {}'.format(dst, bk)
+            dst=bk
+            i += 1
+
+
+            # try:
+            #     os.rename(src, dst)
+            #     break
+            # except OSError, e:
+            #     name = dst[:-4]
+            #     bk = '{}_{:03d}bk.app'.format(name, i)
+            #     print '{} already exists. backing it up as {}'.format(dst, bk)
+            #     try:
+            #         os.rename(dst, bk)
+            #     except OSError:
+            #         i += 1
         shutil.move(src, dst)
 
     def make_argv(self):
@@ -139,7 +160,7 @@ execfile(os.path.join(os.path.split(__file__)[0], "{}.py"))
         plistlib.writePlist(tree, info_plist)
 
     def copy_resource(self, src, name=None):
-        print os.path.isfile(src), src
+        # print os.path.isfile(src), src
         if os.path.isfile(src):
             if name is None:
                 name = os.path.basename(src)
