@@ -49,18 +49,14 @@ class PychronApplication(BaseTasksApplication):
         about_dialog = AboutDialog(
             image=ImageResource(name='about.png',
                                 search_path=[paths.app_resources,
-                                             paths.abouts]
-            ),
-        )
+                                             paths.abouts]))
         return about_dialog
 
     def _splash_screen_default(self):
         sp = SplashScreen(
             image=ImageResource(name='splash.png',
                                 search_path=[paths.app_resources,
-                                             paths.splashes]
-            ),
-        )
+                                             paths.splashes]))
         return sp
 
 
