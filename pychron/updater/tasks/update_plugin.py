@@ -27,6 +27,7 @@ from pychron import version
 from pychron.applications.util.builder import Builder
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.loggable import confirmation_dialog
+from pychron.paths import paths
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 
 logger = new_logger('UpdatePlugin')
@@ -160,8 +161,10 @@ class UpdatePlugin(Plugin):
             p=os.path.dirname(p)
 
     def _get_working_directory(self):
-        # p=os.path.join(paths.hidden_dir, 'updates', 'pychron')
         p = '/Users/ross/Sandbox/updater_test/user_repo'
+        if not os.path.isdir(p):
+            p=os.path.join(paths.hidden_dir, 'updates', 'pychron')
+
         return p
 
     def _preferences_panes_default(self):
