@@ -25,6 +25,7 @@ from git import Repo
 #============= local library imports  ==========================
 from pychron import version
 from pychron.applications.util.installer import Builder
+from pychron.core.helpers.filetools import to_bool
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.loggable import confirmation_dialog
 from pychron.paths import paths
@@ -49,9 +50,10 @@ class UpdatePlugin(Plugin):
     def start(self):
         logger.debug('starting update plugin')
         pref=self.application.preferences
-        if pref.get('pychron.update.check_on_startup'):
+        # print pref.get('pychron.update.check_on_startup')
+        if to_bool(pref.get('pychron.update.check_on_startup')):
             url=pref.get('pychron.update.update_url')
-            if pref.get('pychron.update.use_development'):
+            if to_bool(pref.get('pychron.update.use_development')):
                 url=pref.get('pychron.update.update_url')
 
             if url:
