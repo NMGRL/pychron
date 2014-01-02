@@ -80,7 +80,8 @@ def install(name, setup_version='_install'):
 
         os.chdir(wd)
         subprocess.call(['git', 'clone', url])
-        time.sleep(2)
+        os.chdir(os.path.join(wd, repo_name))
+
     else:
         os.chdir(os.path.join(wd, repo_name))
         subprocess.call(['git', 'pull'])
