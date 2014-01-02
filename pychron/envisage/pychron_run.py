@@ -24,6 +24,7 @@ from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.logger.tasks.logger_plugin import LoggerPlugin
 from pychron.initialization_parser import InitializationParser
+from pychron.updater.tasks.update_plugin import UpdatePlugin
 
 
 logger = new_logger('launcher')
@@ -167,7 +168,9 @@ def app_factory(klass):
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
-        LoggerPlugin()]
+        LoggerPlugin(),
+        UpdatePlugin(),
+        ]
 
     plugins += get_hardware_plugins()
     plugins += get_user_plugins()

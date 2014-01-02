@@ -69,11 +69,10 @@ class BaseTasksApplication(TasksApplication, Loggable):
         info = obj.edit_traits(**kw)
         self.add_view(info)
 
-    def exit(self):
+    def exit(self, **kw):
 
         self._cleanup_services()
 
-        import copy
         uis = self.uis
 #         uis = copy.copy(self.uis)
         for ui in uis:
@@ -82,7 +81,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
             except AttributeError:
                 pass
 
-        super(BaseTasksApplication, self).exit()
+        super(BaseTasksApplication, self).exit(**kw)
 
     def _cleanup_services(self):
         for si in self.get_services(ICoreDevice):
