@@ -58,18 +58,19 @@ def install(name):
 
         os.mkdir(p)
         os.mkdir(os.path.join(p, 'hidden'))
-        os.mkdir(wd)
-        subprocess.call(['git', 'clone', url, wd])
-
-    # subprocess.call(['cd', wd])
-    # subprocess.call(['pwd'])
+        # os.mkdir(wd)
+        os.chdir(wd)
+        subprocess.call(['git', 'clone', url])
+    else:
+        os.chdir(wd)
+        subprocess.call(['git', 'pull'])
 
     # subprocess.Popen(['git', 'clone', url, wd])
     #install dependencies using pip
     install_dependencies(wd)
 
     #build
-    # build_pychron(wd, name)
+    build_pychron(wd, name)
 
 
 def install_dependencies(wd):
