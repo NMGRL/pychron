@@ -69,7 +69,7 @@ def install(name):
     install_dependencies(wd)
 
     #build
-    build_pychron(wd, name)
+    # build_pychron(wd, name)
 
 
 def install_dependencies(wd):
@@ -79,7 +79,8 @@ def install_dependencies(wd):
     rp = os.path.join(wd, 'requirements.txt')
 
     print rp, os.path.isfile(rp)
-    subprocess.call(['pip','-h'])
+    # subprocess.call(['pip','-h'])
+    subprocess.call(['pip','install', '-r{}'.format(rp)])
 
 
 def build_pychron(wd, name):
@@ -108,9 +109,18 @@ def build_pychron(wd, name):
 def build_egg(wd, dest):
     from setuptools import setup, find_packages
 
-    pkgs = find_packages(wd,
-                         exclude=('launchers', 'tests',
-                                  'app_utils'))
+    # pkgs = find_packages(wd,
+    #                      exclude=(
+    #                             'app_utils',
+    #                             'docs',
+    #                             'launchers',
+    #                             'migration',
+    #                             'tests',
+    #                              'qtegra',
+    #                              'sandbox'
+    #                               ))
+
+    pkgs=find_packages(os.path.join(wd, 'pychron'))
     ver = imp.new_module('ver')
     v = open(os.path.join(wd, 'pychron','version.py')).read()
     exec v in ver.__dict__
