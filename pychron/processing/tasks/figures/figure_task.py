@@ -236,7 +236,7 @@ class FigureTask(AnalysisEditTask):
         iaf = InterpretedAgeFactory(groups=ias)
         info = iaf.edit_traits()
         if info.result:
-            self.active_editor.add_interpreted_ages(ias.groups)
+            self.active_editor.add_interpreted_ages(ias)
 
 
     #===============================================================================
@@ -356,17 +356,20 @@ class FigureTask(AnalysisEditTask):
             with db.session_ctx():
                 sam = [p.name for p in new]
                 figs = db.get_sample_figures(sam)
-                self.ofigures = [self._dbfigure_factory(f) for f in figs]
+                figs=[self._dbfigure_factory(f) for f in figs]
+                figs=[f for f in figs if f]
+                self.ofigures = figs
                 self.figures = self.ofigures
                 self._figure_kind_changed()
 
     def _dbfigure_factory(self, f):
-        dbf = DBFigure(name=f.name or '',
-                       project=f.project.name,
-                       samples=[s.sample.name for s in f.samples],
-                       kind=f.preference.kind,
-                       id=f.id)
-        return dbf
+        if f.preference:
+            dbf = DBFigure(name=f.name or '',
+                           project=f.project.name,
+                           samples=[s.sample.name for s in f.samples],
+                           kind=f.preference.kind,
+                           id=f.id)
+            return dbf
 
     def _get_sample_obj(self, s):
         return next((sr for sr in self.samples if sr.name == s), None)
