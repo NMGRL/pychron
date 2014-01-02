@@ -41,7 +41,7 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Sample', 'sample'),
                ('Identifier', 'identifier'),
-               ('Kind', 'kind'),
+               ('Kind', 'age_kind'),
                ('Age', 'age'),
                ('Error', 'age_err'),
                ('NAnalyses', 'nanalyses'),

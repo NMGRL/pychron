@@ -61,6 +61,7 @@ class Diff(HasTraits):
         cs = []
         lines=self.patch.split('\n')
         has_deletion=False
+        offset=0
         for idx, li in enumerate(lines[2:]):
             if li.startswith('-'):
                 has_deletion = True
@@ -76,8 +77,9 @@ class Diff(HasTraits):
 
                 k=ad.keys()[0]
 
-                cs.append(Change(name=k, line=idx,
+                cs.append(Change(name=k, line=idx-offset,
                                  avalue=ad[k], bvalue=bd[k]))
+                offset+=1
 
                 #find diff
                 # for i, s in enumerate(ndiff(a, b)):

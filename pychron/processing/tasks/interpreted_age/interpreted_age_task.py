@@ -20,20 +20,23 @@
 #============= local library imports  ==========================
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
+from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 
 
 class SavePDFTablesAction(TaskAction):
-    name='Save Tables'
-    method='save_pdf_tables'
+    name = 'Save Tables'
+    method = 'save_pdf_tables'
 
 
 class OpenTableAction(TaskAction):
-    name='Open Table'
-    method='open_table'
+    name = 'Open Table'
+    method = 'open_table'
+
 
 class InterpretedAgeTask(BaseBrowserTask):
+    name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
     tool_bars = [SToolBar(SavePDFTablesAction(),
                           OpenTableAction())]
@@ -46,7 +49,7 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def save_pdf_tables(self):
         # p=self.save_file_dialog()
-        p='/Users/ross/Sandbox/interpreted_age.pdf'
+        p = '/Users/ross/Sandbox/interpreted_age.pdf'
         if p:
             self.active_editor.save_pdf_tables(p)
 
@@ -60,9 +63,13 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def _selected_samples_changed(self):
         if not self.active_editor:
-            editor=InterpretedAgeEditor(processor=self.manager)
+            editor = InterpretedAgeEditor(processor=self.manager)
             self._open_editor(editor)
 
         self.active_editor.set_samples(self.selected_samples)
+
+    def _default_layout_default(self):
+        return TaskLayout(left=PaneItem('pychron.browser'))
+
 #============= EOF =============================================
 

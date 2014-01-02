@@ -137,8 +137,8 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
                 self.checked = False
 
 
-    #def _checked_changed(self):
-    #    print self.checked, self.task_id
+                #def _checked_changed(self):
+                #    print self.checked, self.task_id
 
 #             window = self.task.window
 #             print win, window
@@ -350,12 +350,10 @@ class BaseTask(Task, Loggable):
             Group(
                 CloseAction(),
                 CloseOthersAction(),
-                id='Close'
-            ),
+                id='Close'),
             Group(MinimizeAction(),
                   ResetLayoutAction(),
-                  PositionAction(),
-            ),
+                  PositionAction()),
             WindowGroup(),
             id='Window',
             name='Window')
@@ -378,7 +376,7 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
-    _default_extension= ''
+    _default_extension = ''
     wildcard = None
     manager = Any
 
@@ -445,16 +443,16 @@ class BaseManagerTask(BaseTask):
                 r = dialog.paths
             return r
 
-    def save_file_dialog(self,ext=None, **kw):
+    def save_file_dialog(self, ext=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
         dialog = FileDialog(parent=self.window.control, action='save as',
                             **kw)
         if dialog.open() == OK:
-            path=dialog.path
+            path = dialog.path
             if path:
                 if ext is None:
-                    ext=self._default_extension
+                    ext = self._default_extension
                 return add_extension(path, ext=ext)
 
 
@@ -492,6 +490,7 @@ class BaseExtractionLineTask(BaseManagerTask):
             man.activate()
 
 #            man.canvas.refresh()
+
 
 class BaseHardwareTask(BaseManagerTask):
     pass
