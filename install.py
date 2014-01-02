@@ -43,6 +43,10 @@ def install(name):
 
     #setup application directory
     p = os.path.join(os.path.expanduser('~'), 'Pychrondata_install')
+    wd = os.path.join(p, 'hidden', 'updates')
+    #clone src code
+    url = 'https://github.com/NMGRL/pychron.git'
+
     if not os.path.isdir(p):
         # #backup the previous version
         # ct = datetime.now().strftime('%m-%d-%y')
@@ -54,21 +58,18 @@ def install(name):
 
         os.mkdir(p)
         os.mkdir(os.path.join(p, 'hidden'))
-        wd = os.path.join(p, 'hidden', 'updates')
         os.mkdir(wd)
-
-    #clone src code
-    url = 'https://github.com/NMGRL/pychron.git'
+        subprocess.call(['git', 'clone', url, wd])
 
     # subprocess.call(['cd', wd])
     # subprocess.call(['pwd'])
-    subprocess.call(['git', 'clone', url, wd])
+
     # subprocess.Popen(['git', 'clone', url, wd])
     #install dependencies using pip
-    # install_dependencies(wd)
+    install_dependencies(wd)
 
     #build
-    # build_pychron(wd, name)
+    build_pychron(wd, name)
 
 
 def install_dependencies(wd):
@@ -76,7 +77,9 @@ def install_dependencies(wd):
         use pip's -r option to install from requirements file
     """
     rp = os.path.join(wd, 'requirements.txt')
-    subprocess.call(['pip' 'install', '-r', rp])
+
+    print rp, os.path.isfile(rp)
+    subprocess.call(['pip','-h'])
 
 
 def build_pychron(wd, name):
@@ -109,7 +112,7 @@ def build_egg(wd, dest):
                          exclude=('launchers', 'tests',
                                   'app_utils'))
     ver = imp.new_module('ver')
-    v = open(os.path.join(wd, 'version.py')).read()
+    v = open(os.path.join(wd, 'pychron','version.py')).read()
     exec v in ver.__dict__
 
     app_name = 'pychron'
