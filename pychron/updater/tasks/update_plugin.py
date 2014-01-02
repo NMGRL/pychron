@@ -24,7 +24,7 @@ import os
 from git import Repo
 #============= local library imports  ==========================
 from pychron import version
-from pychron.applications.util.builder import Builder
+from pychron.applications.util.installer import Builder
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.loggable import confirmation_dialog
 from pychron.paths import paths
