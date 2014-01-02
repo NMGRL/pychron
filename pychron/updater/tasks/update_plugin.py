@@ -15,12 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-from envisage.plugin import Plugin
-from git import Repo
 from traits.api import List, on_trait_change
+from envisage.plugin import Plugin
 
 #============= standard library imports ========================
+import os
+from git import Repo
 #============= local library imports  ==========================
 from pychron import version
 from pychron.applications.util.builder import Builder
@@ -71,7 +71,12 @@ class UpdatePlugin(Plugin):
 
                         if info.commit != repo.head.commit:
                             if self._out_of_date():
+
+                                #for debug dont pull changes
+                                #===========================
                                 # origin.pull('master')
+                                #===========================
+
                                 if confirmation_dialog('Restarted required for changes to take affect. Restart now?'):
                                     self._build_required=True
                                     logger.debug('Restarting')
@@ -81,7 +86,6 @@ class UpdatePlugin(Plugin):
         if self._build_required:
             logger.debug('building new version')
             self._build_update()
-
 
     #private
     def _build_update(self):
@@ -93,11 +97,18 @@ class UpdatePlugin(Plugin):
         # dont build if can't find dest
         dest=self._get_destination()
         if dest:
+            ver=version.__version__
+            logger.info('Building {} egg for application'.format(ver))
+
             builder=Builder()
-            builder.app_name='pychron'
+
             builder.launcher_name='pyexperiment'
             builder.root=self._get_working_directory()
-            builder.version=version.__version__
+            builder.dest=dest
+            builder.version=ver
+
+            logger.debug('dest={}'.format(builder.dest))
+            logger.debug('root={}'.format(builder.root))
             builder.run()
 
     def _out_of_date(self):
@@ -123,10 +134,23 @@ class UpdatePlugin(Plugin):
         return repo
 
     def _get_destination(self):
-        return
+        """
+            walk up from current file
+            looking for .app
+
+            return .../name.app/Contents or None
+        """
+
+        p=__file__
+        while p:
+            if p.endswith('.app'):
+                d=os.path.join(p, 'Contents')
+                if os.path.isdir(d):
+                    return d
+            p=os.path.dirname(p)
 
     def _get_working_directory(self):
-        # p=os.path.join(paths.hidden_dir, 'updates')
+        # p=os.path.join(paths.hidden_dir, 'updates', 'pychron')
         p = '/Users/ross/Sandbox/updater_test/user_repo'
         return p
 
