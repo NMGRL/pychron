@@ -139,7 +139,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
-        self.monitor=self._monitor_factory()
+        self.monitor = self._monitor_factory()
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -185,8 +185,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         bind_preference(self.massspec_importer.db, 'username', '{}.massspec_username'.format(prefid))
         bind_preference(self.massspec_importer.db, 'password', '{}.massspec_password'.format(prefid))
 
-
-        prefid='pychron.experiment'
+        prefid = 'pychron.experiment'
         #auto save
         bind_preference(self, 'use_auto_save',
                         '{}.use_auto_save'.format(prefid))
@@ -195,11 +194,11 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         #colors
         color_bind_preference(self, 'signal_color',
-                        '{}.signal_color'.format(prefid))
+                              '{}.signal_color'.format(prefid))
         color_bind_preference(self, 'sniff_color',
-                        '{}.sniff_color'.format(prefid))
+                              '{}.sniff_color'.format(prefid))
         color_bind_preference(self, 'baseline_color',
-                        '{}.baseline_color'.format(prefid))
+                              '{}.baseline_color'.format(prefid))
 
     def isAlive(self):
         return self._alive
@@ -371,15 +370,14 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self.debug('stop iteration')
                     break
 
-                #                runargs = self._execute_run(spec)
+                self._check_run_aliquot(spec)
 
                 run = self._make_run(spec)
                 self.wait_group.active_control.page_name = run.runid
-                #                    self.wait_group.add_control(page_name=run.runid)
 
                 if spec.analysis_type == 'unknown' and spec.overlap:
                     self.info('overlaping')
-                    t = Thread(target=self._do_runA, args=(run,))
+                    t = Thread(target=self._do_run, args=(run,))
                     t.start()
                     run.wait_for_overlap()
 
@@ -389,26 +387,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                 else:
                     last_runid = run.runid
                     self._join_run(spec, run)
-                    #                if not runargs:
-                #                    pass
-                # #                     break
-                #                else:
-                #                    t, run = runargs
-                #                    self.wait_group.active_control.page_name = run.runid
-                # #                    self.wait_group.add_control(page_name=run.runid)
-                #
-                #                    if spec.analysis_type == 'unknown' and spec.overlap:
-                #                        self.info('overlaping')
-                #                        run.wait_for_overlap()
-                #                        self.debug('overlap finished. starting next run')
-                #
-                #                        con.add_consumable((t, run))
-                #                    else:
-                #                        last_runid = run.runid
-                #                        self._join_run(spec, t, run)
-
-                #                        print '{} =========================================='.format(cnt)
-                #                         calc_growth(before)
 
                 cnt += 1
                 total_cnt += 1
@@ -425,30 +403,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
-    #    def _execute_run(self, spec):
-    #
-    #        run = self._make_run(spec)
-    #        self.info('%%%%%%%%%%%%%%%%%%%% starting run {}'.format(run.runid))
-    # #
-    #        t = Thread(target=self._do_run,
-    #                    name=run.runid,
-    #                    args=(run,),
-    #                    )
-    #        t.start()
-    #        return t, run
-
-    #    _prev = 0
-    #    def _do_run(self, run):
-    # hp=hpy()
-    # #hp.setrelheap()
-    #         with MemCTX('sqlalchemy.orm.session.SessionMaker'):
-    #             self._do_runA(run)
-    #        self._do_runA(run)
-    #        gc.collect()
-    #         from pychron.core.codetools.memory_usage import count_instances
-    #         self._prev = count_instances(group='sqlalchemy', prev=self._prev)
-
-    def _do_runA(self, run):
+    def _do_run(self, run):
         mem_log('< start')
 
         run.state = 'not run'
@@ -459,12 +414,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.current_run = run
         st = time.time()
-        for step in (
-            '_start',
-            '_extraction',
-            '_measurement',
-            '_post_measurement'
-        ):
+        for step in ('_start',
+                     '_extraction',
+                     '_measurement',
+                     '_post_measurement'):
 
             if not self.isAlive():
                 break
@@ -499,7 +452,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     def _join_run(self, spec, run):
     #    def _join_run(self, spec, t, run):
     #        t.join()
-        self._do_runA(run)
+        self._do_run(run)
 
         self.debug('{} finished'.format(run.runid))
         if self.isAlive():
@@ -703,7 +656,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
     def _wait(self, delay, msg):
         wg = self.wait_group
-        wc=self.get_wait_control()
+        wc = self.get_wait_control()
         # wc = wg.active_control
         invoke_in_main_thread(wc.trait_set, wtime=delay, message=msg)
         #        wc.trait_set(wtime=delay,
@@ -1041,22 +994,22 @@ If "No" select from database
         if self.massspec_importer:
             db = self.massspec_importer.db
             if db.connected:
-                # try:
-                    # _ = int(arv.labnumber)
-                identifier=self.massspec_importer.get_identifier(arv)
+            # try:
+            # _ = int(arv.labnumber)
+                identifier = self.massspec_importer.get_identifier(arv)
 
-                ai=db.get_analysis(identifier, arv.aliquot, arv.step)
+                ai = db.get_analysis(identifier, arv.aliquot, arv.step)
                 if ai is not None:
                     al = db.get_latest_analysis_aliquot(identifier)
-                    new_aliquot=al+1
+                    new_aliquot = al + 1
                     self.message('{}-{}{} exists in secondary database. Modifying aliquot to {:02n}'.format(identifier,
                                                                                                             arv.aliquot,
                                                                                                             arv.step,
                                                                                                             new_aliquot))
-                    arv.aliquot=new_aliquot
+                    arv.aliquot = new_aliquot
 
-                # al = db.get_latest_analysis_aliquot(identifier)
-                # if al is not None:
+                    # al = db.get_latest_analysis_aliquot(identifier)
+                    # if al is not None:
                     # if al > arv.aliquot:
                     #     old = arv.aliquot
                     #     arv.aliquot = al + 1
@@ -1064,8 +1017,8 @@ If "No" select from database
                     #         arv.labnumber,
                     #         old,
                     #         arv.aliquot))
-                # except ValueError:
-                #     pass
+                    # except ValueError:
+                    #     pass
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
