@@ -21,6 +21,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -28,7 +29,7 @@ from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    AddTextBoxAction, SavePDFFigureAction
+    SavePDFFigureAction
 
 import weakref
 
@@ -53,21 +54,18 @@ class FigureTask(AnalysisEditTask):
         SToolBar(
             SavePDFFigureAction(),
             SaveFigureAction(),
-            name='Figure',
-            image_size=(16, 16)),
+            name='Figure'),
         SToolBar(
             NewIdeogramAction(),
             # AppendIdeogramAction(),
-            name='Ideogram',
-            image_size=(16, 16)),
+            name='Ideogram'),
         SToolBar(
             NewSpectrumAction(),
             # AppendSpectrumAction(),
-            name='Spectrum',
-            image_size=(16, 16)),
-        SToolBar(AddTextBoxAction(),
-                 image_size=(16, 16)
-        )
+            name='Spectrum'),
+        SToolBar(SetInterpretedAgeTBAction(),
+                 BrowseInterpretedAgeTBAction())
+        # SToolBar(AddTextBoxAction())
     ]
 
     auto_select_analysis = False
@@ -137,33 +135,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # figures
     #===============================================================================
-    def add_text_box(self):
-        ac = self.active_editor
-        if ac and ac.component and hasattr(ac, 'add_text_box'):
-
-            self.active_editor.add_text_box()
-
-            at = self.active_editor.annotation_tool
-            if at:
-                at.on_trait_change(self.plot_editor_pane.set_annotation_component,
-                                   'component')
-
-                self.plot_editor_pane.set_annotation_tool(at)
-
-    def tb_new_ideogram(self):
-        if isinstance(self.active_editor, IdeogramEditor) and \
-                not self.unknowns_pane.items:
-            self.append_ideogram()
-        else:
-            self.new_ideogram()
-
-    def tb_new_spectrum(self):
-        if isinstance(self.active_editor, SpectrumEditor) and \
-                not self.unknowns_pane.items:
-            self.append_spectrum()
-        else:
-            self.new_spectrum()
-
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
                      add_table=True, add_iso=True):
@@ -238,7 +209,36 @@ class FigureTask(AnalysisEditTask):
         if info.result:
             self.active_editor.add_interpreted_ages(ias)
 
+    def browse_interpreted_age(self):
+        app=self.application
+        app.open_task('pychron.processing.interpreted_age')
 
+    def add_text_box(self):
+        ac = self.active_editor
+        if ac and ac.component and hasattr(ac, 'add_text_box'):
+
+            self.active_editor.add_text_box()
+
+            at = self.active_editor.annotation_tool
+            if at:
+                at.on_trait_change(self.plot_editor_pane.set_annotation_component,
+                                   'component')
+
+                self.plot_editor_pane.set_annotation_tool(at)
+
+    def tb_new_ideogram(self):
+        if isinstance(self.active_editor, IdeogramEditor) and \
+                not self.unknowns_pane.items:
+            self.append_ideogram()
+        else:
+            self.new_ideogram()
+
+    def tb_new_spectrum(self):
+        if isinstance(self.active_editor, SpectrumEditor) and \
+                not self.unknowns_pane.items:
+            self.append_spectrum()
+        else:
+            self.new_spectrum()
     #===============================================================================
     #
     #===============================================================================

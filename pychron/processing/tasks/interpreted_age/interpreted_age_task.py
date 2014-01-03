@@ -19,27 +19,21 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, OpenTableAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
-
-
-class SavePDFTablesAction(TaskAction):
-    name = 'Save Tables'
-    method = 'save_pdf_tables'
-
-
-class OpenTableAction(TaskAction):
-    name = 'Open Table'
-    method = 'open_table'
 
 
 class InterpretedAgeTask(BaseBrowserTask):
     name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
     tool_bars = [SToolBar(SavePDFTablesAction(),
-                          OpenTableAction())]
+                          OpenTableAction()),
+                 SToolBar(SaveInterpretedAgeGroupAction())]
+
+    def save_interpreted_age_group(self):
+        print 'foo'
 
     def open_table(self):
         # p=self.open_file_dialog()

@@ -31,6 +31,8 @@ from pyface.tasks.action.task_action import TaskAction
 #===============================================================================
 # grouping
 #===============================================================================
+from pychron.envisage.resources import icon
+
 
 class myTaskAction(TaskAction):
     task_ids = List
@@ -212,6 +214,20 @@ class SetInterpretedAgeAction(FigureTaskAction):
     name = 'Set Interpreted Age...'
     #accelerator = 'Ctrl+t'
     method = 'set_interpreted_age'
+
+
+class SetInterpretedAgeTBAction(FigureTaskAction):
+    name = 'Set Interpreted Age'
+    #accelerator = 'Ctrl+t'
+    method = 'set_interpreted_age'
+    image = icon('database_add.png')
+
+
+class BrowseInterpretedAgeTBAction(FigureTaskAction):
+    name = 'Browse Interpreted Age'
+    #accelerator = 'Ctrl+t'
+    method = 'browse_interpreted_age'
+    image = icon('application_view_list.png')
 
 
 class OpenAdvancedQueryAction(Action):

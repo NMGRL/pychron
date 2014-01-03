@@ -24,7 +24,7 @@ from traits.api import List, Str, Instance, Any
 #============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.processing.tasks.actions.vcs_actions import CommitVCSAction, ShareVCSAction
+from pychron.processing.tasks.vcs_data.actions import CommitVCSAction, ShareVCSAction
 from pychron.processing.tasks.vcs_data.panes import VCSCentralPane
 from pychron.processing.vcs_data.diff import Diff
 from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
