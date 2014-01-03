@@ -15,18 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class AddSystemMonitorAction(TaskAction):
     name = 'New Monitor'
     method = 'add_system_monitor'
-    image = ImageResource(name='add',
-                          search_path=paths.icon_search_path)
+    image = icon('add.png')
+
 
 #============= EOF =============================================

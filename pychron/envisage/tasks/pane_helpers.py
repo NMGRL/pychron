@@ -18,12 +18,11 @@
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Instance
 from traitsui.api import Item, ButtonEditor, Spring, View, UItem
-from pyface.image_resource import ImageResource
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.displays.display import DisplayController
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 def spacer(width=-1, **kw):
@@ -36,7 +35,7 @@ def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     name = '{}.png'.format(name)
     kw['show_label'] = label is not None
     kw['label'] = label or ''
-    image = ImageResource(name=name, search_path=paths.icon_search_path)
+    image = icon(name)
 
     return Item(trait, style='custom',
                 editor=ButtonEditor(image=image, **editor_kw),

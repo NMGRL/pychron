@@ -17,8 +17,7 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-from pyface.image_resource import ImageResource
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -51,50 +50,48 @@ class SensitivityEntryAction(Action):
 
 class SaveSensitivityAction(TaskAction):
     name = 'Save'
-    image = ImageResource(name='database_save.png',
-                          search_path=paths.icon_search_path)
+    image = icon('database_save.png')
     method = 'save'
 
 
 class AddSensitivityAction(TaskAction):
     name = 'Add'
-    image = ImageResource(name='database_add.png',
-                          search_path=paths.icon_search_path)
+    image = icon(name='database_add.png')
     method = 'add'
 
 
 class SavePDFAction(TaskAction):
     name = 'Save PDF'
-    image = ImageResource(name='file_pdf.png',
-                          search_path=paths.icon_search_path)
+    image = icon('file_pdf.png')
+
     method = 'save_pdf'
 
 
 class SaveLabbookPDFAction(TaskAction):
     name = 'Save Labbook'
-    image = ImageResource(name='file_pdf.png',
-                          search_path=paths.icon_search_path)
+    image = icon('file_pdf.png')
+
     method = 'save_labbook_pdf'
 
 
 class GenerateLabnumbersAction(TaskAction):
     name = 'Generate Labnumbers'
-    image = ImageResource(name='table_lightning.png',
-                          search_path=paths.icon_search_path)
+    image = icon('table_lightning.png')
+
     method = 'generate_labnumbers'
 
 
 class ImportIrradiationLevelAction(TaskAction):
     name = 'Import Level'
-    image = ImageResource(name='file_xls.png',
-                          search_path=paths.icon_search_path)
+    image = icon('file_xls.png')
+
     method = 'import_irradiation_load_xls'
 
 
 class MakeIrradiationTemplateAction(TaskAction):
     name = 'Irradiation Template'
-    image = ImageResource(name='file_xls.png',
-                          search_path=paths.icon_search_path)
+    image = icon('file_xls.png')
+
     method = 'make_irradiation_load_template'
 
 

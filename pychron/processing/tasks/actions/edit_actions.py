@@ -15,11 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class AnalysisEditAction(TaskAction):
@@ -43,16 +42,16 @@ class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
-    image = ImageResource(name='database_save.png',
-                          search_path=paths.icon_search_path)
+    image = icon('database_save.png')
+
 
 
 class FindAssociatedAction(TaskAction):
     name = 'Find Associated'
     description = 'Find associated analyses'
     method = 'find_associated_analyses'
-    image = ImageResource(name='find.png',
-                          search_path=paths.icon_search_path)
+    image = icon('find.png')
+
 
 
 class TagAction(TaskAction):

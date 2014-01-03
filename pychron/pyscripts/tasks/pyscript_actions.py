@@ -16,12 +16,11 @@
 
 #============= enthought library imports =======================
 from pyface.action.action import Action
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class OpenPyScriptAction(Action):
@@ -67,7 +66,7 @@ class NewPyScriptAction(Action):
 
 class JumpToGosubAction(TaskAction):
     name='Jump to Gosub'
-    image = ImageResource(name='script_go', search_path=paths.icon_search_path)
+    image = icon('script_go.png')
     method='jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 #============= EOF =============================================

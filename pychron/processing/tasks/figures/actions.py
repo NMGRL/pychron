@@ -16,44 +16,38 @@
 
 #============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
-from pyface.image_resource import ImageResource
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class AddTextBoxAction(TaskAction):
     method = 'add_text_box'
     name = 'Annotate'
-    image = ImageResource(name='annotate.png',
-                          search_path=paths.icon_search_path)
+    image = icon('annotate.png')
 
 
 class SaveFigureAction(TaskAction):
     method = 'save_figure'
     name = 'Save Figure'
-    image = ImageResource(name='database_save.png',
-                          search_path=paths.icon_search_path)
+    image = icon('database_save.png')
 
 
 class SavePDFFigureAction(TaskAction):
     method = 'save_pdf_figure'
     name = 'Save PDF Figure'
-    image = ImageResource(name='file_pdf.png',
-                          search_path=paths.icon_search_path)
+    image = icon('file_pdf.png')
 
 
 class OpenFigureAction(TaskAction):
     method = 'open_figure'
     name = 'Open Figure'
-    image = ImageResource(name='page_white_database.png',
-                          search_path=paths.icon_search_path)
+    image = icon('page_white_database.png')
 
 
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
     method = 'tb_new_ideogram'
-    image = ImageResource(name='ideo.png',
-                          search_path=paths.icon_search_path
+    image = icon('ideo.png'
     )
 
 
@@ -63,16 +57,14 @@ class AppendIdeogramAction(TaskAction):
     tooltip = '''Add selected analyses to current ideogram.
 If no analyses selected add all from the selected sample'''
 
-    image = ImageResource(name='ideo_add.png',
-                          search_path=paths.icon_search_path
+    image = icon('ideo_add.png'
     )
 
 
 class NewSpectrumAction(TaskAction):
     name = 'New Spectrum'
     method = 'tb_new_spectrum'
-    image = ImageResource(name='chart_curve.png',
-                          search_path=paths.icon_search_path
+    image = icon('chart_curve.png'
     )
 
 
@@ -82,8 +74,7 @@ class AppendSpectrumAction(TaskAction):
     tooltip = '''Add selected analyses to current spectrum.
 If no analyses selected add all from the selected sample'''
 
-    image = ImageResource(name='chart_curve_add.png',
-                          search_path=paths.icon_search_path
+    image = icon('chart_curve_add.png'
     )
 
 #============= EOF =============================================

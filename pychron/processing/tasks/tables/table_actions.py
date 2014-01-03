@@ -14,8 +14,7 @@
 # limitations under the License.
 #===============================================================================
 from pyface.tasks.action.task_action import TaskAction
-from pyface.image_resource import ImageResource
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
@@ -23,74 +22,58 @@ from pychron.paths import paths
 class MakePDFTableAction(TaskAction):
     name = 'Make PDF'
     method = 'make_pdf_table'
-    image = ImageResource(name='file_pdf.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('file_pdf.png')
 
 
 class MakeXLSTableAction(TaskAction):
     name = 'Make Excel'
     method = 'make_xls_table'
-    image = ImageResource(name='file_xls.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('file_xls.png')
 
 
 class MakeCSVTableAction(TaskAction):
     name = 'Make CSV'
     method = 'make_csv_table'
-    image = ImageResource(name='file_csv.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('file_csv.png')
 
 
 class ToggleStatusAction(TaskAction):
     name = 'Toggle Status'
     method = 'toggle_status'
-    image = ImageResource(name='arrow_switch.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('arrow_switch.png')
     tooltip = 'Toggle status'
 
 
 class SummaryTableAction(TaskAction):
     name = 'Summary'
     method = 'open_summary_table'
-    image = ImageResource(name='report.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('report.png')
     tooltip = 'New summary table'
 
 
 class AppendSummaryTableAction(TaskAction):
     method = 'append_summary_table'
-    image = ImageResource(name='report_add.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('report_add.png')
     tooltip = 'Append to current summary table'
 
 
 class FusionTableAction(TaskAction):
     name = 'Laser'
     method = 'new_fusion_table'
-    image = ImageResource(name='report.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('report.png')
     tooltip = 'New fusion table'
 
 
 class AppendTableAction(TaskAction):
     name = 'Append Table'
     method = 'append_table'
-    image = ImageResource(name='report_add.png',
-                          search_path=paths.icon_search_path
-    )
+    image = icon('report_add.png')
     tooltip = 'Append to current table'
 
 # class AppendFusionTableAction(TaskAction):
 #    name='Append Fusion'
 #    method = 'append_fusion_table'
-#    image = ImageResource(name='report_add.png',
+#    image = icon('report_add.png',
 #                         search_path=paths.icon_search_path
 #                         )
 #    tooltip = 'Append to current fusion table'
@@ -98,7 +81,7 @@ class AppendTableAction(TaskAction):
 #class AppendStepHeatTableAction(TaskAction):
 #    name='Append Step Heat'
 #    method='append_step_heat_table'
-#    image = ImageResource(name='report_add.png',
+#    image = icon('report_add.png',
 #                         search_path=paths.icon_search_path
 #                         )
 #    tooltip = 'Append to current step heat table'

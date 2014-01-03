@@ -15,18 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class NewBrowserEditorAction(TaskAction):
     method = 'new_editor'
     name = 'New Tab'
-    image = ImageResource(name='page_white_add.png',
-                          search_path=paths.icon_search_path)
+    image = icon('page_white_add.png')
+
 
 #============= EOF =============================================

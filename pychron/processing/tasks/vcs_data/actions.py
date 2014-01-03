@@ -16,19 +16,18 @@
 
 #============= enthought library imports =======================
 from pyface.action.action import Action
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class VCSAction(Action):
     pass
 
 class PushVCSAction(VCSAction):
-    image = ImageResource(name='arrow_up.png', search_path=paths.icon_search_path)
+    image = icon('arrow_up.png')
     name='Push'
     def perform(self, event):
         app=event.task.window.application
@@ -38,7 +37,7 @@ class PushVCSAction(VCSAction):
 
 class PullVCSAction(Action):
     name='Pull'
-    image = ImageResource(name='arrow_down.png', search_path=paths.icon_search_path)
+    image = icon('arrow_down.png')
 
     def perform(self, event):
         app = event.task.window.application
