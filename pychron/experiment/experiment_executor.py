@@ -992,6 +992,7 @@ If "No" select from database
 
         """
         if self.massspec_importer:
+            self.debug('Checking run {} aliquot'.format(arv.runid))
             db = self.massspec_importer.db
             if db.connected:
             # try:
