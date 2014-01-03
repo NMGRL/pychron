@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from itertools import groupby
 import os
-from traits.api import Any, List, Str, Button, Instance, on_trait_change
+from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
 
@@ -47,6 +47,12 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('MSWD', 'mswd')]
 
     font = 'arial 10'
+    sample_width=Int(100)
+    identifier_width=Int(100)
+    age_kind_width=Int(100)
+    age_width=Int(75)
+    age_err_width=Int(75)
+    nanalyses_width=Int(75)
 
 
 class InterpretedAgeEditor(BaseTraitsEditor):
@@ -127,13 +133,12 @@ class InterpretedAgeEditor(BaseTraitsEditor):
             title=opt.title
         return title
 
-    def set_samples(self, samples):
+    def set_identifiers(self, lns):
         self.analyses = []
         self.selected_history_name = ''
         self.selected_history = InterpretedAge()
 
-        if samples:
-            lns = [si.labnumber for si in samples]
+        if lns:
             db = self.processor.db
             with db.session_ctx():
                 histories = db.get_interpreted_age_histories(lns)
@@ -143,6 +148,9 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 self.history_names = [hi.name for hi in self.histories]
                 if self.history_names:
                     self.selected_history_name = self.history_names[-1]
+
+    def set_samples(self, samples):
+        self.set_identifiers([si.labnumber for si in samples])
 
     def save_group(self, name, project):
         if self.interpreted_ages:
@@ -160,6 +168,9 @@ class InterpretedAgeEditor(BaseTraitsEditor):
             for gs in hist.interpreted_ages:
                 ias.append(db.interpreted_age_factory(gs.history))
             self.interpreted_ages=ias
+
+            self.set_identifiers([ia.identifier for ia in ias])
+            self.name=hist.name
 
     def _generate_title(self):
         return 'Table 1. Ar/Ar Summary Table'
@@ -207,6 +218,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
         interpreted_grp = UItem('interpreted_ages',
                                 editor=TabularEditor(adapter=InterpretedAgeAdapter(),
                                                      operations=['move','delete'],
+
                                                      ))
         options_grp=UItem('pdf_table_options', style='custom')
 

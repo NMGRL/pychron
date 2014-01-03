@@ -36,6 +36,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -99,6 +100,10 @@ Install to enable MS Excel export''')
                          ICFactorAction(),
                          DiscriminationAction(),
                          FluxAction())
+        def interpreted_group():
+            return Group(SetInterpretedAgeAction(),
+                         OpenInterpretedAgeAction(),
+                         OpenInterpretedAgeGroupAction())
 
         return [
             self._make_task_extension([('recall_action', RecallAction, 'MenuBar/File'),
@@ -108,8 +113,7 @@ Install to enable MS Excel export''')
                                        ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
                                        ('reduction_group', reduction_group, 'MenuBar/data.menu'),
                                        ('figure_group', figure_group, 'MenuBar/data.menu'),
-                                       ('set_interpreted_age', SetInterpretedAgeAction, 'MenuBar/data.menu'),
-                                       ('browse_interpreted_age', OpenInterpretedAgeAction, 'MenuBar/data.menu'),
+                                       ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
 
                                        ('tag', TagAction, 'MenuBar/data.menu'),
                                        ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),

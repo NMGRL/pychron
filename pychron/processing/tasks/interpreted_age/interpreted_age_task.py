@@ -50,6 +50,13 @@ class InterpretedAgeTask(BaseBrowserTask):
                     if name and project:
                         self.active_editor.save_group(name, project)
 
+    def external_open_interpreted_age_group(self):
+        self.load_projects()
+        ogd = OpenGroupDialog(projects=self.projects, db=self.manager.db)
+        info = ogd.edit_traits(kind='livemodal')
+        if info.result:
+            return ogd.get_selected_ids()
+
     def open_interpreted_age_group(self):
         if self.active_editor:
             ogd=OpenGroupDialog(projects=self.projects, db=self.manager.db)
@@ -58,14 +65,16 @@ class InterpretedAgeTask(BaseBrowserTask):
 
             info = ogd.edit_traits(kind='livemodal')
             if info.result:
-                # name = ogd.selected_group.name
-                # project = ogd.selected_project.name
-                self.active_editor.open_group(ogd.selected_group.id)
+                ids=ogd.get_selected_ids()
+                if ids:
+                    self.open_interpreted_age_groups(ids)
 
-            # p=self.open_file_dialog()
-            # p = '/Users/ross/Sandbox/interpreted_age.yaml'
-            # if p:
-            #     self.active_editor.open_table_recipe(p)
+    def open_interpreted_age_groups(self, gids):
+        self.active_editor.open_group(gids[0])
+        for i in gids[1:]:
+            editor = self._new_editor()
+            editor.open_group(i)
+
 
     def save_pdf_tables(self):
         # p=self.save_file_dialog()
@@ -81,10 +90,14 @@ class InterpretedAgeTask(BaseBrowserTask):
 
         return panes
 
+    def _new_editor(self):
+        editor = InterpretedAgeEditor(processor=self.manager)
+        self._open_editor(editor)
+        return editor
+
     def _selected_samples_changed(self):
         if not self.active_editor:
-            editor = InterpretedAgeEditor(processor=self.manager)
-            self._open_editor(editor)
+            self._new_editor()
 
         self.active_editor.set_samples(self.selected_samples)
 

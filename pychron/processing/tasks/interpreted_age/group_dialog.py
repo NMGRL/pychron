@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Any, Str, Int
+from traits.api import HasTraits, List, Any, Str, Int, Date
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
 #============= standard library imports ========================
@@ -25,7 +25,7 @@ from pychron.envisage.browser.adapters import ProjectAdapter
 
 
 class GroupAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [('Name', 'name'), ('Date','create_date')]
 
 
 class GroupDialog(HasTraits):
@@ -51,12 +51,15 @@ class IAGroup(HasTraits):
     name = Str
     project = Str
     id = Int
-
+    create_date=Date
 
 class OpenGroupDialog(GroupDialog):
     groups = List
     db = Any
-    selected_group = Any
+    selected_groups = List
+
+    def get_selected_ids(self):
+        return [gi.id for gi in self.selected_groups]
 
     def _selected_project_changed(self):
         self.groups = []
@@ -68,7 +71,8 @@ class OpenGroupDialog(GroupDialog):
                 for hi in hists:
                     gs.append(IAGroup(name=hi.name,
                                       project=self.selected_project.name,
-                                      id=int(hi.id)))
+                                      id=int(hi.id),
+                                      create_date=hi.create_date))
             self.groups = gs
 
     def traits_view(self):
@@ -79,7 +83,8 @@ class OpenGroupDialog(GroupDialog):
                                        editable=False)),
             UItem('groups',
                   editor=TabularEditor(adapter=GroupAdapter(),
-                                       selected='selected_group',
+                                       selected='selected_groups',
+                                       multi_select=True,
                                        editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
                  title='Open Interpreted Age Group',

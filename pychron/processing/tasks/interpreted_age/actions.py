@@ -41,8 +41,21 @@ class OpenInterpretedAgeGroupAction(TaskAction):
     method = 'open_interpreted_age_group'
     image = icon('database_go')
 
+    def perform(self, event=None):
+        app=self.task.window.application
+        method = self._get_attr(self.object, self.method)
+        if method:
+            method()
+        else:
+            task=app.get_task('pychron.processing.interpreted_age',activate=False)
+            gids=task.external_open_interpreted_age_group()
+            if gids:
+                win=task.window
+                if app.is_open(win):
+                    win.activate()
+                else:
+                    win.open()
 
-# class OpenTableAction(TaskAction):
-#     name = 'Open Table'
-#     method = 'open_table'
-#     image = icon('database_go')
+                task.open_interpreted_age_groups(gids)
+
+
