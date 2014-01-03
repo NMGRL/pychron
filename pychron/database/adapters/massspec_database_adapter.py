@@ -112,10 +112,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
                                    )
 
-    def get_lastest_analysis_aliquot(self, labnumber):
-        '''
+    def get_latest_analysis_aliquot(self, labnumber):
+        """
             return the analysis with the greatest aliquot with this labnumber
-        '''
+        """
         with self.session_ctx() as sess:
     #         sess = self.get_session()
             q = sess.query(AnalysesTable.Aliquot)

@@ -102,11 +102,23 @@ class MassSpecDatabaseImporter(Loggable):
         self.login_session_id = None
         self._current_spec = None
 
+    def get_identifier(self, spec):
+        rid = spec.rid
+        trid = rid.lower()
+        identifier = spec.labnumber
+        if trid.startswith('c'):
+            if spec.spectrometer.lower() in ('obama', 'pychron obama'):
+                identifier = irradpos = '4358'
+            else:
+                identifier = irradpos = '4359'
+        return identifier
+
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
             irradpos = spec.irradpos
             rid = spec.rid
             trid = rid.lower()
+            identifier=spec.labnumber
 
             if trid.startswith('b'):
                 runtype = 'Blank'
@@ -117,22 +129,18 @@ class MassSpecDatabaseImporter(Loggable):
             elif trid.startswith('c'):
                 runtype = 'Unknown'
                 if spec.spectrometer.lower() in ('obama', 'pychron obama'):
-                    rid = '4358'
-                    irradpos = '4358'
+                    identifier=irradpos='4358'
                 else:
-                    rid = '4359'
-                    irradpos = '4359'
-
-                paliquot = self.db.get_lastest_analysis_aliquot(rid)
-                self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%% paliqout{} {}'.format(paliquot, rid))
-                if paliquot is None:
-                    paliquot = 0
-
-                aliquot = paliquot + 1
-                rid = '{}-{:02n}'.format(rid, aliquot)
-                spec.aliquot = '{:02n}'.format(aliquot)
+                    identifier=irradpos='4359'
             else:
                 runtype = 'Unknown'
+
+            # paliquot = self.db.get_latest_analysis_aliquot(identifier)
+            # if paliquot is None:
+            #     paliquot=0
+            #
+            rid = '{}-{:02n}'.format(identifier, spec.aliquot)
+            # self.info('Saving analysis {} to database as {}'.format(spec.rid, rid))
 
             self._analysis = None
             try:
@@ -141,21 +149,9 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save to Mass Spec database.\n {}'.format(tb))
+                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.rid, rid, tb))
                 if commit:
                     sess.rollback()
-                    #                 self.db.rollback()
-                    #                 pid = spec.rid
-                    #                 spec.aliquot = '*{:02n}'.format(spec.aliquot)
-                    #                 spec.rid = '{}-{}'.format(spec.labnumber, spec.aliquot)
-                    #                 self.message('Saving {} as {}'.format(pid, spec.rid))
-                    #                 self._add_analysis(spec, irradpos, spec.rid, runtype, commit)
-
-
-                    #    def _add_analysis(self, *args):
-                    #        db=self.db
-                    #        with db.session_ctx() as sess:
-                    #            self._add_analysis_db(sess,*args)
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
 

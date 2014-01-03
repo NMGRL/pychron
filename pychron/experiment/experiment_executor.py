@@ -1033,26 +1033,39 @@ If "No" select from database
                 return dbr
 
     def _check_run_aliquot(self, arv):
-        '''
-            check the secondary database for this labnumber 
+        """
+            check the secondary database for this labnumber
             get last aliquot
-        '''
+
+        """
         if self.massspec_importer:
             db = self.massspec_importer.db
             if db.connected:
-                try:
-                    _ = int(arv.labnumber)
-                    al = db.get_lastest_analysis_aliquot(arv.labnumber)
-                    if al is not None:
-                        if al > arv.aliquot:
-                            old = arv.aliquot
-                            arv.aliquot = al + 1
-                            self.message('{}-{:02n} exists in secondary database. Modifying aliquot to {:02n}'.format(
-                                arv.labnumber,
-                                old,
-                                arv.aliquot))
-                except ValueError:
-                    pass
+                # try:
+                    # _ = int(arv.labnumber)
+                identifier=self.massspec_importer.get_identifier(arv)
+
+                ai=db.get_analysis(identifier, arv.aliquot, arv.step)
+                if ai is not None:
+                    al = db.get_latest_analysis_aliquot(identifier)
+                    new_aliquot=al+1
+                    self.message('{}-{}{} exists in secondary database. Modifying aliquot to {:02n}'.format(identifier,
+                                                                                                            arv.aliquot,
+                                                                                                            arv.step,
+                                                                                                            new_aliquot))
+                    arv.aliquot=new_aliquot
+
+                # al = db.get_latest_analysis_aliquot(identifier)
+                # if al is not None:
+                    # if al > arv.aliquot:
+                    #     old = arv.aliquot
+                    #     arv.aliquot = al + 1
+                    #     self.message('{}-{:02n} exists in secondary database. Modifying aliquot to {:02n}'.format(
+                    #         arv.labnumber,
+                    #         old,
+                    #         arv.aliquot))
+                # except ValueError:
+                #     pass
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
