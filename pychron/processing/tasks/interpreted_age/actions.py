@@ -21,16 +21,22 @@ from pyface.tasks.action.task_action import TaskAction
 #============= local library imports  ==========================
 
 #============= EOF =============================================
+from pychron.envisage.resources import icon
+
+
 class SavePDFTablesAction(TaskAction):
-    name = 'Save Tables'
+    name = 'Save PDF Tables'
     method = 'save_pdf_tables'
+    image= icon('file_pdf')
 
 
 class SaveInterpretedAgeGroupAction(TaskAction):
-    Name = 'Save Group'
+    name = 'Save Group'
     method = 'save_interpreted_age_group'
+    image=icon('database_add')
 
 
 class OpenTableAction(TaskAction):
     name = 'Open Table'
     method = 'open_table'
+    image=icon('database_go')

@@ -23,14 +23,14 @@ import re
 #============= local library imports  ==========================
 
 from pychron.processing.plotters.options.age import AgeOptions
-from pychron.processing.plotters.options.option import SpectrumPlotOption
+from pychron.processing.plotters.options.option import SpectrumPlotOptions
 
 plat_regex = re.compile(r'\w{1,2}-{1}\w{1,2}$')
 
 
 class SpectrumOptions(AgeOptions):
     step_nsigma = Int(2)
-    plot_option_klass = SpectrumPlotOption
+    plot_option_klass = SpectrumPlotOptions
 
     force_plateau = Bool(False)
     plateau_steps = Property(Str)

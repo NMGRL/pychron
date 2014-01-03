@@ -15,14 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String
+from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
-class PlotterOption(HasTraits):
+class AuxPlotOptions(HasTraits):
     use = Bool
     name=Str(NULL_STR)
     plot_name=Property(Str, depends_on='name')
@@ -42,11 +42,20 @@ class PlotterOption(HasTraits):
     normalize = None
     use_time_axis = False
     initialized=False
+
+    ylimits=Tuple(Float, Float)
+
+    def has_ylimits(self):
+        return self.ylimits and (self.ylimits[0] or self.ylimits[1])
+
     def dump_yaml(self):
         d=dict()
-        attrs=('use','name', 'scale','height','x_error','y_error', 'show_labels','filter_str')
+        attrs=('use','name', 'scale','height',
+               'x_error','y_error', 'show_labels','filter_str')
         for attr in attrs:
             d[attr]=getattr(self, attr)
+
+        d['ylimits']=map(float, self.ylimits)
 
         return d
 
@@ -73,11 +82,11 @@ class PlotterOption(HasTraits):
     #            'relative_probability': 'Ideogram'}
 
 
-class FitPlotterOption(PlotterOption):
+class FitPlotterOptions(AuxPlotOptions):
     fit = Enum(['', ] + FIT_TYPES)
 
 
-class SpectrumPlotOption(PlotterOption):
+class SpectrumPlotOptions(AuxPlotOptions):
     names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
     _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
@@ -90,7 +99,7 @@ class SpectrumPlotOption(PlotterOption):
     #            'age_spectrum': 'Age'}
 
 
-class InverseIsochronPlotOption(PlotterOption):
+class InverseIsochronPlotOptions(AuxPlotOptions):
     names = List([NULL_STR, 'Inv. Isochron'])
 
     _plot_names = List(['', 'inverse_isochron'])
@@ -103,7 +112,7 @@ class InverseIsochronPlotOption(PlotterOption):
                 #'inverse_isochron': 'Inv. Isochron'}
 
 
-class SystemMonitorPlotOption(PlotterOption):
+class SystemMonitorPlotOptions(AuxPlotOptions):
     _auto_set_use = False
     normalize = 'now'
     use_time_axis = True

@@ -41,7 +41,13 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            # #     plotobj.value_mapper.low_setting = po.ylimits[0]
+            # #     plotobj.value_mapper.high_setting = po.ylimits[1]
+            # plotobj.value_mapper.low_setting = 0
+            # plotobj.value_mapper.high_setting = 33
+
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+
 
         try:
             self.graph.set_x_title('Cumulative %39ArK')
@@ -57,8 +63,15 @@ class Spectrum(BaseArArFigure):
     #===============================================================================
     # plotters
     #===============================================================================
-    def _plot_aux(self, title, vk, ys, po, plot, pid, es=None):
-        self._add_aux_plot(ys, title, vk, pid, po)
+    def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
+        # self._add_aux_plot(ys, title, vk, pid, po)
+        graph = self.graph
+        graph.set_y_title(title,
+                          plotid=pid)
+
+        xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
+        s = self._add_plot(xs, ys, es, pid, po)
+        return s
 
     def _plot_age_spectrum(self, po, plot, pid):
         graph = self.graph
@@ -97,7 +110,6 @@ class Spectrum(BaseArArFigure):
         miages = min(yl)
         maages = max(yu)
 
-
         if op.display_integrated_info:
             fs=op.integrated_font_size
             if not fs:
@@ -108,8 +120,8 @@ class Spectrum(BaseArArFigure):
                                       font='modern {}'.format(fs),
                                       label_position='bottom right',
                                       append=False)
-
-        self._set_y_limits(miages, maages, pad='0.1')
+        if not po.has_ylimits():
+            self._set_y_limits(miages, maages, pad='0.1')
 
     def _add_plot(self, xs, ys, es, plotid, po, value_scale='linear'):
         graph = self.graph
@@ -320,14 +332,14 @@ class Spectrum(BaseArArFigure):
         return array(xs), array(ys), array(es), array(c39s)  # , array(ar39s), array(values)
 
 
-    def _add_aux_plot(self, ys, title, vk, pid, po, **kw):
-        graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
-
-        xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
-        s = self._add_plot(xs, ys, es, pid, po, **kw)
-        return s
+    # def _add_aux_plot(self, ys, title, vk, pid, po, **kw):
+        # graph = self.graph
+        # graph.set_y_title(title,
+        #                   plotid=pid)
+        #
+        # xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
+        # s = self._add_plot(xs, ys, es, pid, po, **kw)
+        # return s
 
     #def _calculate_stats(self, ages, errors, xs, ys):
     #    mswd, valid_mswd, n = self._get_mswd(ages, errors)

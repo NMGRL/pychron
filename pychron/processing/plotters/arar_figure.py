@@ -18,7 +18,7 @@
 import re
 from chaco.array_data_source import ArrayDataSource
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
-    Event, Bool, cached_property
+    Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -82,6 +82,9 @@ class BaseArArFigure(HasTraits):
             self._add_limit_tool(pp, 'y')
 
             pp.value_range.tight_bounds = False
+            if po.has_ylimits():
+                pp.value_range.set_bounds(*po.ylimits)
+
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
             if po:
@@ -92,6 +95,8 @@ class BaseArArFigure(HasTraits):
                     pp.value_axis.tick_generator = SparseLogTicks()
                 else:
                     pp.value_axis.tick_generator = SparseTicks()
+
+
 
         graph = self.graph
 
@@ -204,26 +209,26 @@ class BaseArArFigure(HasTraits):
 
         return omits
 
-    def _plot_radiogenic_yield(self, po, plot, pid):
+    def _plot_radiogenic_yield(self, po, plot, pid,**kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('rad40_percent')])
-        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es)
+        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es,**kw)
 
-    def _plot_kcl(self, po, plot, pid):
+    def _plot_kcl(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('kcl')])
-        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es)
+        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es,**kw)
 
-    def _plot_kca(self, po, plot, pid):
+    def _plot_kca(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('kca')])
-        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es)
+        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es,**kw)
 
-    def _plot_moles_k39(self, po, plot, pid):
+    def _plot_moles_k39(self, po, plot, pid,**kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('k39')])
 
-        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es)
+        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es,**kw)
 
     #===============================================================================
     #
@@ -334,6 +339,22 @@ class BaseArArFigure(HasTraits):
             meta = {'selections': sel}
             rend.index.trait_set(metadata=meta,
                                  trait_change_notify=False)
+
+    @on_trait_change('graph:plots:value_mapper:updated')
+    def _handle_value_range(self, obj,name, old, new):
+        if not isinstance(new, bool):
+            # print 'aaa',new.low, new.high
+            for p in self.graph.plots:
+                if p.value_mapper==obj:
+                    plot=p
+                    title = plot.y_axis.title
+                    # print 'ttee',title
+                    for op in self.options.aux_plots:
+                        if title.startswith(op.name):
+                            # print 'setting', title, new.low, new.high
+                            op.ylimits = (new.low, new.high)
+                            break
+                    break
 
     #===============================================================================
     # property get/set

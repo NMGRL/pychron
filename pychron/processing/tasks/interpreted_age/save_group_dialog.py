@@ -15,16 +15,28 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import HasTraits, List, Any, Str
+from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.plotters.options.age import AgeOptions
-from pychron.processing.plotters.options.option import InverseIsochronPlotOptions
+from pychron.envisage.browser.adapters import ProjectAdapter
 
 
-class InverseIsochronOptions(AgeOptions):
-    plot_option_name = 'Inv. Isochron'
-    plot_option_klass = InverseIsochronPlotOptions
+class SaveGroupDialog(HasTraits):
+    name = Str
+    projects = List
+    selected_project = Any
 
+    def traits_view(self):
+        v = View(VGroup(HGroup(Item('name')),
+                        UItem('projects',
+                              editor=TabularEditor(adapter=ProjectAdapter(),
+                                                   selected='selected_project',
+                                                   editable=False))),
+                 buttons=['OK', 'Cancel'], resizable=True,
+                 title='Save Interpreted Age Group')
+        return v
 
 #============= EOF =============================================
+

@@ -18,12 +18,12 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.plotters.options.option import SystemMonitorPlotOption
+from pychron.processing.plotters.options.option import SystemMonitorPlotOptions
 from pychron.processing.plotters.options.series import SeriesOptions
 
 
 class SystemMonitorOptions(SeriesOptions):
-    plot_option_klass = SystemMonitorPlotOption
+    plot_option_klass = SystemMonitorPlotOptions
 
     def _get_dump_attrs(self):
         attrs = super(SystemMonitorOptions, self)._get_dump_attrs()

@@ -32,6 +32,12 @@ class SaveFigureAction(TaskAction):
     image = icon('database_save.png')
 
 
+class SaveAsFigureAction(TaskAction):
+    method = 'save_as figure'
+    name = 'Save As Figure'
+    image = icon('database_save.png')
+
+
 class SavePDFFigureAction(TaskAction):
     method = 'save_pdf_figure'
     name = 'Save PDF Figure'

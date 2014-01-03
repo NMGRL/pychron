@@ -18,7 +18,7 @@
 from itertools import groupby
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
-    List, Event
+    List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 #============= standard library imports ========================
@@ -26,6 +26,7 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
+from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 
 
 class FigureEditor(GraphEditor):
@@ -42,12 +43,12 @@ class FigureEditor(GraphEditor):
     tag=Event
     save_db_figure=Event
 
+    saved_figure_id=Int
+
     def save_figure(self, name, project, samples):
         db=self.processor.db
         with db.session_ctx():
-            # figure = db.add_figure(project=project, name=dlg.name)
-            # for si in dlg.selected_samples:
-            #     db.add_figure_sample(figure, si.name, project)
+
             figure = db.add_figure(project=project, name=name)
             for si in samples:
                 db.add_figure_sample(figure, si, project)
@@ -70,6 +71,13 @@ class FigureEditor(GraphEditor):
             pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
             figure.preference = pref
 
+    def set_interpreted_age(self):
+        ias = self.get_interpreted_ages()
+
+        iaf = InterpretedAgeFactory(groups=ias)
+        info = iaf.edit_traits()
+        if info.result:
+            self.add_interpreted_ages(ias)
 
     def add_interpreted_ages(self, ias):
         db = self.processor.db

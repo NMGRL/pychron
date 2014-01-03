@@ -24,7 +24,6 @@ from traitsui.api import View, EnumEditor, HGroup, spring, \
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
-import yaml
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
@@ -149,32 +148,43 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 if self.history_names:
                     self.selected_history_name = self.history_names[-1]
 
-    def _save_recipe_file(self, p):
-        head, ext=os.path.splitext(p)
-        p='{}.{}'.format(head, 'yaml')
+    def save_group(self, name, project):
+        if self.interpreted_ages:
+            db=self.processor.db
+            with db.session_ctx():
+                hist=db.add_interpreted_age_group_history(name, project=project)
+                for ia in self.interpreted_ages:
+                    db.add_interpreted_age_group_set(hist, ia.id)
 
-        #assemble recipe
-        d={'title':str(self.get_title()),
-           'options':self.pdf_table_options.dump_yaml(),
-           'ids':[int(ia.id) for ia in self.interpreted_ages]}
 
-        with open(p, 'w') as fp:
-            yaml.dump(d, fp)
-
-    def _open_recipe_file(self, p):
-        with open(p, 'r') as fp:
-            d=yaml.load(fp)
-
-        db=self.processor.db
-        with db.session_ctx():
-            ias=[]
-            for hid in d['ids']:
-                hist=db.get_interpreted_age_history(hid)
-                ias.append(db.interpreted_age_factory(hist))
-
-        self.interpreted_ages=ias
-
-        self.pdf_table_options.load_yaml(d['options'])
+    def open_group(self):
+        pass
+    # def _save_recipe_file(self, p):
+    #     head, ext=os.path.splitext(p)
+    #     p='{}.{}'.format(head, 'yaml')
+    #
+    #     #assemble recipe
+    #     d={'title':str(self.get_title()),
+    #        'options':self.pdf_table_options.dump_yaml(),
+    #        'ids':[int(ia.id) for ia in self.interpreted_ages]}
+    #
+    #     with open(p, 'w') as fp:
+    #         yaml.dump(d, fp)
+    #
+    # def _open_recipe_file(self, p):
+    #     with open(p, 'r') as fp:
+    #         d=yaml.load(fp)
+    #
+    #     db=self.processor.db
+    #     with db.session_ctx():
+    #         ias=[]
+    #         for hid in d['ids']:
+    #             hist=db.get_interpreted_age_history(hid)
+    #             ias.append(db.interpreted_age_factory(hist))
+    #
+    #     self.interpreted_ages=ias
+    #
+    #     self.pdf_table_options.load_yaml(d['options'])
         # self.pdf_table_options.trait_set(**d['options'])
 
     def _generate_title(self):

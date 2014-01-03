@@ -24,14 +24,14 @@ import os
 #============= local library imports  ==========================
 import yaml
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.plotters.options.option import PlotterOption
+from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR
 
 
 class BasePlotterOptions(HasTraits):
     aux_plots = List
     name = Str
-    plot_option_klass = PlotterOption
+    plot_option_klass = AuxPlotOptions
     plot_option_name = None
     refresh_plot = Button
     refresh_plot_needed=Event
@@ -67,6 +67,9 @@ class BasePlotterOptions(HasTraits):
                 if k=='aux_plots':
                     ap=[]
                     for vi in v:
+                        if 'ylimits' in vi:
+                            vi['ylimits']=tuple(vi['ylimits'])
+
                         pp=self.plot_option_klass(**vi)
                         ap.append(pp)
                     self.trait_set(**{k:ap})

@@ -22,13 +22,13 @@ from traitsui.api import View, Item, TableEditor, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.processing.plotters.options.base import BasePlotterOptions
-from pychron.processing.plotters.options.option import FitPlotterOption
+from pychron.processing.plotters.options.option import FitPlotterOptions
 
 
 class SeriesOptions(BasePlotterOptions):
     def load_aux_plots(self, ref):
         def f(kii):
-            ff = FitPlotterOption(name=kii)
+            ff = FitPlotterOptions(name=kii)
             ff.trait_set(use=False, fit='')
             return ff
 

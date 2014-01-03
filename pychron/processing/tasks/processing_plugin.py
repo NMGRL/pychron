@@ -133,8 +133,8 @@ Install to enable MS Excel export''')
                                       task_id='pychron.analysis_edit.ic_factor'),
 
             self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-                                       ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu'),
-                                       ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu')]),
+                                       ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+                                       ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]),
             # self._make_task_extension([('vcs_pull', PullVCSAction, 'MenuBar/VCS')]),
 
         ]

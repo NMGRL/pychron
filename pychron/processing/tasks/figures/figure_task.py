@@ -24,12 +24,11 @@ from pyface.tasks.action.schema import SToolBar
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.figures.db_figure import DBFigure
-from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction
+    SavePDFFigureAction, SaveAsFigureAction
 
 import weakref
 
@@ -54,6 +53,7 @@ class FigureTask(AnalysisEditTask):
         SToolBar(
             SavePDFFigureAction(),
             SaveFigureAction(),
+            SaveAsFigureAction(),
             name='Figure'),
         SToolBar(
             NewIdeogramAction(),
@@ -199,15 +199,18 @@ class FigureTask(AnalysisEditTask):
     # actions
     #===============================================================================
     def save_figure(self):
-        self._save_figure()
+        sid=self.active_editor.saved_figure_id
+        if sid:
+            self._save_figure(sid)
+        else:
+            self._save_as_figure()
+
+    def save_as_figure(self):
+        self._save_as_figure()
 
     def set_interpreted_age(self):
-        ias=self.active_editor.get_interpreted_ages()
-
-        iaf = InterpretedAgeFactory(groups=ias)
-        info = iaf.edit_traits()
-        if info.result:
-            self.active_editor.add_interpreted_ages(ias)
+        if self.active_editor:
+            self.active_editor.set_interpreted_age()
 
     def browse_interpreted_age(self):
         app=self.application
@@ -377,7 +380,41 @@ class FigureTask(AnalysisEditTask):
     def _get_project_obj(self, p):
         return next((sr for sr in self.projects if sr.name == p), None)
 
-    def _save_figure(self):
+    def _save_figure(self, sid):
+        """
+            update the figure with id=``sid``
+
+            update preferences
+            update analyses
+        """
+        db=self.manager.db
+        with db.session_ctx() as sess:
+            fig=db.get_figure(sid, key='id')
+            print sid, fig
+
+            pom=self.active_editor.plotter_options_manager
+            blob = pom.dump_yaml()
+            fig.preference.options=blob
+
+            dbans=fig.analyses
+            uuids=[ai.uuid for ai in self.active_editor.analyses]
+
+            for dbai in fig.analyses:
+                if not dbai.analysis.uuid in uuids:
+                    #remove analysis
+                    sess.delete(dbai)
+
+            for ai in self.active_editor.analyses:
+                if not next((dbai for dbai in dbans if dbai.analysis.uuid==ai.uuid), None):
+                    #add analysis
+                    ai=db.get_analysis_uuid(ai.uuid)
+                    db.add_figure_analysis(fig, ai)
+
+
+    def _save_as_figure(self):
+        """
+            add a new figure to the database
+        """
         db = self.manager.db
         if not isinstance(self.active_editor, FigureEditor):
             return
@@ -481,8 +518,8 @@ class FigureTask(AnalysisEditTask):
 
                 ans = [a.analysis for a in db_fig.analyses]
                 self.active_editor.set_items(ans)
-
                 blob = db_fig.preference.options
+
                 kind = db_fig.preference.kind
                 if self.active_editor.basename == kind:
                     self.active_editor.plotter_options_manager.load_yaml(blob)
@@ -490,6 +527,7 @@ class FigureTask(AnalysisEditTask):
                     #open new editor of this kind
                     pass
 
+                self.active_editor.saved_figure_id=int(sf.id)
                 self.active_editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
@@ -517,7 +555,7 @@ class FigureTask(AnalysisEditTask):
 
     @on_trait_change('active_editor:save_db_figure')
     def _handle_save_db_figure(self):
-        self._save_figure()
+        self._save_as_figure()
 
     #===========================================================================
     # browser protocol

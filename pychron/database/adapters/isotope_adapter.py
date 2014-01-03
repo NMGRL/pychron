@@ -65,7 +65,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksTable, proc_BackgroundsTable, proc_BlanksHistoryTable, proc_BackgroundsHistoryTable, \
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
-    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, proc_FigureSamplesTable
+    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, proc_FigureSamplesTable, proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable
 
 # @todo: change rundate and runtime to DateTime columns
 
@@ -348,6 +348,23 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
                               meas_AnalysisTable.analysis_timestamp <= ma))
             return q.all()
+
+    def add_interpreted_age_group_history(self, name, project=None):
+        project=self.get_project(project)
+        if project:
+            obj=proc_InterpretedAgeGroupHistoryTable(name=name)
+            obj.project=project
+
+            self._add_item(obj)
+            return obj
+
+    def add_interpreted_age_group_set(self, hist,interpreted_age, **kw):
+        obj=proc_InterpretedAgeGroupSetTable(**kw)
+
+        obj.group=hist
+        obj.interpreted_age=interpreted_age
+        self._add_item(obj)
+        return obj
 
     def add_history(self, dbrecord, kind):
         func = getattr(self, 'add_{}_history'.format(kind))
