@@ -95,9 +95,9 @@ class proc_ArArTable(Base, BaseMixin):
 class proc_InterpretedAgeGroupHistoryTable(Base, BaseMixin):
     project_id=foreignkey('gen_ProjectTable')
     name=stringcolumn(80)
-    create_date=Column(DateTime)
+    create_date=Column(DateTime, default=func.now())
 
-    interpreted_ages=relationship('proc_InterpretedAgeGroupSetTable')
+    interpreted_ages=relationship('proc_InterpretedAgeGroupSetTable', backref='group')
 
 
 class proc_InterpretedAgeGroupSetTable(Base, BaseMixin):
@@ -122,6 +122,8 @@ class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
     selected = relationship('gen_LabTable',
                            backref='selected_interpreted_age',
                            uselist=False)
+
+    # group_sets=relationship('proc_InterpretedAgeGroupSetTable', backref='history')
 
 class proc_InterpretedAgeTable(Base, BaseMixin):
     pass

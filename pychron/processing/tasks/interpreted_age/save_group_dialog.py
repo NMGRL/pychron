@@ -35,7 +35,8 @@ class SaveGroupDialog(HasTraits):
                                                    selected='selected_project',
                                                    editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
-                 title='Save Interpreted Age Group')
+                 title='Save Interpreted Age Group',
+                 width=300)
         return v
 
 #============= EOF =============================================

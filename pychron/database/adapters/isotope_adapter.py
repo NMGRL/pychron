@@ -351,18 +351,18 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_interpreted_age_group_history(self, name, project=None):
         project=self.get_project(project)
+
         if project:
             obj=proc_InterpretedAgeGroupHistoryTable(name=name)
-            obj.project=project
-
+            obj.project_id=project.id
             self._add_item(obj)
             return obj
 
-    def add_interpreted_age_group_set(self, hist,interpreted_age, **kw):
+    def add_interpreted_age_group_set(self, hist,interpreted_age_id, **kw):
         obj=proc_InterpretedAgeGroupSetTable(**kw)
 
         obj.group=hist
-        obj.interpreted_age=interpreted_age
+        obj.interpreted_age_id=interpreted_age_id
         self._add_item(obj)
         return obj
 

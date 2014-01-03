@@ -156,7 +156,6 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 for ia in self.interpreted_ages:
                     db.add_interpreted_age_group_set(hist, ia.id)
 
-
     def open_group(self):
         pass
     # def _save_recipe_file(self, p):

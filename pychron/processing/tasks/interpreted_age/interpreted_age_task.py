@@ -46,10 +46,6 @@ class InterpretedAgeTask(BaseBrowserTask):
                 if info.result:
                     name=sgd.name
                     project=sgd.selected_project.name
-
-                    name = 'Foo'
-                    project = 'Minna Bluff'
-
                     if name and project:
                         self.active_editor.save_group(name, project)
 
