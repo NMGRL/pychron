@@ -82,6 +82,7 @@ class BaseArArFigure(HasTraits):
             self._add_limit_tool(pp, 'y')
 
             pp.value_range.tight_bounds = False
+            # print po, po.ylimits, po.has_ylimits()
             if po.has_ylimits():
                 pp.value_range.set_bounds(*po.ylimits)
 
@@ -95,8 +96,6 @@ class BaseArArFigure(HasTraits):
                     pp.value_axis.tick_generator = SparseLogTicks()
                 else:
                     pp.value_axis.tick_generator = SparseTicks()
-
-
 
         graph = self.graph
 
@@ -312,6 +311,8 @@ class BaseArArFigure(HasTraits):
             label.tools.append(tool)
         else:
             label.tools.insert(0, tool)
+
+        label.on_trait_change(self._handle_label_move, 'label_position')
         return label
 
     def _build_label_text(self, x, we, mswd, valid_mswd, n):
@@ -339,6 +340,18 @@ class BaseArArFigure(HasTraits):
             meta = {'selections': sel}
             rend.index.trait_set(metadata=meta,
                                  trait_change_notify=False)
+
+    def _handle_label_move(self, obj, name, old, new):
+        # print obj, name,old, new
+        # print obj.component
+        axps = [a for a in self.options.aux_plots if a.use]
+        for i, p in enumerate(self.graph.plots):
+            if next((pp for pp in p.plots.itervalues()
+                            if obj.component==pp[0]),None):
+                axp=axps[i]
+                # print i, axp, obj.id, new
+                axp.set_overlay_position(obj.id, map(float, new))
+                break
 
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj,name, old, new):

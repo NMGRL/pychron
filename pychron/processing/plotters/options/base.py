@@ -69,6 +69,7 @@ class BasePlotterOptions(HasTraits):
                     for vi in v:
                         if 'ylimits' in vi:
                             vi['ylimits']=tuple(vi['ylimits'])
+                            vi['_has_ylimits']=True
 
                         pp=self.plot_option_klass(**vi)
                         ap.append(pp)

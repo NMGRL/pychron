@@ -93,7 +93,12 @@ class Spectrum(BaseArArFigure):
             info_txt=self._build_label_text(plateau_age.nominal_value, plateau_age.std_dev,
                                             plateau_mswd, valid_mswd, nsteps)
 
-            self._add_plateau_overlay(spec, platbounds, plateau_age, info_txt)
+            overlay=self._add_plateau_overlay(spec, platbounds, plateau_age, info_txt)
+
+            overlay.id = 'plateau'
+            if overlay.id in po.overlay_positions:
+                y = po.overlay_positions[overlay.id]
+                overlay.y=y
 
         # tga = self._calculate_total_gas_age(self.sorted_analyses)
         # print tga
@@ -115,11 +120,15 @@ class Spectrum(BaseArArFigure):
             if not fs:
                 fs=10
 
-            self._add_data_label(spec, text,
+            label=self._add_data_label(spec, text,
                                       (25, miages),
                                       font='modern {}'.format(fs),
                                       label_position='bottom right',
                                       append=False)
+            label.id='integrated'
+            if label.id in po.overlay_positions:
+                label.label_position=po.overlay_positions[label.id]
+
         if not po.has_ylimits():
             self._set_y_limits(miages, maages, pad='0.1')
 
@@ -171,7 +180,7 @@ class Spectrum(BaseArArFigure):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
-
+                            id='plateau',
                             label_visible=self.options.display_plateau_info,
                             label_font_size=self.options.plateau_font_size,
                             label_offset=plateau_age.std_dev*self.options.step_nsigma,
@@ -181,6 +190,21 @@ class Spectrum(BaseArArFigure):
 
         tool = PlateauTool(component=ov)
         lp.tools.insert(0, tool)
+        #plateau_label:[x, y
+        ov.on_trait_change(self._handle_plateau_overlay_move, 'position[]')
+
+        return ov
+
+    def _handle_plateau_overlay_move(self, obj, name, old, new):
+        # print obj, name, old, new
+        axps = [a for a in self.options.aux_plots if a.use]
+        for i, p in enumerate(self.graph.plots):
+            if next((pp for pp in p.plots.itervalues()
+                     if obj.component == pp[0]), None):
+                axp = axps[i]
+                # print i, axp, obj.id, new
+                axp.set_overlay_position(obj.id, float(new[0]))
+                break
 
     def update_index_mapper(self, gid, obj, name, old, new):
         if new is True:

@@ -150,14 +150,16 @@ class PlateauTool(DragTool):
 
 class PlateauOverlay(BasePlateauOverlay):
     plateau_bounds = Array
-    y = Float
+    # y = Float
     dragged = False
+    id=Str
 
     plateau_label=PlotLabel
     info_txt=Str
     label_visible=True
     label_offset=None
     label_font_size=10
+
 
     def hittest(self, pt, threshold=7):
         x, y = pt

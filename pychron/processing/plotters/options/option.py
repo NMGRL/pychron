@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float
+from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -43,10 +43,15 @@ class AuxPlotOptions(HasTraits):
     use_time_axis = False
     initialized=False
 
-    ylimits=Tuple(Float, Float)
+    ylimits=Tuple(Float, Float, transient=True)
+    overlay_positions=Dict
+    _has_ylimits=Bool(False)
+
+    def set_overlay_position(self, k, v):
+        self.overlay_positions[k]=v
 
     def has_ylimits(self):
-        return self.ylimits and (self.ylimits[0] or self.ylimits[1])
+        return self._has_ylimits
 
     def dump_yaml(self):
         d=dict()
@@ -56,6 +61,7 @@ class AuxPlotOptions(HasTraits):
             d[attr]=getattr(self, attr)
 
         d['ylimits']=map(float, self.ylimits)
+        d['overlay_positions']=dict(self.overlay_positions)
 
         return d
 

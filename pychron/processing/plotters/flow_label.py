@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool
+from traits.api import Bool, Str
 from chaco.data_label import DataLabel
 #============= standard library imports ========================
 from numpy import max
@@ -30,11 +30,27 @@ class FlowDataLabel(DataLabel):
     """
     constrain_x = Bool(True)
     constrain_y = Bool(True)
+    # position_event=Event
+    id=Str
+    # _ox=None
+
     # def _draw(self, gc, **kw):
     #     self.font='modern 18'
     #     gc.set_font(self.font)
     #     print 'draw', self.font
     #     super(FlowDataLabel, self)._draw(gc,**kw)
+
+    # def _set_x(self, val):
+    #     super(FlowDataLabel, self)._set_x(val)
+    #     if self._ox is None:
+    #         self._ox = val
+    #     elif self._ox != val:
+    #         self.position_event=(self.x, self.y)
+    #
+    # def _set_y(self, val):
+    #     super(FlowDataLabel, self)._set_y(val)
+    #     if val>0:
+    #         self.position_event = (self.x, self.y)
 
     def overlay(self, component, gc, *args, **kw):
 
