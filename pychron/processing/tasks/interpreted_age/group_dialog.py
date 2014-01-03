@@ -15,19 +15,26 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Any, Str
+from traits.api import HasTraits, List, Any, Str, Int
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter
 
 
-class SaveGroupDialog(HasTraits):
+class GroupAdapter(TabularAdapter):
+    columns = [('Name', 'name')]
+
+
+class GroupDialog(HasTraits):
     name = Str
     projects = List
     selected_project = Any
 
+
+class SaveGroupDialog(GroupDialog):
     def traits_view(self):
         v = View(VGroup(HGroup(Item('name')),
                         UItem('projects',
@@ -36,6 +43,46 @@ class SaveGroupDialog(HasTraits):
                                                    editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
                  title='Save Interpreted Age Group',
+                 width=300)
+        return v
+
+
+class IAGroup(HasTraits):
+    name = Str
+    project = Str
+    id = Int
+
+
+class OpenGroupDialog(GroupDialog):
+    groups = List
+    db = Any
+    selected_group = Any
+
+    def _selected_project_changed(self):
+        self.groups = []
+        if self.selected_project:
+            gs = []
+            db = self.db
+            with db.session_ctx():
+                hists = db.get_interpreted_age_groups(self.selected_project.name)
+                for hi in hists:
+                    gs.append(IAGroup(name=hi.name,
+                                      project=self.selected_project.name,
+                                      id=int(hi.id)))
+            self.groups = gs
+
+    def traits_view(self):
+        v = View(VGroup(
+            UItem('projects',
+                  editor=TabularEditor(adapter=ProjectAdapter(),
+                                       selected='selected_project',
+                                       editable=False)),
+            UItem('groups',
+                  editor=TabularEditor(adapter=GroupAdapter(),
+                                       selected='selected_group',
+                                       editable=False))),
+                 buttons=['OK', 'Cancel'], resizable=True,
+                 title='Open Interpreted Age Group',
                  width=300)
         return v
 

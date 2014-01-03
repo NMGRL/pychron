@@ -21,17 +21,18 @@
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, OpenTableAction
+from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction,\
+    OpenInterpretedAgeGroupAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
-from pychron.processing.tasks.interpreted_age.save_group_dialog import SaveGroupDialog
+from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog
 
 
 class InterpretedAgeTask(BaseBrowserTask):
     name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
-    tool_bars = [SToolBar(SavePDFTablesAction(),
-                          OpenTableAction()),
-                 SToolBar(SaveInterpretedAgeGroupAction())]
+    tool_bars = [SToolBar(SavePDFTablesAction()),
+                 SToolBar(SaveInterpretedAgeGroupAction(),
+                          OpenInterpretedAgeGroupAction())]
 
     def save_interpreted_age_group(self):
 
@@ -49,13 +50,22 @@ class InterpretedAgeTask(BaseBrowserTask):
                     if name and project:
                         self.active_editor.save_group(name, project)
 
-    def open_table(self):
-        # p=self.open_file_dialog()
-        # p = '/Users/ross/Sandbox/interpreted_age.yaml'
-        # if p:
-        #     self.active_editor.open_table_recipe(p)
+    def open_interpreted_age_group(self):
         if self.active_editor:
-            self.active_editor.open_group()
+            ogd=OpenGroupDialog(projects=self.projects, db=self.manager.db)
+            if self.selected_projects:
+                ogd.selected_project = self.selected_projects[-1]
+
+            info = ogd.edit_traits(kind='livemodal')
+            if info.result:
+                # name = ogd.selected_group.name
+                # project = ogd.selected_project.name
+                self.active_editor.open_group(ogd.selected_group.id)
+
+            # p=self.open_file_dialog()
+            # p = '/Users/ross/Sandbox/interpreted_age.yaml'
+            # if p:
+            #     self.active_editor.open_table_recipe(p)
 
     def save_pdf_tables(self):
         # p=self.save_file_dialog()

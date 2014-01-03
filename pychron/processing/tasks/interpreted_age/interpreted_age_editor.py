@@ -102,11 +102,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 for ai in ais]
         groups=[StepHeatAnalysisGroup(sample=ais[0].sample,
                                       analyses=ais) for ln, ais in stepheat]
-        # key = lambda x: x.sample
-        # groups=[StepHeatAnalysisGroup(sample=sam, analyses=list(ais))
-        #         for sam, ais in groupby(ans, key=key)]
-        #
-        # ans = groupby(ans, key=key)
+
         head, ext=os.path.splitext(p)
         p='{}.step_heat_data{}'.format(head, ext)
         w.build(p, ans, groups, title=self.get_title())
@@ -156,35 +152,14 @@ class InterpretedAgeEditor(BaseTraitsEditor):
                 for ia in self.interpreted_ages:
                     db.add_interpreted_age_group_set(hist, ia.id)
 
-    def open_group(self):
-        pass
-    # def _save_recipe_file(self, p):
-    #     head, ext=os.path.splitext(p)
-    #     p='{}.{}'.format(head, 'yaml')
-    #
-    #     #assemble recipe
-    #     d={'title':str(self.get_title()),
-    #        'options':self.pdf_table_options.dump_yaml(),
-    #        'ids':[int(ia.id) for ia in self.interpreted_ages]}
-    #
-    #     with open(p, 'w') as fp:
-    #         yaml.dump(d, fp)
-    #
-    # def _open_recipe_file(self, p):
-    #     with open(p, 'r') as fp:
-    #         d=yaml.load(fp)
-    #
-    #     db=self.processor.db
-    #     with db.session_ctx():
-    #         ias=[]
-    #         for hid in d['ids']:
-    #             hist=db.get_interpreted_age_history(hid)
-    #             ias.append(db.interpreted_age_factory(hist))
-    #
-    #     self.interpreted_ages=ias
-    #
-    #     self.pdf_table_options.load_yaml(d['options'])
-        # self.pdf_table_options.trait_set(**d['options'])
+    def open_group(self, gid):
+        db=self.processor.db
+        ias=[]
+        with db.session_ctx():
+            hist=db.get_interpreted_age_group_history(gid)
+            for gs in hist.interpreted_ages:
+                ias.append(db.interpreted_age_factory(gs.history))
+            self.interpreted_ages=ias
 
     def _generate_title(self):
         return 'Table 1. Ar/Ar Summary Table'
@@ -243,4 +218,30 @@ class InterpretedAgeEditor(BaseTraitsEditor):
         return v
 
 #============= EOF =============================================
-
+# def _save_recipe_file(self, p):
+    #     head, ext=os.path.splitext(p)
+    #     p='{}.{}'.format(head, 'yaml')
+    #
+    #     #assemble recipe
+    #     d={'title':str(self.get_title()),
+    #        'options':self.pdf_table_options.dump_yaml(),
+    #        'ids':[int(ia.id) for ia in self.interpreted_ages]}
+    #
+    #     with open(p, 'w') as fp:
+    #         yaml.dump(d, fp)
+    #
+    # def _open_recipe_file(self, p):
+    #     with open(p, 'r') as fp:
+    #         d=yaml.load(fp)
+    #
+    #     db=self.processor.db
+    #     with db.session_ctx():
+    #         ias=[]
+    #         for hid in d['ids']:
+    #             hist=db.get_interpreted_age_history(hid)
+    #             ias.append(db.interpreted_age_factory(hist))
+    #
+    #     self.interpreted_ages=ias
+    #
+    #     self.pdf_table_options.load_yaml(d['options'])
+        # self.pdf_table_options.trait_set(**d['options'])

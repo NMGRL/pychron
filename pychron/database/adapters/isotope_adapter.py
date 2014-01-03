@@ -141,6 +141,23 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return it
 
+    def get_interpreted_age_group_history(self, gid):
+        return self._retrieve_item(proc_InterpretedAgeGroupHistoryTable,
+                                   gid, key='id')
+
+
+    def get_interpreted_age_groups(self, project):
+        with self.session_ctx() as sess:
+            q = sess.query(proc_InterpretedAgeGroupHistoryTable)
+            q=q.join(gen_ProjectTable)
+
+            q=q.filter(gen_ProjectTable.name==project)
+
+            try:
+                return q.all()
+            except NoResultFound:
+                pass
+
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:
             q=sess.query(proc_InterpretedAgeHistoryTable)

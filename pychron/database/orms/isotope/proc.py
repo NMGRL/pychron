@@ -113,20 +113,20 @@ class proc_InterpretedAgeSetTable(Base, BaseMixin):
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
-    pass
     create_date = Column(DateTime, default=func.now())
     user = stringcolumn()
-    #
+
     interpreted_age = relationship('proc_InterpretedAgeTable', backref='history', uselist=False)
     identifier = stringcolumn(80)
     selected = relationship('gen_LabTable',
                            backref='selected_interpreted_age',
                            uselist=False)
 
-    # group_sets=relationship('proc_InterpretedAgeGroupSetTable', backref='history')
+    group_sets=relationship('proc_InterpretedAgeGroupSetTable', backref='history')
+
 
 class proc_InterpretedAgeTable(Base, BaseMixin):
-    pass
+
     history_id = foreignkey('proc_InterpretedAgeHistoryTable')
     age_kind = stringcolumn(32)
     age = Column(Float)

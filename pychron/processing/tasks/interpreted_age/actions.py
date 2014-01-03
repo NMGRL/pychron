@@ -27,16 +27,22 @@ from pychron.envisage.resources import icon
 class SavePDFTablesAction(TaskAction):
     name = 'Save PDF Tables'
     method = 'save_pdf_tables'
-    image= icon('file_pdf')
+    image = icon('file_pdf')
 
 
 class SaveInterpretedAgeGroupAction(TaskAction):
     name = 'Save Group'
     method = 'save_interpreted_age_group'
-    image=icon('database_add')
+    image = icon('database_add')
 
 
-class OpenTableAction(TaskAction):
-    name = 'Open Table'
-    method = 'open_table'
-    image=icon('database_go')
+class OpenInterpretedAgeGroupAction(TaskAction):
+    name = 'Open Group'
+    method = 'open_interpreted_age_group'
+    image = icon('database_go')
+
+
+# class OpenTableAction(TaskAction):
+#     name = 'Open Table'
+#     method = 'open_table'
+#     image = icon('database_go')
