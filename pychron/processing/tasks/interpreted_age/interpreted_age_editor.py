@@ -70,9 +70,8 @@ class InterpretedAgeEditor(BaseTraitsEditor):
     interpreted_ages = List
 
     pdf_table_options=Instance(PDFTableOptions, ())
-
-    def open_table_recipe(self, p):
-        self._open_recipe_file(p)
+    saved_group_id=Int
+    name = 'Untitled'
 
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
@@ -152,6 +151,20 @@ class InterpretedAgeEditor(BaseTraitsEditor):
     def set_samples(self, samples):
         self.set_identifiers([si.labnumber for si in samples])
 
+    def update_group(self):
+        gid=self.saved_group_id
+        db = self.processor.db
+        with db.session_ctx() as sess:
+            hist=db.get_interpreted_age_group_history(gid)
+
+            for gs in hist.interpreted_ages:
+                sess.delete(gs)
+
+            for ia in self.interpreted_ages:
+                db.add_interpreted_age_group_set(hist, ia.id)
+
+        self.information_dialog('Changes saved to Database')
+
     def save_group(self, name, project):
         if self.interpreted_ages:
             db=self.processor.db
@@ -171,6 +184,7 @@ class InterpretedAgeEditor(BaseTraitsEditor):
 
             self.set_identifiers([ia.identifier for ia in ias])
             self.name=hist.name
+            self.saved_group_id=int(hist.id)
 
     def _generate_title(self):
         return 'Table 1. Ar/Ar Summary Table'

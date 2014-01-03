@@ -33,6 +33,12 @@ class SavePDFTablesAction(TaskAction):
 class SaveInterpretedAgeGroupAction(TaskAction):
     name = 'Save Group'
     method = 'save_interpreted_age_group'
+    image = icon('database_edit')
+
+
+class SaveAsInterpretedAgeGroupAction(TaskAction):
+    name = 'Save As Group'
+    method = 'save_as_interpreted_age_group'
     image = icon('database_add')
 
 
@@ -42,15 +48,15 @@ class OpenInterpretedAgeGroupAction(TaskAction):
     image = icon('database_go')
 
     def perform(self, event=None):
-        app=self.task.window.application
+        app = self.task.window.application
         method = self._get_attr(self.object, self.method)
         if method:
             method()
         else:
-            task=app.get_task('pychron.processing.interpreted_age',activate=False)
-            gids=task.external_open_interpreted_age_group()
+            task = app.get_task('pychron.processing.interpreted_age', activate=False)
+            gids = task.external_open_interpreted_age_group()
             if gids:
-                win=task.window
+                win = task.window
                 if app.is_open(win):
                     win.activate()
                 else:

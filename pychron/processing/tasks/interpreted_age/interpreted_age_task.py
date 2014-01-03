@@ -22,7 +22,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction,\
-    OpenInterpretedAgeGroupAction
+    OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog
 
@@ -31,24 +31,9 @@ class InterpretedAgeTask(BaseBrowserTask):
     name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
     tool_bars = [SToolBar(SavePDFTablesAction()),
-                 SToolBar(SaveInterpretedAgeGroupAction(),
+                 SToolBar(SaveAsInterpretedAgeGroupAction(),
+                          SaveInterpretedAgeGroupAction(),
                           OpenInterpretedAgeGroupAction())]
-
-    def save_interpreted_age_group(self):
-
-        if self.active_editor:
-            if self.active_editor.interpreted_ages:
-
-                sgd = SaveGroupDialog(projects=self.projects)
-                if self.selected_projects:
-                    sgd.selected_project=self.selected_projects[-1]
-
-                info = sgd.edit_traits(kind='livemodal')
-                if info.result:
-                    name=sgd.name
-                    project=sgd.selected_project.name
-                    if name and project:
-                        self.active_editor.save_group(name, project)
 
     def external_open_interpreted_age_group(self):
         self.load_projects()
@@ -75,6 +60,26 @@ class InterpretedAgeTask(BaseBrowserTask):
             editor = self._new_editor()
             editor.open_group(i)
 
+    def save_interpreted_age_group(self):
+        if self.active_editor.save_group_id:
+            self.active_editor.update_group()
+        else:
+            self.save_as_interpreted_age_group()
+
+    def save_as_interpreted_age_group(self):
+        if self.active_editor:
+            if self.active_editor.interpreted_ages:
+
+                sgd = SaveGroupDialog(projects=self.projects)
+                if self.selected_projects:
+                    sgd.selected_project = self.selected_projects[-1]
+
+                info = sgd.edit_traits(kind='livemodal')
+                if info.result:
+                    name = sgd.name
+                    project = sgd.selected_project.name
+                    if name and project:
+                        self.active_editor.save_group(name, project)
 
     def save_pdf_tables(self):
         # p=self.save_file_dialog()

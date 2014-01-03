@@ -196,10 +196,8 @@ class Ideogram(BaseArArFigure):
         self._add_info(graph, plot)
         mo=self._add_mean_indicator(graph, scatter, bins, probs, pid)
         mo.id = 'mean_{}'.format(self.group_id)
-        print mo.id, po.overlay_positions.keys()
         if mo.id in po.overlay_positions:
             ap = po.overlay_positions[mo.id]
-            print 'setting {} {}'.format(mo.id, ap[1])
             mo.y=ap[1]
 
         mi, ma = min(probs), max(probs)

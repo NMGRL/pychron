@@ -60,7 +60,6 @@ class AuxPlotOptions(HasTraits):
         for attr in attrs:
             d[attr]=getattr(self, attr)
 
-        print 'dump ylimits', self.ylimits
         d['ylimits']=map(float, self.ylimits)
         d['overlay_positions']=dict(self.overlay_positions)
 

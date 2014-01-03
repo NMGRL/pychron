@@ -201,7 +201,7 @@ class FigureTask(AnalysisEditTask):
     def save_figure(self):
         sid=self.active_editor.saved_figure_id
         if sid:
-            self._save_figure(sid)
+            self._save_figure()
         else:
             self._save_as_figure()
 
@@ -380,35 +380,37 @@ class FigureTask(AnalysisEditTask):
     def _get_project_obj(self, p):
         return next((sr for sr in self.projects if sr.name == p), None)
 
-    def _save_figure(self, sid):
+    def _save_figure(self):
         """
-            update the figure with id=``sid``
 
             update preferences
             update analyses
         """
-        db=self.manager.db
-        with db.session_ctx() as sess:
-            fig=db.get_figure(sid, key='id')
-            print sid, fig
+        if self.active_editor:
+            self.active_editor._update_figure()
 
-            pom=self.active_editor.plotter_options_manager
-            blob = pom.dump_yaml()
-            fig.preference.options=blob
-
-            dbans=fig.analyses
-            uuids=[ai.uuid for ai in self.active_editor.analyses]
-
-            for dbai in fig.analyses:
-                if not dbai.analysis.uuid in uuids:
-                    #remove analysis
-                    sess.delete(dbai)
-
-            for ai in self.active_editor.analyses:
-                if not next((dbai for dbai in dbans if dbai.analysis.uuid==ai.uuid), None):
-                    #add analysis
-                    ai=db.get_analysis_uuid(ai.uuid)
-                    db.add_figure_analysis(fig, ai)
+        # db=self.manager.db
+        # with db.session_ctx() as sess:
+        #     fig=db.get_figure(sid, key='id')
+        #     print sid, fig
+        #
+        #     pom=self.active_editor.plotter_options_manager
+        #     blob = pom.dump_yaml()
+        #     fig.preference.options=blob
+        #
+        #     dbans=fig.analyses
+        #     uuids=[ai.uuid for ai in self.active_editor.analyses]
+        #
+        #     for dbai in fig.analyses:
+        #         if not dbai.analysis.uuid in uuids:
+        #             #remove analysis
+        #             sess.delete(dbai)
+        #
+        #     for ai in self.active_editor.analyses:
+        #         if not next((dbai for dbai in dbans if dbai.analysis.uuid==ai.uuid), None):
+        #             #add analysis
+        #             ai=db.get_analysis_uuid(ai.uuid)
+        #             db.add_figure_analysis(fig, ai)
 
 
     def _save_as_figure(self):

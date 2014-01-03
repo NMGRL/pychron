@@ -82,7 +82,7 @@ class BaseArArFigure(HasTraits):
             self._add_limit_tool(pp, 'y')
 
             pp.value_range.tight_bounds = False
-            print po, po.ylimits, po.has_ylimits()
+            # print po, po.ylimits, po.has_ylimits()
             if po.has_ylimits():
                 pp.value_range.set_bounds(*po.ylimits)
 

@@ -67,7 +67,6 @@ class FigureEditor(GraphEditor):
 
             po = self.plotter_options_manager.plotter_options
             blob = po.dump_yaml()
-            # blob = pickle.dumps(po)
             pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
             figure.preference = pref
 
@@ -119,6 +118,50 @@ class FigureEditor(GraphEditor):
 
         return ias
 
+    def add_text_box(self):
+        if self.annotation_tool is None:
+            an = AnnotationOverlay(component=self.component)
+            at = AnnotationTool(an, components=[an])
+            an.tools.append(at)
+            self.annotation_tool = at
+            self.component.overlays.append(an)
+
+        elif not self.annotation_tool.active:
+            an = AnnotationOverlay(component=self.component)
+            self.annotation_tool.components.append(an)
+            self.annotation_tool.component = an
+            an.tools.append(self.annotation_tool)
+            self.component.overlays.append(an)
+
+        else:
+            self.annotation_tool = None
+
+    def set_group(self, idxs, gid, refresh=True):
+
+        for i, uu in enumerate(self.analyses):
+            if i in idxs:
+                uu.group_id = gid
+
+        if refresh:
+            self.rebuild()
+
+    def rebuild(self):
+        # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
+        ans = self.analyses
+        if ans:
+            po = self.plotter_options_manager.plotter_options
+            #model, comp = timethis(self.get_component, args=(ans, po),
+            #                       msg='get_component {}'.format(self.__class__.__name__))
+            model, comp = self.get_component(ans, po)
+            if comp:
+                comp.invalidate_and_redraw()
+                self.figure_model = model
+                self.component = comp
+                self.component_changed = True
+
+    def get_component(self, ans, po):
+        pass
+
     def _null_component(self):
         self.component = BasePlotContainer()
 
@@ -150,36 +193,7 @@ class FigureEditor(GraphEditor):
                        editor=EnableComponentEditor()))
         return v
 
-    def add_text_box(self):
-        if self.annotation_tool is None:
-            an = AnnotationOverlay(component=self.component)
-            at = AnnotationTool(an, components=[an])
-            an.tools.append(at)
-            self.annotation_tool = at
-            self.component.overlays.append(an)
-
-        elif not self.annotation_tool.active:
-            an = AnnotationOverlay(component=self.component)
-            self.annotation_tool.components.append(an)
-            self.annotation_tool.component = an
-            an.tools.append(self.annotation_tool)
-            self.component.overlays.append(an)
-
-        else:
-            self.annotation_tool = None
-
-    def set_group(self, idxs, gid, refresh=True):
-
-        for i, uu in enumerate(self.analyses):
-            if i in idxs:
-                uu.group_id = gid
-
-        if refresh:
-            # self.rebuild(refresh_data=False)
-            self.rebuild()
-
     def _rebuild_graph(self):
-        # self.rebuild(refresh_data=False)
         self.rebuild()
 
     def _update_analyses_hook(self):
@@ -192,29 +206,40 @@ class FigureEditor(GraphEditor):
                 # else:
                 #     e.items = ans
 
-    def rebuild(self):
-        # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
-        ans=self.analyses
-        if ans:
-            po = self.plotter_options_manager.plotter_options
-            #model, comp = timethis(self.get_component, args=(ans, po),
-            #                       msg='get_component {}'.format(self.__class__.__name__))
-            model, comp = self.get_component(ans, po)
-            if comp:
-                comp.invalidate_and_redraw()
-                self.figure_model = model
-                self.component = comp
-                self.component_changed = True
+    def _update_figure(self):
+        sid=self.saved_figure_id
 
-    def get_component(self, ans, po):
-        pass
+        db = self.processor.db
+        with db.session_ctx() as sess:
+            fig = db.get_figure(sid, key='id')
 
+            pom = self.plotter_options_manager
+            blob = pom.dump_yaml()
+            fig.preference.options = blob
 
+            for dbai in fig.analyses:
+                sess.delete(dbai)
 
+            for ai in self.analyses:
+                ai = db.get_analysis_uuid(ai.uuid)
+                db.add_figure_analysis(fig, ai)
 
-
+        self.information_dialog('Changes saved to Database')
 
 #============= EOF =============================================
+# dbans = fig.analyses
+# uuids = [ai.uuid for ai in self.analyses]
+
+# for dbai in fig.analyses:
+#     if not dbai.analysis.uuid in uuids:
+#         #remove analysis
+#         sess.delete(dbai)
+#
+# for ai in self.analyses:
+#     if not next((dbai for dbai in dbans if dbai.analysis.uuid == ai.uuid), None):
+#         #add analysis
+#         ai = db.get_analysis_uuid(ai.uuid)
+#         db.add_figure_analysis(fig, ai)
 #
 #     def _gather_unknowns_cached(self):
 #         if self._cached_unknowns:
