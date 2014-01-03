@@ -269,18 +269,22 @@ class FigureTask(AnalysisEditTask):
 
         self._open_editor(editor)
 
-        if tklass and add_table:
-            # open table
-            teditor = self._new_table(ans, name, tklass)
-            if teditor:
-                editor.associated_editors.append(weakref.ref(teditor)())
+        add_associated=False
+        if not add_associated:
+            self.debug('Not adding associated editors')
+        else:
+            if tklass and add_table:
+                # open table
+                teditor = self._new_table(ans, name, tklass)
+                if teditor:
+                    editor.associated_editors.append(weakref.ref(teditor)())
 
-        if add_iso:
-            # open associated isochron
-            ieditor = self._new_associated_isochron(ans, name)
-            if ieditor:
-                editor.associated_editors.append(weakref.ref(ieditor)())
-                ieditor.parent_editor = editor
+            if add_iso:
+                # open associated isochron
+                ieditor = self._new_associated_isochron(ans, name)
+                if ieditor:
+                    editor.associated_editors.append(weakref.ref(ieditor)())
+                    ieditor.parent_editor = editor
 
         # activate figure editor
         self.editor_area.activate_editor(editor)
@@ -518,18 +522,21 @@ class FigureTask(AnalysisEditTask):
                 sf = sf[0]
                 db_fig = db.get_figure(sf.id, key='id')
 
-                ans = [a.analysis for a in db_fig.analyses]
-                self.active_editor.set_items(ans)
                 blob = db_fig.preference.options
 
                 kind = db_fig.preference.kind
-                if self.active_editor.basename == kind:
-                    self.active_editor.plotter_options_manager.load_yaml(blob)
-                else:
+                if not self.active_editor.basename == kind:
                     #open new editor of this kind
-                    pass
+                    if kind=='spec':
+                        self.active_editor.close()
+                        self.new_spectrum()
+                    elif kind=='ideo':
+                        self.active_editor.close()
+                        self.new_ideogram()
 
+                self.active_editor.plotter_options_manager.load_yaml(blob)
                 self.active_editor.saved_figure_id=int(sf.id)
+                self.active_editor.set_items([a.analysis for a in db_fig.analyses])
                 self.active_editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
