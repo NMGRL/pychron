@@ -196,15 +196,17 @@ class Spectrum(BaseArArFigure):
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
-        # print obj, name, old, new
-        axps = [a for a in self.options.aux_plots if a.use]
-        for i, p in enumerate(self.graph.plots):
-            if next((pp for pp in p.plots.itervalues()
-                     if obj.component == pp[0]), None):
-                axp = axps[i]
-                # print i, axp, obj.id, new
-                axp.set_overlay_position(obj.id, float(new[0]))
-                break
+        self._handle_overlay_move(obj, name, old, float(new[0]))
+
+    #     # print obj, name, old, new
+    #     axps = [a for a in self.options.aux_plots if a.use]
+    #     for i, p in enumerate(self.graph.plots):
+    #         if next((pp for pp in p.plots.itervalues()
+    #                  if obj.component == pp[0]), None):
+    #             axp = axps[i]
+    #             # print i, axp, obj.id, new
+    #             axp.set_overlay_position(obj.id, float(new[0]))
+    #             break
 
     def update_index_mapper(self, gid, obj, name, old, new):
         if new is True:

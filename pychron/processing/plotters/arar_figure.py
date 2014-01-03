@@ -82,7 +82,7 @@ class BaseArArFigure(HasTraits):
             self._add_limit_tool(pp, 'y')
 
             pp.value_range.tight_bounds = False
-            # print po, po.ylimits, po.has_ylimits()
+            print po, po.ylimits, po.has_ylimits()
             if po.has_ylimits():
                 pp.value_range.set_bounds(*po.ylimits)
 
@@ -192,6 +192,11 @@ class BaseArArFigure(HasTraits):
         if max_ is not None:
             ma = max_
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad)
+
+        n=len(self.options.aux_plots)
+        ap=self.options.aux_plots[n-pid-1]
+
+        ap.ylimits=self.graph.get_y_limits(pid)
 
     #===========================================================================
     # aux plots
@@ -312,7 +317,7 @@ class BaseArArFigure(HasTraits):
         else:
             label.tools.insert(0, tool)
 
-        label.on_trait_change(self._handle_label_move, 'label_position')
+        label.on_trait_change(self._handle_overlay_move, 'label_position')
         return label
 
     def _build_label_text(self, x, we, mswd, valid_mswd, n):
@@ -341,7 +346,7 @@ class BaseArArFigure(HasTraits):
             rend.index.trait_set(metadata=meta,
                                  trait_change_notify=False)
 
-    def _handle_label_move(self, obj, name, old, new):
+    def _handle_overlay_move(self, obj, name, old, new):
         # print obj, name,old, new
         # print obj.component
         axps = [a for a in self.options.aux_plots if a.use]
@@ -364,7 +369,7 @@ class BaseArArFigure(HasTraits):
                     # print 'ttee',title
                     for op in self.options.aux_plots:
                         if title.startswith(op.name):
-                            # print 'setting', title, new.low, new.high
+                            print 'setting', title, new.low, new.high
                             op.ylimits = (new.low, new.high)
                             break
                     break

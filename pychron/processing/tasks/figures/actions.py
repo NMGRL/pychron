@@ -33,7 +33,7 @@ class SaveFigureAction(TaskAction):
 
 
 class SaveAsFigureAction(TaskAction):
-    method = 'save_as figure'
+    method = 'save_as_figure'
     name = 'Save As Figure'
     image = icon('database_save.png')
 

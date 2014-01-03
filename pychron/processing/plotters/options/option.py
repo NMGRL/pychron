@@ -44,7 +44,7 @@ class AuxPlotOptions(HasTraits):
     initialized=False
 
     ylimits=Tuple(Float, Float, transient=True)
-    overlay_positions=Dict
+    overlay_positions=Dict(transient=True)
     _has_ylimits=Bool(False)
 
     def set_overlay_position(self, k, v):
@@ -60,6 +60,7 @@ class AuxPlotOptions(HasTraits):
         for attr in attrs:
             d[attr]=getattr(self, attr)
 
+        print 'dump ylimits', self.ylimits
         d['ylimits']=map(float, self.ylimits)
         d['overlay_positions']=dict(self.overlay_positions)
 

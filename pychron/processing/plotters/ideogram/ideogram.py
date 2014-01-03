@@ -194,7 +194,14 @@ class Ideogram(BaseArArFigure):
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
-        self._add_mean_indicator(graph, scatter, bins, probs, pid)
+        mo=self._add_mean_indicator(graph, scatter, bins, probs, pid)
+        mo.id = 'mean_{}'.format(self.group_id)
+        print mo.id, po.overlay_positions.keys()
+        if mo.id in po.overlay_positions:
+            ap = po.overlay_positions[mo.id]
+            print 'setting {} {}'.format(mo.id, ap[1])
+            mo.y=ap[1]
+
         mi, ma = min(probs), max(probs)
         self._set_y_limits(mi, ma, min_=0)
 
@@ -230,7 +237,7 @@ class Ideogram(BaseArArFigure):
                     plot.overlays.append(pl)
 
     def _add_mean_indicator(self, g, line, bins, probs, pid):
-        maxp = max(probs)
+        # maxp = max(probs)
         wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
                                                          bins, probs)
         #ym = maxp * percentH + offset
@@ -238,7 +245,7 @@ class Ideogram(BaseArArFigure):
         #convert to data space
         ogid = self.group_id
         gid = ogid + 1
-        sgid = ogid * 2
+        # sgid = ogid * 2
 
         text = ''
         if self.options.display_mean:
@@ -256,6 +263,9 @@ class Ideogram(BaseArArFigure):
 
         line.tools.append(OverlayMoveTool(component=m,
                                           constrain='x'))
+
+        m.on_trait_change(self._handle_overlay_move, 'altered_screen_point')
+        return m
 
     def update_index_mapper(self, obj, name, old, new):
         if new:
@@ -288,7 +298,6 @@ class Ideogram(BaseArArFigure):
             sel = self._get_omitted(sorted_ans, omit='omit_ideo')
             #print 'update graph meta'
             self._rebuild_ideo(sel)
-
 
     def _rebuild_ideo(self, sel):
         #print 'rebuild ideo {}'.format(sel)
