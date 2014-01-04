@@ -83,7 +83,10 @@ class EasyFigures(BaseEasy):
 
         #group by stepheat vs fusion
         pred = lambda x: bool(x.step)
-        ans = sorted(li.analyses, key=pred)
+
+        #filter invalid analyses
+        ans=filter(lambda x: not x.tag=='invalid', li.analyses)
+        ans = sorted(ans, key=pred)
         stepheat, fusion = map(list, partition(ans, pred))
 
         apred = lambda x: x.aliquot

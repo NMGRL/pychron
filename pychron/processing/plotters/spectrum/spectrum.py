@@ -324,7 +324,7 @@ class Spectrum(BaseArArFigure):
 
         #values = [getattr(a, value_key) for a in analyses]
         values = [a.get_value(value_key) for a in analyses]
-        ar39s = [a.computed[index_key].nominal_value for a in analyses]
+        ar39s = [a.get_computed_value(index_key).nominal_value for a in analyses]
 
         xs = []
         ys = []
@@ -337,7 +337,10 @@ class Spectrum(BaseArArFigure):
             if isinstance(aa, tuple):
                 ai, ei = aa
             else:
-                ai, ei = aa.nominal_value, aa.std_dev
+                if aa is None:
+                    ai,ei=0,0
+                else:
+                    ai, ei = aa.nominal_value, aa.std_dev
 
             xs.append(prev)
 

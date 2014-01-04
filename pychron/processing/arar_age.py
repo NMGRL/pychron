@@ -105,6 +105,12 @@ class ArArAge(Loggable):
         else:
             return ufloat(0, 0, tag=attr)
 
+    def get_interference_corrected_value(self, iso):
+        if iso in self.isotopes:
+            return self.isotopes[iso].get_interference_corrected_value()
+        else:
+            return ufloat(0,0, tag=iso)
+
     def get_ic_factor(self, det):
         factors = self.arar_constants.ic_factors
         ic = 1, 1e-20

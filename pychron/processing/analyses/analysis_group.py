@@ -165,7 +165,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     def _get_steps(self):
         d = [(ai.age,
               ai.age_err_wo_j,
-              ai.isotopes['Ar39'].get_interference_corrected_value().nominal_value)
+              ai.get_interference_corrected_value('Ar39').nominal_value)
              for ai in self.analyses]
 
         return zip(*d)

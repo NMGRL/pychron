@@ -355,7 +355,11 @@ class BaseArArFigure(HasTraits):
                             if obj.component==pp[0]),None):
                 axp=axps[i]
                 # print i, axp, obj.id, new
-                axp.set_overlay_position(obj.id, map(float, new))
+                if hasattr(new, '__iter__'):
+                    new=map(float, new)
+                else:
+                    new=float(new)
+                axp.set_overlay_position(obj.id, new)
                 break
 
     @on_trait_change('graph:plots:value_mapper:updated')
@@ -369,7 +373,6 @@ class BaseArArFigure(HasTraits):
                     # print 'ttee',title
                     for op in self.options.aux_plots:
                         if title.startswith(op.name):
-                            print 'setting', title, new.low, new.high
                             op.ylimits = (new.low, new.high)
                             break
                     break
