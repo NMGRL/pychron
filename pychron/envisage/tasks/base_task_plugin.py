@@ -15,11 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from traits.api import List
 from envisage.plugin import Plugin
 from envisage.service_offer import ServiceOffer
 from envisage.ui.tasks.task_extension import TaskExtension
-from pychron.envisage.tasks.actions import CloseAction, CloseOthersAction
 from pyface.tasks.action.schema_addition import SchemaAddition
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -28,11 +28,10 @@ class BaseTaskPlugin(Plugin):
     SERVICE_OFFERS = 'envisage.service_offers'
     TASK_EXTENSIONS = 'envisage.ui.tasks.task_extensions'
     TASKS = 'envisage.ui.tasks.tasks'
-
     tasks = List(contributes_to=TASKS)
     service_offers = List(contributes_to=SERVICE_OFFERS)
+
     my_task_extensions = List(contributes_to=TASK_EXTENSIONS)
-#     base_task_extensions = List(contributes_to=TASK_EXTENSIONS)
 
     preferences = List(contributes_to='envisage.preferences')
     preferences_panes = List(
@@ -40,14 +39,32 @@ class BaseTaskPlugin(Plugin):
 
     managers = List(contributes_to='pychron.hardware.managers')
 
-#     def base_task_extensions_default(self):
-#         return [TaskExtension(actions=[
-#                                        SchemaAddition(CloseAction),
-#                                        SchemaAddition(CloseOthersAction),
-#
-#                                        ]),
-#                 ]
+    # def _my_task_extensions_default(self):
+    #     return [TaskExtension(actions=[
+    #                                    SchemaAddition(CloseAction),
+    #                                    SchemaAddition(CloseOthersAction)
+    #                         ]),
+    #             ]
+    # def _my_task_extensions_default(self):
+    #     actions = [
+    #     #SchemaAddition(id='Exit',
+    #     #                       factory=ExitAction,
+    #     #                       path='MenuBar/File'),
+    #     #        SchemaAddition(id='Preferences',
+    #     #                       factory=PreferencesGroup,
+    #     #                       path='MenuBar/Edit'),
+    #            SchemaAddition(id='DockPaneToggleGroup',
+    #                           factory=DockPaneToggleGroup,
+    #                           path='MenuBar/View')]
+    #     return [TaskExtension(actions=actions)]
 
+    def _base_task_extensions_default(self):
+        actions = [
+                   SchemaAddition(id='DockPaneToggleGroup',
+                                  factory=DockPaneToggleGroup,
+                                  path='MenuBar/View')]
+
+        return [TaskExtension(actions=actions)]
 
     def _get_task_extensions(self):
         return []
@@ -59,9 +76,6 @@ class BaseTaskPlugin(Plugin):
         return []
 
     def service_offer_factory(self, **kw):
-        '''
-        
-        '''
         return ServiceOffer(**kw)
 
     def check(self):

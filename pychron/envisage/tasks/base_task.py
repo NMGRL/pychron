@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 import os
 import subprocess
+from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
 # from traitsui.api import View, Item
 from pyface.tasks.task import Task
@@ -28,7 +29,7 @@ from pyface.action.api import ActionItem, Group
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
-    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction
+    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
@@ -244,12 +245,6 @@ class BaseTask(Task, Loggable):
             self._tools_menu(),
             self._window_menu(),
             self._help_menu(),
-            #                       SMenu(
-            #                             ViewMenuManager(),
-            #                             id='Window', name='&Window'),
-
-
-            #                       *menus
         )
         if menus:
             for mi in reversed(menus):
@@ -299,6 +294,8 @@ class BaseTask(Task, Loggable):
                     items.append(ActionItem(action=action))
 
             groups.append(TaskGroup(items=items))
+
+        groups.append(DockPaneToggleGroup())
         return groups
 
     def _view_menu(self):
@@ -363,6 +360,7 @@ class BaseTask(Task, Loggable):
     def _help_menu(self):
         menu = SMenu(
             IssueAction(),
+            AboutAction(),
             id='help.menu',
             name='Help')
         return menu

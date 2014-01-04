@@ -33,6 +33,36 @@ from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 
 logger = new_logger('UpdatePlugin')
 
+def gen_commits(log):
+    def _gen():
+        lines=iter(log.split('\n'))
+        commit=None
+        while 1:
+            try:
+                if not commit:
+                    commit=lines.next()
+
+                author=lines.next()
+                date=lines.next()
+                message=[]
+                while 1:
+                    line=lines.next()
+
+                    if line.startswith('commit '):
+                        commit=line
+                        yield date,author, '\n'.join(message)
+                        break
+                    else:
+                        if line.strip():
+                            message.append(line.strip())
+
+            except StopIteration:
+
+                yield date,author, '\n'.join(message)
+                break
+
+    return _gen()
+
 
 class UpdatePlugin(Plugin):
     preferences = List(contributes_to='envisage.preferences')
@@ -57,33 +87,53 @@ class UpdatePlugin(Plugin):
                 url=pref.get('pychron.update.update_url')
 
             if url:
-                branch='master'
-                remote='origin'
-                repo=self._setup_repo(url, remote=remote)
-                logger.debug('pulling changes')
-                origin=repo.remote(remote)
+                self._check_for_updates(url)
+            else:
+                self._load_local_revision()
+        else:
+            self._load_local_revision()
 
-                if not repo.heads:
+    def _load_local_revision(self):
+        repo=self._get_local_repo()
+        self.application.set_revisions(repo.head.commit,
+                                       'No info. available')
+
+    def _check_for_updates(self, url):
+        branch = 'master'
+        remote = 'origin'
+        repo = self._setup_repo(url, remote=remote)
+        logger.debug('pulling changes')
+        origin = repo.remote(remote)
+
+        if not repo.heads:
+            if self._out_of_date():
+                origin.pull(branch)
+        else:
+            info = origin.fetch()
+            if info:
+                info = info[0]
+                logger.debug('local  commit ={}'.format(repo.head.commit))
+                logger.debug('remote commit ={}'.format(info.commit))
+                self.application.set_revisions(repo.head.commit,
+                                               info.commit)
+                if info.commit != repo.head.commit:
+                    self._load_available_changes(repo)
                     if self._out_of_date():
-                        origin.pull(branch)
-                else:
-                    info=origin.fetch()
-                    if info:
-                        info=info[0]
-                        logger.debug('local  commit ={}'.format(repo.head.commit))
-                        logger.debug('remote commit ={}'.format(info.commit))
 
-                        if info.commit != repo.head.commit:
-                            if self._out_of_date():
+                        #for debug dont pull changes
+                        #===========================
+                        # origin.pull('master')
+                        #===========================
 
-                                #for debug dont pull changes
-                                #===========================
-                                # origin.pull('master')
-                                #===========================
+                        if confirmation_dialog('Restarted required for changes to take affect. Restart now?'):
+                            self._build_required = True
+                            logger.debug('Restarting')
 
-                                if confirmation_dialog('Restarted required for changes to take affect. Restart now?'):
-                                    self._build_required=True
-                                    logger.debug('Restarting')
+    def _load_available_changes(self, repo):
+        log=repo.git.log('HEAD..FETCH_HEAD')
+        self.application.set_changes(list(gen_commits(log)))
+        # for line in log.split('\n'):
+        #     if
 
     def stop(self):
         logger.debug('stopping update plugin')
@@ -130,20 +180,22 @@ class UpdatePlugin(Plugin):
             return True
 
     def _setup_repo(self, url, remote='origin'):
-
-        p=self._get_working_directory()
-        if not os.path.isdir(p):
-            os.mkdir(p)
-            repo=Repo.init(p)
-        else:
-            repo=Repo(p)
-
+        repo=self._get_local_repo()
         _remote=repo.remote(remote)
         if _remote is None:
             repo.create_remote(remote, url)
         elif _remote.url != url:
             _remote.url=url
 
+        return repo
+
+    def _get_local_repo(self):
+        p = self._get_working_directory()
+        if not os.path.isdir(p):
+            os.mkdir(p)
+            repo = Repo.init(p)
+        else:
+            repo = Repo(p)
         return repo
 
     def _get_destination(self):
