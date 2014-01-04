@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Str, Float, Unicode
+from traits.api import HasTraits, Instance, Str, Float, Unicode, Bool, on_trait_change
 from traitsui.api import View, Item, HGroup, VGroup, UCustom
 
 #============= standard library imports ========================
@@ -33,8 +33,14 @@ class ProductionValue(HasTraits):
         return v
 
 
+class EUCustom(UCustom):
+    enabled_when = 'editable'
+
+
 class IrradiationProduction(HasTraits):
     reactor=Str
+
+    dirty=Bool
 
     # K interferences
     k4039 = Instance(ProductionValue, (), {'name': 'K 40/39'})
@@ -53,6 +59,56 @@ class IrradiationProduction(HasTraits):
     # elemental production ratio
     Ca_K = Instance(ProductionValue, (), {'name': 'Ca/K'})
     Cl_K = Instance(ProductionValue, (), {'name': 'Cl/K'})
+    editable=Bool(False)
+    def __init__(self, *args, **kw):
+        super(IrradiationProduction, self).__init__(*args, **kw)
+
+        self.__edited__=dict()
+        self.__dirty__=[]
+
+    @on_trait_change('k+:[value,error],ca+:[value,error], cl+:[value,error], Ca_K:[value,error],Cl_K:[value,error]')
+    def _set_dirty(self,obj,name,old,new):
+        # print name, new
+
+        if name in self.__edited__:
+            old_value=self.__edited__[name]
+            if old_value!=new:
+                self.__dirty__.append(1)
+            else:
+                self.__dirty__.pop()
+        else:
+            self.__edited__[name]=old
+            # self.__dirty__.append(1)
+
+        self.dirty=bool(self.__dirty__)
+
+    def get_params(self):
+        params={}
+        keys = ['k4039', 'k3839', 'k3739',
+                'ca3937', 'ca3837', 'ca3637',
+                'cl3638']
+
+        for ki in keys:
+            obj = getattr(self, ki)
+
+            ki = ki.capitalize()
+            params[ki]=obj.value
+            params['{}_err'.format(ki)]=obj.error
+
+            # setattr(ip, ki, obj.value)
+            # setattr(ip, '{}_err'.format(ki), obj.error)
+
+            # ekeys = ['{}_err'.format(ki) for ki in keys]
+            # values = [getattr(self, ki).value for ki in keys]
+            # errors = [getattr(self, ki).error for ki in keys]
+            # ks = [ki.capitalize() for ki in keys + ekeys]
+            # params = dict(zip(ks, values + errors))
+            #
+        params['Ca_K'] = self.Ca_K.value
+        params['Ca_K_err'] = self.Ca_K.error
+        params['Cl_K'] = self.Cl_K.value
+        params['Cl_K_err'] = self.Cl_K.error
+        return params
 
     def create(self, dbrecord):
         for attr in ('K4039','K3839','K3739',
@@ -61,31 +117,31 @@ class IrradiationProduction(HasTraits):
             v=getattr(dbrecord, attr)
             e=getattr(dbrecord, '{}_err'.format(attr))
             obj=getattr(self, attr.lower())
-            obj.value=v
-            obj.error=e
+            obj.value=v if v is not None else 0
+            obj.error=e if e is not None else 0
 
-        self.Ca_K.value = dbrecord.Ca_K
-        self.Ca_K.error = dbrecord.Ca_K_err
+        self.Ca_K.value = dbrecord.Ca_K if dbrecord.Ca_K else 0
+        self.Ca_K.error = dbrecord.Ca_K_err if dbrecord.Ca_K_err else 0
 
-        self.Cl_K.value = dbrecord.Cl_K
-        self.Cl_K.error = dbrecord.Cl_K_err
+        self.Cl_K.value = dbrecord.Cl_K if dbrecord.Cl_K else 0
+        self.Cl_K.error = dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
 
     def traits_view(self):
-        kgrp = VGroup(UCustom('k4039'),
-                      UCustom('k3839'),
-                      UCustom('k3739'),
+        kgrp = VGroup(EUCustom('k4039'),
+                      EUCustom('k3839'),
+                      EUCustom('k3739'),
                       label='K', show_border=True)
         cagrp = VGroup(
-            UCustom('ca3937'),
-            UCustom('ca3837'),
-            UCustom('ca3637'),
+            EUCustom('ca3937'),
+            EUCustom('ca3837'),
+            EUCustom('ca3637'),
             label='Ca', show_border=True)
         clgrp = VGroup(
-            UCustom('cl3638'),
+            EUCustom('cl3638'),
             label='Cl', show_border=True)
         elem_grp = VGroup(
-            UCustom('Ca_K'),
-            UCustom('Cl_K'),
+            EUCustom('Ca_K'),
+            EUCustom('Cl_K'),
             label='Elemental', show_border=True)
 
         v = View(

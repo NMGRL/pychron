@@ -20,7 +20,7 @@ import struct
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
-from traits.api import List, Instance, Str, Float, Any, Button, Property
+from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
 
@@ -50,6 +50,19 @@ def iter_geom(geom):
     return ((i, f(gi)) for i, gi in enumerate(xrange(0, len(geom), 12)))
 
 
+class NewProduction(HasTraits):
+    name = Str
+    reactor = Str
+
+    def traits_view(self):
+        v = View(HGroup('name', 'reactor'),
+                 buttons=['OK', 'Cancel', 'Revert'],
+                 title='New Production Ratio',
+                 kind='livemodal'
+        )
+        return v
+
+
 class ProductionAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Reactor', 'reactor')]
     font = 'arial 10'
@@ -64,11 +77,14 @@ class TrayAdapter(TabularAdapter):
 
 
 class EditView(ModelView):
-    title = Str
+    title = 'Edit Irradiation'
 
     def traits_view(self):
-        pr_group = VGroup(HGroup(icon_button_editor('add_production_button', 'add',
-                                                    tooltip='Add a Production Ratio')),
+        pr_group = VGroup(HGroup(icon_button_editor('add_production_button', 'database_add',
+                                                    tooltip='Add a Production Ratio'),
+                                 icon_button_editor('edit_production_button', 'database_edit',
+                                                    enabled_when='selected_production',
+                                                    tooltip='Edit Production Ratio')),
                           VSplit(UItem('productions', editor=TabularEditor(adapter=ProductionAdapter(),
                                                                            editable=False,
                                                                            selected='selected_production')),
@@ -114,7 +130,9 @@ class LevelEditor(Loggable):
     trays = List
 
     canvas = Instance(IrradiationCanvas, ())
+
     add_production_button = Button
+    edit_production_button = Button
     add_tray_button = Button
 
     def edit(self):
@@ -126,7 +144,7 @@ class LevelEditor(Loggable):
         return self._add_level()
 
     def _edit_level(self):
-        orignal_name=self.name
+        orignal_name = self.name
         db = self.db
         with db.session_ctx():
             level = db.get_irradiation_level(self.irradiation, self.name)
@@ -142,16 +160,21 @@ class LevelEditor(Loggable):
             info = ev.edit_traits()
             while 1:
                 if info.result:
-                    if self.name!=orignal_name:
-                        ret=self.confirmation_dialog('You have changed the name for this level.\n\n'
-                                                      'Would you like to rename "{}" to "{}" (Yes) '
-                                                      'or add a new level named "{}" (No)'.format(orignal_name, self.name, self.name), cancel=True, return_retval=True)
+                    if self.name != orignal_name:
+                        ret = self.confirmation_dialog('You have changed the name for this level.\n\n'
+                                                       'Would you like to rename "{}" to "{}" (Yes) '
+                                                       'or add a new level named "{}" (No)'.format(orignal_name,
+                                                                                                   self.name,
+                                                                                                   self.name),
+                                                       cancel=True, return_retval=True)
                         if ret == YES:
                             level.name = self.name
                         elif ret == NO:
                             self._add_level()
                         else:
                             return
+
+                    self._save_production()
 
                     pr = db.get_irradiation_production(self.selected_production.name)
                     level.production = pr
@@ -207,6 +230,9 @@ class LevelEditor(Loggable):
                                                  self.selected_tray,
                                                  self.selected_production.name,
                                                  self.z)
+
+                        self._save_production()
+
                         return self.name
 
                     else:
@@ -223,7 +249,6 @@ class LevelEditor(Loggable):
             else:
                 return 'break'
 
-
     def _load_productions(self):
         db = self.db
         with db.session_ctx():
@@ -235,8 +260,52 @@ class LevelEditor(Loggable):
 
             self.productions = ps
 
+    def _save_production(self):
+        prod = self.selected_production
+        db = self.db
+        if prod.dirty:
+            with db.session_ctx():
+                ip = db.get_irradiation_production(prod.name)
+                if ip:
+                    self.debug('saving production {}'.format(prod.name))
+
+                    params = prod.get_params()
+                    for k, v in params.iteritems():
+                        self.debug('setting {}={}'.format(k, v))
+                        setattr(ip, k, v)
+
+    def _add_production(self):
+        pr = NewProduction()
+        info = pr.edit_traits()
+        db = self.db
+        with db.session_ctx():
+            while 1:
+                if info.result:
+                    if db.get_irradiation_production(pr.name):
+                        if self.confirmation_dialog(
+                                'Production Ratio "{}" already exists. Would you like to enter an new name?'):
+                            info = pr.edit_traits()
+                            continue
+                    else:
+                        if self.selected_production:
+                            pp=self.selected_production.clone_traits()
+                        else:
+                            pp=IrradiationProduction()
+
+                        db.add_irradiation_production(name=pr.name)
+                        pp.name=pr.name
+                        self.productions.append(pp)
+
+                        self.selected_production=next((pp for pp in self.productions if pp.name==pr.name), None)
+                        self.selected_production.editable=True
+
+                break
+
+    def _edit_production_button_fired(self):
+        self.selected_production.editable = True
+
     def _add_production_button_fired(self):
-        pass
+        self._add_production()
 
     def _selected_tray_changed(self):
         with self.db.session_ctx():
