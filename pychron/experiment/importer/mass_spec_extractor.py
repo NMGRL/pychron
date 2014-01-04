@@ -103,18 +103,18 @@ class MassSpecExtractor(Extractor):
         if dbirrad is None:
             # add chronology
             dbchron = self._add_chronology(dest, name)
-            # add production
-            dbpr = self._add_production_ratios(dest, name)
+            # # add production
+            # dbpr = self._add_production_ratios(dest, name)
+
             # add irradiation
-            dbirrad = dest.add_irradiation(name, production=dbpr,
-                                           chronology=dbchron)
+            dbirrad = dest.add_irradiation(name, chronology=dbchron)
             added_to_db = True
 
         dest.sess.flush()
 
         if dbirrad:
             # add all the levels and positions for this irradiation
-            added_to_db = self._add_levels(dest, progress, dbirrad, name,
+            added_to_db = self._add_levels(dest, progress, dbirrad,
                                            include_analyses,
                                            include_blanks,
                                            include_airs,
@@ -131,7 +131,7 @@ class MassSpecExtractor(Extractor):
         self.import_err_file.close()
         return ImportName(name=name, skipped=not added_to_db)
 
-    def _add_levels(self, dest, progress, dbirrad, name,
+    def _add_levels(self, dest, progress, dbirrad, dbpr,
                     include_analyses=False,
                     include_blanks=False,
                     include_airs=False,
@@ -144,6 +144,8 @@ class MassSpecExtractor(Extractor):
         """
         added_to_db = False
         db = self.db
+
+        name=dbirrad.name
         with db.session_ctx() as sess:
             levels = db.get_levels_by_irradname(name,
                                                 levels=include_list)
@@ -164,10 +166,12 @@ class MassSpecExtractor(Extractor):
                 #if mli.Level not in include_list:
                 #    continue
 
+                dbpr = self._add_production_ratios(dest, name, mli.Level)
+
                 # is level already in dest
                 dbl = dest.get_irradiation_level(name, mli.Level)
                 if dbl is None:
-                    dest.add_irradiation_level(mli.Level, dbirrad, mli.SampleHolder)
+                    dest.add_irradiation_level(mli.Level, dbirrad, mli.SampleHolder, dbpr)
                     added_to_db = True
 
                 # add all irradiation positions for this level
@@ -648,10 +652,11 @@ class MassSpecExtractor(Extractor):
             self.info('adding irradiation and chronology for {}'.format(name))
             return dest.add_irradiation_chronology(chronblob)
 
-    def _add_production_ratios(self, dest, name):
+    def _add_production_ratios(self, dest, irrad, level):
         db = self.db
         with db.session_ctx():
-            production = db.get_production_ratio_by_irradname(name)
+            # production = db.get_production_ratio_by_irradname(name)
+            production = db.get_production_ratio_by_level(irrad, level)
             if production is not None:
                 prname = production.Label
                 dbpr = dest.get_irradiation_production(prname)

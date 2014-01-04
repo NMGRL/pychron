@@ -48,6 +48,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
             return q.all()
 
+    def get_production_ratio_by_level(self, irrad, name):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationLevelTable)
+            q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
+            q = q.filter(IrradiationLevelTable.Level == name)
+            return q.one().production
+
     def get_production_ratio_by_irradname(self, name):
 #         sess = self.get_session()
         with self.session_ctx() as sess:
