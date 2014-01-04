@@ -73,10 +73,11 @@ class LoadingCanvas(SceneCanvas):
             self.selected = None
 
     def hittest(self, event):
-        for li in self.scene.layers:
-            for it in li.components:
-                if it.is_in(event.x, event.y):
-                    return it
+        if self.scene:
+            for li in self.scene.layers:
+                for it in li.components:
+                    if it.is_in(event.x, event.y):
+                        return it
 
     def normal_mouse_move(self, event):
         if self.hittest(event):

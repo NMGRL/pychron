@@ -331,8 +331,8 @@ class DBAnalysis(Analysis):
             self.irradiation = irrad.name
 
             self._sync_chron_segments(irrad)
-            self._sync_production_ratios(irrad)
-            self._sync_interference_corrections(irrad)
+            self._sync_production_ratios(level)
+            self._sync_interference_corrections(level)
 
     def _sync_j(self, ln):
         s, e = 1, 0
@@ -343,8 +343,8 @@ class DBAnalysis(Analysis):
 
         self.j = ufloat(s, e)
 
-    def _sync_production_ratios(self, irradiation):
-        pr = irradiation.production
+    def _sync_production_ratios(self, level):
+        pr = level.production
         cak, clk = pr.Ca_K, pr.Cl_K
 
         self.production_ratios = dict(Ca_K=cak, Cl_K=clk)
@@ -360,13 +360,13 @@ class DBAnalysis(Analysis):
                 analts = datetime.fromtimestamp(analts)
 
             segments = []
-            for st, en in doses:
+            for pwr, st, en in doses:
                 if st is not None and en is not None:
                     dur = en - st
                     dt = analts - st
-                    segments.append((1, convert_days(dur), convert_days(dt)))
+                    segments.append((pwr, convert_days(dur), convert_days(dt)))
 
-            d_o = doses[0][0]
+            d_o = doses[0][1]
             it = 0
             if d_o is not None:
                 it = time.mktime(d_o.timetuple())
@@ -374,8 +374,8 @@ class DBAnalysis(Analysis):
             self.irradiation_time = it
             self.chron_segments = segments
 
-    def _sync_interference_corrections(self, irradiation):
-        pr = irradiation.production
+    def _sync_interference_corrections(self, level):
+        pr = level.production
         prs = dict()
         for pk in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']:
             v, e = getattr(pr, pk), getattr(pr, '{}_err'.format(pk))

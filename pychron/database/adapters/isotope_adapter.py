@@ -808,12 +808,10 @@ class IsotopeAdapter(DatabaseAdapter):
         fx = flux_MonitorTable(name=name, **kw)
         return self._add_unique(fx, 'flux_monitor', name)
 
-    def add_irradiation(self, name, production=None, chronology=None):
-        production = self.get_irradiation_production(production)
+    def add_irradiation(self, name, chronology=None):
         chronology = self.get_irradiation_chronology(chronology)
 
         ir = irrad_IrradiationTable(name=name,
-                                    production=production,
                                     chronology=chronology)
         self._add_item(ir)
         return ir
@@ -859,8 +857,9 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(ch, )
         return ch
 
-    def add_irradiation_level(self, name, irradiation, holder, z=0):
+    def add_irradiation_level(self, name, irradiation, holder, production, z=0):
         irradiation = self.get_irradiation(irradiation)
+        production=self.get_irradiation_production(production)
         if irradiation:
             irn = irradiation.name
             level = next((li for li in irradiation.levels if li.name == name), None)
@@ -871,15 +870,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 self.info('adding level {}, holder={} to {}'.format(name, hn, irn))
 
                 level = irrad_LevelTable(name=name, z=z)
+
                 level.irradiation = irradiation
                 level.holder = holder
-
-                #if irradiation is not None:
-                #level.irradiation=irradiation
-                #irradiation.levels.append(level)
-                #if holder is not None:
-                #level.holder=holder
-                #holder.levels.append(level)
+                level.production=production
 
                 self._add_item(level)
 

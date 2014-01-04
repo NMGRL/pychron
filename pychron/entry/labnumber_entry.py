@@ -26,15 +26,17 @@ from pyface.image_resource import ImageResource
 import os
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.entry.editors.irradiation_editor import IrradiationEditor
+from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.labnumber_generator import LabnumberGenerator
 from pychron.entry.loaders.sample_loader import SampleLoader
 from pychron.paths import paths
-from pychron.entry.irradiation import Irradiation
-from pychron.entry.level import Level, load_holder_canvas, iter_geom
-from pychron.pychron_constants import NULL_STR, ALPHAS
+# from pychron.entry.irradiation import Irradiation
+# from pychron.entry.level import Level, load_holder_canvas, iter_geom
+from pychron.pychron_constants import NULL_STR
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
@@ -78,6 +80,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     #labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
+
+    _level_editor=None
+    _irradiation_editor=None
 
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
@@ -353,7 +358,44 @@ THIS CHANGE CANNOT BE UNDONE')
             self._load_positions_from_file(p)
 
     def _add_irradiation_button_fired(self):
+        name=self._auto_increment_irradiation()
+        irrad=self._get_irradiation_editor(name=name)
 
+        new_irrad=irrad.add()
+        if new_irrad:
+            self.irradiation=new_irrad
+            self.updated = True
+
+    def _edit_irradiation_button_fired(self):
+        irrad=self._get_irradiation_editor(name=self.irradiation)
+
+        new_irrad=irrad.edit()
+        if new_irrad:
+            self.irradiation = new_irrad
+            self.updated = True
+
+    def _edit_level_button_fired(self):
+        editor=self._get_level_editor(name=self.level,
+                                      irradiation=self.irradiation)
+        new_level=editor.edit()
+        if new_level:
+            self.level=new_level
+            self.updated=True
+
+    def _add_level_button_fired(self):
+        editor=self._get_level_editor(irradiation=self.irradiation)
+        new_level=editor.add()
+        if new_level:
+            self.level=new_level
+            self.updated=True
+
+    def _level_changed(self):
+        self.debug('level changed')
+        self.irradiated_positions = []
+        if self.level:
+            self._update_level(debug=True)
+
+    def _auto_increment_irradiation(self):
         lastname = self.irradiations[0]
         #try to auto increment the irrad
         if self.irradiation_prefix:
@@ -370,101 +412,7 @@ THIS CHANGE CANNOT BE UNDONE')
                     #try to increment lastname
                     lastname = self._increment(lastname)
 
-        irrad = Irradiation(db=self.db,
-                            trays=self.trays,
-                            name=lastname
-        )
-        while 1:
-            info = irrad.edit_traits(kind='livemodal')
-            if info.result:
-                result = irrad.save_to_db()
-                if result is True:
-                    self.irradiation = irrad.name
-                    self.dirty = True
-                    #self.saved = True
-
-                    break
-                elif result is False:
-                    break
-            else:
-                break
-
-    def _edit_irradiation_button_fired(self):
-        irrad = Irradiation(db=self.db,
-                            trays=self.trays,
-                            name=self.irradiation
-        )
-        irrad.load_production_name()
-        irrad.load_chronology()
-
-        info = irrad.edit_traits(kind='livemodal')
-        if info.result:
-            irrad.edit_db()
-
-    def _edit_level_button_fired(self):
-        _prev_tray = self.tray_name
-        irradiation = self.irradiation
-        level = Level(db=self.db,
-                      name=self.level,
-                      trays=self.trays
-        )
-        level.load(irradiation)
-        info = level.edit_traits(kind='livemodal')
-        if info.result:
-
-            self.info('saving level. Irradiation={}, Name={}, Tray={}, Z={}'.format(irradiation,
-                                                                                    level.name,
-                                                                                    level.tray,
-                                                                                    level.z))
-            level.edit_db()
-
-            self.saved = True
-            self.irradiation = irradiation
-            self.level = level.name
-
-            if _prev_tray != level.tray:
-                if not self.confirmation_dialog('Irradiation Tray changed. Copy labnumbers to new tray'):
-                    self._load_holder_positions(level.tray)
-
-    def _add_level_button_fired(self):
-        irrad = self.irradiation
-        db = self.db
-        with db.session_ctx():
-            irrad = db.get_irradiation(irrad)
-            try:
-                level = irrad.levels[-1]
-                lastlevel = level.name
-                lastz = level.z
-                nind = list(ALPHAS).index(lastlevel) + 1
-            except IndexError:
-                nind = 0
-                lastz = 0
-
-            try:
-                t = Level(name=ALPHAS[nind],
-                          z=lastz if lastz is not None else 0,
-                          tray=self.tray_name,
-                          trays=self.trays)
-            except IndexError:
-                self.warning_dialog('Too many Trays')
-                return
-
-            info = t.edit_traits(kind='livemodal')
-            if info.result:
-                #irrad = self.db.get_irradiation(irrad)
-                if not next((li for li in irrad.levels if li.name == t.name), None):
-                    db.add_irradiation_level(t.name, irrad, t.tray, t.z)
-                    #self.db.commit()
-                    self.level = t.name
-                    self.dirty = True
-                else:
-                    self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.irradiation))
-
-    def _level_changed(self):
-        self.debug('level changed')
-        self.irradiated_positions = []
-        if self.level:
-            self._update_level(debug=True)
+        return lastname
 
     # @simple_timer()
     def _update_level(self, name=None, debug=False):
@@ -543,11 +491,24 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             if note:
                 ir.note = note
 
+    def _get_irradiation_editor(self, **kw):
+        ie = self._irradiation_editor
+        if ie is None:
+            self._irradiation_editor = ie = IrradiationEditor(db=self.db)
+        ie.trait_set(**kw)
+        return ie
 
-                #===============================================================================
-                # property get/set
-                #===============================================================================
+    def _get_level_editor(self, **kw):
+        ie = self._level_editor
+        if ie is None:
+            self._level_editor = ie = LevelEditor(db=self.db,
+                                                  trays=self.trays)
+        ie.trait_set(**kw)
+        return ie
 
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     @cached_property
     def _get_projects(self):
         order = gen_ProjectTable.name.asc()
@@ -629,6 +590,29 @@ if __name__ == '__main__':
     m = LabnumberEntry()
     m.configure_traits()
 #============= EOF =============================================
+# _prev_tray = self.tray_name
+# irradiation = self.irradiation
+# level = Level(db=self.db,
+#               name=self.level,
+#               trays=self.trays)
+# level.load(irradiation)
+# info = level.edit_traits(kind='livemodal')
+# if info.result:
+#
+#     self.info('saving level. Irradiation={}, Name={}, Tray={}, Z={}'.format(irradiation,
+#                                                                             level.name,
+#                                                                             level.tray,
+#                                                                             level.z))
+#     level.edit_db()
+#
+#     self.saved = True
+#     self.irradiation = irradiation
+#     self.level = level.name
+#
+#     if _prev_tray != level.tray:
+#         if not self.confirmation_dialog('Irradiation Tray changed. Copy labnumbers to new tray'):
+#             self._load_holder_positions(level.tray)
+
 #@on_trait_change('project, sample')
 #def _edit_handler(self, name, new):
 #    if self.selected:

@@ -91,7 +91,7 @@ def load_isotopedb_defaults(db):
         #
         # else:
         for p, name in iterdir(mdir, exclude=('.zip',)):
-            _load_irradiation_map(db, p, name)
+            load_irradiation_map(db, p, name)
 
         mdir = paths.map_dir
         for p, name in iterdir(mdir):
@@ -111,17 +111,16 @@ def _load_tray_map(db, p, name):
                     for si in sm.sample_holes])
     db.add_load_holder(name, geometry=blob)
 
-
-def _load_irradiation_map(db, p, name):
-    overwrite_geometry = False
-
-    with open(p, 'r') as f:
-        try:
-            h = f.readline()
+def parse_irradiation_tray_map(p):
+    """
+        return list of  x,y,r tuples or None if exception
+    """
+    try:
+        with open(p, 'r') as fp:
+            h = fp.readline()
             _, diam = map(str.strip, h.split(','))
-
             holes = []
-            for i, l in enumerate(f):
+            for i, l in enumerate(fp):
                 try:
                     args = map(float, l.strip().split(','))
                     if len(args) == 2:
@@ -134,13 +133,39 @@ def _load_irradiation_map(db, p, name):
                 except ValueError:
                     break
 
+            return holes
+    except Exception:
+        return
+
+
+def load_irradiation_map(db, p, name):
+    overwrite_geometry = False
+
+    holes=parse_irradiation_tray_map(p)
+    if holes is not None:
+        try:
             blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
             name, _ = os.path.splitext(name)
 
             h = db.add_irradiation_holder(name, geometry=blob)
             if overwrite_geometry:
                 h.geometry = blob
-
         except Exception, e:
             print p, name, e
+            db.sess.rollback()
+
+    # with open(p, 'r') as f:
+    #     try:
+    #
+    #
+    #         blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+    #         name, _ = os.path.splitext(name)
+    #
+    #         h = db.add_irradiation_holder(name, geometry=blob)
+    #         if overwrite_geometry:
+    #             h.geometry = blob
+    #
+    #     except Exception, e:
+    #         print p, name, e
+    #         db.sess.rollback()
 
