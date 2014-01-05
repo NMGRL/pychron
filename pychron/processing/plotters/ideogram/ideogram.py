@@ -80,10 +80,13 @@ class Ideogram(BaseArArFigure):
             # print ai.record_id, i in omit
             ai.value_filter_omit = i in omit
 
+        self._asymptotic_limit_flag=True
         opt=self.options
         xmi, xma=self.xmi, self.xma
         pad = '0.05'
-        if opt.use_centered_range:
+        if opt.use_asymptotic_limits:
+            xmi, xma = self.xmi, self.xma
+        elif opt.use_centered_range:
             w2=opt.centered_range/2.0
             r=self.center
             xmi, xma=r-w2, w2+r
@@ -200,7 +203,7 @@ class Ideogram(BaseArArFigure):
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
-        bins, probs = self._calculate_probability_curve(self.xs, self.xes)
+        bins, probs = self._calculate_probability_curve(self.xs, self.xes, calculate_limits=True)
 
         ogid = self.group_id
         gid = ogid + 1
@@ -421,18 +424,30 @@ class Ideogram(BaseArArFigure):
                                plotid=pid)
         return s
 
-    def _calculate_probability_curve(self, ages, errors):
+    def _calculate_probability_curve(self, ages, errors, calculate_limits=False):
 
         xmi, xma = self.graph.get_x_limits()
         if xmi == -Inf or xma == Inf:
             xmi, xma = self.xmi, self.xma
 
-        #        print self.probability_curve_kind
-        if self.options.probability_curve_kind == 'kernel':
+        opt=self.options
+
+
+        if opt.probability_curve_kind == 'kernel':
             return self._kernel_density(ages, errors, xmi, xma)
 
         else:
-            return self._cumulative_probability(ages, errors, xmi, xma)
+            if opt.use_asymptotic_limits and calculate_limits:
+                cfunc=lambda x1,x2: self._cumulative_probability(ages, errors, x1,x2)
+                # bins,probs=cfunc(xmi,xma)
+                bins, probs, x1,x2=self._calculate_asymptotic_limits(cfunc, xmi, xma,
+                                                                     asymptotic_width=opt.asymptotic_width)
+                self.trait_setq(xmi=x1, xma=x2)
+                print x1, x2
+                # self.xmi, self.xma=x1,x2
+                return bins, probs
+            else:
+                return self._cumulative_probability(ages, errors, xmi, xma)
 
     def _kernel_density(self, ages, errors, xmi, xma):
         from scipy.stats.kde import gaussian_kde
@@ -464,6 +479,43 @@ class Ideogram(BaseArArFigure):
             probs += gs
 
         return bins, probs
+
+    def _calculate_asymptotic_limits(self, cfunc, xmi, xma,
+                                     max_iter=100, asymptotic_width=1,
+                                     tol=5, std_tol=5):
+        """
+            cfunc: callable that returns xs,ys and accepts xmin, xmax
+                    xs, ys= cfunc(x1,x2)
+
+            asymptotic_width=width of asymptotic section in index units (Ma,ka)
+                    Essentially amount of white space at either end
+
+            returns xs,ys,xmi,xma
+        """
+        rx1,rx2=None, None
+        step=asymptotic_width*0.25
+        for i in xrange(max_iter):
+            x1,x2=xmi-step*i, xma+step*i
+            xs, ys=cfunc(x1,x2)
+
+            bin_per_ma=N/(x2-x1)
+            aw=asymptotic_width*bin_per_ma
+
+            low = ys[:aw]
+            high = ys[-aw:]
+            if low.mean()<tol and low.std()<std_tol:
+                rx1=x1
+            if high.mean()<tol and high.std()<std_tol:
+                rx2=x2
+            if rx1 is not None and rx2 is not None:
+                break
+
+        if rx1 is None:
+            rx1=x1
+        if rx2 is None:
+            rx2=x2
+
+        return xs, ys, rx1, rx2
 
     def _cmp_analyses(self, x):
         return x.age

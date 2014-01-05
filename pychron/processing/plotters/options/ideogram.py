@@ -37,7 +37,8 @@ class IdeogramOptions(AgeOptions):
     display_mean = Bool(True)
     plot_option_name = 'Ideogram'
     index_attr = Enum('Age')
-
+    use_asymptotic_limits=Bool
+    asymptotic_width=Float
     # def _get_x_axis_group(self):
     #     vg = super(IdeogramOptions, self)._get_x_axis_group()
     #
@@ -57,7 +58,11 @@ class IdeogramOptions(AgeOptions):
     def _get_groups(self):
         xgrp = VGroup(HGroup(Item('index_attr', label='X Value'),
                              Item('xlow', label='Min.',enabled_when='not object.use_centered_range'),
-                             Item('xhigh', label='Max.',enabled_when='not object.use_centered_range')),
+                             Item('xhigh', label='Max.',enabled_when='not object.use_centered_range'),
+                             ),
+                      HGroup(Item('use_asymptotic_limits', enabled_when='not object.use_centered_range'),
+                             Item('asymptotic_width', label='Width',
+                                  enabled_when='object.use_asymptotic_limits')),
                       HGroup(Item('use_centered_range', label='Center on fixed range'),
                              UItem('centered_range',
                                    enabled_when='object.use_centered_range')),
@@ -102,6 +107,7 @@ class IdeogramOptions(AgeOptions):
             'error_calc_method',
             'xlow', 'xhigh',
             'use_centered_range', 'centered_range',
+            'use_asymptotic_limits','asymptotic_width',
             'display_mean', 'display_mean_indicator'
         ]
 
