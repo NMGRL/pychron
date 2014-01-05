@@ -58,7 +58,7 @@ class FigureEditor(GraphEditor):
                 aid = ai.record_id
                 if dban:
                     db.add_figure_analysis(figure, dban,
-                                           status=ai.temp_status and ai.status,
+                                           status=ai.is_omitted('omit_{}'.format(self.basename)),
                                            graph=ai.graph_id,
                                            group=ai.group_id)
                     self.debug('adding analysis {} to figure'.format(aid))

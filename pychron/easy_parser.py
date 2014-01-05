@@ -39,7 +39,7 @@ class EasyParser(Loggable):
         # name = add_extension(name, '.yaml')
         # p = os.path.join(paths., name)
 
-        p=os.path.join(paths.dissertation, 'data','minnabluff','spectra_unknowns.yaml')
+        p=os.path.join(paths.dissertation, 'data','minnabluff','ideo_j.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 md = yaml.load_all(fp)
