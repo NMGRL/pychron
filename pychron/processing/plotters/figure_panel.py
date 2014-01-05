@@ -66,8 +66,12 @@ class FigurePanel(HasTraits):
                                for i in self.figures])
             mi, ma = min(xmis), max(xmas)
 
+            cs=[i.mean_x(attr) for i in self.figures]
+            center=sum(cs)/len(cs)
+
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
+                          center=center,
                           options=po,
                           graph=g)
 

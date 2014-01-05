@@ -51,6 +51,10 @@ class Ideogram(BaseArArFigure):
         """
             plot data on plots
         """
+        opt=self.options
+        if opt.index_attr:
+            if opt.index_attr=='Age':
+                self.index_key='uage'
 
         graph = self.graph
 
@@ -58,7 +62,7 @@ class Ideogram(BaseArArFigure):
 
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
-                                   for ai in self._get_xs(key=self.index_key)]).T
+                                       for ai in self._get_xs(key=self.index_key)]).T
         except (ValueError, AttributeError):
             return
 
@@ -76,8 +80,19 @@ class Ideogram(BaseArArFigure):
             # print ai.record_id, i in omit
             ai.value_filter_omit = i in omit
 
-        graph.set_x_limits(min_=self.xmi, max_=self.xma,
-                           pad='0.05')
+        opt=self.options
+        xmi, xma=self.xmi, self.xma
+        pad = '0.05'
+        if opt.use_centered_range:
+            w2=opt.centered_range/2.0
+            r=self.center
+            xmi, xma=r-w2, w2+r
+            pad=False
+        elif opt.xlow or opt.xhigh:
+            xmi,xma=opt.xlow, opt.xhigh
+            pad=False
+
+        graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
 
         ref = self.analyses[0]
         age_units = ref.arar_constants.age_units
@@ -91,6 +106,16 @@ class Ideogram(BaseArArFigure):
         #print 'ideo omit', self.group_id, omit
         if omit:
             self._rebuild_ideo(list(omit))
+
+    def mean_x(self, attr):
+        #todo: handle other attributes
+        return self.analysis_group.weighted_age.nominal_value
+
+        # try:
+        #     return max([ai
+        #                 for ai in self._unpack_attr(attr)])
+        # except (AttributeError, ValueError):
+        #     return 0
 
     def max_x(self, attr):
         try:
