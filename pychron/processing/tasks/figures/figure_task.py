@@ -462,8 +462,12 @@ class FigureTask(AnalysisEditTask):
                 project = dlg.selected_project.name
 
             identifiers = [si.labnumber for si in dlg.selected_samples]
-            self.active_editor.save_figure(dlg.name, project, identifiers)
+            fid=self.active_editor.save_figure(dlg.name, project, identifiers)
             self._load_sample_figures(dlg.selected_samples)
+
+            idx=next((i for i, o in enumerate(self.ofigures) if o.id ==fid), None)
+            if idx is not None:
+                self.active_editor.saved_figure_id=idx
 
     def _delete_figures(self, figs):
         db=self.manager.db
@@ -509,6 +513,11 @@ class FigureTask(AnalysisEditTask):
             else:
                 kind=self.figure_kind[:4].lower()
                 self.figures=filter(lambda x:x.kind==kind, self.ofigures)
+
+    def _dclicked_sample_changed(self):
+        if self.active_editor:
+            self.active_editor.saved_figure_id=0
+        super(FigureTask, self)._dclicked_sample_changed()
 
     def _dclicked_figure_changed(self):
         sf = self.selected_figures

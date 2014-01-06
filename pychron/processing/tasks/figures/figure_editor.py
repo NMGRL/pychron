@@ -69,6 +69,7 @@ class FigureEditor(GraphEditor):
             blob = po.dump_yaml()
             pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
             figure.preference = pref
+            return int(figure.id)
 
     def set_interpreted_age(self):
         ias = self.get_interpreted_ages()
@@ -221,8 +222,11 @@ class FigureEditor(GraphEditor):
                 sess.delete(dbai)
 
             for ai in self.analyses:
-                ai = db.get_analysis_uuid(ai.uuid)
-                db.add_figure_analysis(fig, ai)
+                dbai = db.get_analysis_uuid(ai.uuid)
+                db.add_figure_analysis(fig, dbai,
+                                       status=ai.is_omitted('omit_{}'.format(self.basename)),
+                                       graph=ai.graph_id,
+                                       group=ai.group_id)
 
         self.information_dialog('Changes saved to Database')
 
