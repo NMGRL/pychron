@@ -274,7 +274,7 @@ class MultipleLinearRegressor(OLSRegressor):
         if xs is None:
             xs = self.get_clean_xs()
 
-        _, c = xs.shape
+        r, c = xs.shape
         if c == 2:
             xs = column_stack((xs, ones(r)))
             return xs

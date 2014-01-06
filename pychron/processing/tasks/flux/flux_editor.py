@@ -86,6 +86,7 @@ class MonitorPosition(HasTraits):
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
+    dev=Float
 
 
 class FluxEditor(GraphEditor):
@@ -107,12 +108,12 @@ class FluxEditor(GraphEditor):
     def _get_positions(self):
         return sorted(self.monitor_positions.itervalues(), key=lambda x: x.hole_id)
 
-    def add_monitor_position(self, pid, identifier, x, y, j, je):
+    def add_monitor_position(self, pid, identifier, x, y, j, je, dev):
         pos = MonitorPosition(identifier=identifier,
                               hole_id=pid,
                               x=x, y=y,
                               theta=math.atan2(x, y),
-                              j=j, jerr=je)
+                              j=j, jerr=je, dev=dev)
 
         self.monitor_positions[identifier] = pos
         self.positions_dirty = True
@@ -259,11 +260,13 @@ class FluxEditor(GraphEditor):
             ObjectColumn(name='y', label='Y', editable=False, format='%0.3f'),
             ObjectColumn(name='theta', label=u'\u03b8', editable=False, format='%0.3f'),
             ObjectColumn(name='j', label='J',
-                         format_func=lambda x: floatfmt(x, n=3, s=3),
+                         format_func=lambda x: floatfmt(x, n=5, s=3),
                          editable=True),
             ObjectColumn(name='jerr',
-                         format_func=lambda x: floatfmt(x, n=3, s=3),
-                         label=u'\u00b1\u03c3', editable=True)]
+                         format_func=lambda x: floatfmt(x, n=6, s=3),
+                         label=u'\u00b1\u03c3', editable=True),
+            ObjectColumn(name='dev', label='dev', format_func=lambda x: floatfmt(x, n=2))
+            ]
         editor = TableEditor(columns=cols, sortable=False, reorderable=False)
 
         v = View(VSplit(

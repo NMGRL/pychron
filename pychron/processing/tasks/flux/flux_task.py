@@ -24,6 +24,8 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 from numpy import asarray, average
 #============= local library imports  ==========================
 from uncertainties import ufloat
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
 from pychron.processing.tasks.flux.panes import IrradiationPane
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
@@ -117,8 +119,8 @@ class FluxTask(InterpolationTask):
                     self.unknowns_pane.items = u
                     self.references_pane.items = r
 
-                    #self.active_editor.unknowns=u
-                    #self.active_editor.references= r
+                    # self.active_editor.set_items(u)
+                    # self.active_editor.references= r
 
     @on_trait_change('active_editor:tool:calculate_button')
     def _calculate_flux(self):
@@ -193,7 +195,7 @@ class FluxTask(InterpolationTask):
             ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier) for ri in refs])
             #print ans
             #print tcs
-            prog = proc.open_progress(n=sum(tcs))
+            prog = proc.open_progress(n=sum(tcs), close_at_end=False)
 
             geom = self._get_geometry()
             editor = self.active_editor
@@ -204,11 +206,18 @@ class FluxTask(InterpolationTask):
                     ref = ais[0]
                     pid = ref.labnumber.irradiation_position.position
                     ident = ref.labnumber.identifier
-
+                    cj=ref.labnumber.selected_flux_history.flux.j
                     x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     j = mean_j(aa)
-                    editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev)
+
+                    dev=100
+                    if cj:
+                        dev=(j.nominal_value-cj)/cj*100
+
+                    editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
+
+            prog.close()
 
     def _get_geometry(self, irrad=None, level=None, holder=None):
         man = self.manager
@@ -229,4 +238,35 @@ class FluxTask(InterpolationTask):
             return [struct.unpack('>fff', geom[i:i + 12])
                     for i in xrange(0, len(geom), 12)]
 
+
+    @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
+    def _update_unknowns_runs(self, obj, name, old, new):
+        if name == 'dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif name == 'refresh_editor_needed':
+            self.active_editor.rebuild()
+        # else:
+        #     if not obj._no_update:
+        #         if self.active_editor:
+        #             self.active_editor.set_items(self.unknowns_pane.items)
+        #         if self.plot_editor_pane:
+        #             self.plot_editor_pane.analyses = self.unknowns_pane.items
+
+    def _active_editor_changed(self):
+        if self.active_editor:
+            if self.controls_pane:
+                tool = None
+                if hasattr(self.active_editor, 'tool'):
+                    tool = self.active_editor.tool
+
+                self.controls_pane.tool = tool
+
+            # if self.unknowns_pane:
+            #     # if hasattr(self.unknowns_pane, 'previous_selections'):
+            #     #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
+            #     if hasattr(self.active_editor, 'analyses'):
+            #         #if self.active_editor.unknowns:
+            #         self.unknowns_pane.items = self.active_editor.analyses
 #============= EOF =============================================
