@@ -54,24 +54,34 @@ class EasyFigures(BaseEasy):
 
         db = self.db
         with db.session_ctx():
-            if identifiers:
-                lns=[db.get_labnumber(li) for li in identifiers]
-            elif levels:
+            if levels:
                 for li_str in levels:
                     irrad, level = li_str.split(' ')
-                    dblevel=db.get_irradiation_level(irrad, level)
-                    ans=[ai for li in dblevel
+                    dblevel = db.get_irradiation_level(irrad, level)
+                    pos=[pp for pp in dblevel.positions if pp.labnumber]
+
+                    lns=[pp.labnumber for pp in pos
+                            if pp.labnumber.sample.project.name in projects]
+
+                    # ans = [ai for pp in pos
+                    #              for ai in pp.labnumber.analyses
+                    #                 if ai.tag != 'invalid']
+                    ans=[ai for li in lns
                                 for ai in li.analyses
-                                    if ai.tag != 'invalid']
-                    self._make_level(doc, irrad, level, ans)
+                                    if ai.tag!='invalid']
+                    ids=[li.identifier for li in lns]
 
+                    self._make_level(doc, irrad, level, ids, ans)
             else:
-                lns = [ln for proj in projects
-                       for si in db.get_samples(project=proj)
-                       for ln in si.labnumbers]
-            self._make_labnumbers(doc, lns)
+                if identifiers:
+                    lns=[db.get_labnumber(li) for li in identifiers]
+                else:
+                    lns = [ln for proj in projects
+                           for si in db.get_samples(project=proj)
+                           for ln in si.labnumbers]
+                self._make_labnumbers(doc, lns)
 
-    def _make_level(self, doc, irrad, level, ans):
+    def _make_level(self, doc, irrad, level,ids, ans):
         root = doc['root']
         options = doc['options']
 
@@ -92,14 +102,15 @@ class EasyFigures(BaseEasy):
         # if stepheat:
         #     self._make_editor(stepheat, 'step_heat', options, prog, ln_root, li)
         project='J'
-        lns=[li.identifier for li in level.labnumbers]
+        # lns=[li.identifier for li in level.labnumbers]
 
         if fusion:
             save_args=(lroot, level, '{} {}'.format(irrad, level),
-                       project, lns)
+                       project, ids)
             self._make_editor(fusion, ('fusion','fusion_grouped'),
                               options, prog, 'aliquot',
                               save_args)
+        prog.close()
 
     def _make_labnumbers(self, doc, lns):
         root=doc['root']
@@ -152,9 +163,9 @@ class EasyFigures(BaseEasy):
 
         unks = self.make_analyses(ans, progress=prog)
         editor.set_items(unks)
-        editor.rebuild()
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
+        editor.rebuild()
 
         func=getattr(self, '_save_{}'.format(save_name))
         func(editor, *save_args)

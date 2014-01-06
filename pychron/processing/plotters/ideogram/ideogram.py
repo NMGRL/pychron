@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from chaco.plot_label import PlotLabel
 from traits.api import Float, Array
 #============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
@@ -23,6 +22,7 @@ from numpy import linspace, pi, exp, zeros, ones, array, arange, \
 #============= local library imports  ==========================
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
+from pychron.processing.plotters.flow_label import FlowPlotLabel
 
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.core.stats.peak_detection import find_peaks
@@ -75,6 +75,8 @@ class Ideogram(BaseArArFigure):
             if args:
                 scatter, omits=args
                 omit=omit.union(set(omits))
+
+            self._update_options_limits(pid)
 
         for i, ai in enumerate(self.sorted_analyses):
             # print ai.record_id, i in omit
@@ -157,6 +159,7 @@ class Ideogram(BaseArArFigure):
             self._add_point_labels(scatter)
 
         self._add_scatter_inspector(scatter)
+
         return scatter, omits
 
     def _plot_analysis_number(self, *args, **kw):
@@ -194,9 +197,12 @@ class Ideogram(BaseArArFigure):
             self._add_point_labels(scatter)
 
         #         self._analysis_number_cnt += n
-        self.graph.set_y_limits(min_=0,
-                                max_=max(ys) + 1,
-                                plotid=pid)
+        # self.graph.set_y_limits(min_=0,
+        #                         max_=max(ys) + 1,
+        #                         # pad='0.01',
+        #                         plotid=pid)
+        if not po.has_ylimits():
+            self._set_y_limits(0, max(ys)+1, pid=pid)
 
         omits=self._get_aux_plot_omits(po, ys)
         return scatter, omits
@@ -229,7 +235,9 @@ class Ideogram(BaseArArFigure):
             mo.y=ap[1]
 
         mi, ma = min(probs), max(probs)
-        self._set_y_limits(mi, ma, min_=0)
+
+        if not po.has_ylimits():
+            self._set_y_limits(mi, ma, min_=0, pad='0.05')
 
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
@@ -256,7 +264,7 @@ class Ideogram(BaseArArFigure):
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 
                 if ts:
-                    pl = PlotLabel(text='\n'.join(ts),
+                    pl = FlowPlotLabel(text='\n'.join(ts),
                                    overlay_position='inside top',
                                    hjustify='left',
                                    component=plot)
@@ -443,7 +451,7 @@ class Ideogram(BaseArArFigure):
                 bins, probs, x1,x2=self._calculate_asymptotic_limits(cfunc, xmi, xma,
                                                                      asymptotic_width=opt.asymptotic_width)
                 self.trait_setq(xmi=x1, xma=x2)
-                print x1, x2
+                # print x1, x2
                 # self.xmi, self.xma=x1,x2
                 return bins, probs
             else:
@@ -499,10 +507,11 @@ class Ideogram(BaseArArFigure):
             xs, ys=cfunc(x1,x2)
 
             bin_per_ma=N/(x2-x1)
-            aw=asymptotic_width*bin_per_ma
+            aw=max(i+1, int(asymptotic_width*bin_per_ma))
 
             low = ys[:aw]
             high = ys[-aw:]
+
             if low.mean()<tol and low.std()<std_tol:
                 rx1=x1
             if high.mean()<tol and high.std()<std_tol:

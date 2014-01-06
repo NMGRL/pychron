@@ -361,9 +361,8 @@ class FigureTask(AnalysisEditTask):
         if new:
             db = self.manager.db
             with db.session_ctx():
-                sam = [p.identifier for p in new]
-                figs = db.get_labnumber_figures(sam)
-
+                lns = [p.labnumber for p in new]
+                figs = db.get_labnumber_figures(lns)
                 figs=[self._dbfigure_factory(f) for f in figs]
                 figs=[f for f in figs if f]
                 self.ofigures = figs
@@ -374,13 +373,14 @@ class FigureTask(AnalysisEditTask):
         if f.preference:
             dbf = DBFigure(name=f.name or '',
                            project=f.project.name,
-                           samples=[s.sample.name for s in f.samples],
+                           identifiers=[s.labnumber.identifier for s in f.labnumbers],
+                           samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
                            kind=f.preference.kind,
                            id=f.id)
             return dbf
 
     def _get_sample_obj(self, s):
-        return next((sr for sr in self.samples if sr.name == s), None)
+        return next((sr for sr in self.samples if sr.labnumber == s), None)
 
     def _get_project_obj(self, p):
         return next((sr for sr in self.projects if sr.name == p), None)
@@ -417,7 +417,6 @@ class FigureTask(AnalysisEditTask):
         #             ai=db.get_analysis_uuid(ai.uuid)
         #             db.add_figure_analysis(fig, ai)
 
-
     def _save_as_figure(self):
         """
             add a new figure to the database
@@ -440,12 +439,12 @@ class FigureTask(AnalysisEditTask):
                 if proj:
                     dlg.selected_project = proj
 
-            samples = list(set([ai.sample for ai in self.active_editor.analyses]))
+            identifiers = list(set([ai.labnumber for ai in self.active_editor.analyses]))
             # print samples
-            ss = [self._get_sample_obj(si) for si in samples]
-            # print ss
+            ss = [self._get_sample_obj(si) for si in identifiers]
+            # # print ss
             ss = filter(lambda x: not x is None, ss)
-            # print ss
+            # # print ss
             dlg.selected_samples = ss
 
             while 1:
@@ -462,8 +461,8 @@ class FigureTask(AnalysisEditTask):
             if dlg.selected_project:
                 project = dlg.selected_project.name
 
-            samples = [si.name for si in dlg.selected_samples]
-            self.active_editor.save_figure(dlg.name, project, samples)
+            identifiers = [si.labnumber for si in dlg.selected_samples]
+            self.active_editor.save_figure(dlg.name, project, identifiers)
             self._load_sample_figures(dlg.selected_samples)
 
     def _delete_figures(self, figs):
@@ -473,7 +472,7 @@ class FigureTask(AnalysisEditTask):
                 dbfig=db.get_figure(fi.id, key='id')
 
                 sess.delete(dbfig.preference)
-                for si in dbfig.samples:
+                for si in dbfig.labnumbers:
                     sess.delete(si)
 
                 for ai in dbfig.analyses:
@@ -495,11 +494,7 @@ class FigureTask(AnalysisEditTask):
     def _delete_figure_button_fired(self):
         if self.selected_figures:
 
-            fs='\n'.join(['{:>30s} project= {}'.format(s.name, s.project) for s in self.selected_figures])
-
-            n=len(self.selected_figures)
-            if self.confirmation_dialog('Are you sure you want to delete these figures?\n\n{}'.format(fs),
-                                        size=(600, 120+10*n)):
+            if self.confirmation_dialog('Are you sure you want to delete the selected figures?'):
                 self._delete_figures(self.selected_figures)
                 if self.selected_samples:
                     self._load_sample_figures(self.selected_samples)
@@ -537,7 +532,12 @@ class FigureTask(AnalysisEditTask):
 
                 self.active_editor.plotter_options_manager.load_yaml(blob)
                 self.active_editor.saved_figure_id=int(sf.id)
+
                 self.active_editor.set_items([a.analysis for a in db_fig.analyses])
+                for ai,dbai in zip(self.active_editor.analyses, db_fig.analyses):
+                    ai.group_id=int(dbai.group or 0)
+                    ai.graph_id=int(dbai.graph or 0)
+
                 self.active_editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')

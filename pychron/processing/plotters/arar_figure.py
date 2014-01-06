@@ -35,6 +35,8 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 
+PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
+                '%40Ar*': 'Radiogenic 40Ar'}
 
 class BaseArArFigure(HasTraits):
     analyses = Any
@@ -191,12 +193,13 @@ class BaseArArFigure(HasTraits):
             mi = min_
         if max_ is not None:
             ma = max_
-        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad)
+        self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
 
-        n=len(self.options.aux_plots)
-        ap=self.options.aux_plots[n-pid-1]
+    def _update_options_limits(self, pid):
+        n = len(self.options.aux_plots)
+        ap = self.options.aux_plots[n - pid - 1]
 
-        ap.ylimits=self.graph.get_y_limits(pid)
+        ap.ylimits = self.graph.get_y_limits(pid)
 
     #===========================================================================
     # aux plots
@@ -370,7 +373,10 @@ class BaseArArFigure(HasTraits):
                 if p.value_mapper==obj:
                     plot=p
                     title = plot.y_axis.title
-                    # print 'ttee',title
+
+                    if title in PLOT_MAPPING:
+                        title=PLOT_MAPPING[title]
+
                     for op in self.options.aux_plots:
                         if title.startswith(op.name):
                             op.ylimits = (new.low, new.high)
