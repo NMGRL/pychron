@@ -83,6 +83,7 @@ class gen_LabTable(Base, BaseMixin):
     analyses = relationship('meas_AnalysisTable',
                             backref='labnumber')
 
+    figures = relationship('proc_FigureLabTable', backref='labnumber')
 
 class gen_MassSpectrometerTable(Base, NameMixin):
 #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
@@ -114,7 +115,6 @@ class gen_SampleTable(Base, NameMixin):
     material_id = foreignkey('gen_MaterialTable')
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
-    figures = relationship('proc_FigureSamplesTable', backref='sample')
 
     igsn=Column(CHAR(9))
     location=stringcolumn(80)

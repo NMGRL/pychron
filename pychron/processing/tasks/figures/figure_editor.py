@@ -45,13 +45,13 @@ class FigureEditor(GraphEditor):
 
     saved_figure_id=Int
 
-    def save_figure(self, name, project, samples):
+    def save_figure(self, name, project, labnumbers):
         db=self.processor.db
         with db.session_ctx():
 
             figure = db.add_figure(project=project, name=name)
-            for si in samples:
-                db.add_figure_sample(figure, si, project)
+            for li in labnumbers:
+                db.add_figure_labnumber(figure, li)
 
             for ai in self.analyses:
                 dban = db.get_analysis_uuid(ai.uuid)

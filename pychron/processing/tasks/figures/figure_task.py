@@ -361,8 +361,9 @@ class FigureTask(AnalysisEditTask):
         if new:
             db = self.manager.db
             with db.session_ctx():
-                sam = [p.name for p in new]
-                figs = db.get_sample_figures(sam)
+                sam = [p.identifier for p in new]
+                figs = db.get_labnumber_figures(sam)
+
                 figs=[self._dbfigure_factory(f) for f in figs]
                 figs=[f for f in figs if f]
                 self.ofigures = figs

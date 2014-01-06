@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from canopy.plugin.preferences import PreferencesPane
-from traits.api import Int
+from traits.api import Int, Bool
 from traitsui.api import View, Item, Group
 
 #============= standard library imports ========================
@@ -25,6 +25,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ProcessingPreferences(BasePreferencesHelper):
+    use_easy = Bool
     recent_hours = Int
     preferences_path = 'pychron.processing'
 
@@ -39,7 +40,21 @@ class ProcessingPreferencesPane(PreferencesPane):
                  tooltip='Number of hours a "Recent" database search will include'),
             label='Recent',
             show_border=True)
-        v = View(recent_grp)
+
+        easy_grp = Group(Item('use_easy'))
+        v = View(recent_grp,
+                 easy_grp,
+        )
+        return v
+
+
+class EasyPreferencesPane(PreferencesPane):
+    model_factory = ProcessingPreferences
+    category = 'Processing'
+
+    def traits_view(self):
+        easy_grp = Group(Item('use_easy'), label='Easy')
+        v = View(easy_grp)
         return v
 
 #============= EOF =============================================

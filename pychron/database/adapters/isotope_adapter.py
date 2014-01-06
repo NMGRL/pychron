@@ -65,7 +65,8 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_BlanksTable, proc_BackgroundsTable, proc_BlanksHistoryTable, proc_BackgroundsHistoryTable, \
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
-    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, proc_FigureSamplesTable, proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable
+    proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
+    proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable
 
 # @todo: change rundate and runtime to DateTime columns
 
@@ -183,15 +184,15 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
-    def get_sample_figures(self, samples):
-        if not hasattr(samples, '__iter__'):
-            samples = (samples,)
+    def get_labnumber_figures(self, identifiers):
+        if not hasattr(identifiers, '__iter__'):
+            identifiers = (identifiers,)
 
         with self.session_ctx() as sess:
             q = sess.query(proc_FigureTable)
-            q = q.join(proc_FigureSamplesTable)
-            q = q.join(gen_SampleTable)
-            q = q.filter(gen_SampleTable.name.in_(samples))
+            q = q.join(proc_FigureLabTable)
+            q = q.join(gen_LabTable)
+            q = q.filter(gen_LabTable.identifier.in_(identifiers))
             try:
                 return q.all()
             except NoResultFound:
@@ -709,15 +710,13 @@ class IsotopeAdapter(DatabaseAdapter):
         item = gen_ExtractionDeviceTable(name=name, **kw)
         return self._add_unique(item, 'extraction_device', name, )
 
-    def add_figure_sample(self, figure, sample, project):
-
-        sample=self.get_sample(sample, project=project)
-        if sample:
-            obj=proc_FigureSamplesTable()
+    def add_figure_labnumber(self, figure, labnumber):
+        labnumber=self.get_labnumber(labnumber)
+        if labnumber:
+            obj = proc_FigureLabTable()
             self._add_item(obj)
-
-            obj.figure=figure
-            obj.sample=sample
+            obj.figure = figure
+            obj.labnumber=labnumber
             return obj
 
     def add_figure(self, project=None, **kw):

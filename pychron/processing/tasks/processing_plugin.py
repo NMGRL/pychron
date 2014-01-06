@@ -19,9 +19,10 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
-from pyface.tasks.action.schema import SMenu, SGroup
+from pyface.tasks.action.schema import SMenu
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
@@ -40,7 +41,7 @@ from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeG
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
-from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane
+from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane, EasyPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
 from pychron.processing.tasks.preferences.vcs_preferences import VCSPreferencesPane
@@ -100,56 +101,88 @@ Install to enable MS Excel export''')
                          ICFactorAction(),
                          DiscriminationAction(),
                          FluxAction())
+
         def interpreted_group():
             return Group(SetInterpretedAgeAction(),
                          OpenInterpretedAgeAction(),
                          OpenInterpretedAgeGroupAction())
 
-        return [
-            self._make_task_extension([('recall_action', RecallAction, 'MenuBar/File'),
-                                       ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
-                                       ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
+        def easy_group():
+            return Group(EasyImportAction(),
+                         EasyFiguresAction(),
+                         EasyTablesAction())
 
-                                       ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-                                       ('reduction_group', reduction_group, 'MenuBar/data.menu'),
-                                       ('figure_group', figure_group, 'MenuBar/data.menu'),
-                                       ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
+        default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
+                           ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
-                                       ('tag', TagAction, 'MenuBar/data.menu'),
-                                       ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
-                                       ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+                           ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+                           ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+                           ('figure_group', figure_group, 'MenuBar/data.menu'),
+                           ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
 
-                                       ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                           ('tag', TagAction, 'MenuBar/data.menu'),
+                           ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+                           ('grouping_group', grouping_group, 'MenuBar/data.menu'),
 
-                                       ('easy_group', lambda: SGroup(id='easy.group', name='Easy'), 'MenuBar/tools.menu'),
-                                       ('easy_import', EasyImportAction, 'MenuBar/tools.menu/easy.group'),
-                                       ('easy_figures', EasyFiguresAction, 'MenuBar/tools.menu/easy.group'),
-                                       ('easy_tables', EasyTablesAction, 'MenuBar/tools.menu/easy.group')]),
+                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
 
-            self._make_task_extension([('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-                                       ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
-                                      task_id='pychron.analysis_edit.isotope_evolution'),
-            self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
-                                      task_id='pychron.analysis_edit.blanks'),
-            self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
-                                      task_id='pychron.analysis_edit.discrimination'),
-            self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
-                                      task_id='pychron.analysis_edit.ic_factor'),
+        exts = [self._make_task_extension(default_actions)]
 
-            self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-                                       ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-                                       ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]),
-            # self._make_task_extension([('vcs_pull', PullVCSAction, 'MenuBar/VCS')]),
+        #                            ('easy_import', EasyImportAction, 'MenuBar/tools.menu/easy.group'),
+        #                            ('easy_figures', EasyFiguresAction, 'MenuBar/tools.menu/easy.group'),
+        #                            ('easy_tables', EasyTablesAction, 'MenuBar/tools.menu/easy.group')]),
+        #
+        # self._make_task_extension([('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
+        #                            ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
+        #                           task_id='pychron.analysis_edit.isotope_evolution'),
+        # self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
+        #                           task_id='pychron.analysis_edit.blanks'),
+        # self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
+        #                           task_id='pychron.analysis_edit.discrimination'),
+        # self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
+        #                           task_id='pychron.analysis_edit.ic_factor'),
 
-        ]
+        # self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+        #                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+        #                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]),
+        # self._make_task_extension([('vcs_pull', PullVCSAction, 'MenuBar/VCS')]),
+
+        # ]
+
+        use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+        if use_vcs:
+            exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+                                                   ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+                                                   ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+
+        use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
+        if use_easy:
+            a = self._make_task_extension(
+                [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
+                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
+                task_id='pychron.analysis_edit.isotope_evolution')
+
+            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
+                                          task_id='pychron.analysis_edit.blanks')
+
+            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
+                                          task_id='pychron.analysis_edit.discrimination')
+
+            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
+                                          task_id='pychron.analysis_edit.ic_factor')
+
+            e = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
+            exts.extend((a, b, c, d, e))
+
+        return exts
 
     def _meta_task_factory(self, i, f, n, task_group=None,
                            accelerator='', include_view_menu=False):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
-                           include_view_menu=include_view_menu or accelerator
-        )
+                           include_view_menu=include_view_menu or accelerator)
 
     def _tasks_default(self):
         tasks = [
@@ -270,7 +303,6 @@ Install to enable MS Excel export''')
         return [
             ProcessingPreferencesPane,
             VCSPreferencesPane,
-            OfflinePreferencesPane,
-            ]
+            OfflinePreferencesPane,EasyPreferencesPane]
 
         #============= EOF =============================================

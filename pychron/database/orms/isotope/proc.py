@@ -242,9 +242,9 @@ class proc_FigurePrefTable(Base, BaseMixin):
     kind=Column(String(40))
 
 
-class proc_FigureSamplesTable(Base, BaseMixin):
+class proc_FigureLabTable(Base, BaseMixin):
     figure_id = foreignkey('proc_FigureTable')
-    sample_id = foreignkey('gen_SampleTable')
+    lab_id = foreignkey('gen_LabTable')
 
 
 class proc_FigureTable(Base, NameMixin):
@@ -252,7 +252,7 @@ class proc_FigureTable(Base, NameMixin):
     user = stringcolumn()
     project_id = foreignkey('gen_ProjectTable')
 
-    samples = relationship('proc_FigureSamplesTable', backref='figure')
+    labnumbers = relationship('proc_FigureLabTable', backref='figure')
     analyses = relationship('proc_FigureAnalysisTable', backref='figure')
     preference = relationship('proc_FigurePrefTable', backref='figure',
                               uselist=False)

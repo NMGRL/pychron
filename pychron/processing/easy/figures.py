@@ -26,6 +26,7 @@ from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEditor
+from pychron.processing.utils.grouping import group_analyses_by_key
 
 
 class EasyFigures(BaseEasy):
@@ -49,17 +50,56 @@ class EasyFigures(BaseEasy):
 
         projects = doc['projects']
         identifiers = doc.get('identifiers')
+        levels = doc.get('levels')
 
         db = self.db
         with db.session_ctx():
             if identifiers:
                 lns=[db.get_labnumber(li) for li in identifiers]
+            elif levels:
+                for li_str in levels:
+                    irrad, level = li_str.split(' ')
+                    dblevel=db.get_irradiation_level(irrad, level)
+                    ans=[ai for li in dblevel
+                                for ai in li.analyses
+                                    if ai.tag != 'invalid']
+                    self._make_level(doc, irrad, level, ans)
 
             else:
                 lns = [ln for proj in projects
                        for si in db.get_samples(project=proj)
                        for ln in si.labnumbers]
             self._make_labnumbers(doc, lns)
+
+    def _make_level(self, doc, irrad, level, ans):
+        root = doc['root']
+        options = doc['options']
+
+        lroot = os.path.join(root, irrad, level)
+        r_mkdir(lroot)
+
+        n=len(ans)
+        prog = self.open_progress(n, close_at_end=False)
+
+        #group by stepheat vs fusion
+        pred = lambda x: bool(x.step)
+
+        ans = sorted(ans, key=pred)
+        stepheat, fusion = map(list, partition(ans, pred))
+
+        # apred = lambda x: x.aliquot
+        # stepheat = sorted(stepheat, key=apred)
+        # if stepheat:
+        #     self._make_editor(stepheat, 'step_heat', options, prog, ln_root, li)
+        project='J'
+        lns=[li.identifier for li in level.labnumbers]
+
+        if fusion:
+            save_args=(lroot, level, '{} {}'.format(irrad, level),
+                       project, lns)
+            self._make_editor(fusion, ('fusion','fusion_grouped'),
+                              options, prog, 'aliquot',
+                              save_args)
 
     def _make_labnumbers(self, doc, lns):
         root=doc['root']
@@ -81,22 +121,28 @@ class EasyFigures(BaseEasy):
 
         prog.change_message('Making {} for {}'.format(self._tag, ident))
 
-        #group by stepheat vs fusion
-        pred = lambda x: bool(x.step)
 
         #filter invalid analyses
         ans=filter(lambda x: not x.tag=='invalid', li.analyses)
+
+        #group by stepheat vs fusion
+        pred = lambda x: bool(x.step)
+
         ans = sorted(ans, key=pred)
         stepheat, fusion = map(list, partition(ans, pred))
 
         apred = lambda x: x.aliquot
         stepheat = sorted(stepheat, key=apred)
         if stepheat:
-            self._make_editor(stepheat, 'step_heat', options, prog, ln_root, li)
+            self._make_editor(stepheat, 'step_heat', options, prog, False, ln_root, li)
         if fusion:
-            self._make_editor(fusion, 'fusion', options, prog, ln_root, li)
+            self._make_editor(fusion, 'fusion', options, prog, False, ln_root, li)
 
-    def _make_editor(self, ans, editor_name, options, prog, ln_root, li):
+    def _make_editor(self, ans, editor_name, options, prog, apply_grouping, save_args):
+        if isinstance(editor_name, tuple):
+            editor_name, save_name=editor_name
+        else:
+            editor_name,save_name=editor_name, editor_name
 
         editor=getattr(self, '_{}_editor'.format(editor_name))
         if editor is None:
@@ -107,13 +153,16 @@ class EasyFigures(BaseEasy):
         unks = self.make_analyses(ans, progress=prog)
         editor.set_items(unks)
         editor.rebuild()
+        if apply_grouping:
+            group_analyses_by_key(editor, editor.analyses, apply_grouping)
 
-        func=getattr(self, '_save_{}'.format(editor_name))
-        func(editor, ln_root, li)
+        func=getattr(self, '_save_{}'.format(save_name))
+        func(editor, *save_args)
         setattr(self, '_{}_editor'.format(editor_name), editor)
 
     #save
     def _save_step_heat(self,editor, *args):
+
         self._save('{}_step_heat_figure', editor, *args)
 
         if self._save_interpreted:
@@ -126,15 +175,25 @@ class EasyFigures(BaseEasy):
 
             editor.add_interpreted_ages(ias)
 
-    def _save_fusion(self, *args):
-        self._save('{}_fusion_figure', *args)
+    def _save_fusion_grouped(self, *args):
+        self._save(*args)
 
-    def _save(self, tag, editor, root, ln):
-        p, _ = unique_path(root, tag.format(ln.identifier), extension='.pdf')
+    def _save_fusion(self, *args):
+        self._save_labnumber('{}_fusion_figure', *args)
+
+    def _save_labnumber(self, tag, editor, root, ln):
+        pathname=tag.format(ln.identifier)
+        name=ln.identifier
+        project=ln.sample.project.name
+        lns=[ln.identifier]
+        self._save(editor, root, pathname, name, project, lns)
+
+    def _save(self,editor, root, pathname, name, project, lns):
+        p, _ = unique_path(root, pathname, extension='.pdf')
         editor.save_file(p)
         if self._save_db_figure:
-            editor.save_figure('EasyFigure {}'.format(ln.identifier),
-                               ln.sample.project.name, [ln.sample.name])
+            editor.save_figure('EasyFigure {}'.format(name),
+                               project, lns)
 
 
 #============= EOF =============================================

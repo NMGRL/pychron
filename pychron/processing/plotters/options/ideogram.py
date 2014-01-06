@@ -39,19 +39,7 @@ class IdeogramOptions(AgeOptions):
     index_attr = Enum('Age')
     use_asymptotic_limits=Bool
     asymptotic_width=Float
-    # def _get_x_axis_group(self):
-    #     vg = super(IdeogramOptions, self)._get_x_axis_group()
-    #
-    #     limits_grp = HGroup(Item('xlow', label='Min.'),
-    #                         Item('xhigh', label='Max.'),
-    #                         enabled_when='not object.use_centered_range')
-    #     centered_grp = HGroup(Item('use_centered_range', label='Center'),
-    #                           Item('centered_range', show_label=False,
-    #                                enabled_when='object.use_centered_range'))
-    #     vg.content.append(limits_grp)
-    #     vg.content.append(centered_grp)
 
-    # return vg
     def _index_attr_default(self):
         return 'Age'
 
