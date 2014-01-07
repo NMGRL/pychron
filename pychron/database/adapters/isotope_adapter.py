@@ -804,6 +804,9 @@ class IsotopeAdapter(DatabaseAdapter):
         return ft
 
     def add_flux_monitor(self, name, **kw):
+        """
+
+        """
         fx = flux_MonitorTable(name=name, **kw)
         return self._add_unique(fx, 'flux_monitor', name)
 
@@ -1419,8 +1422,8 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_flux_history(self, value):
         return self._retrieve_item(flux_HistoryTable, value)
 
-    def get_flux_monitor(self, value):
-        return self._retrieve_item(flux_MonitorTable, value)
+    def get_flux_monitor(self, value, **kw):
+        return self._retrieve_item(flux_MonitorTable, value, **kw)
 
     def get_tag(self, name):
         return self._retrieve_item(proc_TagTable, name)

@@ -22,11 +22,22 @@ from pychron.envisage.resources import icon
 #============= local library imports  ==========================
 
 class AddMolecularWeightAction(Action):
-    name='Add/Edit Molecular Weight'
-    def perform(self,event):
+    name = 'Add/Edit Molecular Weight'
+
+    def perform(self, event):
         app = event.task.window.application
-        s=app.get_service('pychron.entry.molecular_weight_factory.MolecularWeightFactory')
+        s = app.get_service('pychron.entry.editors.molecular_weight_editor.MolecularWeightEditor')
         s.add_molecular_weight()
+
+
+class AddFluxMonitorAction(Action):
+    name = 'Add/Edit Flux Monitors'
+
+    def perform(self, event):
+        app = event.task.window.application
+        s = app.get_service('pychron.entry.editors.flux_monitor_editor.FluxMonitorEditor')
+        s.add_flux_monitor()
+
 
 class LabnumberEntryAction(Action):
     name = 'Labnumber Entry'
@@ -96,7 +107,8 @@ class MakeIrradiationTemplateAction(TaskAction):
 
 
 class ImportSampleMetadataAction(TaskAction):
-    name='Import Sample Metadata...'
-    method='import_sample_metadata'
+    name = 'Import Sample Metadata...'
+    method = 'import_sample_metadata'
+
 
 #============= EOF =============================================

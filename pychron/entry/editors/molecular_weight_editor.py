@@ -45,7 +45,7 @@ class MolecularWeight(HasTraits):
         return v
 
 
-class MolecularWeightFactory(IsotopeDatabaseManager):
+class MolecularWeightEditor(IsotopeDatabaseManager):
     def add_molecular_weight(self):
         db = self.db
         with db.session_ctx():
