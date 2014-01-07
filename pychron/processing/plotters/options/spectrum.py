@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool, Enum, Float
+from traits.api import Str, Int, Property, Bool, Enum, Float, Color
 from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring
 
 #============= standard library imports ========================
@@ -45,7 +45,10 @@ class SpectrumOptions(AgeOptions):
     integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
     step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 16, 18, 24, 28, 32)
     envelope_alpha = Float
-
+    center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
+    extend_plateau_end_caps = Bool(True)
+    plateau_line_width=Float
+    plateau_line_color=Color
     # def _get_info_group(self):
     #     g = VGroup(
     #         HGroup(Item('show_info', label='Display Info'),
@@ -85,18 +88,25 @@ class SpectrumOptions(AgeOptions):
                         'integrated_font_size',
                         'step_label_font_size',
                         'envelope_alpha',
-                        '_plateau_steps']
+                        '_plateau_steps', 'center_line_style',
+                        'extend_plateau_end_caps',
+                        'plateau_line_width', 'plateau_line_color']
 
     def _get_groups(self):
 
-        plat_grp = Group(HGroup(
-            Item('force_plateau',
-                 tooltip='Force a plateau over provided steps'),
-            UItem('plateau_steps',
-                  enabled_when='force_plateau',
-                  tooltip='Enter start and end steps. e.g A-C ')),
-                         show_border=True,
-                         label='Plateau')
+        plat_grp = Group(
+            Item('center_line_style'),
+            Item('extend_plateau_end_caps'),
+            Item('plateau_line_width'),
+            Item('plateau_line_color'),
+            HGroup(
+                Item('force_plateau',
+                     tooltip='Force a plateau over provided steps'),
+                UItem('plateau_steps',
+                      enabled_when='force_plateau',
+                      tooltip='Enter start and end steps. e.g A-C ')),
+            show_border=True,
+            label='Plateau')
 
         error_grp = Group(HGroup(Item('step_nsigma',
                                       editor=EnumEditor(values=[1, 2, 3]),

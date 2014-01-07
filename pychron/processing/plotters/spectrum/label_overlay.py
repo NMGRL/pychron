@@ -22,6 +22,44 @@ from traits.api import List, Bool, Int, on_trait_change
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+class IntegratedPlotLabel(PlotLabel):
+    relative_position=Int
+    def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
+        """ Draws the overlay layer of a component.
+
+        Overrides PlotComponent.
+        """
+        # Perform justification and compute the correct offsets for
+        # the label position
+        width, height = self._label.get_bounding_box(gc)
+        if self.hjustify == "left":
+            x_offset = 0
+        elif self.hjustify == "right":
+            x_offset = self.width - width
+        elif self.hjustify == "center":
+            x_offset = int((self.width - width) / 2)
+        #
+        if self.vjustify == "bottom":
+            y=self.component.y+5+(self.relative_position*(height+2))
+        elif self.vjustify == "top":
+            y = self.component.y2 -height-(self.relative_position*(height+2))
+
+        # elif self.vjustify == "center":
+        #     y_offset = int((self.height - height) / 2)
+        # x_offset, y_offset=0,0
+        # print self.x, self.y, self.width, self.height, self.bounds
+        with gc:
+            # XXX: Uncomment this after we fix kiva GL backend's clip stack
+            #gc.clip_to_rect(self.x, self.y, self.width, self.height)
+
+            # We have to translate to our position because the label
+            # tries to draw at (0,0).
+
+            gc.translate_ctm(self.x + x_offset, y)
+            self._label.draw(gc)
+
+        return
+
 
 class SpectrumLabelOverlay(AbstractOverlay):
     display_extract_value=Bool(True)

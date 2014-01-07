@@ -61,6 +61,7 @@ class FigurePanel(HasTraits):
         po = self.plot_options
         attr = self._index_attr
         mi, ma = -Inf, Inf
+        center=None
         if attr:
             xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
                                for i in self.figures])

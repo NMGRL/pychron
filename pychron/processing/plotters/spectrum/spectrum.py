@@ -22,7 +22,7 @@ from numpy import hstack, array
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
-from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay
+from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
     SpectrumErrorOverlay, PlateauTool, PlateauOverlay
 
@@ -84,6 +84,8 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title('Age ({})'.format(au))
 
         spec = self._add_plot(xs, ys, es, pid, po)
+        spec.line_style=self.options.center_line_style
+
         ag=self.analysis_group
         if ag.plateau_age:
             plateau_age=ag.plateau_age
@@ -93,7 +95,9 @@ class Spectrum(BaseArArFigure):
             info_txt=self._build_label_text(plateau_age.nominal_value, plateau_age.std_dev,
                                             plateau_mswd, valid_mswd, nsteps)
 
-            overlay=self._add_plateau_overlay(spec, platbounds, plateau_age, info_txt)
+            overlay=self._add_plateau_overlay(spec, platbounds, plateau_age,
+                                              ys[::2], es[::2],
+                                              info_txt)
 
             overlay.id = 'plateau'
             if overlay.id in po.overlay_positions:
@@ -120,17 +124,30 @@ class Spectrum(BaseArArFigure):
             if not fs:
                 fs=10
 
-            label=self._add_data_label(spec, text,
-                                      (25, miages),
-                                      font='modern {}'.format(fs),
-                                      label_position='bottom right',
-                                      append=False)
-            label.id='integrated'
-            if label.id in po.overlay_positions:
-                label.label_position=po.overlay_positions[label.id]
+            self._add_integrated_label(plot,
+                                           text,
+                                           font='modern {}'.format(fs),
+                                           relative_position=self.group_id)
+            # label=self._add_data_label(spec, text,
+            #                           (25, miages),
+            #                           font='modern {}'.format(fs),
+            #                           label_position='bottom right',
+            #                           append=False)
+            # label.id='integrated'
+            # if label.id in po.overlay_positions:
+            #     label.label_position=po.overlay_positions[label.id]
 
         if not po.has_ylimits():
             self._set_y_limits(miages, maages, pad='0.1')
+
+    def _add_integrated_label(self, plot, text, font='modern 10', relative_position=0):
+
+        o=IntegratedPlotLabel(component=plot,text=text,
+                              hjustify='center',vjustify='bottom',
+                             font=font,
+                             relative_position=relative_position)
+
+        plot.overlays.append(o)
 
     def _add_plot(self, xs, ys, es, plotid, po, value_scale='linear'):
         graph = self.graph
@@ -151,9 +168,13 @@ class Spectrum(BaseArArFigure):
         ds.errors = es
 
         ns = self.options.step_nsigma
+        a=self.options.envelope_alpha
+        if a>1.0:
+            a*=0.01
+
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
-                                  alpha=max(min(1.0, self.options.envelope_alpha), 0.0),
+                                  alpha=max(min(1.0, a), 0.0),
                                   nsigma=ns)
         ds.overlays.append(sp)
 
@@ -176,15 +197,20 @@ class Spectrum(BaseArArFigure):
     #===============================================================================
     # overlays
     #===============================================================================
-    def _add_plateau_overlay(self, lp, bounds, plateau_age, info_txt):
+    def _add_plateau_overlay(self, lp, bounds, plateau_age, ages,age_errors, info_txt):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
                             id='plateau',
+                            ages=ages,
+                            age_errors=age_errors,
+                            line_width=self.options.plateau_line_width,
+                            line_color=self.options.plateau_line_color,
+                            extend_end_caps=self.options.extend_plateau_end_caps,
                             label_visible=self.options.display_plateau_info,
                             label_font_size=self.options.plateau_font_size,
-                            label_offset=plateau_age.std_dev*self.options.step_nsigma,
-                            y=plateau_age.nominal_value)
+                            # label_offset=plateau_age.std_dev*self.options.step_nsigma,
+                            y=plateau_age.nominal_value*1.25)
 
         lp.overlays.append(ov)
 
