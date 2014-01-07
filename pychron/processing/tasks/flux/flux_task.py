@@ -92,8 +92,7 @@ class FluxTask(InterpolationTask):
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
         return panes + [
-            IrradiationPane(model=self.manager)
-        ]
+            IrradiationPane(model=self.manager)]
 
     def new_flux(self):
         from pychron.processing.tasks.flux.flux_editor import FluxEditor
@@ -124,19 +123,20 @@ class FluxTask(InterpolationTask):
 
     @on_trait_change('active_editor:tool:calculate_button')
     def _calculate_flux(self):
-        editor = self.active_editor
-        editor.monitor_positions = {}
+        if self.references_pane.items:
+            editor = self.active_editor
+            editor.monitor_positions = {}
 
-        with self.manager.db.session_ctx():
-            geom = self._get_geometry()
-            editor.geometry = geom
+            with self.manager.db.session_ctx():
+                geom = self._get_geometry()
+                editor.geometry = geom
 
-        if editor.tool.data_source == 'database':
-            self._calculate_flux_db(editor)
-        else:
-            self._calculate_flux_file(editor)
+            if editor.tool.data_source == 'database':
+                self._calculate_flux_db(editor)
+            else:
+                self._calculate_flux_file(editor)
 
-        editor.rebuild_graph()
+            editor.rebuild_graph()
 
     def _calculate_flux_file(self, editor):
         #p = self.open_file_dialog()
@@ -177,8 +177,11 @@ class FluxTask(InterpolationTask):
 
         # helper funcs
         def calc_j(ai):
-            ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
-            ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
+            ar40=ai.get_interference_corrected_value('Ar40')
+            ar39=ai.get_interference_corrected_value('Ar39')
+
+            # ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
+            # ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
             return calculate_flux(ar40, ar39, monitor_age)
 
         def mean_j(ans):
@@ -237,7 +240,6 @@ class FluxTask(InterpolationTask):
             geom = holder.geometry
             return [struct.unpack('>fff', geom[i:i + 12])
                     for i in xrange(0, len(geom), 12)]
-
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):

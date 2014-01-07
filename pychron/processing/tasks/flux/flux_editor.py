@@ -17,11 +17,10 @@
 #============= enthought library imports =======================
 import math
 
-from chaco.default_colormaps import color_map_name_dict
-from traits.api import HasTraits, Instance, on_trait_change, Button, Float, Str, \
+from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
     Dict, Property, Event, Int, Bool, List
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    VGroup, VSplit, EnumEditor, Item, HGroup
+    VSplit
 
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -38,40 +37,13 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
+from pychron.processing.tasks.flux.tool import FluxTool
 
 
 def make_grid(r, n):
     xi = linspace(-r, r, n)
     yi = linspace(-r, r, n)
     return meshgrid(xi, yi)
-
-
-class FluxTool(HasTraits):
-    calculate_button = Button('Calculate')
-    monitor_age = Float
-    color_map_name = Str('jet')
-    levels = Int(10, auto_set=False, enter_set=True)
-    model_kind = Str('Plane')
-
-    data_source = Str('database')
-    plot_kind = Str('Contour')
-
-    def traits_view(self):
-        contour_grp = VGroup(Item('color_map_name',
-                                  label='Color Map',
-                                  editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
-                             Item('levels'),
-                             Item('model_kind', label='Fit Model',
-                                  editor=EnumEditor(values=['Bowl', 'Plane'])),
-                             visible_when='plot_kind=="Contour"'
-        )
-
-        v = View(
-            VGroup(HGroup(UItem('calculate_button'),
-                          UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
-                          UItem('plot_kind', editor=EnumEditor(values=['Contour', 'Hole vs J']))),
-                   contour_grp))
-        return v
 
 
 #Position = namedtuple('Positon', 'position x y')
@@ -135,6 +107,7 @@ class FluxEditor(GraphEditor):
             x, y, z, ze = array([(pos.x, pos.y, pos.j, pos.jerr)
                                  for pos in self.monitor_positions.itervalues()
                                  if pos.use]).T
+
         except ValueError:
             self.debug('no monitor positions to fit')
             return
@@ -230,8 +203,9 @@ class FluxEditor(GraphEditor):
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-
-        return klass(xs=xy, ys=z, yserr=ze)
+        reg=klass(xs=xy, ys=z, yserr=ze)
+        reg.calculate()
+        return reg
 
     def _model_flux(self, reg, r):
 
