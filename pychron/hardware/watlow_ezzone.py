@@ -27,6 +27,7 @@ from traitsui.api import View, HGroup, Item, Group, VGroup, EnumEditor, RangeEdi
 #                               'Programming', 'mercurial', 'pychron_beta'))
 
 from core.core_device import CoreDevice
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
 
 from pychron.graph.plot_record import PlotRecord
@@ -214,12 +215,16 @@ class WatlowEZZone(CoreDevice):
 
     use_pid_bin = Bool(True)
     default_output=Int(1)
+    advanced_values_button=Button
+    min_output_scale=Float
+    max_output_scale=Float
 
     #def _get_use_calibrated_temperature(self):
     #    return self._use_calibrated_temperature and self.calibration is not None
 
     #def _set_use_calibrated_temperature(self, v):
     #    self._use_calibrated_temperature = v
+    # reciprocal_power=Bool(True)
 
     def _get_coeff_string(self):
         s = ''
@@ -269,11 +274,14 @@ class WatlowEZZone(CoreDevice):
             if self.program_memory_blocks:
                 self._program_memory_blocks()
 
-            p = self.read_high_power_scale()
-            if p:
-                self._max_output = p
+            # p = self.read_high_power_scale()
+            # p=self.read_out
+            # if p:
+            #     self._max_output = p
 
             self.initialization_hook()
+
+            self._load_max_output()
 
             self.setup_consumer()
 
@@ -285,6 +293,15 @@ class WatlowEZZone(CoreDevice):
         r = self.get_temp_and_power()
         if r is not None:
             return r.data[0] > 1
+
+    def _load_max_output(self):
+        oh = self.output_scale_high
+        ol = self.output_scale_low
+
+        mo = self.max_output_scale
+        mi = self.min_output_scale
+        # print oh, ol, mo, mi
+        self._max_output = (oh - ol) / (mo - mi)*100
 
     def _program_memory_blocks(self):
         """
@@ -434,6 +451,9 @@ class WatlowEZZone(CoreDevice):
     def load_additional_args(self, config):
         """
         """
+        self.set_attribute(config, 'min_output_scale', 'Output', 'scale_low', cast='float')
+        self.set_attribute(config, 'max_output_scale', 'Output', 'scale_high', cast='float')
+
         self.set_attribute(config, 'setpointmin', 'Setpoint', 'min', cast='float')
         self.set_attribute(config, 'setpointmax', 'Setpoint', 'max', cast='float')
 
@@ -547,6 +567,10 @@ class WatlowEZZone(CoreDevice):
             10=closed
             54=open
         """
+        if mode=='open':
+            self.output_scale_low=self.min_output_scale
+            self.output_scale_high=self.max_output_scale
+
         self.info('setting control mode = %s' % mode)
         self._control_mode = mode
         value = 10 if mode == 'closed' else 54
@@ -721,11 +745,12 @@ class WatlowEZZone(CoreDevice):
 
     def set_high_power_scale(self, value, output=None, **kw):
         if output is None:
-            output==self.default_output
+            output=self.default_output
 
         self.info('set high power scale {}'.format(value))
         # register = 898 if output == 1 else 928
         register = 746 if output == 1 else 866
+        # register= 898 if output ==1 else 898
         v = max(0, min(100, value))
         self.write(register, v, nregisters=2, **kw)
 
@@ -867,12 +892,16 @@ class WatlowEZZone(CoreDevice):
 
     def read_high_power_scale(self, output=None, **kw):
         if output is None:
-            output == self.default_output
-        self.info('read high power scale')
+            output = self.default_output
+        self.info('read high power scale {}'.format(output))
         register= 746 if output == 1 else 866
+        # register = 898 if output == 1 else 898
         # register = 898 if output == 1 else 928
         # r = self.read(register, nregisters=2, nbytes=9, **kw)
-        r = self.read(register, nregisters=2, **kw)
+        r = self.read(register, nregisters=2, nbytes=9, **kw)
+        if self.reciprocal_power:
+            r=100-r
+
         return r
 
     #    def read_cool_power(self,**kw):
@@ -1008,9 +1037,19 @@ class WatlowEZZone(CoreDevice):
         self.set_dead_band(v)
 
     def _set_max_output(self, v):
-        self._max_output = v
-        self.set_high_power_scale(v)
-        self.read_high_power_scale()
+        v=(self.max_output_scale-self.min_output_scale)*v/100.+self.output_scale_low
+        self.output_scale_high=v
+        # self.set_output_scale_high(v)
+        self._load_max_output()
+
+        # self._max_output = v
+        # if self.reciprocal_power:
+        #     v=100-v
+        #
+        # self.set_high_power_scale(v)
+        # p=self.read_high_power_scale()
+        # if p is not None:
+        #     self._max_output=p
 
     def _validate_max_output(self, v):
         return self._validate_number(v)
@@ -1163,7 +1202,7 @@ class WatlowEZZone(CoreDevice):
                         tooltip='Set PID parameters based on setpoint'),
                    Item('use_calibrated_temperature',
                         label='Use Calibration'),
-                   Item('coeff_string', label='Coefficients', enabled_when='use_calibrated_temperature')),
+                   Item('coeff_string',show_label=False, enabled_when='use_calibrated_temperature')),
             Item('closed_loop_setpoint',
                  style='custom',
                  label='setpoint',
@@ -1178,10 +1217,18 @@ class WatlowEZZone(CoreDevice):
                                                   low_name='olsmin', high_name='olsmax'),
                                visible_when='control_mode=="open"'))
 
-        cg = VGroup(HGroup(Item('control_mode', editor=EnumEditor(values=['closed', 'open'])),
-                           Item('max_output', label='Max Output %')),
+        tune_grp=HGroup(Item('enable_tru_tune'),
+                        Item('tru_tune_gain', label='Gain', tooltip='1:Most overshot, 6:Least overshoot'))
+        cg = VGroup(HGroup(
+            Item('control_mode', editor=EnumEditor(values=['closed', 'open'])),
+                           Item('max_output', label='Max Output %', format_str='%0.1f'),
+                           icon_button_editor('advanced_values_button','cog')),
+                    tune_grp,
                     closed_grp, open_grp)
         return cg
+
+    def _advanced_values_button_fired(self):
+        self.edit_traits(view='configure_view')
 
     def get_configure_group(self):
         """

@@ -21,7 +21,7 @@ from traits.api import Float
 
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
     nonzero, max
-from skimage.morphology.watershed import is_local_maximum
+# from skimage.morphology.watershed import is_local_maximum
 from skimage.morphology import watershed
 from skimage.draw import polygon
 from scipy import ndimage

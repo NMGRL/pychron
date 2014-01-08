@@ -66,7 +66,7 @@ class PIDTuningScanner(Scanner):
             args=tc.report_pid()
             if args:
                 ph, pc, i, d=args
-                d=(setpoint, ph, pc, i, d, max_output)
+                d=(setpoint, ph, 0, i, d, max_output)
                 dm.write_to_frame(d)
 
     def _maintain_setpoint(self, t, d, max_output):
@@ -91,7 +91,7 @@ class PIDTuningScanner(Scanner):
             wait until temp is below threshold
         """
         self._set_power_hook(0)
-        threshold=100
+        threshold=300
         tm=self.manager.get_device('temperature_monitor')
         ct=tm.get_process_value()
         while ct>threshold:
@@ -102,6 +102,7 @@ class PIDTuningScanner(Scanner):
         tc=self.manager.get_device('temperature_controller')
 
         self.info('starting autotune')
+        ott=tc.enable_tru_tune
         tc.enable_tru_tune = False
         tc.start_autotune()
 
@@ -113,7 +114,7 @@ class PIDTuningScanner(Scanner):
             elapsed = time.time() - sti
             time.sleep(max(0.0001, min(1, 1 - elapsed)))
 
-        tc.enable_tru_tune=True
+        tc.enable_tru_tune=ott
         tt=time.time()-st
         self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
 
