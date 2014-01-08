@@ -28,7 +28,7 @@ from pychron.applications.util.installer import Builder
 from pychron.core.helpers.filetools import to_bool
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.loggable import confirmation_dialog
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 
 logger = new_logger('UpdatePlugin')
@@ -95,7 +95,12 @@ class UpdatePlugin(Plugin):
 
     def _load_local_revision(self):
         repo=self._get_local_repo()
-        self.application.set_revisions(repo.head.commit,
+        try:
+            commit=repo.head.commit
+        except ValueError:
+            commit=None
+
+        self.application.set_revisions(commit,
                                        'No info. available')
 
     def _check_for_updates(self, url):
@@ -192,7 +197,7 @@ class UpdatePlugin(Plugin):
     def _get_local_repo(self):
         p = self._get_working_directory()
         if not os.path.isdir(p):
-            os.mkdir(p)
+            r_mkdir(p)
             repo = Repo.init(p)
         else:
             repo = Repo(p)

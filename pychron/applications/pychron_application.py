@@ -40,10 +40,13 @@ def get_resource_root():
 paths.set_search_paths(get_resource_root())
 
 def revision_str(rev):
-    if not isinstance(rev, str):
-        t = datetime.fromtimestamp(rev.committed_date)
-        h, b = rev.name_rev.split(' ')
-        rev = '{} ({}) {}'.format(b, h[:8], t.strftime('%m-%d-%Y'))
+    if rev is None:
+        rev =''
+    else:
+        if not isinstance(rev, str):
+            t = datetime.fromtimestamp(rev.committed_date)
+            h, b = rev.name_rev.split(' ')
+            rev = '{} ({}) {}'.format(b, h[:8], t.strftime('%m-%d-%Y'))
     return rev
 
 class PychronApplication(BaseTasksApplication):
@@ -53,7 +56,6 @@ class PychronApplication(BaseTasksApplication):
         self.about_dialog.changes=changelist
 
     def set_revisions(self, local, remote):
-
         local=revision_str(local)
         remote=revision_str(remote)
 
