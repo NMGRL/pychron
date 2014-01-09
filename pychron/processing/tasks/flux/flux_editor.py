@@ -19,6 +19,7 @@ import math
 
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
     Dict, Property, Event, Int, Bool, List
+from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
     VSplit
 
@@ -30,6 +31,7 @@ from traitsui.table_column import ObjectColumn
 from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, cos
 
 #============= local library imports  ==========================
+from pychron.envisage.browser.record_views import RecordView
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
@@ -47,6 +49,21 @@ def make_grid(r, n):
 
 
 #Position = namedtuple('Positon', 'position x y')
+class FluxMonitorRecordView(RecordView):
+    age=Float
+    age_err=Float
+    name=Str
+
+    def _create(self, dbrecord):
+        for attr in ('age','age_err','name'):
+            try:
+                setattr(self, attr, getattr(dbrecord, attr))
+            except TraitError:
+                pass
+
+    def __repr__(self):
+        return '{} {:0.3f}Ma'.format(self.name, self.age*1e-6)
+
 
 class MonitorPosition(HasTraits):
     hole_id = Int
@@ -224,7 +241,20 @@ class FluxEditor(GraphEditor):
         g.new_plot(xtitle='X', ytitle='Y')
         g.add_colorbar()
         return g
+    def _tool_default(self):
+        ft=FluxTool()
+        db=self.processor.db
+        fs=[]
+        with db.session_ctx():
+            fm= db.get_flux_monitors()
+            if fm:
+                fs=[FluxMonitorRecordView(fi) for fi in fm]
 
+        ft.monitors=fs
+        if fs:
+            ft.monitor=fs[-1]
+
+        return ft
     def traits_view(self):
         cols = [
             CheckboxColumn(name='use', label='Use'),

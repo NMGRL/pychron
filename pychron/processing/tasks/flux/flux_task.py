@@ -172,8 +172,7 @@ class FluxTask(InterpolationTask):
     def _calculate_flux_db(self, editor):
 
         monitor_age = editor.tool.monitor_age
-        if not monitor_age:
-            monitor_age = 28.02e6
+
 
         # helper funcs
         def calc_j(ai):

@@ -21,7 +21,8 @@
 
 from chaco.default_colormaps import color_map_name_dict
 from traits.has_traits import HasTraits
-from traits.trait_types import Button, Float, Str, Int, Enum
+from traits.trait_types import Button, Str, Int, Enum, Any, List
+from traits.traits import Property
 from traitsui.editors import EnumEditor
 from traitsui.group import VGroup, HGroup
 from traitsui.item import Item, UItem
@@ -31,7 +32,7 @@ from traitsui.view import View
 
 class FluxTool(HasTraits):
     calculate_button = Button('Calculate')
-    monitor_age = Float
+    monitor_age = Property(depends_on='monitor')
     color_map_name = Str('jet')
     levels = Int(10, auto_set=False, enter_set=True)
     model_kind = Str('Plane')
@@ -41,7 +42,15 @@ class FluxTool(HasTraits):
     plot_kind=Enum('Contour','Hole vs J')
 
     # def _plot_kind_default(self,):
+    monitor=Any
+    monitors=List
 
+    def _get_monitor_age(self):
+        ma = 28.02e6
+        if self.monitor:
+            ma=self.monitor.age
+
+        return ma
 
     def traits_view(self):
         contour_grp = VGroup(Item('color_map_name',
@@ -49,10 +58,11 @@ class FluxTool(HasTraits):
                                   editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
                              Item('levels'),
                              visible_when='plot_kind=="Contour"')
-
+        monitor_grp=Item('monitor', editor=EnumEditor(name='monitors'))
         v = View(
             VGroup(HGroup(UItem('calculate_button'),
-                          UItem('data_source', editor=EnumEditor(values=['database', 'file']))),
+                          UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
+                          monitor_grp),
                    HGroup(UItem('plot_kind'),
                           Item('model_kind', label='Fit Model',
                             editor=EnumEditor(values=['Bowl', 'Plane']))),
