@@ -131,7 +131,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _create_browser_pane(self, **kw):
         self.browser_pane = BrowserPane(model=self, **kw)
         self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-
+        self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
         return self.browser_pane
 
     def _ok_query(self):

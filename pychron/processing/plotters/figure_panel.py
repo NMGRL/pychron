@@ -82,14 +82,14 @@ class FigurePanel(HasTraits):
                 fig.build(plots)
                 #print fig
             fig.plot(plots)
-
+            ma,mi=max(fig.xma, ma), min(fig.xmi, mi)
             #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
 
         #meta=self.meta
         #print 'meta',meta
         #if meta:
         #    g.load_metadata(meta)
-
+        g.set_x_limits(mi, ma)
         self.graph = g
         #print self.graph
         return g.plotcontainer

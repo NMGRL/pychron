@@ -29,7 +29,7 @@ class RecordView(HasTraits):
         pass
 
 
-class SampleRecordView(RecordView):
+class LabnumberRecordView(RecordView):
 
     name = Str
     material = Str
@@ -43,11 +43,27 @@ class SampleRecordView(RecordView):
     alt_name=Str
     low_post=Date #
 
+    irradiation=Str
+    irradiation_level=Str
+    irradiation_pos=Str
+
     def _create(self, dbrecord):
-        if dbrecord.material:
-            self.material = dbrecord.material.name
-        if dbrecord.project:
-            self.project = dbrecord.project.name
+        self.labnumber = dbrecord.identifier
+        pos = dbrecord.irradiation_position
+        if pos:
+            level = pos.level
+            irrad = level.irradiation
+
+            self.irradiation_pos = str(pos.position)
+            self.irradiation_level = level.name
+            self.irradiation = irrad.name
+
+        sample=dbrecord.sample
+
+        if sample.material:
+            self.material = sample.material.name
+        if sample.project:
+            self.project = sample.project.name
 
         for attr in ('name','lat',('lon','long'),
                      'elevation','lithology','location','igsn'):
@@ -56,9 +72,11 @@ class SampleRecordView(RecordView):
             else:
                 dbattr=attr
 
-            v=getattr(dbrecord, dbattr)
+            v=getattr(sample, dbattr)
             if v is not None:
                 setattr(self, attr, v)
+
+
 
 
 class ProjectRecordView(RecordView):

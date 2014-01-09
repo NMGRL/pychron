@@ -97,7 +97,9 @@ class Ideogram(BaseArArFigure):
             xmi,xma=opt.xlow, opt.xhigh
             pad=False
 
-        graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
+        self.xmi=min(xmi, self.xmi)
+        self.xma=max(xma, self.xma)
+        # graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
 
         ref = self.analyses[0]
         age_units = ref.arar_constants.age_units
@@ -489,8 +491,8 @@ class Ideogram(BaseArArFigure):
         return bins, probs
 
     def _calculate_asymptotic_limits(self, cfunc, xmi, xma,
-                                     max_iter=100, asymptotic_width=1,
-                                     tol=5, std_tol=5):
+                                     max_iter=200, asymptotic_width=1,
+                                     tol=0.1):
         """
             cfunc: callable that returns xs,ys and accepts xmin, xmax
                     xs, ys= cfunc(x1,x2)
@@ -502,19 +504,28 @@ class Ideogram(BaseArArFigure):
         """
         rx1,rx2=None, None
         step=asymptotic_width*0.25
+        N2=N/2.0
         for i in xrange(max_iter):
             x1,x2=xmi-step*i, xma+step*i
             xs, ys=cfunc(x1,x2)
 
             bin_per_ma=N/(x2-x1)
-            aw=max(i+1, int(asymptotic_width*bin_per_ma))
+
+            aw=int(asymptotic_width * bin_per_ma)
+            if aw>N2:
+                continue
+
+            if aw<1:
+                break
 
             low = ys[:aw]
             high = ys[-aw:]
 
-            if low.mean()<tol and low.std()<std_tol:
+            tt=tol*max(ys)
+            # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
+            if low.mean()<tt:# and low.std()<std_tol:
                 rx1=x1
-            if high.mean()<tol and high.std()<std_tol:
+            if high.mean()<tt:# and high.std()<std_tol:
                 rx2=x2
             if rx1 is not None and rx2 is not None:
                 break
@@ -524,6 +535,7 @@ class Ideogram(BaseArArFigure):
         if rx2 is None:
             rx2=x2
 
+        # print 'x1,x2',rx1, rx2
         return xs, ys, rx1, rx2
 
     def _cmp_analyses(self, x):

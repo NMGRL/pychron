@@ -25,7 +25,7 @@ from datetime import timedelta, datetime
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
-from pychron.envisage.browser.record_views import ProjectRecordView, SampleRecordView
+from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView
 from pychron.envisage.browser.table_configurer import SampleTableConfigurer
 from pychron.paths import paths
 
@@ -188,7 +188,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
             lns = db.get_recent_labnumbers(lpost, ms)
 
-            sams = [SampleRecordView(li.sample, labnumber=li.identifier, low_post=lpost)
+            sams = [LabnumberRecordView(li, low_post=lpost)
                     for li in lns if li.sample]
             #ss = db.get_recent_samples(lpost, ms)
             #print ss
@@ -223,8 +223,7 @@ class BrowserMixin(ColumnSorterMixin):
                         return any([len(li.analyses) for li in sa.labnumbers])
 
                 def make_samples(sa):
-                    return [SampleRecordView(sa, labnumber=ln.identifier)
-                            for ln in sa.labnumbers]
+                    return [LabnumberRecordView(ln) for ln in sa.labnumbers]
 
                 ss = [si for s in ss if test(s)
                       for si in make_samples(s)]

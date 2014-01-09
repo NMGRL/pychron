@@ -43,7 +43,10 @@ class SampleAdapter(BrowserAdapter):
                ('Material', 'material')]
     all_columns = [('Sample', 'name'),
                    ('Identifier', 'labnumber'),
-                   ('Material', 'material')]
+                   ('Material', 'material'),
+                   ('Irradiation','irradiation'),
+                   ('Level','irradiation_level'),
+                   ('Irrad. Pos.','irradiation_pos')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 

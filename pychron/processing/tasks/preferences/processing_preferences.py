@@ -41,10 +41,7 @@ class ProcessingPreferencesPane(PreferencesPane):
             label='Recent',
             show_border=True)
 
-        easy_grp = Group(Item('use_easy'))
-        v = View(recent_grp,
-                 easy_grp,
-        )
+        v = View(recent_grp)
         return v
 
 
