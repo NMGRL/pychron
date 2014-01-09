@@ -578,21 +578,22 @@ class AutomatedRunFactory(Loggable):
                         self._flux_error != self.flux_error:
 
             v, e = self._flux, self._flux_error
-            db = self.db
-            with db.session_ctx():
-                dbln = db.get_labnumber(self.labnumber)
-                if dbln:
-                    dbpos = dbln.irradiation_position
-                    dbhist = db.add_flux_history(dbpos)
-                    dbflux = db.add_flux(float(v), float(e))
-                    dbflux.history = dbhist
-                    dbln.selected_flux_history = dbhist
-                    self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
+            self.db.save_flux(self.labnumber, v, e)
 
-                    #===============================================================================
-                    #
-                    #===============================================================================
+            # db = self.db
+            # with db.session_ctx():
+            #     dbln = db.get_labnumber(self.labnumber)
+            #     if dbln:
+            #         dbpos = dbln.irradiation_position
+            #         dbhist = db.add_flux_history(dbpos)
+            #         dbflux = db.add_flux(float(v), float(e))
+            #         dbflux.history = dbhist
+            #         dbln.selected_flux_history = dbhist
+            #         self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(self.labnumber, v, e))
 
+    #===============================================================================
+    #
+    #===============================================================================
     def _load_extraction_defaults(self, ln):
         defaults = self._load_default_file()
         if defaults:

@@ -18,10 +18,10 @@
 import math
 
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
-    Dict, Property, Event, Int, Bool, List
+    Dict, Property, Event, Int, Bool, List, cached_property, Button
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    VSplit
+    VSplit, HGroup, VGroup, spring
 
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -32,10 +32,12 @@ from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, c
 
 #============= local library imports  ==========================
 from pychron.envisage.browser.record_views import RecordView
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import partition
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
 from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
@@ -50,24 +52,29 @@ def make_grid(r, n):
 
 #Position = namedtuple('Positon', 'position x y')
 class FluxMonitorRecordView(RecordView):
-    age=Float
-    age_err=Float
-    name=Str
+    age = Float
+    age_err = Float
+    name = Str
+    sample = Str
 
     def _create(self, dbrecord):
-        for attr in ('age','age_err','name'):
+        for attr in ('age', 'age_err', 'name'):
             try:
                 setattr(self, attr, getattr(dbrecord, attr))
             except TraitError:
                 pass
 
+        if dbrecord.sample:
+            self.sample = dbrecord.sample.name
+
     def __repr__(self):
-        return '{} {:0.3f}Ma'.format(self.name, self.age*1e-6)
+        return '{} {:0.3f}Ma'.format(self.name, self.age * 1e-6)
 
 
 class MonitorPosition(HasTraits):
     hole_id = Int
     identifier = Str
+    sample = Str
     x = Float
     y = Float
     z = Float
@@ -75,7 +82,8 @@ class MonitorPosition(HasTraits):
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
-    dev=Float
+    save = Bool(False)
+    dev = Float
 
 
 class FluxEditor(GraphEditor):
@@ -85,6 +93,22 @@ class FluxEditor(GraphEditor):
     positions_dirty = Event
     positions = Property(depends_on='positions_dirty')
     geometry = List
+    suppress_update = Bool(False)
+
+    save_all_button = Button
+    save_unknowns_button = Button
+    _save_all = True
+    _save_unknowns = True
+
+    def save(self):
+        self._save_db()
+
+    def _save_db(self):
+        db = self.processor.db
+        with db.session_ctx():
+            for pp in self.monitor_positions.itervalues():
+                if pp.save:
+                    db.save_flux(pp.identifier, pp.j, pp.jerr, inform=False)
 
     def _gather_unknowns(self, refresh_data,
                          exclude='invalid',
@@ -94,30 +118,52 @@ class FluxEditor(GraphEditor):
     def _update_unknowns(self, obj, name, old, new):
         pass
 
+    @cached_property
     def _get_positions(self):
-        return sorted(self.monitor_positions.itervalues(), key=lambda x: x.hole_id)
 
-    def add_monitor_position(self, pid, identifier, x, y, j, je, dev):
+        hkey = lambda x: x.hole_id
+        if self.tool.group_positions:
+            mons, unks = map(list, partition(self.monitor_positions.itervalues(),
+                                             lambda x: x.sample == self.tool.monitor.sample))
+            return [ai for ps in (mons, unks)
+                    for ai in sorted(ps, key=hkey)]
+
+        else:
+            return sorted(self.monitor_positions.itervalues(), key=hkey)
+
+    def add_position(self, pid, identifier, sample, x, y, j, jerr, use):
         pos = MonitorPosition(identifier=identifier,
+                              sample=sample,
                               hole_id=pid,
                               x=x, y=y,
+                              j=j, jerr=jerr,
                               theta=math.atan2(x, y),
-                              j=j, jerr=je, dev=dev)
+                              use=use)
 
         self.monitor_positions[identifier] = pos
+        # self.positions_dirty = True
+
+    def set_unknown_j(self):
+        reg = self._regressor
+        for p in self.positions:
+            if not p.use:
+                j = reg.predict([(p.x, p.y)])[0]
+                oj = p.j
+                p.j = j
+                p.jerr = j
+
+                p.dev = (oj - j) / j * 100
         self.positions_dirty = True
+
+    def set_position_j(self, identifier, j, jerr, dev):
+        if identifier in self.monitor_positions:
+            mon = self.monitor_positions[identifier]
+            mon.trait_set(j=j, jerr=jerr, dev=dev)
+        else:
+            self.warning('invalid identifier {}'.format(identifier))
 
     def _get_dump_tool(self):
         pass
-
-    @on_trait_change('monitor_positions:[use, j, jerr]')
-    def _handle_monitor_pos_change(self):
-        print 'monitor pos change'
-        self.rebuild_graph()
-
-    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind]')
-    def _handle_tool_change(self):
-        self.rebuild_graph()
 
     def _rebuild_graph(self):
         try:
@@ -134,7 +180,7 @@ class FluxEditor(GraphEditor):
             r = max((max(abs(x)), max(abs(y))))
             r *= 1.25
             reg = self._regressor_factory(x, y, z, ze)
-
+            self._regressor = reg
             if self.tool.plot_kind == 'Contour':
                 self._rebuild_contour(x, y, r, reg)
             else:
@@ -220,7 +266,7 @@ class FluxEditor(GraphEditor):
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-        reg=klass(xs=xy, ys=z, yserr=ze)
+        reg = klass(xs=xy, ys=z, yserr=ze)
         reg.calculate()
         return reg
 
@@ -236,168 +282,99 @@ class FluxEditor(GraphEditor):
 
         return nz
 
+    @on_trait_change('monitor_positions:[use, j, jerr]')
+    def _handle_monitor_pos_change(self, obj, name, old, new):
+        if obj.use:
+            if not self.suppress_update:
+                print 'monitor pos change'
+                self.rebuild_graph()
+
+    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind]')
+    def _handle_tool_change(self):
+        self.rebuild_graph()
+
+    @on_trait_change('tool:group_positions')
+    def _handle_group_monitors(self):
+        self.positions_dirty = True
+
+    def _save_all_button_fired(self):
+        # if self._save_all:
+        for pp in self.positions:
+            pp.save = self._save_all
+
+        self.positions_dirty = True
+        self._save_all = not self._save_all
+
+        self._save_unknowns = True
+
+    def _save_unknowns_button_fired(self):
+        for pp in self.positions:
+            if not pp.sample == self.tool.monitor.sample:
+                pp.save = self._save_unknowns
+            else:
+                pp.save = False
+
+        self._save_unknowns = not self._save_unknowns
+        self.positions_dirty = True
+
     def _graph_default(self):
         g = ContourGraph(container_dict={'kind': 'h'})
         g.new_plot(xtitle='X', ytitle='Y')
         g.add_colorbar()
         return g
-    def _tool_default(self):
-        ft=FluxTool()
-        db=self.processor.db
-        fs=[]
-        with db.session_ctx():
-            fm= db.get_flux_monitors()
-            if fm:
-                fs=[FluxMonitorRecordView(fi) for fi in fm]
 
-        ft.monitors=fs
+    def _tool_default(self):
+        ft = FluxTool()
+        db = self.processor.db
+        fs = []
+        with db.session_ctx():
+            fm = db.get_flux_monitors()
+            if fm:
+                fs = [FluxMonitorRecordView(fi) for fi in fm]
+
+        ft.monitors = fs
         if fs:
-            ft.monitor=fs[-1]
+            ft.monitor = fs[-1]
 
         return ft
+
     def traits_view(self):
+        def column(klass=ObjectColumn, editable=False, **kw):
+            return klass(text_font='arial 10', editable=editable, **kw)
+
         cols = [
-            CheckboxColumn(name='use', label='Use'),
-            ObjectColumn(name='hole_id', label='Hole', editable=False),
-            ObjectColumn(name='identifier', label='Identifier', editable=False),
-            ObjectColumn(name='x', label='X', editable=False, format='%0.3f'),
-            ObjectColumn(name='y', label='Y', editable=False, format='%0.3f'),
-            ObjectColumn(name='theta', label=u'\u03b8', editable=False, format='%0.3f'),
-            ObjectColumn(name='j', label='J',
-                         format_func=lambda x: floatfmt(x, n=5, s=3),
-                         editable=True),
-            ObjectColumn(name='jerr',
-                         format_func=lambda x: floatfmt(x, n=6, s=3),
-                         label=u'\u00b1\u03c3', editable=True),
-            ObjectColumn(name='dev', label='dev', format_func=lambda x: floatfmt(x, n=2))
-            ]
-        editor = TableEditor(columns=cols, sortable=False, reorderable=False)
+            column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
+            column(name='hole_id', label='Hole'),
+            column(name='identifier', label='Identifier'),
+            column(name='sample', label='Sample', width=115),
+            column(name='x', label='X', format='%0.3f', width=50),
+            column(name='y', label='Y', format='%0.3f', width=50),
+            column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            column(name='j', label='J',
+                   format_func=lambda x: floatfmt(x, n=7, s=3),
+                   width=75),
+            column(name='jerr',
+                   format_func=lambda x: floatfmt(x, n=8, s=3),
+                   label=u'\u00b1\u03c3',
+                   width=75),
+            column(name='dev', label='dev',
+                   format='%0.2f',
+                   width=70),
+            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)
+        ]
+
+        editor = TableEditor(columns=cols, sortable=False,
+                             reorderable=False)
 
         v = View(VSplit(
             UItem('graph',
                   style='custom',
                   editor=InstanceEditor(), height=0.72),
-            UItem('positions', editor=editor, height=0.28)))
+            VGroup(HGroup(spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+                                                     tooltip='Toggle "save" for unknown positions'),
+                          icon_button_editor('save_all_button', 'dialog-ok-apply-5',
+                                             tooltip='Toggle "save" for all positions')),
+                   UItem('positions', editor=editor, height=0.28))))
         return v
-
-        #class FluxEditor(InterpolationEditor):
-        #    level = Any
-        #    tool = Instance(FluxTool, ())
-        #
-        #    def _dump_tool(self):
-        #        pass
-        #
-        #    def _rebuild_graph(self):
-        #        g = self.graph
-        #        if self.references:
-        #            p = g.new_plot(xtitle='Hole Position (radians)',
-        #                           ytitle='Flux',
-        #                           padding=[70, 10, 10, 60])
-        #            p.index_range.tight_bounds = False
-        #            reg2D = self._model_flux()
-        #
-        #            xs = reg2D.xs
-        #            skw = dict(type='scatter', marker='circle', marker_size=2)
-        #            scatter, _ = g.new_series(xs, reg2D.ys, yerror=reg2D.yserr,
-        #                                      **skw)
-        #            ebo = ErrorBarOverlay(component=scatter, orientation='y')
-        #            scatter.overlays.append(ebo)
-        #            self._add_inspector(scatter)
-        #
-        #            # plot fit
-        #            xs = linspace(min(xs), max(xs))
-        #
-        #            ys = reg2D.predict(xs)
-        #            g.new_series(xs, ys, color='black')
-        #
-        #            es = reg2D.predict_error(xs, ys)
-        #
-        #            g.new_series(xs, ys + es, color='red')
-        #            g.new_series(xs, ys - es, color='red')
-        #
-        #            #            # plot predicted unknowns
-        #            uxs = self._get_xs(self.unknowns)
-        #            ys = reg2D.predict(uxs)
-        #            es = reg2D.predict_error(uxs, ys)
-        #            scatter, _ = g.new_series(uxs, ys, yerror=es, **skw)
-        #
-        #            ebo = ErrorBarOverlay(component=scatter, orientation='y')
-        #            scatter.overlays.append(ebo)
-        #            self._add_inspector(scatter)
-        #
-        #    def _add_inspector(self, scatter):
-        #        from pychron.graph.tools.point_inspector import PointInspector
-        #        from pychron.graph.tools.point_inspector import PointInspectorOverlay
-        #
-        #        point_inspector = PointInspector(scatter)
-        #        pinspector_overlay = PointInspectorOverlay(component=scatter,
-        #                                                   tool=point_inspector)
-        #        #
-        #        scatter.overlays.append(pinspector_overlay)
-        #        scatter.tools.append(point_inspector)
-        #
-        #    def _model_flux(self):
-        #        fitfunc = lambda p, x: p[0] * cos(p[1] * x + p[2]) + p[3] * x + p[4]
-        #
-        #        x = self._get_xs(self._references)
-        #        #        x, y, e = zip(*[(ri.position, ri.labnumber.selected_flux_history.flux.j,
-        #        #                      ri.labnumber.selected_flux_history.flux.j_err)
-        #        #                      for ri in self._references])
-        #        y, e = self._get_flux(self._references)
-        #        reg2D = LeastSquaresRegressor(
-        #            fitfunc=fitfunc,
-        #            xs=x, ys=y, yserr=e,
-        #            initial_guess=[1, 1, 1, 1, 1],
-        #        )
-        #        reg2D.calculate()
-        #        return reg2D
-        #
-        #    def _get_flux(self, ans):
-        #        y, e = zip(*[(ri.labnumber.selected_flux_history.flux.j,
-        #                      ri.labnumber.selected_flux_history.flux.j_err)
-        #                     for ri in ans])
-        #        return y, e
-        #
-        #    def _get_xs(self, ans):
-        #        xy = self._get_xy(ans)
-        #        return [math.atan2(x, y) for x, y in xy]
-        #
-        #    def _get_xy(self, ans):
-        #xx = []
-        #if self.level:
-        #    geom = self.level.holder.geometry
-        #
-        #    positions = [
-        #        Position(i, x, y)
-        #        for i, (x, y) in enumerate([struct.unpack('>ff', geom[i:i + 8]) for i in xrange(0, len(geom), 8)])
-        #    ]
-        #    for ri in ans:
-        #        pos = next((pi for pi in positions if pi.position + 1 == ri.position), None)
-        #        if pos:
-        #        #                    print ri.position, pos.x, pos.y, math.atan2(pos.x, pos.y)
-        #            xx.append((pos.x, pos.y))
-        #return xx
-
-#
-#    @on_trait_change('unknowns[]')
-#    def _update_unknowns(self):
-#
-#
-#        '''
-#            TODO: find reference analyses using the current _unknowns
-#        '''
-#        #         self._make_unknowns()
-#        self.rebuild_graph()
-#
-#    #     def _make_unknowns(self):
-#    #         self._unknowns = self.unknowns
-#
-#    #     def make_references(self):
-#    #         self._references = self.references
-#
-#    def _graph_default(self):
-#        g = Graph()
-#        return g
-
 
 #============= EOF =============================================

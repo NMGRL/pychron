@@ -126,17 +126,42 @@ class FluxTask(InterpolationTask):
         if self.references_pane.items:
             editor = self.active_editor
             editor.monitor_positions = {}
-
-            with self.manager.db.session_ctx():
+            editor.positions_dirty=True
+            editor.suppress_update=True
+            db=self.manager.db
+            with db.session_ctx():
                 geom = self._get_geometry()
                 editor.geometry = geom
+                def add_pos(i, use=False):
+                    ref = db.get_labnumber(i.identifier)
+                    pid = ref.irradiation_position.position
+                    ident = ref.identifier
+                    sample=''
+                    if ref.sample:
+                        sample=ref.sample.name
 
-            if editor.tool.data_source == 'database':
-                self._calculate_flux_db(editor)
-            else:
-                self._calculate_flux_file(editor)
+                    cj = ref.selected_flux_history.flux.j
+                    cjerr = ref.selected_flux_history.flux.j_err
+                    x, y, r = geom[pid - 1]
 
-            editor.rebuild_graph()
+                    editor.add_position(int(pid), ident, sample, x, y, cj, cjerr, use)
+
+                for ii in self.unknowns_pane.items:
+                    add_pos(ii, use=False)
+
+                for ii in self.references_pane.items:
+                    add_pos(ii, use=True)
+
+                editor.positions_dirty=True
+
+                if editor.tool.data_source == 'database':
+                    self._calculate_flux_db(editor)
+                else:
+                    self._calculate_flux_file(editor)
+
+                editor.rebuild_graph()
+                editor.set_unknown_j()
+                editor.suppress_update = False
 
     def _calculate_flux_file(self, editor):
         #p = self.open_file_dialog()
@@ -172,7 +197,6 @@ class FluxTask(InterpolationTask):
     def _calculate_flux_db(self, editor):
 
         monitor_age = editor.tool.monitor_age
-
 
         # helper funcs
         def calc_j(ai):
@@ -217,7 +241,8 @@ class FluxTask(InterpolationTask):
                     if cj:
                         dev=(j.nominal_value-cj)/cj*100
 
-                    editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
+                    editor.set_position_j(ident, j.nominal_value, j.std_dev, dev)
+                    # editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
 
             prog.close()
 

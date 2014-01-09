@@ -21,7 +21,7 @@
 
 from chaco.default_colormaps import color_map_name_dict
 from traits.has_traits import HasTraits
-from traits.trait_types import Button, Str, Int, Enum, Any, List
+from traits.trait_types import Button, Str, Int, Enum, Any, List, Bool
 from traits.traits import Property
 from traitsui.editors import EnumEditor
 from traitsui.group import VGroup, HGroup
@@ -45,6 +45,8 @@ class FluxTool(HasTraits):
     monitor=Any
     monitors=List
 
+    group_positions=Bool(False)
+
     def _get_monitor_age(self):
         ma = 28.02e6
         if self.monitor:
@@ -63,6 +65,7 @@ class FluxTool(HasTraits):
             VGroup(HGroup(UItem('calculate_button'),
                           UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
                           monitor_grp),
+                   HGroup(Item('group_positions'), Item('object.monitor.sample', style='readonly',label='Sample')),
                    HGroup(UItem('plot_kind'),
                           Item('model_kind', label='Fit Model',
                             editor=EnumEditor(values=['Bowl', 'Plane']))),

@@ -106,6 +106,23 @@ class IsotopeAdapter(DatabaseAdapter):
     """
 
     selector_klass = IsotopeAnalysisSelector
+
+    def save_flux(self, identifier, v, e, inform=True):
+
+        with self.session_ctx():
+            dbln = self.get_labnumber(identifier)
+            if dbln:
+                dbpos = dbln.irradiation_position
+                dbhist = self.add_flux_history(dbpos)
+                dbflux = self.add_flux(float(v), float(e))
+                dbflux.history = dbhist
+                dbln.selected_flux_history = dbhist
+                msg=u'Flux for {} {} \u00b1{} saved to database'.format(identifier, v, e)
+                if inform:
+                    self.information_dialog(msg)
+                else:
+                    self.debug(msg)
+
     def interpreted_age_factory(self, hi):
         dbln = self.get_labnumber(hi.identifier)
         sample = None

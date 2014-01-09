@@ -115,6 +115,7 @@ class gen_SampleTable(Base, NameMixin):
     material_id = foreignkey('gen_MaterialTable')
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
+    monitors = relationship('flux_MonitorTable', backref='sample')
 
     igsn=Column(CHAR(9))
     location=stringcolumn(80)
