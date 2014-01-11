@@ -77,8 +77,6 @@ class LabnumberRecordView(RecordView):
                 setattr(self, attr, v)
 
 
-
-
 class ProjectRecordView(RecordView):
     name = Str
 

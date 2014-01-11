@@ -27,19 +27,19 @@ from pychron.processing.tasks.analysis_edit.interpolation_task import Interpolat
 
 
 class IntercalibrationFactorTask(InterpolationTask):
-    id = 'pychron.analysis_edit.ic_factor'
+    id = 'pychron.processing.ic_factor'
     ic_factor_editor_count = 1
     name = 'Detector Intercalibration'
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit.ic_factor',
+            id='pychron.processing.ic_factor',
             left=HSplitter(
                 PaneItem('pychron.browser'),
                 VSplitter(
-                    Tabbed(PaneItem('pychron.analysis_edit.unknowns'),
-                           PaneItem('pychron.analysis_edit.references')),
-                    PaneItem('pychron.analysis_edit.controls'),
+                    Tabbed(PaneItem('pychron.processing.unknowns'),
+                           PaneItem('pychron.processing.references')),
+                    PaneItem('pychron.processing.controls'),
                 )
             )
         )

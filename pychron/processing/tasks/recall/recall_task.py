@@ -89,7 +89,7 @@ class RecallTask(AnalysisEditTask):
             id='pychron.recall',
             left=HSplitter(Tabbed(
                 PaneItem('pychron.browser')),
-                PaneItem('pychron.analysis_edit.controls')))
+                PaneItem('pychron.processing.controls')))
 
     def create_dock_panes(self):
         self.controls_pane = ControlsPane()

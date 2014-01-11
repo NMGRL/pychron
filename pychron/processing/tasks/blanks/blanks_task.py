@@ -29,23 +29,23 @@ from pychron.processing.tasks.analysis_edit.interpolation_task import Interpolat
 
 
 class BlanksTask(InterpolationTask):
-    id = 'pychron.analysis_edit.blanks'
+    id = 'pychron.processing.blanks'
     blank_editor_count = 1
     name = 'Blanks'
     default_reference_analysis_type = 'blank_unknown'
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit.blanks',
+            id='pychron.processing.blanks',
             left=HSplitter(
                 Tabbed(
                     PaneItem('pychron.browser'),
                     PaneItem('pychron.search.query'),
                 ),
                 Tabbed(
-                    PaneItem('pychron.analysis_edit.unknowns'),
-                    PaneItem('pychron.analysis_edit.references'),
-                    PaneItem('pychron.analysis_edit.controls')
+                    PaneItem('pychron.processing.unknowns'),
+                    PaneItem('pychron.processing.references'),
+                    PaneItem('pychron.processing.controls')
                 ),
             ),
         )

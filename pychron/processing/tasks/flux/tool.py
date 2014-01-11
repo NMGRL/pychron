@@ -29,6 +29,9 @@ from traitsui.item import Item, UItem
 from traitsui.view import View
 
 
+class DummyFluxMonitor(HasTraits):
+    sample=Str
+
 
 class FluxTool(HasTraits):
     calculate_button = Button('Calculate')
@@ -46,6 +49,8 @@ class FluxTool(HasTraits):
     monitors=List
 
     group_positions=Bool(False)
+    def _monitor_default(self):
+        return DummyFluxMonitor()
 
     def _get_monitor_age(self):
         ma = 28.02e6

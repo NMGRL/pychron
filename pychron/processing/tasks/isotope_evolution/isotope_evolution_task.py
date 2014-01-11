@@ -33,7 +33,7 @@ from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
     iso_evo_editor_count = 1
-    id = 'pychron.analysis_edit.isotope_evolution',
+    id = 'pychron.processing.isotope_evolution',
     auto_select_analysis = False
     tool_bars = [SToolBar(DatabaseSaveAction(),
                           FindAssociatedAction(),
@@ -44,7 +44,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit.isotope_evolution',
+            id='pychron.processing.isotope_evolution',
             left=HSplitter(
                 Tabbed(PaneItem('pychron.browser'),
                        PaneItem('pychron.search.query')
@@ -52,8 +52,8 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                 VSplitter(
                     Tabbed(
                         PaneItem('pychron.plot_editor'),
-                        PaneItem('pychron.analysis_edit.unknowns')),
-                    PaneItem('pychron.analysis_edit.controls'))))
+                        PaneItem('pychron.processing.unknowns')),
+                    PaneItem('pychron.processing.controls'))))
 
     def create_dock_panes(self):
         self.unknowns_pane = self._create_unknowns_pane()

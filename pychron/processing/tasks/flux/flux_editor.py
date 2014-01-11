@@ -87,7 +87,7 @@ class MonitorPosition(HasTraits):
 
 
 class FluxEditor(GraphEditor):
-    tool = Instance(FluxTool, ())
+    tool = Instance(FluxTool)
     monitor_positions = Dict
 
     positions_dirty = Event
@@ -99,6 +99,16 @@ class FluxEditor(GraphEditor):
     save_unknowns_button = Button
     _save_all = True
     _save_unknowns = True
+
+    def set_save_all(self, v):
+        self._save_all=True
+        self._save_unknowns=True
+        self._save_all_button_fired()
+        self.positions_dirty=True
+
+    def set_save_unknowns(self, v):
+        self._save_unknowns=v
+        self._save_unknowns_button_fired()
 
     def save(self):
         self._save_db()

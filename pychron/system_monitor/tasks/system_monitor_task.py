@@ -197,7 +197,7 @@ class SystemMonitorTask(FigureTask):
             left=Splitter(
                 Splitter(
                     PaneItem('pychron.sys_mon.connection'),
-                    PaneItem('pychron.analysis_edit.controls'),
+                    PaneItem('pychron.processing.controls'),
                     orientation='vertical'),
                 PaneItem('pychron.sys_mon.analyses'),
                 orientation='horizontal'),

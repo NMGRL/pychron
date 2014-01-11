@@ -280,13 +280,13 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
 
 
 class UnknownsPane(HistoryTablePane):
-    id = 'pychron.analysis_edit.unknowns'
+    id = 'pychron.processing.unknowns'
     name = 'Unknowns'
 
 
 class ReferencesPane(HistoryTablePane):
     name = 'References'
-    id = 'pychron.analysis_edit.references'
+    id = 'pychron.processing.references'
 
     _add_tooltip = '''(r) Append references'''
     _replace_tooltip = ''' (Shift+r) Replace references'''
@@ -297,7 +297,7 @@ class ControlsPane(TraitsDockPane):
     #dry_run = Bool(True)
     #save_button = Button('Save')
     tool = Instance(IAnalysisEditTool)
-    id = 'pychron.analysis_edit.controls'
+    id = 'pychron.processing.controls'
     name = 'Controls'
 
     def traits_view(self):

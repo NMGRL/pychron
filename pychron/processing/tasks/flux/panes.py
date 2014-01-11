@@ -15,14 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
 from traitsui.api import View, Item, EnumEditor, VGroup
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class IrradiationPane(TraitsDockPane):
     name = 'Irradiation'
-    id = 'pychron.analysis_edit.irradiation'
+    id = 'pychron.processing.irradiation'
     def traits_view(self):
         v = View(
                VGroup(

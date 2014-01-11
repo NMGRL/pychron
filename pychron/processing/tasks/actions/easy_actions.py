@@ -25,6 +25,9 @@ from pyface.tasks.action.task_action import TaskAction
 
 
 #============= EOF ====================================
+
+
+
 class EasyFitAction(TaskAction):
     method = 'do_easy_fit'
     name = 'Easy Fit'
@@ -63,4 +66,9 @@ class EasyTablesAction(Action):
 
         e = EasyTables()
         e.make()
+
+
+class EasyFluxAction(TaskAction):
+    method='do_easy_flux'
+    name='Easy Flux'
 

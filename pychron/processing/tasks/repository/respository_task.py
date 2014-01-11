@@ -122,11 +122,11 @@ class RepositoryTask(AnalysisEditTask):
                           #                                     PaneItem('pychron.browser'),
                           #                                     Splitter(
                           #                                          Tabbed(
-                          #                                                 PaneItem('pychron.analysis_edit.unknowns'),
+                          #                                                 PaneItem('pychron.processing.unknowns'),
                           # #                                                 PaneItem('pychron.processing.figures.plotter_options')
                           #                                                 ),
                           # #                                          Tabbed(
-                          # #                                                 PaneItem('pychron.analysis_edit.controls'),
+                          # #                                                 PaneItem('pychron.processing.controls'),
                           # #                                                 PaneItem('pychron.processing.editor'),
                           # #                                                 ),
                           #                                          orientation='vertical'

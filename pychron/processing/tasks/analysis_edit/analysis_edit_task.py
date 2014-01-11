@@ -37,7 +37,7 @@ from pychron.processing.analyses.analysis import Analysis
 #============= local library imports  ==========================
 
 class AnalysisEditTask(BaseBrowserTask):
-    id = 'pychron.analysis_edit'
+    id = 'pychron.processing'
     unknowns_pane = Instance(TablePane)
     controls_pane = Instance(ControlsPane)
     plot_editor_pane = Instance(PlotEditorPane)

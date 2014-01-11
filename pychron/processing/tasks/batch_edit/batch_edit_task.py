@@ -40,7 +40,7 @@ from pychron.processing.tasks.smart_selection.panes import SmartSelection
 
 class BatchEditTask(AnalysisEditTask):
     name = 'Batch Edit'
-    id = 'pychron.analysis_edit.batch'
+    id = 'pychron.processing.batch'
     central_pane = Instance(TraitsTaskPane)
     central_pane_klass = BatchEditPane
     batch_editor = Instance(BatchEditor, ())
@@ -240,12 +240,12 @@ class BatchEditTask(AnalysisEditTask):
 
         #a=Splitter(d,orientation='vertical')
 
-        unk = PaneItem('pychron.analysis_edit.unknowns')
+        unk = PaneItem('pychron.processing.unknowns')
 
         left = Splitter(search, unk)
 
         return TaskLayout(
-            id='pychron.analysis_edit.batch',
+            id='pychron.processing.batch',
             left=left)
 
 #============= EOF =============================================

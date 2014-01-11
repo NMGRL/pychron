@@ -22,7 +22,7 @@ from pychron.processing.tasks.analysis_edit.interpolation_task import Interpolat
 
 
 class DiscrimintationTask(InterpolationTask):
-    id = 'pychron.analysis_edit.discrimination'
+    id = 'pychron.processing.discrimination'
     ic_factor_editor_count = 1
     references_adapter = ReferencesAdapter
 
@@ -68,11 +68,11 @@ class DiscrimintationTask(InterpolationTask):
 
         #def _default_layout_default(self):
         #    return TaskLayout(
-        #id='pychron.analysis_edit.ic_factor',
+        #id='pychron.processing.ic_factor',
         #left=Splitter(
-        #           PaneItem('pychron.analysis_edit.unknowns'),
-        #           PaneItem('pychron.analysis_edit.references'),
-        #           PaneItem('pychron.analysis_edit.controls'),
+        #           PaneItem('pychron.processing.unknowns'),
+        #           PaneItem('pychron.processing.references'),
+        #           PaneItem('pychron.processing.controls'),
         #           orientation='vertical'
         #           ),
         #right=Splitter(

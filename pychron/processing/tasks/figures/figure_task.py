@@ -585,12 +585,12 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit',
+            id='pychron.processing',
             left=HSplitter(
                 PaneItem('pychron.browser'),
                 Tabbed(
                     PaneItem('pychron.processing.figures.saved_figures'),
-                    PaneItem('pychron.analysis_edit.unknowns'),
+                    PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.figures.plotter_options'),
                     PaneItem('pychron.plot_editor'))))
 #============= EOF =============================================

@@ -27,7 +27,7 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction
 from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
@@ -129,27 +129,6 @@ Install to enable MS Excel export''')
 
         exts = [self._make_task_extension(default_actions)]
 
-        #                            ('easy_import', EasyImportAction, 'MenuBar/tools.menu/easy.group'),
-        #                            ('easy_figures', EasyFiguresAction, 'MenuBar/tools.menu/easy.group'),
-        #                            ('easy_tables', EasyTablesAction, 'MenuBar/tools.menu/easy.group')]),
-        #
-        # self._make_task_extension([('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-        #                            ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
-        #                           task_id='pychron.analysis_edit.isotope_evolution'),
-        # self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
-        #                           task_id='pychron.analysis_edit.blanks'),
-        # self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
-        #                           task_id='pychron.analysis_edit.discrimination'),
-        # self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
-        #                           task_id='pychron.analysis_edit.ic_factor'),
-
-        # self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-        #                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-        #                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]),
-        # self._make_task_extension([('vcs_pull', PullVCSAction, 'MenuBar/VCS')]),
-
-        # ]
-
         use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
         if use_vcs:
             exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
@@ -158,22 +137,28 @@ Install to enable MS Excel export''')
 
         use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
         if use_easy:
+            grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
             a = self._make_task_extension(
                 [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
                  ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
-                task_id='pychron.analysis_edit.isotope_evolution')
+                task_id='pychron.processing.isotope_evolution')
 
             b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
-                                          task_id='pychron.analysis_edit.blanks')
+                                          task_id='pychron.processing.blanks')
 
             c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
-                                          task_id='pychron.analysis_edit.discrimination')
+                                          task_id='pychron.processing.discrimination')
 
             d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
-                                          task_id='pychron.analysis_edit.ic_factor')
+                                          task_id='pychron.processing.ic_factor')
 
-            e = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
-            exts.extend((a, b, c, d, e))
+
+
+            e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
+                                          task_id='pychron.processing.flux')
+
+
+            exts.extend((grp, a, b, c, d, e))
 
         return exts
 
@@ -191,20 +176,20 @@ Install to enable MS Excel export''')
             ('pychron.advanced_query',
              self._advanced_query_task_factory, 'Advanced Query'),
 
-            ('pychron.analysis_edit.blanks',
+            ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
-            ('pychron.analysis_edit.flux',
+            ('pychron.processing.flux',
              self._flux_task_factory, 'Flux'),
-            ('pychron.analysis_edit.isotope_evolution',
+            ('pychron.processing.isotope_evolution',
              self._iso_evo_task_factory, 'Isotope Evolution'),
-            ('pychron.analysis_edit.ic_factor',
+            ('pychron.processing.ic_factor',
              self._ic_factor_task_factory, 'IC Factor'),
-            ('pychron.analysis_edit.discrimination',
+            ('pychron.processing.discrimination',
              self._discrimination_task_factory, 'Discrimination'),
 
-            ('pychron.analysis_edit.batch',
+            ('pychron.processing.batch',
              self._batch_edit_task_factory, 'Batch Edit'),
-            #('pychron.analysis_edit.smart_batch',
+            #('pychron.processing.smart_batch',
             # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
 
             ('pychron.processing.figures',
