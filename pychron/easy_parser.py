@@ -25,7 +25,10 @@ from pychron.paths import paths
 from pychron.loggable import Loggable
 
 
-doc_mapping = ['setup', 'import', 'iso_fits', 'blanks', 'disc','ic', 'figures', 'tables','flux']
+doc_mapping = ['setup', 'import', 'iso_fits',
+               'blanks', 'disc','ic',
+               'figures', 'tables','flux',
+               'sensitivity']
 
 class EasyParser(Loggable):
     _docs = List
@@ -39,7 +42,7 @@ class EasyParser(Loggable):
         # name = add_extension(name, '.yaml')
         # p = os.path.join(paths., name)
 
-        p=os.path.join(paths.dissertation, 'data','minnabluff','flux.yaml')
+        p=os.path.join(paths.dissertation, 'data','minnabluff','sensitivity.yaml')
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 md = yaml.load_all(fp)

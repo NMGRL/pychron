@@ -35,7 +35,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 #from pychron.processing.tasks.figures.panes import MultiSelectAnalysisBrowser
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.tasks.smart_selection.panes import SmartSelection
+# from pychron.processing.tasks.smart_selection.panes import SmartSelection
 
 
 class BatchEditTask(AnalysisEditTask):
@@ -47,7 +47,7 @@ class BatchEditTask(AnalysisEditTask):
 
     unknowns = List
 
-    smart_selection = Instance(SmartSelection, ())
+    # smart_selection = Instance(SmartSelection, ())
 
     #def create_dock_panes(self):
     #panes = AnalysisEditTask.create_dock_panes(self)
@@ -214,7 +214,7 @@ class BatchEditTask(AnalysisEditTask):
 
     @on_trait_change('batch_editor:db_sens_button')
     def _update_db_sens_button(self):
-        app = self.window.application
+        # app = self.window.application
         #entry = app.get_service('pychron.entry.modal_sensitivity')
         #if entry:
         #    print entry
@@ -229,10 +229,9 @@ class BatchEditTask(AnalysisEditTask):
             if s is not None:
                 self.batch_editor.sens_value = s.sensitivity
 
-            #===============================================================================
-            # defaults
-            #===============================================================================
-
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
         search = Tabbed(PaneItem('pychron.browser'))

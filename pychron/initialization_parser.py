@@ -63,7 +63,7 @@ class InitializationParser(XMLParser):
         # ver = '_exp'
         #ver = '_exp_uv'
         #ver= '_spec'
-        ver='_diode'
+        # ver='_diode'
         # ver = '_dash'
         #ver = '_dash_client'
         #ver = ''

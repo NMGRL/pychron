@@ -353,9 +353,11 @@ class IsotopeAdapter(DatabaseAdapter):
     #
     #        return getattr(q, f)(), tc
 
-    def get_analyses_data_range(self, mi, ma,
+    def get_analyses_date_range(self, mi, ma,
                                 analysis_type=None,
-                                mass_spectrometer=None, extract_device=None):
+                                mass_spectrometer=None,
+                                extract_device=None,
+                                exclude_invalid=True):
         ed = extract_device
         ms = mass_spectrometer
         at = analysis_type
@@ -382,6 +384,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
                               meas_AnalysisTable.analysis_timestamp <= ma))
+
+            if exclude_invalid:
+                q=q.filter(meas_AnalysisTable.tag!='invalid')
             return q.all()
 
     def add_interpreted_age_group_history(self, name, project=None):

@@ -28,12 +28,7 @@ from pychron.paths import paths
 #============= local library imports  ==========================
 
 
-
 class BatchEditPane(TraitsTaskPane):
-
-#===============================================================================
-# views
-#===============================================================================
 
     def _discrimination_group(self):
         cols = [
@@ -44,12 +39,10 @@ class BatchEditPane(TraitsTaskPane):
             ObjectColumn(name='std_dev',
                          width=75,
                          label='Error'),
-            CheckboxColumn(name='use', label='Use')
-        ]
+            CheckboxColumn(name='use', label='Use')]
         grp = VGroup(UItem('values', editor=TableEditor(columns=cols,
                                                         sortable=False, )),
-                     label='Detectors'
-        )
+                     label='Detectors')
         return grp
 
     def _blanks_group(self):
@@ -61,8 +54,7 @@ class BatchEditPane(TraitsTaskPane):
             ObjectColumn(name='std_dev',
                          width=75,
                          label='Error'),
-            CheckboxColumn(name='use', label='Use')
-        ]
+            CheckboxColumn(name='use', label='Use')]
         grp = VGroup(UItem('blanks', editor=TableEditor(columns=cols,
                                                         sortable=False)),
                      label='Blanks')
@@ -71,9 +63,7 @@ class BatchEditPane(TraitsTaskPane):
     def _sensitivity_group(self):
         im = ImageResource(
             name='database_go.png',
-            search_path=paths.icon_search_path
-
-        )
+            search_path=paths.icon_search_path)
         beditor = ButtonEditor(image=im)
 
         grp = VGroup(
@@ -81,11 +71,9 @@ class BatchEditPane(TraitsTaskPane):
                 UItem('sens_value', ),
                 UItem('db_sens_button',
                       style='custom',
-                      editor=beditor)
-            ),
+                      editor=beditor)),
 
-            label='Sensitivity'
-        )
+            label='Sensitivity')
 
         return grp
 
@@ -95,9 +83,7 @@ class BatchEditPane(TraitsTaskPane):
             VGroup(
                 self._discrimination_group(),
                 self._blanks_group(),
-                self._sensitivity_group()
-            )
-        )
+                self._sensitivity_group()))
         return v
 
         #============= EOF =============================================

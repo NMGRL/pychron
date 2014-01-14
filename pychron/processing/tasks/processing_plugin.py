@@ -27,7 +27,7 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction
 from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
@@ -110,7 +110,8 @@ Install to enable MS Excel export''')
         def easy_group():
             return Group(EasyImportAction(),
                          EasyFiguresAction(),
-                         EasyTablesAction())
+                         EasyTablesAction(),
+                         EasySensitivityAction())
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
@@ -151,8 +152,6 @@ Install to enable MS Excel export''')
 
             d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
                                           task_id='pychron.processing.ic_factor')
-
-
 
             e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.flux')
@@ -253,11 +252,6 @@ Install to enable MS Excel export''')
         from pychron.processing.tasks.batch_edit.batch_edit_task import BatchEditTask
 
         return BatchEditTask(manager=self._processor_factory())
-
-    def _smart_batch_edit_task_factory(self):
-        from pychron.processing.tasks.batch_edit.smart_batch_edit_task import SmartBatchEditTask
-
-        return SmartBatchEditTask(manager=self._processor_factory())
 
     def _figure_task_factory(self):
         from pychron.processing.tasks.figures.figure_task import FigureTask
