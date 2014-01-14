@@ -192,7 +192,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
             # strip off first three command characters
             # compare with sent command for error checking
             if re[:3] == 'R07':
-                re = make_bitarray(int(re[3:]))
+                re = make_bitarray(int(re[3:], 16))
                 input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
                 if input_class == 'TC':
                     self._input_type = TC_MAP[int(re[2:6], 2)]
