@@ -391,6 +391,13 @@ class DBAnalysis(Analysis):
     def _sync_extraction(self, meas_analysis):
         extraction = meas_analysis.extraction
         if extraction:
+            #sensitivity
+            shist=meas_analysis.selected_histories.selected_sensitivity
+            if shist:
+                sm = extraction.sensitivity_multiplier
+                s=shist.sensitivity.value
+                self.sensitivity=sm*s
+
             self.extract_device = self._get_extraction_device(extraction)
             self.extract_value = extraction.extract_value
 

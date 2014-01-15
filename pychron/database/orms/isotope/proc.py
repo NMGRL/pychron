@@ -43,6 +43,21 @@ class HistoryMixin(BaseMixin, History):
     pass
 
 
+class proc_SensitivityHistoryTable(Base, HistoryMixin):
+    sensitivity = relationship('proc_SensitivityTable', backref='history',
+                               uselist=False)
+    selected = relationship('proc_SelectedHistoriesTable',
+                            backref='selected_sensitivity',
+                            uselist=False)
+
+class proc_SensitivityTable(Base, BaseMixin):
+
+    value = Column(Float(32))
+    error = Column(Float(32))
+    history_id = foreignkey('proc_SensitivityHistoryTable')
+
+
+
 class proc_TagTable(Base):
     __tablename__ = 'proc_TagTable'
     name = Column(String(40), primary_key=True)
@@ -93,23 +108,23 @@ class proc_ArArTable(Base, BaseMixin):
 
 
 class proc_InterpretedAgeGroupHistoryTable(Base, BaseMixin):
-    project_id=foreignkey('gen_ProjectTable')
-    name=stringcolumn(80)
-    create_date=Column(DateTime, default=func.now())
+    project_id = foreignkey('gen_ProjectTable')
+    name = stringcolumn(80)
+    create_date = Column(DateTime, default=func.now())
 
-    interpreted_ages=relationship('proc_InterpretedAgeGroupSetTable', backref='group')
+    interpreted_ages = relationship('proc_InterpretedAgeGroupSetTable', backref='group')
 
 
 class proc_InterpretedAgeGroupSetTable(Base, BaseMixin):
     interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
-    group_id=foreignkey('proc_InterpretedAgeGroupHistoryTable')
+    group_id = foreignkey('proc_InterpretedAgeGroupHistoryTable')
 
 
 class proc_InterpretedAgeSetTable(Base, BaseMixin):
     interpreted_age_id = foreignkey('proc_InterpretedAgeTable')
     analysis_id = foreignkey('meas_AnalysisTable')
     forced_plateau_step = Column(Boolean)
-    plateau_step=Column(Boolean)
+    plateau_step = Column(Boolean)
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
@@ -119,21 +134,20 @@ class proc_InterpretedAgeHistoryTable(Base, BaseMixin):
     interpreted_age = relationship('proc_InterpretedAgeTable', backref='history', uselist=False)
     identifier = stringcolumn(80)
     selected = relationship('gen_LabTable',
-                           backref='selected_interpreted_age',
-                           uselist=False)
+                            backref='selected_interpreted_age',
+                            uselist=False)
 
-    group_sets=relationship('proc_InterpretedAgeGroupSetTable', backref='history')
+    group_sets = relationship('proc_InterpretedAgeGroupSetTable', backref='history')
 
 
 class proc_InterpretedAgeTable(Base, BaseMixin):
-
     history_id = foreignkey('proc_InterpretedAgeHistoryTable')
     age_kind = stringcolumn(32)
     age = Column(Float)
     age_err = Column(Float)
     wtd_kca = Column(Float)
     wtd_kca_err = Column(Float)
-    mswd=Column(Float)
+    mswd = Column(Float)
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 
@@ -239,7 +253,7 @@ class proc_FigurePrefTable(Base, BaseMixin):
     xbounds = Column(String(80))
     ybounds = Column(String(80))
     options = Column(BLOB)
-    kind=Column(String(40))
+    kind = Column(String(40))
 
 
 class proc_FigureLabTable(Base, BaseMixin):
@@ -286,9 +300,10 @@ class proc_FitTable(Base, BaseMixin):
     filter_outlier_std_devs = Column(Integer, default=1)
 
     def make_summary(self):
-        f=self.fit[:1].upper()
-        s='{}{}'.format(self.isotope.molecular_weight.name, f)
+        f = self.fit[:1].upper()
+        s = '{}{}'.format(self.isotope.molecular_weight.name, f)
         return s
+
 
 class proc_SelectedHistoriesTable(Base, BaseMixin):
     analysis_id = foreignkey('meas_AnalysisTable')
@@ -298,6 +313,7 @@ class proc_SelectedHistoriesTable(Base, BaseMixin):
     selected_fits_id = foreignkey('proc_FitHistoryTable')
     selected_arar_id = foreignkey('proc_ArArHistoryTable')
     selected_det_param_id = foreignkey('proc_DetectorParamHistoryTable')
+    selected_sensitivity_id = foreignkey('proc_SensitivityHistoryTable')
 
 
 class proc_IsotopeResultsTable(Base, BaseMixin):

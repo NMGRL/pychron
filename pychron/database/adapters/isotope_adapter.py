@@ -66,7 +66,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
-    proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable
+    proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, proc_SensitivityHistoryTable, proc_SensitivityTable
 
 # @todo: change rundate and runtime to DateTime columns
 
@@ -93,8 +93,7 @@ class InterpretedAge(HasTraits):
                                 style='readonly', show_label=False),
                            Item('age', style='readonly'),
                            Item('age_err', style='readonly'),
-                           Item('mswd', style='readonly', label='MSWD'),
-                           ))
+                           Item('mswd', style='readonly', label='MSWD')))
 
 
 class IsotopeAdapter(DatabaseAdapter):
@@ -107,6 +106,18 @@ class IsotopeAdapter(DatabaseAdapter):
 
     selector_klass = IsotopeAnalysisSelector
 
+    def set_analysis_sensitivity(self, analysis, v, e):
+        hist=proc_SensitivityHistoryTable()
+        hist.analysis_id=analysis.id
+        self._add_item(hist)
+
+        sens=proc_SensitivityTable(value=float(v),
+                                   error=float(e))
+        hist.sensitivity=sens
+        self._add_item(sens)
+
+        analysis.selected_histories.selected_sensitivity=hist
+
     def save_flux(self, identifier, v, e, inform=True):
 
         with self.session_ctx():
@@ -117,7 +128,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 dbflux = self.add_flux(float(v), float(e))
                 dbflux.history = dbhist
                 dbln.selected_flux_history = dbhist
-                msg=u'Flux for {} {} \u00b1{} saved to database'.format(identifier, v, e)
+                msg = u'Flux for {} {} \u00b1{} saved to database'.format(identifier, v, e)
                 if inform:
                     self.information_dialog(msg)
                 else:
@@ -167,9 +178,9 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_interpreted_age_groups(self, project):
         with self.session_ctx() as sess:
             q = sess.query(proc_InterpretedAgeGroupHistoryTable)
-            q=q.join(gen_ProjectTable)
+            q = q.join(gen_ProjectTable)
 
-            q=q.filter(gen_ProjectTable.name==project)
+            q = q.filter(gen_ProjectTable.name == project)
 
             try:
                 return q.all()
@@ -178,10 +189,10 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:
-            q=sess.query(proc_InterpretedAgeHistoryTable)
+            q = sess.query(proc_InterpretedAgeHistoryTable)
 
-            attr=getattr(proc_InterpretedAgeHistoryTable, key)
-            q=q.filter(attr.in_(values))
+            attr = getattr(proc_InterpretedAgeHistoryTable, key)
+            q = q.filter(attr.in_(values))
 
             try:
                 return q.all()
@@ -190,7 +201,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_project_figures(self, projects):
         if not hasattr(projects, '__iter__'):
-            projects=(projects,)
+            projects = (projects,)
 
         with self.session_ctx() as sess:
             q = sess.query(proc_FigureTable)
@@ -276,7 +287,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     #def count_sample_analyses(self, *args, **kw):
     #    return self._get_sample_analyses('count', *args, **kw)
-    def get_labnumber_analyses(self, lns, low_post=None,**kw):
+    def get_labnumber_analyses(self, lns, low_post=None, **kw):
         if not hasattr(lns, '__iter__'):
             lns = (lns, )
 
@@ -285,7 +296,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_LabTable)
             q = q.filter(gen_LabTable.identifier.in_(lns))
             if low_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp>=low_post)
+                q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
 
             return self._get_paginated_analyses(q, **kw)
 
@@ -302,8 +313,8 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.limit(limit)
         if offset:
 
-            if offset<0:
-                offset=max(0,tc+offset)
+            if offset < 0:
+                offset = max(0, tc + offset)
 
             q = q.offset(offset)
 
@@ -386,23 +397,23 @@ class IsotopeAdapter(DatabaseAdapter):
                               meas_AnalysisTable.analysis_timestamp <= ma))
 
             if exclude_invalid:
-                q=q.filter(meas_AnalysisTable.tag!='invalid')
+                q = q.filter(meas_AnalysisTable.tag != 'invalid')
             return q.all()
 
     def add_interpreted_age_group_history(self, name, project=None):
-        project=self.get_project(project)
+        project = self.get_project(project)
 
         if project:
-            obj=proc_InterpretedAgeGroupHistoryTable(name=name)
-            obj.project_id=project.id
+            obj = proc_InterpretedAgeGroupHistoryTable(name=name)
+            obj.project_id = project.id
             self._add_item(obj)
             return obj
 
-    def add_interpreted_age_group_set(self, hist,interpreted_age_id, **kw):
-        obj=proc_InterpretedAgeGroupSetTable(**kw)
+    def add_interpreted_age_group_set(self, hist, interpreted_age_id, **kw):
+        obj = proc_InterpretedAgeGroupSetTable(**kw)
 
-        obj.group=hist
-        obj.interpreted_age_id=interpreted_age_id
+        obj.group = hist
+        obj.interpreted_age_id = interpreted_age_id
         self._add_item(obj)
         return obj
 
@@ -628,9 +639,9 @@ class IsotopeAdapter(DatabaseAdapter):
         name = 'proc_InterpretedAgeHistoryTable'
         table = self.__import_proctable(name)
 
-        labnumber=self.get_labnumber(labnumber)
-        t=table(identifier=labnumber.identifier, **kw)
-        labnumber.selected_interpreted_age=t
+        labnumber = self.get_labnumber(labnumber)
+        t = table(identifier=labnumber.identifier, **kw)
+        labnumber.selected_interpreted_age = t
 
         self._add_item(t)
 
@@ -640,9 +651,9 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._add_series_item('InterpretedAge', 'interpreted_age', history, **kw)
 
     def add_interpreted_age_set(self, interpreted_age, analysis, **kw):
-        item=proc_InterpretedAgeSetTable(analysis=analysis,
-                                         interpreted_age_id=interpreted_age.id,
-                                         **kw)
+        item = proc_InterpretedAgeSetTable(analysis=analysis,
+                                           interpreted_age_id=interpreted_age.id,
+                                           **kw)
         return self._add_item(item)
         #return self._add_set('InterpretedAge', 'interpreted_age',
         #                     interpreted_age, analysis, **kw)
@@ -733,12 +744,12 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._add_unique(item, 'extraction_device', name, )
 
     def add_figure_labnumber(self, figure, labnumber):
-        labnumber=self.get_labnumber(labnumber)
+        labnumber = self.get_labnumber(labnumber)
         if labnumber:
             obj = proc_FigureLabTable()
             self._add_item(obj)
             obj.figure = figure
-            obj.labnumber=labnumber
+            obj.labnumber = labnumber
             return obj
 
     def add_figure(self, project=None, **kw):
@@ -866,7 +877,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if not dbpos:
                 dbpos = irrad_PositionTable(position=pos, **kw)
 
-                dbpos.level=level
+                dbpos.level = level
                 self._add_item(dbpos)
 
             labnumber.irradiation_position = dbpos
@@ -883,7 +894,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_irradiation_level(self, name, irradiation, holder, production, z=0):
         irradiation = self.get_irradiation(irradiation)
-        production=self.get_irradiation_production(production)
+        production = self.get_irradiation_production(production)
         if irradiation:
             irn = irradiation.name
             level = next((li for li in irradiation.levels if li.name == name), None)
@@ -897,7 +908,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
                 level.irradiation = irradiation
                 level.holder = holder
-                level.production=production
+                level.production = production
 
                 self._add_item(level)
 
@@ -1249,7 +1260,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             q = q.limit(1)
             try:
-                r=q.one()
+                r = q.one()
                 self.debug('{}-{}'.format(r.labnumber.identifier, r.aliquot))
                 return r
             except NoResultFound, e:
@@ -1427,9 +1438,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_sample(self, value, project=None, material=None, **kw):
         if 'joins' not in kw:
-            kw['joins']=[]
+            kw['joins'] = []
         if 'filters' not in kw:
-            kw['filters']=[]
+            kw['filters'] = []
 
         if project:
             kw['joins'] += [gen_ProjectTable]
@@ -1455,6 +1466,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_interpreted_age_history(self, sid):
         return self._retrieve_item(proc_InterpretedAgeHistoryTable, sid, key='id')
+
     #===============================================================================
     # ##getters multiple
     #===============================================================================
