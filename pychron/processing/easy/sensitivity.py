@@ -25,6 +25,7 @@ from pychron.processing.easy.base_easy import BaseEasy
 
 class EasySensitivity(BaseEasy):
     def _make(self, ep):
+        self._uuids=[]
         doc = ep.doc('sensitivity')
         # print doc['mass_spectrometer']
         project=doc['project']
@@ -32,6 +33,9 @@ class EasySensitivity(BaseEasy):
         for ms in doc['mass_spectrometers']:
             mi = ms['name']
             for di in ms['dates']:
+                self.debug('set sensitivity {} to {}'.format(di['start'],
+                                                             di['end'],
+                                                             ))
                 s = datetime.strptime(di['start'], '%m-%d-%Y')
                 e = datetime.strptime(di['end'], '%m-%d-%Y')
                 for k in ('furnace','co2'):
@@ -39,14 +43,23 @@ class EasySensitivity(BaseEasy):
                     self._set_device_sensitivity(s,e, mi, k, project,
                                                  value,error, prog)
         prog.close()
+        self._uuids=None
 
-    def _set_device_sensitivity(self, s, e, mi, ed, project, v,err,prog):
+    def _set_device_sensitivity(self, s, e, mi, ed, pr, v, err,prog):
+        """
+            get all analyses between s, e
+            where mass_spectrometer=mi, extract_device=ed, and project=pr
+            set sensitivity to v +/-1s e
+        """
         db=self.db
         with db.session_ctx():
             ans = db.get_analyses_date_range(s, e,
                                              mass_spectrometer=mi,
                                              extract_device=ed,
-                                             project=project)
+                                             project=pr)
+            ans=filter(lambda x: not x.uuid in self._uuids, ans)
+            self._uuids.extend([ai.uuid for ai in ans])
+            self.debug('setting {} analyses'.format(len(ans)))
             prog.increase_max(len(ans))
             for ai in ans:
                 r = make_runid(ai.labnumber.identifier,
