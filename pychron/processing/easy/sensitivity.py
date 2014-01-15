@@ -27,39 +27,35 @@ class EasySensitivity(BaseEasy):
     def _make(self, ep):
         doc = ep.doc('sensitivity')
         # print doc['mass_spectrometer']
-        # print doc['project']
-        db=self.db
+        project=doc['project']
         prog=self.open_progress(n=2)
         for ms in doc['mass_spectrometers']:
             mi = ms['name']
-            for di in ms['devices']:
-                ed = di['name']
+            for di in ms['dates']:
                 s = datetime.strptime(di['start'], '%m-%d-%Y')
                 e = datetime.strptime(di['end'], '%m-%d-%Y')
-                value=di['sensitivity']
-                error=di['sensitivity_error']
-                with db.session_ctx():
-                    ans=db.get_analyses_date_range(s,e,
-                                               mass_spectrometer=mi,
-                                               extract_device=ed)
-                    prog.increase_max(len(ans))
-                    for ai in ans:
-                        r=make_runid(ai.labnumber.identifier,
-                                     ai.aliquot, ai.step)
-                        prog.change_message('Saving sensitivity for {}'.format(r))
-                        db.set_analysis_sensitivity(ai, value, error)
-
+                for k in ('furnace','co2'):
+                    value, error=di[k],0
+                    self._set_device_sensitivity(s,e, mi, k, project,
+                                                 value,error, prog)
         prog.close()
-                # for ed in ms:
-                #     print ed, ms[ed]
 
-                # for d in doc['dates']:
-                #     s=datetime.strptime(d['start'],'%m-%d-%Y')
-                #     e=datetime.strptime(d['end'],'%m-%d-%Y')
-                #     db=self.db
-                #     with db.session_ctx():
-                # for mi in doc['mass_spectrometers']:
-                # print db.get_analysis_date_range(s,e, mas)
+    def _set_device_sensitivity(self, s, e, mi, ed, project, v,err,prog):
+        db=self.db
+        with db.session_ctx():
+            ans = db.get_analyses_date_range(s, e,
+                                             mass_spectrometer=mi,
+                                             extract_device=ed,
+                                             project=project)
+            prog.increase_max(len(ans))
+            for ai in ans:
+                r = make_runid(ai.labnumber.identifier,
+                               ai.aliquot, ai.step)
+                prog.change_message('Saving sensitivity for {}'.format(r))
+                db.set_analysis_sensitivity(ai, v, err)
+
+
+
 
 #============= EOF =============================================
 

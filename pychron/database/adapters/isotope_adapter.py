@@ -368,10 +368,12 @@ class IsotopeAdapter(DatabaseAdapter):
                                 analysis_type=None,
                                 mass_spectrometer=None,
                                 extract_device=None,
+                                project=None,
                                 exclude_invalid=True):
         ed = extract_device
         ms = mass_spectrometer
         at = analysis_type
+        pr=project
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(gen_LabTable)
@@ -385,6 +387,9 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_ExtractionDeviceTable)
             if at:
                 q = q.join(gen_AnalysisTypeTable)
+            if pr:
+                q=q.join(gen_SampleTable)
+                q=q.join(gen_ProjectTable)
 
             if ms:
                 q = q.filter(gen_MassSpectrometerTable.name == ms)
@@ -392,6 +397,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
             if at:
                 q = q.filter(gen_AnalysisTypeTable.name == at)
+            if pr:
+                q=q.filter(gen_ProjectTable.name==pr)
 
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
                               meas_AnalysisTable.analysis_timestamp <= ma))
