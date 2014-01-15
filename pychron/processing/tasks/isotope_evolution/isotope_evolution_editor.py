@@ -285,7 +285,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:
-                        if not self.comfirmation_dialog('No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
+                        if not self.confirmation_dialog('No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
                             break
                     i += 1
 
