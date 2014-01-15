@@ -16,24 +16,23 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, String, \
-     ForeignKey, BLOB, Float, Time, Boolean, DateTime
+from sqlalchemy import Column, Float, DateTime
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Table
 #============= local library imports  ==========================
 
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
-from pychron.database.orms.isotope.util import foreignkey, stringcolumn
+from pychron.database.orms.isotope.util import foreignkey
 
 from util import Base
+
 
 class flux_FluxTable(Base, BaseMixin):
     j = Column(Float)
     j_err = Column(Float)
     history_id = foreignkey('flux_HistoryTable')
+
 
 class flux_MonitorTable(Base, NameMixin):
     decay_constant = Column(Float)
@@ -42,13 +41,15 @@ class flux_MonitorTable(Base, NameMixin):
     age_err = Column(Float)
     sample_id = foreignkey('gen_SampleTable')
 
+
 class flux_HistoryTable(Base, BaseMixin):
     irradiation_position_id = foreignkey('irrad_PositionTable')
     selected = relationship('gen_LabTable',
                             backref='selected_flux_history',
-                            uselist=False
-                            )
+                            uselist=False)
     flux = relationship('flux_FluxTable',
-                      backref='history',
-                      uselist=False)
+                        backref='history',
+                        uselist=False)
+    create_date = Column(DateTime, default=func.now())
+
 #============= EOF =============================================
