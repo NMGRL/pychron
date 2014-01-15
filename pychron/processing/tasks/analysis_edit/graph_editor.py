@@ -77,13 +77,15 @@ class GraphEditor(BaseUnknownsEditor):
             with open(p, 'r') as fp:
                 try:
                     obj = pickle.load(fp)
-                    if isinstance(obj, dict):
-                        self._load_tool(obj, tool=tool)
+                    self._load_tool(obj, tool=tool)
                 except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError),e:
                     self.debug('exception loading tool {}'.format(e))
                     return
 
     def _load_tool(self, tooldict, tool):
+        if not isinstance(tooldict, dict):
+            self.warning('invalid pickled tool {}'.format(type(tooldict)))
+            return
 
         if tool is None:
             tool=self.tool
