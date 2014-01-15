@@ -131,9 +131,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])
         except ZeroDivisionError:
             return None, None
-
-            #rys = [ri.nominal_value for ri in rys]
-            #return rys, None
+        finally:
+            return None, None
 
     def _get_current_values(self, dets):
         #return None, None
