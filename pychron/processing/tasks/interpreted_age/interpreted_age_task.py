@@ -61,7 +61,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             editor.open_group(i)
 
     def save_interpreted_age_group(self):
-        if self.active_editor.save_group_id:
+        if self.active_editor.saved_group_id:
             self.active_editor.update_group()
         else:
             self.save_as_interpreted_age_group()

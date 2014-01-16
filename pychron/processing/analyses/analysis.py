@@ -394,7 +394,7 @@ class DBAnalysis(Analysis):
             #sensitivity
             shist=meas_analysis.selected_histories.selected_sensitivity
             if shist:
-                sm = extraction.sensitivity_multiplier
+                sm = extraction.sensitivity_multiplier or 1
                 s=shist.sensitivity.value
                 self.sensitivity=sm*s
 

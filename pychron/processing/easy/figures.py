@@ -91,6 +91,7 @@ class EasyFigures(BaseEasy):
         n=len(ans)
         prog = self.open_progress(n, close_at_end=False)
 
+        ans = self.make_analyses(ans, progress=prog, use_cache=False)
         #group by stepheat vs fusion
         pred = lambda x: bool(x.step)
 
@@ -144,10 +145,14 @@ class EasyFigures(BaseEasy):
 
         apred = lambda x: x.aliquot
         stepheat = sorted(stepheat, key=apred)
+        project='Minna Bluff'
+        li=li.identifier
         if stepheat:
-            self._make_editor(stepheat, 'step_heat', options, prog, False, ln_root, li)
+            self._make_editor(stepheat, 'step_heat', options, prog, False,
+                              (ln_root, li, li, project, (li,)))
         if fusion:
-            self._make_editor(fusion, 'fusion', options, prog, False, ln_root, li)
+            self._make_editor(fusion, 'fusion', options, prog, False,
+                              (ln_root, li, li, project (li,)))
 
     def _make_editor(self, ans, editor_name, options, prog, apply_grouping, save_args):
         if isinstance(editor_name, tuple):
@@ -161,7 +166,7 @@ class EasyFigures(BaseEasy):
             editor=klass(processor=self)
             editor.plotter_options_manager.set_plotter_options(options[editor_name])
 
-        unks = self.make_analyses(ans, progress=prog)
+        unks = self.make_analyses(ans, progress=prog, use_cache=False)
         editor.set_items(unks)
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
@@ -173,8 +178,7 @@ class EasyFigures(BaseEasy):
 
     #save
     def _save_step_heat(self,editor, *args):
-
-        self._save('{}_step_heat_figure', editor, *args)
+        self._save(editor, *args)
 
         if self._save_interpreted:
             ias = editor.get_interpreted_ages()
