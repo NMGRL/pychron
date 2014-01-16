@@ -18,7 +18,6 @@
 from traits.api import HasTraits, Any, on_trait_change, List, Int
 #============= standard library imports ========================
 from itertools import groupby
-from numpy.core.numeric import Inf
 
 #============= local library imports  ==========================
 from pychron.processing.analysis_graph import AnalysisStackedGraph
@@ -60,8 +59,9 @@ class FigurePanel(HasTraits):
 
         po = self.plot_options
         attr = self._index_attr
-        mi, ma = -Inf, Inf
+
         center=None
+        mi,ma=None, None
         if attr:
             xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
                                for i in self.figures])
@@ -89,6 +89,11 @@ class FigurePanel(HasTraits):
         #print 'meta',meta
         #if meta:
         #    g.load_metadata(meta)
+        # if mi==-Inf and ma==Inf:
+            # mi,ma=0, 100
+        if mi is None and ma is None:
+            mi,ma=0, 100
+
         g.set_x_limits(mi, ma)
         self.graph = g
         #print self.graph
