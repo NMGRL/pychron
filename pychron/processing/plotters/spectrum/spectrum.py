@@ -51,6 +51,7 @@ class Spectrum(BaseArArFigure):
 
         try:
             self.graph.set_x_title('Cumulative %39ArK')
+            self.graph.set_x_limits(0,100)
         except IndexError:
             pass
 
