@@ -17,11 +17,13 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
+from itertools import groupby
 import os
 #============= local library imports  ==========================
 #from pychron.experiment.easy_parser import EasyParser
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.iterfuncs import partition
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
@@ -133,7 +135,6 @@ class EasyFigures(BaseEasy):
 
         prog.change_message('Making {} for {}'.format(self._tag, ident))
 
-
         #filter invalid analyses
         ans=filter(lambda x: not x.tag=='invalid', li.analyses)
 
@@ -146,10 +147,15 @@ class EasyFigures(BaseEasy):
         apred = lambda x: x.aliquot
         stepheat = sorted(stepheat, key=apred)
         project='Minna Bluff'
-        li=li.identifier
+
+        li = li.identifier
         if stepheat:
-            self._make_editor(stepheat, 'step_heat', options, prog, False,
-                              (ln_root, li, li, project, (li,)))
+            key=lambda x: x.aliquot
+            stepheat=sorted(stepheat, key=key)
+            for aliquot, ais in groupby(stepheat, key=key):
+                name=make_runid(li, aliquot, '')
+                self._make_editor(ais, 'step_heat', options, prog, False,
+                                  (ln_root, name, name, project, (li,)))
         if fusion:
             self._make_editor(fusion, 'fusion', options, prog, False,
                               (ln_root, li, li, project (li,)))

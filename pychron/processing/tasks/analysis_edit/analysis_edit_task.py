@@ -172,7 +172,7 @@ class AnalysisEditTask(BaseBrowserTask):
         db = self.manager.db
         with db.session_ctx():
             self._save_to_db()
-        self.information_dialog('Changes saved to the database')
+        self.db_save_info()
 
     def save_pdf_figure(self):
         if self.active_editor:
@@ -484,7 +484,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
         prog.close()
         if ok:
-            self.information_dialog('Changes saved to the database')
+            self.db_save_info()
 
 #===============================================================================
 #

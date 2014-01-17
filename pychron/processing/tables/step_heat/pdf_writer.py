@@ -43,30 +43,6 @@ def extract_text(txt):
 
 
 class StepHeatPDFTableWriter(IsotopePDFTableWriter):
-    def _calculate_col_widths(self, *rows):
-        def get_width(pa):
-            if pa.frags:
-                ft = ''
-                fs = 0
-                for f in pa.frags:
-                    ft += f.text
-                    fs = max(fs, f.fontSize)
-
-                w = stringWidth(ft, fontName=f.fontName,
-                                fontSize=fs) + 6
-            else:
-                w = 8
-
-            return w
-
-        wcols = []
-        for cols in zip(*rows):
-            ws = max([get_width(ci) for ci in cols])
-            #self.debug('max {}'.format(ws))
-            #self.debug('-------------------')
-            wcols.append(ws)
-            #aaa
-        self.col_widths = wcols
 
     def _make_table(self, group,
                     double_first_line=True,
@@ -128,7 +104,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                     #         data.extend([self._make_blank_row(ai) for ai in analyses])
         auto_col_widths = True
         if auto_col_widths:
-            self._calculate_col_widths(*data[2:])
+            self._calculate_col_widths(data[2:])
 
         idx = len(data) - 1
         self._new_line(style, idx)

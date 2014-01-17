@@ -152,7 +152,12 @@ class IsotopeAdapter(DatabaseAdapter):
                 irrad = level.irradiation
                 irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
         ia = hi.interpreted_age
-        n = len(ia.sets)
+
+        if ia.age_kind=='Plateau':
+            n=len(filter(lambda x: x.plateau_step, ia.sets))
+        else:
+            n = len(ia.sets)
+
         it = InterpretedAge(create_date=hi.create_date,
                             id=hi.id,
                             age=ia.age,

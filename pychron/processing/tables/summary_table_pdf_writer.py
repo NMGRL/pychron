@@ -86,9 +86,12 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         self._new_line(style, idx)
 
         self._make_notes(data, style)
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(data[1:-1])
 
         t = self._new_table(style, data,
-                            repeatRows=3)
+                            repeatRows=2)
         return t
 
     def _make_header(self, style):
@@ -123,7 +126,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         row.add_item(value=interpreted_age.identifier)
         row.add_item(value=interpreted_age.irradiation)
         row.add_item(value=self._short_material_name(interpreted_age.material))
-        row.add_item(value=interpreted_age.kind)
+        row.add_item(value=interpreted_age.age_kind)
         row.add_item(value=interpreted_age.nanalyses)
         row.add_item(value=floatfmt(interpreted_age.mswd, n=1))
         # row.add_item(value=self._value(n=1)(interpreted_age.weighted_kca))

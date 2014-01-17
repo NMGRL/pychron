@@ -53,10 +53,11 @@ class IAGroup(HasTraits):
     id = Int
     create_date=Date
 
-class OpenGroupDialog(GroupDialog):
+class SelectionGroupDialog(GroupDialog):
     groups = List
     db = Any
     selected_groups = List
+    title=Str
 
     def get_selected_ids(self):
         return [gi.id for gi in self.selected_groups]
@@ -87,9 +88,17 @@ class OpenGroupDialog(GroupDialog):
                                        multi_select=True,
                                        editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
-                 title='Open Interpreted Age Group',
+                 title=self.title,
                  width=300)
         return v
+
+
+class OpenGroupDialog(SelectionGroupDialog):
+    title='Open Interpreted Age Group'
+
+
+class DeleteGroupDialog(SelectionGroupDialog):
+    title='Delete Interpreted Age Groups'
 
 #============= EOF =============================================
 

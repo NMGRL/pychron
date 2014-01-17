@@ -65,3 +65,22 @@ class OpenInterpretedAgeGroupAction(TaskAction):
                 task.open_interpreted_age_groups(gids)
 
 
+class MakeGroupFromFileAction(TaskAction):
+    name='Group From File'
+    method='make_group_from_file'
+    image=icon('document-open-2.png')
+
+
+class DeleteInterpretedAgeGroupAction(TaskAction):
+    name='Delete Group'
+    method='delete_group'
+    image=icon('delete.png')
+
+    def perform(self, event=None):
+        app = self.task.window.application
+        method = self._get_attr(self.object, self.method)
+        if method:
+            method()
+        else:
+            task = app.get_task('pychron.processing.interpreted_age', activate=False)
+            task.external_delete_group()
