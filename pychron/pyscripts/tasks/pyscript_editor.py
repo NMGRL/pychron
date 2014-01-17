@@ -27,8 +27,7 @@ from pyface.tasks.api import Editor
 #============= local library imports  ==========================
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
 
-SCRIPT_PKGS = dict(Bakeout='pychron.pyscripts.bakeout_pyscript',
-                   Extraction='pychron.pyscripts.extraction_line_pyscript',
+SCRIPT_PKGS = dict(Extraction='pychron.pyscripts.extraction_line_pyscript',
                    Measurement='pychron.pyscripts.measurement_pyscript')
 
 
@@ -245,13 +244,6 @@ class MeasurementEditor(PyScriptEditor):
 
 class ExtractionEditor(PyScriptEditor):
     kind = 'Extraction'
-
-    # def _editor_default(self):
-    #     return ParameterEditor(editor=self)
-
-
-class BakeoutEditor(PyScriptEditor):
-    kind = 'Bakeout'
 
     # def _editor_default(self):
     #     return ParameterEditor(editor=self)
