@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 import os
-from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int
+from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
 
@@ -71,11 +71,12 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     pdf_table_options=Instance(PDFTableOptions, ())
     saved_group_id=Int
     name = 'Untitled'
+    refresh=Event
 
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
 
-        # self.save_analysis_data_table(p)
+        self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
         w=StepHeatPDFTableWriter()
@@ -227,16 +228,19 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         with db.session_ctx():
             hist=db.get_interpreted_age_group_history(gid)
             prog=self.processor.open_progress(len(hist.interpreted_ages))
+            # self.interpreted_ages=[]
             for gs in hist.interpreted_ages:
                 # print gs.id, gs.history, gs.history.id if gs.history else ''
                 ia=db.interpreted_age_factory(gs.history)
-                ias.append(ia)
+                # self.interpreted_ages.append(ia)
                 prog.change_message('Interpreted age {}'.format(ia.identifier))
+                ias.append(ia)
+
             prog.close()
 
             self.interpreted_ages=ias
 
-            self.set_identifiers([ia.identifier for ia in ias])
+            # self.set_identifiers([ia.identifier for ia in ias])
             self.name=hist.name
             self.saved_group_id=int(hist.id)
 
@@ -303,7 +307,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         interpreted_grp = UItem('interpreted_ages',
                                 editor=TabularEditor(adapter=InterpretedAgeAdapter(),
                                                      operations=['move','delete'],
-                                                     column_clicked='column_clicked'
+                                                     column_clicked='column_clicked',
+                                                     refresh='refresh'
                                                      ))
         options_grp=UItem('pdf_table_options', style='custom')
 

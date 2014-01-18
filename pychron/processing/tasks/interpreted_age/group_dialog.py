@@ -75,6 +75,8 @@ class SelectionGroupDialog(GroupDialog):
                                       id=int(hi.id),
                                       create_date=hi.create_date))
             self.groups = gs
+            if gs:
+                self.selected_groups=gs[-1:]
 
     def traits_view(self):
         v = View(VGroup(

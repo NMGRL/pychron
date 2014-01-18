@@ -56,7 +56,7 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def make_group_from_file(self):
         if self.has_active_editor():
-            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages.yaml'
+            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_lt8.yaml'
             if not os.path.isfile(p):
                 p=self.open_file_dialog()
             if p:
@@ -122,12 +122,14 @@ class InterpretedAgeTask(BaseBrowserTask):
     def save_pdf_tables(self):
         if self.has_active_editor():
             # p=self.save_file_dialog()
-            p = '/Users/ross/Sandbox/interpreted_age.pdf'
+            # p = '/Users/ross/Sandbox/interpreted_age.pdf'
+
+            n=self.active_editor.name
+            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
             if p:
                 self.active_editor.save_pdf_tables(p)
 
             self.view_pdf(p)
-            self.view_pdf('/Users/ross/Sandbox/interpreted_age.step_heat_data.pdf')
 
     def create_dock_panes(self):
         panes = [self._create_browser_pane(analyses_defined='0')]
