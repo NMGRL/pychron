@@ -54,5 +54,9 @@ class ShareVCSAction(TaskAction):
     name='Share'
     method='share'
 
+class MigrateProjectRepositoriesAction(TaskAction):
+    name='Migrate'
+    method='migrate_project_repositories'
+
 #============= EOF =============================================
 
