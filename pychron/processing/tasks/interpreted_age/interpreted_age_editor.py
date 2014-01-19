@@ -24,12 +24,14 @@ from traitsui.api import View, EnumEditor, HGroup, spring, \
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.iterfuncs import partition
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
+from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
@@ -79,84 +81,56 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
-        w=StepHeatPDFTableWriter()
+
 
         # ans=[]
         db=self.processor.db
 
         with db.session_ctx():
-            ans = [si.analysis for ia in self.interpreted_ages
-                        for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
-                            if si.analysis.tag!='invalid']
+            ias=self.interpreted_ages[:10]
+
+            ans = [si.analysis for ia in ias
+                   for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
+                   if si.analysis.tag!='invalid']
             prog = self.processor.open_progress(len(ans), close_at_end=False)
-                    # hid = db.get_interpreted_age_history(ia.id)
-                # dbia = hid.interpreted_age
-                # ans.extend([si.analysis for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
-                #         if not si.analysis.tag == 'invalid'])
+            # hid = db.get_interpreted_age_history(ia.id)
+            # dbia = hid.interpreted_age
+            # ans.extend([si.analysis for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
+            #         if not si.analysis.tag == 'invalid'])
 
-            groups=[]
+            # groups=[]
 
-            for ia in self.interpreted_ages:
-                hid=db.get_interpreted_age_history(ia.id)
-                ans= (si.analysis for si in hid.interpreted_age.sets
-                      if not si.analysis.tag=='invalid')
-                ans=self.processor.make_analyses(ans,
-                                                 calculate_age=True, use_cache=False,
-                                                 progress=prog)
-                if ans[0].step:
-                    klass=StepHeatAnalysisGroup
-                else:
-                    klass=AnalysisGroup
+            def gfactory(klass, ia):
+                hid = db.get_interpreted_age_history(ia.id)
+                ans = (si.analysis for si in hid.interpreted_age.sets \
+                       if not si.analysis.tag == 'invalid')
+                ans = self.processor.make_analyses(ans,
+                                                   calculate_age=True, use_cache=False,
+                                                   progress=prog)
+                return klass(sample=ans[0].sample, analyses=ans)
 
-                groups.append(klass(sample=ans[0].sample,
-                                    analyses=ans))
+            #partition fusion vs stepheat
+            fusion, step_heat=partition(ias, lambda x: x.age_kind=='Weighted Mean')
+            # for ia in step_heat:
+            #     groups.append(klass(sample=ans[0].sample,
+            #                         analyses=ans))
+            shgroups=[gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
+            fgroups=[gfactory(AnalysisGroup, ia) for ia in fusion]
             prog.close()
 
-
-            # #partition stepheat vs fusion
-            # pred = lambda x: bool(x.step)
-            # ans = sorted(ans, key=pred)
-            # stepheat_ans, fusion = map(list, partition(ans, pred))
-            #
-            # #group by labnumber
-            # key = lambda x: x.labnumber
-            # stepheat_ans=sorted(stepheat_ans, key=key)
-            # groups=[]
-            # for ln, ais in groupby(stepheat_ans, key=key):
-            #     #group by aliquot
-            #     apred = lambda x: x.aliquot
-            #     ais = sorted(ais, key=apred)
-            #     for aliquot, ais in groupby(ais, key=apred):
-            #         ais=list(ais)
-            #         groups.append(StepHeatAnalysisGroup(sample=ais[0].sample,
-            #                                             analyses=ais))
-        # '''
-        #     group the analyses by labnumber
-        #     then partition into step heat and fusion
-        # '''
-        # gs=[]
-        # key = lambda x: x.labnumber
-        # ans=sorted(ans, key=key)
-        # for ln, ais in groupby(ans, key=key):
-        #     gs.append((ln, list(ais)))
-
-        # stepheat, fusion=partition(gs, lambda x: x[1][0].step!='')
-        # stepheat=list(stepheat)
-        # for ln, ais in stepheat:
-
-
-        # ans=[ai for _,ais in stepheat
-        #         for ai in ais]
-
-
-        # groups=[StepHeatAnalysisGroup(sample=ais[0].sample,
-        #                               analyses=ais) for ln, ais in stepheat]
-
         head, ext=os.path.splitext(p)
-        p='{}.step_heat_data{}'.format(head, ext)
-        w.build(p, ans, groups, title=self.get_title())
+        if shgroups:
+            w = StepHeatPDFTableWriter()
+            p='{}.step_heat_data{}'.format(head, ext)
+            w.build(p, shgroups, title=self.get_title())
+        if fgroups:
+            w=FusionPDFTableWriter()
+            p='{}.fusion_data{}'.format(head, ext)
+            w.build(p,fgroups, title=self.get_title())
 
-        # fusion=list(fusion)
+
+
+            # fusion=list(fusion)
 
     def save_summary_table(self, p):
         w = SummaryPDFTableWriter()

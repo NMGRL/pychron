@@ -66,6 +66,14 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
         data = []
         bdata = []
+        #set extract units/label before making meta rows
+        if analyses[0].extract_device=='Furnace':
+            self.extract_label='Temp'
+            self.extract_units='C'
+        else:
+            self.extract_label='Power'
+            self.extract_units='W'
+
         # make meta
         meta = self._make_meta(analyses, style,
                                include_footnotes=include_footnotes)

@@ -28,7 +28,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
 
-    def _build(self, doc, ans, groups, title):
+    def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))
         title_para = self._new_paragraph(title)
 

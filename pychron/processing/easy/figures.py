@@ -158,7 +158,7 @@ class EasyFigures(BaseEasy):
                                   (ln_root, name, name, project, (li,)))
         if fusion:
             self._make_editor(fusion, 'fusion', options, prog, False,
-                              (ln_root, li, li, project (li,)))
+                              (ln_root, li, li, project, (li,)))
 
     def _make_editor(self, ans, editor_name, options, prog, apply_grouping, save_args):
         if isinstance(editor_name, tuple):
@@ -199,17 +199,27 @@ class EasyFigures(BaseEasy):
     def _save_fusion_grouped(self, *args):
         self._save(*args)
 
-    def _save_fusion(self, *args):
-        self._save_labnumber('{}_fusion_figure', *args)
+    def _save_fusion(self,editor, *args):
+        # self._save_labnumber(editor, *args)
+        if self._save_interpreted:
+            ias = editor.get_interpreted_ages()
+            # for ia in ias:
+            #     ia.preferred_age_kind='Weighted Mean'
+                # if ia.plateau_age:
+                #     ia.preferred_age_kind = 'Plateau'
+                # else:
+                #     ia.preferred_age_kind = 'Integrated'
 
-    def _save_labnumber(self, tag, editor, root, ln):
-        pathname=tag.format(ln.identifier)
-        name=ln.identifier
-        project=ln.sample.project.name
-        lns=[ln.identifier]
+            editor.add_interpreted_ages(ias)
+
+    def _save_labnumber(self, editor, root, pathname, name, project, lns):
+        # pathname=tag.format(ln.identifier)
+        # name=ln.identifier
+        # project=ln.sample.project.name
+        # lns=[ln.identifier]
         self._save(editor, root, pathname, name, project, lns)
 
-    def _save(self,editor, root, pathname, name, project, lns):
+    def _save(self, editor, root, pathname, name, project, lns):
         p, _ = unique_path(root, pathname, extension='.pdf')
         editor.save_file(p)
         if self._save_db_figure:

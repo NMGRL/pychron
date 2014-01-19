@@ -57,6 +57,7 @@ class InterpretedAgeTask(BaseBrowserTask):
     def make_group_from_file(self):
         if self.has_active_editor():
             p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_lt8.yaml'
+            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_gt8.yaml'
             if not os.path.isfile(p):
                 p=self.open_file_dialog()
             if p:
