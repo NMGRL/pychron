@@ -18,6 +18,7 @@
 from itertools import groupby
 import os
 import subprocess
+from git.exc import GitCommandError
 import paramiko
 from traits.api import Instance, Str
 #============= standard library imports ========================
@@ -121,11 +122,14 @@ class IsotopeVCSManager(VCSManager):
     #         stdin, stdout, stderr = client.exec_command('cd {}'.format(path))
     #         return not 'No such file or directory' in stdout.readall()
 
-    def create_remote_repo(self, path, host='localhost'):
+    def create_remote_repo(self, name, host='localhost'):
         """
             create a bare repo on the server
         """
+        path=self.remote_template.format(name)[7:]
+        print path, host
         if host=='localhost':
+
             if not os.path.isdir(path):
                 os.mkdir(path)
                 subprocess.call(['git','--bare', 'init',path])
@@ -167,7 +171,12 @@ class IsotopeVCSManager(VCSManager):
                 self.create_remote(url)
 
                 self.add_readme(p)
-                self.pull()
+                try:
+                    self.pull(handled=False)
+                except GitCommandError:
+                    p=os.path.basename(p)
+                    self.create_remote_repo(p)
+
                 self.push()
 
             self.pull()
@@ -279,7 +288,7 @@ class IsotopeVCSManager(VCSManager):
             nifc[k]=nominal_value(v)
             nifc['{}_err'.format(k)]=float(std_dev(v))
 
-        d['interfence_corrections']=nifc
+        d['interference_corrections']=nifc
         d['chron_segments']=[dict(zip(('power','duration','dt'), ci)) for ci in ai.chron_segments]
         d['irradiation_time']=ai.irradiation_time
 

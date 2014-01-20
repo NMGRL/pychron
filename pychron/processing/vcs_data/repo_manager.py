@@ -57,7 +57,7 @@ class RepoManager(Loggable):
                 pass
 
     #git protocol
-    def pull(self, repo=None, branch='master', remote='origin'):
+    def pull(self, repo=None, branch='master', remote='origin', handled=True):
         """
             fetch and merge
         """
@@ -68,6 +68,8 @@ class RepoManager(Loggable):
                 repo.git.pull(remote, branch)
             except GitCommandError, e:
                 self.debug(e)
+                if not handled:
+                    raise e
 
     def push(self, repo=None, branch='master', remote='origin'):
         repo=self._get_repo(repo)
