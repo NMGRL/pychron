@@ -119,7 +119,7 @@ class PatternExecutor(Patternable):
 
         if self.pattern is not None:
             self.controller.linear_move(self.pattern.cx, self.pattern.cy)
-            self.pattern.close_ui()
+            # self.pattern.close_ui()
             self.info('Pattern {} stopped'.format(self.pattern_name))
 
             # prevent future stops (AbortJogs from massspec) from executing
