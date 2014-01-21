@@ -1214,6 +1214,7 @@ class WatlowEZZone(CoreDevice):
         open_grp = VGroup(Item('open_loop_setpoint',
                                label='setpoint',
                                editor=RangeEditor(mode='slider',
+                                                  format='%0.2f',
                                                   low_name='olsmin', high_name='olsmax'),
                                visible_when='control_mode=="open"'))
 

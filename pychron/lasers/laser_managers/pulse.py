@@ -66,7 +66,7 @@ class Pulse(HasTraits):
 
     def _duration_changed(self):
         self.wait_control.wtime = self.duration
-        self.wait_control._current_time = self.duration
+        self.wait_control.reset()
 
     def _wait_control_default(self):
         return WaitControl(low_name=0,
@@ -91,7 +91,6 @@ class Pulse(HasTraits):
         self.wait_control.start()
 
         self.pulsing = False
-
         if man is not None:
             if self.disable_at_end:
                 man.disable_laser()
