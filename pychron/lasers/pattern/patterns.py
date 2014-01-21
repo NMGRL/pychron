@@ -17,9 +17,9 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Bool, Float, Button, Instance, Range, Str, Property, \
-    Event
-from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring, VGroup
+from traits.api import Bool, Float, Button, Instance, Range, Str, Property
+from traits.has_traits import HasTraits
+from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
 from chaco.api import AbstractOverlay
 #============= standard library imports ========================
 from numpy import array, transpose
@@ -33,9 +33,7 @@ import os
 # from chaco.data_range_1d import DataRange1D
 # from chaco.linear_mapper import LinearMapper
 import math
-from pychron.lasers.pattern.pattern_generators import circular_contour_pattern, \
-    diamond_pattern
-from pychron.viewable import Viewable
+from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
 
 
 class TargetOverlay(AbstractOverlay):
@@ -83,7 +81,7 @@ class OverlapOverlay(AbstractOverlay):
         gc.restore_state()
 
 
-class Pattern(Viewable):
+class Pattern(HasTraits):
 
     graph = Instance(Graph, (), transient=True)
     cx = Float(transient=True)
@@ -109,13 +107,13 @@ class Pattern(Viewable):
 
     niterations = Range(1, 200)
 
-    canceled = Event
+    # canceled = Event
 #    def map_pt(self, x, y):
 #
 #        return self.pxpermm * x + self.image_width / 2, self.pxpermm * y + self.image_height / 2
-    def close(self, isok):
-        self.canceled = True
-        return True
+#     def close(self, isok):
+#         self.canceled = True
+#         return True
 
     @property
     def kind(self):
@@ -212,7 +210,7 @@ class Pattern(Viewable):
 #        graph.redraw()
 
     def pattern_generator_factory(self, **kw):
-        raise  NotImplementedError
+        raise NotImplementedError
 
     def replot(self):
         self.plot()
