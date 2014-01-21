@@ -129,8 +129,9 @@ class PatternExecutor(Patternable):
         return self._alive
 
     def close_pattern(self):
-        if self.pattern:
-            self.pattern.close_ui()
+        pass
+        # if self.pattern:
+        #     self.pattern.close_ui()
 
     def show_pattern(self):
         self.pattern.window_x = 50
@@ -166,8 +167,8 @@ class PatternExecutor(Patternable):
 #                time.sleep(0.1)
 
             self.controller.linear_move(pat.cx, pat.cy)
-            if self.pattern:
-                self.pattern.close_ui()
+            # if self.pattern:
+            #     self.pattern.close_ui()
             self.finish()
             self.info('finished pattern')
 
