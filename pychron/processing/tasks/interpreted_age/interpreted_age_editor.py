@@ -78,7 +78,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
 
-        self.save_analysis_data_table(p)
+        # self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
 

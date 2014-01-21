@@ -37,7 +37,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
-from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction
+from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -106,7 +106,8 @@ Install to enable MS Excel export''')
             return Group(SetInterpretedAgeAction(),
                          OpenInterpretedAgeAction(),
                          OpenInterpretedAgeGroupAction(),
-                         DeleteInterpretedAgeGroupAction())
+                         DeleteInterpretedAgeGroupAction(),
+                         MakeGroupFromFileAction())
 
         def easy_group():
             return Group(EasyImportAction(),
