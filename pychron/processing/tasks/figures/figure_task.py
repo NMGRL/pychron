@@ -531,24 +531,31 @@ class FigureTask(AnalysisEditTask):
                 blob = db_fig.preference.options
 
                 kind = db_fig.preference.kind
-                if not self.active_editor.basename == kind:
+                open_editor_needed=True
+                if self.active_editor:
+                    open_editor_needed=self.active_editor.basename!=kind
+
+                if open_editor_needed:
                     #open new editor of this kind
                     if kind=='spec':
-                        self.active_editor.close()
+                        if self.active_editor:
+                            self.active_editor.close()
                         self.new_spectrum()
                     elif kind=='ideo':
-                        self.active_editor.close()
+                        if self.active_editor:
+                            self.active_editor.close()
                         self.new_ideogram()
 
-                self.active_editor.plotter_options_manager.load_yaml(blob)
-                self.active_editor.saved_figure_id=int(sf.id)
+                if self.active_editor:
+                    self.active_editor.plotter_options_manager.load_yaml(blob)
+                    self.active_editor.saved_figure_id=int(sf.id)
 
-                self.active_editor.set_items([a.analysis for a in db_fig.analyses])
-                for ai,dbai in zip(self.active_editor.analyses, db_fig.analyses):
-                    ai.group_id=int(dbai.group or 0)
-                    ai.graph_id=int(dbai.graph or 0)
+                    self.active_editor.set_items([a.analysis for a in db_fig.analyses])
+                    for ai,dbai in zip(self.active_editor.analyses, db_fig.analyses):
+                        ai.group_id=int(dbai.group or 0)
+                        ai.graph_id=int(dbai.graph or 0)
 
-                self.active_editor.rebuild()
+                    self.active_editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
     def _options_update(self, obj, name, old, new):
