@@ -20,7 +20,6 @@ from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError
 
 #============= standard library imports ========================
-from ConfigParser import ConfigParser
 import os
 from numpy import array, argmin, abs
 #============= local library imports  ==========================
@@ -199,6 +198,29 @@ class Spectrometer(SpectrometerDevice):
     def load(self):
 
         self.load_detectors()
+
+        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        config = self.get_configuration_writer(p)
+        pd='Protection'
+        if config.has_section(pd):
+
+            self.magnet.use_beam_blank=self.config_get(config, pd, 'use_beam_blank',
+                                                       cast='boolean',default=False)
+            self.magnet.use_detector_protection=self.config_get(config, pd,
+                                                                'use_detector_protection',
+                                                                cast='boolean', default=False)
+            self.magnet.beam_blank_threshold=self.config_get(config, pd,
+                                                             'beam_blank_threshold',cast='float',default=0.1)
+            self.magnet.detector_protection_threshold=self.config_get(config, pd,
+                                                                      'detector_protection_threshold',
+                                                                      cast='boolean',default=0.1)
+            ds=self.config_get(config, pd, 'detectors')
+            if ds:
+                ds=ds.split(',')
+                self.magnet.protected_detectors = ds
+                for di in ds:
+                    self.info('Making protection available for detector "{}"'.format(di))
+
         self.magnet.load()
 
         self.debug('Detectors {}'.format(self.detectors))
@@ -348,8 +370,7 @@ class Spectrometer(SpectrometerDevice):
         if self.microcontroller:
 
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-            config = ConfigParser()
-            config.read(p)
+            config=self.get_configuration_writer(p)
 
             for section in config.sections():
                 if section == 'Default':

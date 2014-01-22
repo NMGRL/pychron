@@ -207,7 +207,7 @@ class FigureEditor(GraphEditor):
                 # else:
                 #     e.items = ans
 
-    def _update_figure(self):
+    def update_figure(self):
         sid=self.saved_figure_id
 
         db = self.processor.db
@@ -227,8 +227,6 @@ class FigureEditor(GraphEditor):
                                        status=ai.is_omitted('omit_{}'.format(self.basename)),
                                        graph=ai.graph_id,
                                        group=ai.group_id)
-
-        self.information_dialog('Changes saved to Database')
 
 #============= EOF =============================================
 # dbans = fig.analyses

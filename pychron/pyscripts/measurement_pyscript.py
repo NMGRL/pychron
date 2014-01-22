@@ -193,11 +193,6 @@ class MeasurementPyScript(ValvePyScript):
         integration_time = 1.1
 
         counts = sum([ci * integration_time + s for _h, ci, s in hops]) * ncycles
-        tt = 0
-        #for h,ci, s in hops:
-        #print ci, s, ci+s
-        #tt+=ci+s
-        #print 'tttt', tt, tt, tt*ncycles
         if calc_time:
             # counts = sum of counts for each hop
             self._estimated_duration += (counts * ESTIMATED_DURATION_FF)

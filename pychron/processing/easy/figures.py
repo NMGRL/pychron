@@ -17,11 +17,13 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
+from itertools import groupby
 import os
 #============= local library imports  ==========================
 #from pychron.experiment.easy_parser import EasyParser
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.iterfuncs import partition
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
@@ -91,6 +93,7 @@ class EasyFigures(BaseEasy):
         n=len(ans)
         prog = self.open_progress(n, close_at_end=False)
 
+        ans = self.make_analyses(ans, progress=prog, use_cache=False)
         #group by stepheat vs fusion
         pred = lambda x: bool(x.step)
 
@@ -132,7 +135,6 @@ class EasyFigures(BaseEasy):
 
         prog.change_message('Making {} for {}'.format(self._tag, ident))
 
-
         #filter invalid analyses
         ans=filter(lambda x: not x.tag=='invalid', li.analyses)
 
@@ -144,10 +146,19 @@ class EasyFigures(BaseEasy):
 
         apred = lambda x: x.aliquot
         stepheat = sorted(stepheat, key=apred)
+        project='Minna Bluff'
+
+        li = li.identifier
         if stepheat:
-            self._make_editor(stepheat, 'step_heat', options, prog, False, ln_root, li)
+            key=lambda x: x.aliquot
+            stepheat=sorted(stepheat, key=key)
+            for aliquot, ais in groupby(stepheat, key=key):
+                name=make_runid(li, aliquot, '')
+                self._make_editor(ais, 'step_heat', options, prog, False,
+                                  (ln_root, name, name, project, (li,)))
         if fusion:
-            self._make_editor(fusion, 'fusion', options, prog, False, ln_root, li)
+            self._make_editor(fusion, 'fusion', options, prog, False,
+                              (ln_root, li, li, project, (li,)))
 
     def _make_editor(self, ans, editor_name, options, prog, apply_grouping, save_args):
         if isinstance(editor_name, tuple):
@@ -161,7 +172,7 @@ class EasyFigures(BaseEasy):
             editor=klass(processor=self)
             editor.plotter_options_manager.set_plotter_options(options[editor_name])
 
-        unks = self.make_analyses(ans, progress=prog)
+        unks = self.make_analyses(ans, progress=prog, use_cache=False)
         editor.set_items(unks)
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
@@ -173,8 +184,7 @@ class EasyFigures(BaseEasy):
 
     #save
     def _save_step_heat(self,editor, *args):
-
-        self._save('{}_step_heat_figure', editor, *args)
+        self._save(editor, *args)
 
         if self._save_interpreted:
             ias = editor.get_interpreted_ages()
@@ -189,17 +199,27 @@ class EasyFigures(BaseEasy):
     def _save_fusion_grouped(self, *args):
         self._save(*args)
 
-    def _save_fusion(self, *args):
-        self._save_labnumber('{}_fusion_figure', *args)
+    def _save_fusion(self,editor, *args):
+        # self._save_labnumber(editor, *args)
+        if self._save_interpreted:
+            ias = editor.get_interpreted_ages()
+            # for ia in ias:
+            #     ia.preferred_age_kind='Weighted Mean'
+                # if ia.plateau_age:
+                #     ia.preferred_age_kind = 'Plateau'
+                # else:
+                #     ia.preferred_age_kind = 'Integrated'
 
-    def _save_labnumber(self, tag, editor, root, ln):
-        pathname=tag.format(ln.identifier)
-        name=ln.identifier
-        project=ln.sample.project.name
-        lns=[ln.identifier]
+            editor.add_interpreted_ages(ias)
+
+    def _save_labnumber(self, editor, root, pathname, name, project, lns):
+        # pathname=tag.format(ln.identifier)
+        # name=ln.identifier
+        # project=ln.sample.project.name
+        # lns=[ln.identifier]
         self._save(editor, root, pathname, name, project, lns)
 
-    def _save(self,editor, root, pathname, name, project, lns):
+    def _save(self, editor, root, pathname, name, project, lns):
         p, _ = unique_path(root, pathname, extension='.pdf')
         editor.save_file(p)
         if self._save_db_figure:

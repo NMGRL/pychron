@@ -162,8 +162,9 @@ class BaseLaserManager(Manager):
         return 'DISABLE' if self.enabled else 'ENABLE'
 
     def _get_calibrated_power(self, power, use_calibration=True, verbose=True):
-        if self.use_calibrated_power and use_calibration:
-            power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
+        if power:
+            if self.use_calibrated_power and use_calibration:
+                power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
         return power
 
     def _get_requested_power(self):

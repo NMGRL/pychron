@@ -1,0 +1,7 @@
+- entry
+    - add remote repository when adding new project
+
+- experiment
+    - clone project repositories
+        - check before execution
+        - check every run

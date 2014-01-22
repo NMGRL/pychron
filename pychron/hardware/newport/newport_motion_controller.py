@@ -255,7 +255,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 #            points = [(x + 0.001, y / 2.0), (x, y)]
 #            self.multiple_point_move(points, nominal_displacement = d)
             self.single_axis_move('y', y, **kw)
-            self._y_position = y
+            # self._y_position = y
             return
         if abs(dy) < tol:
             if 'grouped_move' in kw:
@@ -264,7 +264,7 @@ ABLE TO USE THE HARDWARE JOYSTICK
 #            points = [(x / 2.0, y + 0.001), (x, y)]
 #            self.multiple_point_move(points, nominal_displacement = d)
             self.single_axis_move('x', x, **kw)
-            self._x_position = x
+            # self._x_position = x
             return
 
         errx = self._validate(x, 'x', cur=self._x_position)
@@ -285,7 +285,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
             self._linear_move_(dict(x=x, y=y), **kw)
         else:
             self.info('displacement of move too small {} < {}'.format(d, tol))
-
 
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None, update=250,
@@ -357,9 +356,6 @@ ABLE TO USE THE HARDWARE JOYSTICK
             block = key
 
         if update:
-
-            self.debug('timer period {}'.format(update))
-#        if update and not block:
             self.timer = self.timer_factory(func=func, period=update)
         else:
             if mode == 'absolute':
@@ -374,9 +370,9 @@ ABLE TO USE THE HARDWARE JOYSTICK
         self._axis_move(cmd, block=block, **kw)
 
     def multiple_axis_move(self, axes_list, block=False):
-        '''
+        """
             block - wait for move to complete before returning control
-        '''
+        """
         self.configure_group(False)
 
         cmd = ';'.join(['{}PA{:0.3f}'.format(ax, val)

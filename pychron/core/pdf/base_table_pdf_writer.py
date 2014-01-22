@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from reportlab.lib import colors
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Table, TableStyle
 
 #============= standard library imports ========================
@@ -27,6 +28,33 @@ from pychron.core.pdf.options import PDFTableOptions
 class BasePDFTableWriter(BasePDFWriter):
     col_widths = None
     _options_klass = PDFTableOptions
+
+    def _calculate_col_widths(self, rows):
+        def get_width(pa):
+            if pa.frags:
+                ft = ''
+                fs = 0
+                for f in pa.frags:
+                    ft += f.text
+                    fs = max(fs, f.fontSize)
+
+                w = stringWidth(ft, fontName=f.fontName,
+                                fontSize=fs) + 10
+            else:
+                w = 8
+
+            return w
+
+        # print rows
+        wcols = []
+        for ri in rows:
+            for i, ci in enumerate(ri.items):
+                try:
+                    wcols[i]=max(wcols[i], get_width(ci.render()))
+                except IndexError:
+                    wcols.append(get_width(ci.render()))
+
+        self.col_widths = wcols
 
     def _get_idxs(self, rows, klass):
         return [(i, v) for i, v in enumerate(rows)

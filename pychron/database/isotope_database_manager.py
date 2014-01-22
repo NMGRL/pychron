@@ -225,12 +225,24 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
+
+                        if self.use_vcs:
+                            #clone the necessary project repositories
+                            def f(x):
+                                try:
+                                    return x.labnumber.sample.project.name
+                                except AttributeError:
+                                    pass
+                            prs=filter(lambda x: not x is None, (f(ai) for ai in no_db_ans))
+                            self.vcs.clone_project_repos(prs)
+
                         if n > 1:
                             if progress is not None:
                                 if progress.max < (n + progress.get_value()):
                                     progress.increase_max(n+2)
                             else:
                                 progress = self._open_progress(n+2)
+
                         new_ans=[]
                         for i, ai in enumerate(no_db_ans):
                             if progress:
@@ -255,13 +267,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
                         db_ans.extend(new_ans)
 
-                        self.debug('use vcs {}'.format(self.use_vcs))
-                        if self.use_vcs:
-                            if progress:
-                                progress.increase_max(len(new_ans)+1)
-                                progress.change_message('Adding analyses to vcs')
-
-                            self.vcs.add_analyses(new_ans, progress=progress)
+                        # self.debug('use vcs {}'.format(self.use_vcs))
+                        # if self.use_vcs:
+                        #     if progress:
+                        #         progress.increase_max(len(new_ans)+1)
+                        #         progress.change_message('Adding analyses to vcs')
+                        #
+                        #     self.vcs.add_analyses(new_ans, progress=progress)
 
                         self.debug('use offline database {}'.format(self.use_offline_database))
                         if self.use_offline_database:
@@ -330,18 +342,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         meas_analysis = self.db.get_analysis_uuid(rec.uuid)
 
-        klass=DBAnalysis
-        if self.use_vcs:
-            klass=VCSAnalysis
-
+        klass=DBAnalysis if not self.use_vcs else VCSAnalysis
         ai = klass(group_id=group_id,
-                        graph_id=graph_id)
+                   graph_id=graph_id)
 
+        # if not self.use_vcs:
         synced=False
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
                 ai.sync(meas_analysis, unpack=False, load_changes=load_changes)
-                ai.calculate_age(force=True)
+                ai.calculate_age(force=not self.use_vcs)
                 synced=True
 
         if not synced:

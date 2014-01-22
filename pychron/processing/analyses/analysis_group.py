@@ -146,6 +146,13 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     nsteps = Int
 
+    def _get_nanalyses(self):
+        if self.plateau_steps:
+            n= self.nsteps
+        else:
+            n=super(StepHeatAnalysisGroup, self)._get_nanalyses()
+        return n
+
     def get_plateau_mswd_tuple(self):
         return self.plateau_mswd, self.plateau_mswd_valid, self.nsteps
 

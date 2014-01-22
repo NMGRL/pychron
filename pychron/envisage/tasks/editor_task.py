@@ -33,6 +33,15 @@ class BaseEditorTask(BaseManagerTask):
                              depends_on='editor_area.active_editor')
     editor_area = Instance(IEditorAreaPane)
 
+    def db_save_info(self):
+        self.information_dialog('Changes saved to the database')
+
+    def has_active_editor(self):
+        if not self.active_editor:
+            self.information_dialog('No active tab. Please open a tab')
+
+        return self.active_editor
+
     def activate_editor(self, editor):
         if self.editor_area:
             try:

@@ -217,6 +217,7 @@ class PlotPanel(Loggable):
 
     is_baseline = Bool(False)
     is_peak_hop = Bool(False)
+    hops=List
 
     ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
@@ -309,6 +310,12 @@ class PlotPanel(Loggable):
     def _set_ncycles(self, v):
         self.info('{} set to terminate after {} ncycles'.format(self.plot_title, v))
         self._ncycles = v
+
+        if self.hops:
+            #update ncounts
+            integration_time = 1.1
+            counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
+            self.ncounts=counts
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',

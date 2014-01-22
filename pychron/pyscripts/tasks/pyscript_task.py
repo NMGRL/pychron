@@ -24,8 +24,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
-from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor, \
-    BakeoutEditor
+from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
     CommandEditorPane, ControlPane, ScriptBrowserPane
 from pychron.paths import paths
@@ -209,8 +208,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         if kind == 'Measurement':
             klass = MeasurementEditor
-        elif kind == 'Bakeout':
-            klass = BakeoutEditor
         else:
             klass = ExtractionEditor
 

@@ -58,8 +58,6 @@ class Paths():
     device_scan_root = device_scan_root = None
     device_scan_db = None
 
-    bakeout_db_root = bakeout_db_root = None
-    bakeout_db = None
     co2laser_db_root = None
     co2laser_db = None
 
@@ -104,9 +102,6 @@ class Paths():
     jog_dir = None
     pattern_dir = None
     incremental_heat_template_dir = None
-
-    bakeout_config_dir = None
-    bakeout = None
 
     block_dir = None
     heating_schedule_dir = None
@@ -195,8 +190,7 @@ class Paths():
         db_path = stable_root
         self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
         self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
-        self.bakeout_db_root = join(db_path, 'bakeoutdb')
-        self.bakeout_db = join(db_path, 'bakeouts.db')
+
         self.co2laser_db_root = join(db_path, 'co2laserdb')
         self.co2laser_db = join(db_path, 'co2.sqlite')
         self.uvlaser_db_root = join(db_path, 'uvlaserdb')
@@ -244,9 +238,6 @@ class Paths():
         self.monitors_dir = join(setup_dir, 'monitors')
         self.pattern_dir = join(setup_dir, 'patterns')
         self.incremental_heat_template_dir = join(setup_dir, 'incremental_heat_templates')
-
-        self.bakeout_config_dir = join(setup_dir, 'bakeout_configurations')
-        self.bakeout = join(device_dir, 'bakeout')
 
         self.block_dir = join(setup_dir, 'blocks')
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')

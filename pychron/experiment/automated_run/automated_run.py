@@ -427,7 +427,8 @@ class AutomatedRun(Loggable):
 
         if self.plot_panel:
             self.plot_panel.trait_set(is_baseline=is_baseline,
-                                      _ncycles=cycles)
+                                      _ncycles=cycles,
+                                      hops=hops)
 
         self.save_as_peak_hop = True
         self.is_peak_hop = True
@@ -848,8 +849,10 @@ class AutomatedRun(Loggable):
         self.extraction_script.run_identifier = self.runid
 
         if self.extraction_script.execute():
-            self._post_extraction_save()
+            #report the extraction results
+            self.extraction_script.report_results()
 
+            self._post_extraction_save()
             self.info('======== Extraction Finished ========')
             self.info_color = None
             return True
@@ -1292,11 +1295,11 @@ anaylsis_type={}
                 ex.
                 hop = 'Ar40:H1,Ar36:CDD', 10, 1
         """
-
         self.peak_hop_collector.trait_set(ncycles=ncycles,
                                           parent=self)
 
         self.peak_hop_collector.set_hops(hops)
+
         #self.peak_hop_collector.stop()
         #ncounts = sum([ci+s for _h, ci, s in hops]) * ncycles
         #ncounts = self.measurement_script.ncounts

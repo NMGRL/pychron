@@ -25,6 +25,8 @@ from pychron.lasers.laser_managers.pychron_laser_manager import PychronLaserMana
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
+
 
 class BaseLaserAction(Action):
     manager_name = None
@@ -76,6 +78,19 @@ class OpenAutoTunerAction(LocalLaserAction):
 
 
 class LaserTaskAction(TaskAction):
+    # def perform(self, event=None):
+    #     app = self.task.window.application
+    #     method = self._get_attr(self.object, self.method)
+    #     if method:
+    #         method()
+    #     else:
+    #         for i in ('pychron.fusions.co2', 'pychron.fusions.diode'):
+    #             task = app.get_task(i, activate=False)
+    #             method = self._get_attr(task, self.method)
+    #             if method:
+    #                 method()
+    #                 break
+
     _enabled = None
 
     def _task_changed(self):
@@ -113,14 +128,20 @@ class TestDegasAction(LaserTaskAction):
     method = 'test_degas'
 
 
-class OpenPatternAction(LaserTaskAction):
+class OpenPatternAction(Action):
     name = 'Open Pattern...'
-    method = 'open_pattern'
+    def perform(self, event=None):
+        pm = PatternMakerView()
+        if pm.load_pattern():
+            event.task.window.application.open_view(pm)
 
-
-class NewPatternAction(LaserTaskAction):
+class NewPatternAction(Action):
     name = 'New Pattern...'
     method = 'new_pattern'
+
+    def perform(self, event=None):
+        pm = PatternMakerView()
+        event.task.window.application.open_view(pm)
 
 
 class LaserCalibrationAction(Action):

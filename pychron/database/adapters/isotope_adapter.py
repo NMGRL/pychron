@@ -152,7 +152,12 @@ class IsotopeAdapter(DatabaseAdapter):
                 irrad = level.irradiation
                 irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
         ia = hi.interpreted_age
-        n = len(ia.sets)
+
+        if ia.age_kind=='Plateau':
+            n=len(filter(lambda x: x.plateau_step, ia.sets))
+        else:
+            n = len(ia.sets)
+
         it = InterpretedAge(create_date=hi.create_date,
                             id=hi.id,
                             age=ia.age,
@@ -199,6 +204,19 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
+    def get_project_analysis_count(self, projects):
+        if not hasattr(projects, '__iter__'):
+            projects = (projects,)
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(gen_LabTable)
+            q = q.join(gen_SampleTable)
+            q = q.join(gen_ProjectTable)
+            q = q.filter(gen_ProjectTable.name.in_(projects))
+            try:
+                return int(q.count())
+            except NoResultFound:
+                pass
     def get_project_figures(self, projects):
         if not hasattr(projects, '__iter__'):
             projects = (projects,)

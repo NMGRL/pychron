@@ -392,7 +392,8 @@ class FigureTask(AnalysisEditTask):
             update analyses
         """
         if self.active_editor:
-            self.active_editor._update_figure()
+            self.active_editor.update_figure()
+            self.db_save_info()
 
         # db=self.manager.db
         # with db.session_ctx() as sess:

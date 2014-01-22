@@ -22,9 +22,10 @@ from traits.api import List, Str, Instance, Any
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import paths
 from pychron.envisage.tasks.base_task import BaseManagerTask
-from pychron.processing.tasks.vcs_data.actions import CommitVCSAction, ShareVCSAction
+from pychron.processing.tasks.vcs_data.actions import CommitVCSAction, ShareVCSAction, MigrateProjectRepositoriesAction
 from pychron.processing.tasks.vcs_data.panes import VCSCentralPane
 from pychron.processing.vcs_data.diff import Diff
 from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
@@ -37,7 +38,8 @@ class VCSDataTask(BaseManagerTask):
 
     tool_bars = [SToolBar(
                           CommitVCSAction(),
-                          ShareVCSAction())]
+                          ShareVCSAction(),
+                          MigrateProjectRepositoriesAction())]
 
     selected_repository=Str
     repositories=List
@@ -94,6 +96,40 @@ class VCSDataTask(BaseManagerTask):
 
     def initiate_pull(self):
         pass
+
+    def migrate_project_repositories(self):
+        """
+            utitlity function for migrating projects from mysql to git
+            create an analysis file for each analysis in the project
+        """
+        from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+        src=IsotopeDatabaseManager()
+        db=src.db
+
+        with db.session_ctx():
+            projects=['Minna Bluff']
+
+            n=db.get_project_analysis_count(projects)
+            if n:
+                prog = src.open_progress(n, close_at_end=False)
+                for pr in projects:
+                    # self.vcs.set_repo(pr)
+                    pr=db.get_project(pr)
+                    ans=[ai for s in pr.samples
+                         for li in s.labnumbers
+                            for ai in li.analyses][:20]
+
+                    for ai in ans:
+                        ai=src.make_analysis(ai, progress=prog)
+                        try:
+                            self.vcs.add_analysis(ai, commit=False)
+                        except BaseException, e:
+                            rid=make_runid(ai.labnumber, ai.aliquot, ai.step)
+                            self.debug('Failed making {}'.format(rid, e))
+                    self.vcs.commit('{} - project migration'.format(pr.name))
+                    self.vcs.push()
+                prog.close()
+                self.information_dialog('Migration completed')
 
     def share(self):
         path = '/Users/ross/Sandbox/git/vcs_data.git'

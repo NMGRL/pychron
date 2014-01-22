@@ -129,53 +129,15 @@ class PychronLaserManager(BaseLaserManager):
     # patterning
     #===============================================================================
     def execute_pattern(self, name=None, block=False):
-        '''
-            name is either a name of a file 
+        """
+            name is either a name of a file
             of a pickled pattern obj
-        '''
+        """
         if name:
             return self._execute_pattern(name)
-            #        pm = self.pattern_executor
-            #        pattern = pm.load_pattern(name)
-            #        if pattern:
-            #            t = Thread(target=self._execute_pattern,
-            #                       args=(pattern,))
-            #            t.start()
-            #            if block:
-            #                t.join()
-            #
-            #            return True
 
     def _execute_pattern(self, pat):
-        '''
-        '''
-        #        pat = pattern.pat
         self.info('executing pattern {}'.format(pat))
-        #        pm = self.pattern_executor
-
-        #        pm.start()
-
-        # set the current position
-        #        xyz = self.get_position()
-        #        if xyz:
-        #            pm.set_current_position(*xyz)
-        #        '''
-        #            look for pattern pat in local pattern dir
-        #            if exists send the pickled pattern string instead of
-        #            the pat
-        #        '''
-        #         if pm.is_local_pattern(pat):
-        #             txt = pickle.dumps(pattern)
-        #             msg = 'DoPattern <local pickle> {}'.format(pat)
-        #        else:
-        #            msg = 'Do Pattern {}'.format(pat)
-
-
-        #        '''
-        #            display an alternate message
-        #            if is local pattern then txt is a binary str
-        #            log msg instead of cmd
-        #        '''
 
         if not pat.endswith('.lp'):
             pat = '{}.lp'.format(pat)
@@ -188,24 +150,21 @@ class PychronLaserManager(BaseLaserManager):
 
         cmd = 'DoPattern {}'.format(pat)
         self._ask(cmd, verbose=False)
-        #        self._communicator.info(msg)
 
         time.sleep(0.5)
 
-        if not self._block('IsPatterning',
-                           period=1
-                           #                           position_callback=pm.set_current_position
-        ):
+        if not self._block('IsPatterning', period=1):
             cmd = 'AbortPattern'
             self._ask(cmd)
 
-            #        pm.finish()
+    def stop_pattern(self):
+        self._ask('AbortPattern')
 
     @on_trait_change('pattern_executor:pattern:canceled')
     def pattern_canceled(self):
-        '''
+        """
             this patterning window was closed so cancel the blocking loop
-        '''
+        """
         self._cancel_blocking = True
 
     def get_pattern_names(self):
@@ -223,20 +182,30 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     # pyscript commands
     #===============================================================================
+    def get_achieved_output(self):
+        rv=0
+        v=self._ask('GetAchievedOutput')
+        if v is not None:
+            try:
+                rv=float(v)
+            except ValueError:
+                pass
+        return rv
+
     def do_machine_vision_degas(self, lumens, duration):
         if lumens and duration:
             self.info('Doing machine vision degas. lumens={}'.format(lumens))
-            self.ask('MachineVisionDegas {} {}'.format(lumens, duration))
+            self._ask('MachineVisionDegas {} {}'.format(lumens, duration))
         else:
             self.debug('lumens and duration not set {}, {}'.format(lumens, duration))
 
     def start_video_recording(self, name):
         self.info('Start Video Recording')
-        self.ask('StartVideoRecording {}'.format(name))
+        self._ask('StartVideoRecording {}'.format(name))
 
     def stop_video_recording(self):
         self.info('Stop Video Recording')
-        self.ask('StopVideoRecording')
+        self._ask('StopVideoRecording')
 
     def take_snapshot(self, name):
         self.info('Take snapshot')

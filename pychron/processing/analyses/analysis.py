@@ -54,7 +54,7 @@ class Analysis(ArArAge):
 
     aliquot_step_str = Str
 
-    is_plateau_step=False
+    is_plateau_step = False
     temp_status = Int
     value_filter_omit = Bool
     table_filter_omit = Bool
@@ -162,8 +162,8 @@ class DBAnalysis(Analysis):
     status_text = Property
     age_string = Property
 
-    blank_changes=List
-    fit_changes=List
+    blank_changes = List
+    fit_changes = List
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -307,8 +307,8 @@ class DBAnalysis(Analysis):
 
     def _sync_changes(self, meas_analysis):
 
-        self.blank_changes=[BlankChange(bi) for bi in meas_analysis.blanks_histories]
-        self.fit_changes=[FitChange(fi) for fi in meas_analysis.fit_histories]
+        self.blank_changes = [BlankChange(bi) for bi in meas_analysis.blanks_histories]
+        self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
@@ -392,11 +392,11 @@ class DBAnalysis(Analysis):
         extraction = meas_analysis.extraction
         if extraction:
             #sensitivity
-            shist=meas_analysis.selected_histories.selected_sensitivity
+            shist = meas_analysis.selected_histories.selected_sensitivity
             if shist:
-                sm = extraction.sensitivity_multiplier
-                s=shist.sensitivity.value
-                self.sensitivity=sm*s
+                sm = extraction.sensitivity_multiplier or 1
+                s = shist.sensitivity.value
+                self.sensitivity = sm * s
 
             self.extract_device = self._get_extraction_device(extraction)
             self.extract_value = extraction.extract_value
@@ -717,32 +717,37 @@ class VCSAnalysis(DBAnalysis):
     """
         uses local data with db metadata
     """
-    _ydict=None
+
     def _load_file(self):
-        p=os.path.join(paths.vcs_dir, self.project, self.labnumber,'{}.yaml'.format(self.record_id))
+        pr=self.project.replace(' ','_')
+
+        p = os.path.join(paths.vcs_dir, pr, self.sample, self.labnumber, '{}.yaml'.format(self.record_id))
         if os.path.isfile(p):
-            yd=yaml.load(p)
-            self._ydict=yd
+            with open(p, 'r') as fp:
+                return yaml.load(fp)
+
 
     def _sync(self, meas_analysis, unpack=False, load_changes=False):
         """
             if unpack is true load original signal data from db
         """
+
         self._sync_meas_analysis_attributes(meas_analysis)
         self._sync_analysis_info(meas_analysis)
         self.analysis_type = self._get_analysis_type(meas_analysis)
         self._sync_extraction(meas_analysis)
         self._sync_experiment(meas_analysis)
 
-        use_local=not unpack
+        use_local = not unpack
         if not unpack:
-            if not self._load_file():
-                use_local=False
+            yd = self._load_file()
+            if not yd:
+                use_local = False
 
         if use_local:
-            self._sync_irradiation(meas_analysis.labnumber)
-            self._sync_isotopes(meas_analysis, unpack)
-            self._sync_detector_info(meas_analysis)
+            self._sync_irradiation(yd, meas_analysis.labnumber)
+            self._sync_isotopes(yd, meas_analysis, unpack)
+            self._sync_detector_info(yd, meas_analysis)
         else:
             super(VCSAnalysis, self)._sync_irradiation(meas_analysis.labnumber)
             super(VCSAnalysis, self)._sync_isotopes(meas_analysis, unpack)
@@ -751,50 +756,51 @@ class VCSAnalysis(DBAnalysis):
         if load_changes:
             self._sync_changes(meas_analysis)
 
-        self._ydict=None
-        del self._ydict
+    def _sync_irradiation(self, yd, ln):
 
-    def _sync_irradiation(self, ln):
-        cs=[]
-        for ci in self._ydict['chron_segments']:
+        cs = []
+        for ci in yd['chron_segments']:
             cs.append((ci['power'], ci['duration'], ci['dt']))
 
-        self.chron_segments= cs
-        self.production_ratios=self._ydict['production_ratios']
+        self.chron_segments = cs
+        self.production_ratios = yd['production_ratios']
 
-        ifc=self._ydict['interference_corrections']
-        nifc=dict()
+        ifc = yd['interference_corrections']
+        nifc = dict()
         for k in ifc:
             if k.endswith('_err'):
                 continue
-            nifc[k]=self._to_ufloat(ifc, k)
+            nifc[k] = self._to_ufloat(ifc, k)
 
-        self.interference_corrections=nifc
+        self.interference_corrections = nifc
 
-    def _sync_isotopes(self, meas_analysis, unpack):
+        self.j = ufloat(yd['j'],yd['j_err'])
+
+    def _sync_isotopes(self, yd, meas_analysis, unpack):
         """
             load isotopes from file
         """
-        isos={}
-
-        for iso in self._ydict['isotopes']:
-            ii= Isotope(name=iso['name'],
-                        detector=iso['detector'],
-                        ic_factor=self._to_ufloat(iso, 'ic_factor'),
-                        discrimination=self._to_ufloat(iso, 'discrimination'))
+        isos = {}
+        print yd['isotopes']
+        for iso in yd['isotopes']:
+            ii = Isotope(name=iso['name'],
+                         detector=iso['detector'],
+                         ic_factor=self._to_ufloat(iso, 'ic_factor'),
+                         discrimination=self._to_ufloat(iso, 'discrimination'))
 
             ii.trait_set(_value=iso['value'], _error=iso['error'])
 
             ii.set_blank(iso['blank'], iso['blank_err'])
             ii.set_baseline(iso['baseline'], iso['baseline_err'])
 
-            iso[iso['name']]=ii
-        self.isotopes=isos
+            isos[iso['name']] = ii
+        self.isotopes = isos
+        print self.isotopes
 
     def _to_ufloat(self, obj, attr):
         return ufloat(obj[attr], obj['{}_err'.format(attr)])
 
-    def _sync_detector_info(self, meas_analysis, **kw):
+    def _sync_detector_info(self,yd, meas_analysis, **kw):
         pass
 
 

@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from cStringIO import StringIO
+from git.exc import GitCommandError
 
 from traits.api import Any, Directory
 
@@ -41,9 +42,10 @@ class RepoManager(Loggable):
         """
             add a blank repo at ``localpath``
         """
-        repo=self._add_repo(localpath)
+        repo, existed=self._add_repo(localpath)
         self._repo=repo
         self.root=localpath
+        return existed
 
     def create_remote(self, url, name='origin', repo=None):
         repo=self._get_repo(repo)
@@ -55,21 +57,26 @@ class RepoManager(Loggable):
                 pass
 
     #git protocol
-    def update(self, repo=None, remote='origin'):
+    def pull(self, repo=None, branch='master', remote='origin', handled=True):
+        """
+            fetch and merge
+        """
+        repo = self._get_repo(repo)
         remote=self._get_remote(repo, remote)
         if remote:
-            remote.fetch()
-            remote.pull()
+            try:
+                repo.git.pull(remote, branch)
+            except GitCommandError, e:
+                self.debug(e)
+                if not handled:
+                    raise e
 
-    def push(self, repo=None, remote='origin'):
+    def push(self, repo=None, branch='master', remote='origin'):
         repo=self._get_repo(repo)
 
         rr = self._get_remote(repo, remote)
         if rr:
-        #     print remote, remote.url
-            # remote.push()
-
-            repo.git.push(remote,'master')
+            repo.git.push(remote,branch)
 
     def commit(self, msg, repo=None):
         index=self._get_repo_index(repo)
@@ -136,15 +143,18 @@ class RepoManager(Loggable):
         return repo
 
     def _add_repo(self, root):
+        existed=True
         if not os.path.isdir(root):
             os.mkdir(root)
+            existed=False
 
         gitdir=os.path.join(root, '.git')
         if not os.path.isdir(gitdir):
             repo = Repo.init(root)
+            existed = False
         else:
             repo = Repo(root)
 
-        return repo
+        return repo, existed
 
 #============= EOF =============================================

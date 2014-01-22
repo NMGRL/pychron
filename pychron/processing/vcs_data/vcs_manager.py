@@ -18,6 +18,7 @@
 from itertools import groupby
 import os
 import subprocess
+from git.exc import GitCommandError
 import paramiko
 from traits.api import Instance, Str
 #============= standard library imports ========================
@@ -38,7 +39,7 @@ class VCSManager(Loggable):
     """
     #root location of all repositories
     root = Str
-
+    remote_template=Str('file:///Users/ross/Sandbox/git/{}.git')
 
 class IsotopeVCSManager(VCSManager):
     """
@@ -80,6 +81,7 @@ class IsotopeVCSManager(VCSManager):
         return ds
 
     def set_repo(self, name):
+        name=name.replace(' ','_')
         p = os.path.join(paths.vcs_dir, name)
 
         #make or use existing repo
@@ -98,8 +100,11 @@ class IsotopeVCSManager(VCSManager):
             self.repo_manager.add(p, msg='init commit')
 
     def init_repo(self, path):
+        """
+            return if repositories already existed
+        """
         rm = self.repo_manager
-        rm.add_repo(path)
+        return rm.add_repo(path)
 
     def create_remote(self, *args, **kw):
         """
@@ -117,11 +122,14 @@ class IsotopeVCSManager(VCSManager):
     #         stdin, stdout, stderr = client.exec_command('cd {}'.format(path))
     #         return not 'No such file or directory' in stdout.readall()
 
-    def create_remote_repo(self, path, host='localhost'):
+    def create_remote_repo(self, name, host='localhost'):
         """
             create a bare repo on the server
         """
+        path=self.remote_template.format(name)[7:]
+        print path, host
         if host=='localhost':
+
             if not os.path.isdir(path):
                 os.mkdir(path)
                 subprocess.call(['git','--bare', 'init',path])
@@ -139,14 +147,40 @@ class IsotopeVCSManager(VCSManager):
         rm.add(p, **kw)
 
     def push(self, **kw):
+        self.debug('pushing')
         rm=self.repo_manager
         rm.push(**kw)
 
-    def commit_change(self, msg):
+    def pull(self, **kw):
+        rm = self.repo_manager
+        rm.pull(**kw)
+
+    def commit(self, msg):
         rm = self.repo_manager
         rm.commit(msg)
 
     #Isotope protocol
+    def clone_project_repos(self, rs):
+        for ri in rs:
+            ri=ri.replace(' ','_')
+            p=os.path.join(paths.vcs_dir, ri)
+            if not self.init_repo(p):
+                self.debug('Cloning repository {}'.format(ri))
+
+                url=self.remote_template.format(ri)
+                self.create_remote(url)
+
+                self.add_readme(p)
+                try:
+                    self.pull(handled=False)
+                except GitCommandError:
+                    p=os.path.basename(p)
+                    self.create_remote_repo(p)
+
+                self.push()
+
+            self.pull()
+
     def update_analyses(self, ans, msg):
         for proj, ais in self._groupby_project(ans):
 
@@ -158,11 +192,11 @@ class IsotopeVCSManager(VCSManager):
 
             s=ans[0]
             e=ans[-1]
-            self.commit_change('{} project={} {}({}) - {}({})'.format(msg, proj, s.record_id, s.sample, e.record_id, e.sample))
+            self.commit('{} project={} {}({}) - {}({})'.format(msg, proj, s.record_id, s.sample, e.record_id, e.sample))
 
     def update_analysis(self, an, msg):
         self._update_analysis(an)
-        self.commit_change(msg)
+        self.commit(msg)
 
     def _update_analysis(self,an):
         root = self.repo_manager.root
@@ -191,9 +225,10 @@ class IsotopeVCSManager(VCSManager):
                                                                                                  e.record_id, e.sample,
                                                                                                  proj))
 
-    def add_analysis(self, an):
-        self.set_repo(an.project)
-        self._add_analysis(an)
+    def add_analysis(self, an, set_repo=True, **kw):
+        if set_repo:
+            self.set_repo(an.project)
+        self._add_analysis(an, **kw)
 
     def _add_analysis(self, an, commit=True, progress=None):
         root = os.path.join(self.repo_manager.root, an.sample, an.labnumber)
@@ -253,7 +288,7 @@ class IsotopeVCSManager(VCSManager):
             nifc[k]=nominal_value(v)
             nifc['{}_err'.format(k)]=float(std_dev(v))
 
-        d['interfence_corrections']=nifc
+        d['interference_corrections']=nifc
         d['chron_segments']=[dict(zip(('power','duration','dt'), ci)) for ci in ai.chron_segments]
         d['irradiation_time']=ai.irradiation_time
 

@@ -23,7 +23,7 @@ import cStringIO
 from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
 import time
-from threading import Thread, Event, Lock
+from threading import Thread, Event
 from Queue import Queue
 
 
@@ -110,7 +110,6 @@ class PatternExecutor(Patternable):
                 #        pname = name + '.lp'
                 #        return test_name(pname)
 
-
     def stop(self):
         self.info('User requested stop')
         self._alive = False
@@ -119,7 +118,7 @@ class PatternExecutor(Patternable):
 
         if self.pattern is not None:
             self.controller.linear_move(self.pattern.cx, self.pattern.cy)
-            self.pattern.close_ui()
+            # self.pattern.close_ui()
             self.info('Pattern {} stopped'.format(self.pattern_name))
 
             # prevent future stops (AbortJogs from massspec) from executing
@@ -129,8 +128,9 @@ class PatternExecutor(Patternable):
         return self._alive
 
     def close_pattern(self):
-        if self.pattern:
-            self.pattern.close_ui()
+        pass
+        # if self.pattern:
+        #     self.pattern.close_ui()
 
     def show_pattern(self):
         self.pattern.window_x = 50
@@ -166,8 +166,8 @@ class PatternExecutor(Patternable):
 #                time.sleep(0.1)
 
             self.controller.linear_move(pat.cx, pat.cy)
-            if self.pattern:
-                self.pattern.close_ui()
+            # if self.pattern:
+            #     self.pattern.close_ui()
             self.finish()
             self.info('finished pattern')
 
@@ -208,7 +208,6 @@ class PatternExecutor(Patternable):
             for x, y in pts:
                 if not self.isPatterning():
                     break
-
                 controller.linear_move(x, y, block=True,
                                        velocity=pattern.velocity)
 

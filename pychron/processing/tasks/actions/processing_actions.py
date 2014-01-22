@@ -191,17 +191,6 @@ class RecallAction(Action):
         task = app.get_task('pychron.recall')
 
 
-class SmartProjectAction(Action):
-    name = 'Smart Project'
-    accelerator = 'Ctrl+P'
-
-    def perform(self, event):
-        app = event.task.window.application
-        task = app.get_task('pychron.processing.smart_project')
-
-        task.process_project_file()
-
-
 class OpenInterpretedAgeAction(Action):
     name = 'Browse Interpreted Ages'
 
