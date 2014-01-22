@@ -44,14 +44,6 @@ def main():
 #    a.check()
     logging_setup('pychron', level='DEBUG')
 
-#===============================================================================
-# test flag
-# set if you want to execute tests after startup
-# explicitly set the flag here once. mode is a readonly property
-#===============================================================================
-    from pychron.globals import globalv
-    globalv._test = False
-
     from pychron.applications.pyexperiment import PyExperiment as app
     launch(app)
 
