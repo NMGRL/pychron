@@ -17,10 +17,12 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
+
 #============= local library imports  ==========================
 """
     https://gist.github.com/sixtenbe/1178136
 """
+from numpy import Inf, isscalar, array, argmax, polyfit
 
 
 def _datacheck_peakdetect(x_axis, y_axis):
@@ -260,28 +262,28 @@ def calculate_peak_center(x, y, min_peak_height=1.0, percent=80):
 
 
 
-
-if __name__ == '__main__':
-    from pylab import *
-
-    def multi_peak_generator(values):
-        for v in values:
-            m = 0.5
-            if 5.4 <= v <= 5.8:
-                m = 3
-            elif 6.1 <= v <= 7:
-                m = 6
-
-            yield m + random() / 10.
-
-    xs = linspace(3, 10, 101)
-    ys = list(multi_peak_generator(xs))
-    print ys
-    mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
-
-    plot(xs, ys)
-    for i, v in mxp:
-        print i, v, xs[i]
-        axvline(xs[i])
-    show()
+#
+# if __name__ == '__main__':
+#     from pylab import *
+#
+#     def multi_peak_generator(values):
+#         for v in values:
+#             m = 0.5
+#             if 5.4 <= v <= 5.8:
+#                 m = 3
+#             elif 6.1 <= v <= 7:
+#                 m = 6
+#
+#             yield m + random() / 10.
+#
+#     xs = linspace(3, 10, 101)
+#     ys = list(multi_peak_generator(xs))
+#     print ys
+#     mxp, mip = find_peaks(ys, lookahead=2, delta=1.5)
+#
+#     plot(xs, ys)
+#     for i, v in mxp:
+#         print i, v, xs[i]
+#         axvline(xs[i])
+#     show()
 #============= EOF =============================================

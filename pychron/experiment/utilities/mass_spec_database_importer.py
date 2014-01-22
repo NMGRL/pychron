@@ -103,7 +103,7 @@ class MassSpecDatabaseImporter(Loggable):
         self._current_spec = None
 
     def get_identifier(self, spec):
-        rid = spec.rid
+        rid = spec.runid
         trid = rid.lower()
         identifier = spec.labnumber
         if trid.startswith('c'):
@@ -149,7 +149,7 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.rid, rid, tb))
+                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                 if commit:
                     sess.rollback()
 
@@ -191,7 +191,7 @@ class MassSpecDatabaseImporter(Loggable):
         refdbdet = db.add_detector('H1', Label='H1')
 
         # remember new rid in case duplicate entry error and need to augment rid
-        spec.rid = rid
+        spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
                                    RUN_TYPE_DICT[runtype],

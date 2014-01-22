@@ -89,13 +89,22 @@ class ExtractionPyScript(ValvePyScript):
     snapshot_paths = List
 
     def report_results(self):
-        request=self.extract
-        ach=self._manager_action([('get_achieved_output', (), {})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
-        if ach is not None:
-            self.info('Requested Output= {:0.3f}'.format(request))
-            self.info('Achieved Output=  {:0.3f}'.format(ach))
+        request = self.extract
+        ach = self._manager_action([('get_achieved_output', (), {})],
+                                   name=self.extract_device,
+                                   protocol=ILaserManager)
+        try:
+            request = float(request)
+        except (ValueError, TypeError):
+            request = 0
+
+        try:
+            ach = float(ach)
+        except (ValueError, TypeError):
+            ach = 0
+
+        self.info('Requested Output= {:0.3f}'.format(request))
+        self.info('Achieved Output=  {:0.3f}'.format(ach))
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
