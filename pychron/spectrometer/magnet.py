@@ -146,7 +146,7 @@ class Magnet(SpectrometerDevice):
             if self.use_detector_protection:
                 if abs(self._dac - v) >self.detector_protection_threshold:
                     for pd in self.protected_detectors:
-                        micro.ask('ProtectDetector {} On'.format(pd), verbose=verbose)
+                        micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
                     unprotect = True
 
             elif self.use_beam_blank:
@@ -158,7 +158,7 @@ class Magnet(SpectrometerDevice):
             time.sleep(self.settling_time)
             if unprotect:
                 for pd in self.protected_detectors:
-                    micro.ask('ProtectDetector {} Off'.format(pd), verbose=verbose)
+                    micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
             if unblank:
                 micro.ask('BlankBeam False', verbose=verbose)
 

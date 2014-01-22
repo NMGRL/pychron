@@ -134,6 +134,9 @@ class ATLLaserControlUnit(CoreDevice):
         self._reprate = self.get_reprate()
         return r
 
+    def get_mean_energy(self):
+        return self.energies.mean()
+
     def is_enabled(self):
         return self.status_readback == 'Laser On'
 

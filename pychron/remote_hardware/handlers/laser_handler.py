@@ -279,8 +279,12 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return self.error_response(err)
 
     def GetPatternNames(self, manager, *args):
+        ret=''
         jogs = manager.get_pattern_names()
-        return ','.join(jogs)
+        if jogs:
+            ret=','.join(jogs)
+
+        return ret
 
     def DoPattern(self, manager, name, *args, **kw):
         if name is None:
@@ -397,8 +401,7 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return result
 
     def GetAchievedOutput(self, manager):
-        result='0'
-        manager.get_achieved_output()
+        result=manager.get_achieved_output()
         return str(result)
 
 #===============================================================================

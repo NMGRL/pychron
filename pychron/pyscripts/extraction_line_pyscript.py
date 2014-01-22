@@ -88,19 +88,23 @@ class ExtractionPyScript(ValvePyScript):
     info_color = EXTRACTION_COLOR
     snapshot_paths = List
 
+    def report_results(self):
+        request=self.extract
+        ach=self._manager_action([('get_achieved_output', (), {})],
+                             name=self.extract_device,
+                             protocol=ILaserManager)
+        if ach is not None:
+            self.info('Requested Output= {:0.3f}'.format(request))
+            self.info('Achieved Output=  {:0.3f}'.format(ach))
+
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()
         return command_register.commands.items() + cm
 
-    #     def _post_execute_hook(self):
-    #         # remove ourselves from the script runner
-    #         if self.runner:
-    #             self.runner.scripts.remove(self)
-
     def set_default_context(self):
-        '''
+        """
             provide default values for all the properties exposed in the script
-        '''
+        """
         self.setup_context(analysis_type='',
                            position='',
                            pattern='',
@@ -112,8 +116,7 @@ class ExtractionPyScript(ValvePyScript):
                            duration=0,
                            cleanup=0,
                            beam_diameter=None,
-                           run_identifier='default_runid'
-        )
+                           run_identifier='default_runid')
 
     #===============================================================================
     # properties
@@ -322,8 +325,7 @@ class ExtractionPyScript(ValvePyScript):
         result = self._manager_action([('set_stage_map', (tray,), {})
                                       ],
                                       protocol=ILaserManager,
-                                      name=self.extract_device
-        )
+                                      name=self.extract_device)
         return result
 
     #     @verbose_skip

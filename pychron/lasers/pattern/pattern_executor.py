@@ -23,7 +23,7 @@ import cStringIO
 from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
 import time
-from threading import Thread, Event, Lock
+from threading import Thread, Event
 from Queue import Queue
 
 
@@ -109,7 +109,6 @@ class PatternExecutor(Patternable):
                 #    if not name.endswith('.lp'):
                 #        pname = name + '.lp'
                 #        return test_name(pname)
-
 
     def stop(self):
         self.info('User requested stop')
@@ -209,7 +208,6 @@ class PatternExecutor(Patternable):
             for x, y in pts:
                 if not self.isPatterning():
                     break
-
                 controller.linear_move(x, y, block=True,
                                        velocity=pattern.velocity)
 
