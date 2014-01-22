@@ -57,6 +57,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
+    truncate_condition_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
     #    extraction_script_width = Int(125)
@@ -179,7 +180,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
 
 class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
-     def _columns_factory(self):
+    def _columns_factory(self):
         cols = [
             #                ('', 'state'),
             ('Labnumber', 'labnumber'),
