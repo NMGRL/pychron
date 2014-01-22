@@ -154,7 +154,7 @@ class TrayCalibrationManager(Manager):
 
     @cached_property
     def _get_calibrator(self):
-        kw = dict(name=self.parent.stage_map,
+        kw = dict(name=self.parent.stage_map or '',
                   manager=self)
 
         if self.style in STYLE_DICT:
