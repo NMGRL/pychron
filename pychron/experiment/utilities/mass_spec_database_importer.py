@@ -147,7 +147,7 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.rid, rid, tb))
                 if commit:
                     sess.rollback()
 

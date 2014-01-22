@@ -33,7 +33,7 @@ class ExportSpec(Loggable):
 
     isotopes=Dict
 
-    spectrometer = Str
+    mass_spectrometer = Str
     extract_device = Str
     tray = Str
     position = Property(depends_on='_position')

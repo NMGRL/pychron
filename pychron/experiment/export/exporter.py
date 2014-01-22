@@ -72,7 +72,7 @@ class MassSpecExporter(Exporter):
         rid = spec.runid
         # convert rid
         if rid == 'c':
-            if spec.spectrometer == 'Pychron Jan':
+            if spec.mass_spectrometer == 'Pychron Jan':
                 rid = '4359'
             else:
                 rid = '4358'
