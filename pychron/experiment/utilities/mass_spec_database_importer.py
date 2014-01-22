@@ -107,7 +107,7 @@ class MassSpecDatabaseImporter(Loggable):
         trid = rid.lower()
         identifier = spec.labnumber
         if trid.startswith('c'):
-            if spec.spectrometer.lower() in ('obama', 'pychron obama'):
+            if spec.mass_spectrometer.lower() in ('obama', 'pychron obama'):
                 identifier = irradpos = '4358'
             else:
                 identifier = irradpos = '4359'
@@ -128,10 +128,8 @@ class MassSpecDatabaseImporter(Loggable):
                 irradpos = -2
             elif trid.startswith('c'):
                 runtype = 'Unknown'
-                if spec.spectrometer.lower() in ('obama', 'pychron obama'):
-                    identifier=irradpos='4358'
-                else:
-                    identifier=irradpos='4359'
+                identifier=self.get_identifier(spec)
+
             else:
                 runtype = 'Unknown'
 
@@ -159,7 +157,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         db = self.db
 
-        spectrometer = spec.spectrometer
+        spectrometer = spec.mass_spectrometer
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
