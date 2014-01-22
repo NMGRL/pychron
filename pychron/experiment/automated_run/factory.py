@@ -201,6 +201,7 @@ class AutomatedRunFactory(Loggable):
     truncation_str = Property(depends_on='trunc_+')
     truncation_path = Str
     truncations = List
+    clear_truncation=Button
 
     #===========================================================================
     # frequency
@@ -835,11 +836,14 @@ class AutomatedRunFactory(Loggable):
             pass
 
     def _get_truncation_str(self):
+
         if self.trunc_attr is not None and \
                         self.trunc_comp is not None and \
                         self.trunc_crit is not None:
             return '{}{}{}, {}'.format(self.trunc_attr, self.trunc_comp,
                                        self.trunc_crit, self.trunc_start)
+        else:
+            return ''
 
     @cached_property
     def _get_flux(self):
@@ -891,7 +895,6 @@ class AutomatedRunFactory(Loggable):
 
     @on_trait_change('trunc_+, truncation_path')
     def _edit_truncation(self, obj, trait, name, new):
-
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
@@ -901,12 +904,14 @@ class AutomatedRunFactory(Loggable):
             else:
                 t = self.truncation_str
 
-            if t:
-                for s in self._selected_runs:
-                    s.truncate_condition = t
+            self._set_truncation(t)
 
-            self.changed = True
-            self.refresh_table_needed = True
+    def _set_truncation(self, t):
+        for s in self._selected_runs:
+            s.truncate_condition = t
+
+        self.changed = True
+        self.refresh_table_needed = True
 
     @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
 extract_units,
@@ -1085,6 +1090,13 @@ post_equilibration_script:name
 
     def _edit_mode_button_fired(self):
         self.edit_mode = not self.edit_mode
+
+    def _clear_truncation_fired(self):
+        if self.edit_mode and \
+                self._selected_runs and \
+                not self.suppress_update:
+
+            self._set_truncation('')
 
     def _aliquot_changed(self):
         if self.edit_mode:

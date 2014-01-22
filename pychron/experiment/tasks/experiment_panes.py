@@ -232,6 +232,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                 RFItem('trunc_crit', show_label=False),
                 spacer(-10),
                 RFItem('trunc_start', label='Start Count'),
+                icon_button_editor(make_rf_name('clear_truncation'),
+                                   'delete',
+                                   enabled_when=make_rf_name('edit_mode')),
                 show_border=True,
                 label='Simple'
             ),
