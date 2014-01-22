@@ -19,7 +19,7 @@ set_toolkit('qt4')
 
 #============= enthought library imports =======================
 from scipy import optimize
-from traits.api import HasTraits, List, Any, Property, Float, Event, Str
+from traits.api import HasTraits, List, Any, Property, Float, Event, Str, Bool
 from traitsui.api import View, Item, VGroup, HGroup, Spring, \
     RangeEditor
 
@@ -93,6 +93,14 @@ class Magnet(SpectrometerDevice):
 
     fitfunc = Str('parabolic')
 
+    protected_detectors=List
+
+    use_detector_protection=Bool
+    use_beam_blank=Bool
+
+    detector_protection_threshold=Float(0.1) #DAC units
+    beam_blank_threshold=Float(0.1) #DAC units
+
     def update_field_table(self, det, isotope, dac):
         """
 
@@ -132,19 +140,29 @@ class Magnet(SpectrometerDevice):
     #===============================================================================
     def set_dac(self, v, verbose=False):
         micro = self.microcontroller
-        unblank = False
-        if abs(self._dac - v) > 0.1:
-            if micro:
-                micro.ask('BlankBeam True', verbose=verbose)
-                unblank = True
-
-        self._dac = v
+        unprotect = False
+        unblank=False
         if micro:
-            self.microcontroller.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
+            if self.use_detector_protection:
+                if abs(self._dac - v) >self.detector_protection_threshold:
+                    for pd in self.protected_detectors:
+                        micro.ask('ProtectDetector {} On'.format(pd), verbose=verbose)
+                    unprotect = True
+
+            elif self.use_beam_blank:
+                if abs(self._dac - v) >self.beam_blank_threshold:
+                    micro.ask('BlankBeam True', verbose=verbose)
+                    unblank=True
+
+            micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
             time.sleep(self.settling_time)
+            if unprotect:
+                for pd in self.protected_detectors:
+                    micro.ask('ProtectDetector {} Off'.format(pd), verbose=verbose)
             if unblank:
                 micro.ask('BlankBeam False', verbose=verbose)
 
+        self._dac = v
         self.dac_changed = True
 
     @get_float
@@ -160,6 +178,7 @@ class Magnet(SpectrometerDevice):
     #===============================================================================
     def load(self):
         pass
+
 
     def finish_loading(self):
         d = self.read_dac()
