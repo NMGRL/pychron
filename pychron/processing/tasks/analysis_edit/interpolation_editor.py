@@ -43,35 +43,16 @@ class InterpolationEditor(GraphEditor):
     sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
 
-
     def find_references(self, **kw):
         self._find_references(**kw)
 
     @on_trait_change('references[]')
     def _update_references(self):
-    #         self.make_references()
-    #    if self.unknowns:
-    #        ref_ans=self.unknowns[0]
-    #        self._load_ref_fits(ref_ans)
         self._update_references_hook()
-
         self.rebuild_graph()
 
     def _update_references_hook(self):
         pass
-
-        #def _load_ref_fits(self, ref_ans):
-        #    pass
-        #keys=ref_ans.isotope_keys
-        #fits=[ref_ans.isotopes[ki]]
-
-    #     def make_references(self):
-    #         self._references = self.processor.make_analyses(self.references)
-    # #         self.processor.load_analyses(self._references)
-    #         self._make_references()
-    #
-    #     def _make_references(self):
-    #         pass
 
     def _get_start_end(self, rxs, uxs):
         mrxs = min(rxs) if rxs else Inf
@@ -268,19 +249,13 @@ class InterpolationEditor(GraphEditor):
         return ebo
 
     def _add_inspector(self, scatter, ans):
-
-
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
-                                                 convert_index=lambda x: '{:0.3f}'.format(x),
-                                                 #value_format=value_format,
-                                                 #additional_info=additional_info
-        )
+                                                 convert_index=lambda x: '{:0.3f}'.format(x))
 
         pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector,
-        )
-        #
+                                                   tool=point_inspector)
+
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
         scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
@@ -300,7 +275,6 @@ class InterpolationEditor(GraphEditor):
     def _get_sorted_references(self):
         return sorted(self.references, key=lambda x: x.timestamp)
 
-
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
 
@@ -309,9 +283,6 @@ class InterpolationEditor(GraphEditor):
         for fit, (plotobj, reg) in zip(gen, new):
             if issubclass(type(reg), BaseRegressor):
                 iso = fit.name
-                # for i, (fit, reg) in enumerate(zip(gen, new)):
-                #     iso = fit.name
-                #     plotobj = self.graph.plots[i]
 
                 scatter = plotobj.plots['Unknowns-predicted'][0]
                 xs = scatter.index.get_data()
