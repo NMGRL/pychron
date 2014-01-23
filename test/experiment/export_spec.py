@@ -10,7 +10,7 @@ build_directories(paths)
 from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('export_spec')
-from pychron.experiment.export.export_spec import ExportSpec
+from pychron.processing.export.export_spec import ExportSpec
 from pychron.core.helpers.isotope_utils import sort_isotopes
 
 import unittest

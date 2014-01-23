@@ -18,15 +18,19 @@
 import os
 import struct
 import base64
-
+from traits.api import Instance, on_trait_change
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.export.destinations import MassSpecDestination, XMLDestination
 
 
 class Exporter(Loggable):
+    def start_export(self):
+        return True
+
     def export(self, *args, **kw):
         raise NotImplementedError
 
@@ -35,20 +39,28 @@ class Exporter(Loggable):
 
 
 class MassSpecExporter(Exporter):
-    def __init__(self, destination, *args, **kw):
+    destination = Instance(MassSpecDestination, ())
+
+    def __init__(self, *args, **kw):
         '''
             destination: dict. 
                 dict, required keys are (username, password, host, name)
         '''
         super(MassSpecExporter, self).__init__(*args, **kw)
-
         importer = MassSpecDatabaseImporter()
-        db = importer.db
-        for k in ('username', 'password', 'host', 'name'):
-            setattr(db, k, destination[k])
-
         self.importer = importer
-        db.connect()
+
+    @on_trait_change('destination:[username, password, host, name]')
+    def set_destination(self, name, new):
+        importer = self.importer
+        db = importer.db
+        # for k in ('username', 'password', 'host', 'name'):
+        setattr(db, name, new)
+        # db.connect()
+
+    def start_export(self):
+        self.importer.db.connect()
+        return self.importer.db.connected
 
     def export(self):
         self.info('committing current session to database')
@@ -58,9 +70,10 @@ class MassSpecExporter(Exporter):
     #        self.extractor.db.close()
 
     def rollback(self):
-        '''
+        """
             Mass Spec schema doesn't allow rollback
-        '''
+        """
+        pass
 
     #        self.info('rollback')
     #        self.extractor.db.rollback()
@@ -69,29 +82,35 @@ class MassSpecExporter(Exporter):
     def add(self, spec):
         db = self.importer.db
 
-        rid = spec.runid
+        # rid = spec.runid
         # convert rid
-        if rid == 'c':
-            if spec.mass_spectrometer == 'Pychron Jan':
-                rid = '4359'
-            else:
-                rid = '4358'
+        # if rid == 'c':
+        #     if spec.mass_spectrometer == 'Pychron Jan':
+        #         rid = '4359'
+        #     else:
+        #         rid = '4358'
+        rid = self.importer.get_identifier(spec)
 
         if db.get_analysis(rid, spec.aliquot, spec.step):
             self.debug('analysis {} already exists in database'.format(rid))
         else:
+            spec.update_rundatetime = True
             self.importer.add_analysis(spec)
-            self.importer.db.reset()
+            # self.importer.db.reset()
             return True
 
 
 class XMLExporter(Exporter):
-    def __init__(self, destination, *args, **kw):
+    destination = Instance(XMLDestination, ())
+
+    def __init__(self, *args, **kw):
         super(XMLExporter, self).__init__(*args, **kw)
         from pychron.core.xml.xml_parser import XMLParser
 
         xmlp = XMLParser()
         self._parser = xmlp
+
+    def set_destination(self, destination):
         self.destination = destination
 
     def add(self, spec):

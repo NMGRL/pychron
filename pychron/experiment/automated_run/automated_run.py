@@ -54,7 +54,7 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
 from pychron.experiment.automated_run.condition import TruncationCondition, \
     ActionCondition, TerminationCondition
 from pychron.processing.arar_age import ArArAge
-from pychron.experiment.export.export_spec import ExportSpec
+from pychron.processing.export.export_spec import ExportSpec, assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.codetools.file_log import file_log
@@ -82,26 +82,6 @@ class ScriptInfo(HasTraits):
 
 SCRIPTS = {}
 WARNED_SCRIPTS = []
-
-
-def assemble_script_blob(scripts, kinds=None):
-    """
-        make one blob of all the script text
-
-        return csv-list of names, blob
-    """
-    if kinds is None:
-        kinds = ['extraction', 'measurement', 'post_equilibration', 'post_measurement']
-
-    ts = []
-    for (name, blob), kind in zip(scripts, kinds):
-        ts.append('#' + '=' * 79)
-        ts.append('# {} SCRIPT {}'.format(kind.replace('_', ' ').upper(), name))
-        ts.append('#' + '=' * 79)
-        if blob:
-            ts.append(blob)
-
-    return 'Pychron Script', '\n'.join(ts)
 
 
 class AutomatedRun(Loggable):
@@ -1892,11 +1872,12 @@ anaylsis_type={}
                          # signal_fits=sf,
                          mass_spectrometer=self.spec.mass_spectrometer.capitalize(),
                          # blanks=blanks,
-                         data_path=p,
+                         # data_path=p,
                          isotopes=self.arar_age.isotopes,
                          # signal_intercepts=si,
                          # signal_intercepts=self._processed_signals_dict,
-                         is_peak_hop=self.save_as_peak_hop)
+                         is_peak_hop=self.save_as_peak_hop
+        )
         exp.load_record(self)
         return exp
 

@@ -75,7 +75,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #clear_selection_button = Button
 
     browser_pane = Any
-
     advanced_query=Button
 
     #def set_projects(self, ps, sel):
@@ -112,6 +111,25 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # def _set_db(self):
         #self.analysis_table.db = self.manager.db
         # self.danalysis_table.db = self.manager.db
+
+    def _get_selected_analyses(self, unks=None):
+        s = self.analysis_table.selected
+        if not s:
+            if self.selected_samples:
+                iv = not self.analysis_table.omit_invalid
+
+                uuids = []
+                if unks:
+                    uuids = [x.uuid for x in unks]
+
+                def test(aa):
+                    return not aa.uuid in uuids
+
+                s = [ai for ai in self._get_sample_analyses(self.selected_samples,
+                                                            include_invalid=iv)
+                     if test(ai)]
+
+        return s
 
     def _load_mass_spectrometers(self):
         db = self.manager.db

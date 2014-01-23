@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import datetime
 from traits.api import Instance, Button
 from traitsui.api import View, Item
 
@@ -213,6 +214,11 @@ class MassSpecDatabaseImporter(Loggable):
                                    LoginSessionID=self.login_session_id,
                                    RunScriptID=rs.RunScriptID)
 
+        if spec.update_rundatetime:
+            d = datetime.fromtimestamp(spec.timestamp)
+            analysis.RunDateTime = d
+            analysis.LastSaved = d
+
         db.add_analysis_positions(analysis, spec.position)
         #=======================================================================
         # add changeable items
@@ -232,20 +238,20 @@ class MassSpecDatabaseImporter(Loggable):
         return analysis
 
     def _add_isotopes(self, analysis, spec, refdet, runtype):
-        with spec.open_file():
-            isotopes = list(spec.iter_isotopes())
-            isotopes = sort_isotopes(isotopes, key=lambda x: x[0])
+        # with spec.open_file():
+        isotopes = list(spec.iter_isotopes())
+        isotopes = sort_isotopes(isotopes, key=lambda x: x[0])
 
-            bs = []
-            for iso, det in isotopes:
-                self.debug('adding isotope {} {}'.format(iso, det))
-                dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
+        bs = []
+        for iso, det in isotopes:
+            self.debug('adding isotope {} {}'.format(iso, det))
+            dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
-                if not dbdet.Label in bs:
-                    self._add_baseline(spec, dbiso, dbdet, det)
-                    bs.append(dbdet.Label)
+            if not dbdet.Label in bs:
+                self._add_baseline(spec, dbiso, dbdet, det)
+                bs.append(dbdet.Label)
 
-                self._add_signal(spec, dbiso, dbdet, det, runtype)
+            self._add_signal(spec, dbiso, dbdet, det, runtype)
 
     def _add_isotope(self, analysis, spec, iso, det, refdet):
         db = self.db
@@ -328,12 +334,12 @@ class MassSpecDatabaseImporter(Loggable):
         ncnts = len(tb)
         db_baseline = db.add_baseline(blob, label, ncnts, dbiso)
 
-        if spec.is_peak_hop:
-            det = spec.peak_hop_detector
+        # if spec.is_peak_hop:
+        #     det = spec.peak_hop_detector
 
         bs = spec.get_baseline_uvalue(iso)
 
-        sem = bs.std_dev / (ncnts) ** 0.5
+        sem = bs.std_dev / (ncnts) ** 0.5 if ncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
 

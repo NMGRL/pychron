@@ -16,12 +16,11 @@
 
 #============= enthought library imports =======================
 from traits.api import CStr, Str, CInt, Float, \
-    TraitError, Property, Any, Either, Instance, Dict, Bool
+    TraitError, Property, Any, Either, Dict, Bool
 from uncertainties import ufloat
 from pychron.loggable import Loggable
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 
 class ExportSpec(Loggable):
@@ -38,6 +37,7 @@ class ExportSpec(Loggable):
     position = Property(depends_on='_position')
     _position = Any
 
+    timestamp = Float
     power_requested = Float(0)
     power_achieved = Float(0)
     duration = Float(0)
@@ -48,27 +48,35 @@ class ExportSpec(Loggable):
     runscript_text = Str
     comment = Str
 
-    data_path = Str
-    data_manager = Instance(H5DataManager, ())
-
+    # data_path = Str
+    # data_manager = Instance(H5DataManager, ())
+    update_rundatetime = Bool
     is_peak_hop = Bool
     peak_hop_detector = 'CDD'
+    ic_factor_v = Float
+    ic_factor_e = Float
 
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
                  ('step', 'step'),
                  ('irradpos', 'labnumber'),
+                 ('timestamp', 'timestamp'),
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
                  ('duration_at_request', 'duration'), ('first_stage_delay', 'cleanup'),
                  ('comment', 'comment'), ]
 
+        if hasattr(record, 'spec'):
+            spec = record.spec
+        else:
+            spec = record
+
         for exp_attr, run_attr in attrs:
-            if hasattr(record.spec, run_attr):
+            if hasattr(spec, run_attr):
                 try:
-                    setattr(self, exp_attr, getattr(record.spec, run_attr))
+                    setattr(self, exp_attr, getattr(spec, run_attr))
                 except TraitError, e:
                     self.debug(e)
 
@@ -83,8 +91,8 @@ class ExportSpec(Loggable):
         else:
             self.debug('{} has no ic_factor attribute'.format(record, ))
 
-    def open_file(self):
-        return self.data_manager.open_file(self.data_path)
+    # def open_file(self):
+    #     return self.data_manager.open_file(self.data_path)
 
     def iter_isotopes(self):
         return ((iso.name, iso.detector) for iso in self.isotopes.itervalues())
@@ -174,12 +182,12 @@ class ExportSpec(Loggable):
         #
         # return ufloat(v, e)
 
-    def _get_baseline_detector(self, iso, det):
-        if self.is_peak_hop:
-            det = self.peak_hop_detector
-            msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
-            self.debug(msg)
-        return det
+    # def _get_baseline_detector(self, iso, det):
+    #     if self.is_peak_hop:
+    #         det = self.peak_hop_detector
+    #         msg = 'is_peak_hop using peak_hop_det baseline {} for {}'.format(det, iso)
+    #         self.debug(msg)
+    #     return det
 
     def _get_data(self, group, iso, det, verbose=True):
         try:
@@ -235,3 +243,23 @@ class ExportSpec(Loggable):
         return self._position
 
         #============= EOF =============================================
+
+
+def assemble_script_blob(scripts, kinds=None):
+    """
+        make one blob of all the script text
+
+        return csv-list of names, blob
+    """
+    if kinds is None:
+        kinds = ['extraction', 'measurement', 'post_equilibration', 'post_measurement']
+
+    ts = []
+    for (name, blob), kind in zip(scripts, kinds):
+        ts.append('#' + '=' * 79)
+        ts.append('# {} SCRIPT {}'.format(kind.replace('_', ' ').upper(), name))
+        ts.append('#' + '=' * 79)
+        if blob:
+            ts.append(blob)
+
+    return 'Pychron Script', '\n'.join(ts)

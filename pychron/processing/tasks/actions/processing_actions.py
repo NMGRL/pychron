@@ -229,11 +229,21 @@ class OpenAdvancedQueryAction(Action):
 
 
 class ClearAnalysisCacheAction(Action):
-    name='Clear Analysis Cache'
+    name = 'Clear Analysis Cache'
+
     def perform(self, event=None):
-        from pychron.database.isotope_database_manager import ANALYSIS_CACHE,ANALYSIS_CACHE_COUNT
+        from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT
+
         ANALYSIS_CACHE.clear()
         ANALYSIS_CACHE_COUNT.clear()
+
+
+class ExportAnalysesAction(Action):
+    name = 'Export Analyses...'
+
+    def perform(self, event):
+        app = event.task.window.application
+        app.open_task('pychron.export')
 
 #============= EOF =============================================
 

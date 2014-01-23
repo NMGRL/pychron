@@ -32,7 +32,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -127,7 +127,8 @@ Install to enable MS Excel export''')
                            ('tag', TagAction, 'MenuBar/data.menu'),
                            ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
                            ('grouping_group', grouping_group, 'MenuBar/data.menu'),
-                           ('clear_cache',ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+                           ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
 
         exts = [self._make_task_extension(default_actions)]
@@ -157,7 +158,6 @@ Install to enable MS Excel export''')
 
             e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.flux')
-
 
             exts.extend((grp, a, b, c, d, e))
 
@@ -205,6 +205,8 @@ Install to enable MS Excel export''')
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R'),
             ('pychron.processing.vcs',
              self._vcs_data_task_factory, 'VCS', '', ''),
+            ('pychron.export',
+             self._export_task_factory, 'Export', '', '')
         ]
 
         return [
@@ -280,10 +282,15 @@ Install to enable MS Excel export''')
 
         return VCSDataTask(manager=self._processor_factory())
 
+    def _export_task_factory(self):
+        from pychron.processing.tasks.export.export_task import ExportTask
+
+        return ExportTask(manager=self._processor_factory())
+
     def _preferences_panes_default(self):
         return [
             ProcessingPreferencesPane,
             VCSPreferencesPane,
-            OfflinePreferencesPane,EasyPreferencesPane]
+            OfflinePreferencesPane, EasyPreferencesPane]
 
         #============= EOF =============================================
