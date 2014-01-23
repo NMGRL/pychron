@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import List, on_trait_change, Instance, Bool, \
+from traits.api import List, on_trait_change, Bool, \
     Property, cached_property
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
@@ -32,7 +32,7 @@ from pychron.core.helpers.datetime_tools import convert_timestamp
 
 
 class InterpolationEditor(GraphEditor):
-    tool_klass=InterpolationFitSelector
+    tool_klass = InterpolationFitSelector
     references = List
     #     _references = List
 
@@ -95,11 +95,11 @@ class InterpolationEditor(GraphEditor):
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
-            n=len(self.analyses)
+            n = len(self.analyses)
 
-            if n>1:
+            if n > 1:
                 if progress is None:
-                    progress=proc.open_progress(n)
+                    progress = proc.open_progress(n)
                 else:
                     progress.increase_max(n)
 
@@ -120,7 +120,7 @@ class InterpolationEditor(GraphEditor):
 
             if progress:
                 progress.soft_close()
-            #self.task.references_pane.items = ans
+                #self.task.references_pane.items = ans
 
     def _get_current_values(self, *args, **kw):
         pass
@@ -174,12 +174,13 @@ class InterpolationEditor(GraphEditor):
             r_ys, r_es = None, None
             if self.references:
                 r_ys, r_es = self._get_reference_values(iso)
-
+            print self.references
+            print r_ys
             p = graph.new_plot(
                 ytitle=iso,
                 xtitle='Time (hrs)',
                 padding=[80, 10, 5, 30])
-            p.y_axis.title_spacing=60
+            p.y_axis.title_spacing = 60
             p.value_range.tight_bounds = False
 
             if c_ues and c_uys:
@@ -305,12 +306,12 @@ class InterpolationEditor(GraphEditor):
 
         #necessary to handle user excluding points
         gen = self._graph_generator()
-        for fit, (plotobj, reg) in zip(gen,new):
+        for fit, (plotobj, reg) in zip(gen, new):
             if issubclass(type(reg), BaseRegressor):
                 iso = fit.name
-            # for i, (fit, reg) in enumerate(zip(gen, new)):
-            #     iso = fit.name
-            #     plotobj = self.graph.plots[i]
+                # for i, (fit, reg) in enumerate(zip(gen, new)):
+                #     iso = fit.name
+                #     plotobj = self.graph.plots[i]
 
                 scatter = plotobj.plots['Unknowns-predicted'][0]
                 xs = scatter.index.get_data()

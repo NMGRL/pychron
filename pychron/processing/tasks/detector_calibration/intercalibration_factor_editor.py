@@ -129,9 +129,10 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         try:
             rys = (nys / dys) / self.tool.standard_ratio
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])
-        except ZeroDivisionError:
-            return None, None
-        finally:
+        except ZeroDivisionError, e:
+            import traceback
+
+            traceback.print_exc()
             return None, None
 
     def _get_current_values(self, dets):
