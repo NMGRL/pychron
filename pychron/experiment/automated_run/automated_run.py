@@ -33,6 +33,7 @@ import gc
 # from memory_profiler import profile
 import weakref
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector, parse_hops
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -514,7 +515,7 @@ class AutomatedRun(Loggable):
         """
             attr must be an attribute of arar_age
         """
-
+        self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
         self.truncation_conditions.append(TruncationCondition(attr, comp,
                                                               start_count,
                                                               frequency,
@@ -1123,13 +1124,13 @@ anaylsis_type={}
         t = self.spec.truncate_condition
         self.debug('adding truncate condition {}'.format(t))
         if t:
-            if t.endswith('.yaml'):
-                p = os.path.join(paths.truncation_dir, t)
-                if os.path.isfile(p):
-                    with open(p, 'r') as fp:
-                        doc = yaml.load(fp)
+            p = os.path.join(paths.truncation_dir, add_extension(t, '.yaml'))
+            if os.path.isfile(p):
+                self.debug('extract truncations from file. {}'.format(p))
+                with open(p, 'r') as fp:
+                    doc = yaml.load(fp)
 
-                    for c in doc['conditions']:
+                    for c in doc:
                         attr=c['attr']
                         comp=c['comp']
                         start=c['start']
@@ -1137,9 +1138,6 @@ anaylsis_type={}
                         acr=c.get('abbreviated_count_ratio',1)
                         self.py_add_truncation(attr, comp, int(start), freq, acr)
 
-                else:
-                    self.warning('Not a valid truncation file {}'.format(p))
-                    return
             else:
                 try:
                     c, start = t.split(',')
