@@ -99,6 +99,7 @@ class SpectrumOptions(AgeOptions):
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),
             Item('plateau_line_color'),
+            Item('nsigma'),
             HGroup(
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),
@@ -120,8 +121,8 @@ class SpectrumOptions(AgeOptions):
 
         display_grp = Group(HGroup(UItem('show_info',
                                          tooltip='Show general info in the upper right corner'),
-                                   Item('show_mean_info', label='Mean', enabled_when='show_info'),
-                                   Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
+                                   # Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                                   # Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                                    label='General'),
                             HGroup(Item('display_step', label='Step'),
                                    Item('display_extract_value', label='Power/Temp'),

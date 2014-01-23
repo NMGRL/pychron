@@ -295,6 +295,7 @@ class BaseArArFigure(HasTraits):
             # labels
             #===============================================================================
 
+
     def _add_data_label(self, s, text, point, bgcolor='transparent',
                         label_position='top right', color=None, append=True, **kw):
         if color is None:
