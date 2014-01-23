@@ -19,7 +19,6 @@ from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Instance, Dict, Bool
 from uncertainties import ufloat
 from pychron.loggable import Loggable
-from pychron.experiment.utilities.identifier import make_rid
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
@@ -118,7 +117,7 @@ class ExportSpec(Loggable):
             # ps = self.signal_intercepts['{}signal'.format(iso)]
         except KeyError, e:
             self.debug('no key {} {}'.format(iso,
-                                             self.signal_intercepts.keys()))
+                                             self.isotopes.keys()))
             ps = ufloat(0, 0)
 
         return ps

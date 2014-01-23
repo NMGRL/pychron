@@ -849,9 +849,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self.cancel(confirm=False)
 
     def _pre_execute_check(self, inform=True):
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
+        # if globalv.experiment_debug:
+        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+        #     return True
 
         with self.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -863,6 +863,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
                     self._prev_baselines = dbr.get_baseline_dict()
 
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
             return

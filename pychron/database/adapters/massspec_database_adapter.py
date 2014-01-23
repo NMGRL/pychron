@@ -20,6 +20,7 @@
 
 #=============local library imports  ==========================
 import binascii
+from numpy import Inf
 
 from sqlalchemy.sql.expression import func, distinct
 
@@ -398,11 +399,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #                           baseline, baseline_err,
 #                           blank, blank_err
                            ):
-        '''
+        """
             intercept, baseline and blank should be ufloats
-            
+
             mass spec does not propogate baseline error
-        '''
+        """
 
         isotope = self.get_isotope(isotope,)
 
@@ -420,15 +421,23 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         detector = self.get_detector(detector,)
 
+        i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
+        ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
+        iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
+        isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+
+        b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
+        be = float(blank.nominal_value) if blank.std_dev != Inf else 0
+
         iso_r = IsotopeResultsTable(DataReductionSessionID=data_reduction_session_id,
-                                    Intercept=intercept.nominal_value,
-                                    InterceptEr=float(intercept.std_dev),
+                                    Intercept=i,
+                                    InterceptEr=ie,
 
-                                    Iso=isotope_value.nominal_value,
-                                    IsoEr=float(isotope_value.std_dev),
+                                    Iso=iso,
+                                    IsoEr=isoe,
 
-                                    Bkgd=blank.nominal_value,
-                                    BkgdEr=float(blank.std_dev),
+                                    Bkgd=b,
+                                    BkgdEr=be,
 
                                     BkgdDetTypeID=detector.DetectorTypeID,
 

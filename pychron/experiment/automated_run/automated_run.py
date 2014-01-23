@@ -1640,9 +1640,12 @@ anaylsis_type={}
                 db.add_fit(dbhist, dbiso, fit=m.fit)
 
             # add isotope result
+            v = float(m.value) if m.value != Inf else 0.0
+            e = float(m.error) if m.error != Inf else 0.0
+
             db.add_isotope_result(dbiso,
                                   dbhist,
-                                  signal_=float(m.value), signal_err=float(m.error))
+                                  signal_=v, signal_err=e)
 
     def _time_save(self, func, name, *args, **kw):
         st = time.time()
