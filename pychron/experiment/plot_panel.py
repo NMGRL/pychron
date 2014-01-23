@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Int, Tuple, Color
+    Str, CInt, Tuple, Color
 from traitsui.api import View, UItem, VGroup, HGroup, spring
 from pychron.graph.graph import Graph
 
@@ -84,70 +84,8 @@ class TraitsContainer(HasTraits):
             return {'object': self.model}
         return super(TraitsContainer, self).trait_context()
 
-#class DisplayContainer(TraitsContainer):
-#    model = Any
-#    def _get_display_group(self):
-#        results_grp = Group(
-##                             HGroup(
-##                                   Item('correct_for_baseline'),
-##                                   Item('correct_for_blank'),
-##                                   spring),
-#                            UItem('display_signals',
-#                                  editor=FastTextTableEditor(adapter=SignalAdapter(),
-#                                                         bg_color='lightyellow',
-#                                                         header_color='lightgray',
-#                                                         font_size=10,
-#                                                         ),
-##                                          width=0.8
-#                                         ),
-#                                label='Results'
-#                            )
-#
-#        ratios_grp = Group(UItem('display_ratios',
-#                                         editor=FastTextTableEditor(adapter=RatiosAdapter(),
-#                                                         bg_color='lightyellow',
-#                                                         header_color='lightgray'
-#                                                         ),
-#                                        ),
-#                           label='Ratios'
-#                           )
-#        summary_grp = Group(
-#                           UItem('display_summary',
-#                                 editor=FastTextTableEditor(adapter=ValueErrorAdapter(),
-#                                                        bg_color='lightyellow',
-#                                                        header_color='lightgray'
-#                                                        )
-#                                 ),
-#                            label='Summary'
-#                          )
-#        display_grp = Group(
-#                            results_grp,
-#                            ratios_grp,
-#                            summary_grp,
-#                            layout='tabbed'
-#                            )
-#
-#        return display_grp
-#
-#    def traits_view(self):
-#        v = View(
-#               VGroup(
-#                      Item('ncounts'),
-#                      self._get_display_group()
-#                     ),
-#               )
-#        return v
-
 
 class GraphContainer(TraitsContainer):
-
-#    graphs = List
-#    selected_tab = Any
-#    label = Str
-#     def _selected_tab_changed(self):
-#         print 'sel', self.selected_tab
-
-
     def traits_view(self):
         v = View(
             VGroup(
@@ -187,10 +125,10 @@ class PlotPanel(Loggable):
     plot_title = Str
     #analysis_id=DelegatesTo('analysis_view')
 
-    ncounts = Property(Int(enter_set=True, auto_set=False), depends_on='_ncounts')
+    ncounts = Property(CInt(enter_set=True, auto_set=False), depends_on='_ncounts')
     _ncounts = CInt
 
-    ncycles = Property(Int(enter_set=True, auto_set=False),
+    ncycles = Property(CInt(enter_set=True, auto_set=False),
                        depends_on='_ncycles')
     _ncycles = CInt
 

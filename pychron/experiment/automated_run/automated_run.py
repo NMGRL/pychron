@@ -1388,7 +1388,7 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.05
+            max_ = tc * 1.1
 
         if starttime_offset > mi:
             min_ = -starttime_offset
