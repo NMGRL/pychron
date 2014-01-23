@@ -88,7 +88,7 @@ class ExtractionPyScript(ValvePyScript):
     info_color = EXTRACTION_COLOR
     snapshot_paths = List
 
-    def report_results(self):
+    def output_achieved(self):
         request = self.extract
         ach = self._manager_action([('get_achieved_output', (), {})],
                                    name=self.extract_device,
@@ -103,8 +103,8 @@ class ExtractionPyScript(ValvePyScript):
         except (ValueError, TypeError):
             ach = 0
 
-        self.info('Requested Output= {:0.3f}'.format(request))
-        self.info('Achieved Output=  {:0.3f}'.format(ach))
+        return ('Requested Output= {:0.3f}'.format(request),
+                'Achieved Output=  {:0.3f}'.format(ach))
 
     def get_command_register(self):
         cm = super(ExtractionPyScript, self).get_command_register()

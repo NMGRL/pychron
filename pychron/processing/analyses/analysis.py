@@ -188,6 +188,8 @@ class DBAnalysis(Analysis):
             r = self.ic_factors[det]
         else:
             #get the ic_factor from preferences if available otherwise 1.0
+            # storing ic_factor in preferences causing issues
+            # ic_factor stored in detectors.cfg
             r = ArArAge.get_ic_factor(self, det)
 
         return r

@@ -850,7 +850,9 @@ class AutomatedRun(Loggable):
 
         if self.extraction_script.execute():
             #report the extraction results
-            self.extraction_script.report_results()
+            r=self.extraction_script.output_achieved()
+            for ri in r:
+                self.info(ri)
 
             self._post_extraction_save()
             self.info('======== Extraction Finished ========')
