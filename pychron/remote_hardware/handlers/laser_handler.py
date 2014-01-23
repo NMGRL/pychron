@@ -400,7 +400,7 @@ class LaserHandler(BaseRemoteHardwareHandler):
         manager.set_laser_output(p, units)
         return result
 
-    def GetAchievedOutput(self, manager):
+    def GetAchievedOutput(self, manager, *args):
         result=manager.get_achieved_output()
         return str(result)
 

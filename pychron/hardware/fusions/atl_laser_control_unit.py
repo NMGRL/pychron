@@ -248,7 +248,7 @@ class ATLLaserControlUnit(CoreDevice):
     def laser_run(self):
         self.debug('run laser')
         self.firing = True
-        self.energies=array()
+        self.energies = array([])
 
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
