@@ -108,9 +108,9 @@ class MassSpecDatabaseImporter(Loggable):
         identifier = spec.labnumber
         if trid.startswith('c'):
             if spec.mass_spectrometer.lower() in ('obama', 'pychron obama'):
-                identifier = irradpos = '4358'
+                identifier = '4358'
             else:
-                identifier = irradpos = '4359'
+                identifier = '4359'
         return identifier
 
     def add_analysis(self, spec, commit=True):
@@ -118,7 +118,7 @@ class MassSpecDatabaseImporter(Loggable):
             irradpos = spec.irradpos
             rid = spec.runid
             trid = rid.lower()
-            identifier=spec.labnumber
+            identifier = spec.labnumber
 
             if trid.startswith('b'):
                 runtype = 'Blank'
@@ -128,8 +128,7 @@ class MassSpecDatabaseImporter(Loggable):
                 irradpos = -2
             elif trid.startswith('c'):
                 runtype = 'Unknown'
-                identifier=self.get_identifier(spec)
-
+                identifier = irradpos = self.get_identifier(spec)
             else:
                 runtype = 'Unknown'
 
@@ -147,7 +146,8 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
+                self.message(
+                    'Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                 if commit:
                     sess.rollback()
 
@@ -315,7 +315,7 @@ class MassSpecDatabaseImporter(Loggable):
                               dbdet)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
-        iso=dbiso.Label
+        iso = dbiso.Label
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
         det = dbdet.Label
         tb, vb = spec.get_baseline_data(iso, odet)
