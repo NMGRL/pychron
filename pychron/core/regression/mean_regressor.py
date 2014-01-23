@@ -98,8 +98,8 @@ sem={}
     def make_equation(self):
         return
 
-    def predict_error(self, x, error_calc='sem'):
-        if error_calc == 'sem':
+    def predict_error(self, x):
+        if 'sem' in self.fit.lower():
             e = self.sem
         else:
             e = self.std
