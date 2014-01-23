@@ -282,6 +282,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     else:
                         xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
+                    print xs
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:
