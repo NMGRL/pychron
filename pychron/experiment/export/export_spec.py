@@ -26,14 +26,14 @@ from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 
 class ExportSpec(Loggable):
-    rid = CStr
+    runid = CStr
     aliquot = Either(CInt, Str)
     step = Str
     irradpos = CStr
 
     isotopes=Dict
 
-    spectrometer = Str
+    mass_spectrometer = Str
     extract_device = Str
     tray = Str
     position = Property(depends_on='_position')
@@ -222,9 +222,9 @@ class ExportSpec(Loggable):
         #
         # return t, v
 
-    @property
-    def record_id(self):
-        return make_rid(self.labnumber, self.aliquot, self.step)
+    #@property
+    #def runid(self):
+    #    return make_rid(self.labnumber, self.aliquot, self.step)
 
     def _set_position(self, pos):
         if ',' in pos:

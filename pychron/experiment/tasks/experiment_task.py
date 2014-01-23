@@ -100,7 +100,8 @@ class ExperimentEditorTask(EditorTask):
         bind_preference(self.notifier, 'port',
                         'pychron.experiment.notifications_port')
         #force notifier setup
-        self.notifier.setup(self.notifier.port)
+        if self.use_notifications:
+            self.notifier.setup(self.notifier.port)
 
          #sys logger
         bind_preference(self, 'use_syslogger',

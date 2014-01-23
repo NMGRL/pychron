@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from distutils.util import strtobool
 from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
@@ -156,6 +157,12 @@ class Magnet(SpectrometerDevice):
 
             micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
             time.sleep(self.settling_time)
+
+            for i in xrange(50):
+                if not strtobool(micro.ask('GetMagnetMoving')):
+                    break
+                time.sleep(0.25)
+
             if unprotect:
                 for pd in self.protected_detectors:
                     micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)

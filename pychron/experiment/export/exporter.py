@@ -69,16 +69,16 @@ class MassSpecExporter(Exporter):
     def add(self, spec):
         db = self.importer.db
 
-        rid = spec.rid
+        rid = spec.runid
         # convert rid
         if rid == 'c':
-            if spec.spectrometer == 'Pychron Jan':
+            if spec.mass_spectrometer == 'Pychron Jan':
                 rid = '4359'
             else:
                 rid = '4358'
 
         if db.get_analysis(rid, spec.aliquot, spec.step):
-            self.debug('analysis {} already exists in database'.format(spec.record_id))
+            self.debug('analysis {} already exists in database'.format(rid))
         else:
             self.importer.add_analysis(spec)
             self.importer.db.reset()
@@ -111,7 +111,7 @@ class XMLExporter(Exporter):
     def _make_xml_analysis(self, xmlp, spec):
         an = xmlp.add('analysis', '', None)
         meta = xmlp.add('metadata', '', an)
-        xmlp.add('RID', spec.rid, meta)
+        xmlp.add('RID', spec.runid, meta)
         xmlp.add('Aliquot', spec.aliquot, meta)
         xmlp.add('Step', spec.step, meta)
 

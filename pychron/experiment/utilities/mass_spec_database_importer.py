@@ -103,22 +103,22 @@ class MassSpecDatabaseImporter(Loggable):
         self._current_spec = None
 
     def get_identifier(self, spec):
-        rid = spec.rid
+        rid = spec.runid
         trid = rid.lower()
         identifier = spec.labnumber
         if trid.startswith('c'):
-            if spec.spectrometer.lower() in ('obama', 'pychron obama'):
-                identifier = irradpos = '4358'
+            if spec.mass_spectrometer.lower() in ('obama', 'pychron obama'):
+                identifier = '4358'
             else:
-                identifier = irradpos = '4359'
+                identifier = '4359'
         return identifier
 
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
             irradpos = spec.irradpos
-            rid = spec.rid
+            rid = spec.runid
             trid = rid.lower()
-            identifier=spec.labnumber
+            identifier = spec.labnumber
 
             if trid.startswith('b'):
                 runtype = 'Blank'
@@ -128,10 +128,7 @@ class MassSpecDatabaseImporter(Loggable):
                 irradpos = -2
             elif trid.startswith('c'):
                 runtype = 'Unknown'
-                if spec.spectrometer.lower() in ('obama', 'pychron obama'):
-                    identifier=irradpos='4358'
-                else:
-                    identifier=irradpos='4359'
+                identifier = irradpos = self.get_identifier(spec)
             else:
                 runtype = 'Unknown'
 
@@ -149,7 +146,8 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.rid, rid, tb))
+                self.message(
+                    'Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                 if commit:
                     sess.rollback()
 
@@ -159,7 +157,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         db = self.db
 
-        spectrometer = spec.spectrometer
+        spectrometer = spec.mass_spectrometer
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
@@ -179,7 +177,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sample_id = db_irradpos.SampleID
             else:
                 self.warning(
-                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.record_id))
+                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
                 return
                 # add runscript
         rs = db.add_runscript(spec.runscript_name,
@@ -191,7 +189,7 @@ class MassSpecDatabaseImporter(Loggable):
         refdbdet = db.add_detector('H1', Label='H1')
 
         # remember new rid in case duplicate entry error and need to augment rid
-        spec.rid = rid
+        spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,
                                    RUN_TYPE_DICT[runtype],
@@ -228,7 +226,7 @@ class MassSpecDatabaseImporter(Loggable):
         sess.flush()
 
         t = time.time() - gst
-        self.debug('{} added analysis time {}s'.format(spec.record_id, t))
+        self.debug('{} added analysis time {}s'.format(spec.runid, t))
         return analysis
 
     def _add_isotopes(self, analysis, spec, refdet, runtype):
@@ -317,7 +315,7 @@ class MassSpecDatabaseImporter(Loggable):
                               dbdet)
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
-        iso=dbiso.Label
+        iso = dbiso.Label
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
         det = dbdet.Label
         tb, vb = spec.get_baseline_data(iso, odet)
