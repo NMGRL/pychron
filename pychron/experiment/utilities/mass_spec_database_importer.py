@@ -177,7 +177,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sample_id = db_irradpos.SampleID
             else:
                 self.warning(
-                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.record_id))
+                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
                 return
                 # add runscript
         rs = db.add_runscript(spec.runscript_name,
@@ -226,7 +226,7 @@ class MassSpecDatabaseImporter(Loggable):
         sess.flush()
 
         t = time.time() - gst
-        self.debug('{} added analysis time {}s'.format(spec.record_id, t))
+        self.debug('{} added analysis time {}s'.format(spec.runid, t))
         return analysis
 
     def _add_isotopes(self, analysis, spec, refdet, runtype):

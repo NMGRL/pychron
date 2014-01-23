@@ -78,7 +78,7 @@ class MassSpecExporter(Exporter):
                 rid = '4358'
 
         if db.get_analysis(rid, spec.aliquot, spec.step):
-            self.debug('analysis {} already exists in database'.format(spec.record_id))
+            self.debug('analysis {} already exists in database'.format(rid))
         else:
             self.importer.add_analysis(spec)
             self.importer.db.reset()
