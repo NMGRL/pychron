@@ -77,9 +77,9 @@ sem={}
 
     def calculate_ci(self, fx, fy):
 #         c = self.predict(fx)
-        fit = self.fit.lower()
-        ec = 'sem' if fit.endswith('sem') else 'sd'
-        e = self.predict_error(fx, error_calc=ec)
+        #fit = self.fit.lower()
+        #ec = 'sem' if fit.endswith('sem') else 'sd'
+        e = self.predict_error(fx)
         ly = fy - e
         uy = fy + e
         return ly, uy
@@ -98,8 +98,11 @@ sem={}
     def make_equation(self):
         return
 
-    def predict_error(self, x):
-        if 'sem' in self.fit.lower():
+    def predict_error(self, x, error_calc=None):
+        if error_calc is None:
+            error_calc='sem' if 'sem' in self.fit.lower() else 'sd'
+
+        if error_calc=='sem':
             e = self.sem
         else:
             e = self.std
