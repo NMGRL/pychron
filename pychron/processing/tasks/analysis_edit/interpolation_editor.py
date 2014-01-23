@@ -174,8 +174,7 @@ class InterpolationEditor(GraphEditor):
             r_ys, r_es = None, None
             if self.references:
                 r_ys, r_es = self._get_reference_values(iso)
-            print self.references
-            print r_ys
+
             p = graph.new_plot(
                 ytitle=iso,
                 xtitle='Time (hrs)',
