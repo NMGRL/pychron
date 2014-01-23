@@ -453,7 +453,9 @@ class Spectrum(BaseArArFigure):
     def _build_integrated_age_label(self, tga, *args):
         age, error = tga.nominal_value, tga.std_dev
         error *= self.options.nsigma
+
         txt = self._build_label_text(age, error, *args)
         return 'Integrated Age= {}'.format(txt)
+
 
 #============= EOF =============================================
