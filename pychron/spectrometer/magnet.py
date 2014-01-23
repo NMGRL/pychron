@@ -13,10 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from distutils.util import strtobool
-from pychron.core.ui import set_toolkit
-
-set_toolkit('qt4')
+from pychron.core.helpers.filetools import to_bool
 
 #============= enthought library imports =======================
 from scipy import optimize
@@ -159,7 +156,7 @@ class Magnet(SpectrometerDevice):
             time.sleep(self.settling_time)
 
             for i in xrange(50):
-                if not strtobool(micro.ask('GetMagnetMoving')):
+                if not to_bool(micro.ask('GetMagnetMoving')):
                     break
                 time.sleep(0.25)
 
@@ -403,17 +400,17 @@ class Magnet(SpectrometerDevice):
         #    return v
 
 
-if __name__ == '__main__':
-    from launchers.helpers import build_version
-
-    build_version('_dev')
-
-    from pychron.core.helpers.logger_setup import logging_setup
-
-    logging_setup('magnet')
-    m = Magnet()
-    m.load()
-    m.update_field_table('AX', 'Ar40', 5)
+# if __name__ == '__main__':
+#     from launchers.helpers import build_version
+#
+#     build_version('_dev')
+#
+#     from pychron.core.helpers.logger_setup import logging_setup
+#
+#     logging_setup('magnet')
+#     m = Magnet()
+#     m.load()
+#     m.update_field_table('AX', 'Ar40', 5)
     #m.configure_traits()
     #============= EOF =============================================
     # def get_dac_for_mass(self, mass):

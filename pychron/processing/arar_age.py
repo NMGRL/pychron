@@ -16,9 +16,12 @@
 
 
 #============= enthought library imports =======================
+from ConfigParser import ConfigParser
 from copy import copy
+import os
 from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -32,7 +35,7 @@ from pychron.loggable import Loggable
 from pychron.core.helpers.isotope_utils import sort_isotopes
 
 logger=new_logger('ArArAge')
-arar_constants = None
+# arar_constants = None
 
 
 class ArArAge(Loggable):
@@ -78,7 +81,7 @@ class ArArAge(Loggable):
     ar39decayfactor = Float
     ar37decayfactor = Float
 
-    arar_constants = Instance(ArArConstants)
+    arar_constants = Instance(ArArConstants,())
     logger=logger
 
     moles_Ar40 = Float
@@ -112,11 +115,26 @@ class ArArAge(Loggable):
             return ufloat(0,0, tag=iso)
 
     def get_ic_factor(self, det):
-        factors = self.arar_constants.ic_factors
+        # storing ic_factor in preferences causing issues
+        # ic_factor stored in detectors.cfg
+
+        p=os.path.join(paths.spectrometer_dir, 'detector.cfg')
+        # factors=None
         ic = 1, 1e-20
-        if factors:
-            ic = next(((ic.value, ic.error) for ic in factors
-                       if ic.detector.lower() == det.lower()), (1.0, 1e-20))
+        if os.path.isfile(p):
+            c=ConfigParser()
+            c.read(p)
+            det=det.lower()
+            for si in c.sections():
+                if si.lower()==det:
+                    v,e=1,1e-20
+                    if c.has_option(si, 'ic_factor'):
+                        v=c.getfloat(si,'ic_factor')
+                    if c.has_option(si, 'ic_factor_err'):
+                        e=c.getfloat(si,'ic_factor_err')
+                    ic=v,e
+                    break
+
         r = ufloat(*ic)
         return r
 
@@ -401,17 +419,17 @@ class ArArAge(Loggable):
     #        except ZeroDivisionError:
     #            return ufloat(0, 1e-20)
 
-    def _arar_constants_default(self):
-        """
-            use a global shared arar_constants
-        """
-
-        global arar_constants
-        #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-        #print 'asdf', arar_constants
-        if arar_constants is None:
-            arar_constants = ArArConstants()
-            #return ArArConstants()
-        return arar_constants
+    # def _arar_constants_default(self):
+    #     """
+    #         use a global shared arar_constants
+    #     """
+    #
+    #     global arar_constants
+    #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+    #     #print 'asdf', arar_constants
+    #     if arar_constants is None:
+    #         arar_constants = ArArConstants()
+    #         #return ArArConstants()
+    #     return arar_constants
 
         #============= EOF =============================================

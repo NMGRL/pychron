@@ -33,6 +33,7 @@ import gc
 # from memory_profiler import profile
 import weakref
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector, parse_hops
 from pychron.globals import globalv
 from pychron.loggable import Loggable
@@ -501,30 +502,30 @@ class AutomatedRun(Loggable):
     #===============================================================================
     # conditions
     #===============================================================================
-    def py_add_termination(self, attr, comp, value, start_count, frequency):
+    def py_add_termination(self, attr, comp, start_count, frequency):
         """
             attr must be an attribute of arar_age
         """
-        self.termination_conditions.append(TerminationCondition(attr, comp, value,
+        self.termination_conditions.append(TerminationCondition(attr, comp,
                                                                 start_count,
                                                                 frequency))
 
-    def py_add_truncation(self, attr, comp, value, start_count, frequency,
+    def py_add_truncation(self, attr, comp, start_count, frequency,
                           abbreviated_count_ratio):
         """
             attr must be an attribute of arar_age
         """
-
-        self.truncation_conditions.append(TruncationCondition(attr, comp, value,
+        self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
+        self.truncation_conditions.append(TruncationCondition(attr, comp,
                                                               start_count,
                                                               frequency,
                                                               abbreviated_count_ratio=abbreviated_count_ratio))
 
-    def py_add_action(self, attr, comp, value, start_count, frequency, action, resume):
+    def py_add_action(self, attr, comp, start_count, frequency, action, resume):
         """
             attr must be an attribute of arar_age
         """
-        self.action_conditions.append(ActionCondition(attr, comp, value,
+        self.action_conditions.append(ActionCondition(attr, comp,
                                                       start_count,
                                                       frequency,
                                                       action=action,
@@ -850,7 +851,9 @@ class AutomatedRun(Loggable):
 
         if self.extraction_script.execute():
             #report the extraction results
-            self.extraction_script.report_results()
+            r=self.extraction_script.output_achieved()
+            for ri in r:
+                self.info(ri)
 
             self._post_extraction_save()
             self.info('======== Extraction Finished ========')
@@ -1005,16 +1008,7 @@ anaylsis_type={}
         d = dict()
         for k, iso in self.arar_age.isotopes.iteritems():
             d[k] = iso.baseline_corrected_value()
-
-            # if self._processed_signals_dict is not None:
-            #     d = dict()
-            #     signals = self._processed_signals_dict
-            #     for iso, _, kind in self._save_isotopes:
-            #         if kind == 'signal':
-            #             si = signals['{}signal'.format(iso)]
-            #             bi = signals['{}baseline'.format(iso)]
-            #             d[iso] = si - bi
-            #     return d
+        return d
 
     def get_position_list(self):
         return self._make_iterable(self.spec.position)
@@ -1121,28 +1115,28 @@ anaylsis_type={}
         t = self.spec.truncate_condition
         self.debug('adding truncate condition {}'.format(t))
         if t:
-            if t.endswith('.yaml'):
-                p = os.path.join(paths.truncation_dir, t)
-                if os.path.isfile(p):
-                    with open(p, 'r') as fp:
-                        doc = yaml.load(fp)
+            p = os.path.join(paths.truncation_dir, add_extension(t, '.yaml'))
+            if os.path.isfile(p):
+                self.debug('extract truncations from file. {}'.format(p))
+                with open(p, 'r') as fp:
+                    doc = yaml.load(fp)
 
-                    attr = doc['attr']
-                    comp = doc['comp']
-                    value = doc['value']
-                    start = doc['start']
-                    acr = doc.get(['abbreviate_count_ratio'], 1)
-                    freq = doc.get(['frequency'], 1)
-                else:
-                    self.warning('Not a valid truncation file {}'.format(p))
-                    return
+                    for c in doc:
+                        attr=c['attr']
+                        comp=c['comp']
+                        start=c['start']
+                        freq=c.get('frequency',1)
+                        acr=c.get('abbreviated_count_ratio',1)
+                        self.py_add_truncation(attr, comp, int(start), freq, acr)
+
             else:
                 try:
                     c, start = t.split(',')
                     pat = '<=|>=|[<>=]'
-                    attr, value = re.split(pat, c)
-                    m = re.search(pat, c)
-                    comp = m.group(0)
+                    attr = re.split(pat, c)[0]
+                    # attr, value = re.split(pat, c)
+                    # m = re.search(pat, c)
+                    # comp = m.group(0)
 
                     freq = 1
                     acr = 1
@@ -1150,7 +1144,7 @@ anaylsis_type={}
                     self.debug('truncate_condition parse failed {} {}'.format(e, t))
                     return
 
-            self.py_add_truncation(attr, comp, float(value), int(start), freq, acr)
+                self.py_add_truncation(attr, c, int(start), freq, acr)
 
     def wait(self, t, msg=''):
         if self.experiment_executor:
@@ -1388,7 +1382,7 @@ anaylsis_type={}
         min_ = mi
         tc = self.plot_panel.total_counts
         if tc > ma or ma == Inf:
-            max_ = tc * 1.05
+            max_ = tc * 1.1
 
         if starttime_offset > mi:
             min_ = -starttime_offset
@@ -1646,9 +1640,12 @@ anaylsis_type={}
                 db.add_fit(dbhist, dbiso, fit=m.fit)
 
             # add isotope result
+            v = float(m.value) if m.value != Inf else 0.0
+            e = float(m.error) if m.error != Inf else 0.0
+
             db.add_isotope_result(dbiso,
                                   dbhist,
-                                  signal_=float(m.value), signal_err=float(m.error))
+                                  signal_=v, signal_err=e)
 
     def _time_save(self, func, name, *args, **kw):
         st = time.time()

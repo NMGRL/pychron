@@ -249,18 +249,16 @@ class PlateauOverlay(BasePlateauOverlay):
                 x2 = pt2[0] - 1
                 gc.lines([(x1, y), (x2, y)])
 
+                self._draw_end_caps(gc, x1, x2, y)
+                gc.draw_path()
+
                 # add end caps
                 if self.extend_end_caps:
+                    gc.set_line_width(1)
                     self._draw_extended_end_caps(gc, x1,x2,y,y1,y2)
-                else:
-                    self._draw_end_caps(gc, x1, x2, y)
 
                 gc.draw_path()
-                #draw label
-                # w, h, _, _ = gc.get_full_text_extent(self.plateau_label)
-                # tx=x1+(w-(x2-x1)/2.0)
-                # ty=y+5
-                # gc.set_text_position(tx,ty)
+
                 if self.label_visible:
                     label = self._get_plateau_label(x1, x2, y)
                     label.overlay(component, gc)

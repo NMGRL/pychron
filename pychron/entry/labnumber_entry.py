@@ -32,7 +32,6 @@ from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
 from pychron.entry.irradiation_pdf_writer import IrradiationPDFWriter, LabbookPDFWriter
 from pychron.entry.irradiation_table_view import IrradiationTableView
 from pychron.entry.labnumber_generator import LabnumberGenerator
-from pychron.entry.loaders.sample_loader import SampleLoader
 from pychron.paths import paths
 # from pychron.entry.irradiation import Irradiation
 # from pychron.entry.level import Level, load_holder_canvas, iter_geom
@@ -100,6 +99,12 @@ class LabnumberEntry(IsotopeDatabaseManager):
         #self.canvas.selected_samples=new
 
     def import_sample_metadata(self, p):
+        try:
+            from pychron.entry.loaders.sample_loader import SampleLoader
+        except ImportError, e:
+            self.warning_dialog(str(e))
+            return
+
         sample_loader=SampleLoader()
         sample_loader.do_import(self, p)
 
@@ -248,6 +253,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         dbln.selected_flux_history = hist
                         f = db.add_flux(irs.j, irs.j_err)
                         f.history = hist
+                        for ai in dbln.analyses:
+                            self.remove_from_cache(ai.uuid)
 
                     if dbln.selected_flux_history:
                         tol = 1e-10
@@ -278,7 +285,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                                         dbln.identifier))
 
         self.dirty = False
-        self.info('chang saved to database')
+        self.info('changes saved to database')
 
     def _increment(self, name):
         """

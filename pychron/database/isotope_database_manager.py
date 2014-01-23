@@ -293,6 +293,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         return self.db.get_irradiation_level(irradiation, level)
 
+    def remove_from_cache(self, uuid):
+        if uuid in ANALYSIS_CACHE:
+            ANALYSIS_CACHE.pop(uuid)
+            ANALYSIS_CACHE_COUNT.pop(uuid)
     #===============================================================================
     # private
     #===============================================================================

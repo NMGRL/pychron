@@ -85,44 +85,48 @@ class PeakHopCollector(DataCollector):
         """
             is it time for a magnet move
         """
-        try:
-            cycle, dets, isos, defls, settle, count = self.hop_generator.next()
-        except StopIteration:
-            return
+        # try:
+        cycle, dets, isos, defls, settle, count = self.hop_generator.next()
+        # except StopIteration:
+        #     return
 
         #update the iso/det in plotpanel
         # self.plot_panel.set_detectors(isos, dets)
 
         detector = dets[0]
         isotope = isos[0]
-        if cycle >= self.plot_panel.ncycles:
-            self.info('user termination. measurement iteration executed {}/{} cycles'.format(cycle, self.ncycles))
-            self.stop()
+        # self.debug('c={} pc={} nc={}'.format(cycle, self.plot_panel.ncycles, self.ncycles))
+        if self.plot_panel.ncycles!=self.ncycles:
+            if cycle >= self.plot_panel.ncycles:
+                self.info('user termination. measurement iteration executed {}/{} cycles'.format(cycle, self.ncycles))
+                self.stop()
+                return
+        elif cycle>=self.ncycles:
             return
-        else:
-            if count == 0:
-                #set deflections
-                # only set deflections deflections were changed or need changing
-                deflect = len([d for d in defls if d is not None])
-                if deflect or self._was_deflected:
-                    self._was_deflected = False
-                    for det, defl in zip(dets, defls):
-                        #use the measurement script to set the deflections
-                        #this way defaults from the config can be used
-                        if defl is None:
-                            defl = ''
-                        else:
-                            self._was_deflected = True
 
-                        self.measurement_script.set_deflection(det, defl)
+        if count == 0:
+            #set deflections
+            # only set deflections deflections were changed or need changing
+            deflect = len([d for d in defls if d is not None])
+            if deflect or self._was_deflected:
+                self._was_deflected = False
+                for det, defl in zip(dets, defls):
+                    #use the measurement script to set the deflections
+                    #this way defaults from the config can be used
+                    if defl is None:
+                        defl = ''
+                    else:
+                        self._was_deflected = True
 
-                self.parent.set_magnet_position(isotope, detector,
-                                                update_detectors=False, update_labels=False,
-                                                update_isotopes=True,
-                                                remove_non_active=False)
-                msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
-                self.parent.wait(settle, msg)
-                self.debug(msg)
+                    self.measurement_script.set_deflection(det, defl)
+
+            self.parent.set_magnet_position(isotope, detector,
+                                            update_detectors=False, update_labels=False,
+                                            update_isotopes=True,
+                                            remove_non_active=False)
+            msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
+            self.parent.wait(settle, msg)
+            self.debug(msg)
 
         d = self.parent.get_detector(detector)
         # self.debug('cycle {} count {} {}'.format(cycle, count, id(self)))
@@ -136,12 +140,14 @@ class PeakHopCollector(DataCollector):
         return dets, isos
 
     def _generator_hops(self):
-
-        for c in xrange(self.ncycles):
+        # for c in xrange(self.ncycles):
+        c=0
+        while 1:
             for hopstr, counts, settle in self.hops:
                 isos, dets, defls = zip(*split_hopstr(hopstr))
                 for i in xrange(int(counts)):
                     yield c, dets, isos, defls, settle, i
+            c+=1
 
 
 

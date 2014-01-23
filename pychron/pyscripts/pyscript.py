@@ -335,7 +335,7 @@ class PyScript(Loggable):
                 except KeyError, e:
                     return MainError()
                 except Exception, e:
-                    return traceback.format_exc(limit=5)
+                    return traceback.format_exc()
             else:
                 return code_or_err
 

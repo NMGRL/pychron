@@ -403,6 +403,24 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
+    def _join_run(self, spec, run):
+    #    def _join_run(self, spec, t, run):
+    #        t.join()
+        self._do_run(run)
+
+        self.debug('{} finished'.format(run.runid))
+        if self.isAlive():
+            self.debug('spec analysis type {}'.format(spec.analysis_type))
+            if spec.analysis_type.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    self._prev_blanks = pb
+                    self.debug('previous blanks ={}'.format(pb))
+
+        self._report_execution_state(run)
+        run.teardown()
+        mem_log('> end join')
+
     def _do_run(self, run):
         mem_log('< start')
 
@@ -448,23 +466,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         self.wait_group.pop()
 
         mem_log('end run')
-
-    def _join_run(self, spec, run):
-    #    def _join_run(self, spec, t, run):
-    #        t.join()
-        self._do_run(run)
-
-        self.debug('{} finished'.format(run.runid))
-        if self.isAlive():
-
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blanks = pb
-
-        self._report_execution_state(run)
-        run.teardown()
-        mem_log('> end join')
 
     def _overlapped_run(self, v):
         self._overlapping = True
@@ -848,9 +849,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self.cancel(confirm=False)
 
     def _pre_execute_check(self, inform=True):
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
+        # if globalv.experiment_debug:
+        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+        #     return True
 
         with self.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -862,6 +863,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
                     self._prev_baselines = dbr.get_baseline_dict()
 
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
             return

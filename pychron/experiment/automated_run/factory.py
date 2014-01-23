@@ -34,7 +34,7 @@ from pychron.experiment.script.script import Script
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -193,13 +193,21 @@ class AutomatedRunFactory(Loggable):
     #===========================================================================
     # truncation
     #===========================================================================
-    trunc_attr = Enum('age', 'kca', 'kcl')
+    trunc_attr = String('age')
+    trunc_attrs= List(['age',
+                       'age_err',
+                       'kca',
+                       'kca_err',
+                       'kcl',
+                       'kcl_err',
+                       'rad40_percent',
+                       'Ar40','Ar39','Ar38','Ar37','Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
 
     truncation_str = Property(depends_on='trunc_+')
-    truncation_path = Str
+    truncation_path = String
     truncations = List
     clear_truncation=Button
 
@@ -819,7 +827,7 @@ class AutomatedRunFactory(Loggable):
     def _get_truncations(self):
         p = paths.truncation_dir
         extension = '.yaml'
-        temps = list_directory(p, extension)
+        temps = list_directory(p, extension, remove_extension=True)
         return ['', ] + temps
 
     def _get_beam_diameter(self):
@@ -894,13 +902,15 @@ class AutomatedRunFactory(Loggable):
             self.extract_group = eg
 
     @on_trait_change('trunc_+, truncation_path')
-    def _edit_truncation(self, obj, trait, name, new):
+    def _edit_truncation(self, obj, name, old, new):
+        print name,new
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
 
             if name == 'truncation_path':
-                t = add_extension(new, '.yaml') if new else None
+                t=new
+                # t = add_extension(new, '.yaml') if new else None
             else:
                 t = self.truncation_str
 

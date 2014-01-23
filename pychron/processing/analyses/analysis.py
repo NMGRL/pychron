@@ -188,6 +188,8 @@ class DBAnalysis(Analysis):
             r = self.ic_factors[det]
         else:
             #get the ic_factor from preferences if available otherwise 1.0
+            # storing ic_factor in preferences causing issues
+            # ic_factor stored in detectors.cfg
             r = ArArAge.get_ic_factor(self, det)
 
         return r
@@ -781,7 +783,7 @@ class VCSAnalysis(DBAnalysis):
             load isotopes from file
         """
         isos = {}
-        print yd['isotopes']
+        # print yd['isotopes']
         for iso in yd['isotopes']:
             ii = Isotope(name=iso['name'],
                          detector=iso['detector'],
@@ -795,7 +797,7 @@ class VCSAnalysis(DBAnalysis):
 
             isos[iso['name']] = ii
         self.isotopes = isos
-        print self.isotopes
+        # print self.isotopes
 
     def _to_ufloat(self, obj, attr):
         return ufloat(obj[attr], obj['{}_err'.format(attr)])

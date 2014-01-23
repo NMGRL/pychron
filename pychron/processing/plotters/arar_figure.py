@@ -295,6 +295,7 @@ class BaseArArFigure(HasTraits):
             # labels
             #===============================================================================
 
+
     def _add_data_label(self, s, text, point, bgcolor='transparent',
                         label_position='top right', color=None, append=True, **kw):
         if color is None:
@@ -341,7 +342,15 @@ class BaseArArFigure(HasTraits):
         we = floatfmt(we, 4)
         pm = '+/-'
 
-        return u'{} {}{} {} {}'.format(x, pm, we, mswd, n)
+        age_units = self._get_age_units()
+
+        return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
+
+    def _get_age_units(self):
+        a = 'Ma'
+        if self.analyses:
+            a = self.analyses[0].arar_constants.age_units
+        return a
 
     def _set_renderer_selection(self, rs, sel):
         for rend in rs:

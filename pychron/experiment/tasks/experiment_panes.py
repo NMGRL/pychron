@@ -227,7 +227,9 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_truncate_group(self):
         grp = VGroup(
             HGroup(
-                RFItem('trunc_attr', show_label=False),
+                RFItem('trunc_attr',
+                       editor=EnumEditor(name=make_rf_name('trunc_attrs')),
+                       show_label=False),
                 RFItem('trunc_comp', show_label=False),
                 RFItem('trunc_crit', show_label=False),
                 spacer(-10),

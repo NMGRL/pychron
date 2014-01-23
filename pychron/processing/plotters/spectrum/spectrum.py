@@ -21,6 +21,7 @@ from numpy import hstack, array
 #============= local library imports  ==========================
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
+from pychron.processing.plotters.flow_label import FlowPlotLabel
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
@@ -93,8 +94,9 @@ class Spectrum(BaseArArFigure):
             plateau_mswd, valid_mswd, nsteps=ag.get_plateau_mswd_tuple()
             platbounds=ag.plateau_steps
 
-            info_txt=self._build_label_text(plateau_age.nominal_value, plateau_age.std_dev,
-                                            plateau_mswd, valid_mswd, nsteps)
+            e=plateau_age.std_dev*self.options.nsigma
+            info_txt=self._build_label_text(plateau_age.nominal_value, e,
+                                            plateau_mswd, valid_mswd, nsteps, )
 
             overlay=self._add_plateau_overlay(spec, platbounds, plateau_age,
                                               ys[::2], es[::2],
@@ -138,8 +140,29 @@ class Spectrum(BaseArArFigure):
             # if label.id in po.overlay_positions:
             #     label.label_position=po.overlay_positions[label.id]
 
+        self._add_info(graph, plot)
+
         if not po.has_ylimits():
             self._set_y_limits(miages, maages, pad='0.1')
+
+    def _add_info(self, g, plot):
+        if self.group_id == 0:
+            if self.options.show_info:
+                ts = ['+/-{}s'.format(self.options.nsigma)]
+
+                # if self.options.show_mean_info:
+                #     m = self.options.mean_calculation_kind
+                #     s = self.options.nsigma
+                #     ts.append('Mean: {} +/-{}s'.format(m, s))
+                # if self.options.show_error_type_info:
+                #     ts.append('Error Type:{}'.format(self.options.error_calc_method))
+
+                if ts:
+                    pl = FlowPlotLabel(text='\n'.join(ts),
+                                       overlay_position='inside top',
+                                       hjustify='left',
+                                       component=plot)
+                    plot.overlays.append(pl)
 
     def _add_integrated_label(self, plot, text, font='modern 10', relative_position=0):
 
@@ -210,6 +233,7 @@ class Spectrum(BaseArArFigure):
                             extend_end_caps=self.options.extend_plateau_end_caps,
                             label_visible=self.options.display_plateau_info,
                             label_font_size=self.options.plateau_font_size,
+
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             y=plateau_age.nominal_value*1.25)
 
@@ -429,7 +453,9 @@ class Spectrum(BaseArArFigure):
     def _build_integrated_age_label(self, tga, *args):
         age, error = tga.nominal_value, tga.std_dev
         error *= self.options.nsigma
+
         txt = self._build_label_text(age, error, *args)
         return 'Integrated Age= {}'.format(txt)
+
 
 #============= EOF =============================================
