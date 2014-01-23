@@ -116,7 +116,7 @@ class MassSpecDatabaseImporter(Loggable):
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
             irradpos = spec.irradpos
-            rid = spec.rid
+            rid = spec.runid
             trid = rid.lower()
             identifier=spec.labnumber
 
@@ -147,7 +147,7 @@ class MassSpecDatabaseImporter(Loggable):
                 import traceback
 
                 tb = traceback.format_exc()
-                self.message('Could not save spec.rid={} rid={} to Mass Spec database.\n {}'.format(spec.rid, rid, tb))
+                self.message('Could not save spec.runid={} rid={} to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
                 if commit:
                     sess.rollback()
 
