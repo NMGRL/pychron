@@ -160,7 +160,6 @@ class InterpolationEditor(GraphEditor):
             p_... predicted value
         '''
         set_x_flag = False
-        i = 0
         gen = self._graph_generator()
         for i, fit in enumerate(gen):
             iso = fit.name
@@ -233,6 +232,10 @@ class InterpolationEditor(GraphEditor):
 
                 if reg:
                     p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
+
+                    p_uys=[p if p is not None else 0 for p in p_uys]
+                    p_ues=[p if p is not None else 0 for p in p_ues]
+
                     # display the predicted values
                     s, _p = graph.new_series(c_uxs,
                                              p_uys,
@@ -245,8 +248,6 @@ class InterpolationEditor(GraphEditor):
                                              bind_id=-1)
                     graph.set_series_label('Unknowns-predicted', plotid=i)
                     self._add_error_bars(s, p_ues)
-
-            i += 1
 
         if set_x_flag:
             m = abs(end - start) / 3600.
