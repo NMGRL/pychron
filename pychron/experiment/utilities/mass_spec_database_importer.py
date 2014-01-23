@@ -23,6 +23,7 @@ import struct
 from numpy import array
 #============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.core.regression.ols_regressor import PolynomialRegressor
@@ -136,8 +137,9 @@ class MassSpecDatabaseImporter(Loggable):
             # if paliquot is None:
             #     paliquot=0
             #
-            rid = '{}-{:02n}'.format(identifier, spec.aliquot)
+            #rid = '{}-{:02n}'.format(identifier, spec.aliquot, spec.step)
             # self.info('Saving analysis {} to database as {}'.format(spec.rid, rid))
+            rid = make_runid(identifier, spec.aliquot, spec.step)
 
             self._analysis = None
             try:

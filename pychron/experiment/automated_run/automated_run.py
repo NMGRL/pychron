@@ -1008,16 +1008,7 @@ anaylsis_type={}
         d = dict()
         for k, iso in self.arar_age.isotopes.iteritems():
             d[k] = iso.baseline_corrected_value()
-
-            # if self._processed_signals_dict is not None:
-            #     d = dict()
-            #     signals = self._processed_signals_dict
-            #     for iso, _, kind in self._save_isotopes:
-            #         if kind == 'signal':
-            #             si = signals['{}signal'.format(iso)]
-            #             bi = signals['{}baseline'.format(iso)]
-            #             d[iso] = si - bi
-            #     return d
+        return d
 
     def get_position_list(self):
         return self._make_iterable(self.spec.position)

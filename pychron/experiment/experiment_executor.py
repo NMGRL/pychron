@@ -403,6 +403,24 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
+    def _join_run(self, spec, run):
+    #    def _join_run(self, spec, t, run):
+    #        t.join()
+        self._do_run(run)
+
+        self.debug('{} finished'.format(run.runid))
+        if self.isAlive():
+            self.debug('spec analysis type {}'.format(spec.analysis_type))
+            if spec.analysis_type.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    self._prev_blanks = pb
+                    self.debug('previous blanks ={}'.format(pb))
+
+        self._report_execution_state(run)
+        run.teardown()
+        mem_log('> end join')
+
     def _do_run(self, run):
         mem_log('< start')
 
@@ -448,23 +466,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         self.wait_group.pop()
 
         mem_log('end run')
-
-    def _join_run(self, spec, run):
-    #    def _join_run(self, spec, t, run):
-    #        t.join()
-        self._do_run(run)
-
-        self.debug('{} finished'.format(run.runid))
-        if self.isAlive():
-
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blanks = pb
-
-        self._report_execution_state(run)
-        run.teardown()
-        mem_log('> end join')
 
     def _overlapped_run(self, v):
         self._overlapping = True
