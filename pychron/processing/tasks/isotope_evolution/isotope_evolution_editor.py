@@ -58,7 +58,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         return t
 
     def save(self):
-        self._save(None, None)
+        self._save(None, None, None)
 
     def _save(self, fits, filters, progress):
         proc = self.processor
