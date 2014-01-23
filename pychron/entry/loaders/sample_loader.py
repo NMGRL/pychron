@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 import pyproj
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
