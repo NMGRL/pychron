@@ -19,6 +19,6 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 version_id = ''
-setup_version_id='_install'
+setup_version_id = '_uv'
 #============= EOF =============================================
 

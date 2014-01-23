@@ -811,7 +811,8 @@ class StageManager(Manager):
 
             self._move_to_point_hook()
 
-            self.info('Move complete')
+        self.info('Move complete')
+        self.update_axes()
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
