@@ -20,7 +20,7 @@ from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
 #============= standard library imports ========================
-from numpy import array
+from numpy import array, Inf
 #============= local library imports  ==========================
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
@@ -29,6 +29,21 @@ N = 500
 
 class Series(BaseArArFigure):
     xs = Array
+
+    def max_x(self, *args):
+        if len(self.xs):
+            return max(self.xs)
+        return -Inf
+
+    def min_x(self, *args):
+        if len(self.xs):
+            return min(self.xs)
+        return Inf
+
+    def mean_x(self, *args):
+        if len(self.xs):
+            return self.xs.mean()
+        return 0
 
     def build(self, plots):
         graph = self.graph

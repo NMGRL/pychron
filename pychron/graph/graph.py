@@ -1557,8 +1557,11 @@ class Graph(Viewable, ContextMenuMixin):
             #    def _set_limits(self, mi, ma, axis, plotid, auto, track, pad):
 
     def _set_limits(self, mi, ma, axis, plotid, pad, pad_style='symmetric', force=False):
-        '''
-        '''
+        """
+        """
+        if not plotid < len(self.plots):
+            return
+
         plot = self.plots[plotid]
         ra = getattr(plot, '%s_range' % axis)
 

@@ -60,15 +60,14 @@ class FigurePanel(HasTraits):
         po = self.plot_options
         attr = self._index_attr
 
-        center=None
-        mi,ma=None, None
-        if attr:
-            xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                               for i in self.figures])
-            mi, ma = min(xmis), max(xmas)
+        # center=None
+        # mi,ma=None, None
+        xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                           for i in self.figures])
+        mi, ma = min(xmis), max(xmas)
 
-            cs=[i.mean_x(attr) for i in self.figures]
-            center=sum(cs)/len(cs)
+        cs = [i.mean_x(attr) for i in self.figures]
+        center = sum(cs) / len(cs)
 
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
@@ -91,6 +90,7 @@ class FigurePanel(HasTraits):
         #    g.load_metadata(meta)
         # if mi==-Inf and ma==Inf:
             # mi,ma=0, 100
+        print ma, mi
         if mi is None and ma is None:
             mi,ma=0, 100
 

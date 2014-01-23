@@ -168,6 +168,7 @@ class RectSelectionTool(BaseTool):
         if self._start_pos and self._end_pos:
             x, y = self._start_pos
             x2, y2 = self._end_pos
+
             dx, dy = comp.map_data([x, y])
             dx2, dy2 = comp.map_data([x2, y2])
 
@@ -177,8 +178,8 @@ class RectSelectionTool(BaseTool):
             data = vstack([datax, datay]).transpose()
 
             ind = [i for i, (xi, yi) in enumerate(data) \
-                   if dx <= xi <= dx2 and dy >= yi >= dy2
-            ]
+                   if (dx <= xi <= dx2 and dy >= yi >= dy2) or
+                      (dx >= xi >= dx2) and dy <= yi <= dy2]
 
         selection = index.metadata[self.selection_metadata_name]
         index.metadata[self.selection_metadata_name] = list(set(ind) ^ set(selection))

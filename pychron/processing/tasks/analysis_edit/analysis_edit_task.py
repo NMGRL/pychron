@@ -346,7 +346,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:save_event')
     def _handle_save_event(self):
-        self._save_to_db()
+        self.save_to_db()
 
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
