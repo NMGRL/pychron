@@ -501,30 +501,30 @@ class AutomatedRun(Loggable):
     #===============================================================================
     # conditions
     #===============================================================================
-    def py_add_termination(self, attr, comp, value, start_count, frequency):
+    def py_add_termination(self, attr, comp, start_count, frequency):
         """
             attr must be an attribute of arar_age
         """
-        self.termination_conditions.append(TerminationCondition(attr, comp, value,
+        self.termination_conditions.append(TerminationCondition(attr, comp,
                                                                 start_count,
                                                                 frequency))
 
-    def py_add_truncation(self, attr, comp, value, start_count, frequency,
+    def py_add_truncation(self, attr, comp, start_count, frequency,
                           abbreviated_count_ratio):
         """
             attr must be an attribute of arar_age
         """
 
-        self.truncation_conditions.append(TruncationCondition(attr, comp, value,
+        self.truncation_conditions.append(TruncationCondition(attr, comp,
                                                               start_count,
                                                               frequency,
                                                               abbreviated_count_ratio=abbreviated_count_ratio))
 
-    def py_add_action(self, attr, comp, value, start_count, frequency, action, resume):
+    def py_add_action(self, attr, comp, start_count, frequency, action, resume):
         """
             attr must be an attribute of arar_age
         """
-        self.action_conditions.append(ActionCondition(attr, comp, value,
+        self.action_conditions.append(ActionCondition(attr, comp,
                                                       start_count,
                                                       frequency,
                                                       action=action,
@@ -1129,12 +1129,14 @@ anaylsis_type={}
                     with open(p, 'r') as fp:
                         doc = yaml.load(fp)
 
-                    attr = doc['attr']
-                    comp = doc['comp']
-                    value = doc['value']
-                    start = doc['start']
-                    acr = doc.get(['abbreviate_count_ratio'], 1)
-                    freq = doc.get(['frequency'], 1)
+                    for c in doc['conditions']:
+                        attr=c['attr']
+                        comp=c['comp']
+                        start=c['start']
+                        freq=c.get('frequency',1)
+                        acr=c.get('abbreviated_count_ratio',1)
+                        self.py_add_truncation(attr, comp, int(start), freq, acr)
+
                 else:
                     self.warning('Not a valid truncation file {}'.format(p))
                     return
@@ -1142,9 +1144,10 @@ anaylsis_type={}
                 try:
                     c, start = t.split(',')
                     pat = '<=|>=|[<>=]'
-                    attr, value = re.split(pat, c)
-                    m = re.search(pat, c)
-                    comp = m.group(0)
+                    attr = re.split(pat, c)[0]
+                    # attr, value = re.split(pat, c)
+                    # m = re.search(pat, c)
+                    # comp = m.group(0)
 
                     freq = 1
                     acr = 1
@@ -1152,7 +1155,7 @@ anaylsis_type={}
                     self.debug('truncate_condition parse failed {} {}'.format(e, t))
                     return
 
-            self.py_add_truncation(attr, comp, float(value), int(start), freq, acr)
+                self.py_add_truncation(attr, c, int(start), freq, acr)
 
     def wait(self, t, msg=''):
         if self.experiment_executor:

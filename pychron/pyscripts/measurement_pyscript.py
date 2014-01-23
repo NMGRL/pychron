@@ -363,35 +363,31 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, value, start_count=0, frequency=10):
-        self._automated_run_call('py_add_termination', attr, comp, value,
+    def add_termination(self, attr, comp, start_count=0, frequency=10):
+        self._automated_run_call('py_add_termination', attr, comp,
                                  start_count=start_count,
-                                 frequency=frequency
-        )
+                                 frequency=frequency)
 
     @verbose_skip
     @command_register
-    def add_truncation(self, attr, comp, value, start_count=0, frequency=10,
-                       abbreviated_count_ratio=1.0
-    ):
-        self._automated_run_call('py_add_truncation', attr, comp, value,
+    def add_truncation(self, attr, comp, start_count=0, frequency=10,
+                       abbreviated_count_ratio=1.0):
+        self._automated_run_call('py_add_truncation', attr, comp,
                                  start_count=start_count,
                                  frequency=frequency,
-                                 abbreviated_count_ratio=abbreviated_count_ratio
-        )
+                                 abbreviated_count_ratio=abbreviated_count_ratio)
 
     @verbose_skip
     @command_register
-    def add_action(self, attr, comp, value, start_count=0, frequency=10,
+    def add_action(self, attr, comp, start_count=0, frequency=10,
                    action=None,
-                   resume=False
-    ):
+                   resume=False):
 
     #        if self._syntax_checking:
     #            if isinstance(action, str):
     #                self.execute_snippet(action)
 
-        self._automated_run_call('py_add_action', attr, comp, value,
+        self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,

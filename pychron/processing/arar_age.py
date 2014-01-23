@@ -105,6 +105,8 @@ class ArArAge(Loggable):
             return self.isotopes[attr]
         elif hasattr(self, attr):
             return getattr(self, attr)
+        elif attr == '%Ar40*':
+            return self.rad40_percent
         else:
             return ufloat(0, 0, tag=attr)
 

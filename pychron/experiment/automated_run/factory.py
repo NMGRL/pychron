@@ -193,7 +193,10 @@ class AutomatedRunFactory(Loggable):
     #===========================================================================
     # truncation
     #===========================================================================
-    trunc_attr = Enum('age', 'kca', 'kcl')
+    trunc_attr = Str#('age', 'kca', 'kcl')
+    trunc_attrs= List(['age', 'kca', 'kcl',
+                       '%Ar40*',
+                       'Ar40','Ar39','Ar38','Ar37','Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
