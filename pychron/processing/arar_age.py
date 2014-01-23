@@ -119,18 +119,22 @@ class ArArAge(Loggable):
         # ic_factor stored in detectors.cfg
 
         p=os.path.join(paths.spectrometer_dir, 'detector.cfg')
-        factors=None
+        # factors=None
+        ic = 1, 1e-20
         if os.path.isfile(p):
             c=ConfigParser()
             c.read(p)
-            factors=[(det,
-                      c.getfloat(det,'ic_factor_err'),
-                      c.getfloat(det,'ic_factor')) for det in c.sections()]
+            det=det.lower()
+            for si in c.sections():
+                if si.lower()==det:
+                    v,e=1,1e-20
+                    if c.has_option(si, 'ic_factor'):
+                        v=c.getfloat(si,'ic_factor')
+                    if c.has_option(si, 'ic_factor_err'):
+                        e=c.getfloat(si,'ic_factor_err')
+                    ic=v,e
+                    break
 
-        ic = 1, 1e-20
-        if factors:
-            ic = next(((ic.value, ic.error) for ic in factors
-                       if ic.detector.lower() == det.lower()), (1.0, 1e-20))
         r = ufloat(*ic)
         return r
 
