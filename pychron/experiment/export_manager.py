@@ -191,7 +191,7 @@ class ExportManager(IsotopeDatabaseManager):
             return
 
         es = ExportSpec(rid=convert_special_name(rec.labnumber),
-                        spectrometer=spectrometer,
+                        mass_spectrometer=spectrometer,
                         runscript_name=scriptname,
                         runscript_text=scripttxt
                         )
