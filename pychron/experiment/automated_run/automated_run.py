@@ -1889,7 +1889,7 @@ anaylsis_type={}
         # sf = dict(zip(dkeys, fb))
         p = self._current_data_frame
 
-        exp = ExportSpec(rid=rid,
+        exp = ExportSpec(runid=rid,
                          runscript_name=rs_name,
                          runscript_text=rs_text,
                          # signal_fits=sf,

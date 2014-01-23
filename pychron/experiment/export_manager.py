@@ -190,7 +190,7 @@ class ExportManager(IsotopeDatabaseManager):
             self.info('no mass spectrometer specified. Cannot import {}'.format(r))
             return
 
-        es = ExportSpec(rid=convert_special_name(rec.labnumber),
+        es = ExportSpec(runid=convert_special_name(rec.labnumber),
                         mass_spectrometer=spectrometer,
                         runscript_name=scriptname,
                         runscript_text=scripttxt
