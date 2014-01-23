@@ -228,5 +228,12 @@ class OpenAdvancedQueryAction(Action):
         task.set_append_replace_enabled(False)
 
 
+class ClearAnalysisCacheAction(Action):
+    name='Clear Analysis Cache'
+    def perform(self, event=None):
+        from pychron.database.isotope_database_manager import ANALYSIS_CACHE,ANALYSIS_CACHE_COUNT
+        ANALYSIS_CACHE.clear()
+        ANALYSIS_CACHE_COUNT.clear()
+
 #============= EOF =============================================
 

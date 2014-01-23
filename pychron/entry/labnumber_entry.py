@@ -253,6 +253,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         dbln.selected_flux_history = hist
                         f = db.add_flux(irs.j, irs.j_err)
                         f.history = hist
+                        for ai in dbln.analyses:
+                            self.remove_from_cache(ai.uuid)
 
                     if dbln.selected_flux_history:
                         tol = 1e-10
@@ -283,7 +285,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                                         dbln.identifier))
 
         self.dirty = False
-        self.info('chang saved to database')
+        self.info('changes saved to database')
 
     def _increment(self, name):
         """
