@@ -30,7 +30,7 @@ from helpers import build_version
     Use false (default) if your are launching from a standalone bundle. 
 '''
 DEBUG = True
-build_version('_temp', setup_version_id, debug=DEBUG)
+build_version('', setup_version_id, debug=DEBUG)
 
 def main():
     '''
