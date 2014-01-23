@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import time
+from chaco.array_data_source import ArrayDataSource
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
@@ -96,8 +97,11 @@ class Series(BaseArArFigure):
             ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
             yerr = [ai.std_dev for ai in self._unpack_attr(po.name)]
 
+            n = [ai.record_id for ai in self.sorted_analyses]
+
             scatter, p = graph.new_series(x=self.xs,
                                           y=ys,
+                                          display_index=ArrayDataSource(data=n),
                                           yerror=yerr,
                                           fit=po.fit,
                                           plotid=pid,

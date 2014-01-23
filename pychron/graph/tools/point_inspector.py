@@ -68,8 +68,7 @@ class PointInspector(InfoInspector):
                 y = fmt.format(y)
                 y = u'{} {}{}({:0.2f}%)'.format(y, '+/-', ye, pe)
 
-            lines = [u'x= {}'.format(x), u'y= {}'.format(y),
-            ]
+            lines = [u'x= {}'.format(x), u'y= {}'.format(y)]
 
             if ind is not None and hasattr(self.component, 'display_index'):
                 x = self.component.display_index.get_data()[ind][0]
