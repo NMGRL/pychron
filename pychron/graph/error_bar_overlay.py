@@ -17,12 +17,12 @@
 
 
 #=============enthought library imports=======================
-from traits.api import Int, Enum
+from traits.api import Enum
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
 #============= standard library imports ========================
 
-from numpy import column_stack, transpose, invert, isnan, compress, arange, ma, delete
+from numpy import column_stack
 #============= local library imports  ==========================
 
 
@@ -55,7 +55,6 @@ class ErrorBarOverlay(AbstractOverlay):
             else:
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
-
                 err = err * self.nsigma
                 ylow, yhigh = y - err, y + err
                 ylow = comp.value_mapper.map_screen(ylow)

@@ -21,6 +21,7 @@
 
 
 def convert_fit(f):
+    err=None
     if isinstance(f, (str, unicode)):
         f = f.lower()
         fits = ['linear', 'parabolic', 'cubic']
@@ -32,8 +33,14 @@ def convert_fit(f):
             else:
                 f = 'averageSD'
         else:
-            f = None
-    return f
+            for i,ff in enumerate(fits):
+                if f.startswith(ff):
+                    f=i+1
+                    err='ci'
+                    break
+            else:
+                f = None
+    return f, err
 
 
 def unconvert_fit(f):

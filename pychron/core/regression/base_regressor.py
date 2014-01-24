@@ -56,6 +56,8 @@ class BaseRegressor(Loggable):
     filter_ys = Array
     _filtering = Bool(False)
 
+    error_calc_type=None
+
     def _get_n(self):
         return len(self.xs)
 
@@ -161,14 +163,14 @@ class BaseRegressor(Loggable):
             SigmaFit=Sqrt(SumSqResid/((NP-1)-(q-1)))
 
             NP = number of points
-            q= number of fit params... parabolic =3
+            q= number of fit params... parabolic =4
         """
         res = self.calculate_residuals()
         ss_res = (res ** 2).sum()
 
         n = res.shape[0]
         q = self._degree
-        s = (ss_res / (n - q - 1)) ** 0.5
+        s = (ss_res / (n - 1 - q)) ** 0.5
         return s
 
     def _get_coefficients(self):
@@ -187,14 +189,17 @@ class BaseRegressor(Loggable):
         return self.predict(self.xs) - self.ys
 
     def calculate_ci(self, rx, rmodel=None):
+        cors=self.calculate_ci_error(rx, rmodel)
+        if rmodel is not None and cors is not None:
+            if rmodel.shape[0] and cors.shape[0]:
+                return rmodel - cors, rmodel + cors
+
+    def calculate_ci_error(self, rx, rmodel=None):
         if rmodel is None:
             rmodel = self.predict(rx)
 
         cors = self._calculate_ci(rx, rmodel)
-        #         print cors
-        if rmodel is not None and cors is not None:
-            if rmodel.shape[0] and cors.shape[0]:
-                return rmodel - cors, rmodel + cors
+        return cors
 
     def _calculate_ci(self, rx, rmodel):
         if isinstance(rx, (float, int)):

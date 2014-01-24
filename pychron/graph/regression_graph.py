@@ -207,7 +207,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if scatter.no_regression:
             return
 
-        fit = convert_fit(scatter.fit)
+        fit, err = convert_fit(scatter.fit)
         if fit is None:
             return
 
@@ -231,6 +231,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             high = plot.index_range.high
             fx = linspace(low, high, 100)
             fy = r.predict(fx)
+            r.error_calc_type=err
+
             if line:
                 line.regressor = r
 

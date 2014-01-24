@@ -148,7 +148,10 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         if dbfit != fit:
             v = iso.uvalue
-            iso.fit = convert_fit(fit)
+            f,e=convert_fit(fit)
+
+            iso.fit=f
+            # iso.fit = convert_fit(fit)
 
             if fit_hist is None:
                 fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)

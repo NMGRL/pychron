@@ -89,13 +89,19 @@ class OLSRegressor(BaseRegressor):
                 pred = pred[0]
             return pred
 
-    def predict_error(self, x, error_calc='sem'):
+    def predict_error(self, x, error_calc=None):
+        if error_calc is None:
+            error_calc=self.error_calc_type
+
         return_single = False
         if isinstance(x, (float, int)):
             x = [x]
             return_single = True
+        if error_calc=='ci':
+            e=self.calculate_ci_error(x)
+        else:
+            e = self.predict_error_matrix(x, error_calc)
 
-        e = self.predict_error_matrix(x, error_calc)
         if return_single:
             e = e[0]
         return e
