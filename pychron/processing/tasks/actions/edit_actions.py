@@ -45,6 +45,12 @@ class DatabaseSaveAction(TaskAction):
     image = icon('database_save.png')
 
 
+class BinAnalysesAction(TaskAction):
+    name = 'Bin'
+    description = ''
+    method = 'bin_analyses'
+    image = icon('database_save.png')
+
 
 class FindAssociatedAction(TaskAction):
     name = 'Find Associated'

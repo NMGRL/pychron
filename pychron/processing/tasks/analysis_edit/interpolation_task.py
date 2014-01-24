@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 from datetime import timedelta
+from pyface.tasks.action.schema import SToolBar
 from traits.api import on_trait_change
 from traits.api import Any
 from pychron.processing.easy.easy_manager import EasyManager
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
@@ -72,6 +74,16 @@ class InterpolationTask(AnalysisEditTask):
     references_adapter = ReferencesAdapter
     references_pane_klass = ReferencesPane
     default_reference_analysis_type = 'air'
+
+    tool_bars = [SToolBar(DatabaseSaveAction(),
+                          BinAnalysesAction()
+                          )]
+
+    def bin_analyses(self):
+        self.debug('binning analyses')
+        if self.active_editor:
+            self.active_editor.bin_analyses()
+
 
     def create_dock_panes(self):
         panes = super(InterpolationTask, self).create_dock_panes()

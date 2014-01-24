@@ -22,7 +22,7 @@ from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
 from pychron.easy_parser import EasyParser
 from pychron.core.helpers.datetime_tools import get_datetime
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -49,7 +49,7 @@ class AnalysisEditTask(BaseBrowserTask):
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
-                          FindAssociatedAction(),
+                         # FindAssociatedAction(),
                           image_size=(16, 16))]
 
     external_recall_window = True
