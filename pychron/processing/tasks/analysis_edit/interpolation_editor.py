@@ -214,14 +214,17 @@ class InterpolationEditor(GraphEditor):
                 if reg:
                     p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
 
+
                     p_uys=[p if p is not None else 0 for p in p_uys]
                     p_ues=[p if p is not None else 0 for p in p_ues]
+                    ids=[ai.record_id for ai in self.sorted_analyses]
 
                     # display the predicted values
                     s, _p = graph.new_series(c_uxs,
                                              p_uys,
                                              isotope=iso,
                                              yerror=ArrayDataSource(p_ues),
+                                             display_index=ArrayDataSource(data=ids),
                                              fit=False,
                                              type='scatter',
                                              marker_size=3,

@@ -16,7 +16,7 @@
 from numpy.lib.twodim_base import diag
 #============= enthought library imports =======================
 
-from traits.api import Int, Property
+from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
     matrix, sqrt, abs, zeros
@@ -261,8 +261,8 @@ class OLSRegressor(BaseRegressor):
         X = column_stack(cols)
         return X
 
+    @cached_property
     def _get_mswd(self):
-        print self._degree
         if self._degree==1:
             # a = self.intercept
             # b = self.slope
