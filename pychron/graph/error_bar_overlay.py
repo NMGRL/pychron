@@ -17,7 +17,7 @@
 
 
 #=============enthought library imports=======================
-from traits.api import Enum
+from traits.api import Enum, Bool
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
 #============= standard library imports ========================
@@ -32,6 +32,7 @@ class ErrorBarOverlay(AbstractOverlay):
     draw_layer = 'underlay'
     nsigma = 1
     _cache_valid = False
+    use_end_caps= Bool(True)
 
     def overlay(self, component, gc, view_bounds, mode='normal'):
         with gc:
@@ -52,6 +53,9 @@ class ErrorBarOverlay(AbstractOverlay):
                 xhigh = comp.index_mapper.map_screen(xhigh)
 
                 start, end = column_stack((xlow, y)), column_stack((xhigh, y))
+                lstart, lend = column_stack((xlow, y-5)), column_stack((xlow, y+5))
+                ustart, uend = column_stack((xhigh, y-5)), column_stack((xhigh, y+5))
+
             else:
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
@@ -61,23 +65,8 @@ class ErrorBarOverlay(AbstractOverlay):
                 yhigh = comp.value_mapper.map_screen(yhigh)
                 #                 idx = arange(len(x))
                 start, end = column_stack((x, ylow)), column_stack((x, yhigh))
-
-
-            #            sels = (a for i, a in enumerate(zip(args1, args2)) if i in sel)
-            #            nonsels = (a for i, a in enumerate(zip(args1, args2)) if i not in sel)
-            #            sel = comp.index.metadata.get('selections', [])
-            #            if sel:
-            #                nonsel = arange(len(x))
-            #                nonsel = delete(nonsel, sel)
-            #                sel_start, sel_end = start[sel], end[sel]
-            #                start, end = start[nonsel], end[nonsel]
-            #                color = (1, 0, 0)
-            #                # draw selected
-            #                gc.set_stroke_color(color)
-            #                gc.set_fill_color(color)
-            #                gc.line_set(sel_start, sel_end)
-            #                gc.draw_path()
-
+                lstart,lend=column_stack((x-5, ylow)), column_stack((x+5, ylow))
+                ustart,uend=column_stack((x-5, yhigh)), column_stack((x+5, yhigh))
 
             # draw normal
             color = component.color
@@ -87,6 +76,11 @@ class ErrorBarOverlay(AbstractOverlay):
             gc.set_stroke_color(color)
             gc.set_fill_color(color)
             gc.line_set(start, end)
+
+            if self.use_end_caps:
+                gc.line_set(lstart, lend)
+                gc.line_set(ustart, uend)
+
             gc.draw_path()
 
 
