@@ -232,8 +232,6 @@ class PlateauOverlay(BasePlateauOverlay):
         #     gc.lines([(x2, y - 10),(x2, y2 + 5)])
 
     def overlay(self, component, gc, *args, **kw):
-
-
         points = self._get_line()
         if points:
             pt1, pt2, y1,y2 = points

@@ -28,7 +28,7 @@ class FigurePanel(HasTraits):
     graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = None
+    _index_attr = ''
     equi_stack = False
     graph_klass = AnalysisStackedGraph
     graph_spacing = Int
