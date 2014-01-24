@@ -353,6 +353,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
 
+
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
         if name=='dclicked':
