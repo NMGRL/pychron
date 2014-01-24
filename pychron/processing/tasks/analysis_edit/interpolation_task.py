@@ -29,33 +29,6 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 
 
-def bin_analyses(ans):
-    ans = iter(sorted(ans, key=lambda x: x.analysis_timestamp))
-
-    def _bin():
-        ai = ans.next()
-        pt = ai.analysis_timestamp
-        g = [ai]
-        tol = 60 * 60
-        while 1:
-            try:
-                ai = ans.next()
-                dev = ai.analysis_timestamp - pt
-                pt = ai.analysis_timestamp
-                if dev.total_seconds() > tol:
-                    yield g
-                    g = [ai]
-                else:
-                    g.append(ai)
-
-            except StopIteration:
-                break
-
-        yield g
-
-    return _bin()
-
-
 class no_auto_ctx(object):
     def __init__(self, obj):
         self.obj=obj

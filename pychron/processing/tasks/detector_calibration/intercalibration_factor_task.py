@@ -23,7 +23,8 @@ from pyface.tasks.task_layout import TaskLayout, VSplitter, PaneItem, \
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import r_mkdir
-from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx, bin_analyses
+from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
+from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
 
 
 class IntercalibrationFactorTask(InterpolationTask):

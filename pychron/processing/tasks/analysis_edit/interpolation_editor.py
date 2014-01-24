@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import List, on_trait_change, Instance, Bool, \
+from traits.api import List, on_trait_change, Bool, \
     Property, cached_property
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
@@ -31,6 +31,33 @@ from pychron.core.helpers.datetime_tools import convert_timestamp
 #============= local library imports  ==========================
 
 
+def bin_analyses(ans):
+    ans = iter(sorted(ans, key=lambda x: x.timestamp))
+
+    def _bin():
+        ai = ans.next()
+        pt = ai.timestamp
+        g = [ai]
+        tol = 60 * 60
+        while 1:
+            try:
+                ai = ans.next()
+                dev = ai.timestamp - pt
+                pt = ai.timestamp
+                if dev > tol:
+                    yield g
+                    g = [ai]
+                else:
+                    g.append(ai)
+
+            except StopIteration:
+                break
+
+        yield g
+
+    return _bin()
+
+
 class InterpolationEditor(GraphEditor):
     tool_klass=InterpolationFitSelector
     references = List
@@ -42,7 +69,26 @@ class InterpolationEditor(GraphEditor):
     default_reference_analysis_type = 'air'
     sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
+    binned_analyses=List
 
+    def bin_analyses(self):
+
+        groups=list(bin_analyses(self.analyses))
+        if len(groups)>1:
+            for gi in groups[1:-1]:
+                lbound=gi[-1].timestamp
+                ubound=gi[0].timestamp
+
+                c=(ubound-lbound)/2.0+lbound
+                self.add_group_divider(c)
+
+    def add_group_divider(self, cen):
+        print cen
+        start=self.sorted_analyses[0]
+        cen=cen-start.timestamp
+        print cen
+        self.graph.add_vertical_rule(cen/3600.)
+        self.graph.redraw()
 
     def find_references(self, **kw):
         self._find_references(**kw)
@@ -160,98 +206,105 @@ class InterpolationEditor(GraphEditor):
             p_... predicted value
         '''
         set_x_flag = False
-        i = 0
         gen = self._graph_generator()
         for i, fit in enumerate(gen):
-            iso = fit.name
-            set_x_flag = True
-            fit = fit.fit.lower()
-            c_uys, c_ues = None, None
 
-            if self.analyses and self.show_current:
-                c_uys, c_ues = self._get_current_values(iso)
-
-            r_ys, r_es = None, None
-            if self.references:
-                r_ys, r_es = self._get_reference_values(iso)
-
-            p = graph.new_plot(
-                ytitle=iso,
-                xtitle='Time (hrs)',
-                padding=[80, 10, 5, 30])
-            p.y_axis.title_spacing=60
-            p.value_range.tight_bounds = False
-
-            if c_ues and c_uys:
-                # plot unknowns
-                s, _p = graph.new_series(c_uxs, c_uys,
-                                         yerror=c_ues,
-                                         fit=False,
-                                         type='scatter',
-                                         plotid=i,
-                                         marker='square',
-                                         marker_size=3,
-                                         bind_id=-1,
-                                         add_inspector=False)
-                self._add_inspector(s, self.sorted_analyses)
-                self._add_error_bars(s, c_ues)
-
-                graph.set_series_label('Unknowns-Current', plotid=i)
-
-            if r_ys:
-                reg = None
-                # plot references
-
-                if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
-                    reg = InterpolationRegressor(xs=r_xs,
-                                                 ys=r_ys,
-                                                 yserr=r_es,
-                                                 kind=fit)
-                    s, _p = graph.new_series(r_xs, r_ys,
-                                             yerror=r_es,
-                                             type='scatter',
-                                             plotid=i,
-                                             fit=False,
-                                             marker_size=3,
-                                             add_inspector=False, )
-                    self._add_inspector(s, self.sorted_references)
-                    self._add_error_bars(s, r_es)
-
-                else:
-                    _p, s, l = graph.new_series(r_xs, r_ys,
-                                                display_index=ArrayDataSource(data=display_xs),
-                                                yerror=ArrayDataSource(data=r_es),
-                                                fit=fit,
-                                                plotid=i,
-                                                marker_size=3,
-                                                add_inspector=False)
-                    if hasattr(l, 'regressor'):
-                        reg = l.regressor
-
-                    self._add_inspector(s, self.sorted_references)
-                    self._add_error_bars(s, array(r_es))
-
-                if reg:
-                    p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
-                    # display the predicted values
-                    s, _p = graph.new_series(c_uxs,
-                                             p_uys,
-                                             isotope=iso,
-                                             yerror=ArrayDataSource(p_ues),
-                                             fit=False,
-                                             type='scatter',
-                                             marker_size=3,
-                                             plotid=i,
-                                             bind_id=-1)
-                    graph.set_series_label('Unknowns-predicted', plotid=i)
-                    self._add_error_bars(s, p_ues)
-
-            i += 1
+            if self.binned_analyses:
+                set_x_flag=self._rebuild_binned_graph(fit, c_uxs, r_xs, display_xs)
+            else:
+                set_x_flag=self._rebuild_non_binned(fit,c_uxs, r_xs, display_xs)
 
         if set_x_flag:
             m = abs(end - start) / 3600.
             graph.set_x_limits(0, m, pad='0.1')
             graph.refresh()
+
+    def _rebuild_non_binned(self, i, fit, c_uxs, r_xs, display_xs):
+        graph=self.graph
+        iso = fit.name
+        set_x_flag = True
+        fit = fit.fit.lower()
+        c_uys, c_ues = None, None
+
+        if self.analyses and self.show_current:
+            c_uys, c_ues = self._get_current_values(iso)
+
+        r_ys, r_es = None, None
+        if self.references:
+            r_ys, r_es = self._get_reference_values(iso)
+
+        p = graph.new_plot(
+            ytitle=iso,
+            xtitle='Time (hrs)',
+            padding=[80, 10, 5, 30])
+        p.y_axis.title_spacing = 60
+        p.value_range.tight_bounds = False
+
+        if c_ues and c_uys:
+            # plot unknowns
+            s, _p = graph.new_series(c_uxs, c_uys,
+                                     yerror=c_ues,
+                                     fit=False,
+                                     type='scatter',
+                                     plotid=i,
+                                     marker='square',
+                                     marker_size=3,
+                                     bind_id=-1,
+                                     add_inspector=False)
+            self._add_inspector(s, self.sorted_analyses)
+            self._add_error_bars(s, c_ues)
+
+            graph.set_series_label('Unknowns-Current', plotid=i)
+
+        if r_ys:
+            reg = None
+            # plot references
+
+            if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+                reg = InterpolationRegressor(xs=r_xs,
+                                             ys=r_ys,
+                                             yserr=r_es,
+                                             kind=fit)
+                s, _p = graph.new_series(r_xs, r_ys,
+                                         yerror=r_es,
+                                         type='scatter',
+                                         plotid=i,
+                                         fit=False,
+                                         marker_size=3,
+                                         add_inspector=False, )
+                self._add_inspector(s, self.sorted_references)
+                self._add_error_bars(s, r_es)
+
+            else:
+                _p, s, l = graph.new_series(r_xs, r_ys,
+                                            display_index=ArrayDataSource(data=display_xs),
+                                            yerror=ArrayDataSource(data=r_es),
+                                            fit=fit,
+                                            plotid=i,
+                                            marker_size=3,
+                                            add_inspector=False)
+                if hasattr(l, 'regressor'):
+                    reg = l.regressor
+
+                self._add_inspector(s, self.sorted_references)
+                self._add_error_bars(s, array(r_es))
+
+            if reg:
+                p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
+                # display the predicted values
+                s, _p = graph.new_series(c_uxs,
+                                         p_uys,
+                                         isotope=iso,
+                                         yerror=ArrayDataSource(p_ues),
+                                         fit=False,
+                                         type='scatter',
+                                         marker_size=3,
+                                         plotid=i,
+                                         bind_id=-1)
+                graph.set_series_label('Unknowns-predicted', plotid=i)
+                self._add_error_bars(s, p_ues)
+
+        return set_x_flag
 
     def _add_error_bars(self, scatter, errors,
                         orientation='y', visible=True, nsigma=1):
@@ -321,5 +374,6 @@ class InterpolationEditor(GraphEditor):
 
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]
+#============= EOF =============================================
 
-        #============= EOF =============================================
+

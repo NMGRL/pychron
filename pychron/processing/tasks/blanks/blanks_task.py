@@ -22,8 +22,9 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import r_mkdir
+from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
 
-from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, bin_analyses, no_auto_ctx
+from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
