@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Array
 #============= standard library imports ========================
 from numpy import average, ones, asarray
 #============= local library imports  ==========================
@@ -112,19 +111,23 @@ sem={}
         return self.std
 
 class WeightedMeanRegressor(MeanRegressor):
-    errors = Array
-    @property
-    def mean(self):
-        return average(self.ys, weights=self.weights)
 
     @property
-    def std(self):
-        var = 1 / sum(self.weights)
-        return var ** 0.5
+    def mean(self):
+        if len(self.weights):
+            return average(self.ys, weights=self.weights)
+        else:
+            return average(self.ys)
+
+    @property
+    def mean_std(self):
+        if len(self.weights):
+            var = 1 / sum(self.weights)
+            return var ** 0.5
 
     @property
     def weights(self):
-        return 1 / self.errors ** 2
+        return 1 / self.yserr ** 2
 
 
 #============= EOF =============================================

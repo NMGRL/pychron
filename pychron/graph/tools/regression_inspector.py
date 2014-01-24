@@ -23,7 +23,8 @@ from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 class RegressionInspectorTool(InfoInspector):
     def assemble_lines(self):
         reg = self.component.regressor
-        lines = [reg.make_equation()]
+        lines = [reg.make_equation(),
+                 'MSWD {:0.2f}'.format(reg.mswd)]
 
         lines += map(unicode.strip, map(unicode, reg.tostring().split(',')))
 

@@ -30,7 +30,7 @@ from pychron.graph.time_series_graph import TimeSeriesGraph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.core.helpers.fits import convert_fit
 from pychron.core.regression.ols_regressor import PolynomialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
@@ -304,9 +304,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _mean_regress(self, scatter, r, fit):
-
-        if r is None or not isinstance(r, MeanRegressor):
-            r = MeanRegressor()
+        if hasattr(scatter, 'yerror'):
+            if r is None or not isinstance(r, WeightedMeanRegressor):
+                r = WeightedMeanRegressor()
+            yserr = scatter.yerror.get_data()
+            r.trait_set(yserr=yserr)
+        else:
+            if r is None or not isinstance(r, MeanRegressor):
+                r = MeanRegressor()
 
         self._set_regressor(scatter, r)
         r.trait_set(fit=fit, trait_change_notify=False)

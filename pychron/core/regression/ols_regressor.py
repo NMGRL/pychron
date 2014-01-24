@@ -19,7 +19,8 @@ from numpy.lib.twodim_base import diag
 from traits.api import Int, Property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
-    matrix, sqrt, abs
+    matrix, sqrt, abs, zeros
+from pychron.core.stats import calculate_mswd2
 
 try:
     from statsmodels.api import OLS
@@ -216,7 +217,7 @@ class OLSRegressor(BaseRegressor):
     def _set_degree(self, d):
         if isinstance(d, str):
             d = d.lower()
-            fits = ['linear', 'parabolic', 'cubic']
+            fits = ['', 'linear', 'parabolic', 'cubic']
             if d in fits:
                 d = fits.index(d) + 1
             else:
@@ -259,6 +260,34 @@ class OLSRegressor(BaseRegressor):
         cols = [pow(xs, i) for i in range(self.degree + 1)]
         X = column_stack(cols)
         return X
+
+    def _get_mswd(self):
+        print self._degree
+        if self._degree==1:
+            # a = self.intercept
+            # b = self.slope
+            coeffs=self._calculate_coefficients()
+            if not len(coeffs):
+                self.calculate()
+                coeffs = self._calculate_coefficients()
+
+            if len(coeffs):
+                x = self.xs
+                y = self.ys
+
+                sx = self.xserr
+                sy = self.yserr
+                if not len(sx):
+                    sx=zeros(self.n)
+                if not len(sy):
+                    sy=zeros(self.n)
+
+                return calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+            else:
+                return 0
+        else:
+            return super(OLSRegressor, self)._get_mswd()
+
 
 
 class PolynomialRegressor(OLSRegressor):

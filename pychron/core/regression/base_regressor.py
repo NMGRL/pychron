@@ -22,6 +22,7 @@ from traits.api import Array, List, Event, Property, Any, \
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
+from pychron.core.stats.core import calculate_mswd
 from pychron.loggable import Loggable
 from tinv import tinv
 from pychron.pychron_constants import ALPHAS
@@ -58,8 +59,8 @@ class BaseRegressor(Loggable):
 
     error_calc_type=None
 
-    def _get_n(self):
-        return len(self.xs)
+    mswd=Property(depends_on='dirty, xs, ys')
+
 
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
@@ -163,14 +164,15 @@ class BaseRegressor(Loggable):
             SigmaFit=Sqrt(SumSqResid/((NP-1)-(q-1)))
 
             NP = number of points
-            q= number of fit params... parabolic =4
+            q= number of fit params... parabolic =3
         """
         res = self.calculate_residuals()
         ss_res = (res ** 2).sum()
 
         n = res.shape[0]
-        q = self._degree
-        s = (ss_res / (n - 1 - q)) ** 0.5
+        q=len(self.coefficients)
+
+        s = (ss_res / (n - q)) ** 0.5
         return s
 
     def _get_coefficients(self):
@@ -306,4 +308,10 @@ class BaseRegressor(Loggable):
 #            lower=[]
 #                lower.append(rmodel[i] - cor)
 #                upper.append(rmodel[i] + cor)
+
+    def _get_mswd(self):
+        return calculate_mswd(self.ys, self.yserr)
+
+    def _get_n(self):
+        return len(self.xs)
 #============= EOF =============================================
