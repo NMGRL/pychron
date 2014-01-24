@@ -110,7 +110,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
     def _set_interpolated_values(self, iso, reg, xs):
         p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs, error_calc=self.tool.error_calc.lower())
+        p_ues = reg.predict_error(xs)
 
         _, d = iso.split('/')
         for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
