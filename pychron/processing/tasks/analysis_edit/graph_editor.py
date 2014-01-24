@@ -54,6 +54,7 @@ class GraphEditor(BaseUnknownsEditor):
 
     @on_trait_change('tool:save_event')
     def _handle_save_event(self):
+        print 'ffffffffff'
         self.save_event = True
 
     def make_title(self):

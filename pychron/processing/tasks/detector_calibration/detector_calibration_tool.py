@@ -16,11 +16,12 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Str, List, Property, DelegatesTo, Float, \
-    on_trait_change, String
-from traitsui.api import View, Item, UItem, EnumEditor, VGroup
+    on_trait_change, String, Event
+from traitsui.api import View, Item, UItem, EnumEditor, VGroup, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
 
@@ -39,6 +40,8 @@ class DetectorCalibrationTool(HasTraits):
 
     standard_ratio = Float(enter_set=True, auto_set=False)
     # error_calc = Enum('SD', 'SEM')
+    save_event=DelegatesTo('fit_selector')
+    refresh_references = Event
 
     @on_trait_change('standard_ratio, error_calc')
     def _handle_change(self, name, new):
@@ -74,8 +77,10 @@ class DetectorCalibrationTool(HasTraits):
 
     def traits_view(self):
         v = View(
-            VGroup(Item('analysis_type',
-                        editor=EnumEditor(name='analysis_types')),
+            VGroup(HGroup(Item('analysis_type',
+                          editor=EnumEditor(name='analysis_types')),
+                          icon_button_editor('refresh_references', 'arrow_refresh')
+                          ),
                    Item('standard_ratio', label='Ratio'),
                    # Item('error_calc', label='Error Calc.'),
                    Item('reference_detector',
