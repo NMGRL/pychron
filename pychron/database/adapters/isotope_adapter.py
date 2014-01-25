@@ -547,7 +547,7 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(h)
         return h
 
-    def _add_set(self, name, key, value, analysis, idname=None, **kw):
+    def _add_set(self, name, key, analysis, idname=None, **kw):
         """
             name: e.g Blanks
             key:
@@ -568,8 +568,8 @@ class IsotopeAdapter(DatabaseAdapter):
             #nset.analysis
             #nset.analyses.append(analysis)
 
-        if value:
-            value.sets.append(nset)
+        # if value:
+        #     value.sets.append(nset)
             #    if idname is None:
         #        idname = key
         #    setattr(nset, '{}_analysis_id'.format(idname), analysis.id)
@@ -736,9 +736,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
         return a
 
-    def add_detector_intercalibration_set(self, detector_intercalibration, analysis, **kw):
+    def add_detector_intercalibration_set(self, analysis, **kw):
         return self._add_set('DetectorIntercalibration', 'detector_intercalibration',
-                             detector_intercalibration, analysis, idname='ic', **kw)
+                              analysis, idname='ic', **kw)
 
     def add_experiment(self, name, **kw):
         exp = meas_ExperimentTable(name=name, **kw)

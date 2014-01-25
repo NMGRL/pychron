@@ -35,7 +35,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         return self.tool.fits
 
     def save(self, progress=None):
-        if not any([si.valid for si in self.tool.fits]):
+        fs = [si for si in self.tool.fits if si.valid]
+        if not fs:
             return
 
         db = self.processor.db
@@ -43,6 +44,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         with db.session_ctx():
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
+
             n=len(self.analyses)
             if n>1:
                 if progress is None:
@@ -50,20 +52,19 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
+            set_id=self.processor.add_predictor_set(self._clean_references())
+
             for unk in self.analyses:
                 if progress:
                     progress.change_message('Saving ICs for {}'.format(unk.record_id))
 
                 meas_analysis = db.get_analysis_uuid(unk.uuid)
-
-                # histories = getattr(meas_analysis, '{}_histories'.format(cname))
-                # phistory = histories[-1] if histories else None
                 history = self.processor.add_history(meas_analysis, cname)
+
                 for si in self.tool.fits:
                     if si.valid:
                         # self.debug('saving {} {}'.format(unk.record_id, si.name))
-                        self.processor.apply_correction(history, unk, si,
-                                                        self._clean_references(), cname)
+                        self.processor.apply_correction(history, unk, si, set_id, cname)
 
                 # unk.sync_detector_info(meas_analysis)
 

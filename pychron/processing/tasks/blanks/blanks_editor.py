@@ -63,6 +63,8 @@ class BlanksEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
+            set_id=self.processor.add_predictors_set(self._clean_references())
+            
             for unk in self.analyses:
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
@@ -79,8 +81,7 @@ class BlanksEditor(InterpolationEditor):
                     else:
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
-                        self.processor.apply_correction(history, unk, si,
-                                                        self._clean_references(), cname)
+                        self.processor.apply_correction(history, unk, si, set_id, cname)
                 # unk.sync(meas_analysis)
 
             if self.auto_plot:
@@ -92,19 +93,6 @@ class BlanksEditor(InterpolationEditor):
 
             if progress:
                 progress.soft_close()
-
-            #     def _update_unknowns_hook(self):
-            #         '''
-            #             load references based on unknowns
-            #         '''
-
-            #         ans = set([ai for ui in self._unknowns
-            #                     for ai in self.processor.find_associated_analyses(ui)])
-            #
-            #         ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
-            #         ans = self.processor.make_analyses(ans)
-            #         self.task.references_pane.items = ans
-
 
     def _set_interpolated_values(self, iso, reg, xs):
         p_uys = reg.predict(xs)
