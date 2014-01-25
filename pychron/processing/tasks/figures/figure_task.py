@@ -318,12 +318,13 @@ class FigureTask(AnalysisEditTask):
         return editor
 
     def _add_unknowns_hook(self, *args, **kw):
-        self.group_by_labnumber()
-
         if self.active_editor:
-            for ai in self.active_editor.associated_editors:
-                if isinstance(ai, FigureEditor):
-                    ai.rebuild_graph()
+            if hasattr(self.active_editor, 'auto_group'):
+                if self.active_editor.auto_group:
+                    self.group_by_labnumber()
+                    for ai in self.active_editor.associated_editors:
+                        if isinstance(ai, FigureEditor):
+                            ai.rebuild_graph()
 
     def _get_unique_group_id(self):
         gids = {i.group_id for i in self.unknowns_pane.items}

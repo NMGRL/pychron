@@ -30,6 +30,7 @@ class SeriesEditor(FigureEditor):
     pickle_path = 'series'
     basename = 'Series'
     model_klass = SeriesModel
+    auto_group = False
 
     def _plotter_options_manager_default(self):
         return self.plotter_options_manager_klass()
