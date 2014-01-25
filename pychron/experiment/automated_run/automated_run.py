@@ -496,7 +496,10 @@ class AutomatedRun(Loggable):
             attr must be an attribute of arar_age
         """
         self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
-        self.truncation_conditions.append(TruncationCondition(attr, comp,
+        if not self.arar_age.has_attr(attr):
+            self.warning_dialog('invalid truncation attribute "{}"'.format(attr))
+        else:
+            self.truncation_conditions.append(TruncationCondition(attr, comp,
                                                               start_count,
                                                               frequency,
                                                               abbreviated_count_ratio=abbreviated_count_ratio))

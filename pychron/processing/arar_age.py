@@ -107,6 +107,14 @@ class ArArAge(Loggable):
         else:
             return Baseline()
 
+    def has_attr(self, attr):
+        if attr in self.computed:
+            return True
+        elif attr in self.isotopes:
+            return True
+        elif hasattr(self, attr):
+            return True
+
     def get_value(self, attr):
         if attr in self.computed:
             return self.computed[attr]
