@@ -417,16 +417,15 @@ class Processor(IsotopeDatabaseManager):
                      isotope=prev.isotope,
                      fit=prev.fit,
                      user_value=uv,
-                     user_error=ue
-                )
+                     user_error=ue)
 
-    def apply_correction(self, history, analysis, fit_obj, predictors, kind):
+    def apply_correction(self, history, analysis, fit_obj, set_id, kind):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)
 
         func = getattr(self, '_apply_{}_correction'.format(kind))
-        func(history, analysis, fit_obj, predictors)
+        func(history, analysis, fit_obj, set_id)
 
-    def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, predictors):
+    def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, set_id):
         n, d = fit_obj.name.split('/')
 
         iso=analysis.get_isotope(detector=d)
@@ -447,15 +446,24 @@ class Processor(IsotopeDatabaseManager):
         iso.ic_factor=ufloat(ic_v, ic_e)
 
         db = self.db
-        item = db.add_detector_intercalibration(history,
+        db.add_detector_intercalibration(history,
                                                 detector=d,
                                                 user_value=ic_v,
                                                 user_error=ic_e,
-                                                fit=fit_obj.fit)
+                                                fit=fit_obj.fit,
+                                                set_id=set_id)
+    def add_predictor_set(self, predictors):
+        set_id=0
         if predictors:
-            for pi in predictors:
-                dbr = db.get_analysis_uuid(pi.uuid)
-                db.add_detector_intercalibration_set(item, dbr)
+            db = self.db
+            #make set_id
+            dbrs=[db.get_analysis_uuid(p.uuid) for p in predictors]
+            set_id=hash(tuple((ai.id for ai in dbrs)))
+
+            for dbr in dbrs:
+                db.add_detector_intercalibration_set(dbr, set_id=set_id)
+
+        return set_id
 
     def _apply_blanks_correction(self, history, analysis, fit_obj, predictors):
         if not fit_obj.name in analysis.isotopes:

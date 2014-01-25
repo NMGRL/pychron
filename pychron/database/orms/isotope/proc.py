@@ -154,7 +154,7 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 class proc_BlanksSetTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
-
+    set_id = Column(Integer)
 
 class proc_BlanksHistoryTable(Base, HistoryMixin):
     blanks = relationship('proc_BlanksTable', backref='history')
@@ -170,13 +170,12 @@ class proc_BlanksTable(Base, BaseMixin):
     use_set = Column(Boolean)
     isotope = stringcolumn()
     fit = Column(String(40))
-    sets = relationship('proc_BlanksSetTable', backref='blanks')
-
+    set_id = Column(Integer)
 
 class proc_BackgroundsSetTable(Base, BaseMixin):
     backgrounds_id = foreignkey('proc_BackgroundsTable')
     background_analysis_id = foreignkey('meas_AnalysisTable')
-
+    set_id = Column(Integer)
 
 class proc_BackgroundsHistoryTable(Base, HistoryMixin):
     backgrounds = relationship('proc_BackgroundsTable',
@@ -193,21 +192,18 @@ class proc_BackgroundsTable(Base, BaseMixin):
     use_set = Column(Boolean)
     isotope = stringcolumn()
     fit = stringcolumn()
-    sets = relationship('proc_BackgroundsSetTable', backref='backgrounds')
+    set_id = Column(Integer)
 
 
 class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
     detector_intercalibrations = relationship('proc_DetectorIntercalibrationTable',
-                                              backref='history',
-                                              #                                              uselist=False
-    )
+                                              backref='history')
     # convience
     #     detector_intercalibraion = detector_intercalibrations
 
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_detector_intercalibration',
-                            uselist=False
-    )
+                            uselist=False)
 
 
 class proc_DetectorIntercalibrationTable(Base, BaseMixin):
@@ -216,15 +212,13 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     user_value = Column(Float)
     user_error = Column(Float)
     fit = stringcolumn()
-
-    sets = relationship('proc_DetectorIntercalibrationSetTable',
-                        backref='detector_intercalibration')
+    set_id = Column(Integer)
 
 
 class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
     intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
     ic_analysis_id = foreignkey('meas_AnalysisTable')
-
+    set_id = Column(Integer)
 
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
     detector_params = relationship('proc_DetectorParamTable',
