@@ -18,6 +18,8 @@
 from datetime import timedelta
 from traits.api import on_trait_change
 from traits.api import Any
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
@@ -82,9 +84,13 @@ class InterpolationTask(AnalysisEditTask):
         self.references_pane = self.references_pane_klass(adapter_klass=self.references_adapter)
         self.references_pane.load()
 
-    @on_trait_change('references_pane:[items, update_needed]')
+    @on_trait_change('references_pane:[items, update_needed, dclicked]')
     def _update_references_runs(self, obj, name, old, new):
-        if not obj._no_update:
+        if name == 'dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif not obj._no_update:
             if self.active_editor:
                 self.active_editor.references = self.references_pane.items
 

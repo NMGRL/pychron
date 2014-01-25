@@ -260,9 +260,9 @@ class NewYorkRegressor(YorkRegressor):
 
 
 class ReedYorkRegressor(YorkRegressor):
-    '''
+    """
         reed 1992
-    '''
+    """
     _degree = 1
     #     def _set_degree(self, d):
     #         '''

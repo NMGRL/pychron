@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 #from chaco.label import Label
-from traits.api import Instance, Bool, Any, on_trait_change
+from traits.api import Instance, Bool, Any
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import Inf, polyfit
@@ -45,9 +45,6 @@ class IsotopeEvolutionEditor(GraphEditor):
     update_on_analyses = False
     calculate_age = True
 
-    @on_trait_change('tool:save_event')
-    def _handle_save_event(self):
-        self.save_event=True
 
     def _set_name(self):
         if not self.name:
@@ -58,7 +55,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         return t
 
     def save(self):
-        self._save(None, None)
+        self._save(None, None, None)
 
     def _save(self, fits, filters, progress):
         proc = self.processor
@@ -151,7 +148,10 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         if dbfit != fit:
             v = iso.uvalue
-            iso.fit = convert_fit(fit)
+            f,e=convert_fit(fit)
+
+            iso.fit=f
+            # iso.fit = convert_fit(fit)
 
             if fit_hist is None:
                 fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
@@ -282,6 +282,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     else:
                         xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
+                    print xs
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:

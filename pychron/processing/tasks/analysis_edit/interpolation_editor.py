@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import List, on_trait_change, Instance, Bool, \
+from traits.api import List, on_trait_change, Bool, \
     Property, cached_property
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
@@ -32,7 +32,7 @@ from pychron.core.helpers.datetime_tools import convert_timestamp
 
 
 class InterpolationEditor(GraphEditor):
-    tool_klass=InterpolationFitSelector
+    tool_klass = InterpolationFitSelector
     references = List
     #     _references = List
 
@@ -43,35 +43,16 @@ class InterpolationEditor(GraphEditor):
     sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
 
-
     def find_references(self, **kw):
         self._find_references(**kw)
 
     @on_trait_change('references[]')
     def _update_references(self):
-    #         self.make_references()
-    #    if self.unknowns:
-    #        ref_ans=self.unknowns[0]
-    #        self._load_ref_fits(ref_ans)
         self._update_references_hook()
-
         self.rebuild_graph()
 
     def _update_references_hook(self):
         pass
-
-        #def _load_ref_fits(self, ref_ans):
-        #    pass
-        #keys=ref_ans.isotope_keys
-        #fits=[ref_ans.isotopes[ki]]
-
-    #     def make_references(self):
-    #         self._references = self.processor.make_analyses(self.references)
-    # #         self.processor.load_analyses(self._references)
-    #         self._make_references()
-    #
-    #     def _make_references(self):
-    #         pass
 
     def _get_start_end(self, rxs, uxs):
         mrxs = min(rxs) if rxs else Inf
@@ -95,11 +76,11 @@ class InterpolationEditor(GraphEditor):
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
-            n=len(self.analyses)
+            n = len(self.analyses)
 
-            if n>1:
+            if n > 1:
                 if progress is None:
-                    progress=proc.open_progress(n)
+                    progress = proc.open_progress(n)
                 else:
                     progress.increase_max(n)
 
@@ -120,7 +101,7 @@ class InterpolationEditor(GraphEditor):
 
             if progress:
                 progress.soft_close()
-            #self.task.references_pane.items = ans
+                #self.task.references_pane.items = ans
 
     def _get_current_values(self, *args, **kw):
         pass
@@ -160,7 +141,6 @@ class InterpolationEditor(GraphEditor):
             p_... predicted value
         '''
         set_x_flag = False
-        i = 0
         gen = self._graph_generator()
         for i, fit in enumerate(gen):
             iso = fit.name
@@ -179,7 +159,7 @@ class InterpolationEditor(GraphEditor):
                 ytitle=iso,
                 xtitle='Time (hrs)',
                 padding=[80, 10, 5, 30])
-            p.y_axis.title_spacing=60
+            p.y_axis.title_spacing = 60
             p.value_range.tight_bounds = False
 
             if c_ues and c_uys:
@@ -233,11 +213,18 @@ class InterpolationEditor(GraphEditor):
 
                 if reg:
                     p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
+
+
+                    p_uys=[p if p is not None else 0 for p in p_uys]
+                    p_ues=[p if p is not None else 0 for p in p_ues]
+                    ids=[ai.record_id for ai in self.sorted_analyses]
+
                     # display the predicted values
                     s, _p = graph.new_series(c_uxs,
                                              p_uys,
                                              isotope=iso,
                                              yerror=ArrayDataSource(p_ues),
+                                             display_index=ArrayDataSource(data=ids),
                                              fit=False,
                                              type='scatter',
                                              marker_size=3,
@@ -245,8 +232,6 @@ class InterpolationEditor(GraphEditor):
                                              bind_id=-1)
                     graph.set_series_label('Unknowns-predicted', plotid=i)
                     self._add_error_bars(s, p_ues)
-
-            i += 1
 
         if set_x_flag:
             m = abs(end - start) / 3600.
@@ -267,19 +252,13 @@ class InterpolationEditor(GraphEditor):
         return ebo
 
     def _add_inspector(self, scatter, ans):
-
-
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
-                                                 convert_index=lambda x: '{:0.3f}'.format(x),
-                                                 #value_format=value_format,
-                                                 #additional_info=additional_info
-        )
+                                                 convert_index=lambda x: '{:0.3f}'.format(x))
 
         pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector,
-        )
-        #
+                                                   tool=point_inspector)
+
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
         scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
@@ -299,18 +278,14 @@ class InterpolationEditor(GraphEditor):
     def _get_sorted_references(self):
         return sorted(self.references, key=lambda x: x.timestamp)
 
-
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
 
         #necessary to handle user excluding points
         gen = self._graph_generator()
-        for fit, (plotobj, reg) in zip(gen,new):
+        for fit, (plotobj, reg) in zip(gen, new):
             if issubclass(type(reg), BaseRegressor):
                 iso = fit.name
-            # for i, (fit, reg) in enumerate(zip(gen, new)):
-            #     iso = fit.name
-            #     plotobj = self.graph.plots[i]
 
                 scatter = plotobj.plots['Unknowns-predicted'][0]
                 xs = scatter.index.get_data()

@@ -56,10 +56,14 @@ class IntercalibrationFactorTask(InterpolationTask):
         #self.unknowns_pane.items = selector.records[156:159]
         #self.references_pane.items = selector.records[150:155]
 
-    @on_trait_change('active_editor:tool:[analysis_type]')
+    @on_trait_change('active_editor:tool:[analysis_type, refresh_references]')
     def _handle_analysis_type(self, obj, name, old, new):
         if name == 'analysis_type':
-            self._set_analysis_type(new)
+            if new:
+                self._set_analysis_type(new)
+        elif name=='refresh_references':
+            if obj.analysis_type:
+                self._set_analysis_type(self.analysis_type)
 
     def _set_analysis_type(self, new, progress=None):
         records = self.unknowns_pane.items

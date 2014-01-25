@@ -346,12 +346,14 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:save_event')
     def _handle_save_event(self):
-        self._save_to_db()
+        print 'asdfsadf'
+        self.save_to_db()
 
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
+
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):

@@ -259,8 +259,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
                     if dbln.selected_flux_history:
                         tol = 1e-10
                         flux = dbln.selected_flux_history.flux
-                        if abs(flux.j - irs.j) > tol or abs(flux.j_err - irs.j_err) > tol:
-                            add_flux()
+                        if flux:
+                            if abs(flux.j - irs.j) > tol or abs(flux.j_err - irs.j_err) > tol:
+                                add_flux()
                     else:
                         add_flux()
                 else:

@@ -16,10 +16,11 @@
 from numpy.lib.twodim_base import diag
 #============= enthought library imports =======================
 
-from traits.api import Int, Property
+from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
-    matrix, sqrt, abs
+    matrix, sqrt, abs, zeros
+from pychron.core.stats import calculate_mswd2
 
 try:
     from statsmodels.api import OLS
@@ -89,13 +90,19 @@ class OLSRegressor(BaseRegressor):
                 pred = pred[0]
             return pred
 
-    def predict_error(self, x, error_calc='sem'):
+    def predict_error(self, x, error_calc=None):
+        if error_calc is None:
+            error_calc=self.error_calc_type
+
         return_single = False
         if isinstance(x, (float, int)):
             x = [x]
             return_single = True
+        if error_calc=='ci':
+            e=self.calculate_ci_error(x)
+        else:
+            e = self.predict_error_matrix(x, error_calc)
 
-        e = self.predict_error_matrix(x, error_calc)
         if return_single:
             e = e[0]
         return e
@@ -210,7 +217,7 @@ class OLSRegressor(BaseRegressor):
     def _set_degree(self, d):
         if isinstance(d, str):
             d = d.lower()
-            fits = ['linear', 'parabolic', 'cubic']
+            fits = ['', 'linear', 'parabolic', 'cubic']
             if d in fits:
                 d = fits.index(d) + 1
             else:
@@ -253,6 +260,34 @@ class OLSRegressor(BaseRegressor):
         cols = [pow(xs, i) for i in range(self.degree + 1)]
         X = column_stack(cols)
         return X
+
+    @cached_property
+    def _get_mswd(self):
+        if self._degree==1:
+            # a = self.intercept
+            # b = self.slope
+            coeffs=self._calculate_coefficients()
+            if not len(coeffs):
+                self.calculate()
+                coeffs = self._calculate_coefficients()
+
+            if len(coeffs):
+                x = self.xs
+                y = self.ys
+
+                sx = self.xserr
+                sy = self.yserr
+                if not len(sx):
+                    sx=zeros(self.n)
+                if not len(sy):
+                    sy=zeros(self.n)
+
+                return calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+            else:
+                return 0
+        else:
+            return super(OLSRegressor, self)._get_mswd()
+
 
 
 class PolynomialRegressor(OLSRegressor):

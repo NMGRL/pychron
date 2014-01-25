@@ -44,7 +44,7 @@ class FitSelector(HasTraits):
     auto_update = Bool(True)
 
     plot_button = Button('Plot')
-    
+
     def _plot_button_fired(self):
         self.update_needed = True
 

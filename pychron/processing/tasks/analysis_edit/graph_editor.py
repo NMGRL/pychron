@@ -52,6 +52,11 @@ class GraphEditor(BaseUnknownsEditor):
     auto_plot = Property
     update_on_analyses = True
 
+    @on_trait_change('tool:save_event')
+    def _handle_save_event(self):
+        print 'ffffffffff'
+        self.save_event = True
+
     def make_title(self):
         names=[ai.record_id for ai in self.analyses]
         return self._grouped_name(names)
