@@ -63,6 +63,7 @@ class Analysis(ArArAge):
     omit_ideo = False
     omit_spec = False
     omit_iso = False
+    omit_series = False
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
@@ -213,7 +214,7 @@ class DBAnalysis(Analysis):
         self.tag = name
 
         omit = name == 'omit'
-        for a in ('ideo', 'spec', 'iso'):
+        for a in ('ideo', 'spec', 'iso','series'):
             a = 'omit_{}'.format(a)
             v = getattr(tag, a)
             setattr(self, a, v)

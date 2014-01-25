@@ -22,7 +22,7 @@ from traits.api import Array, List, Event, Property, Any, \
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
-from pychron.core.stats.core import calculate_mswd
+from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.loggable import Loggable
 from tinv import tinv
 from pychron.pychron_constants import ALPHAS
@@ -60,7 +60,7 @@ class BaseRegressor(Loggable):
     error_calc_type=None
 
     mswd=Property(depends_on='dirty, xs, ys')
-
+    valid_mswd=Bool
 
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
@@ -82,8 +82,12 @@ class BaseRegressor(Loggable):
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 rx = delete(rx, outliers, 0)
                 ry = delete(ry, outliers, 0)
+                self._delete_filtered_hook(outliers)
 
         return rx, ry
+
+    def _delete_filtered_hook(self, outliers):
+        pass
 
     def get_clean_xs(self):
         return self._clean_array(self.xs)
@@ -303,15 +307,18 @@ class BaseRegressor(Loggable):
         eq = '+'.join(ps)
         s = '{}    y={}+{}'.format(fit, eq, constant)
         return s
-        #    fit = property(fset=_set_fit, fget=_get_fit)
-
-#            lower=[]
-#                lower.append(rmodel[i] - cor)
-#                upper.append(rmodel[i] + cor)
 
     def _get_mswd(self):
-        return calculate_mswd(self.ys, self.yserr)
+        self.valid_mswd=False
+        ys=self._clean_array(self.ys)
+        yserr=self._clean_array(self.yserr)
+        if self._check_integrity(ys,yserr):
+
+            mswd=calculate_mswd(ys, yserr)
+            self.valid_mswd=validate_mswd(mswd,len(ys))
+            return mswd
 
     def _get_n(self):
-        return len(self.xs)
+        return len(self._clean_array(self.xs))
+
 #============= EOF =============================================

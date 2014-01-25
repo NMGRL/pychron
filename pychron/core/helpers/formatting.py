@@ -34,21 +34,21 @@ def errorfmt(v, e):
     return '{} ({}%)'.format(floatfmt(e), pe)
 
 
-def floatfmt(f, n=4, s=2, max_width=None):
-    '''
+def floatfmt(f, n=4, s=2, max_width=None, default='NaN'):
+    """
         f: value to format
         n: number of sig figs
-        
-        use scientific notation 
+
+        use scientific notation
         if f<10^-n (e.g n=#.## f=0.00001)
         or
         f>10^(s+1) (e.g  s=### f=3001)
-        
-    '''
+
+    """
     if isinstance(f, str):
         return f
     if f is None:
-        return ''
+        return default
 
     if abs(f) < 1e-20:
         v = '0.0'

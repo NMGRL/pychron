@@ -16,12 +16,9 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import asarray
+from numpy import asarray, delete
 
-try:
-    from statsmodels.api import WLS
-except ImportError:
-    from scikits.statsmodels.api import WLS
+from statsmodels.api import WLS
 #============= local library imports  ==========================
 # from pychron.core.regression.base_regressor import BaseRegressor
 
@@ -29,28 +26,50 @@ from pychron.core.regression.ols_regressor import OLSRegressor, MultipleLinearRe
 
 
 class WeightedPolynomialRegressor(OLSRegressor):
-    def calculate(self):
-        if not len(self.xs) or \
-                not len(self.ys) or \
-                not len(self.yserr):
+    # def calculate(self):
+    #     if not len(self.xs) or \
+    #             not len(self.ys) or \
+    #             not len(self.yserr):
+    #
+    #         return
+    #
+    #     if len(self.xs) != len(self.ys) or len(self.xs) != len(self.yserr):
+    #         return
+    #
+    #     #xs = self.xs
+    #     #xs = asarray(xs)
+    #
+    #     ws = self._get_weights()
+    #     ys = self.ys
+    #     x = self._get_X()
+    #     self._wls = WLS(ys, x,
+    #                     #weights=1 / es
+    #                     weights=ws)
+    #     self._result = self._wls.fit()
+    def _delete_filtered_hook(self, outliers):
+        self.yserr=delete(self.yserr, outliers)
+
+    def _engine_factory(self, fy, X):
+        ws=self._get_weights()
+        if self._check_integrity(fy,X, ws):
+            return WLS(fy, X, weights=ws)
+
+    def _check_integrity(self, x, y, e=None):
+        nx, ny = len(x), len(y)
+        ne=len(e) if e is not None else nx
+        # print nx,ny, ne
+        if not nx or not ny or not ne:
+            return
+        if nx != ny or nx!=ne:
             return
 
-        if len(self.xs) != len(self.ys) or len(self.xs) != len(self.yserr):
+        if nx == 1 or ny == 1 or ne==1:
             return
 
-        #xs = self.xs
-        #xs = asarray(xs)
-
-        ws = self._get_weights()
-        ys = self.ys
-        x = self._get_X()
-        self._wls = WLS(ys, x,
-                        #weights=1 / es
-                        weights=ws)
-        self._result = self._wls.fit()
+        return True
 
     def _get_weights(self):
-        es = asarray(self.yserr)
+        es = asarray(self._clean_array(self.yserr))
         return es ** -2
 
 

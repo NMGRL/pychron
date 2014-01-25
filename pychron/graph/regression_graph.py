@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-
+from pychron.core.ui import set_toolkit
+set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
-from numpy import linspace, random, delete
+from numpy import linspace, random
 import weakref
 
 #============= local library imports  ==========================
@@ -156,7 +157,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
             fired when the index metadata changes e.i user selection
         """
-        #print obj, name, old, new
         sel = obj.metadata.get('selections', None)
         if sel:
             obj.was_selected = True
@@ -242,7 +242,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
                 fx = linspace(low, high, 100)
                 fy = r.predict(fx)
-
                 line.regressor = r
 
                 line.index.set_data(fx)
@@ -270,16 +269,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         y = scatter.value.get_data()
 
         sel=list(selection)
-        x=delete(x, sel)
-        y=delete(y, sel)
-        r.trait_set(xs=x, ys=y,
-                    user_excluded=sel,
-                    filter_outliers_dict=scatter.filter_outliers_dict)
 
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
-            yserr=delete(yserr, sel)
             r.trait_set(yserr=yserr)
+
+        r.trait_set(xs=x, ys=y,
+                    user_excluded=sel,
+                    filter_outliers_dict=scatter.filter_outliers_dict)
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
@@ -495,25 +492,27 @@ class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
 
 
 if __name__ == '__main__':
-    import numpy as np
-
     rg = RegressionGraph()
     rg.new_plot()
     n=50
     x = linspace(0, 10, n)
 
-    y = 2 * x + random.rand(n)
+    y=5+random.rand(n)
+    # y = 2 * x + random.rand(n)
 
-    d = np.zeros(n)
-    d[::10] = random.rand() + 5
-    d[::15] = random.rand() + 2
+    # d = np.zeros(n)
+    # d[::10] = random.rand() + 5
+    # d[::15] = random.rand() + 2
 
-    y += d
+    # y += d
 
     fod={'filter_outliers':True, 'iterations':1, 'std_devs':2}
     rg.new_series(x, y,
-                  truncate='x<1',
-                  filter_outliers_dict=fod)
+                  yerror=random.rand(n)*5,
+                  fit='average'
+                  # truncate='x<1',
+                  # filter_outliers_dict=fod
+    )
 
     rg.configure_traits()
 #============= EOF =============================================

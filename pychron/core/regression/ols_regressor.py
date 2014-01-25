@@ -20,7 +20,7 @@ from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
     matrix, sqrt, abs, zeros
-from pychron.core.stats import calculate_mswd2
+from pychron.core.stats import calculate_mswd2, validate_mswd
 
 try:
     from statsmodels.api import OLS
@@ -67,11 +67,14 @@ class OLSRegressor(BaseRegressor):
                 return
 
             try:
-                ols = OLS(fy, X)
+                ols = self._engine_factory(fy, X)
                 self._result = ols.fit()
             except Exception, e:
                 import traceback
                 traceback.print_exc()
+
+    def _engine_factory(self, fy, X):
+        return OLS(fy, X)
 
     def predict(self, pos):
         return_single = False
@@ -263,6 +266,7 @@ class OLSRegressor(BaseRegressor):
 
     @cached_property
     def _get_mswd(self):
+        self.valid_mswd=False
         if self._degree==1:
             # a = self.intercept
             # b = self.slope
@@ -277,12 +281,20 @@ class OLSRegressor(BaseRegressor):
 
                 sx = self.xserr
                 sy = self.yserr
+
                 if not len(sx):
                     sx=zeros(self.n)
                 if not len(sy):
                     sy=zeros(self.n)
 
-                return calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+                x=self._clean_array(x)
+                y=self._clean_array(y)
+                sx=self._clean_array(sx)
+                sy=self._clean_array(sy)
+
+                m=calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+                self.valid_mswd=validate_mswd(m, len(ys), k=2)
+                return m
             else:
                 return 0
         else:

@@ -24,8 +24,9 @@ class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
     def _calculate_coefficients(self):
-        if len(self.ys):
-            return [self.ys.mean()]
+        ys = self._clean_array(self.ys)
+        if self._check_integrity(ys, ys):
+            return [ys.mean()]
         else:
             return 0
 
@@ -46,8 +47,9 @@ sem={}
 
     @property
     def mean(self):
-        if len(self.ys):
-            return self.ys.mean()
+        ys = self._clean_array(self.ys)
+        if self._check_integrity(ys,ys):
+            return ys.mean()
         else:
             return 0
 
@@ -66,8 +68,9 @@ sem={}
 
     @property
     def sem(self):
-        if len(self.ys):
-            return self.std * 1 / len(self.ys) ** 0.5
+        ys = self._clean_array(self.ys)
+        if self._check_integrity(ys, ys):
+            return self.std * 1 / len(ys) ** 0.5
         else:
             return 0
 
@@ -116,20 +119,23 @@ class WeightedMeanRegressor(MeanRegressor):
 
     @property
     def mean(self):
-        if len(self.weights):
-            return average(self.ys, weights=self.weights)
+        ys = self._clean_array(self.ys)
+        ws=self._get_weights()
+        if self._check_integrity(ys, ws):
+            return average(ys, weights=ws)
         else:
-            return average(self.ys)
+            return average(ys)
 
-    @property
-    def mean_std(self):
-        if len(self.weights):
-            var = 1 / sum(self.weights)
-            return var ** 0.5
+    # @property
+    # def mean_std(self):
+    #     if len(self.weights):
+    #         var = 1 / sum(self.weights)
+    #         return var ** 0.5
 
-    @property
-    def weights(self):
-        return 1 / self.yserr ** 2
+    def _get_weights(self):
+        e=self._clean_array(self.yserr)
+        if self._check_integrity(e,e):
+            return 1 / self.yserr ** 2
 
 
 #============= EOF =============================================

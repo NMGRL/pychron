@@ -30,6 +30,7 @@ N = 500
 
 class Series(BaseArArFigure):
     xs = Array
+    _omit_key = 'omit_series'
 
     def max_x(self, *args):
         if len(self.xs):
@@ -62,6 +63,10 @@ class Series(BaseArArFigure):
         """
             plot data on plots
         """
+
+        omits=self._get_omitted(self.sorted_analyses, omit='omit_series')
+        # print omits
+        # omits=[0,2]
         graph = self.graph
 
         xs = array([ai.timestamp for ai in self.sorted_analyses])
@@ -85,13 +90,13 @@ class Series(BaseArArFigure):
             with graph.no_regression(refresh=True):
                 plots = [po for po in plots if po.use]
                 for i, po in enumerate(plots):
-                    self._plot_series(po, i)
+                    self._plot_series(po, i, omits)
 
                 if plots:
                     graph.set_x_limits(min_=min(self.xs), max_=max(self.xs), pad='0.1',
                                        plotid=0)
 
-    def _plot_series(self, po, pid):
+    def _plot_series(self, po, pid, omits):
         graph = self.graph
         try:
             ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
@@ -110,6 +115,10 @@ class Series(BaseArArFigure):
                 scatter, p = args
             else:
                 p, scatter, l = args
+
+            # sel=scatter.index.metadata.get('selections',[])
+            # sel+=omits
+            # scatter.index.metadata['selections']=list(set(sel))
 
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())

@@ -82,7 +82,7 @@ def validate_mswd(mswd, n, k=1):
 
     rv = chi2(dof, scale=1 / float(dof))
     low, high = rv.interval(0.95)
-    return low <= mswd <= high
+    return bool(low <= mswd <= high)
 
 
 def chi_squared(x, y, sx, sy, a, b):
