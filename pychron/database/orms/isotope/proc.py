@@ -67,6 +67,7 @@ class proc_TagTable(Base):
     omit_ideo = Column(Boolean)
     omit_spec = Column(Boolean)
     omit_iso = Column(Boolean)
+    omit_series = Column(Boolean)
 
     analyses = relationship('meas_AnalysisTable', backref='tag_item')
 
@@ -171,7 +172,7 @@ class proc_BlanksTable(Base, BaseMixin):
     isotope = stringcolumn()
 
     fit = stringcolumn()
-    error_type = stringcolumn()
+    error_type = stringcolumn(default='SD')
 
     set_id = Column(Integer)
 
@@ -195,7 +196,7 @@ class proc_BackgroundsTable(Base, BaseMixin):
     use_set = Column(Boolean)
     isotope = stringcolumn()
     fit = stringcolumn()
-    error_type = stringcolumn()
+    error_type = stringcolumn(default='SD')
     set_id = Column(Integer)
 
 
@@ -216,7 +217,7 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     user_value = Column(Float)
     user_error = Column(Float)
     fit = stringcolumn()
-    error_type = stringcolumn()
+    error_type = stringcolumn(default='SD')
     set_id = Column(Integer)
 
 
@@ -294,7 +295,7 @@ class proc_FitTable(Base, BaseMixin):
     isotope_id = foreignkey('meas_IsotopeTable')
 
     fit = stringcolumn()
-    error_type=stringcolumn()
+    error_type=stringcolumn(default='SD')
     filter_outliers = Column(Boolean)
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)

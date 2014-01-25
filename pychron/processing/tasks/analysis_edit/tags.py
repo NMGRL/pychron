@@ -44,6 +44,7 @@ class Tag(HasTraits):
     omit_ideo = Bool
     omit_spec = Bool
     omit_iso = Bool
+    omit_series = Bool
 
 
 class TagTable(HasTraits):
@@ -77,7 +78,8 @@ class TagTable(HasTraits):
                       date=di.create_date,
                       omit_ideo=di.omit_ideo or False,
                       omit_iso=di.omit_iso or False,
-                      omit_spec=di.omit_spec or False)
+                      omit_spec=di.omit_spec or False,
+                      omit_series=di.omit_series or False)
                   for di in tags]
 
             self.tags = ts
@@ -89,7 +91,8 @@ class TagTable(HasTraits):
             return db.add_tag(name=name, user=user,
                               omit_ideo=tag.omit_ideo,
                               omit_spec=tag.omit_spec,
-                              omit_iso=tag.omit_iso)
+                              omit_iso=tag.omit_iso,
+                              omit_series=tag.omit_series)
 
     def add_tag(self, tag):
         self._add_tag(tag)
@@ -114,7 +117,7 @@ class TagTable(HasTraits):
                 if dbtag is None:
                     dbtag = self._add_tag(ti)
 
-                for a in ('ideo', 'spec', 'iso'):
+                for a in ('ideo', 'spec', 'iso','series'):
                     a = 'omit_{}'.format(a)
                     setattr(dbtag, a, getattr(ti, a))
 
@@ -159,6 +162,8 @@ class TagTableView(Loggable):
                          label='Spectrum'),
                     Item('omit_iso',
                          label='Isochron'),
+                    Item('omit_series',
+                         label='Series'),
                     show_border=True,
                     label='Omit'
                 ),
@@ -183,7 +188,8 @@ class TagTableView(Loggable):
                 ObjectColumn(name='user', editable=False),
                 CheckboxColumn(name='omit_ideo'),
                 CheckboxColumn(name='omit_spec'),
-                CheckboxColumn(name='omit_iso')]
+                CheckboxColumn(name='omit_iso'),
+                CheckboxColumn(name='omit_series')]
 
         editor = TableEditor(columns=cols,
                              selected='selected',
