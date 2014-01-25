@@ -58,6 +58,23 @@ def bin_analyses(ans):
     return _bin()
 
 
+def get_bounds(groups):
+    bs=[]
+    for i, gi in enumerate(groups):
+
+        try:
+            gii=groups[i+1]
+        except IndexError:
+            break
+
+        ua = gi[-1].timestamp
+        bi=(gii[0].timestamp-ua)/2.0+ua
+        bs.append(bi)
+
+    return bs
+
+
+
 class InterpolationEditor(GraphEditor):
     tool_klass = InterpolationFitSelector
     references = List
@@ -72,21 +89,35 @@ class InterpolationEditor(GraphEditor):
     binned_analyses=List
 
     def bin_analyses(self):
-
         groups=list(bin_analyses(self.analyses))
-        if len(groups)>1:
-            for gi in groups[1:-1]:
-                lbound=gi[-1].timestamp
-                ubound=gi[0].timestamp
+        n=len(groups)
+        if n>1:
+            print 'sss', len(self.references)
 
-                c=(ubound-lbound)/2.0+lbound
-                self.add_group_divider(c)
+            mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)-1
+            ma = max(self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp)+1
+            bounds=get_bounds(groups)
+            for bi in bounds:
+                self.add_group_divider(bi, mi)
 
-    def add_group_divider(self, cen):
-        print cen
-        start=self.sorted_analyses[0]
-        cen=cen-start.timestamp
-        print cen
+            gs=[]
+            low=None
+            for i,gi in enumerate(groups):
+                if low is None:
+                    low=mi
+                try:
+                    high=bounds[i]
+                except IndexError:
+                    high=ma
+
+                refs = filter(lambda x: low <= x.timestamp < high, self.sorted_references)
+                gs.append((gi, refs))
+                low=high
+
+            self.binned_analyses=gs
+
+    def add_group_divider(self, cen, mi):
+        cen=cen-mi
         self.graph.add_vertical_rule(cen/3600.)
         self.graph.redraw()
 
@@ -191,23 +222,39 @@ class InterpolationEditor(GraphEditor):
         gen = self._graph_generator()
         for i, fit in enumerate(gen):
 
+            args=i, fit, c_uxs, r_xs, display_xs
             if self.binned_analyses:
-                set_x_flag=self._rebuild_binned_graph(fit, c_uxs, r_xs, display_xs)
+                set_x_flag=self._rebuild_binned(*args)
             else:
-                set_x_flag=self._rebuild_non_binned(fit,c_uxs, r_xs, display_xs)
+                set_x_flag=self._rebuild_non_binned(*args)
 
         if set_x_flag:
             m = abs(end - start) / 3600.
             graph.set_x_limits(0, m, pad='0.1')
             graph.refresh()
 
+    def _rebuild_binned(self, i, fit, c_uxs, r_xs, display_xs):
+        graph=self.graph
+        iso = fit.name
+        fit = fit.fit.lower()
+        set_x_flag = True
+
+        for bi in self.binned_analyses:
+            c_uys, c_ues = None, None
+            if self.show_current:
+                c_uys, c_ues = self._get_current_values(iso, bi)
+
+            r_ys, r_es = None, None
+            if self.references:
+                r_ys, r_es = self._get_reference_values(iso, bi)
+
+
     def _rebuild_non_binned(self, i, fit, c_uxs, r_xs, display_xs):
         graph=self.graph
         iso = fit.name
-        set_x_flag = True
         fit = fit.fit.lower()
+        set_x_flag = True
         c_uys, c_ues = None, None
-
         if self.analyses and self.show_current:
             c_uys, c_ues = self._get_current_values(iso)
 

@@ -118,15 +118,18 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
         return p_uys, p_ues
 
-    def _get_reference_values(self, dets):
+    def _get_reference_values(self, dets, ans=None):
+        if ans is None:
+            ans=self.references
+
         if not self.tool.standard_ratio:
             self.debug('no standard ratio set')
             return None, None
 
         n, d = dets.split('/')
         self.debug('get reference values {}, {}'.format(n,d))
-        nys = [ri.get_isotope(detector=n) for ri in self.references]
-        dys = [ri.get_isotope(detector=d) for ri in self.references]
+        nys = [ri.get_isotope(detector=n) for ri in ans]
+        dys = [ri.get_isotope(detector=d) for ri in ans]
         nys = array([ni.get_corrected_value() for ni in nys if ni is not None])
         dys = array([di.get_corrected_value() for di in dys if di is not None])
 
@@ -139,11 +142,14 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             traceback.print_exc()
             return None, None
 
-    def _get_current_values(self, dets):
+    def _get_current_values(self, dets, ans=None):
+        if ans is None:
+            ans=self.analyses
+
         #return None, None
         n, d = dets.split('/')
-        nys = array([ri.get_ic_factor(n) for ri in self.analyses])
-        dys = array([ri.get_ic_factor(d) for ri in self.analyses])
+        nys = array([ri.get_ic_factor(n) for ri in ans])
+        dys = array([ri.get_ic_factor(d) for ri in ans])
         try:
             rys = dys / nys
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])

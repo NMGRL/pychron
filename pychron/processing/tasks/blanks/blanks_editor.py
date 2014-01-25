@@ -116,9 +116,12 @@ class BlanksEditor(InterpolationEditor):
 
         return p_uys, p_ues
 
-    def _get_current_values(self, iso):
+    def _get_current_values(self, iso, ans=None):
+        if ans is None:
+            ans=self.analyses
+
         return zip(*[self._get_isotope(ui, iso, 'blank')
-                     for ui in self.analyses])
+                     for ui in ans])
 
     def _get_baseline_corrected(self, analysis, k):
         if k in analysis.isotopes:
@@ -128,9 +131,12 @@ class BlanksEditor(InterpolationEditor):
         else:
             return 0, 0
 
-    def _get_reference_values(self, iso):
+    def _get_reference_values(self, iso, ans=None):
+        if ans is None:
+            ans=self.references
+
         return zip(*[self._get_baseline_corrected(ui, iso)
-                     for ui in self.references])
+                     for ui in ans])
 
         #     def _rebuild_graph(self):
         #         graph = self.graph

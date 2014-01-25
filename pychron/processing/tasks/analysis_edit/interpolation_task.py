@@ -59,7 +59,6 @@ class InterpolationTask(AnalysisEditTask):
         if self.active_editor:
             self.active_editor.bin_analyses()
 
-
     def create_dock_panes(self):
         panes = super(InterpolationTask, self).create_dock_panes()
         self._create_references_pane()
