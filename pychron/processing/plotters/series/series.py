@@ -65,8 +65,6 @@ class Series(BaseArArFigure):
         """
 
         omits=self._get_omitted(self.sorted_analyses, omit='omit_series')
-        # print omits
-        # omits=[0,2]
         graph = self.graph
 
         xs = array([ai.timestamp for ai in self.sorted_analyses])
@@ -116,9 +114,9 @@ class Series(BaseArArFigure):
             else:
                 p, scatter, l = args
 
-            # sel=scatter.index.metadata.get('selections',[])
-            # sel+=omits
-            # scatter.index.metadata['selections']=list(set(sel))
+            sel=scatter.index.metadata.get('selections',[])
+            sel+=omits
+            scatter.index.metadata['selections']=list(set(sel))
 
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
