@@ -63,7 +63,7 @@ class BlanksEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
-            set_id=self.processor.add_predictors_set(self._clean_references())
+            set_id=self.processor.add_predictor_set(self._clean_references())
             
             for unk in self.analyses:
                 if progress:
@@ -94,11 +94,16 @@ class BlanksEditor(InterpolationEditor):
             if progress:
                 progress.soft_close()
 
-    def _set_interpolated_values(self, iso, reg, xs):
+    def _set_interpolated_values(self, iso, reg, ans=None):
+        if ans is None:
+            ans=self.sorted_analyses
+
+        xs=[ai.timestamp for ai in ans]
+
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
 
-        for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
+        for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 ui.set_temporary_blank(iso, v, e)
 

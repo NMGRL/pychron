@@ -301,18 +301,18 @@ class Graph(Viewable, ContextMenuMixin):
         return oi, ov
 
     def save_png(self, path=None):
-        '''
-        '''
+        """
+        """
         self._save_(type_='pic', path=path)
 
     def save_pdf(self, path=None):
-        '''
-        '''
+        """
+        """
         self._save_(type_='pdf', path=path)
 
     def save(self, path=None):
-        '''
-        '''
+        """
+        """
         self._save_(path=path)
 
     #     def export_raw_data(self, path=None, header=None, plotid=0):
@@ -324,8 +324,8 @@ class Graph(Viewable, ContextMenuMixin):
     #             self._export_raw_data(path, header, plotid)
 
     def export_data(self, path=None, plotid=None):
-        '''
-        '''
+        """
+        """
         if path is None:
             path = self._path_factory()
 
@@ -342,8 +342,8 @@ class Graph(Viewable, ContextMenuMixin):
         return name_generator(name)
 
     def read_xy(self, p, header=False, series=0, plotid=0):
-        '''
-        '''
+        """
+        """
         x = []
         y = []
         with open(p, 'r') as f:
@@ -405,8 +405,8 @@ class Graph(Viewable, ContextMenuMixin):
         self.clear_data()
 
     def clear(self):
-        '''
-        '''
+        """
+        """
         self.clear_plots()
 
         self.plots = []
@@ -431,15 +431,15 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def set_axis_label_color(self, *args, **kw):
-        '''
-        '''
+        """
+        """
 
         kw['attr'] = 'title'
         self._set_axis_color(*args, **kw)
 
     def set_axis_tick_color(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         attrs = ['tick_label', 'tick']
         if 'attrs' in kw:
             attrs = kw['attrs']
@@ -449,8 +449,8 @@ class Graph(Viewable, ContextMenuMixin):
             self._set_axis_color(*args, **kw)
 
     def _set_axis_color(self, name, color, **kw):
-        '''
-        '''
+        """
+        """
         attr = kw['attr']
         p = self.plots[kw['plotid']]
         if 'axis' in kw:
@@ -477,8 +477,8 @@ class Graph(Viewable, ContextMenuMixin):
             self.set_data([], **kw)
 
     def set_data(self, d, plotid=0, series=0, axis=0):
-        '''
-        '''
+        """
+        """
         if isinstance(series, int):
             n = self.series[plotid][series]
             series = n[axis]
@@ -486,24 +486,24 @@ class Graph(Viewable, ContextMenuMixin):
         self.plots[plotid].data.set_data(series, d)
 
     def set_axis_traits(self, plotid=0, axis='x', **kw):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
 
         attr = getattr(plot, '{}_axis'.format(axis))
         attr.trait_set(**kw)
 
     def set_grid_traits(self, plotid=0, grid='x', **kw):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
 
         attr = getattr(plot, '{}_grid'.format(grid))
         attr.trait_set(**kw)
 
     def set_series_traits(self, d, plotid=0, series=0):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid].plots['plot%i' % series][0]
         plot.trait_set(**d)
         self.plotcontainer.request_redraw()
@@ -533,8 +533,8 @@ class Graph(Viewable, ContextMenuMixin):
     #        return series
     #        #self.refresh_editor()
     def get_series_label(self, plotid=0, series=0):
-        '''
-        '''
+        """
+        """
         r = ''
         legend = self.plots[plotid].legend
         if isinstance(series, str):
@@ -550,14 +550,14 @@ class Graph(Viewable, ContextMenuMixin):
         return r
 
     def set_series_label(self, label, plotid=0, series=None):
-        '''
-        
+        """
+
             A chaco update requires that the legends labels match the keys in the plot dict
-            
+
             save the plots from the dict
             resave them with label as the key
-            
-        '''
+
+        """
 
         legend = self.plots[plotid].legend
         if series is None:
@@ -572,33 +572,26 @@ class Graph(Viewable, ContextMenuMixin):
         except Exception, e:
             legend.labels.append(label)
 
+        try:
+            plots = self.plots[plotid].plots[series]
+        except KeyError:
+            print self.plots[plotid].plots.keys()
+            raise
 
-        #        print legend.labels
-        #        try:
-        plots = self.plots[plotid].plots[series]
         self.plots[plotid].plots[label] = plots
         self.plots[plotid].plots.pop(series)
 
-    #        except Exception,e:
-    #            print series
-    #            print self.plots[plotid].plots.keys()
-
-
-    #        print legend.plots['plot0'][0].visible
-    #        print legend.labels
-    #        legend.hide_invisible_plots = False
-    #        legend._cached_label_names = legend.labels
 
     def clear_legend(self, keys, plotid=0):
-        '''
-        '''
+        """
+        """
         legend = self.plots[plotid].legend
         for key in keys:
             legend.plots.pop(key)
 
     def set_series_visiblity(self, v, plotid=0, series=0):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
 
         if isinstance(series, int):
