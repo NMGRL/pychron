@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.core.ui import set_toolkit
-set_toolkit('qt4')
+
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
-from numpy import linspace, random
+from numpy import linspace, random, delete
 import weakref
 
 #============= local library imports  ==========================
@@ -30,7 +29,7 @@ from pychron.graph.time_series_graph import TimeSeriesGraph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.core.helpers.fits import convert_fit
 from pychron.core.regression.ols_regressor import PolynomialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
@@ -159,7 +158,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
         #print obj, name, old, new
         sel = obj.metadata.get('selections', None)
-        #
         if sel:
             obj.was_selected = True
             self._update_graph()
@@ -207,7 +205,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if scatter.no_regression:
             return
 
-        fit = convert_fit(scatter.fit)
+        fit, err = convert_fit(scatter.fit)
         if fit is None:
             return
 
@@ -231,6 +229,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             high = plot.index_range.high
             fx = linspace(low, high, 100)
             fy = r.predict(fx)
+            r.error_calc_type=err
+
             if line:
                 line.regressor = r
 
@@ -253,13 +253,22 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _set_regressor(self, scatter, r):
         selection = scatter.index.metadata['selections']
-        selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
-
+        # selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
+        selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
         x = scatter.index.get_data()
         y = scatter.value.get_data()
+
+        sel=list(selection)
+        x=delete(x, sel)
+        y=delete(y, sel)
         r.trait_set(xs=x, ys=y,
-                    user_excluded=selection,
+                    user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
+
+        if hasattr(scatter, 'yerror'):
+            yserr = scatter.yerror.get_data()
+            yserr=delete(yserr, sel)
+            r.trait_set(yserr=yserr)
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
@@ -271,8 +280,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
-            yserr=scatter.yerror.get_data()
-            r.trait_set(yserr=yserr, trait_change_notify=False)
         else:
             if r is None or not isinstance(r, PolynomialRegressor):
                 r = PolynomialRegressor()
@@ -302,9 +309,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _mean_regress(self, scatter, r, fit):
-
-        if r is None or not isinstance(r, MeanRegressor):
-            r = MeanRegressor()
+        if hasattr(scatter, 'yerror'):
+            if r is None or not isinstance(r, WeightedMeanRegressor):
+                r = WeightedMeanRegressor()
+        else:
+            if r is None or not isinstance(r, MeanRegressor):
+                r = MeanRegressor()
 
         self._set_regressor(scatter, r)
         r.trait_set(fit=fit, trait_change_notify=False)

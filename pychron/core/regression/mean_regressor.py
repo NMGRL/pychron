@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Array
 #============= standard library imports ========================
 from numpy import average, ones, asarray
 #============= local library imports  ==========================
@@ -77,9 +76,9 @@ sem={}
 
     def calculate_ci(self, fx, fy):
 #         c = self.predict(fx)
-        fit = self.fit.lower()
-        ec = 'sem' if fit.endswith('sem') else 'sd'
-        e = self.predict_error(fx, error_calc=ec)
+        #fit = self.fit.lower()
+        #ec = 'sem' if fit.endswith('sem') else 'sd'
+        e = self.predict_error(fx)
         ly = fy - e
         uy = fy + e
         return ly, uy
@@ -98,8 +97,11 @@ sem={}
     def make_equation(self):
         return
 
-    def predict_error(self, x, error_calc='sem'):
-        if error_calc == 'sem':
+    def predict_error(self, x, error_calc=None):
+        if error_calc is None:
+            error_calc='sem' if 'sem' in self.fit.lower() else 'sd'
+
+        if error_calc=='sem':
             e = self.sem
         else:
             e = self.std
@@ -109,19 +111,23 @@ sem={}
         return self.std
 
 class WeightedMeanRegressor(MeanRegressor):
-    errors = Array
-    @property
-    def mean(self):
-        return average(self.ys, weights=self.weights)
 
     @property
-    def std(self):
-        var = 1 / sum(self.weights)
-        return var ** 0.5
+    def mean(self):
+        if len(self.weights):
+            return average(self.ys, weights=self.weights)
+        else:
+            return average(self.ys)
+
+    @property
+    def mean_std(self):
+        if len(self.weights):
+            var = 1 / sum(self.weights)
+            return var ** 0.5
 
     @property
     def weights(self):
-        return 1 / self.errors ** 2
+        return 1 / self.yserr ** 2
 
 
 #============= EOF =============================================

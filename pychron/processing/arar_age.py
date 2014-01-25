@@ -29,7 +29,7 @@ from numpy import hstack
 #============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, calculate_decay_factor
 from pychron.processing.arar_constants import ArArConstants
-from pychron.processing.isotope import Isotope
+from pychron.processing.isotope import Isotope, Baseline
 
 from pychron.loggable import Loggable
 from pychron.core.helpers.isotope_utils import sort_isotopes
@@ -97,6 +97,15 @@ class ArArAge(Loggable):
     def clear_isotopes(self):
         for iso in self.isotopes:
             self.isotopes[iso] = Isotope(name=iso)
+
+    def get_baseline(self, attr):
+        if attr.endswith('bs'):
+            attr=attr[:-2]
+
+        if attr in self.isotopes:
+            return self.isotopes[attr].baseline
+        else:
+            return Baseline()
 
     def get_value(self, attr):
         if attr in self.computed:

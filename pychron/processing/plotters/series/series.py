@@ -16,11 +16,12 @@
 
 #============= enthought library imports =======================
 import time
+from chaco.array_data_source import ArrayDataSource
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
 #============= standard library imports ========================
-from numpy import array
+from numpy import array, Inf
 #============= local library imports  ==========================
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
@@ -29,6 +30,21 @@ N = 500
 
 class Series(BaseArArFigure):
     xs = Array
+
+    def max_x(self, *args):
+        if len(self.xs):
+            return max(self.xs)
+        return -Inf
+
+    def min_x(self, *args):
+        if len(self.xs):
+            return min(self.xs)
+        return Inf
+
+    def mean_x(self, *args):
+        if len(self.xs):
+            return self.xs.mean()
+        return 0
 
     def build(self, plots):
         graph = self.graph
@@ -81,12 +97,20 @@ class Series(BaseArArFigure):
             ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
             yerr = [ai.std_dev for ai in self._unpack_attr(po.name)]
 
-            scatter, p = graph.new_series(x=self.xs,
-                                          y=ys,
-                                          yerror=yerr,
-                                          fit=po.fit,
-                                          plotid=pid,
-                                          type='scatter')
+            n = [ai.record_id for ai in self.sorted_analyses]
+
+            args = graph.new_series(x=self.xs,
+                                    y=ys,
+                                    display_index=ArrayDataSource(data=n),
+                                    yerror=yerr,
+                                    fit=po.fit,
+                                    plotid=pid,
+                                    type='scatter')
+            if len(args) == 2:
+                scatter, p = args
+            else:
+                p, scatter, l = args
+
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
@@ -98,27 +122,28 @@ class Series(BaseArArFigure):
 
     def _unpack_attr(self, attr):
         if attr.endswith('bs'):
-           f=lambda x: x.baseline.uvalue
-           return (f(ai) for ai in self.sorted_analyses)
-        elif attr=='PC':
-           return super(Series, self)._unpack_attr(attr)
-        else:
-           gs=super(Series, self)._unpack_attr(attr)
-           f=lambda x: x.get_intensity()
-           return map(f, gs)
+            # f=lambda x: x.baseline.uvalue
+            return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
 
-        #if attr.endswith('bs'):
-        #    return (ai.isotopes[attr[:-2]].baseline.uvalue
-        #            for ai in self.sorted_analyses)
-        ##elif '/' in attr:
-        ##    n, d = attr.split('/')
-        #    #return (getattr(ai, n) / getattr(ai, d)
-        #    #        for ai in self.sorted_analyses)
-        #elif attr == 'PC':
-        #    return (getattr(ai, 'peak_center')
-        #            for ai in self.sorted_analyses)
-        #else:
-        #    return super(Series, self)._unpack_attr(attr)
+        elif attr == 'PC':
+            return super(Series, self)._unpack_attr(attr)
+        else:
+            gs = super(Series, self)._unpack_attr(attr)
+            f = lambda x: x.get_intensity()
+            return map(f, gs)
+
+            #if attr.endswith('bs'):
+            #    return (ai.isotopes[attr[:-2]].baseline.uvalue
+            #            for ai in self.sorted_analyses)
+            ##elif '/' in attr:
+            ##    n, d = attr.split('/')
+            #    #return (getattr(ai, n) / getattr(ai, d)
+            #    #        for ai in self.sorted_analyses)
+            #elif attr == 'PC':
+            #    return (getattr(ai, 'peak_center')
+            #            for ai in self.sorted_analyses)
+            #else:
+            #    return super(Series, self)._unpack_attr(attr)
 
 #===============================================================================
 # plotters

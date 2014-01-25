@@ -59,7 +59,7 @@ def bin_analyses(ans):
 
 
 class InterpolationEditor(GraphEditor):
-    tool_klass=InterpolationFitSelector
+    tool_klass = InterpolationFitSelector
     references = List
     #     _references = List
 
@@ -95,29 +95,11 @@ class InterpolationEditor(GraphEditor):
 
     @on_trait_change('references[]')
     def _update_references(self):
-    #         self.make_references()
-    #    if self.unknowns:
-    #        ref_ans=self.unknowns[0]
-    #        self._load_ref_fits(ref_ans)
         self._update_references_hook()
-
         self.rebuild_graph()
 
     def _update_references_hook(self):
         pass
-
-        #def _load_ref_fits(self, ref_ans):
-        #    pass
-        #keys=ref_ans.isotope_keys
-        #fits=[ref_ans.isotopes[ki]]
-
-    #     def make_references(self):
-    #         self._references = self.processor.make_analyses(self.references)
-    # #         self.processor.load_analyses(self._references)
-    #         self._make_references()
-    #
-    #     def _make_references(self):
-    #         pass
 
     def _get_start_end(self, rxs, uxs):
         mrxs = min(rxs) if rxs else Inf
@@ -141,11 +123,11 @@ class InterpolationEditor(GraphEditor):
         proc = self.processor
         uuids = []
         with proc.db.session_ctx():
-            n=len(self.analyses)
+            n = len(self.analyses)
 
-            if n>1:
+            if n > 1:
                 if progress is None:
-                    progress=proc.open_progress(n)
+                    progress = proc.open_progress(n)
                 else:
                     progress.increase_max(n)
 
@@ -166,7 +148,7 @@ class InterpolationEditor(GraphEditor):
 
             if progress:
                 progress.soft_close()
-            #self.task.references_pane.items = ans
+                #self.task.references_pane.items = ans
 
     def _get_current_values(self, *args, **kw):
         pass
@@ -320,29 +302,25 @@ class InterpolationEditor(GraphEditor):
         return ebo
 
     def _add_inspector(self, scatter, ans):
-
-
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
-                                                 convert_index=lambda x: '{:0.3f}'.format(x),
-                                                 #value_format=value_format,
-                                                 #additional_info=additional_info
-        )
+                                                 convert_index=lambda x: '{:0.3f}'.format(x))
 
         pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector,
-        )
-        #
+                                                   tool=point_inspector)
+
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
-        scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
+        scatter.index.on_trait_change(self._update_metadata(ans), 'metadata_changed')
 
-    def _update_metadata(self, obj, name, old, new):
-        meta = obj.metadata
-        selections = meta.get('selections', [])
-        ans = self.sorted_analyses
-        for i, ai in enumerate(ans):
-            ai.temp_status = i in selections
+    def _update_metadata(self, ans):
+        def _handler(obj, name, old, new):
+            meta = obj.metadata
+            selections = meta['selections']
+            for i, ai in enumerate(ans):
+                ai.temp_status = i in selections
+
+        return _handler
 
     @cached_property
     def _get_sorted_analyses(self):
@@ -352,25 +330,21 @@ class InterpolationEditor(GraphEditor):
     def _get_sorted_references(self):
         return sorted(self.references, key=lambda x: x.timestamp)
 
-
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
-
+        key='Unknowns-predicted'
         #necessary to handle user excluding points
         gen = self._graph_generator()
-        for fit, (plotobj, reg) in zip(gen,new):
+        for fit, (plotobj, reg) in zip(gen, new):
             if issubclass(type(reg), BaseRegressor):
                 iso = fit.name
-            # for i, (fit, reg) in enumerate(zip(gen, new)):
-            #     iso = fit.name
-            #     plotobj = self.graph.plots[i]
+                if key in plotobj.plots:
+                    scatter = plotobj.plots[key][0]
+                    xs = scatter.index.get_data()
 
-                scatter = plotobj.plots['Unknowns-predicted'][0]
-                xs = scatter.index.get_data()
-
-                p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
-                scatter.value.set_data(p_uys)
-                scatter.yerror.set_data(p_ues)
+                    p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
+                    scatter.value.set_data(p_uys)
+                    scatter.yerror.set_data(p_ues)
 
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]

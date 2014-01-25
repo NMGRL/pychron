@@ -62,6 +62,8 @@ class Spectrum(BaseArArFigure):
     def min_x(self, attr):
         return min([ai.nominal_value for ai in self._unpack_attr(attr)])
 
+    def mean_x(self, *args):
+        return 50
     #===============================================================================
     # plotters
     #===============================================================================
@@ -247,17 +249,8 @@ class Spectrum(BaseArArFigure):
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
+        # print obj, name, old,new
         self._handle_overlay_move(obj, name, old, float(new[0]))
-
-    #     # print obj, name, old, new
-    #     axps = [a for a in self.options.aux_plots if a.use]
-    #     for i, p in enumerate(self.graph.plots):
-    #         if next((pp for pp in p.plots.itervalues()
-    #                  if obj.component == pp[0]), None):
-    #             axp = axps[i]
-    #             # print i, axp, obj.id, new
-    #             axp.set_overlay_position(obj.id, float(new[0]))
-    #             break
 
     def update_index_mapper(self, gid, obj, name, old, new):
         if new is True:
@@ -266,40 +259,6 @@ class Spectrum(BaseArArFigure):
     def update_graph_metadata(self, group_id, obj, name, old, new):
         pass
 
-    #         sorted_ans = self.sorted_analyses
-    #         if obj:
-    #             hover = obj.metadata.get('hover')
-    #             if hover:
-    #                 hoverid = hover[0]
-    #                 try:
-    #                     self.selected_analysis = sorted_ans[hoverid]
-    #                 except IndexError, e:
-    #                     print 'asaaaaa', e
-    #                     return
-    #             else:
-    #                 self.selected_analysis = None
-    #
-    #             sel = obj.metadata.get('selections', [])
-    #
-    #             if sel:
-    #                 obj.was_selected = True
-    #                 self._rebuild_fig(sel)
-    #             elif hasattr(obj, 'was_selected'):
-    #                 if obj.was_selected:
-    #                     self._rebuild_spec(sel)
-    #
-    #                 obj.was_selected = False
-    #
-    #             # set the temp_status for all the analyses
-    #             for i, a in enumerate(sorted_ans):
-    #                 a.temp_status = 1 if i in sel else 0
-    #         else:
-    #             sel = [i for i, a in enumerate(sorted_ans)
-    #                     if a.temp_status or a.status]
-    #
-    #             self._rebuild_spec(sel)
-    #     def _rebuild_spec(self, sel):
-    #         pass
 
     #===============================================================================
     # utils
@@ -309,58 +268,6 @@ class Spectrum(BaseArArFigure):
                               ai.uage.std_dev)
                              for ai in ans])
         return array(ages), array(errors)
-
-    # def _get_plateau(self, analyses, exclude=None):
-        # if exclude is None:
-        #     exclude = []
-        #
-        # ages, errors = self._get_age_errors(self.sorted_analyses)
-        # k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
-        #
-        # # provide 1s errors
-        # platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
-        # n = 0
-        # if platbounds is not None and len(platbounds):
-        #     n = platbounds[1] - platbounds[0] + 1
-        #
-        # if n > 1:
-        #     ans = []
-        #
-        #     for j, ai in enumerate(analyses):
-        #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
-        #             ans.append(ai)
-        #             #            ans=[ai for (j,ai) in analyses if]
-        #             #            ans = analyses[platbounds[0]:platbounds[1]]
-        #
-        #     ages, errors = self._get_age_errors(ans)
-        #     mswd, valid, n = self._get_mswd(ages, errors)
-        #     plateau_age = self._calculate_total_gas_age(ans)
-        #     return plateau_age, platbounds, mswd, valid, n
-        # else:
-        #     return 0, array([0, 0]), 0, 0, 0
-
-    # def _calculate_total_gas_age(self, analyses):
-    #     """
-    #         sum the corrected rad40 and k39 values
-    #
-    #         not necessarily the same as isotopic recombination
-    #
-    #     """
-    #     rad40, k39 = zip(*[(a.get_computed_value('rad40'),
-    #                         a.get_computed_value('k39')) for a in analyses])
-    #
-    #     rad40 = sum(rad40)
-    #     k39 = sum(k39)
-    #
-    #     j = a.j
-    #     return age_equation(rad40 / k39, j, a.arar_constants)
-    #
-    #     # rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
-    #     # rad40 = sum(rad40)
-    #     # k39 = sum(k39)
-    #     #
-    #     # j = a.j
-    #     # return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
 
     def _calculate_spectrum(self,
                             excludes=None,
@@ -411,31 +318,6 @@ class Spectrum(BaseArArFigure):
 
         return array(xs), array(ys), array(es), array(c39s)  # , array(ar39s), array(values)
 
-
-    # def _add_aux_plot(self, ys, title, vk, pid, po, **kw):
-        # graph = self.graph
-        # graph.set_y_title(title,
-        #                   plotid=pid)
-        #
-        # xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
-        # s = self._add_plot(xs, ys, es, pid, po, **kw)
-        # return s
-
-    #def _calculate_stats(self, ages, errors, xs, ys):
-    #    mswd, valid_mswd, n = self._get_mswd(ages, errors)
-    #    #         mswd = calculate_mswd(ages, errors)
-    #    #         valid_mswd = validate_mswd(mswd, len(ages))
-    #    if self.options.mean_calculation_kind == 'kernel':
-    #        wm, we = 0, 0
-    #        delta = 1
-    #        maxs, _mins = find_peaks(ys, delta, xs)
-    #        wm = max(maxs, axis=1)[0]
-    #    else:
-    #        wm, we = calculate_weighted_mean(ages, errors)
-    #        we = self._calc_error(we, mswd)
-    #
-    #    return wm, we, mswd, valid_mswd
-
     def _calc_error(self, we, mswd):
         ec = self.options.error_calc_method
         n = self.options.nsigma
@@ -459,3 +341,112 @@ class Spectrum(BaseArArFigure):
 
 
 #============= EOF =============================================
+    # def _get_plateau(self, analyses, exclude=None):
+    # if exclude is None:
+    #     exclude = []
+    #
+    # ages, errors = self._get_age_errors(self.sorted_analyses)
+    # k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
+    #
+    # # provide 1s errors
+    # platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
+    # n = 0
+    # if platbounds is not None and len(platbounds):
+    #     n = platbounds[1] - platbounds[0] + 1
+    #
+    # if n > 1:
+    #     ans = []
+    #
+    #     for j, ai in enumerate(analyses):
+    #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
+    #             ans.append(ai)
+    #             #            ans=[ai for (j,ai) in analyses if]
+    #             #            ans = analyses[platbounds[0]:platbounds[1]]
+    #
+    #     ages, errors = self._get_age_errors(ans)
+    #     mswd, valid, n = self._get_mswd(ages, errors)
+    #     plateau_age = self._calculate_total_gas_age(ans)
+    #     return plateau_age, platbounds, mswd, valid, n
+    # else:
+    #     return 0, array([0, 0]), 0, 0, 0
+
+# def _calculate_total_gas_age(self, analyses):
+#     """
+#         sum the corrected rad40 and k39 values
+#
+#         not necessarily the same as isotopic recombination
+#
+#     """
+#     rad40, k39 = zip(*[(a.get_computed_value('rad40'),
+#                         a.get_computed_value('k39')) for a in analyses])
+#
+#     rad40 = sum(rad40)
+#     k39 = sum(k39)
+#
+#     j = a.j
+#     return age_equation(rad40 / k39, j, a.arar_constants)
+#
+#     # rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
+#     # rad40 = sum(rad40)
+#     # k39 = sum(k39)
+#     #
+#     # j = a.j
+#     # return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
+        # def _add_aux_plot(self, ys, title, vk, pid, po, **kw):
+        # graph = self.graph
+        # graph.set_y_title(title,
+        #                   plotid=pid)
+        #
+        # xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
+        # s = self._add_plot(xs, ys, es, pid, po, **kw)
+        # return s
+
+        #def _calculate_stats(self, ages, errors, xs, ys):
+        #    mswd, valid_mswd, n = self._get_mswd(ages, errors)
+        #    #         mswd = calculate_mswd(ages, errors)
+        #    #         valid_mswd = validate_mswd(mswd, len(ages))
+        #    if self.options.mean_calculation_kind == 'kernel':
+        #        wm, we = 0, 0
+        #        delta = 1
+        #        maxs, _mins = find_peaks(ys, delta, xs)
+        #        wm = max(maxs, axis=1)[0]
+        #    else:
+        #        wm, we = calculate_weighted_mean(ages, errors)
+        #        we = self._calc_error(we, mswd)
+        #
+        #    return wm, we, mswd, valid_mswd
+
+        #         sorted_ans = self.sorted_analyses
+        #         if obj:
+        #             hover = obj.metadata.get('hover')
+        #             if hover:
+        #                 hoverid = hover[0]
+        #                 try:
+        #                     self.selected_analysis = sorted_ans[hoverid]
+        #                 except IndexError, e:
+        #                     print 'asaaaaa', e
+        #                     return
+        #             else:
+        #                 self.selected_analysis = None
+        #
+        #             sel = obj.metadata.get('selections', [])
+        #
+        #             if sel:
+        #                 obj.was_selected = True
+        #                 self._rebuild_fig(sel)
+        #             elif hasattr(obj, 'was_selected'):
+        #                 if obj.was_selected:
+        #                     self._rebuild_spec(sel)
+        #
+        #                 obj.was_selected = False
+        #
+        #             # set the temp_status for all the analyses
+        #             for i, a in enumerate(sorted_ans):
+        #                 a.temp_status = 1 if i in sel else 0
+        #         else:
+        #             sel = [i for i, a in enumerate(sorted_ans)
+        #                     if a.temp_status or a.status]
+        #
+        #             self._rebuild_spec(sel)
+        #     def _rebuild_spec(self, sel):
+        #         pass

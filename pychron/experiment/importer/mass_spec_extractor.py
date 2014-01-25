@@ -229,8 +229,8 @@ class MassSpecExtractor(Extractor):
                                     added_to_db = True
 
                     #dest.sess.flush()
-                    if not dry_run:
-                        dest.sess.commit()
+                    # if not dry_run:
+                    dest.sess.commit()
 
         return added_to_db
 

@@ -111,7 +111,8 @@ class BlanksEditor(InterpolationEditor):
         p_ues = reg.predict_error(xs)
 
         for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
-            ui.set_temporary_blank(iso, v, e)
+            if v is not None and e is not None:
+                ui.set_temporary_blank(iso, v, e)
 
         return p_uys, p_ues
 

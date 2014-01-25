@@ -359,19 +359,18 @@ class BaseArArFigure(HasTraits):
                                  trait_change_notify=False)
 
     def _handle_overlay_move(self, obj, name, old, new):
-        # print obj, name,old, new
-        # print obj.component
-        axps = [a for a in self.options.aux_plots if a.use]
+
+        axps = [a for a in self.options.aux_plots if a.use][::-1]
         for i, p in enumerate(self.graph.plots):
             if next((pp for pp in p.plots.itervalues()
                             if obj.component==pp[0]),None):
                 axp=axps[i]
-                # print i, axp, obj.id, new
                 if hasattr(new, '__iter__'):
                     new=map(float, new)
                 else:
                     new=float(new)
                 axp.set_overlay_position(obj.id, new)
+
                 break
 
     @on_trait_change('graph:plots:value_mapper:updated')

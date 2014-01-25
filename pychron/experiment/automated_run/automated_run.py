@@ -1627,134 +1627,108 @@ anaylsis_type={}
                                   dbhist,
                                   signal_=v, signal_err=e)
 
-    def _time_save(self, func, name, *args, **kw):
-        st = time.time()
-        r = func(*args, **kw)
-        self.debug('save {} time= {:0.3f}'.format(name, time.time() - st))
-        return r
-
     def _save_sensitivity(self, extraction, measurement):
         self.info('saving sensitivity')
 
-        def func():
-            # get the lastest sensitivity entry for this spectrometr
-            spec = measurement.mass_spectrometer
-            if spec:
-                sens = spec.sensitivities
-                if sens:
-                    extraction.sensitivity = sens[-1]
-
-        return self._time_save(func, 'sensitivity')
+        # get the lastest sensitivity entry for this spectrometr
+        spec = measurement.mass_spectrometer
+        if spec:
+            sens = spec.sensitivities
+            if sens:
+                extraction.sensitivity = sens[-1]
 
     def _save_peak_center(self, analysis, cp):
         self.info('saving peakcenter')
 
-        def func():
-            dm = self.data_manager
-            with dm.open_table(cp, 'peak_center') as tab:
-                if tab is not None:
-                    db = self.db
-                    packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
-                    points = ''.join(packed_xy)
-                    center = tab.attrs.center_dac
-                    pc = db.add_peak_center(
-                        analysis,
-                        center=float(center),
-                        points=points,
-                    )
-                    return pc
-
-        return self._time_save(func, 'peakcenter')
+        dm = self.data_manager
+        with dm.open_table(cp, 'peak_center') as tab:
+            if tab is not None:
+                db = self.db
+                packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
+                points = ''.join(packed_xy)
+                center = tab.attrs.center_dac
+                pc = db.add_peak_center(
+                    analysis,
+                    center=float(center),
+                    points=points,
+                )
+                return pc
 
     def _save_measurement(self, analysis):
         self.info('saving measurement')
 
-        def func():
-            db = self.db
-            #             with db.session_ctx():
-            meas = db.add_measurement(
-                analysis,
-                self.spec.analysis_type,
-                self.spec.mass_spectrometer)
-            script = db.add_script(self.measurement_script.name,
-                                   self.measurement_script.toblob())
-            #             sess.flush()
-            #             db.flush()
+        db = self.db
+        meas = db.add_measurement(
+            analysis,
+            self.spec.analysis_type,
+            self.spec.mass_spectrometer)
+        script = db.add_script(self.measurement_script.name,
+                               self.measurement_script.toblob())
 
-            meas.script_id = script.id
-            #             script.measurements.append(meas)
+        meas.script_id = script.id
 
-            return meas
-
-        return self._time_save(func, 'measurement')
+        return meas
 
     def _save_extraction(self, analysis=None, loadtable=None):
         self.info('saving extraction')
 
-        def func():
-            db = self.db
-            sens = self._get_extraction_parameter('sensitivity_multiplier',
-                                                  default=1)
-            spec = self.spec
+        db = self.db
+        sens = self._get_extraction_parameter('sensitivity_multiplier',
+                                              default=1)
+        spec = self.spec
 
-            self.debug('Saving extraction device {}'.format(spec.extract_device))
+        self.debug('Saving extraction device {}'.format(spec.extract_device))
 
-            d = dict(extract_device=spec.extract_device,
-                     extract_value=spec.extract_value,
-                     extract_duration=spec.duration,
-                     cleanup_duration=spec.cleanup,
-                     weight=spec.weight,
-                     sensitivity_multiplier=sens,
-                     is_degas=spec.labnumber == 'dg')
+        d = dict(extract_device=spec.extract_device,
+                 extract_value=spec.extract_value,
+                 extract_duration=spec.duration,
+                 cleanup_duration=spec.cleanup,
+                 weight=spec.weight,
+                 sensitivity_multiplier=sens,
+                 is_degas=spec.labnumber == 'dg')
 
-            self._assemble_extraction_parameters(d)
+        self._assemble_extraction_parameters(d)
 
-            ext = db.add_extraction(analysis, **d)
+        ext = db.add_extraction(analysis, **d)
 
-            exp = db.add_script(self.experiment_executor.experiment_queue.name,
-                                self.experiment_executor.experiment_blob())
-            self.debug('Script id {}'.format(exp.id))
-            ext.experiment_blob_id = exp.id
+        exp = db.add_script(self.experiment_executor.experiment_queue.name,
+                            self.experiment_executor.experiment_blob())
+        self.debug('Script id {}'.format(exp.id))
+        ext.experiment_blob_id = exp.id
 
-            if self.extraction_script:
-                script = db.add_script(self.extraction_script.name,
-                                       self._assemble_extraction_blob())
-                ext.script_id = script.id
+        if self.extraction_script:
+            script = db.add_script(self.extraction_script.name,
+                                   self._assemble_extraction_blob())
+            ext.script_id = script.id
 
-            for pi in self.get_position_list():
-                if isinstance(pi, tuple):
-                    if len(pi) > 1:
+        for pi in self.get_position_list():
+            if isinstance(pi, tuple):
+                if len(pi) > 1:
 
-                        if len(pi) == 3:
-                            dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1], z=pi[2])
-                        else:
-                            dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1])
+                    if len(pi) == 3:
+                        dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1], z=pi[2])
+                    else:
+                        dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1])
 
-                else:
-                    dbpos = db.add_analysis_position(ext, pi)
+            else:
+                dbpos = db.add_analysis_position(ext, pi)
 
-                if loadtable and dbpos:
-                    dbpos.load_identifier = loadtable.name
+            if loadtable and dbpos:
+                dbpos.load_identifier = loadtable.name
 
-            return ext
-
-        return self._time_save(func, 'extraction')
+        return ext
 
     def _save_spectrometer_info(self, meas):
         self.info('saving spectrometer info')
+        db = self.db
+        if self.spectrometer_manager:
+            spec_dict = self.spectrometer_manager.make_parameters_dict()
 
-        def func():
-            db = self.db
-            if self.spectrometer_manager:
-                spec_dict = self.spectrometer_manager.make_parameters_dict()
-
-                db.add_spectrometer_parameters(meas, spec_dict)
-                defl_dict = self.spectrometer_manager.make_deflections_dict()
-                for det, deflection in defl_dict.iteritems():
-                    det = db.add_detector(det)
-                    db.add_deflection(meas, det, deflection)
-
-        return self._time_save(func, 'spectrometer_info')
+            db.add_spectrometer_parameters(meas, spec_dict)
+            defl_dict = self.spectrometer_manager.make_deflections_dict()
+            for det, deflection in defl_dict.iteritems():
+                det = db.add_detector(det)
+                db.add_deflection(meas, det, deflection)
 
     def _save_detector_intercalibration(self, analysis):
         self.info('saving detector intercalibration')
@@ -1785,11 +1759,9 @@ anaylsis_type={}
                                                  user_value=float(uv),
                                                  user_error=float(ue))
 
-                #return self._time_save(func, 'detector intercalibration')
-
     def _save_blank_info(self, analysis):
         self.info('saving blank info')
-        return self._time_save(self._save_history_info, 'blank info', analysis, 'blanks')
+        self._save_history_info(analysis, 'blanks')
 
     def _save_history_info(self, analysis, name):
         db = self.db
@@ -1825,17 +1797,14 @@ anaylsis_type={}
         if self.monitor:
             self.info('saving monitor info')
 
-            def func():
-                for ci in self.monitor.checks:
-                    data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
-                    params = dict(name=ci.name,
-                                  parameter=ci.parameter, criterion=ci.criterion,
-                                  comparator=ci.comparator, tripped=ci.tripped,
-                                  data=data)
+            for ci in self.monitor.checks:
+                data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+                params = dict(name=ci.name,
+                              parameter=ci.parameter, criterion=ci.criterion,
+                              comparator=ci.comparator, tripped=ci.tripped,
+                              data=data)
 
-                    self.db.add_monitor(analysis, **params)
-
-            return self._time_save(func, 'monitor info')
+                self.db.add_monitor(analysis, **params)
 
     def _save_to_massspec(self, p):
         #dm = self.data_manager
@@ -2127,7 +2096,6 @@ anaylsis_type={}
                 _t = dm.new_table(isogrp, det)
                 self.debug('add group {} table {}'.format(iso, det))
 
-
     def refresh_scripts(self):
         for name in SCRIPT_KEYS:
             setattr(self, '{}_script'.format(name), self._load_script(name))
@@ -2170,102 +2138,109 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
+#============= EOF =============================================
 
-                # def _is_peak_hop_changed(self, new):
-                #     if self.plot_panel:
-                #         self.debug('Setting is_peak_hop {}'.format(new))
-                #         self.plot_panel.is_peak_hop = new
-                #===============================================================================
-                # defaults
-                #===============================================================================
+# def _time_save(self, func, name, *args, **kw):
+#     st = time.time()
+#     r = func(*args, **kw)
+#     self.debug('save {} time= {:0.3f}'.format(name, time.time() - st))
+#     return r
 
-                #def _multi_collector_default(self):
-                #    return MultiCollector()
+    # def _is_peak_hop_changed(self, new):
+#     if self.plot_panel:
+#         self.debug('Setting is_peak_hop {}'.format(new))
+#         self.plot_panel.is_peak_hop = new
+#===============================================================================
+# defaults
+#===============================================================================
 
-            #============= EOF =============================================
+#def _multi_collector_default(self):
+#    return MultiCollector()
 
-            # for kind in ('sniff','signal','baseline'):
-            #     dbiso = db.add_isotope(analysis, iso.name, det,
-            #                            kind=kind)
-            #     if kind in ('sniff', 'baseline'):
-            #         m=getattr(iso, kind)
-            #     else:
-            #         m=iso
-            #
-            #     self.debug('saving signal {} xs={}'.format(iso.name, len(m.xs)))
-            #     data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
-            #     db.add_signal(dbiso, data)
-            #     if m.fit:
-            #         # add fit
-            #         db.add_fit(dbhist, dbiso, fit=m.fit)
-            #
-            #     if kind in ('signal', 'baseline'):
-            #         # add isotope result
-            #         db.add_isotope_result(dbiso,
-            #                               dbhist,
-            #                               signal_=float(m.value), signal_err=float(m.error))
 
-            # def _save_isotope_info(self, analysis, signals):
-            #     self.info('saving isotope info')
-            #     # def func_peak_hop():
-            #     #     db = self.db
-            #     #
-            #     #     # add fit history
-            #     #     dbhist = db.add_fit_history(analysis,
-            #     #                                 user=self.spec.username)
-            #     #     for iso in self.arar_age.isotopes.itervalues():
-            #     #         detname=iso.detector
-            #     #         det = db.get_detector(detname)
-            #     #         if det is None:
-            #     #             det = db.add_detector(detname)
-            #     #             db.sess.flush()
-            #
-            #
-            #
-            #     def func():
-            #         db = self.db
-            #
-            #         # add fit history
-            #         dbhist = db.add_fit_history(analysis,
-            #                                     user=self.spec.username)
-            #
-            #         key = lambda x: x[1]
-            #         si = sorted(self._save_isotopes, key=key)
-            #
-            #         for detname, isos in groupby(si, key=key):
-            #             det = db.get_detector(detname)
-            #             if det is None:
-            #                 det = db.add_detector(detname)
-            #                 db.sess.flush()
-            #
-            #             for iso, detname, kind in isos:
-            #                 # add isotope
-            #                 dbiso = db.add_isotope(analysis, iso, det,
-            #                                        kind=kind)
-            #                 db.sess.flush()
-            #
-            #                 s = signals['{}{}'.format(iso, kind)]
-            #
-            #                 # add signal data
-            #                 data = ''.join([struct.pack('>ff', x, y)
-            #                                 for x, y in zip(s.xs, s.ys)])
-            #                 db.add_signal(dbiso, data)
-            #
-            #                 if s.fit:
-            #                     # add fit
-            #                     db.add_fit(dbhist, dbiso, fit=s.fit)
-            #
-            #                 if kind in ['signal', 'baseline']:
-            #                     # add isotope result
-            #                     db.add_isotope_result(dbiso,
-            #                                           dbhist,
-            #                                           signal_=float(s.value), signal_err=float(s.error))
-            #
-            #     if self.is_peak_hop:
-            #         func()
-            #     else:
-            #         func()
-            # return self._time_save(func, 'isotope info')
+
+# for kind in ('sniff','signal','baseline'):
+#     dbiso = db.add_isotope(analysis, iso.name, det,
+#                            kind=kind)
+#     if kind in ('sniff', 'baseline'):
+#         m=getattr(iso, kind)
+#     else:
+#         m=iso
+#
+#     self.debug('saving signal {} xs={}'.format(iso.name, len(m.xs)))
+#     data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
+#     db.add_signal(dbiso, data)
+#     if m.fit:
+#         # add fit
+#         db.add_fit(dbhist, dbiso, fit=m.fit)
+#
+#     if kind in ('signal', 'baseline'):
+#         # add isotope result
+#         db.add_isotope_result(dbiso,
+#                               dbhist,
+#                               signal_=float(m.value), signal_err=float(m.error))
+
+# def _save_isotope_info(self, analysis, signals):
+#     self.info('saving isotope info')
+#     # def func_peak_hop():
+#     #     db = self.db
+#     #
+#     #     # add fit history
+#     #     dbhist = db.add_fit_history(analysis,
+#     #                                 user=self.spec.username)
+#     #     for iso in self.arar_age.isotopes.itervalues():
+#     #         detname=iso.detector
+#     #         det = db.get_detector(detname)
+#     #         if det is None:
+#     #             det = db.add_detector(detname)
+#     #             db.sess.flush()
+#
+#
+#
+#     def func():
+#         db = self.db
+#
+#         # add fit history
+#         dbhist = db.add_fit_history(analysis,
+#                                     user=self.spec.username)
+#
+#         key = lambda x: x[1]
+#         si = sorted(self._save_isotopes, key=key)
+#
+#         for detname, isos in groupby(si, key=key):
+#             det = db.get_detector(detname)
+#             if det is None:
+#                 det = db.add_detector(detname)
+#                 db.sess.flush()
+#
+#             for iso, detname, kind in isos:
+#                 # add isotope
+#                 dbiso = db.add_isotope(analysis, iso, det,
+#                                        kind=kind)
+#                 db.sess.flush()
+#
+#                 s = signals['{}{}'.format(iso, kind)]
+#
+#                 # add signal data
+#                 data = ''.join([struct.pack('>ff', x, y)
+#                                 for x, y in zip(s.xs, s.ys)])
+#                 db.add_signal(dbiso, data)
+#
+#                 if s.fit:
+#                     # add fit
+#                     db.add_fit(dbhist, dbiso, fit=s.fit)
+#
+#                 if kind in ['signal', 'baseline']:
+#                     # add isotope result
+#                     db.add_isotope_result(dbiso,
+#                                           dbhist,
+#                                           signal_=float(s.value), signal_err=float(s.error))
+#
+#     if self.is_peak_hop:
+#         func()
+#     else:
+#         func()
+# return self._time_save(func, 'isotope info')
 
 # def _preliminary_processing(self, p):
 #     self.info('organizing data for database save')

@@ -97,6 +97,7 @@ def chi_squared(x, y, sx, sy, a, b):
     """
     x = asarray(x)
     y = asarray(y)
+
     sx = asarray(sx)
     sy = asarray(sy)
 

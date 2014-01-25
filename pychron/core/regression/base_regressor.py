@@ -22,6 +22,7 @@ from traits.api import Array, List, Event, Property, Any, \
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
+from pychron.core.stats.core import calculate_mswd
 from pychron.loggable import Loggable
 from tinv import tinv
 from pychron.pychron_constants import ALPHAS
@@ -56,8 +57,10 @@ class BaseRegressor(Loggable):
     filter_ys = Array
     _filtering = Bool(False)
 
-    def _get_n(self):
-        return len(self.xs)
+    error_calc_type=None
+
+    mswd=Property(depends_on='dirty, xs, ys')
+
 
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
@@ -167,8 +170,9 @@ class BaseRegressor(Loggable):
         ss_res = (res ** 2).sum()
 
         n = res.shape[0]
-        q = self._degree
-        s = (ss_res / (n - q - 1)) ** 0.5
+        q=len(self.coefficients)
+
+        s = (ss_res / (n - q)) ** 0.5
         return s
 
     def _get_coefficients(self):
@@ -187,14 +191,17 @@ class BaseRegressor(Loggable):
         return self.predict(self.xs) - self.ys
 
     def calculate_ci(self, rx, rmodel=None):
+        cors=self.calculate_ci_error(rx, rmodel)
+        if rmodel is not None and cors is not None:
+            if rmodel.shape[0] and cors.shape[0]:
+                return rmodel - cors, rmodel + cors
+
+    def calculate_ci_error(self, rx, rmodel=None):
         if rmodel is None:
             rmodel = self.predict(rx)
 
         cors = self._calculate_ci(rx, rmodel)
-        #         print cors
-        if rmodel is not None and cors is not None:
-            if rmodel.shape[0] and cors.shape[0]:
-                return rmodel - cors, rmodel + cors
+        return cors
 
     def _calculate_ci(self, rx, rmodel):
         if isinstance(rx, (float, int)):
@@ -301,4 +308,10 @@ class BaseRegressor(Loggable):
 #            lower=[]
 #                lower.append(rmodel[i] - cor)
 #                upper.append(rmodel[i] + cor)
+
+    def _get_mswd(self):
+        return calculate_mswd(self.ys, self.yserr)
+
+    def _get_n(self):
+        return len(self.xs)
 #============= EOF =============================================

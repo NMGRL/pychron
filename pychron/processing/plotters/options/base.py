@@ -94,7 +94,7 @@ class BasePlotterOptions(HasTraits):
     def _get_refresh_group(self):
         return HGroup(icon_button_editor('refresh_plot', 'chart_curve_go'),
                       spring,
-                      Item('auto_refresh', label='Auto Refresh'))
+                      Item('auto_refresh', label='Auto Plot'))
     # ==============================================================================
     # persistence
     #===============================================================================

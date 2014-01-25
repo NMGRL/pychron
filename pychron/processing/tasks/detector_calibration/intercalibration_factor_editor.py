@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance
 from pychron.pychron_constants import IC_ANALYSIS_TYPE_MAP
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 #============= standard library imports ========================
@@ -27,7 +26,8 @@ from pychron.processing.tasks.detector_calibration.detector_calibration_tool imp
 
 class IntercalibrationFactorEditor(InterpolationEditor):
     standard_ratio = 1.0
-    tool = Instance(DetectorCalibrationTool)
+    # tool_klass =
+    # tool = Instance(DetectorCalibrationTool)
     auto_find = False
     pickle_path = 'ic_fits'
 
@@ -91,7 +91,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                     ntypes.append(ai)
 
             tool = DetectorCalibrationTool()
-            tool.analysis_types = ntypes
+            tool.analysis_types = ['']+ntypes
 
             dets = [det.name for det in self.processor.db.get_detectors()]
             tool.detectors = sort_detectors(dets)
@@ -110,7 +110,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
     def _set_interpolated_values(self, iso, reg, xs):
         p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs, error_calc=self.tool.error_calc.lower())
+        p_ues = reg.predict_error(xs)
 
         _, d = iso.split('/')
         for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
@@ -119,6 +119,10 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         return p_uys, p_ues
 
     def _get_reference_values(self, dets):
+        if not self.tool.standard_ratio:
+            self.debug('no standard ratio set')
+            return None, None
+
         n, d = dets.split('/')
         self.debug('get reference values {}, {}'.format(n,d))
         nys = [ri.get_isotope(detector=n) for ri in self.references]
@@ -129,9 +133,10 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         try:
             rys = (nys / dys) / self.tool.standard_ratio
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])
-        except ZeroDivisionError:
-            return None, None
-        finally:
+        except ZeroDivisionError, e:
+            import traceback
+
+            traceback.print_exc()
             return None, None
 
     def _get_current_values(self, dets):

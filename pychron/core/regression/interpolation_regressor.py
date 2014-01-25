@@ -35,9 +35,9 @@ class InterpolationRegressor(BaseRegressor):
     def _predict(self, xs, attr):
         kind = self.kind.replace(' ', '_')
         func = getattr(self, '{}_predictors'.format(kind))
-        if isinstance(xs, (float, int)):
-            xs = [xs]
-        xs = asarray(xs)
+        if not hasattr(xs, '__iter__'):
+            xs = (xs,)
+
         return [func(xi, attr) for xi in xs]
 
     def preceding_predictors(self, timestamp, attr='value'):
@@ -45,11 +45,14 @@ class InterpolationRegressor(BaseRegressor):
         ys = self.ys
 
         es = self.yserr
-        ti = where(xs <= timestamp)[0][-1]
-        if attr == 'value':
-            return ys[ti]
-        else:
-            return es[ti]
+        try:
+            ti = where(xs <= timestamp)[0][-1]
+            if attr == 'value':
+                return ys[ti]
+            else:
+                return es[ti]
+        except IndexError:
+            pass
 
     def bracketing_average_predictors(self, tm, attr='value'):
         try:
