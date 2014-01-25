@@ -104,10 +104,11 @@ class IsotopicMeasurement(BaseMeasurement):
     fit = String
     fit_abbreviation = Property(depends_on='fit')
     fit_blocks=List
+    error_type=String
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='xs,ys,fit, dirty')
+    regressor = Property(depends_on='xs,ys, fit, dirty, error_type')
     dirty = Event
 
     def __init__(self, dbresult=None, *args, **kw):
@@ -161,6 +162,7 @@ class IsotopicMeasurement(BaseMeasurement):
                                              iterations=int(fit.filter_outlier_iterations),
                                              std_devs=int(fit.filter_outlier_std_devs))
             self.fit = fit.fit
+            self.error_type=fit.error_type or 'SD'
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -173,7 +175,8 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _mean_regressor_factory(self):
         reg = MeanRegressor(xs=self.xs, ys=self.ys,
-                            filter_outliers_dict=self.filter_outliers_dict)
+                            filter_outliers_dict=self.filter_outliers_dict,
+                            error_type=self.error_type)
         return reg
 
     def _set_error(self, v):
@@ -200,12 +203,13 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_regressor(self):
         # print '{} getting regerssior'.format(self.name)
         # try:
-        if 'average' in self.fit.lower():
+        if self.fit.lower() =='average':
             reg = self._mean_regressor_factory()
         else:
             reg = PolynomialRegressor(xs=self.xs,
                                       ys=self.ys,
                                       degree=self.fit,
+                                      error_type=self.error_type,
                                       filter_outliers_dict=self.filter_outliers_dict)
 
         # except Exception, e:

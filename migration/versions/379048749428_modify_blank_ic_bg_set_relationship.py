@@ -29,10 +29,22 @@ def upgrade():
     op.add_column('proc_BackgroundsTable',
               sa.Column('set_id', sa.Integer))
 
+    op.add_column('proc_DetectorIntercalibrationTable',
+                  sa.Column('error_type', sa.String(40)))
+    op.add_column('proc_BlanksTable',
+                  sa.Column('error_type', sa.String(40)))
+    op.add_column('proc_BackgroundsTable',
+                  sa.Column('error_type', sa.String(40)))
+
 def downgrade():
     op.drop_column('proc_DetectorIntercalibrationSetTable','set_id')
     op.drop_column('proc_BlanksSetTable','set_id')
     op.drop_column('proc_BackgroundsSetTable','set_id')
+
     op.drop_column('proc_DetectorIntercalibrationTable', 'set_id')
     op.drop_column('proc_BlanksTable', 'set_id')
     op.drop_column('proc_BackgroundsTable', 'set_id')
+
+    op.drop_column('proc_DetectorIntercalibrationTable', 'error_type')
+    op.drop_column('proc_BlanksTable', 'error_type')
+    op.drop_column('proc_BackgroundsTable', 'error_type')

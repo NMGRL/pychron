@@ -22,24 +22,23 @@
 
 def convert_fit(f):
     err=None
+    if isinstance(f, tuple):
+        f,err=f
+
     if isinstance(f, (str, unicode)):
         f = f.lower()
         fits = ['linear', 'parabolic', 'cubic']
         if f in fits:
             f = fits.index(f) + 1
-        elif 'average' in f:
-            if f.endswith('sem'):
-                f = 'averageSEM'
-            else:
-                f = 'averageSD'
+        elif f in ('average','weighted_mean'):
+            if not err:
+                if f.endswith('SD'):
+                    err='SD'
+                else:
+                    err='SEM'
         else:
-            for i,ff in enumerate(fits):
-                if f.startswith(ff):
-                    f=i+1
-                    err='ci'
-                    break
-            else:
-                f = None
+            f = None
+
     return f, err
 
 

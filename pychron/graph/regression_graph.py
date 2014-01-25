@@ -225,13 +225,24 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r=self._mean_regress(scatter, r, fit)
 
         if r:
-            low = plot.index_range.low
-            high = plot.index_range.high
-            fx = linspace(low, high, 100)
-            fy = r.predict(fx)
             r.error_calc_type=err
 
             if line:
+                plow = plot.index_range.low
+                phigh = plot.index_range.high
+                if hasattr(line, 'regression_bounds') and line.regression_bounds:
+                    low, high, first, last=line.regression_bounds
+                    if first:
+                        low=min(low, plow)
+                    elif last:
+                        high=max(high, phigh)
+                else:
+                    low,high=plow, phigh
+
+
+                fx = linspace(low, high, 100)
+                fy = r.predict(fx)
+
                 line.regressor = r
 
                 line.index.set_data(fx)

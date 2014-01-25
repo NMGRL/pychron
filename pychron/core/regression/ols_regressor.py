@@ -98,7 +98,7 @@ class OLSRegressor(BaseRegressor):
         if isinstance(x, (float, int)):
             x = [x]
             return_single = True
-        if error_calc=='ci':
+        if error_calc=='CI':
             e=self.calculate_ci_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)

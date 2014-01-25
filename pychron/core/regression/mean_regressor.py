@@ -99,9 +99,11 @@ sem={}
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
-            error_calc='sem' if 'sem' in self.fit.lower() else 'sd'
+            error_calc=self.error_calc_type
+            if not error_calc:
+                error_calc='SEM' if 'sem' in self.fit.lower() else 'SD'
 
-        if error_calc=='sem':
+        if error_calc=='SEM':
             e = self.sem
         else:
             e = self.std

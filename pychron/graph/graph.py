@@ -1074,8 +1074,8 @@ class Graph(Viewable, ContextMenuMixin):
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
     def add_vertical_rule(self, v, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         if 'plot' in kw:
             plot = kw['plot']
         else:

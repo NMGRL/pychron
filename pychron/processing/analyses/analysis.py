@@ -37,7 +37,7 @@ from pychron.experiment.utilities.identifier import make_runid, make_aliquot_ste
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
 from pychron.core.helpers.formatting import calc_percent_error
 
-Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs')
+Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
 
 logger = new_logger('Analysis')
 
@@ -548,7 +548,8 @@ class DBAnalysis(Analysis):
                 r = Baseline(dbresult=result, **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
                 if fit is None:
-                    fit = Fit(fit='average_SEM',
+                    fit = Fit(fit='average',
+                              error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0)
@@ -622,7 +623,9 @@ class DBAnalysis(Analysis):
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
 
                 if fit is None:
-                    fit = Fit(fit='linear', filter_outliers=False,
+                    fit = Fit(fit='linear',
+                              error_type='SD',
+                              filter_outliers=False,
                               filter_outlier_iterations=1,
                               filter_outlier_std_devs=2)
                 r.set_fit(fit)

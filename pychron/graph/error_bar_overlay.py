@@ -17,7 +17,7 @@
 
 
 #=============enthought library imports=======================
-from traits.api import Enum, Bool
+from traits.api import Enum, Bool, Float
 from chaco.api import AbstractOverlay
 from enable.colors import color_table
 #============= standard library imports ========================
@@ -33,6 +33,7 @@ class ErrorBarOverlay(AbstractOverlay):
     nsigma = 1
     _cache_valid = False
     use_end_caps= Bool(True)
+    line_width=Float(1)
 
     def overlay(self, component, gc, view_bounds, mode='normal'):
         with gc:
@@ -59,20 +60,23 @@ class ErrorBarOverlay(AbstractOverlay):
             else:
                 x = comp.index_mapper.map_screen(x)
                 err = comp.yerror.get_data()
+                # print 'fff', len(x), len(err), comp.color
                 err = err * self.nsigma
                 ylow, yhigh = y - err, y + err
                 ylow = comp.value_mapper.map_screen(ylow)
                 yhigh = comp.value_mapper.map_screen(yhigh)
                 #                 idx = arange(len(x))
                 start, end = column_stack((x, ylow)), column_stack((x, yhigh))
-                lstart,lend=column_stack((x-5, ylow)), column_stack((x+5, ylow))
-                ustart,uend=column_stack((x-5, yhigh)), column_stack((x+5, yhigh))
+                lstart, lend = column_stack((x - 5, ylow)), column_stack((x + 5, ylow))
+                ustart, uend = column_stack((x - 5, yhigh)), column_stack((x + 5, yhigh))
 
             # draw normal
             color = component.color
             if isinstance(color, str):
                 color = color_table[color]
                 #print 'ebo color',color
+
+            gc.set_line_width(self.line_width)
             gc.set_stroke_color(color)
             gc.set_fill_color(color)
             gc.line_set(start, end)

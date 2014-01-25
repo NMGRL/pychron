@@ -109,15 +109,10 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
         self.tool.detectors = dets
 
-    def _set_interpolated_values(self, iso, reg, xs):
-        p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs)
-
+    def _set_interpolated_values(self, iso, ans,p_uys, p_ues):
         _, d = iso.split('/')
-        for ui, v, e in zip(self.sorted_analyses, p_uys, p_ues):
+        for ui, v, e in zip(ans, p_uys, p_ues):
             ui.set_temporary_ic_factor(d, v, e)
-
-        return p_uys, p_ues
 
     def _get_reference_values(self, dets, ans=None):
         if ans is None:

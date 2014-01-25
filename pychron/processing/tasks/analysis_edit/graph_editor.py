@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from reportlab.lib.pagesizes import letter
 from traits.api import Any, List, on_trait_change, Property, Event, File
+from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import asarray
@@ -82,7 +83,7 @@ class GraphEditor(BaseUnknownsEditor):
                 try:
                     obj = pickle.load(fp)
                     self._load_tool(obj, tool=tool)
-                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError),e:
+                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError, TraitError),e:
                     self.debug('exception loading tool {}'.format(e))
                     return
 

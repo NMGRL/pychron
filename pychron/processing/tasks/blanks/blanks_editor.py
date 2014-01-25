@@ -91,20 +91,11 @@ class BlanksEditor(InterpolationEditor):
             if progress:
                 progress.soft_close()
 
-    def _set_interpolated_values(self, iso, reg, ans=None):
-        if ans is None:
-            ans=self.sorted_analyses
-
-        xs=[ai.timestamp for ai in ans]
-
-        p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs)
-
+    def _set_interpolated_values(self, iso, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 ui.set_temporary_blank(iso, v, e)
 
-        return p_uys, p_ues
 
     def _get_current_values(self, iso, ans=None):
         if ans is None:

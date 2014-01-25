@@ -169,7 +169,10 @@ class proc_BlanksTable(Base, BaseMixin):
     user_error = Column(Float)
     use_set = Column(Boolean)
     isotope = stringcolumn()
-    fit = Column(String(40))
+
+    fit = stringcolumn()
+    error_type = stringcolumn()
+
     set_id = Column(Integer)
 
 class proc_BackgroundsSetTable(Base, BaseMixin):
@@ -192,6 +195,7 @@ class proc_BackgroundsTable(Base, BaseMixin):
     use_set = Column(Boolean)
     isotope = stringcolumn()
     fit = stringcolumn()
+    error_type = stringcolumn()
     set_id = Column(Integer)
 
 
@@ -212,6 +216,7 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     user_value = Column(Float)
     user_error = Column(Float)
     fit = stringcolumn()
+    error_type = stringcolumn()
     set_id = Column(Integer)
 
 
@@ -289,9 +294,11 @@ class proc_FitTable(Base, BaseMixin):
     isotope_id = foreignkey('meas_IsotopeTable')
 
     fit = stringcolumn()
+    error_type=stringcolumn()
     filter_outliers = Column(Boolean)
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)
+
 
     def make_summary(self):
         f = self.fit[:1].upper()
