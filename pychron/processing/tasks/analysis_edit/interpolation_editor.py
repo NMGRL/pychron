@@ -16,14 +16,14 @@
 
 #============= enthought library imports =======================
 from traits.api import List, on_trait_change, Bool, \
-    Property, cached_property
+    Property, cached_property, HasTraits, Tuple
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 #============= standard library imports ========================
-from numpy import Inf, asarray, array
+from numpy import Inf, asarray, array, where
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from chaco.array_data_source import ArrayDataSource
@@ -74,6 +74,11 @@ def get_bounds(groups):
     return bs
 
 
+class BinGroup(HasTraits):
+    unknowns=List
+    references=List
+    bounds=Tuple
+
 
 class InterpolationEditor(GraphEditor):
     tool_klass = InterpolationFitSelector
@@ -110,7 +115,10 @@ class InterpolationEditor(GraphEditor):
                     high=ma
 
                 refs = filter(lambda x: low <= x.timestamp < high, self.sorted_references)
-                gs.append((gi, refs))
+                gs.append(BinGroup(unknowns=gi,
+                                   reference=refs,
+                                   bounds=(low, high)
+                                   ))
                 low=high
 
             self.binned_analyses=gs
@@ -244,7 +252,10 @@ class InterpolationEditor(GraphEditor):
         p.y_axis.title_spacing = 60
         p.value_range.tight_bounds = False
 
-        for j, (bis,refs) in enumerate(self.binned_analyses):
+        for j, gi in enumerate(self.binned_analyses):
+            bis=gi.unknowns
+            refs=gi.references
+
             c_xs=self.normalize([bi.timestamp for bi in bis],start)
             rxs=[bi.timestamp for bi in refs]
             r_xs=self.normalize(rxs,start)
@@ -261,7 +272,9 @@ class InterpolationEditor(GraphEditor):
             current_args = bis,c_xs, c_ys, c_es
             ref_args = refs,r_xs, r_ys, r_es, dx
 
-            self._build_plot(i, iso, fit, current_args, ref_args, series_id=j)
+            self._build_plot(i, iso, fit, current_args, ref_args,
+                             series_id=j,
+                             regression_bounds=gi.bounds)
 
     def _build_non_binned(self, i, iso, fit, c_xs, r_xs):
 
@@ -287,7 +300,9 @@ class InterpolationEditor(GraphEditor):
 
         self._build_plot(i, iso, fit, current_args, ref_args)
 
-    def _build_plot(self, i,iso, fit, current_args, ref_args, series_id=0):
+    def _build_plot(self, i,iso, fit, current_args, ref_args,
+                    series_id=0,
+                    regression_bounds=None):
         ans, c_xs, c_ys, c_es=current_args
         refs, r_xs, r_ys, r_es, display_xs=ref_args
 
@@ -344,6 +359,8 @@ class InterpolationEditor(GraphEditor):
 
                 self._add_inspector(s, refs)
                 self._add_error_bars(s, array(r_es))
+                if regression_bounds:
+                    self._mask_plot(regression_bounds, l)
 
             if reg:
                 p_uys, p_ues = self._set_interpolated_values(iso, reg, ans)
@@ -362,6 +379,13 @@ class InterpolationEditor(GraphEditor):
                 graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=i,
                                        series=(series_id+1)*3)
                 self._add_error_bars(s, p_ues)
+
+    def _mask_plot(self, bounds, l):
+        low,high=bounds
+        xs=l.index.get_data()
+        m=where((xs>low) &(xs<high))
+        print xs
+        print m
 
     def _add_error_bars(self, scatter, errors,
                         orientation='y', visible=True, nsigma=1):

@@ -35,7 +35,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
         return self.tool.fits
 
     def save(self, progress=None):
-        fs = [si for si in self.tool.fits if si.valid]
+        fs = [si for si in self.tool.fits if si.save]
         if not fs:
             return
 
@@ -62,7 +62,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 history = self.processor.add_history(meas_analysis, cname)
 
                 for si in self.tool.fits:
-                    if si.valid:
+                    if si.save:
                         # self.debug('saving {} {}'.format(unk.record_id, si.name))
                         self.processor.apply_correction(history, unk, si, set_id, cname)
 

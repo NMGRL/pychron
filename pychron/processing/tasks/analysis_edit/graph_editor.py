@@ -141,14 +141,14 @@ class GraphEditor(BaseUnknownsEditor):
         if ans:
             self.debug('analyses changed nanalyses={}'.format(len(ans)))
             self._compress_analyses(ans)
-            #if new[0] and issubclass(type(new[0]), Analysis):
-            if self.auto_plot:
-                self.rebuild_graph()
 
             refiso = ans[0]
             self._load_refiso(refiso)
+
             self._set_name()
             self._update_analyses_hook()
+            if self.auto_plot:
+                self.rebuild_graph()
         else:
             self.debug('analyses changed {}'.format(ans))
             self._null_component()

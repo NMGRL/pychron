@@ -74,7 +74,10 @@ class FitSelector(HasTraits):
                 CheckboxColumn(name='show'),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
-                             width=75),
+                             width=150),
+                ObjectColumn(name='error_type',
+                             editor=EnumEditor(name='error_types'),
+                             width=150),
                 CheckboxColumn(name='use', label='Save DB')]
 
         return cols
@@ -124,7 +127,7 @@ class FitSelector(HasTraits):
             fits = []
 
         fs = [
-            self.fit_klass(name='{}bs'.format(ki), fit='average_sem')
+            self.fit_klass(name='{}bs'.format(ki), fit='average_SEM')
             for ki in keys
         ]
 
@@ -136,7 +139,7 @@ class FitSelector(HasTraits):
         if not fits:
             fits = []
 
-        fs = self.fit_klass(name='PC', fit='average_sem')
+        fs = self.fit_klass(name='PC', fit='average_SEM')
 
         fits.append(fs)
         self.fits = fits
@@ -147,7 +150,7 @@ class FitSelector(HasTraits):
             fits = []
 
         fs = [
-            self.fit_klass(name='{}E'.format(ki), fit='average_sem')
+            self.fit_klass(name='{}E'.format(ki), fit='average_SEM')
             for ki in keys
         ]
 

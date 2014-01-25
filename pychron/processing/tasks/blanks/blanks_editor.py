@@ -38,8 +38,6 @@ class BlanksEditor(InterpolationEditor):
 
     def load_fits(self, ref_ans):
         keys = ref_ans.isotope_keys
-        #print ref_ans
-        #print ref_ans.isotopes['Ar40'].blank.uvalue
         fits = [ref_ans.isotopes[ki].blank.fit or 'average_sem' for ki in keys]
         self.tool.load_fits(keys, fits)
 
@@ -47,8 +45,7 @@ class BlanksEditor(InterpolationEditor):
         pass
 
     def save(self, progress=None):
-
-        if not any([si.valid for si in self.tool.fits]):
+        if not any([si.save for si in self.tool.fits]):
             return
 
         db = self.processor.db

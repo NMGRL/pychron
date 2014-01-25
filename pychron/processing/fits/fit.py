@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property
+from traits.api import HasTraits, Str, Bool, Property, Enum
 from traitsui.api import View, HGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
@@ -27,10 +27,17 @@ class Fit(HasTraits):
     name = Str
     use = Bool
     show = Bool
-    fit_types = Property
-    #     fit = Enum(FIT_TYPES)
     fit = Str
+    fit_types = Property
+    error_type=Str
+    error_types=Enum('SD','SEM','CI')
+
+    #     fit = Enum(FIT_TYPES)
     valid = Property(depends_on=('fit, use, show'))
+    save= Property(depends_on=('fit','use'))
+
+    def _get_save(self):
+        return self.use and self.fit
 
     def _fit_default(self):
         return self.fit_types[0]
