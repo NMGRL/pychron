@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.core.ui import set_toolkit
-set_toolkit('qt4')
+
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
-from numpy import linspace, random
+from numpy import linspace, random, delete
 import weakref
 
 #============= local library imports  ==========================
@@ -159,7 +158,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
         #print obj, name, old, new
         sel = obj.metadata.get('selections', None)
-        #
         if sel:
             obj.was_selected = True
             self._update_graph()
@@ -255,13 +253,22 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _set_regressor(self, scatter, r):
         selection = scatter.index.metadata['selections']
-        selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
-
+        # selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
+        selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
         x = scatter.index.get_data()
         y = scatter.value.get_data()
+
+        sel=list(selection)
+        x=delete(x, sel)
+        y=delete(y, sel)
         r.trait_set(xs=x, ys=y,
-                    user_excluded=selection,
+                    user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
+
+        if hasattr(scatter, 'yerror'):
+            yserr = scatter.yerror.get_data()
+            yserr=delete(yserr, sel)
+            r.trait_set(yserr=yserr)
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
@@ -273,8 +280,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
-            yserr=scatter.yerror.get_data()
-            r.trait_set(yserr=yserr, trait_change_notify=False)
         else:
             if r is None or not isinstance(r, PolynomialRegressor):
                 r = PolynomialRegressor()
@@ -307,8 +312,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedMeanRegressor):
                 r = WeightedMeanRegressor()
-            yserr = scatter.yerror.get_data()
-            r.trait_set(yserr=yserr)
         else:
             if r is None or not isinstance(r, MeanRegressor):
                 r = MeanRegressor()

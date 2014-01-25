@@ -214,7 +214,6 @@ class InterpolationEditor(GraphEditor):
                 if reg:
                     p_uys, p_ues = self._set_interpolated_values(iso, reg, c_uxs)
 
-
                     p_uys=[p if p is not None else 0 for p in p_uys]
                     p_ues=[p if p is not None else 0 for p in p_ues]
                     ids=[ai.record_id for ai in self.sorted_analyses]
@@ -261,14 +260,16 @@ class InterpolationEditor(GraphEditor):
 
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
-        scatter.index.on_trait_change(self._update_metadata, 'metadata_changed')
+        scatter.index.on_trait_change(self._update_metadata(ans), 'metadata_changed')
 
-    def _update_metadata(self, obj, name, old, new):
-        meta = obj.metadata
-        selections = meta.get('selections', [])
-        ans = self.sorted_analyses
-        for i, ai in enumerate(ans):
-            ai.temp_status = i in selections
+    def _update_metadata(self, ans):
+        def _handler(obj, name, old, new):
+            meta = obj.metadata
+            selections = meta['selections']
+            for i, ai in enumerate(ans):
+                ai.temp_status = i in selections
+
+        return _handler
 
     @cached_property
     def _get_sorted_analyses(self):
@@ -280,19 +281,19 @@ class InterpolationEditor(GraphEditor):
 
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
-
+        key='Unknowns-predicted'
         #necessary to handle user excluding points
         gen = self._graph_generator()
         for fit, (plotobj, reg) in zip(gen, new):
             if issubclass(type(reg), BaseRegressor):
                 iso = fit.name
+                if key in plotobj.plots:
+                    scatter = plotobj.plots[key][0]
+                    xs = scatter.index.get_data()
 
-                scatter = plotobj.plots['Unknowns-predicted'][0]
-                xs = scatter.index.get_data()
-
-                p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
-                scatter.value.set_data(p_uys)
-                scatter.yerror.set_data(p_ues)
+                    p_uys, p_ues = self._set_interpolated_values(iso, reg, xs)
+                    scatter.value.set_data(p_uys)
+                    scatter.yerror.set_data(p_ues)
 
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]

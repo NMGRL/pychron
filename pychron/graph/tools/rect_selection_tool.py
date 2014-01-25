@@ -182,8 +182,9 @@ class RectSelectionTool(BaseTool):
                       (dx >= xi >= dx2) and dy <= yi <= dy2]
 
         selection = index.metadata[self.selection_metadata_name]
-        index.metadata[self.selection_metadata_name] = list(set(ind) ^ set(selection))
-        index.metadata_changed = True
+        nind=list(set(ind) ^ set(selection))
+        index.metadata[self.selection_metadata_name]=nind
+        # index.metadata_changed = True
 
     def _end_select(self, event):
         self.event_state = 'normal'
