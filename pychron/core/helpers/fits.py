@@ -50,15 +50,6 @@ def convert_fit(f):
     return f, err
 
 
-def unconvert_fit(f):
-    if isinstance(f, int):
-        try:
-            f=['linear', 'parabolic','cubic'][f-1]
-        except IndexError:
-            pass
-
-    return f
-
 
 #============= EOF =============================================
 
