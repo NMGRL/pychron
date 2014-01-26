@@ -57,7 +57,7 @@ class BaseRegressor(Loggable):
     filter_ys = Array
     _filtering = Bool(False)
 
-    error_calc_type=None
+    error_calc_type='SD'
 
     mswd=Property(depends_on='dirty, xs, ys')
     valid_mswd=Bool
