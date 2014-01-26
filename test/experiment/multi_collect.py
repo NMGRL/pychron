@@ -65,15 +65,16 @@ class MulticollectTestCase(unittest.TestCase):
 
         a.spec = aspec
         a._measured = True
-        a._save_enabled = True
+        a.persister.save_enabled = True
 
         cls.arun = a
 
     def setUp(self):
         a = self.arun
-        a._save_isotopes = []
-        a._pre_measurement_save()
 
+        a.setup_persister()
+
+        a.persister.pre_measurement_save()
         a._integration_seconds = 0.05
 
     def measure(self):
@@ -85,7 +86,7 @@ class MulticollectTestCase(unittest.TestCase):
         counts = 50
         dets = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
         a = self.arun
-        a.measurement_script.ncounts = 1000
+        a.measurement_script.ncounts = 50
         a.py_position_magnet('Ar40', 'H1')
         a.py_activate_detectors(dets)
         st = time.time()
@@ -98,7 +99,7 @@ class MulticollectTestCase(unittest.TestCase):
         msi = MassSpecDatabaseImporter()
         msi.connect()
         arun = self.arun
-        arun.massspec_importer = msi
+        arun.persister.massspec_importer = msi
         ret = arun.post_measurement_save()
         self.assertTrue(ret)
 
