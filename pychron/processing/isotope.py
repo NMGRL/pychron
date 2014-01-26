@@ -352,4 +352,24 @@ class Isotope(BaseIsotope):
     def set_baseline(self, v, e):
         self.baseline=Baseline(_value=v, _error=e)
 
+    def __eq__(self, other):
+        return self.baseline_corrected_value().__eq__(other)
+
+    def __le__(self, other):
+        return self.baseline_corrected_value().__le__(other)
+
+    def __ge__(self, other):
+        return self.baseline_corrected_value().__ge__(other)
+
+    def __gt__(self, other):
+        return self.baseline_corrected_value().__gt__(other)
+
+    def __lt__(self, other):
+        return self.baseline_corrected_value().__lt__(other)
+
+    def __str__(self):
+        try:
+            return '{} {}'.format(self.name, self.baseline_corrected_value())
+        except (OverflowError, ValueError, AttributeError, TypeError),e:
+            return '{} {}'.format(self.name, e)
 #============= EOF =============================================

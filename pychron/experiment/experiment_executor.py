@@ -849,9 +849,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self.cancel(confirm=False)
 
     def _pre_execute_check(self, inform=True):
-        # if globalv.experiment_debug:
-        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-        #     return True
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
 
         with self.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -863,11 +863,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
                     self._prev_baselines = dbr.get_baseline_dict()
 
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
+            msg='Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+            invoke_in_main_thread(self.warning_dialog, msg)
             return
 
         if self._check_memory():
@@ -1012,18 +1011,12 @@ If "No" select from database
                                                                                                             arv.step,
                                                                                                             new_aliquot))
                     arv.aliquot = new_aliquot
-
-                    # al = db.get_latest_analysis_aliquot(identifier)
-                    # if al is not None:
-                    # if al > arv.aliquot:
-                    #     old = arv.aliquot
-                    #     arv.aliquot = al + 1
-                    #     self.message('{}-{:02n} exists in secondary database. Modifying aliquot to {:02n}'.format(
-                    #         arv.labnumber,
-                    #         old,
-                    #         arv.aliquot))
-                    # except ValueError:
-                    #     pass
+                    #update aliquot for all runs with this labnumber
+                    i=1
+                    for ei in self.experiment_queue.cleaned_automated_runs:
+                        if ei.labnumber==identifier and ei!=arv:
+                            ei.aliquot=new_aliquot+i
+                            i+=1
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
@@ -1037,11 +1030,10 @@ If "No" select from database
             if not nonfound:
                 break
         else:
-        #        if nonfound:
-            self.info('experiment canceled because could not find managers {} ntries={}'.format(nonfound, n))
+            self.info('experiment canceled because could connect to managers {} ntries={}'.format(nonfound, n))
             if inform:
                 invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not find managers {}'.format(','.join(nonfound)))
+                                      'Canceled! Could not connect to managers {}. Check that these instances are running.'.format(','.join(nonfound)))
             return
 
         return True

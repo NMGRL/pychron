@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from datetime import datetime
 from itertools import groupby
+import math
 from traits.api import Any, Str, Int, List, Property, \
     Event, Instance, Bool, HasTraits, Float
 #============= standard library imports ========================
@@ -496,8 +497,9 @@ class AutomatedRun(Loggable):
             attr must be an attribute of arar_age
         """
         self.info('adding truncation {} {} {}'.format(attr, comp, start_count))
+
         if not self.arar_age.has_attr(attr):
-            self.warning_dialog('invalid truncation attribute "{}"'.format(attr))
+            self.warning('invalid truncation attribute "{}"'.format(attr))
         else:
             self.truncation_conditions.append(TruncationCondition(attr, comp,
                                                               start_count,
@@ -1623,8 +1625,10 @@ anaylsis_type={}
                 db.add_fit(dbhist, dbiso, fit=m.fit)
 
             # add isotope result
-            v = float(m.value) if m.value != Inf else 0.0
-            e = float(m.error) if m.error != Inf else 0.0
+            # print 'a',m.value, m.error, type(m.error), type(nan)
+            v,e=float(m.value),float(m.error)
+            v=0 if math.isnan(v) or math.isinf(v) else v
+            e=0 if math.isnan(e) or math.isinf(e) else e
 
             db.add_isotope_result(dbiso,
                                   dbhist,

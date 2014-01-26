@@ -378,11 +378,7 @@ class MassSpecDatabaseImporter(Loggable):
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql',
-                                     host='localhost',
-                                     username='root',
-                                     password='Argon',
-                                     name='massspecdata_import')
+        db = MassSpecDatabaseAdapter(kind='mysql')
 
         return db
 

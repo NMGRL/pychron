@@ -38,6 +38,12 @@ class SessionCTX(object):
     _parent = None
 
     def __init__(self, sess=None, commit=True, parent=None):
+        """
+            sess: existing Session object
+            commit: commit Session at exit
+            parent: DatabaseAdapter instance
+
+        """
         self._sess = sess
         self._commit = commit
         self._parent = parent
@@ -184,14 +190,11 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         return sess
 
-    def get_migrate_version(self):
-        return True
+    def get_migrate_version(self, **kw):
         with self.session_ctx() as s:
-
             #q = s.query(MigrateVersionTable)
             q = s.query(AlembicVersionTable)
             mv = q.one()
-
             return mv
 
     def get_results(self, tablename, **kw):
@@ -261,10 +264,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 #                 self.sess = None
                 #                 self.get_session()
                 #                sess = self.session_factory()
-                    self.info('testing database connection')
-                    getattr(self, self.test_func)()
+                    self.info('testing database connection {}'.format(self.test_func))
+                    getattr(self, self.test_func)(reraise=True)
                     connected = True
-
             except Exception, e:
                 print 'exception', e
 
@@ -358,7 +360,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
     def _retrieve_items(self, table,
                         joins=None,
                         filters=None,
-                        limit=None, order=None):
+                        limit=None, order=None, reraise=False):
 
         sess = self.sess
         if sess is None:
@@ -377,7 +379,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         if ji != table:
                             q = q.join(ji)
                 except InvalidRequestError:
-                    pass
+                    if reraise:
+                        raise
 
             if filters is not None:
                 for fi in filters:
@@ -389,7 +392,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if limit is not None:
                 q = q.limit(limit)
 
-            r = self._query_all(q)
+            r = self._query_all(q, reraise)
             return r
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
@@ -413,10 +416,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             print e
             return
 
-    def _query_all(self, q):
+    def _query_all(self, q, reraise=False):
         try:
             return q.all()
         except SQLAlchemyError, e:
+            if reraise:
+                raise
             print e
             return []
 
