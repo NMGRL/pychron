@@ -339,11 +339,12 @@ class PyScript(Loggable):
             else:
                 return code_or_err
 
-    def syntax_ok(self):
+    def syntax_ok(self, warn=True):
         try:
             self.test()
         except PyscriptError, e:
-            self.warning_dialog(e)
+            if warn:
+                self.warning_dialog(e)
             return False
 
         return True

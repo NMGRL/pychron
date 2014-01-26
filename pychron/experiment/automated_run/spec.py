@@ -65,7 +65,6 @@ class AutomatedRunSpec(Loggable):
     step = Property(depends_on='_step')
     _step = Int(-1)
 
-
     #===========================================================================
     # scripts
     #===========================================================================
@@ -90,6 +89,8 @@ class AutomatedRunSpec(Loggable):
     disable_between_positions = Bool(False)
     overlap = Bool(False)
     truncate_condition = Str
+    syn_extraction=Str
+
     #===========================================================================
     # info
     #===========================================================================

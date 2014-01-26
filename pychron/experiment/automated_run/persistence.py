@@ -78,6 +78,9 @@ class AutomatedRunPersister(Loggable):
     load_name=Str
 
     cdd_ic_factor = Any
+
+    _db_extraction_id=0
+
     def writer_ctx(self):
         return self.data_manager.open_file(self._current_data_frame)
 
@@ -88,20 +91,23 @@ class AutomatedRunPersister(Loggable):
         self.info('Analysis started at {}'.format(self.runtime))
 
     def post_extraction_save(self):
-        db = self.db
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
 
-        with db.session_ctx() as sess:
-            loadtable = db.get_loadtable(self.load_name)
-            if loadtable is None:
-                loadtable = db.add_load(self.load_name)
-                #             db.flush()
+        db = self.db
+        if self.db:
+            with db.session_ctx() as sess:
+                loadtable = db.get_loadtable(self.load_name)
+                if loadtable is None:
+                    loadtable = db.add_load(self.load_name)
+                    #             db.flush()
 
-            ext = self._save_extraction(loadtable=loadtable)
-            sess.commit()
-            self._db_extraction_id = int(ext.id)
+                ext = self._save_extraction(loadtable=loadtable)
+                sess.commit()
+                self._db_extraction_id = int(ext.id)
+        else:
+            self.debug('No database instance')
 
     def pre_measurement_save(self):
         self.info('pre measurement save')
@@ -170,7 +176,9 @@ class AutomatedRunPersister(Loggable):
         # save to a database
         db = self.db
         #         if db and db.connect(force=True):
-        if db and db.connected:
+        if not db or not db.connected:
+            self.warning('No database instanc. Not saving post measurement to primary database')
+        else:
             with db.session_ctx() as sess:
                 pt = time.time()
 
@@ -239,7 +247,10 @@ class AutomatedRunPersister(Loggable):
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
-        if self.massspec_importer.db.connected:
+        if not self.massspec_importer or not self.massspec_importer.db.connected:
+            self.debug('Secondary database is not available')
+        else:
+            self.debug('saving post measurement to secondary database')
             # save to massspec
             mt = time.time()
             self._save_to_massspec(cp)

@@ -840,12 +840,26 @@ class AutomatedRun(Loggable):
         self.extraction_script.manager = self.experiment_executor
         self.extraction_script.run_identifier = self.runid
 
-        if self.use_syn_extraction:
-            syn_extractor=SynExtractionCollector(arun=weakref.ref(self))
-
-        if self.extraction_script.execute():
+        syn_extractor=None
+        if self.extraction_script.syntax_ok(warn=False):
             if self.use_syn_extraction:
-                pass
+                p=os.path.join(paths.scripts_dir, 'syn_extraction',self.spec.syn_extraction)
+                p=add_extension(p,'.yaml')
+
+                if os.path.isfile(p):
+                    dur=self.extraction_script.get_estimated_duration()
+                    syn_extractor=SynExtractionCollector(arun=weakref.ref(self)(),
+                                                         path=p,
+                                                         extraction_duration=dur)
+                    syn_extractor.start()
+                else:
+                    self.warning('Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
+        else:
+            self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
+            return
+        if self.extraction_script.execute():
+            if syn_extractor:
+                syn_extractor.stop()
 
             #report the extraction results
             r = self.extraction_script.output_achieved()
@@ -857,6 +871,9 @@ class AutomatedRun(Loggable):
             self.info_color = None
             return True
         else:
+            if syn_extractor:
+                syn_extractor.stop()
+
             self.do_post_equilibration()
             self.do_post_measurement()
             self.finish()

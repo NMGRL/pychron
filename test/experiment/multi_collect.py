@@ -49,9 +49,13 @@ class MulticollectTestCase(unittest.TestCase):
         aspec.mass_spectrometer = 'jan'
         aspec.labnumber = '17005'
         aspec.aliquot = 82
+        aspec.syn_extraction='test'
+
 
         a = AutomatedRun()
         a.script_info.measurement_script_name = 'unknown'
+        a.script_info.extraction_script_name = 'pause'
+
         s = SpectrometerManager()
         ion = IonOpticsManager(spectrometer=s.spectrometer)
 
@@ -83,9 +87,13 @@ class MulticollectTestCase(unittest.TestCase):
         t.join()
 
     def _measure(self):
+        a = self.arun
+        a.use_syn_extraction=True
+
+        a.do_extraction()
+
         counts = 50
         dets = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        a = self.arun
         a.measurement_script.ncounts = 50
         a.py_position_magnet('Ar40', 'H1')
         a.py_activate_detectors(dets)

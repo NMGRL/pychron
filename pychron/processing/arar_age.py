@@ -135,7 +135,7 @@ class ArArAge(Loggable):
         # storing ic_factor in preferences causing issues
         # ic_factor stored in detectors.cfg
 
-        p=os.path.join(paths.spectrometer_dir, 'detector.cfg')
+        p=os.path.join(paths.spectrometer_dir, 'detectors.cfg')
         # factors=None
         ic = 1, 1e-20
         if os.path.isfile(p):
@@ -151,6 +151,8 @@ class ArArAge(Loggable):
                         e=c.getfloat(si,'ic_factor_err')
                     ic=v,e
                     break
+        else:
+            self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
 
         r = ufloat(*ic)
         return r
