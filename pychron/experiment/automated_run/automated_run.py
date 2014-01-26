@@ -34,6 +34,7 @@ import weakref
 from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector, parse_hops
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
+from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -95,66 +96,50 @@ class AutomatedRun(Loggable):
     plot_panel = Any
     arar_age = Instance(ArArAge)
 
-    spec = None
-
+    spec = Any
+    runid = Property
     uuid = Str
-
-    user_defined_aliquot = False
-
-    state = Str('not run')
     extract_device = Str
+    analysis_type = Property
+    user_defined_aliquot = Bool(False)
+    fits = List
+    eqtime = Float
 
+    use_syn_extraction = Bool(False)
 
+    is_last = Bool(False)
+    is_peak_hop = Bool(False)
 
-    # scripts = Dict
+    truncated = Bool
+    state = Str('not run')
+    measuring = Bool(False)
+    dirty = Bool(False)
+    update = Event
 
     measurement_script = Instance(MeasurementPyScript)
     post_measurement_script = Instance(ExtractionPyScript)
     post_equilibration_script = Instance(ExtractionPyScript)
     extraction_script = Instance(ExtractionPyScript)
 
-    _active_detectors = List
-    _peak_center_detectors = List
-    _loaded = False
-    _measured = False
-
-    _alive = False
-    _truncate_signal = Bool
-
-    # valid_scripts = Dict
-    peak_center = None
-    coincidence_scan = None
-    update = Event
-
-    #    condition_truncated = Bool
-    truncated = Bool
-    eqtime = Float
-
-    measuring = Bool(False)
-    dirty = Bool(False)
-
     termination_conditions = List
     truncation_conditions = List
     action_conditions = List
 
-    fits = List
-    runid = Property
-    analysis_type = Property
-
+    peak_center = None
+    coincidence_scan = None
     info_color = None
+
+    _active_detectors = List
+    _peak_center_detectors = List
+    _loaded = False
+    _measured = False
+    _alive = False
+    _truncate_signal = Bool
     _equilibration_done = False
-
-    #    save_error_flag = False
-    # invalid_script = False
-
     _current_data_frame = None
-
-    # WARNED_SCRIPTS = []
-
-    is_last = False
-    is_peak_hop = Bool(False)
-
     _integration_seconds = Float(1.0)
+
+
     #===============================================================================
     # pyscript interface
     #===============================================================================
@@ -855,7 +840,13 @@ class AutomatedRun(Loggable):
         self.extraction_script.manager = self.experiment_executor
         self.extraction_script.run_identifier = self.runid
 
+        if self.use_syn_extraction:
+            syn_extractor=SynExtractionCollector(arun=weakref.ref(self))
+
         if self.extraction_script.execute():
+            if self.use_syn_extraction:
+                pass
+
             #report the extraction results
             r = self.extraction_script.output_achieved()
             for ri in r:

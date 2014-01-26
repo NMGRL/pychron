@@ -638,6 +638,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
 
+        arun.use_syn_extraction=True
+
         arun.runner = self.pyscript_runner
         arun.extract_device = exp.extract_device
 
