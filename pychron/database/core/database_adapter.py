@@ -114,6 +114,7 @@ class DatabaseAdapter(Loggable):
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
+    datasource_url =Property(depends_on='connection_parameters_changed')
 
     path=Str
 
@@ -212,6 +213,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 q = q.filter(func(val))
 
         return q.all()
+
+    @cached_property
+    def _get_datasource_url(self):
+        return '{}:{}'.format(self.host, self.name)
 
     @cached_property
     def _get_url(self):
@@ -345,15 +350,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         args['filename'] = n
         return args
 
-    def _delete_item(self, name, value):
+    def _delete_item(self, value, name=None):
         sess = self.sess
         if sess is None:
             if self.session_factory:
                 sess = self.session_factory()
 
         with self.session_ctx(sess):
-            func = getattr(self, 'get_{}'.format(name))
-            item = func(value)
+            if name is not None:
+                func = getattr(self, 'get_{}'.format(name))
+                item = func(value)
+            else:
+                item=value
+
             if item:
                 sess.delete(item)
 

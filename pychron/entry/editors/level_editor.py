@@ -155,6 +155,7 @@ class LevelEditor(Loggable):
                                                  if p.name == level.production.name), None)
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
+                original_tray=self.selected_tray
 
             ev = EditView(model=self)
             info = ev.edit_traits()
@@ -178,13 +179,38 @@ class LevelEditor(Loggable):
 
                     pr = db.get_irradiation_production(self.selected_production.name)
                     level.production = pr
-                    tr = db.get_irradiation_holder(self.selected_tray)
-                    level.tray = tr
+
+                    if original_tray!=self.selected_tray:
+                        self._save_tray(level, original_tray)
+
                     break
                 else:
                     break
 
         return self.name
+
+    def _save_tray(self, level, original_tray):
+        db=self.db
+        tr = db.get_irradiation_holder(self.selected_tray)
+        n=len(tuple(iter_geom(tr.geometry)))
+        on=len(level.positions)
+        if n<on:
+            if any([p.labnumber.analyses for p in level.positions[n:]]):
+                self.warning_dialog('Cannot change tray from "{}" to "{}" '
+                                    'This change would orphan irradiation identifiers '
+                                    'that have associated analyses'.format(original_tray, self.selected_tray))
+            elif self.confirmation_dialog('You are about to orphan {} irradiation identifiers. '
+                                     'Are you sure you want to continue?'.format(on-n)):
+
+                level.holder=tr
+                for p in level.positions[n:]:
+                    self.debug('deleting {} {} {} {}'.format(level.irradiation.name,
+                                                             level.name,
+                                                          p.position,
+                                                          p.labnumber.identifier))
+                    db.delete_irradiation_position(p)
+        else:
+            level.holder=tr
 
     def _add_level(self):
         irrad = self.irradiation

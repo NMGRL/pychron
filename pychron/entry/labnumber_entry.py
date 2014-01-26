@@ -287,6 +287,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
         self.dirty = False
         self.info('changes saved to database')
+        self._level_changed()
 
     def _increment(self, name):
         """
@@ -380,7 +381,7 @@ THIS CHANGE CANNOT BE UNDONE')
         new_irrad=irrad.edit()
         if new_irrad:
             self.irradiation = new_irrad
-            self.updated = True
+        self.updated = True
 
     def _edit_level_button_fired(self):
         editor=self._get_level_editor(name=self.level,
@@ -388,7 +389,9 @@ THIS CHANGE CANNOT BE UNDONE')
         new_level=editor.edit()
         if new_level:
             self.level=new_level
-            self.updated=True
+
+        self.updated=True
+        self._level_changed()
 
     def _add_level_button_fired(self):
         editor=self._get_level_editor(irradiation=self.irradiation)
@@ -471,10 +474,8 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
             ir.trait_set(labnumber=str(labnumber), hole=position)
 
             item = self.canvas.scene.get_item(str(position))
-            item.fill = ln.sample
+            item.fill = ln.identifier
 
-            #         ir = IrradiatedPosition(labnumber=str(labnumber), hole=position)
-            #         if labnumber:
             selhist = ln.selected_flux_history
             if selhist:
                 flux = selhist.flux

@@ -101,7 +101,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_analysis_types()
             self._load_extraction_devices()
 
-        self.datasource_url='{}:{}'.format(db.host, db.name)
+        self.datasource_url=db.datasource_url
         # self._set_db()
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')

@@ -1657,8 +1657,16 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_tags(self, **kw):
         return self._retrieve_items(proc_TagTable, **kw)
 
-    def delete_tag(self, name):
-        self._delete_item('tag', name)
+    def delete_tag(self, v):
+        self._delete_item(v, name='tag')
+
+    def delete_irradiation_position(self, p):
+        with self.session_ctx():
+            self._delete_item(p.labnumber)
+            for fi in p.flux_histories:
+                self._delete_item(fi.flux)
+                self._delete_item(fi)
+            self._delete_item(p)
 
     #===============================================================================
     # deleters

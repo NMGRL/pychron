@@ -39,7 +39,7 @@ CACHE_LIMIT = 500
 class BaseIsotopeDatabaseManager(Loggable):
     db = Any
     _db_klass = Any
-
+    datasource_url = Property
     def __init__(self, bind=True, connect=True, warn=True, *args, **kw):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
@@ -120,6 +120,9 @@ class BaseIsotopeDatabaseManager(Loggable):
         db = self._db_klass(application=self.application)
         return db
 
+    def _get_datasource_url(self):
+        if self.db:
+            return self.db.datasource_url
     #===============================================================================
     # defaults
     #===============================================================================
