@@ -28,14 +28,22 @@ def convert_fit(f):
     if isinstance(f, (str, unicode)):
         f = f.lower()
         fits = ['linear', 'parabolic', 'cubic']
+        if '_' in f:
+
+            try:
+                f,err=f.split('_')
+                err=err.upper()
+            except ValueError:
+                return None, None
+
         if f in fits:
             f = fits.index(f) + 1
-        elif f in ('average','weighted_mean'):
-            if not err:
-                if f.endswith('SD'):
-                    err='SD'
-                else:
-                    err='SEM'
+        elif f.startswith('average'):
+            f='average'
+            err='SEM' if 'sem' in f else 'SD'
+        elif f.startswith('weightedmean'):
+            f = 'weightedmean'
+            err = 'SEM' if 'sem' in f else 'SD'
         else:
             f = None
 
