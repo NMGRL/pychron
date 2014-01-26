@@ -220,7 +220,7 @@ class OLSRegressor(BaseRegressor):
     def _set_degree(self, d):
         if isinstance(d, str):
             d = d.lower()
-            fits = ['', 'linear', 'parabolic', 'cubic']
+            fits = ['linear', 'parabolic', 'cubic']
             if d in fits:
                 d = fits.index(d) + 1
             else:

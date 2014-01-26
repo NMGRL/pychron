@@ -16,7 +16,8 @@
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
-
+from pychron.core.ui import set_toolkit
+set_toolkit('qt4')
 #============= standard library imports ========================
 from unittest import TestCase
 import numpy as np

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
-from numpy import asarray, average, vectorize
+from numpy import asarray, average, vectorize, corrcoef
 from scipy.stats import chi2
 #============= local library imports  ==========================
 def _kronecker(ii, jj):
@@ -85,7 +85,7 @@ def validate_mswd(mswd, n, k=1):
     return bool(low <= mswd <= high)
 
 
-def chi_squared(x, y, sx, sy, a, b):
+def chi_squared(x, y, sx, sy, a, b, correlated_errors=True):
     """
         Press et. al 2007 Numerical Recipes
         chi2=Sum((y_i-(a+b*x_i)^2*W_i)
@@ -94,6 +94,14 @@ def chi_squared(x, y, sx, sy, a, b):
         a: y intercept
         b: slope
 
+        Mahon 1996 modifies weights for correlated errors
+
+        W_i=1/(sy_i^2+(b*sx_i)^2-k)
+
+        k=2*b*p_i.*sx_i**2
+
+        p: correlation_coefficient
+
     """
     x = asarray(x)
     y = asarray(y)
@@ -101,14 +109,19 @@ def chi_squared(x, y, sx, sy, a, b):
     sx = asarray(sx)
     sy = asarray(sy)
 
-    w = (sy ** 2 + (b * sx) ** 2) ** -1
+    k=0
+    if correlated_errors:
+        pxy = corrcoef(x, y)[0][1]
+        k = 2 * b * pxy * sx ** 2
+
+    w = (sy ** 2 + (b * sx) ** 2 - k) ** -1
 
     c = ((y - (a + b * x)) ** 2 * w).sum()
 
     return c
 
 
-def calculate_mswd2(x, y, ex, ey, a, b):
+def calculate_mswd2(x, y, ex, ey, a, b, correlated_errors=True):
     """
         see Murray 1994, Press 2007
 
@@ -116,37 +129,8 @@ def calculate_mswd2(x, y, ex, ey, a, b):
         mswd=chi2/(n-2)
     """
     n = len(x)
-    return chi_squared(x, y, ex, ey, a, b) / (n - 2)
+
+    return chi_squared(x, y, ex, ey, a, b, correlated_errors) / (n - 2)
 
 #============= EOF =============================================
-#    if 1 <= dof <= 25:
-#        table = {
-#           1:(0.001, 5.020),
-#           2:(0.025, 3.690),
-#           3:(0.072, 3.117),
-#           4:(0.121, 2.775),
-#           5:(0.166, 2.560),
-#           6:(0.207, 2.400),
-#           7:(0.241, 2.286),
-#           8:(0.273, 2.188),
-#           9:(0.300, 2.111),
-#           10:(0.325, 2.050),
-#           11:(0.347, 1.991),
-#           12:(0.367, 1.942),
-#           13:(0.385, 1.900),
-#           14:(0.402, 1.864),
-#           15:(0.417, 1.833),
-#           16:(0.432, 1.800),
-#           17:(0.445, 1.776),
-#           18:(0.457, 1.750),
-#           19:(0.469, 1.732),
-#           20:(0.480, 1.710),
-#           21:(0.490, 1.690),
-#           22:(0.500, 1.673),
-#           23:(0.509, 1.657),
-#           24:(0.517, 1.642),
-#           25:(0.524, 1.624),
-#           }
-#        low, high = table[n]
-#    else:
-#        low, high = (0.524, 1.624)
+
