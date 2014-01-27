@@ -152,9 +152,9 @@ class YorkRegressor(OLSRegressor):
 
 
 class NewYorkRegressor(YorkRegressor):
-    '''
+    """
         mahon 1996
-    '''
+    """
 
     def _calculate(self):
         b = 0

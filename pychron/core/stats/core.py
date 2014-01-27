@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
-from numpy import asarray, average, vectorize, corrcoef
+from numpy import asarray, average, vectorize
 from scipy.stats import chi2
 #============= local library imports  ==========================
 def _kronecker(ii, jj):
@@ -111,8 +111,8 @@ def chi_squared(x, y, sx, sy, a, b, correlated_errors=True):
 
     k=0
     if correlated_errors:
-        pxy = corrcoef(x, y)[0][1]
-        k = 2 * b * pxy * sx ** 2
+        p=((1+sy**2)*(1+sx**2))**-2
+        k = 2 * b * p * sx * sy
 
     w = (sy ** 2 + (b * sx) ** 2 - k) ** -1
 

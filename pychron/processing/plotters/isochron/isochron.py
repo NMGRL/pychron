@@ -27,7 +27,6 @@ from pychron.processing.argon_calculations import calculate_isochron
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
-from pychron.core.regression.new_york_regressor import ReedYorkRegressor
 from pychron.core.stats import validate_mswd
 
 N = 500
@@ -101,6 +100,7 @@ class InverseIsochron(Isochron):
 
         xs, ys, xerrs, yerrs = data
         self._cached_data = data
+        self._cached_reg = reg
         self._age = age
 
         graph = self.graph
@@ -231,6 +231,7 @@ class InverseIsochron(Isochron):
         self._set_renderer_selection(ss, sel)
 
         if self._cached_data:
+            reg=self._cached_reg
             xs, ys, xerr, yerr = self._cached_data
 
             nxs = delete(xs, sel)
@@ -238,8 +239,9 @@ class InverseIsochron(Isochron):
             nxerr = delete(xerr, sel)
             nyerr = delete(yerr, sel)
 
-            reg = ReedYorkRegressor(xs=nxs, ys=nys,
-                                    xserr=nxerr, yserr=nyerr)
+            # reg = ReedYorkRegressor(xs=nxs, ys=nys,
+            #                         xserr=nxerr, yserr=nyerr)
+            reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]

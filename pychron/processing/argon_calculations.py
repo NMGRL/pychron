@@ -30,8 +30,11 @@ from pychron.core.stats.core import calculate_weighted_mean
 #============= local library imports  ==========================
 
 
-def calculate_isochron(analyses):
-    from pychron.core.regression.new_york_regressor import ReedYorkRegressor
+def calculate_isochron(analyses, reg='Reed'):
+    if reg.lower() in ('newyork','new_york'):
+        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
+    else:
+        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
 
     ref=analyses[0]
     ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
@@ -49,7 +52,7 @@ def calculate_isochron(analyses):
     xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
     ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
 
-    reg = ReedYorkRegressor(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
+    reg = klass(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
     reg.calculate()
 
     xint = ufloat(reg.x_intercept, reg.x_intercept_error)
