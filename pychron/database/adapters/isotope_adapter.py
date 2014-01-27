@@ -1258,14 +1258,15 @@ class IsotopeAdapter(DatabaseAdapter):
                 self.debug('get last labnumber {}'.format(e))
                 return
 
-    def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None):
+    def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
             if ln:
-                ln = self.get_labnumber(ln, )
+                ln = self.get_labnumber(ln)
                 if not ln:
                     return
+
+            q = sess.query(meas_AnalysisTable)
 
             if spectrometer:
                 q = q.join(meas_MeasurementTable)
@@ -1278,7 +1279,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
 
             if ln:
-                q = q.filter(getattr(meas_AnalysisTable, 'labnumber') == ln)
+                q = q.filter(meas_AnalysisTable.labnumber == ln)
                 if aliquot:
                     q = q.filter(meas_AnalysisTable.aliquot == aliquot)
 
@@ -1286,11 +1287,11 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.limit(1)
             try:
                 r = q.one()
-                self.debug('{}-{}'.format(r.labnumber.identifier, r.aliquot))
+                self.debug('got last analysis {}-{}'.format(r.labnumber.identifier, r.aliquot))
                 return r
             except NoResultFound, e:
-                self.debug('get last analysis {}'.format(e))
-                return
+                self.debug('no analyses for {}'.format(ln.identifier))
+                return 0
 
     def get_unique_analysis(self, ln, ai, step=None):
     #         sess = self.get_session()

@@ -15,6 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from threading import Event
+import time
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
     Str, CInt, Tuple, Color
 from traitsui.api import View, UItem, VGroup, HGroup, spring
@@ -181,6 +183,7 @@ class PlotPanel(Loggable):
             super(PlotPanel, self).info(*args, **kw)
 
     def reset(self):
+        self.debug('clearing graphs')
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
 
@@ -208,9 +211,13 @@ class PlotPanel(Loggable):
         """
             dets: list of Detector instances
         """
-        invoke_in_main_thread(self._create, dets)
+        evt=Event()
+        invoke_in_main_thread(self._create, dets, evt)
+        #delay a short time to ensure plots created
+        while not evt.is_set():
+            time.sleep(0.05)
 
-    def _create(self, dets):
+    def _create(self, dets, evt):
         self.reset()
 
         g = self.isotope_graph
@@ -219,6 +226,7 @@ class PlotPanel(Loggable):
         self.detectors = dets
         for det in dets:
             self.new_plot()
+        evt.set()
 
     def new_plot(self, **kw):
         g=self.isotope_graph

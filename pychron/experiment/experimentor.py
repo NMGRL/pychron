@@ -85,15 +85,15 @@ class Experimentor(IsotopeDatabaseManager):
     def update_queues(self):
         self._update_queues()
 
-    def test_connections(self):
-        if not self.db:
-            return
-
-        if not self.db.connect():
-            self.warning_dialog('Failed connecting to database. {}'.format(self.db.url))
-            return
-
-        return True
+    # def test_connections(self):
+    #     if not self.db:
+    #         return
+    #
+    #     if not self.db.connect():
+    #         self.warning_dialog('Failed connecting to database. {}'.format(self.db.url))
+    #         return
+    #
+    #     return True
 
     def update_info(self):
         self._update()

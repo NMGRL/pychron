@@ -142,7 +142,7 @@ def get_analysis_type(idn):
         return 'unknown'
 
 
-def make_runid(ln, a, s):
+def make_runid(ln, a, s=''):
     _as = make_aliquot_step(a, s)
     return '{}-{}'.format(ln, _as)
 
@@ -151,7 +151,6 @@ def strip_runid(r):
     l, x = r.split('-')
 
     a = ''
-    s = ''
     for i, xi in enumerate(x):
         a += xi
         try:

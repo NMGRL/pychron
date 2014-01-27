@@ -80,7 +80,18 @@ class AutomatedRunPersister(Loggable):
 
     cdd_ic_factor = Any
 
-    _db_extraction_id=0
+    _db_extraction_id=None
+
+    def get_last_aliquot(self, identifier):
+        if self.db:
+            with self.db.session_ctx():
+                a=self.db.get_last_analysis(ln=identifier, ret='aliquot')
+                if a is not None:
+                    if not isinstance(a, (float, int)):
+                        a=int(a.aliquot)
+
+                    return a
+
 
     def writer_ctx(self):
         return self.data_manager.open_file(self._current_data_frame)
@@ -209,17 +220,18 @@ class AutomatedRunPersister(Loggable):
                 else:
                     self.warning('no experiment found for {}'.format(self.experiment_identifier))
 
-                # save extraction
-                ext = self._db_extraction_id
-                dbext = db.get_extraction(ext, key='id')
-
-                a.extraction_id = dbext.id
-
                 # save measurement
                 meas = self._save_measurement(a)
+                # save extraction
+                ext = self._db_extraction_id
+                if ext is not None:
+                    dbext = db.get_extraction(ext, key='id')
+                    a.extraction_id = dbext.id
+                    # save sensitivity info to extraction
+                    self._save_sensitivity(dbext, meas)
 
-                # save sensitivity info to extraction
-                self._save_sensitivity(dbext, meas)
+                else:
+                    self.debug('no extraction to associate with this run')
 
                 self._save_spectrometer_info(meas)
 

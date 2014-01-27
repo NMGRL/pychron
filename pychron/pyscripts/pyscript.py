@@ -157,7 +157,7 @@ named_register = makeNamedRegistry(command_register)
 
 class PyScript(Loggable):
     text = Property
-    syntax_checked = Property
+    syntax_checked = Bool
 
     manager = Any
     #     parent = Any
@@ -181,7 +181,6 @@ class PyScript(Loggable):
     _completed = False
     _truncate = False
 
-    _syntax_checked = False
     _syntax_error = None
     _gosub_script = None
     _wait_control = None
@@ -195,13 +194,13 @@ class PyScript(Loggable):
         super(PyScript, self).__init__(*args, **kw)
         self._block_lock = Lock()
 
-    def calculate_estimated_duration(self):
-        self._estimated_duration = 0
-        if not self._syntax_checked:
+    def calculate_estimated_duration(self, force=False):
+        if not self.syntax_checked or force:
+
+            self.syntax_checked=False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
-        # self._set_syntax_checked(False)
-        # self.test()
+
         return self.get_estimated_duration()
 
     def traceit(self, frame, event, arg):
@@ -264,6 +263,8 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
+            self.debug('testing...')
+            self._estimated_duration=0
             self.syntax_checked = True
             self.testing_syntax = True
             self._syntax_error = True
@@ -495,7 +496,7 @@ class PyScript(Loggable):
                   manager=self.manager,
                   parent_script=weakref.ref(self)(),
 
-                  _syntax_checked=self._syntax_checked,
+                  syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,
                   **kw
         )
@@ -549,7 +550,8 @@ class PyScript(Loggable):
             f.clear()
 
     @command_register
-    def begin_interval(self, duration=0, name=None):
+    def begin_interval(self, duration, name=None):
+
         self._estimated_duration += duration
 
         if self._cancel:
@@ -579,10 +581,11 @@ class PyScript(Loggable):
 
     @command_register
     def sleep(self, duration=0, message=None):
-
-        self._estimated_duration += duration
-        if self.parent_script is not None:
-            self.parent_script._estimated_duration += self._estimated_duration
+        #dont add to duration if within an interval
+        if not self._interval_stack.qsize()%2:
+            self._estimated_duration += duration
+            if self.parent_script is not None:
+                self.parent_script._estimated_duration += self._estimated_duration
 
         #         if self._graph_calc:
         #             va = self._xs[-1] + duration
@@ -783,12 +786,6 @@ class PyScript(Loggable):
 
     def _set_text(self, t):
         self._text = t
-
-    def _get_syntax_checked(self):
-        return self._syntax_checked
-
-    def _set_syntax_checked(self, v):
-        self._syntax_checked = v
 
     def __str__(self):
         return self.name

@@ -202,7 +202,7 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, ncounts, starttime, starttime_offset, series=0):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0):
         if not self._alive:
             return
 
@@ -212,7 +212,6 @@ class AutomatedRun(Loggable):
         gn = 'signal'
 
         self.persister.build_tables(gn, self._active_detectors)
-        check_conditions = True
 
         self._add_truncate_condition()
 
@@ -222,11 +221,13 @@ class AutomatedRun(Loggable):
         else:
             sc='red'
 
+        check_conditions= obj==self.measurement_script
+
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions, sc)
+                               check_conditions, sc, obj)
         return result
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
@@ -711,8 +712,9 @@ class AutomatedRun(Loggable):
 
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
-            with self.db.session_ctx():
-                ln = self.db.get_labnumber(ln)
+            db=self.persister.db
+            with db.session_ctx():
+                ln = db.get_labnumber(ln)
                 if ln:
                     an = DBAnalysis()
                     x = datetime.now()
@@ -813,12 +815,14 @@ class AutomatedRun(Loggable):
     #===============================================================================
     # doers
     #===============================================================================
-    def do_extraction(self):
-        if not self._alive:
-            return
+    def start_extraction(self):
+        return self._start_script('extraction')
 
-        if not self.extraction_script:
-            return
+    def start_measurement(self):
+        return self._start_script('measurement')
+
+    def do_extraction(self):
+        self.debug('do extraction')
 
         self.persister.pre_extraction_save()
 
@@ -839,7 +843,7 @@ class AutomatedRun(Loggable):
                 p=add_extension(p,'.yaml')
 
                 if os.path.isfile(p):
-                    dur=self.extraction_script.get_estimated_duration()
+                    dur=self.extraction_script.calculate_estimated_duration(force=True)
                     syn_extractor=SynExtractionCollector(arun=weakref.ref(self)(),
                                                          path=p,
                                                          extraction_duration=dur)
@@ -874,23 +878,19 @@ class AutomatedRun(Loggable):
             self.info_color = None
             return False
 
-    def start_measurement(self):
-        if not self._alive:
-            return
-        if not self.measurement_script:
-            return
-        return True
-
     def do_measurement(self, script=None):
+        self.debug('do measurement')
         if not self._alive:
+            self.warning('run is not alive')
             return
-            #if not self.measurement_script:
-        #    return True
+
         if script is None:
             script=self.measurement_script
 
-        # self.measurement_script.runner = self.runner
-        # self.measurement_script.manager = self.experiment_executor
+        if script is None:
+            self.warning('no measurement script')
+            return
+
         script.trait_set(runner=self.runner,
                          manager=self.experiment_executor)
 
@@ -905,11 +905,6 @@ class AutomatedRun(Loggable):
 
         self.measuring = True
         self.persister.save_enabled = True
-        #         self.persister.save_enabled = False
-        #         from guppy import hpy
-        #         hp = hpy()
-        #         hp = self.experiment_executor.application.hp
-        #         hp.setrelheap()
 
         if script.execute():
             mem_log('post measurement execute')
@@ -936,6 +931,7 @@ class AutomatedRun(Loggable):
 
         if not self._alive:
             return
+
         msg = 'Post Measurement Started {}'.format(self.post_measurement_script.name)
         self.info('======== {} ========'.format(msg))
         #        self.state = 'extraction'
@@ -1033,6 +1029,19 @@ anaylsis_type={}
     #             from pychron.core.ui.thread import Thread as mThread
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
+    def _start_script(self, name):
+        script = getattr(self, '{}_script'.format(name))
+        self.debug('start {}'.format(name))
+        if not self._alive:
+            self.warning('run is not alive')
+            return
+
+        if not script:
+            self.warning('no {} script'.format(name))
+            return
+
+        return True
+
     def _set_active_detectors(self, dets):
         spec = self.spectrometer_manager.spectrometer
         return [spec.get_detector(n) for n in dets]
@@ -1250,6 +1259,7 @@ anaylsis_type={}
                 # update the plot_panel labels
                 plots = self.plot_panel.isotope_graph.plots
                 n = len(plots)
+
                 for i, det in enumerate(self._active_detectors):
                     if i < n:
                         plots[i].y_axis.title = det.isotope
@@ -1321,7 +1331,10 @@ anaylsis_type={}
 
     def _measure(self, grpname, data_writer,
                  ncounts, starttime, starttime_offset,
-                 series, check_conditions, color):
+                 series, check_conditions, color, script=None):
+
+        if script is None:
+            script=self.measurement_script
 
         mem_log('pre measure')
         if not self.spectrometer_manager:
@@ -1344,7 +1357,7 @@ anaylsis_type={}
         m.trait_set(
             plot_panel=self.plot_panel,
             arar_age=self.arar_age,
-            measurement_script=self.measurement_script,
+            measurement_script=script,
             detectors=self._active_detectors,
             truncation_conditions=self.truncation_conditions,
             termination_conditions=self.termination_conditions,
@@ -1365,7 +1378,7 @@ anaylsis_type={}
             self.plot_panel.total_counts += ncounts
             invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color)
 
-        dm = self.persister.data_manager
+        # dm = self.persister.data_manager
         with self.persister.writer_ctx():
         # with dm.open_file(self.current_data_frame):
             m.measure()

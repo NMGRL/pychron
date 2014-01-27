@@ -20,20 +20,20 @@ from traits.api import Str, CInt, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr
 #============= standard library imports ========================
 import uuid
+import weakref
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
     make_runid
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 from pychron.loggable import Loggable
-import weakref
 
 
 class AutomatedRunSpec(Loggable):
-    '''
-        this class is used to as a simple container and factory for 
+    """
+        this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
-    '''
+    """
     #     automated_run = Instance(AutomatedRun)
     #    state = Property(depends_on='_state')
     state = Enum('not run', 'extraction',
@@ -123,8 +123,7 @@ class AutomatedRunSpec(Loggable):
                  'position', 'duration', 'cleanup', 'beam_diameter',
                  'mass_spectrometer', 'extract_device',
                  'extraction_script', 'measurement_script',
-                 'post_equilibration_script', 'post_measurement_script'
-        ]
+                 'post_equilibration_script', 'post_measurement_script']
         return ','.join(map(str, self.to_string_attrs(attrs)))
 
     def test_scripts(self, script_context=None, warned=None, duration=True):
@@ -155,16 +154,16 @@ class AutomatedRunSpec(Loggable):
                 # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
+                    if duration:
+                        arun.setup_context(script)
+
                     ok = script.syntax_ok()
                     script_oks.append(ok)
                     script_context[name] = script, ok
-                    if ok and duration:
-                        arun.setup_context(script)
+                    if ok:
                         if si in ('measurement_script', 'extraction_script'):
                             d = script.calculate_estimated_duration()
                             s += d
-                # elif arun.invalid_script:
-                #     script_oks.append(False)
         if arun:
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
@@ -172,7 +171,7 @@ class AutomatedRunSpec(Loggable):
         self.executable = all(script_oks)
         return s
 
-    def get_estimated_duration(self, script_context, warned):
+    def get_estimated_duration(self, script_context, warned, force=False):
         """
             use the pyscripts to calculate etd
 
@@ -180,7 +179,7 @@ class AutomatedRunSpec(Loggable):
 
             this is a good point to set executable as well
         """
-        if not self._estimated_duration or self._changed:
+        if not self._estimated_duration or self._changed or force:
             s = self.test_scripts(script_context, warned)
 
             db_save_time = 1
@@ -193,10 +192,6 @@ class AutomatedRunSpec(Loggable):
         if run is None:
             run = self.run_klass()
 
-        #         attrs = self._get_run_attrs()
-        #         for ai in attrs:
-        #             setattr(run, ai, getattr(self, ai))
-
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),
                     getattr(self, '{}_script'.format(si)))
@@ -204,7 +199,6 @@ class AutomatedRunSpec(Loggable):
         if new_uuid:
             run.uuid = str(uuid.uuid4())
 
-        #         run.spec = self
         run.spec = weakref.ref(self)()
 
         return run
@@ -214,7 +208,6 @@ class AutomatedRunSpec(Loggable):
             setattr(self, '{}_script'.format(k), v)
 
         for k, v in params.iteritems():
-        #            print 'param', k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -260,10 +253,10 @@ class AutomatedRunSpec(Loggable):
                 'pattern',
                 'beam_diameter',
                 'truncate_condition',
+                'syn_extraction',
                 'mass_spectrometer', 'extract_device',
                 'analysis_type',
-                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after'
-        )
+                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
     #===============================================================================
     # handlers

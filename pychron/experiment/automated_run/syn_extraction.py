@@ -18,12 +18,14 @@
 import os
 from threading import Thread
 import time
+import uuid
 from traits.api import HasTraits, Instance, Str, Dict, Property, Bool, Float
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import yaml
 from pychron.core.helpers.filetools import add_extension
+from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
@@ -31,23 +33,31 @@ from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
 class SynExtractionSpec(HasTraits):
     mode = Str
+    duration = Float
+
     config = Dict
 
     end_threshold = Property
     script = Property
-    duration = Float
+    identifier = Property
 
     def _get_script(self):
-        name = self.config.get('measurement_script')
+        name=self._get_value('measurement_script','')
         p=add_extension(name, '.py')
         p = os.path.join(paths.scripts_dir, 'measurement', p)
         return p
 
     def _get_end_threshold(self):
+        return self._get_value('end_threshold', 0)
+
+    def _get_identifier(self):
+        return self._get_value('identifier')
+
+    def _get_value(self,attr, default=None):
         if self.config:
-            return self.config.get('end_threshold', 0)
+            return self.config.get(attr, default)
         else:
-            return 0
+            return default
 
 
 class SynExtractionCollector(Loggable):
@@ -134,14 +144,31 @@ class SynExtractionCollector(Loggable):
                                      name=sname,
                                      automated_run=self.arun)
             if ms.bootstrap():
-                spec.duration = ms.get_estimated_duration()
-                return ms
+                if ms.syntax_ok(warn=False):
+                    spec.duration = ms.get_estimated_duration()
+                    return ms
+                else:
+                    self.debug('invalid syntax {}'.format(ms.name))
 
         self.debug('invalid measurement script "{}"'.format(p))
 
     def _do_syn_extract(self, spec, script):
-        self.debug('Executing SynExtractionSpec mode="{}"'.format(spec.mode))
-        return self.arun.do_measurement(script=script)
+        self.debug('Executing SynExtraction mode="{}"'.format(spec.mode))
+
+        #modify the persister. the original persister for the automated run is saved at self.persister
+        #arun.persister reset to original when syn extraction stops
+        identifier=spec.identifier
+        last_aq=self.arun.persister.get_last_aliquot(identifier)
+        if last_aq is None:
+            self.warning('invalid identifier "{}". Does not exist in database'.format(identifier))
+        else:
+            runid=make_runid(identifier, last_aq+1)
+            self.arun.info('Starting SynExtraction run {}'.format(runid))
+            self.arun.persister.trait_set(use_secondary_database=False,
+                                          runid=runid,
+                                          uuid=str(uuid.uuid4()))
+
+            return self.arun.do_measurement(script=script)
 
     def _spec_generator(self, config):
         pattern = config.get('pattern', 'S')

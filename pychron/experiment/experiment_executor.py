@@ -240,8 +240,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             #             self._prev_baselines = dict()
             #             self._prev_blanks = dict()
 
-            self.pyscript_runner.connect()
-            self.massspec_importer.connect()
+            # self.pyscript_runner.connect()
+            # self.massspec_importer.connect()
+
             self.experiment_queue.executed = True
             t = Thread(name='execute_{}'.format(name),
                        target=self._execute)
@@ -570,9 +571,12 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
     def _extraction(self, ai):
         ret = True
-        self.extracting = True
-        if not ai.do_extraction():
-            ret = self._failed_execution_step('Extraction Failed')
+        if ai.start_extraction():
+            self.extracting = True
+            if not ai.do_extraction():
+                ret = self._failed_execution_step('Extraction Failed')
+        else:
+            ret=ai.isAlive()
 
         self.trait_set(extraction_state_label='', extracting=False)
 
