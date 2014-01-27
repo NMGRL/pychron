@@ -39,8 +39,7 @@ class AutomatedRunSpec(Loggable):
     state = Enum('not run', 'extraction',
                  'measurement', 'success',
                  'failed', 'truncated', 'canceled',
-                 'invalid', 'test'
-    )
+                 'invalid', 'test')
 
     skip = Bool(False)
     end_after = Bool(False)
@@ -140,7 +139,7 @@ class AutomatedRunSpec(Loggable):
             name = getattr(self, si)
             if name in script_context:
                 if name not in warned:
-                    self.debug('{:<30s} in script context. using previous estimated duration'.format(name))
+                    self.debug('{} in script context. using previous estimated duration'.format(name))
                     warned.append(name)
 
                 script, ok = script_context[name]
@@ -152,10 +151,9 @@ class AutomatedRunSpec(Loggable):
                 if arun is None:
                     arun = self.make_run(new_uuid=False)
 
-                arun.invalid_script = False
+                # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
-
                     ok = script.syntax_ok()
                     script_oks.append(ok)
                     script_context[name] = script, ok
@@ -164,22 +162,23 @@ class AutomatedRunSpec(Loggable):
                         if si in ('measurement_script', 'extraction_script'):
                             d = script.calculate_estimated_duration()
                             s += d
-                elif arun.invalid_script:
-                    script_oks.append(False)
+                # elif arun.invalid_script:
+                #     script_oks.append(False)
         if arun:
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
+
         self.executable = all(script_oks)
         return s
 
     def get_estimated_duration(self, script_context, warned):
-        '''
+        """
             use the pyscripts to calculate etd
-            
+
             script_context is a dictionary of already loaded scripts
-            
+
             this is a good point to set executable as well
-        '''
+        """
         if not self._estimated_duration or self._changed:
             s = self.test_scripts(script_context, warned)
 

@@ -27,7 +27,7 @@
 # from pychron.database.selectors.power_map_selector import PowerMapSelector
 # from pychron.database.orms.co2laser_orm import PowerTable, PowerPathTable
 # #from pychron.database.selectors.bakeout_selector import BakeoutDBSelector
-# #from pychron.helpers.datetime_tools import  get_date
+# #from pychron.core.helpers.datetime_tools import  get_date
 # #from pychron.loggable import Loggable
 # #from pychron.bakeout.bakeout_graph_viewer import BakeoutGraphViewer
 #

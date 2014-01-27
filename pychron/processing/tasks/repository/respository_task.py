@@ -65,9 +65,9 @@ class RepositoryTask(AnalysisEditTask):
         #return ps
 
     def _save_to_db(self):
-        '''
+        """
             save the sample igsn to the database
-        '''
+        """
         db = self.manager.db
         with db.session_ctx():
             s = self.selected_samples
@@ -89,10 +89,10 @@ class RepositoryTask(AnalysisEditTask):
     #===============================================================================
     @on_trait_change('igsn:new_igsn')
     def _new_igsn(self, new):
-        '''
-            associate the new igsn with the current sample and save to the 
+        """
+            associate the new igsn with the current sample and save to the
             database
-        '''
+        """
         sample = self.igsn.sample
         project = self.igsn.project
         self.debug('Retrieved new IGSN:{} for project: {} sample: {}'.format(new, sample, project))
@@ -122,11 +122,11 @@ class RepositoryTask(AnalysisEditTask):
                           #                                     PaneItem('pychron.browser'),
                           #                                     Splitter(
                           #                                          Tabbed(
-                          #                                                 PaneItem('pychron.analysis_edit.unknowns'),
+                          #                                                 PaneItem('pychron.processing.unknowns'),
                           # #                                                 PaneItem('pychron.processing.figures.plotter_options')
                           #                                                 ),
                           # #                                          Tabbed(
-                          # #                                                 PaneItem('pychron.analysis_edit.controls'),
+                          # #                                                 PaneItem('pychron.processing.controls'),
                           # #                                                 PaneItem('pychron.processing.editor'),
                           # #                                                 ),
                           #                                          orientation='vertical'

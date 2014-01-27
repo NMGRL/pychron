@@ -25,7 +25,7 @@ import os
 #============= local library imports  ==========================
 from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 from pychron.graph.graph import Graph
-from pychron.time_series.time_series import smooth
+from pychron.core.time_series.time_series import smooth
 from pychron.globals import globalv
 from pychron.paths import paths
 

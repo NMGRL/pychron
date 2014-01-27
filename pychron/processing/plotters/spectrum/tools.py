@@ -15,13 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Array, Int, Float
+from chaco.plot_label import PlotLabel
+from enable.colors import color_table, convert_from_pyqt_color
+from traits.api import Array, Int, Float,Str, Color
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
 from numpy import where, array
 from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
-from enable.colors import color_table
 #============= local library imports  ==========================
 
 class BasePlateauOverlay(AbstractOverlay):
@@ -77,6 +78,8 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
 class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)
+    alpha=Float
+
     def overlay(self, component, gc, *args, **kw):
         comp = self.component
         with gc:
@@ -110,7 +113,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
                     if isinstance(c, str):
                         c = color_table[c]
 
+                    c=c[0],c[1],c[2],self.alpha
                     gc.set_fill_color(c)
+
                 gc.rect(x, y, w + 1, h)
                 gc.fill_path()
 
@@ -145,48 +150,132 @@ class PlateauTool(DragTool):
 
 class PlateauOverlay(BasePlateauOverlay):
     plateau_bounds = Array
-    y = Float
+    # y = Float
     dragged = False
+    id=Str
+
+    plateau_label=PlotLabel
+    info_txt=Str
+    label_visible=True
+    label_offset=0
+    label_font_size=10
+    extend_end_caps = True
+    ages_errors=Array
+    ages=Array
+    nsigma=Int(2)
+    line_color=Color('red')
+    line_width=Float(1.0)
 
     def hittest(self, pt, threshold=7):
         x, y = pt
         pts = self._get_line()
         if pts is not None:
-            pt1, pt2 = pts
+            pt1, pt2,y1,y2 = pts
             if pt1[0] <= x <= pt2[0]:
                 if abs(y - pt1[1]) <= threshold:
                     return True
 
     def _get_line(self):
+        """
+            reurns screen values for start plat, end plat, error mag at start, error mag at end
+        """
         cs = self.cumulative39s
         ps = self.plateau_bounds
         if ps[0] == ps[1]:
             return
-        cstart = cs[ps[0]]
-        cend = cs[ps[1] + 1]
+
+        sidx=ps[0]
+        eidx=ps[1]+1
+        cstart = cs[sidx]
+        cend = cs[eidx]
+
+        aes=self.ages
+        es=self.age_errors
+        eidx-=1
+        estart=es[sidx]*self.nsigma
+        eend=es[eidx]*self.nsigma
+
+        ystart=aes[sidx]
+        yend=aes[eidx]
+
         y = self.y
+
+        a=ystart-estart if y<ystart else ystart+estart
+        b=yend-eend if y<yend else yend+eend
+
         pt1, pt2 = self.component.map_screen([(cstart, y), (cend, y)])
-        return pt1, pt2
+        up1, up2 = self.component.map_screen([(cstart,a),(cend, b)])
+        y1,y2=up1[1], up2[1]
+
+        return pt1, pt2, y1,y2
+
+    def _draw_end_caps(self, gc, x1, x2, y):
+        gc.lines([(x1, y - 10), (x1, y + 10)])
+        gc.lines([(x2, y - 10), (x2, y + 10)])
+
+    def _draw_extended_end_caps(self, gc,x1,x2,y,y1,y2):
+        if y1>y:
+            gc.lines([(x1, y - 10), (x1, y1 - 5)])
+        else:
+            gc.lines([(x1, y+10), (x1, y1+5)])
+
+        if y2>y:
+            gc.lines([(x2, y-10), (x2, y2-5)])
+        else:
+            gc.lines([(x2, y+10), (x2, y2+5)])
+
+        # if y1 < y and y2<y:
+        #     gc.lines([(x1, y1+5), (x1, y + 10)])
+        #     gc.lines([(x2, y2+5), (x2, y + 10)])
+        # elif y1> y and y2>y:
+        #     gc.lines([(x1, y - 10),(x1, y1 + 5)])
+        #     gc.lines([(x2, y - 10),(x2, y2 + 5)])
 
     def overlay(self, component, gc, *args, **kw):
-
-        line_width = 4
         points = self._get_line()
         if points:
-            pt1, pt2 = points
+            pt1, pt2, y1,y2 = points
             with gc:
                 comp = self.component
                 gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
-                gc.set_stroke_color((1, 0, 0))
-                gc.set_line_width(line_width)
+
+                gc.set_stroke_color(convert_from_pyqt_color(None, None, self.line_color))
+                gc.set_line_width(self.line_width)
 
                 y = pt1[1]
                 x1 = pt1[0] + 1
                 x2 = pt2[0] - 1
                 gc.lines([(x1, y), (x2, y)])
 
-                # add end caps
-                gc.lines([(x1, y - 10), (x1, y + 10)])
-                gc.lines([(x2, y - 10), (x2, y + 10)])
+                self._draw_end_caps(gc, x1, x2, y)
                 gc.draw_path()
+
+                # add end caps
+                if self.extend_end_caps:
+                    gc.set_line_width(1)
+                    self._draw_extended_end_caps(gc, x1,x2,y,y1,y2)
+
+                gc.draw_path()
+
+                if self.label_visible:
+                    label = self._get_plateau_label(x1, x2, y)
+                    label.overlay(component, gc)
+
+    def _get_plateau_label(self, x1, x2, y):
+        if self.layout_needed or not self.plateau_label:
+            p=self.plateau_label
+        else:
+            ox, oy= self.component.map_screen([(0, self.y + self.label_offset)])[0]
+            # print self.label_offset, self.y, oy, y
+            # ox,oy=self.component.map_screen([self.y+self.label_offset])[0]
+            # print oy, self.label_offset, y,self.y
+            # oy=10
+
+            p=PlotLabel(text=self.info_txt,
+                        font='modern {}'.format(self.label_font_size),
+                        x=x1+(x2-x1)*0.5,
+                        y=oy+15)
+            self.plateau_label=p
+
+        return p
 #============= EOF =============================================

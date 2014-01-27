@@ -3,6 +3,7 @@
 *.pyc
 zobs/
 docs/_build
+sandbox/
 *.hidden
 *.project
 *.pydevproject

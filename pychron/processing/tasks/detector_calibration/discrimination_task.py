@@ -22,14 +22,14 @@ from pychron.processing.tasks.analysis_edit.interpolation_task import Interpolat
 
 
 class DiscrimintationTask(InterpolationTask):
-    id = 'pychron.analysis_edit.discrimination'
+    id = 'pychron.processing.discrimination'
     ic_factor_editor_count = 1
     references_adapter = ReferencesAdapter
 
     def do_easy_discrimination(self):
         self._do_easy(self._easy_discrimination)
 
-    def _easy_discrimination(self, db, ep):
+    def _easy_discrimination(self, db, ep, prog):
         doc = ep.doc('disc')
         projects = doc['projects']
         disc, disc_err = doc['discrimination']
@@ -40,7 +40,8 @@ class DiscrimintationTask(InterpolationTask):
                for ln in si.labnumbers
                for ai in ln.analyses]
 
-        prog = self.manager.open_progress(len(ans) + 1)
+        prog.increase_max(len(ans))
+        # prog = self.manager.open_progress(len(ans) + 1)
         for ai in ans:
             if prog.canceled:
                 return
@@ -62,16 +63,16 @@ class DiscrimintationTask(InterpolationTask):
             #an=self.manager.make_analysis(ai, calculate_age=True)
             #self.manager.save_arar(an, ai)
 
-        prog.increment()
+        # prog.close()
         return True
 
         #def _default_layout_default(self):
         #    return TaskLayout(
-        #id='pychron.analysis_edit.ic_factor',
+        #id='pychron.processing.ic_factor',
         #left=Splitter(
-        #           PaneItem('pychron.analysis_edit.unknowns'),
-        #           PaneItem('pychron.analysis_edit.references'),
-        #           PaneItem('pychron.analysis_edit.controls'),
+        #           PaneItem('pychron.processing.unknowns'),
+        #           PaneItem('pychron.processing.references'),
+        #           PaneItem('pychron.processing.controls'),
         #           orientation='vertical'
         #           ),
         #right=Splitter(

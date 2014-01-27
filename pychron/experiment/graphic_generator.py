@@ -15,9 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Any, Button, Float
-from traitsui.api import View, Item, Controller, UItem, HGroup
-from chaco.api import HPlotContainer, OverlayPlotContainer
+from traits.api import HasTraits, Instance, Any, Float
+from traitsui.api import View, Controller, UItem
+from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
 #============= standard library imports ========================
@@ -31,9 +31,8 @@ from chaco.data_label import DataLabel
 from pychron.paths import paths
 from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action
-from pyface.timer.do_later import do_later
 import math
-from pychron.helpers.filetools import str_to_bool
+from pychron.core.helpers.filetools import to_bool
 #============= local library imports  ==========================
 class myDataLabel(DataLabel):
     label_position = Any
@@ -117,7 +116,7 @@ class GraphicModel(HasTraits):
 
         use_label = parser.find('use_label')
         if use_label is not None:
-            use_label = str_to_bool(use_label.text.strip())
+            use_label = to_bool(use_label.text.strip())
         else:
             use_label = True
 

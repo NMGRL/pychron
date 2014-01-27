@@ -25,15 +25,14 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 class DatabasePlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
-        return [
-            ConnectionPreferencesPane,
-            MassSpecConnectionPane]
+        return [ConnectionPreferencesPane,
+                MassSpecConnectionPane,
+                ]
 
     def _service_offers_default(self):
         so = self.service_offer_factory(
             protocol=IsotopeDatabaseManager,
-            factory=IsotopeDatabaseManager
-        )
+            factory=IsotopeDatabaseManager)
         return [so, ]
 
     #def _my_task_extensions_default(self):

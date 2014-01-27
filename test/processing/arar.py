@@ -1,4 +1,4 @@
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -7,7 +7,7 @@ from pychron.paths import paths
 paths.build('_unittest')
 #build_directories(paths)
 
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('arar')
 
@@ -170,7 +170,7 @@ class ArArAgeCase(unittest.TestCase):
 
     def test_R_errors(self):
         an = self.analysis
-        self.assertNotEqual(an.R_err, an.R_err_wo_irrad)
+        self.assertNotEqual(an.F_err, an.F_err_wo_irrad)
 
     def test_Multiplier_baseline(self):
         an = self.analysis

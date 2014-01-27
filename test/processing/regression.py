@@ -16,15 +16,16 @@
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
-
+from pychron.core.ui import set_toolkit
+set_toolkit('qt4')
 #============= standard library imports ========================
 from unittest import TestCase
 import numpy as np
 #============= local library imports  ==========================
-from pychron.regression.mean_regressor import WeightedMeanRegressor
-from pychron.regression.ols_regressor import PolynomialRegressor
-from pychron.regression.wls_regressor import WeightedPolynomialRegressor
-# from pychron.regression.york_regressor import YorkRegressor
+from pychron.core.regression.mean_regressor import WeightedMeanRegressor
+from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+# from pychron.core.regression.york_regressor import YorkRegressor
 
 class WeightedMeanRegressionTest(TestCase):
     def setUp(self):
@@ -72,11 +73,11 @@ class CITest(TestCase):
 
     def testSYX(self):
         reg = PolynomialRegressor(xs=self.x, ys=self.y, degree=1)
-        self.assertAlmostEqual(reg.syx, 0.297, delta=0.01)
+        self.assertAlmostEqual(reg.get_syx(), 0.297, delta=0.01)
 
     def testSSX(self):
         reg = PolynomialRegressor(xs=self.x, ys=self.y, degree=1)
-        self.assertAlmostEqual(reg.ssx, 8301.389, delta=0.01)
+        self.assertAlmostEqual(reg.get_ssx(), 8301.389, delta=0.01)
 
 
 class WLSRegressionTest(TestCase):
@@ -109,7 +110,7 @@ class WLSRegressionTest(TestCase):
 
     def testVarCovar(self):
         wls = self.wls
-        cv = wls.calculate_var_covar()
+        cv = wls.var_covar
         print cv
         print wls._result.normalized_cov_params
 
@@ -159,12 +160,12 @@ class OLSRegressionTest(TestCase):
 
     def testPredictYerr(self):
         ols = self.ols
-        ypred = ols.predict_error(self.Xk)[0]
+        ypred = ols.predict_error(self.Xk)
         self.assertAlmostEqual(ypred, self.ypred_k, 3)
 
     def testPredictYerr_matrix(self):
         ols = self.ols
-        ypred = ols.predict_error_matrix(self.Xk)[0]
+        ypred = ols.predict_error_matrix([self.Xk])[0]
         self.assertAlmostEqual(ypred, self.ypred_k, 3)
 
     def testPredictYerr_al(self):
@@ -174,13 +175,13 @@ class OLSRegressionTest(TestCase):
 
     def testPredictYerrSD(self):
         ols = self.ols
-        ypred = ols.predict_error(self.Xk, error_calc='sd')[0]
-        ypredm = ols.predict_error_matrix(self.Xk, error_calc='sd')[0]
+        ypred = ols.predict_error(self.Xk, error_calc='sd')
+        ypredm = ols.predict_error_matrix([self.Xk], error_calc='sd')[0]
         self.assertAlmostEqual(ypred, ypredm, 7)
 
     def testPredictYerrSD_al(self):
         ols = self.ols
-        ypred = ols.predict_error(self.Xk, error_calc='sd')[0]
+        ypred = ols.predict_error(self.Xk, error_calc='sd')
         ypredal = ols.predict_error_al(self.Xk, error_calc='sd')[0]
         self.assertAlmostEqual(ypred, ypredal, 7)
 

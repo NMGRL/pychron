@@ -67,7 +67,7 @@ class AerotechMotionControllerManager(MotionControllerManager):
         return True
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('amc')
     globalv.show_infos = False
     globalv.show_warnings = False

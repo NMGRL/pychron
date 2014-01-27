@@ -20,16 +20,14 @@ import os
 import sys
 #============= local library imports  ==========================
 
-def build_version(ver, setup_ver=None,debug=False):
+def build_version(ver=None, setup_ver=None, debug=False):
+    if ver is None:
+        ver = ''
 
     if setup_ver is None:
-        setup_ver = ver
+        setup_ver = ''
 
     root = os.path.dirname(__file__)
-    #    if debug_path:
-    # #       insert pychron pychron dir into sys.path
-    #        build_sys_path(ver, root)
-    #    else:
 
     if not debug:
         add_eggs(root)
@@ -49,12 +47,17 @@ def build_version(ver, setup_ver=None,debug=False):
 
 
 def build_sys_path(ver, root):
-    merc = os.path.join(os.path.expanduser('~'),
-                        'Programming',
-                        'git')
-    src = os.path.join(merc, 'pychron{}'.format(ver))
-
-    sys.path.insert(0, src)
+    """
+    obsolete
+    """
+    pass
+    # merc = os.path.join(os.path.expanduser('~'),
+    #                     'Programming',
+    #                     'git')
+    # src = os.path.join(merc, 'pychron{}'.format(ver))
+    # print src
+    # print root
+    # sys.path.insert(0, src)
 
 
 def add_eggs(root):
@@ -77,7 +80,6 @@ def build_globals(debug):
     from pychron.globals import globalv
 
     globalv.build(ip)
-
     globalv.debug = debug
 
 # #    use_ipc = ip.get_global('use_ipc')

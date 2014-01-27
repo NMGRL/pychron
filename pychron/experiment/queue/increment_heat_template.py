@@ -25,7 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 import csv
 import os
 #============= local library imports  ==========================
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.paths import paths
 from pychron.viewable import Viewable
 from pychron.pychron_constants import alphas

@@ -26,7 +26,7 @@ from threading import Lock
 from pychron.config_loadable import ConfigLoadable
 from pychron.remote_hardware.errors import PychronCommErrorCode
 from pychron.globals import globalv
-from pychron.ui.led_editor import LED, LEDEditor
+from pychron.core.ui.led_editor import LED, LEDEditor
 
 
 class CRHandler(Handler):
@@ -283,7 +283,7 @@ def profiling():
     profile.runctx('repeator.get_response(*args)', globals(), {'repeator':repeator, 'args':(1, 2, 3) })
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('profile_repeator')
     profiling()

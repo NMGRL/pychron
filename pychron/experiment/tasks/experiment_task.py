@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import on_trait_change, Bool, Instance
+from traits.api import on_trait_change, Bool, Instance, Event
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
@@ -27,7 +27,6 @@ import os
 #============= local library imports  ==========================
 import xlrd
 from pychron.envisage.tasks.pane_helpers import ConsolePane
-from pychron.experiment.health.analysis_health import AnalysisHealth
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
     ControlsPane, WaitPane, IsotopeEvolutionPane
@@ -38,8 +37,7 @@ from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.image.tasks.video_pane import VideoDockPane
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
-from pychron.helpers.filetools import add_extension
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.helpers.filetools import add_extension
 from pychron.messaging.notify.notifier import Notifier
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
@@ -49,8 +47,6 @@ class ExperimentEditorTask(EditorTask):
     group_count = 0
     name = 'Experiment'
 
-    auto_figure_window = None
-    use_auto_figure = Bool
     use_notifications = Bool
     use_syslogger = Bool
     #notifications_port = Int
@@ -59,7 +55,8 @@ class ExperimentEditorTask(EditorTask):
     notifier = Instance(Notifier, ())
     syslogger = Instance('pychron.experiment.sys_log.SysLogger')
 
-    analysis_health = Instance(AnalysisHealth)
+    # analysis_health = Instance(AnalysisHealth)
+    last_experiment_changed = Event
 
     def new_pattern(self):
         pm = PatternMakerView()
@@ -103,15 +100,10 @@ class ExperimentEditorTask(EditorTask):
         bind_preference(self.notifier, 'port',
                         'pychron.experiment.notifications_port')
         #force notifier setup
-        self.notifier.setup(self.notifier.port)
+        if self.use_notifications:
+            self.notifier.setup(self.notifier.port)
 
-        #auto save
-        bind_preference(self.manager.executor, 'use_auto_save',
-                        'pychron.experiment.use_auto_save')
-        bind_preference(self.manager.executor, 'auto_save_delay',
-                        'pychron.experiment.auto_save_delay')
-
-        #sys logger
+         #sys logger
         bind_preference(self, 'use_syslogger',
                         'pychron.use_syslogger')
         if self.use_syslogger:
@@ -129,8 +121,6 @@ class ExperimentEditorTask(EditorTask):
                             'pychron.syslogger.password')
             bind_preference(self.syslogger, 'host',
                             'pychron.syslogger.host')
-
-
 
     def create_dock_panes(self):
         self.isotope_evolution_pane = IsotopeEvolutionPane()
@@ -239,11 +229,15 @@ class ExperimentEditorTask(EditorTask):
 
         return txt, is_uv
 
+    def _set_last_experiment(self, p):
+        with open(paths.last_experiment, 'w') as fp:
+            fp.write(p)
+        self.last_experiment_changed=True
+
     def open(self, path=None):
 
         #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
 #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
         if not os.path.isfile(path):
             path = None
 
@@ -332,29 +326,6 @@ class ExperimentEditorTask(EditorTask):
             #msg = 'RunAdded {}'.format(run.uuid)
             #self.info('pushing notification {}'.format(msg))
             self.notifier.send_notification(run.uuid)
-
-    def _open_auto_figure(self):
-        if self.use_auto_figure:
-            app = self.window.application
-            from pyface.tasks.task_window_layout import TaskWindowLayout
-
-            win = app.create_window(TaskWindowLayout('pychron.processing.auto_figure'))
-            win.open()
-
-            win.active_task.attached = True
-            self.auto_figure_window = win
-
-            self.window.activate()
-
-    def _test_auto_figure(self):
-        self.use_auto_figure = True
-
-        self._open_auto_figure()
-        task = self.auto_figure_window.active_task
-
-        #         task.plot_series('bu-FC-J', 'blank_unknown', 'jan', 'Fusions CO2', days=100)
-        #         task.plot_series('bu-FD-J', 'blank_unknown', 'jan', 'Fusions Diode', days=100)
-        task.plot_sample_ideogram('NM-779')
 
     #===============================================================================
     # handlers
@@ -487,10 +458,6 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change('manager:executor:run_completed')
     def _update_run_completed(self, new):
-        if self.auto_figure_window:
-            task = self.auto_figure_window.active_task
-            invoke_in_main_thread(task.refresh_plots, new)
-
         self._publish_notification(new)
 
         load_name = self.manager.executor.experiment_queue.load_name
@@ -541,7 +508,7 @@ class ExperimentEditorTask(EditorTask):
             # if successful open an auto figure task
             if self.manager.execute_queues(qs):
                 self._show_pane(self.wait_pane)
-                self._open_auto_figure()
+                self._set_last_experiment(self.active_editor.path)
             else:
                 self.warning('experiment queue did not start properly')
 
@@ -616,9 +583,9 @@ class ExperimentEditorTask(EditorTask):
     #def _notifier_default(self):
     #    return self._notifier_factory()
 
-    def _analysis_health_default(self):
-        ah = AnalysisHealth(db=self.manager.db)
-        return ah
+    # def _analysis_health_default(self):
+    #     ah = AnalysisHealth(db=self.manager.db)
+    #     return ah
 
     def _loading_manager_default(self):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')

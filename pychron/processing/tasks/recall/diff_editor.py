@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, HSplit, TabularEditor
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.tasks.recall.mass_spec_recaller import MassSpecRecaller
 
 

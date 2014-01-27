@@ -77,7 +77,7 @@ def end_request(fn):
 #        only open an read the file on start up
 #        memoize_value stores the result
 #    '''
-#    from pychron.helpers.paths import setup_dir
+#    from pychron.core.helpers.paths import setup_dir
 #    p = os.path.join(setup_dir, 'hmac')
 #    #read a config file
 #    with open(p, 'r') as f:

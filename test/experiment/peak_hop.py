@@ -1,5 +1,6 @@
 import time
-from pychron.ui import set_toolkit
+from uncertainties import ufloat
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -8,7 +9,7 @@ from pychron.paths import paths, build_directories
 paths.build('_unittest')
 build_directories(paths)
 
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 
 logging_setup('peak_hop')
 
@@ -27,11 +28,11 @@ import unittest
 #        #('Ar38:CDD',                                5, 1)
 #        ('Ar37:CDD', 5, 1)
 #]
-HOPS = [('Ar40:CDD', 5, 1),
+HOPS = [('Ar40:H1, Ar36:CDD', 5, 1),
         ('Ar39:CDD', 5, 1),
         ('Ar38:CDD', 5, 1),
         ('Ar37:CDD', 5, 1),
-        ('Ar36:CDD', 5, 1)]
+        ]
 
 #from traits.api import HasTraits, Str, Button
 #from traitsui.api import View
@@ -48,7 +49,7 @@ class PeakHopTestCase(unittest.TestCase):
         aspec = AutomatedRunSpec()
         aspec.mass_spectrometer = 'jan'
         aspec.labnumber = '17005'
-        aspec.aliquot = 81
+        aspec.aliquot = 95
 
         a = AutomatedRun()
         a.script_info.measurement_script_name = 'unknown_peak_hop'
@@ -59,6 +60,7 @@ class PeakHopTestCase(unittest.TestCase):
         a.spectrometer_manager = s
         a.ion_optics_manager = ion
         a.arar_age = ArArAge()
+        a.arar_age.j=ufloat(0.001, 1e-6)
 
         a._alive = True
         a.uuid = '12345-ABCDE'
@@ -80,15 +82,19 @@ class PeakHopTestCase(unittest.TestCase):
                               ('Ar39', 'CDD', 'signal'),
                               ('Ar38', 'CDD', 'signal'),
                               ('Ar37', 'CDD', 'signal'),
-                              ('Ar36', 'CDD', 'signal')
-        ]
-
-    def measure(self):
-        t = Thread(name='run', target=self._measure)
+                              ('Ar36', 'CDD', 'signal')]
+        self.save_isotopes = [('Ar40', 'H1', 'signal'),
+                              ('Ar36', 'CDD', 'signal'),
+                              ('Ar39', 'CDD', 'signal'),
+                              ('Ar38', 'CDD', 'signal'),
+                              ('Ar37', 'CDD', 'signal'),
+                              ]
+    def measure(self, **kw):
+        t = Thread(name='run', target=self._measure, kwargs=kw)
         t.start()
         t.join()
 
-    def _measure(self):
+    def _measure(self, baseline=True):
         cycles = 1
         counts = 100
         dets = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
@@ -102,12 +108,12 @@ class PeakHopTestCase(unittest.TestCase):
                       #time.time(),
                       0,
                       series=0, group='signal')
-
-        a.py_baselines(10, st, 0, 39.5, 'H1', series=1)
+        if baseline:
+            a.py_baselines(10, st, 0, 39.5, 'H1', series=1)
 
     #@unittest.skip("skip peak_hop_save")
     def test_peak_hop_save(self):
-        self.measure()
+        self.measure(baseline=False)
 
         msi = MassSpecDatabaseImporter()
         msi.connect()
@@ -126,11 +132,13 @@ class PeakHopTestCase(unittest.TestCase):
         #    det='CDD'
         #    tb, vb = spec.get_baseline_data(iso, det)
         #    self.assertEqual(len(tb), 10)
-        #def test_peak_hop_setup(self):
-        #    a=self.arun
-        #    self.measure()
-        #    self.assertEqual(a._save_isotopes,
-        #                     self.save_isotopes)
+
+    @unittest.skip("skip peak_hop_setup")
+    def test_peak_hop_setup(self):
+       a=self.arun
+       self.measure(baseline=False)
+       self.assertEqual(a._save_isotopes,
+                        self.save_isotopes)
 
 
 if __name__ == '__main__':

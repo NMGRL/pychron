@@ -18,19 +18,14 @@ from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 import csv
-from pylab import polar, show, ylim, Inf, arange, meshgrid, zeros, \
-    contour, ones, contourf, array, mgrid, plot, legend, mean, polyfit, \
-    polyval, linspace, argmin, argmax, scatter, cm, cos, sin, xlabel, ylabel, \
-    colorbar, hstack, rc, gcf, pi
+from pylab import show, meshgrid, zeros, \
+    contourf, array, linspace, scatter, cm, xlabel, ylabel, \
+    colorbar, rc, gcf
 import math
 # from itertools import groupby
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.interpolate import griddata
-from pychron.regression.ols_regressor import MultipleLinearRegressor, FluxRegressor
+from pychron.core.regression.ols_regressor import MultipleLinearRegressor, FluxRegressor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -215,7 +210,7 @@ def flux_contour3d(xx, yy, z, ze):
 def visualize_flux_contour(p, holder, delim=','):
 #    from traits.etsconfig.etsconfig import ETSConfig
 #    ETSConfig.toolkit = 'qt4'
-#    from pychron.regression.ols_regressor import MultipleLinearRegressor
+#    from pychron.core.regression.ols_regressor import MultipleLinearRegressor
     use_2d = True
     #use_2d = False
     fit_dev = False

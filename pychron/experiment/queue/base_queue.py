@@ -28,7 +28,7 @@ from pychron.paths import paths
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.loggable import Loggable
 from pychron.experiment.queue.parser import RunParser, UVRunParser
-from pychron.helpers.ctx_managers import no_update
+from pychron.core.helpers.ctx_managers import no_update
 
 
 def extract_meta(line_gen):

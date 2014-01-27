@@ -22,7 +22,7 @@ ETSConfig.toolkit = "qt4"
 import os
 #============= local library imports  ==========================
 
-version_id = '_view'
+version_id = ''
 from helpers import build_version
 '''
     set_path=True inserts the pychron source directory into the PYTHONPATH
@@ -30,7 +30,7 @@ from helpers import build_version
     Use false (default) if your are launching from a standalone bundle. 
 '''
 DEBUG = True
-build_version(version_id, debug=DEBUG)
+build_version(version_id, setup_ver='_view',debug=DEBUG)
 
 def main():
     '''
@@ -38,7 +38,7 @@ def main():
     '''
 
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # import application
@@ -48,7 +48,7 @@ def main():
     # build directories
     build_directories(paths)
 
-#    from pychron.helpers.paths import hidden_dir
+#    from pychron.core.helpers.paths import hidden_dir
 #    path = os.path.join(hidden_dir, 'version_info')
 #    a = VersionInfoDisplay(local_path=path,
 #                           src_path=os.path.join(SRC_DIR,

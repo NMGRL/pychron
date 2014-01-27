@@ -25,11 +25,11 @@ import yaml
 #============= local library imports  ==========================
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.graph.stream_graph import StreamStackedGraph
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 from pychron.application_controller import ApplicationController
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.thread import Thread
+from pychron.core.ui.thread import Thread
 
 
 class ScannerController(ApplicationController):
@@ -38,10 +38,8 @@ class ScannerController(ApplicationController):
 
     def traits_view(self):
         v = View(UItem('controller.execute_button',
-                       editor=ButtonEditor(label_value='controller.execute_label')
-        ),
-                 Item('setpoint', enabled_when='_scanning'),
-        )
+                       editor=ButtonEditor(label_value='controller.execute_label')),
+                 Item('setpoint', enabled_when='_scanning'))
         return v
 
     def controller_execute_button_changed(self, info):
@@ -89,9 +87,9 @@ class Scanner(Loggable):
             self.set_static_value(name, *args, **kw)
 
     def set_static_value(self, name_or_idx, value, plotid=None):
-        '''
+        """
             if the plotid is not None add a horizontal guide at value
-        '''
+        """
         if isinstance(name_or_idx, str):
             name_or_idx = next((i for i, (e, a) in enumerate(self.static_values)), None)
 
@@ -129,7 +127,7 @@ class Scanner(Loggable):
                 kw['xtitle'] = 'Time'
 
             g.new_plot(
-                data_limit=1000,
+                data_limit=3000,
                 **kw)
             g.new_series(plotid=i)
         self._graph = g
@@ -141,8 +139,11 @@ class Scanner(Loggable):
         self.stop_event = True
         self.info('scan stopped')
         if self.manager:
+            self._stop_hook()
             self.manager.disable_device()
-            self.manager.set_laser_temperature(0)
+
+    def _stop_hook(self):
+        pass
 
     def execute(self):
 
@@ -229,28 +230,32 @@ class Scanner(Loggable):
         print setpoints
         self.set_static_value('Setpoint', 0)
         time.sleep(start_delay)
-        for t, d in setpoints:
+        for args in setpoints:
+            t=args[0]
             if self._scanning:
                 self.setpoint = t
-
-                if self.manager:
-                    self.manager.set_laser_temperature(t)
+                self._set_power_hook(t)
 
                 self.set_static_value('Setpoint', t, plotid=0)
-                self._maintain_setpoint(t, d)
+                self._maintain_setpoint(t, *args[1:])
 
         if self._scanning:
             self.setpoint = 0
             self.set_static_value('Setpoint', 0)
-            if self.manager:
-                self.manager.set_laser_temperature(0)
+            self._set_power_hook(0)
+            # if self.manager:
+                # self.manager.set_laser_temperature(0)
 
             time.sleep(end_delay)
             self.stop()
 
         self.end_control_hook(self._scanning)
 
-    def _maintain_setpoint(self, t, d):
+    def _set_power_hook(self, t):
+        if self.manager:
+            self.manager.set_laser_temperature(t)
+
+    def _maintain_setpoint(self, t, d, *args):
         self.info('setting setpoint to {} for {}s'.format(t, d))
         st = time.time()
         while time.time() - st < d and self._scanning:

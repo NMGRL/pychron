@@ -37,13 +37,14 @@ class irrad_LevelTable(Base, NameMixin):
     z = Column(Float)
     holder_id = foreignkey('irrad_HolderTable')
     irradiation_id = foreignkey('irrad_IrradiationTable')
+    production_id = foreignkey('irrad_ProductionTable')
+
     positions = relationship('irrad_PositionTable', backref='level')
 
 
 class irrad_PositionTable(Base, BaseMixin):
     labnumber = relationship('gen_LabTable', backref='irradiation_position',
-                             uselist=False
-    )
+                             uselist=False)
     flux_histories = relationship('flux_HistoryTable', backref='position')
 
     level_id = foreignkey('irrad_LevelTable')
@@ -75,12 +76,13 @@ class irrad_ProductionTable(Base, NameMixin):
     Cl_K = Column(Float)
     Cl_K_err = Column(Float)
 
-    irradiations = relationship('irrad_IrradiationTable', backref='production')
+    # irradiations = relationship('irrad_IrradiationTable', backref='production')
+    levels = relationship('irrad_LevelTable', backref='production')
 
 
 class irrad_IrradiationTable(Base, NameMixin):
     levels = relationship('irrad_LevelTable', backref='irradiation')
-    irradiation_production_id = foreignkey('irrad_ProductionTable')
+    # irradiation_production_id = foreignkey('irrad_ProductionTable')
     irradiation_chronology_id = foreignkey('irrad_ChronologyTable')
 
 
@@ -90,11 +92,27 @@ class irrad_ChronologyTable(Base, BaseMixin):
 
     def get_doses(self, tofloat=True):
         doses = self.chronology.split('$')
-        doses = [di.strip().split('%') for di in doses]
+        # doses = [di.strip().split('%') for di in doses]
+        dd = []
+        for di in doses:
+            pwr = 1.0
+            if '|' in di:
+                pwr, di = di.split('|')
+                pwr = float(pwr)
+
+            s, e = di.strip().split('%')
+            dd.append((pwr, s, e))
+
         if tofloat:
+            # def convert(x):
+            #     pwr=1.0
+            #     if ':' in x:
+            #         pwr,x = x.split('|')
+            #
+            #     return pwr, datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
             convert = lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-            doses = [map(convert, d) for d in doses if d]
+            dd = [(p, convert(s), convert(e)) for p, s, e in dd]
 
-        return doses
+        return dd
 
-    #============= EOF =============================================
+        #============= EOF =============================================

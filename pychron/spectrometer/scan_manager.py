@@ -33,14 +33,14 @@ from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
 # from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
 # import csv
-# from pychron.helpers.filetools import unique_path
+# from pychron.core.helpers.filetools import unique_path
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # import time
 
 import time
 from threading import Thread
 from Queue import Queue
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.pychron_constants import NULL_STR
 from pychron.spectrometer.readout_view import ReadoutView
 from pychron.graph.tools.data_tool import DataTool, DataToolOverlay
@@ -63,9 +63,7 @@ class ScanManager(Manager):
     graph = Instance(TimeSeriesStreamGraph)
     readout_view = Instance(ReadoutView)
 
-    integration_time = Enum(0, 0.065536, 0.131072, 0.262144, 0.524288,
-                            1.048576, 2.097152, 4.194304, 8.388608,
-                            16.777216, 33.554432, 67.108864)
+    integration_time = DelegatesTo('spectrometer')#Enum(QTEGRA_INTEGRATION_TIMES)
 
     detectors = DelegatesTo('spectrometer')
     detector = Instance(Detector)
@@ -111,7 +109,7 @@ class ScanManager(Manager):
         # covnert dac into a mass
         # convert mass to isotope
         #            d = self.magnet.dac
-            iso = self.magnet.map_dac_to_isotope()
+            iso = self.magnet.map_dac_to_isotope(current=False)
             if not iso in self.isotopes:
                 iso = NULL_STR
 
@@ -140,8 +138,7 @@ class ScanManager(Manager):
         self.graph = self._graph_factory()
 
         #trigger a timer reset. set to 0 then default
-        self.integration_time = 0
-        self.integration_time = 1.048576
+        self.reset_scan_timer()
 
         # listen to detector for enabling
         self.on_trait_change(self._toggle_detector, 'detectors:active')
@@ -221,7 +218,7 @@ class ScanManager(Manager):
                     if plot.visible:
                         ys=plot.value.get_data()
                         ma=max(ma, max(ys))
-                        mi=min(ma, min(ys))
+                        mi=min(mi, min(ys))
 
                 self.graph.set_y_limits(min_=mi,max_=ma, pad='0.1')
 
@@ -235,6 +232,8 @@ class ScanManager(Manager):
 
     def reset_scan_timer(self):
         self.info('reset scan timer')
+
+        self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
     def _stop_timer(self):
@@ -364,8 +363,6 @@ class ScanManager(Manager):
     def _integration_time_changed(self):
         if self.integration_time:
             self.spectrometer.set_integration_time(self.integration_time)
-
-            self.graph.set_scan_delay(self.integration_time)
             self.reset_scan_timer()
 
 

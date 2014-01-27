@@ -25,7 +25,7 @@ from traits.traits import Property
 
 #============= EOF =============================================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.helpers.formatting import floatfmt, calc_percent_error
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'

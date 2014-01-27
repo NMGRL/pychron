@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Any
 from traitsui.handler import Controller
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

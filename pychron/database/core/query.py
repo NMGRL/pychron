@@ -361,11 +361,6 @@ class VideoQuery(DateQuery):
     pass
 
 
-class BakeoutQuery(Query):
-    __params__ = ['Run Date/Time',
-                  'Controller'
-    ]
-
 #============= EOF =============================================
 #        elif 'runtime' in param:
 #    def time_query(self):

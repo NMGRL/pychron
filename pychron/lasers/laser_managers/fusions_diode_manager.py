@@ -37,8 +37,8 @@ from fusions_laser_manager import FusionsLaserManager
 
 
 class FusionsDiodeManager(FusionsLaserManager):
-    '''
-    '''
+    """
+    """
     id = 'pychron.fusions.diode'
     name = 'fusions_diode'
     configuration_dir_name = 'fusions_diode'
@@ -173,9 +173,6 @@ class FusionsDiodeManager(FusionsLaserManager):
         pass
 
     def emergency_shutoff(self, *args, **kw):
-        '''
- 
-        '''
 
         super(FusionsDiodeManager, self).emergency_shutoff(*args, **kw)
         self.control_module_manager.disable()
@@ -190,24 +187,24 @@ class FusionsDiodeManager(FusionsLaserManager):
         else:
             self.set_laser_power(value)
 
-    def set_laser_temperature(self, temp):
-        return self._set_laser_power_hook(temp, mode='closed')
+    def set_laser_temperature(self, temp, set_pid=True):
+        return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
         #use_calibration=self.use_calibrated_temperature)
-
 
     #===============================================================================
     # private
     #===============================================================================
-    def _set_laser_power_hook(self, power, mode='open', **kw):
-        ''' 
-        '''
+    def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
         tc = self.temperature_controller
-        if tc._control_mode != mode:
+        if tc.control_mode != mode:
             tc.set_control_mode(mode)
 
+        power=float(power)
+        if mode == 'closed' and set_pid and power:
+            tc.set_pid(power)
+
         func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
-        func(float(power),
-             **kw)
+        func(power, set_pid=set_pid, **kw)
 
     def _enable_hook(self):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
@@ -239,37 +236,22 @@ class FusionsDiodeManager(FusionsLaserManager):
 
         except AttributeError:
             pass
-            #===============================================================================
-            # views
-            #===============================================================================
 
+    #===============================================================================
+    # views
+    #===============================================================================
     def get_additional_controls(self):
     #        v = Group(
-        gs = [
-            VGroup(Item('temperature_controller', style='custom',
-                        editor=InstanceEditor(view='control_view'),
-                        show_label=False,
-            ),
-                   label='Watlow',
-                   #                      show_border = True,
-            ),
-            VGroup(Item('pyrometer', show_label=False, style='custom',
-            ),
-                   #                      show_border = True,
-                   label='Pyrometer',
-
-            ),
-            VGroup(Item('control_module_manager', show_label=False, style='custom',
-            ),
-                   #                      show_border = True,
-                   label='ControlModule',
-
-            ),
-            VGroup(Item('fiber_light', style='custom', show_label=False),
-                   label='FiberLight'
-            ),
-            #                  layout = 'tabbed',
-        ]
+        gs = [VGroup(Item('temperature_controller', style='custom',
+                          editor=InstanceEditor(view='control_view'),
+                          show_label=False, ),
+                     label='Watlow'),
+              VGroup(Item('pyrometer', show_label=False, style='custom'),
+                     label='Pyrometer'),
+              VGroup(Item('control_module_manager', show_label=False, style='custom'),
+                     label='ControlModule'),
+              VGroup(Item('fiber_light', style='custom', show_label=False),
+                     label='FiberLight')]
         return gs
 
     #===============================================================================
@@ -289,22 +271,16 @@ class FusionsDiodeManager(FusionsLaserManager):
     #        return lm
 
     def _temperature_monitor_default(self):
-        '''
-        '''
         tm = DPi32TemperatureMonitor(name='temperature_monitor',
                                      configuration_dir_name=self.configuration_dir_name)
         return tm
 
     def _pyrometer_default(self):
-        '''
-        '''
         p = MikronGA140Pyrometer(name='pyrometer',
                                  configuration_dir_name=self.configuration_dir_name)
         return p
 
     def _laser_controller_default(self):
-        '''
-        '''
         b = FusionsDiodeLogicBoard(name='laser_controller',
                                    configuration_name='laser_controller',
                                    configuration_dir_name=self.configuration_dir_name)
@@ -319,33 +295,24 @@ class FusionsDiodeManager(FusionsLaserManager):
     #        return b
 
     def _stage_manager_default(self):
-        '''
-        '''
         args = dict(name='stage',
                     configuration_name='stage',
                     configuration_dir_name=self.configuration_dir_name,
-                    parent=self,
-        )
+                    parent=self)
         return self._stage_manager_factory(args)
 
     def _temperature_controller_default(self):
-        '''
-        '''
         w = WatlowEZZone(name='temperature_controller',
                          use_calibrated_temperature=self.use_calibrated_temperature,
                          configuration_dir_name=self.configuration_dir_name)
         return w
 
     def _pyrometer_temperature_monitor_default(self):
-        '''
-        '''
         py = PyrometerTemperatureMonitor(name='pyrometer_tm',
                                          configuration_dir_name=self.configuration_dir_name)
         return py
 
     def _title_default(self):
-        '''
-        '''
         return 'Diode Manager'
 
     def _control_module_manager_default(self):
@@ -354,7 +321,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.initializer import Initializer
 
 

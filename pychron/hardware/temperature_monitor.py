@@ -114,24 +114,24 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         return self.read_input_type()
 
     def _get_input_type(self):
-        '''
-        '''
+        """
+        """
         return self._input_type
 
     def _set_input_type(self, v):
-        '''
-        '''
+        """
+        """
         self._input_type = v
         self.set_input_type(v)
 
     def get_process_value(self):
-        '''
-        '''
+        """
+        """
         return self.process_value
 
     def read_temperature(self, **kw):
-        '''
-        '''
+        """
+        """
         commandindex = '01'
 #        com = self._build_command('V', commandindex)
         com = ('V', commandindex)
@@ -192,7 +192,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
             # strip off first three command characters
             # compare with sent command for error checking
             if re[:3] == 'R07':
-                re = make_bitarray(int(re[3:]))
+                re = make_bitarray(int(re[3:], 16))
                 input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
                 if input_class == 'TC':
                     self._input_type = TC_MAP[int(re[2:6], 2)]

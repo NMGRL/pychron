@@ -35,8 +35,8 @@ from pychron.hardware.kerr.kerr_microcontroller import KerrMicrocontroller
 
 
 class FusionsLogicBoard(CoreDevice):
-    '''
-    '''
+    """
+    """
     refresh_canvas = Event
     motor_microcontroller = Instance(KerrMicrocontroller)
 
@@ -97,8 +97,8 @@ class FusionsLogicBoard(CoreDevice):
         return mc.get_input(request)
 
     def initialize(self, *args, **kw):
-        '''
-        '''
+        """
+        """
 
         # disable laser
 
@@ -132,8 +132,8 @@ class FusionsLogicBoard(CoreDevice):
         return True
 
     def _build_command(self, *args):
-        '''
-        '''
+        """
+        """
         if self.prefix is not None:
             cmd = ' '.join(map(str, args))
             return ''.join((self.prefix, cmd))
@@ -141,8 +141,8 @@ class FusionsLogicBoard(CoreDevice):
             self.warning('Prefix not set')
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
 
         prefix = self.config_get(config, 'General', 'prefix')
         if prefix is not None:
@@ -382,8 +382,7 @@ class FusionsLogicBoard(CoreDevice):
     # motor methods
     #==============================================================================
     def set_motor(self, name, value, block=False,
-                  relative=False,
-    ):
+                  relative=False):
 
         motor = next((m for m in self.motors if m.name == name), None)
         if motor is None:

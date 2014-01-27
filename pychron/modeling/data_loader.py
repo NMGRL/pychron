@@ -72,7 +72,7 @@ class DataLoader(Loggable):
                                     tempoffset={} (C)
                                     timeoffset={} (min)
                             '''.format(len(samples), ', '.join(names), tempoffset, timeoffset),
-                            decorate=False)
+                            )
         for i in range(len(samples) - 1):
             self.info('loading sample {}'.format(names[i]))
             self.load_sample(path, samples[i], samples[i + 1], names[i], tempoffset, timeoffset)
@@ -402,7 +402,7 @@ class DataLoader(Loggable):
         return True
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('dataloader')
     d = DataLoader()
     path = '/Users/Ross/Pychrondata_beta/data/modeling/ShapFurnace.txt'

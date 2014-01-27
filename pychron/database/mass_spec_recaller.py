@@ -321,7 +321,7 @@
 #
 #
 #
-#    from pychron.helpers.logger_setup import logging_setup
+#    from pychron.core.helpers.logger_setup import logging_setup
 #    logging_setup('massspecrecaller')
 #    m = MassSpecRecaller()
 #    m.selector._search_()

@@ -22,7 +22,7 @@ from enable.colors import ColorTrait
 #============= standard library imports ========================
 import string
 #============= local library imports  ==========================
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import XYPlotLabel
 
 

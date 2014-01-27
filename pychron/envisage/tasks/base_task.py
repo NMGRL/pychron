@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 import os
 import subprocess
+from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
 # from traitsui.api import View, Item
 from pyface.tasks.task import Task
@@ -28,17 +29,17 @@ from pyface.action.api import ActionItem, Group
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
-    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction
+    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
 from pyface.confirmation_dialog import ConfirmationDialog
-from pychron.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class WindowGroup(Group):
@@ -137,8 +138,8 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
                 self.checked = False
 
 
-    #def _checked_changed(self):
-    #    print self.checked, self.task_id
+                #def _checked_changed(self):
+                #    print self.checked, self.task_id
 
 #             window = self.task.window
 #             print win, window
@@ -244,12 +245,6 @@ class BaseTask(Task, Loggable):
             self._tools_menu(),
             self._window_menu(),
             self._help_menu(),
-            #                       SMenu(
-            #                             ViewMenuManager(),
-            #                             id='Window', name='&Window'),
-
-
-            #                       *menus
         )
         if menus:
             for mi in reversed(menus):
@@ -299,13 +294,15 @@ class BaseTask(Task, Loggable):
                     items.append(ActionItem(action=action))
 
             groups.append(TaskGroup(items=items))
+
+        groups.append(DockPaneToggleGroup())
         return groups
 
     def _view_menu(self):
         grps = self._view_groups()
         view_menu = SMenu(
             *grps,
-            id='View', name='&View')
+            id='view.menu', name='&View')
         return view_menu
 
     def _edit_menu(self):
@@ -342,7 +339,7 @@ class BaseTask(Task, Loggable):
         return file_menu
 
     def _tools_menu(self):
-        tools_menu = SMenu(id='Tools', name='Tools')
+        tools_menu = SMenu(id='tools.menu', name='Tools')
         return tools_menu
 
     def _window_menu(self):
@@ -350,12 +347,10 @@ class BaseTask(Task, Loggable):
             Group(
                 CloseAction(),
                 CloseOthersAction(),
-                id='Close'
-            ),
+                id='Close'),
             Group(MinimizeAction(),
                   ResetLayoutAction(),
-                  PositionAction(),
-            ),
+                  PositionAction()),
             WindowGroup(),
             id='Window',
             name='Window')
@@ -365,6 +360,7 @@ class BaseTask(Task, Loggable):
     def _help_menu(self):
         menu = SMenu(
             IssueAction(),
+            AboutAction(),
             id='help.menu',
             name='Help')
         return menu
@@ -378,7 +374,7 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
-    _default_extension= ''
+    _default_extension = ''
     wildcard = None
     manager = Any
 
@@ -402,7 +398,8 @@ class BaseManagerTask(BaseTask):
         return True
 
     def view_pdf(self, p):
-        self.view_file(p, application='Adobe Reader')
+        # self.view_file(p, application='Adobe Reader')
+        self.view_file(p, application='Preview')
 
     def view_xls(self, p):
         application = 'Microsoft Office 2011/Microsoft Excel'
@@ -444,16 +441,17 @@ class BaseManagerTask(BaseTask):
                 r = dialog.paths
             return r
 
-    def save_file_dialog(self, **kw):
+    def save_file_dialog(self, ext=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
         dialog = FileDialog(parent=self.window.control, action='save as',
-                            **kw
-        )
+                            **kw)
         if dialog.open() == OK:
-            path=dialog.path
+            path = dialog.path
             if path:
-                return add_extension(path, ext=self._default_extension)
+                if ext is None:
+                    ext = self._default_extension
+                return add_extension(path, ext=ext)
 
 
 class BaseExtractionLineTask(BaseManagerTask):
@@ -490,6 +488,7 @@ class BaseExtractionLineTask(BaseManagerTask):
             man.activate()
 
 #            man.canvas.refresh()
+
 
 class BaseHardwareTask(BaseManagerTask):
     pass

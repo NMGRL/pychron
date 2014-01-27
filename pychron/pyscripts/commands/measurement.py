@@ -472,4 +472,37 @@ class SetExtractionLens(ValueCommand):
     description = 'Set extraction lens'
     example = 'set_extraction_lens(10.1)'
 
+
+class DefineDetectors(Command):
+    pass
+
+
+class DefineHops(Command):
+    pass
+
+
+class GetDeflection(Command):
+    pass
+
+
+class IsLastRun(Command):
+    pass
+
+
+class LoadHops(Command):
+    pass
+
+
+class SetBaselineFits(Command):
+    pass
+
+
+class SetFits(Command):
+    pass
+
+
+class SetIntegrationTime(Command):
+    pass
+
+
 #============= EOF =============================================

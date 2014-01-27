@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
-    Str
+    Str, on_trait_change
 from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.processing.search.previous_selection import PreviousSelection
@@ -26,11 +26,12 @@ import hashlib
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
 from pychron.paths import paths
-from pychron.processing.analysis import Marker
+# from pychron.processing.analysis import Marker
 from pychron.processing.selection.previous_selection import PreviousSelection
 from pychron.column_sorter_mixin import ColumnSorterMixin
 
@@ -38,12 +39,15 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 class TablePane(TraitsDockPane):
     append_button = Button
     replace_button = Button
+    clear_button = Button
 
     items = List
 
     _no_update = False
     update_needed = Event
     refresh_needed = Event
+    refresh_editor_needed=Event
+
     selected = Any
     dclicked = Any
 
@@ -52,7 +56,6 @@ class TablePane(TraitsDockPane):
 
     def dump(self):
         pass
-
 
     def traits_view(self):
         v = View(VGroup(
@@ -63,12 +66,7 @@ class TablePane(TraitsDockPane):
                                                   selected='selected',
                                                   dclicked='dclicked',
                                                   update='update_needed',
-                                                  refresh='refresh_needed'
-                                                  #                                                            auto_resize_rows=True
-            ),
-            )
-        )
-        )
+                                                  refresh='refresh_needed'))))
         return v
 
 
@@ -78,8 +76,12 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
 
     _add_tooltip = '''(u) Append unknowns'''
     _replace_tooltip = '''(Shift+u) Replace unknowns'''
+    _clear_tooltip = '''Clear unknowns'''
     configure_button = Button
-    clear_button = Button
+    clear_history_button = Button
+
+    configure_filter_button = Button
+
     history_limit = Int(10)
 
     configure_history_tooltip = 'Configure previous selections'
@@ -88,34 +90,54 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
     ps_label = Str('Previous Selections')
     cs_label = Property(depends_on='items[]')
 
+    @on_trait_change('append_button, replace_button')
+    def _on_append_replace(self):
+        self.dump_selection()
+        self.load_previous_selections()
+
     def load(self):
         self.load_previous_selections()
 
     def dump(self):
-        try:
-            self.dump_selection()
-        except ImportError:
-            pass
+        self.dump_selection()
 
     #===============================================================================
     # previous selections
     #===============================================================================
     def load_previous_selections(self):
+        try:
+            self._load()
+        except BaseException:
+            import traceback
+            traceback.print_exc()
+            self._remove_shelve()
+
+    def dump_selection(self):
+        try:
+            self._dump_selection()
+        except BaseException:
+            import traceback
+            traceback.print_exc()
+            self._remove_shelve()
+
+    def _remove_shelve(self):
+        os.unlink(self._get_shelve_path())
+
+    def _load(self):
         d = self._open_shelve()
         keys = sorted(d.keys(), reverse=True)
 
         def get_value(k):
             try:
                 return d[k]
-            except Exception:
+            except BaseException:
                 pass
 
         self.previous_selections = [PreviousSelection([], name='Previous Selections'),
                                     PreviousSelection([], name='')] + [get_value(ki) for ki in keys]
         self.previous_selection = self.previous_selections[0]
-        #self.previous_selections = filter(None, [get_value(ki) for ki in keys])
 
-    def dump_selection(self):
+    def _dump_selection(self):
         records = self.items
         if not records:
             return
@@ -127,10 +149,21 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         def make_name(rec):
             s = rec[0]
             e = rec[-1]
+            samples=set((r.sample for r in rec))
+            sname=','.join(samples)
+            if len(sname)>20:
+                sname='{}...'.format(sname[:20])
+
             if s != e:
-                return '{} - {}'.format(s.record_id, e.record_id)
+                if s.labnumber==e.labnumber:
+                    start=s.record_id
+                    end=e.aliquot_step_str
+                else:
+                    start=s.record_id
+                    end=e.record_id
+                return '{} ({} - {})'.format(sname, start, end)
             else:
-                return s.record_id
+                return '{} {}'.format(sname, s.record_id)
 
         def make_hash(rec):
             md5 = hashlib.md5()
@@ -138,13 +171,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                 md5.update('{}{}{}'.format(r.uuid, r.group_id, r.graph_id))
             return md5.hexdigest()
 
-        try:
-            d = self._open_shelve()
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            return
+        d = self._open_shelve()
 
         name = make_name(records)
         ha = make_hash(records)
@@ -156,7 +183,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             if keys:
                 next_key = '{:03n}'.format(int(keys[-1]) + 1)
 
-            records = filter(lambda ri: not isinstance(ri, Marker), records)
+            # records = filter(lambda ri: not isinstance(ri, Marker), records)
 
             name_exists = next((True for pi in d.itervalues() if pi.name == name), False)
             if name_exists:
@@ -179,17 +206,31 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
 
         d.close()
 
+    def _get_shelve_path(self):
+        return os.path.join(paths.hidden_dir, '{}_stored_selections'.format(self.id.split('.')[-1]))
+
     def _open_shelve(self):
-        p = os.path.join(paths.hidden_dir, 'stored_selections')
+        p =self._get_shelve_path()
         d = shelve.open(p)
         return d
+
+    def _get_cs_label(self):
+        m = 'Current Selection'
+        if self.items:
+            m = '{} n= {}'.format(m, len(self.items))
+        return m
 
     def traits_view(self):
         v = View(VGroup(
             HGroup(icon_button_editor('append_button', 'add',
                                       tooltip=self._add_tooltip),
                    icon_button_editor('replace_button', 'arrow_refresh',
-                                      tooltip=self._replace_tooltip)),
+                                      tooltip=self._replace_tooltip),
+                   icon_button_editor('clear_button', 'delete',
+                                      tooltip=self._clear_tooltip),
+                   icon_button_editor('configure_filter_button', 'filter',
+                                      tooltip='Configure/Apply a filter',
+                                      enabled_when='items')),
             HGroup(UItem('previous_selection',
                          editor=EnumEditor(name='previous_selections')),
                    icon_button_editor('configure_button', 'cog',
@@ -203,54 +244,60 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                                   dclicked='dclicked',
                                                   refresh='refresh_needed',
                                                   multi_select=True,
-                                                  column_clicked='column_clicked'
-            ))))
+                                                  column_clicked='column_clicked'))))
         return v
 
     def configure_view(self):
         v = View(
             Item('history_limit', label='Max. N History'),
-            icon_button_editor('clear_button', 'delete',
+            icon_button_editor('clear_history_button', 'delete',
                                label='Clear',
                                tooltip=self.clear_prev_selection_tooltip),
             buttons=['OK', 'Cancel', 'Revert'],
-            title='Configure History'
-        )
+            title='Configure History')
         return v
 
     def _clear_button_fired(self):
-        d = self._open_shelve()
-        d.update(dict())
-        d.close()
+        self.items=[]
+
+    def _clear_history_button_fired(self):
+        self._remove_shelve()
+        self.load_previous_selections()
 
     def _configure_button_fired(self):
         self.edit_traits(view='configure_view', kind='livemodal')
 
-    def _get_cs_label(self):
-        m = 'Current Selection'
-        if self.items:
-            m = '{} n= {}'.format(m, len(self.items))
-        return m
+    def _configure_filter_button_fired(self):
+        tf=TableFilter(items=self.items)
+        info=tf.edit_traits(kind='livemodal')
+        if info.result:
+            if not tf.filtered:
+                tf.apply_filter()
+
+            self.trait_set(items=tf.items, trait_change_notify=False)
+            self.refresh_needed=True
+            self.refresh_editor_needed=True
 
 
 class UnknownsPane(HistoryTablePane):
-    id = 'pychron.analysis_edit.unknowns'
+    id = 'pychron.processing.unknowns'
     name = 'Unknowns'
 
 
 class ReferencesPane(HistoryTablePane):
     name = 'References'
-    id = 'pychron.analysis_edit.references'
+    id = 'pychron.processing.references'
 
     _add_tooltip = '''(r) Append references'''
     _replace_tooltip = ''' (Shift+r) Replace references'''
+    _clear_tooltip = '''Clear references'''
 
 
 class ControlsPane(TraitsDockPane):
     #dry_run = Bool(True)
     #save_button = Button('Save')
     tool = Instance(IAnalysisEditTool)
-    id = 'pychron.analysis_edit.controls'
+    id = 'pychron.processing.controls'
     name = 'Controls'
 
     def traits_view(self):

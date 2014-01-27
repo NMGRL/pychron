@@ -48,6 +48,16 @@ class PlotterOptionsManager(HasTraits):
     persistence_name = ''
     persistence_root = Property
 
+    def load_yaml(self, blob):
+        po=self.plotter_options_klass(self.persistence_root)
+        po.load_yaml(blob)
+        self.plotter_options=po
+        po.initialize()
+
+    def dump_yaml(self):
+        po=self.plotter_options
+        return po.dump_yaml()
+
     def _get_persistence_root(self):
         return os.path.join(paths.plotter_options_dir, self.persistence_name)
 
@@ -65,12 +75,14 @@ class PlotterOptionsManager(HasTraits):
 
         p = os.path.join(self.persistence_root,
                          '{}.default'.format(self.plotter_options_name))
+        name = self.plotter_options.name
         with open(p, 'w') as fp:
-            obj = self.plotter_options.name
-            pickle.dump(obj, fp)
+            pickle.dump(name, fp)
 
         self.plotter_options.dump(self.persistence_root)
         self._plotter_options_list_dirty = True
+
+        self.plotter_options=next((pp for pp in self.plotter_options_list if pp.name==name), None)
 
 
     def set_plotter_options(self, name):
@@ -117,16 +129,13 @@ class PlotterOptionsManager(HasTraits):
                      tooltip='List of available plot options'),
                 icon_button_editor('add_options',
                                    'add',
-                                   tooltip='Add new plot options',
-                ),
+                                   tooltip='Add new plot options',),
                 icon_button_editor('delete_options',
                                    'delete',
                                    tooltip='Delete current plot options',
-                                   enabled_when='object.plotter_options.name!="Default"',
-                ),
+                                   enabled_when='object.plotter_options.name!="Default"',),
                 icon_button_editor('save_options', 'disk',
-                                   tooltip='Save changes to options',
-                )),
+                                   tooltip='Save changes to options')),
             Item('plotter_options',
                  show_label=False,
                  style='custom'),
@@ -146,7 +155,6 @@ class PlotterOptionsManager(HasTraits):
 
                 po = klass(self.persistence_root, name=n)
                 ps.append(po)
-
         return ps
 
     def _plotter_options_default(self):

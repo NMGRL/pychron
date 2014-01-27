@@ -16,12 +16,10 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Any
-from traitsui.api import View, Item, TableEditor, UItem
+from traitsui.api import View, TableEditor, UItem
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
-from pychron.ui.gui import invoke_in_main_thread
-from pyface.timer.do_later import do_later
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

@@ -33,6 +33,11 @@ except ImportError:
 
 
 class SysLogger(Loggable):
+    """
+        sandboxing/proof of concept.
+        build a context
+        send to remote machine which parses and displays in django app
+    """
     _ssh = None
     _sftp = None
     host = Str

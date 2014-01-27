@@ -22,8 +22,8 @@ from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
 from pychron.managers.manager import Manager
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.led_editor import LED
-from pychron.helpers.filetools import list_directory
+from pychron.core.ui.led_editor import LED
+from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -150,6 +150,9 @@ class BaseLaserManager(Manager):
     def set_motors_for_point(self, pt):
         pass
 
+    def get_achieved_output(self):
+        pass
+
 #===============================================================================
 # getter/setters
 #===============================================================================
@@ -159,8 +162,9 @@ class BaseLaserManager(Manager):
         return 'DISABLE' if self.enabled else 'ENABLE'
 
     def _get_calibrated_power(self, power, use_calibration=True, verbose=True):
-        if self.use_calibrated_power and use_calibration:
-            power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
+        if power:
+            if self.use_calibrated_power and use_calibration:
+                power = max(0, self.laser_controller.get_calibrated_power(power, verbose=verbose))
         return power
 
     def _get_requested_power(self):

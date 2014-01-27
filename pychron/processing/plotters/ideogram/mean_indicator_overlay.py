@@ -18,16 +18,17 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from traits.api import Color, Instance, Str, Float, Int
+from traits.api import Color, Instance, Str, Float, Int, HasTraits, Any
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.plotters.point_move_tool import LabelMoveTool
 
 
-class Movable(object):
+class Movable(HasTraits):
     current_screen_point = None
-    altered_screen_point = None
+    altered_screen_point = Any
+
 
     def get_current_point(self):
         data_pt = self.altered_screen_point
@@ -157,6 +158,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
 
+        self.label.font.face_name=''
         with gc:
             oc = other_component
             gc.clip_to_rect(oc.x, oc.y, oc.x2, oc.y2)

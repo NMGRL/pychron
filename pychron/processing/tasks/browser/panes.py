@@ -17,27 +17,28 @@
 #============= enthought library imports =======================
 from traits.api import Int, Str, Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup, Label, spring, \
-    VSplit, TabularEditor, EnumEditor, Group, DateEditor, Heading
+    VSplit, TabularEditor, EnumEditor, DateEditor, Heading
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
 # from traitsui.list_str_adapter import ListStrAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.tasks.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 class AnalysisAdapter(BrowserAdapter):
-    all_columns = [('Identifier', 'record_id'),
+    all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
                    ('Flux', 'flux_fit_status')]
 
-    columns = [('Identifier', 'record_id'),
+    columns = [('Run ID', 'record_id'),
                ('Tag', 'tag'),
                #('Iso Fits', 'iso_fit_status'),
                #('Blank', 'blank_fit_status'),
@@ -49,6 +50,13 @@ class AnalysisAdapter(BrowserAdapter):
     tag_width = Int(65)
     odd_bg_color = 'lightgray'
     font = 'arial 10'
+
+    def get_bg_color( self, object, trait, row, column = 0):
+        color = 'white'
+        if self.item.is_plateau_step:
+            color='lightgreen'
+
+        return color
 
 
 class BrowserPane(TraitsDockPane):
@@ -85,8 +93,8 @@ class BrowserPane(TraitsDockPane):
                 UItem('sample_filter',
                       editor=EnumEditor(name='sample_filter_values'),
                       width=-25),
-                UItem('filter_non_run_samples',
-                      tooltip='Omit non-analyzed samples'),
+                # UItem('filter_non_run_samples',
+                #       tooltip='Omit non-analyzed samples'),
                 icon_button_editor('configure_sample_table',
                                    'cog',
                                    tooltip='Configure Sample Table')),
@@ -107,7 +115,8 @@ class BrowserPane(TraitsDockPane):
             project_grp,
             sample_grp,
             self._get_analysis_group(),
-            label='Project/Sample')
+            # label='Project/Sample'
+        )
 
         return grp
 
@@ -153,13 +162,14 @@ class BrowserPane(TraitsDockPane):
                 UItem(make_name('analysis_filter'),
                       editor=EnumEditor(name=make_name('analysis_filter_values')),
                       width=-25),
-                icon_button_editor(make_name('configure_analysis_filter'), 'cog',
+                icon_button_editor(make_name('configure_analysis_table'), 'cog',
                                    tooltip='Configure/Advanced query')),
             UItem(make_name('analyses'),
                   editor=myTabularEditor(
                       adapter=self.analysis_tabular_adapter,
                       #                                                       editable=False,
                       operations=['move'],
+                      refresh=make_name('refresh_needed'),
                       selected=make_name('selected'),
                       dclicked=make_name('dclicked'),
                       multi_select=self.multi_select,
@@ -171,24 +181,24 @@ class BrowserPane(TraitsDockPane):
                   #                                           )
                   width=300),
             HGroup(
-                Item(make_name('page_width'),
-                     label='N',
-                     tooltip='Page Width. Number of analyses to display per page'),
-
+                # Item(make_name('page_width'),
+                #      label='N',
+                #      tooltip='Page Width. Number of analyses to display per page'),
+                #
                 spring,
-
-                icon_button_editor(make_name('backward'),
-                                   'control_rewind',
-                                   #enabled_when=make_name('backward_enabled'),
-                                   tooltip='Backward one page'),
-                icon_button_editor(make_name('forward'),
-                                   'control_fastforward',
-                                   #enabled_when=make_name('forward_enabled'),
-                                   tooltip='Forwad 1 page'),
-                UItem(make_name('page'),
-                      tooltip='Current page'),
-                UItem(make_name('npages'),
-                      format_str='%02i', style='readonly'),
+                #
+                # icon_button_editor(make_name('backward'),
+                #                    'control_rewind',
+                #                    #enabled_when=make_name('backward_enabled'),
+                #                    tooltip='Backward one page'),
+                # icon_button_editor(make_name('forward'),
+                #                    'control_fastforward',
+                #                    #enabled_when=make_name('forward_enabled'),
+                #                    tooltip='Forwad 1 page'),
+                # UItem(make_name('page'),
+                #       tooltip='Current page'),
+                # UItem(make_name('npages'),
+                #       format_str='%02i', style='readonly'),
                 Item(make_name('omit_invalid'))
             ),
             defined_when=self.analyses_defined,
@@ -196,14 +206,21 @@ class BrowserPane(TraitsDockPane):
         return analysis_grp
 
     def traits_view(self):
+        # main_grp= Group(
+        #     self._get_browser_group(),
+        #     self._get_date_group(),
+        #     layout='tabbed')
+
+        main_grp= self._get_browser_group()
+
         v = View(
             VGroup(
                 HGroup(icon_button_editor('advanced_query', 'application_form_magnify',
-                                          tooltip='Advanced Query')),
-                Group(
-                    self._get_browser_group(),
-                    self._get_date_group(),
-                    layout='tabbed')))
+                                          tooltip='Advanced Query'),
+                       spring,
+                       CustomLabel('datasource_url', color='maroon'),
+                       spring),
+                main_grp))
 
         return v
 

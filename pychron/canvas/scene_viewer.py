@@ -15,20 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, List
-from traitsui.api import View, Item, HGroup, Group, VGroup, VSplit
+from traits.api import HasTraits, Instance
+from traitsui.api import View, Item, HGroup, Group
 from pychron.loggable import Loggable
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from enable.component_editor import ComponentEditor
-from pychron.canvas.canvas2D.scene.scene import Scene
-import os
-from pychron.canvas.canvas2D.scene.laser_mine_scene import LaserMineScene
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
-from pychron.geometry.geometry import sort_clockwise
+from pychron.core.geometry.geometry import sort_clockwise
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
-from pychron.geometry.scan_line import raster
+from pychron.core.geometry.scan_line import raster
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
 
 class SceneViewer(Loggable):
@@ -67,7 +63,7 @@ class SceneViewer(Loggable):
 
 from traits.api import Any, on_trait_change
 from pychron.graph.graph import Graph
-from numpy import hstack, array, vstack
+from numpy import array, vstack
 
 class CanvasGraphItem(HasTraits):
     canvas = Instance(SceneCanvas)
@@ -143,7 +139,7 @@ class CanvasGraphItem(HasTraits):
                              (p1[1], p2[1]), color='black', plotid=0)
 
         if poly.use_outline:
-            from pychron.geometry.polygon_offset import polygon_offset
+            from pychron.core.geometry.polygon_offset import polygon_offset
             opoly = polygon_offset(pts, -1 * poly.offset)
             opoly = array(opoly)
             xs, ys, _ = opoly.T
@@ -213,7 +209,6 @@ class LaserMineViewer(SceneViewer):
 if __name__ == '__main__':
     from launchers.helpers import build_version
     build_version('_uv')
-    from pychron.paths import paths
     sv = LaserMineViewer()
     sv.configure_traits()
 

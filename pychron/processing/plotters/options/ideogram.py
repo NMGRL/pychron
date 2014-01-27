@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Enum, Float, Bool
-from traitsui.api import Item, HGroup, Group, VGroup
+from traitsui.api import Item, HGroup, Group, VGroup, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -27,29 +27,35 @@ class IdeogramOptions(AgeOptions):
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
     error_calc_method = Enum('SEM, but if MSWD>1 use SEM * sqrt(MSWD)', 'SEM')
+
     xlow = Float
     xhigh = Float
     use_centered_range = Bool
     centered_range = Float(0.5)
+
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     plot_option_name = 'Ideogram'
+    index_attr = Enum('Age')
+    use_asymptotic_limits=Bool
+    asymptotic_width=Float
 
-    def _get_x_axis_group(self):
-        vg = super(IdeogramOptions, self)._get_x_axis_group()
-
-        limits_grp = HGroup(Item('xlow', label='Min.'),
-                            Item('xhigh', label='Max.'),
-                            enabled_when='not object.use_centered_range')
-        centered_grp = HGroup(Item('use_centered_range', label='Center'),
-                              Item('centered_range', show_label=False,
-                                   enabled_when='object.use_centered_range'))
-        vg.content.append(limits_grp)
-        vg.content.append(centered_grp)
-
-        return vg
+    def _index_attr_default(self):
+        return 'Age'
 
     def _get_groups(self):
+        xgrp = VGroup(HGroup(Item('index_attr', label='X Value'),
+                             Item('xlow', label='Min.',enabled_when='not object.use_centered_range'),
+                             Item('xhigh', label='Max.',enabled_when='not object.use_centered_range'),
+                             ),
+                      HGroup(Item('use_asymptotic_limits', enabled_when='not object.use_centered_range'),
+                             Item('asymptotic_width', label='Width',
+                                  enabled_when='object.use_asymptotic_limits')),
+                      HGroup(Item('use_centered_range', label='Center on fixed range'),
+                             UItem('centered_range',
+                                   enabled_when='object.use_centered_range')),
+                      label='Index')
+
         g = Group(
             Item('probability_curve_kind',
                  width=-150,
@@ -66,11 +72,20 @@ class IdeogramOptions(AgeOptions):
             Item('include_decay_error'),
             label='Calculations')
 
-        g2=Group(Item('display_mean_indicator', label='Display Mean'),
-                 Item('display_mean', label='Display Mean Value'),
-                 label='Display')
+        g2 = Group(HGroup(Item('display_mean_indicator', label='Indicator'),
+                          Item('display_mean', label='Value'),
+                          label='Mean'),
 
-        return VGroup(g,g2,label='Options'),
+                   HGroup(Item('show_info', label='Show'),
+                          Item('show_mean_info', label='Mean', enabled_when='show_info'),
+                          Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
+                          label='Info'),
+                   label='Display')
+
+        return VGroup(self._get_title_group(),
+                      xgrp,
+                      g, g2, label='Options'),
+
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
@@ -80,7 +95,8 @@ class IdeogramOptions(AgeOptions):
             'error_calc_method',
             'xlow', 'xhigh',
             'use_centered_range', 'centered_range',
-            'display_mean','display_mean_indicator'
+            'use_asymptotic_limits','asymptotic_width',
+            'display_mean', 'display_mean_indicator'
         ]
 
 #============= EOF =============================================

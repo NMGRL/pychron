@@ -20,20 +20,21 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.expression import and_
+from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
+from uncertainties import ufloat
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, gen_ExtractionDeviceTable
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-from pychron.processing.analysis import Analysis
+# from pychron.processing.analysis import Analysis
 # from pychron.processing.plotters.spectrum import Spectrum
 # from pychron.processing.plotters.ideogram import Ideogram
 # from pychron.processing.plotters.inverse_isochron import InverseIsochron
 # from pychron.processing.plotters.series import Series
-from pychron.helpers.iterfuncs import partition
+from pychron.core.helpers.iterfuncs import partition
 # from pychron.processing.plotters import plotter_options
 
 
@@ -51,27 +52,31 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
-    def find_associated_analyses(self, analysis, delta=12, atype=None, **kw):
+    def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
         """
             find atype analyses +/- delta hours (12 hours default)
             if atype is None use "blank_{analysis.analysis_type}"
         """
-        if not isinstance(analysis, Analysis):
-            analysis = self.make_analysis(analysis)
+        # if not isinstance(analysis, Analysis):
+        #     analysis = self.make_analysis(analysis)
             #             analysis.load_isotopes()
 
         ms = analysis.mass_spectrometer
         post = analysis.timestamp
+        if isinstance(post, float):
+            post = datetime.fromtimestamp(post)
 
-        #         delta = -2
         if atype is None:
             atype = 'blank_{}'.format(analysis.analysis_type)
-        br = self._find_analyses(ms, post, -delta, atype, **kw)
 
-        #         delta = 2
-        ar = self._find_analyses(ms, post, delta, atype, **kw)
+        dt=timedelta(hours=delta)
+        lpost=post-dt
+        hpost=post+dt
 
-        return br + ar
+        return self._filter_analyses(ms, lpost, hpost, limit, atype, **kw)
+        # br = self._find_analyses(ms, post, -delta, atype, **kw)
+        # ar = self._find_analyses(ms, post, delta, atype, **kw)
+        # return br + ar
 
     def group_level(self, level, irradiation=None, monitor_filter=None):
         if monitor_filter is None:
@@ -168,13 +173,13 @@ class Processor(IsotopeDatabaseManager):
             #        return ans
 
             #     def auto_blank_fit(self, irradiation, level, kind):
-            #         if kind == 'preceeding':
+            #         if kind == 'preceding':
             #             '''
             #             1. supply a list of labnumbers/ supply level and extract labnumbers (with project minnabluff)
             #             2. get all analyses for the labnumbers
             #             3. sort analyses by run date
             #             4. calculate blank
-            #                 1. preceeding/bracketing
+            #                 1. preceding/bracketing
             #                     get max 2 predictors
             #
             #                 2. fit
@@ -193,7 +198,7 @@ class Processor(IsotopeDatabaseManager):
             #                         ]
             #             pd = self.open_progress(n=len(ans))
             #             for ai in ans:
-            #                 self.preceeding_blank_correct(ai, pd=pd)
+            #                 self.preceding_blank_correct(ai, pd=pd)
             #             db.commit()
 
     #def refit_isotopes(self, meas_analysis, pd=None, fits=None, keys=None, verbose=False):
@@ -270,7 +275,7 @@ class Processor(IsotopeDatabaseManager):
     #    if pd is not None:
     #        pd.increment()
 
-    #def _get_preceeding_analysis(self, ms, post, atype):
+    #def _get_preceding_analysis(self, ms, post, atype):
     #    if isinstance(post, float):
     #        post = datetime.datetime.fromtimestamp(post)
     #
@@ -293,14 +298,14 @@ class Processor(IsotopeDatabaseManager):
     #    except NoResultFound:
     #        pass
 
-    #def preceeding_blank_correct(self, analysis, keys=None, pd=None):
-    #    from pychron.regression.interpolation_regressor import InterpolationRegressor
+    #def preceding_blank_correct(self, analysis, keys=None, pd=None):
+    #    from pychron.core.regression.interpolation_regressor import InterpolationRegressor
     #
     #    if not isinstance(analysis, Analysis):
     #        analysis = self.make_analysis(analysis)
     #        #             analysis.load_isotopes()
     #
-    #    msg = 'applying preceeding blank for {}'.format(analysis.record_id)
+    #    msg = 'applying preceding blank for {}'.format(analysis.record_id)
     #    if pd is not None:
     #        pd.change_message(msg)
     #        pd.increment()
@@ -313,10 +318,10 @@ class Processor(IsotopeDatabaseManager):
     #    #         delta = -5
     #    atype = 'blank_{}'.format(analysis.analysis_type)
     #
-    #    an = self._get_preceeding_analysis(ms, post, atype)
+    #    an = self._get_preceding_analysis(ms, post, atype)
     #
     #    if not an:
-    #        self.warning('no preceeding blank for {}'.format(analysis.record_id))
+    #        self.warning('no preceding blank for {}'.format(analysis.record_id))
     #        return
     #
     #    ai = self.make_analyses(an)
@@ -328,7 +333,7 @@ class Processor(IsotopeDatabaseManager):
     #    kind = 'blanks'
     #    history = self.add_history(an, kind)
     #
-    #    fit = 'preceeding'
+    #    fit = 'preceding'
     #
     #    reg = InterpolationRegressor(kind=fit)
     #    for key in keys:
@@ -412,37 +417,55 @@ class Processor(IsotopeDatabaseManager):
                      isotope=prev.isotope,
                      fit=prev.fit,
                      user_value=uv,
-                     user_error=ue
-                )
+                     user_error=ue)
 
-    def apply_correction(self, history, analysis, fit_obj, predictors, kind):
+    def apply_correction(self, history, analysis, fit_obj, set_id, kind):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)
 
         func = getattr(self, '_apply_{}_correction'.format(kind))
-        func(history, analysis, fit_obj, predictors)
+        func(history, analysis, fit_obj, set_id)
 
-    def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, predictors):
+    def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, set_id):
         n, d = fit_obj.name.split('/')
-        ic = analysis.get_isotope(detector=d).temporary_ic_factor
+
+        iso=analysis.get_isotope(detector=d)
+        if not iso:
+            self.debug('************************* {} no detector {}'.format(analysis.record_id, d))
+            return
+
+        ic=iso.temporary_ic_factor
+        # ic = analysis.get_isotope(detector=d).temporary_ic_factor
         if ic is None:
             self.debug('************************* no ic factor for {} {}'.format(analysis.record_id,
                                                                                  fit_obj))
             return
 
         ic_v, ic_e = map(float, ic)
+
+        #copy temp ic_factor to ic_factor
+        iso.ic_factor=ufloat(ic_v, ic_e)
+
         db = self.db
-        item = db.add_detector_intercalibration(history,
+        db.add_detector_intercalibration(history,
                                                 detector=d,
                                                 user_value=ic_v,
                                                 user_error=ic_e,
-                                                fit=fit_obj.fit)
+                                                fit=fit_obj.fit,
+                                                set_id=set_id)
+    def add_predictor_set(self, predictors):
+        set_id=0
         if predictors:
-            for pi in predictors:
-                dbr = db.get_analysis_uuid(pi.uuid)
-                db.add_detector_intercalibration_set(item, dbr)
+            db = self.db
+            #make set_id
+            dbrs=[db.get_analysis_uuid(p.uuid) for p in predictors]
+            set_id=hash(tuple((ai.id for ai in dbrs)))
 
+            for dbr in dbrs:
+                db.add_detector_intercalibration_set(dbr, set_id=set_id)
 
-    def _apply_blanks_correction(self, history, analysis, fit_obj, predictors):
+        return set_id
+
+    def _apply_blanks_correction(self, history, analysis, fit_obj, set_id):
         if not fit_obj.name in analysis.isotopes:
             return
 
@@ -457,28 +480,30 @@ class Processor(IsotopeDatabaseManager):
         '''
         if hasattr(ss, 'temporary_blank'):
             blank = ss.temporary_blank
+            ss.blank = blank
         else:
             blank = ss.blank
 
         db = self.db
-        item = db.add_blanks(history,
+        db.add_blanks(history,
                              isotope=fit_obj.name,
                              user_value=float(blank.value),
                              user_error=float(blank.error),
-                             fit=fit_obj.fit)
+                             fit=fit_obj.fit,
+                             set_id=set_id)
 
         #        ps = self.interpolation_correction.predictors
-        if predictors:
-
-            lns = set([si.labnumber for si in predictors])
-            ids = [si.uuid for si in predictors]
-
-            def f(t, t2):
-                return t2.identifier.in_(lns), t.uuid.in_(ids)
-
-            ans = db.get_analyses(uuid=f)
-            for ai in ans:
-                db.add_blanks_set(item, ai)
+        # if predictors:
+        #
+        #     lns = set([si.labnumber for si in predictors])
+        #     ids = [si.uuid for si in predictors]
+        #
+        #     def f(t, t2):
+        #         return t2.identifier.in_(lns), t.uuid.in_(ids)
+        #
+        #     ans = db.get_analyses(uuid=f)
+        #     for ai in ans:
+        #         db.add_blanks_set(item, ai)
                 #for pi in predictors:
                 #    dbr = db.get_analysis_uuid(pi.uuid)
                 #    #                 self.db.add_blanks_set(item, pi.dbrecord)
@@ -488,15 +513,21 @@ class Processor(IsotopeDatabaseManager):
         if delta < 0:
             step = -step
 
+        if isinstance(post, float):
+            post = datetime.fromtimestamp(post)
+
         for i in range(maxtries):
-            rs = self._filter_analyses(ms, post, delta + i * step, 5, atype, **kw)
+            win = timedelta(hours=delta+i*step)
+            lpost=post-win
+            hpost=post+win
+            rs = self._filter_analyses(ms, lpost, hpost, 5, atype, **kw)
             if rs:
                 return rs
         else:
             return []
 
-    def _filter_analyses(self, ms, post, delta, lim, at, filter_hook=None):
-        '''
+    def _filter_analyses(self, ms, lpost, hpost, lim, at, exclude_uuids=None, filter_hook=None):
+        """
             ms= spectrometer
             post= timestamp
             delta= time in hours
@@ -507,32 +538,34 @@ class Processor(IsotopeDatabaseManager):
 
             if delta is post
             get all before post+delta and after post
-        '''
+        """
         sess = self.db.get_session()
         q = sess.query(meas_AnalysisTable)
         q = q.join(meas_MeasurementTable)
         q = q.join(gen_AnalysisTypeTable)
         q = q.join(gen_MassSpectrometerTable)
 
-        win = timedelta(hours=delta)
-        if isinstance(post, float):
-            post = datetime.fromtimestamp(post)
-
-        dt = post + win
-        if delta < 0:
-            a, b = dt, post
-        else:
-            a, b = post, dt
+        # win = timedelta(hours=delta)
+        # if isinstance(post, float):
+        #     post = datetime.fromtimestamp(post)
+        #
+        # dt = post + win
+        # if delta < 0:
+        #     a, b = dt, post
+        # else:
+        #     a, b = post, dt
 
         q = q.filter(and_(
             gen_AnalysisTypeTable.name == at,
-            meas_AnalysisTable.analysis_timestamp >= a,
-            meas_AnalysisTable.analysis_timestamp <= b,
-            gen_MassSpectrometerTable.name == ms
-        ))
+            meas_AnalysisTable.analysis_timestamp >= lpost,
+            meas_AnalysisTable.analysis_timestamp <= hpost,
+            gen_MassSpectrometerTable.name == ms))
 
         if filter_hook:
             q = filter_hook(q)
+
+        if exclude_uuids:
+            q=q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
         q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
         q = q.limit(lim)

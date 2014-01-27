@@ -57,6 +57,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
+    truncate_condition_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
     #    extraction_script_width = Int(125)
@@ -81,18 +82,18 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         item = self.item
         if not item.executable:
             color = NOT_EXECUTABLE_COLOR
-
-        if item.skip:
-            color = SKIP_COLOR  # '#33CCFF'  # light blue
-        elif item.state in COLORS:
-            color = COLORS[item.state]
-        elif item.end_after:
-            color = COLORS['end_after']
         else:
-            if row % 2 == 0:
-                color = 'white'
+            if item.skip:
+                color = SKIP_COLOR  # '#33CCFF'  # light blue
+            elif item.state in COLORS:
+                color = COLORS[item.state]
+            elif item.end_after:
+                color = COLORS['end_after']
             else:
-                color = '#E6F2FF'  # light gray blue
+                if row % 2 == 0:
+                    color = 'white'
+                else:
+                    color = '#E6F2FF'  # light gray blue
 
         return color
 
@@ -179,7 +180,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
 
 class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
-     def _columns_factory(self):
+    def _columns_factory(self):
         cols = [
             #                ('', 'state'),
             ('Labnumber', 'labnumber'),

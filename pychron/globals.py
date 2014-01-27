@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.helpers.filetools import str_to_bool
+from pychron.core.helpers.filetools import to_bool
 
 
 class Globals(object):
@@ -71,19 +71,19 @@ class Globals(object):
 
     def build(self, ip):
 
-        for attr, func in [('use_ipc', str_to_bool),
-                           ('ignore_initialization_warnings', str_to_bool),
-                           ('ignore_connection_warnings', str_to_bool),
-                           ('ignore_chiller_unavailable', str_to_bool),
-                           ('ignore_required', str_to_bool),
-                           ('ignore_initialization_questions', str_to_bool),
-                           ('show_infos', str_to_bool),
-                           ('show_warnings', str_to_bool),
-                           ('video_test', str_to_bool),
-                           ('load_valve_states', str_to_bool),
-                           ('load_soft_locks', str_to_bool),
-                           ('experiment_debug', str_to_bool),
-                           ('experiment_savedb', str_to_bool),
+        for attr, func in [('use_ipc', to_bool),
+                           ('ignore_initialization_warnings', to_bool),
+                           ('ignore_connection_warnings', to_bool),
+                           ('ignore_chiller_unavailable', to_bool),
+                           ('ignore_required', to_bool),
+                           ('ignore_initialization_questions', to_bool),
+                           ('show_infos', to_bool),
+                           ('show_warnings', to_bool),
+                           ('video_test', to_bool),
+                           ('load_valve_states', to_bool),
+                           ('load_soft_locks', to_bool),
+                           ('experiment_debug', to_bool),
+                           ('experiment_savedb', to_bool),
                            ('test_experiment_set', str)
         ]:
             a = ip.get_global(attr)

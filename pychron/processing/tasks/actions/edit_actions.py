@@ -15,15 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class AnalysisEditAction(TaskAction):
-    task_id = 'pychron.analysis_edit'
+    task_id = 'pychron.processing'
     #     def _create_window(self, app):
     # #         win = None
     #         # search other windows
@@ -43,16 +42,22 @@ class DatabaseSaveAction(TaskAction):
     name = 'Database Save'
     description = 'Save current changes to the database'
     method = 'save_to_db'
-    image = ImageResource(name='database_save.png',
-                          search_path=paths.icon_search_path)
+    image = icon('database_save.png')
+
+
+class BinAnalysesAction(TaskAction):
+    name = 'Bin'
+    description = ''
+    method = 'bin_analyses'
+    image = icon('database_save.png')
 
 
 class FindAssociatedAction(TaskAction):
     name = 'Find Associated'
     description = 'Find associated analyses'
     method = 'find_associated_analyses'
-    image = ImageResource(name='find.png',
-                          search_path=paths.icon_search_path)
+    image = icon('find.png')
+
 
 
 class TagAction(TaskAction):
@@ -65,60 +70,60 @@ class FluxAction(AnalysisEditAction):
     name = 'Flux...'
     accelerator = 'Ctrl+g'
     method = 'new_flux'
-    task_id = 'pychron.analysis_edit.flux'
+    task_id = 'pychron.processing.flux'
 
 
 class BlankEditAction(AnalysisEditAction):
     name = 'Blanks...'
     accelerator = 'Ctrl+B'
     method = 'new_blank'
-    task_id = 'pychron.analysis_edit.blanks'
+    task_id = 'pychron.processing.blanks'
 
 
 # class SeriesAction(AnalysisEditAction):
 #     name = 'Series...'
 #     accelerator = 'Ctrl+L'
 #     method = 'new_series'
-#     task_id = 'pychron.analysis_edit.series'
+#     task_id = 'pychron.processing.series'
 
 class IsotopeEvolutionAction(AnalysisEditAction):
     name = 'Isotope Evolution...'
     accelerator = 'Ctrl+k'
     method = 'new_isotope_evolution'
-    task_id = 'pychron.analysis_edit.isotope_evolution'
+    task_id = 'pychron.processing.isotope_evolution'
 
 
 class RefitIsotopeEvolutionAction(AnalysisEditAction):
     name = 'Refit Isotope Evolution...'
     accelerator = 'Ctrl+Shift+f'
     method = 'refit_isotopes'
-    task_id = 'pychron.analysis_edit.isotope_evolution'
+    task_id = 'pychron.processing.isotope_evolution'
 
 
 class ICFactorAction(AnalysisEditAction):
     name = 'IC Factor...'
     accelerator = 'Ctrl+shift+i'
     method = 'new_ic_factor'
-    task_id = 'pychron.analysis_edit.ic_factor'
+    task_id = 'pychron.processing.ic_factor'
 
 
 class DiscriminationAction(AnalysisEditAction):
     name = 'Discrimination...'
     accelerator = 'Ctrl+shift+d'
     #method = 'new_ic_factor'
-    task_id = 'pychron.analysis_edit.discrimination'
+    task_id = 'pychron.processing.discrimination'
 
 
 class BatchEditAction(AnalysisEditAction):
     name = 'Batch Edit...'
     #accelerator = 'Ctrl+Shift+e'
-    task_id = 'pychron.analysis_edit.batch'
+    task_id = 'pychron.processing.batch'
 
 
 class SmartBatchEditAction(AnalysisEditAction):
     name = 'Smart Batch Edit...'
     accelerator = 'Ctrl+Shift+e'
-    task_id = 'pychron.analysis_edit.smart_batch'
+    task_id = 'pychron.processing.smart_batch'
 
 
 class SCLFTableAction(AnalysisEditAction):

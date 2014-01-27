@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import pickle
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button
@@ -27,8 +25,7 @@ from pychron.database.orms.isotope.gen import gen_MassSpectrometerTable, gen_Lab
     gen_AnalysisTypeTable
 from pychron.database.orms.isotope.meas import meas_MeasurementTable, meas_AnalysisTable, meas_ExtractionTable
 from pychron.envisage.tasks.editor_task import BaseEditorTask
-from pychron.experiment.tasks.browser.browser_mixin import BrowserMixin
-from pychron.paths import paths
+from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -50,8 +47,8 @@ DEFAULT_ED = 'Extraction Device'
 
 
 class BaseBrowserTask(BaseEditorTask, BrowserMixin):
-    analysis_table = Instance(AnalysisTable, ())
-    danalysis_table = Instance(AnalysisTable, ())
+    analysis_table = Instance(AnalysisTable)
+    danalysis_table = Instance(AnalysisTable)
 
     analysis_filter = String(enter_set=True, auto_set=False)
 
@@ -74,10 +71,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     days_pad = Int(0)
     hours_pad = Int(18)
 
+    datasource_url=String
     #clear_selection_button = Button
 
     browser_pane = Any
-
     advanced_query=Button
 
     #def set_projects(self, ps, sel):
@@ -89,60 +86,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #    self.samples = s
     #    self.osamples = s
     #    self.trait_set(selected_sample=sel)
-    def load_browser_selection(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
-        p=os.path.join(paths.hidden_dir, 'browser_selection')
-        if os.path.isfile(p):
-            try:
-                with open(p, 'rb') as fp:
-                    sel=pickle.load(fp)
-            except (pickle.PickleError, EOFError, OSError),e:
-                self.debug('Failed loaded previous browser selection. {}'.format(e))
-                return
 
-            self._load_browser_selection(sel)
-
-    def _load_browser_selection(self, selection):
-        def load(attr, values):
-            def get(n):
-                return next((p for p in values if p.name==n), None)
-            try:
-                sel=selection[attr]
-            except KeyError:
-                return
-
-            vs=[get(pp) for pp in sel]
-            vs=[pp for pp in vs if pp is not None]
-            setattr(self, 'selected_{}'.format(attr), vs)
-
-        load('projects', self.projects)
-        load('samples', self.samples)
-
-    def dump_browser_selection(self):
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ Dumping browser selection')
-
-        ps=[]
-        if self.selected_projects:
-            ps=[p.name for p in self.selected_projects]
-
-        ss=[]
-        if self.selected_samples:
-            ss=[p.name for p in self.selected_samples]
-
-        obj=dict(projects=ps,
-                 samples=ss)
-
-        p=os.path.join(paths.hidden_dir, 'browser_selection')
-        try:
-            with open(p, 'wb') as fp:
-                pickle.dump(obj, fp)
-        except (pickle.PickleError, EOFError, OSError),e:
-            self.debug('Failed dumping previous browser selection. {}'.format(e))
-            return
 
     def prepare_destroy(self):
         self.dump_browser_selection()
-        self.analysis_table.dump()
+        # self.analysis_table.dump()
 
     def activated(self):
         self.load_projects()
@@ -152,15 +100,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_mass_spectrometers()
             self._load_analysis_types()
             self._load_extraction_devices()
-        self._set_db()
+
+        self.datasource_url=db.datasource_url
+        # self._set_db()
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
-        self.analysis_table.load()
+        # self.analysis_table.load()
 
-    def _set_db(self):
+    # def _set_db(self):
         #self.analysis_table.db = self.manager.db
-        self.danalysis_table.db = self.manager.db
+        # self.danalysis_table.db = self.manager.db
+
+    def _get_selected_analyses(self, unks=None):
+        s = self.analysis_table.selected
+        if not s:
+            if self.selected_samples:
+                iv = not self.analysis_table.omit_invalid
+
+                uuids = []
+                if unks:
+                    uuids = [x.uuid for x in unks]
+
+                def test(aa):
+                    return not aa.uuid in uuids
+
+                s = [ai for ai in self._get_sample_analyses(self.selected_samples,
+                                                            include_invalid=iv)
+                     if test(ai)]
+
+        return s
 
     def _load_mass_spectrometers(self):
         db = self.manager.db
@@ -180,7 +149,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _create_browser_pane(self, **kw):
         self.browser_pane = BrowserPane(model=self, **kw)
         self.analysis_table.tabular_adapter = self.browser_pane.analysis_tabular_adapter
-
+        self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
         return self.browser_pane
 
     def _ok_query(self):
@@ -196,6 +165,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         app=self.window.application
         win, task, is_open = app.get_open_task('pychron.advanced_query')
+        task.set_append_replace_enabled(True)
         if is_open:
             win.activate()
         else:
@@ -252,36 +222,36 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self._selected_samples_changed(self.selected_samples)
 
     def _dclicked_sample_changed(self):
-        ans = self._get_sample_analyses(self.selected_samples,
-                                        include_invalid=not self.analysis_table.omit_invalid)
-        print self.active_editor
         if self.active_editor:
-            self.active_editor.unknowns = ans
-            #self.unknowns_pane.items = self.active_editor.unknowns
+            ans=self.analysis_table.analyses
+            self.active_editor.set_items(ans)
 
     def _selected_samples_changed(self, new):
         if new:
-            self._set_page(-1, reset_page=True)
+            # self._set_page(-1, reset_page=True)
+            ans = self._get_sample_analyses(self.selected_samples,
+                                            include_invalid=not self.analysis_table.omit_invalid)
 
+            self.analysis_table.set_analyses(ans)
             ans=self.analysis_table.analyses
             if ans and self.auto_select_analysis:
                 self.analysis_table.selected = ans[0]
 
-    @on_trait_change('analysis_table:page')
-    def _page_changed(self, new):
-        self._set_page(new)
+    # @on_trait_change('analysis_table:page')
+    # def _page_changed(self, new):
+    #     self._set_page(new)
 
-    def _set_page(self, page, reset_page=False):
-        if not self.analysis_table.no_update:
-            include_invalid = not self.analysis_table.omit_invalid
-            page_width = self.analysis_table.page_width
-
-            ans, tc = self._get_sample_analyses(self.selected_samples,
-                                                include_invalid=include_invalid,
-                                                page_width=page_width,
-                                                page=page)
-
-            self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
+    # def _set_page(self, page, reset_page=False):
+    #     if not self.analysis_table.no_update:
+    #         include_invalid = not self.analysis_table.omit_invalid
+    #         page_width = self.analysis_table.page_width
+    #
+    #         ans, tc = self._get_sample_analyses(self.selected_samples,
+    #                                             include_invalid=include_invalid,
+    #                                             page_width=page_width,
+    #                                             page=page)
+    #
+    #         self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)

@@ -24,9 +24,9 @@ import os
 
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.managers.manager import Manager
-from pychron.helpers.datetime_tools import generate_datetimestamp, time_generator
+from pychron.core.helpers.datetime_tools import generate_datetimestamp, time_generator
 
 
 class DataManager(Manager):
@@ -43,8 +43,8 @@ class DataManager(Manager):
         pass
 
     def new_frame(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         p = self._new_frame_path(*args, **kw)
 
         name, _ext = os.path.splitext(os.path.basename(p))
@@ -56,9 +56,9 @@ class DataManager(Manager):
     def _new_frame_path(self, path=None, directory='scans',
                         offset=0,
                         base_frame_name=None, verbose=True):
-        '''
+        """
 
-        '''
+        """
         if base_frame_name is None:
             base_frame_name = 'scan'
 

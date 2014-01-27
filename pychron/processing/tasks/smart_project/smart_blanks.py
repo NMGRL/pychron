@@ -20,7 +20,7 @@ from traits.api import Instance
 import time
 from datetime import timedelta
 #============= local library imports  ==========================
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.smart_project.blanks_pdf_writer import BlanksPDFWrtier
 from pychron.processing.tasks.smart_project.base_smarter import BaseSmarter
 
@@ -30,11 +30,11 @@ class SmartBlanks(BaseSmarter):
     def simple_fit_blanks(self, n, ans, kind, dry_run):
         '''
             ans: analysis generator
-            fit with preceeding or bracketing
+            fit with preceding or bracketing
         '''
         man = self.processor
-        if kind == 'preceeding':
-            func = man.preceeding_blank_correct
+        if kind == 'preceding':
+            func = man.preceding_blank_correct
 
         fn = float(n)
         st = time.time()

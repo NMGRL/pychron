@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class GosubError(Exception):
@@ -38,8 +36,9 @@ class PyscriptError(Exception):
     def __init__(self, name, err):
         self.name = name
         self.err = err
+
     def __str__(self):
-        return 'Pyscript error in {}: {}'.format(self.name, self.err)
+        return 'Pyscript error in {}\n\n{}'.format(self.name, self.err)
 
 
 class IntervalError(Exception):

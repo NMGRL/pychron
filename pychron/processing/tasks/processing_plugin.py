@@ -19,27 +19,32 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
-from pyface.tasks.action.schema import SMenu, SGroup
+from pyface.tasks.action.schema import SMenu
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction
-from pychron.processing.tasks.processing_actions import IdeogramAction, \
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction
+from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
+from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
-from pychron.processing.tasks.processing_preferences import ProcessingPreferencesPane
+from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
+from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane, EasyPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
+from pychron.processing.tasks.preferences.vcs_preferences import VCSPreferencesPane
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -76,11 +81,13 @@ Install to enable MS Excel export''')
                 SpectrumAction(),
                 IdeogramAction(),
                 InverseIsochronAction(),
-                SeriesAction(),
-                )
+                SeriesAction())
 
         def data_menu():
-            return SMenu(id='Data', name='Data')
+            return SMenu(id='data.menu', name='Data')
+
+        def vcs_menu():
+            return SMenu(id='vcs.menu', name='VCS')
 
         def grouping_group():
             return Group(GroupSelectedAction(),
@@ -95,38 +102,73 @@ Install to enable MS Excel export''')
                          DiscriminationAction(),
                          FluxAction())
 
-        return [
-            self._make_task_extension([('recall_action', RecallAction, 'MenuBar/File'),
-                                       ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
-                                       ('reduction_group', reduction_group, 'MenuBar/Data'),
-                                       ('figure_group', figure_group, 'MenuBar/Data'),
-                                       ('interpreted_age', SetInterpretedAgeAction, 'MenuBar/Data'),
+        def interpreted_group():
+            return Group(SetInterpretedAgeAction(),
+                         OpenInterpretedAgeAction(),
+                         OpenInterpretedAgeGroupAction(),
+                         DeleteInterpretedAgeGroupAction(),
+                         MakeGroupFromFileAction())
 
-                                       ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/Tools'),
-                                       ('data', data_menu, 'MenuBar', {'before': 'Tools', 'after': 'View'}),
-                                       ('tag', TagAction, 'MenuBar/Data'),
-                                       ('database_save', DatabaseSaveAction, 'MenuBar/Data'),
-                                       ('grouping_group', grouping_group, 'MenuBar/Data'),
-                                       ('easy_group', lambda: SGroup(id='Easy', name='Easy'), 'MenuBar/Tools'),
-                                       ('easy_import', EasyImportAction, 'MenuBar/Tools/Easy'),
-                                       ('easy_figures', EasyFiguresAction, 'MenuBar/Tools/Easy'),
-                                       ('easy_tables', EasyTablesAction, 'MenuBar/Tools/Easy')]),
-            self._make_task_extension([('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/Tools'),
-                                       ('easy_fit', EasyFitAction, 'MenuBar/Tools/Easy')],
-                                      task_id='pychron.analysis_edit.isotope_evolution'),
-            self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/Easy')],
-                                      task_id='pychron.analysis_edit.blanks'),
-            self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/Tools/Easy')],
-                                      task_id='pychron.analysis_edit.discrimination'),
-        ]
+        def easy_group():
+            return Group(EasyImportAction(),
+                         EasyFiguresAction(),
+                         EasyTablesAction(),
+                         EasySensitivityAction())
+
+        default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
+                           ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
+
+                           ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+                           ('reduction_group', reduction_group, 'MenuBar/data.menu'),
+                           ('figure_group', figure_group, 'MenuBar/data.menu'),
+                           ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
+
+                           ('tag', TagAction, 'MenuBar/data.menu'),
+                           ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+                           ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+                           ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
+                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
+
+        exts = [self._make_task_extension(default_actions)]
+
+        use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+        if use_vcs:
+            exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+                                                   ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+                                                   ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+
+        use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
+        if use_easy:
+            grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
+            a = self._make_task_extension(
+                [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
+                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
+                task_id='pychron.processing.isotope_evolution')
+
+            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
+                                          task_id='pychron.processing.blanks')
+
+            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
+                                          task_id='pychron.processing.discrimination')
+
+            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
+                                          task_id='pychron.processing.ic_factor')
+
+            e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],
+                                          task_id='pychron.processing.flux')
+
+            exts.extend((grp, a, b, c, d, e))
+
+        return exts
 
     def _meta_task_factory(self, i, f, n, task_group=None,
                            accelerator='', include_view_menu=False):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
-                           include_view_menu=include_view_menu or accelerator
-        )
+                           include_view_menu=include_view_menu or accelerator)
 
     def _tasks_default(self):
         tasks = [
@@ -135,30 +177,36 @@ Install to enable MS Excel export''')
             ('pychron.advanced_query',
              self._advanced_query_task_factory, 'Advanced Query'),
 
-            ('pychron.analysis_edit.blanks',
+            ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
-            ('pychron.analysis_edit.flux',
+            ('pychron.processing.flux',
              self._flux_task_factory, 'Flux'),
-            ('pychron.analysis_edit.isotope_evolution',
+            ('pychron.processing.isotope_evolution',
              self._iso_evo_task_factory, 'Isotope Evolution'),
-            ('pychron.analysis_edit.ic_factor',
+            ('pychron.processing.ic_factor',
              self._ic_factor_task_factory, 'IC Factor'),
-            ('pychron.analysis_edit.discrimination',
+            ('pychron.processing.discrimination',
              self._discrimination_task_factory, 'Discrimination'),
 
-            ('pychron.analysis_edit.batch',
-            self._batch_edit_task_factory, 'Batch Edit'),
-            #('pychron.analysis_edit.smart_batch',
+            ('pychron.processing.batch',
+             self._batch_edit_task_factory, 'Batch Edit'),
+            #('pychron.processing.smart_batch',
             # self._smart_batch_edit_task_factory, 'Smart Batch Edit'),
 
             ('pychron.processing.figures',
              self._figure_task_factory, 'Figures'),
+            ('pychron.processing.interpreted_age',
+             self._interpreted_age_task_factory, 'Interpeted Age'),
+
             # ('pychron.processing.publisher', self._publisher_task_factory, 'Publisher'),
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R'),
-
+            ('pychron.processing.vcs',
+             self._vcs_data_task_factory, 'VCS', '', ''),
+            ('pychron.export',
+             self._export_task_factory, 'Export', '', '')
         ]
 
         return [
@@ -209,11 +257,6 @@ Install to enable MS Excel export''')
 
         return BatchEditTask(manager=self._processor_factory())
 
-    def _smart_batch_edit_task_factory(self):
-        from pychron.processing.tasks.batch_edit.smart_batch_edit_task import SmartBatchEditTask
-
-        return SmartBatchEditTask(manager=self._processor_factory())
-
     def _figure_task_factory(self):
         from pychron.processing.tasks.figures.figure_task import FigureTask
 
@@ -229,9 +272,25 @@ Install to enable MS Excel export''')
 
         return TableTask(manager=self._processor_factory())
 
+    def _interpreted_age_task_factory(self):
+        from pychron.processing.tasks.interpreted_age.interpreted_age_task import InterpretedAgeTask
+
+        return InterpretedAgeTask(manager=self._processor_factory())
+
+    def _vcs_data_task_factory(self):
+        from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+
+        return VCSDataTask(manager=self._processor_factory())
+
+    def _export_task_factory(self):
+        from pychron.processing.tasks.export.export_task import ExportTask
+
+        return ExportTask(manager=self._processor_factory())
+
     def _preferences_panes_default(self):
         return [
-            #AutoFigurePreferencesPane,
-            ProcessingPreferencesPane]
+            ProcessingPreferencesPane,
+            VCSPreferencesPane,
+            OfflinePreferencesPane, EasyPreferencesPane]
 
         #============= EOF =============================================

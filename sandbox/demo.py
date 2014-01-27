@@ -44,8 +44,8 @@ class Demo(HasTraits):
         )
         return v
 
-    # from pychron.ui.qt.pie_clock_editor import PieClockEditor
-# from pychron.ui.thread import Thread
+    # from pychron.core.ui.qt.pie_clock_editor import PieClockEditor
+# from pychron.core.ui.thread import Thread
 # class Demo(HasTraits):
 #     pie_clock = Float
 #     test = Button

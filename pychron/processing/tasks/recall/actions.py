@@ -15,25 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.image_resource import ImageResource
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 
 
 class AddIsoEvoAction(TaskAction):
     name = 'Iso. Evo'
     method = 'add_iso_evo'
-    image = ImageResource(name='chart_curve_add.png',
-                          search_path=paths.icon_search_path)
+    image = icon('chart_curve_add.png')
+
 
 
 class AddDiffAction(TaskAction):
     name = 'Diff'
     method = 'add_diff'
-    image = ImageResource(name='edit_diff.png',
-                          search_path=paths.icon_search_path)
+    image = icon('edit_diff.png')
+
 
 #============= EOF =============================================

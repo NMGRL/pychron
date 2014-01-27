@@ -17,14 +17,15 @@
 
 
 #============= enthought library imports =======================
-from traits.api import Float, Int, Str, Bool, Property
+from traits.api import Float, Int, Str, Bool, Property, Array
 #============= standard library imports ========================
+from numpy import array, hstack
+import time
+from threading import Lock
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.checksum_helper import computeBCC
-import time
 from pychron.hardware.core.data_helper import make_bitarray
-from threading import Lock
 
 STX = chr(2)
 ETX = chr(3)
@@ -37,8 +38,8 @@ ACTION = ['Turn Off', 'Turn on', 'Single Shot', 'Run', 'Firing']
 
 
 class ATLLaserControlUnit(CoreDevice):
-    '''
-    '''
+    """
+    """
     energy_readback = Float
     pressure_readback = Float
     burst_readback = Int
@@ -52,6 +53,8 @@ class ATLLaserControlUnit(CoreDevice):
     reprate = Property(Int(enter_set=True, auto_set=False), depends_on='_reprate')
     _reprate = Int
     _was_fired = False
+
+    energies=Array
 
     #    _timer = None
     #    _enabled = Bool(False)
@@ -131,24 +134,12 @@ class ATLLaserControlUnit(CoreDevice):
         self._reprate = self.get_reprate()
         return r
 
+    def get_mean_energy(self):
+        return self.energies.mean()
+
     def is_enabled(self):
         return self.status_readback == 'Laser On'
 
-    #    def laser_burst(self, n):
-    # get process status
-    # if not burst mode set to burst mode
-    #        ps=self.get_process_status()
-    #        if not self.is_burst_mode(ps):
-    #            time.sleep(0.05)
-    #            self.set_burst_mode(True, ps)
-    #
-    #        time.sleep(0.05)
-    # #        #set number of bursts
-    #        self.set_nburst(n)
-
-    # run laser
-    #        cmd = self._build_command(11, 3)
-    #        self._send_command(cmd)
     def set_reprate(self, n, save=True):
         lh = self._make_integer_pair(n)
         if lh:
@@ -179,11 +170,9 @@ class ATLLaserControlUnit(CoreDevice):
                 cmd = self._build_command(1004, lh)
                 self._send_command(cmd, lock=False)
 
+                self._burst_shot = int(n)
                 if save:
                     self._save_eeprom()
-                self._burst_shot = int(n)
-
-                #        self.burst_readback = self.get_nburst()
 
     def _save_eeprom(self, lock=False):
         cmd = self._build_command(37, 1)
@@ -247,10 +236,6 @@ class ATLLaserControlUnit(CoreDevice):
         cmd = self._build_command(11, 1)
         self._send_command(cmd)
 
-    #        self.ask('A'+ENQ)
-    # self._enabled = True
-
-
     def laser_off(self):
         cmd = self._build_command(11, 0)
         self._send_command(cmd)
@@ -261,17 +246,12 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_run(self):
-
-        #        #self.start_update_timer()
-        #        ps=self.get_process_status()
-        #        if self.is_burst_mode(ps):
-        #            self.set_burst_mode(False, ps)
         self.debug('run laser')
         self.firing = True
+        self.energies = array([])
 
         cmd = self._build_command(11, 3)
         self._send_command(cmd)
-
 
     def laser_stop(self):
     #        self.stop_update_timer()
@@ -360,15 +340,15 @@ class ATLLaserControlUnit(CoreDevice):
 
     def update_parameters(self):
 
-        # energy and pressure_readback
+        # energy, pressure, status, action
         vs = self._send_query(8, 4, verbose=False)
-        #        print vs
-        #        vs=self._send_query(30, 2, verbose=False)
+
         if vs is not None:
             vs = self._parse_response(vs, 4)
-            #            print vs
             if vs is not None:
                 self.energy_readback = vs[0] / 10.
+                self.energies=hstack((self.energies[:-5], [self.energy_readback]))
+
                 self.pressure_readback = vs[1]
                 self.status_readback = STATUS[vs[2]]
                 self.action_readback = ACTION[vs[3]]
@@ -379,13 +359,11 @@ class ATLLaserControlUnit(CoreDevice):
             if self.firing:
                 self.debug('readback={} burst={} fired={}'.format(b, self.burst_shot, self._was_fired))
                 if self._was_fired and b == self.burst_shot:
+                    self.debug('AUTO STOP LASER')
                     self.laser_stop()
                     self._was_fired = False
 
                 self._was_fired = b != self.burst_shot
-                #if not b or b == self.burst_shot:
-
-                #self.laser_stop()
 
     def _set_answer_parameters(self, start_addr_value, answer_len,
                                verbose=True, ):
@@ -395,9 +373,7 @@ class ATLLaserControlUnit(CoreDevice):
 
         self._send_command(cmd, verbose=verbose)
 
-
     def _build_command(self, start_addr, values):
-
 
         if isinstance(start_addr, int):
             start_addr = '{:04X}'.format(start_addr)
@@ -536,7 +512,7 @@ class ATLLaserControlUnit(CoreDevice):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('atl')
     a = ATLLaserControlUnit(name='ATLLaserControlUnit',

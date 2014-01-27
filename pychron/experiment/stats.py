@@ -21,7 +21,7 @@ import time
 from traits.api import Property, String, Float, Any, Int, List
 from traitsui.api import View, Item, VGroup
 
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
@@ -69,13 +69,11 @@ class ExperimentStats(Loggable):
 
     def _calculate_duration(self, runs):
         dur = 0
-        warned = []
         if runs:
-            ni = len(runs)
             script_ctx = dict()
-
+            warned = []
+            ni = len(runs)
             dur = sum([a.get_estimated_duration(script_ctx, warned) for a in runs])
-
 
             btw = (self.delay_between_analyses * ni)
             dur += btw + self.delay_before_analyses
@@ -140,16 +138,21 @@ class StatsGroup(ExperimentStats):
         self.calculate()
 
     def calculate(self):
-        ''' 
+        """
             calculate the total duration
             calculate the estimated time of finish
-        '''
+        """
         #runs = [ai
         #        for ei in self.experiment_queues
         #            for ai in ei.cleaned_automated_runs]
         #
         #ni = len(runs)
         #self.nruns = ni
+        # for ei in self.experiment_queues:
+        #     dur=ei.stats.calculate_duration(ei.cleaned_automated_runs)
+        #     if
+
+
         tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
                  for ei in self.experiment_queues])
         self._total_time = tt

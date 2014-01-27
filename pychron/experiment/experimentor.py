@@ -115,6 +115,7 @@ class Experimentor(IsotopeDatabaseManager):
                     if ai.executable]
         
     def _update(self, queues=None):
+
         self.debug('update runs')
         if queues is None:
             queues = self.experiment_queues
@@ -125,6 +126,9 @@ class Experimentor(IsotopeDatabaseManager):
 
         self.debug('updating stats')
         self.stats.calculate()
+        self.refresh_executable(queues)
+
+        self.debug('executor executable {}'.format(self.executor.executable))
         self.debug('stats calculated')
 
         ans = self._get_all_runs(queues)
@@ -329,10 +333,10 @@ class Experimentor(IsotopeDatabaseManager):
 
     @on_trait_change('executor:start_button')
     def _execute(self):
-        '''
+        """
             trigger the experiment task to assemble current queues.
             the queues are then passed back to execute_queues()
-        '''
+        """
         self.debug('%%%%%%%%%%%%%%%%%% Start fired')
         if not self.executor.isAlive():
         #             self.update_info()
@@ -344,10 +348,13 @@ class Experimentor(IsotopeDatabaseManager):
     def _update_queues(self):
         qs = self.experiment_queues
         self.stats.experiment_queues = qs
-        self.stats.calculate()
-        self.refresh_executable(qs)
-
-        self.debug('executor executable {}'.format(self.executor.executable))
+        # try:
+        #     self.stats.calculate()
+        # except PyscriptError, e:
+        #     self.warning_dialog(str(e))
+        # self.refresh_executable(qs)
+        #
+        # self.debug('executor executable {}'.format(self.executor.executable))
 
     @on_trait_change('experiment_factory:run_factory:changed')
     def _queue_dirty(self):

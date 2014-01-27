@@ -30,9 +30,9 @@ import os
 #============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 from pychron.messaging.command_repeater import CommandRepeater
-from pychron.helpers.datetime_tools import diff_timestamp
+from pychron.core.helpers.datetime_tools import diff_timestamp
 from pychron.remote_hardware.command_processor import CommandProcessor
-from pychron.ui.led_editor import LED, LEDEditor
+from pychron.core.ui.led_editor import LED, LEDEditor
 from pychron.globals import globalv
 
 LOCAL = False

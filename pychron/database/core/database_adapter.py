@@ -32,26 +32,18 @@ import weakref
 ATTR_KEYS = ['kind', 'username', 'host', 'name', 'password']
 
 
-# Session = sessionmaker()
-
-# def create_url(kind, user, hostname, db, password=None):
-
-#    if kind == 'mysql':
-#        if password is not None:
-#            url = 'mysql://{}:{}@{}/{}?connect_timeout=3'.format(user, password, hostname, db)
-#        else:
-#            url = 'mysql://{}@{}/{}?connect_timeout=3'.format(user, hostname, db)
-#    else:
-#        url = 'sqlite:///{}'.format(db)
-#
-#    return url
-
 class SessionCTX(object):
     _close_at_exit = True
     _commit = True
     _parent = None
 
     def __init__(self, sess=None, commit=True, parent=None):
+        """
+            sess: existing Session object
+            commit: commit Session at exit
+            parent: DatabaseAdapter instance
+
+        """
         self._sess = sess
         self._commit = commit
         self._parent = parent
@@ -75,7 +67,7 @@ class SessionCTX(object):
                 self._parent.sess = None
 
         #print 'exit',self._commit, self._close_at_exit, self._parent._sess_stack
-        self._sess.flush()
+        # self._sess.flush()
         if self._close_at_exit:
             try:
                 #self._parent.debug('$%$%$%$%$%$%$%$ commit {}'.format(self._commit))
@@ -94,8 +86,8 @@ class SessionCTX(object):
 
 
 class DatabaseAdapter(Loggable):
-    '''
-    '''
+    """
+    """
     sess = None
 
     sess_stack = 0
@@ -122,6 +114,14 @@ class DatabaseAdapter(Loggable):
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
+    datasource_url =Property(depends_on='connection_parameters_changed')
+
+    path=Str
+
+    def create_all(self, metadata):
+        if self.kind=='sqlite':
+            with self.session_ctx() as sess:
+                metadata.create_all(sess.bind)
 
     def session_ctx(self, sess=None, commit=True):
         if sess is None:
@@ -138,19 +138,6 @@ class DatabaseAdapter(Loggable):
 
     def isConnected(self):
         return self.connected
-
-    #     def reset(self):
-    #         if self.sess:
-    #             self.info('clearing current session. uncommitted changes will be deleted')
-    #             self.sess.flush()
-    #             self.sess.close()
-    #
-    #             self.sess.remove()
-    #             self.sess = None
-
-    #             import gc
-    #             gc.collect()
-
 
     def connect(self, test=True, force=False, warn=True):
         if force:
@@ -178,9 +165,7 @@ class DatabaseAdapter(Loggable):
                     engine = create_engine(url, echo=False)
                     #                     Session.configure(bind=engine)
 
-                    self.session_factory = sessionmaker(bind=engine,
-                                                        #                                                         autoflush=False
-                    )
+                    self.session_factory = sessionmaker(bind=engine,autoflush=False)
                     if test:
                         self.connected = self._test_db_connection()
                     else:
@@ -196,67 +181,21 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         self.connection_parameters_changed = False
         return self.connected
 
-    #     def new_session(self):
-    # #         sess = self.session_factory()
-    #         sess = scoped_session(Session)
-    #         return sess
-
     def initialize_database(self):
         pass
 
-    #     def get_query(self, table):
-    #         sess = self.get_session()
-    #         if sess:
-    #             q = sess.query(table)
-    #             return q
-
     def get_session(self):
-    #         '''
-    #         '''
         sess = self.sess
         if sess is None:
             sess = self.session_factory()
 
         return sess
 
-    # #             if self.session_factory is not None:
-    #             self.sess = self.new_session()
-    #
-    #         return self.sess
-
-    #     def expire(self):
-    #         if self.sess is not None:
-    #             self.sess.expire_all()
-    #
-    #     def delete(self, item):
-    #         if self.sess is not None:
-    #             self.sess.delete(item)
-    #
-    #     def commit(self):
-    #         if self.sess is not None:
-    #             self.sess.commit()
-    #
-    #     def flush(self):
-    #         if self.sess is not None:
-    #             self.sess.flush()
-    #
-    #     def rollback(self):
-    #         if self.sess is not None:
-    #             self.sess.rollback()
-    #
-    #     def close(self):
-    #         if self.sess is not None:
-    #             self.sess.close()
-
-
-    def get_migrate_version(self):
-        return True
+    def get_migrate_version(self, **kw):
         with self.session_ctx() as s:
-
             #q = s.query(MigrateVersionTable)
             q = s.query(AlembicVersionTable)
             mv = q.one()
-
             return mv
 
     def get_results(self, tablename, **kw):
@@ -276,6 +215,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         return q.all()
 
     @cached_property
+    def _get_datasource_url(self):
+        return '{}:{}'.format(self.host, self.name)
+
+    @cached_property
     def _get_url(self):
         kind = self.kind
         password = self.password
@@ -293,7 +236,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             else:
                 url = 'mysql+{}://{}@{}/{}?connect_timeout=3'.format(driver, user, host, name)
         else:
-            url = 'sqlite:///{}'.format(name)
+            url = 'sqlite:///{}'.format(self.path)
 
         return url
 
@@ -326,10 +269,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 #                 self.sess = None
                 #                 self.get_session()
                 #                sess = self.session_factory()
-                    self.info('testing database connection')
-                    getattr(self, self.test_func)()
+                    self.info('testing database connection {}'.format(self.test_func))
+                    getattr(self, self.test_func)(reraise=True)
                     connected = True
-
             except Exception, e:
                 print 'exception', e
 
@@ -401,16 +343,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         return nitem
 
-
-    #         def func(s):
-    # test if already exists
-    #                 self.flush()
-    #                 self.debug('add unique flush')
-
-    #            self.info('{}= {} already exists'.format(attr, name))
-    #         return nitem
-
-
     def _get_path_keywords(self, path, args):
         n = os.path.basename(path)
         r = os.path.dirname(path)
@@ -418,22 +350,26 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         args['filename'] = n
         return args
 
-    def _delete_item(self, name, value):
+    def _delete_item(self, value, name=None):
         sess = self.sess
         if sess is None:
             if self.session_factory:
                 sess = self.session_factory()
 
         with self.session_ctx(sess):
-            func = getattr(self, 'get_{}'.format(name))
-            item = func(value)
+            if name is not None:
+                func = getattr(self, 'get_{}'.format(name))
+                item = func(value)
+            else:
+                item=value
+
             if item:
                 sess.delete(item)
 
     def _retrieve_items(self, table,
                         joins=None,
                         filters=None,
-                        limit=None, order=None):
+                        limit=None, order=None, reraise=False):
 
         sess = self.sess
         if sess is None:
@@ -452,7 +388,8 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         if ji != table:
                             q = q.join(ji)
                 except InvalidRequestError:
-                    pass
+                    if reraise:
+                        raise
 
             if filters is not None:
                 for fi in filters:
@@ -464,19 +401,22 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if limit is not None:
                 q = q.limit(limit)
 
-            r = self._query_all(q)
+            r = self._query_all(q, reraise)
             return r
 
-    def _retrieve_first(self, table, value, key='name', order_by=None):
-        if not isinstance(value, (str, int, unicode, long, float)):
-            return value
+    def _retrieve_first(self, table, value=None, key='name', order_by=None):
+        if value is not None:
+            if not isinstance(value, (str, int, unicode, long, float)):
+                return value
 
         sess = self.get_session()
         if sess is None:
             return
 
         q = sess.query(table)
-        q = q.filter(getattr(table, key) == value)
+        if value is not None:
+            q = q.filter(getattr(table, key) == value)
+
         try:
             if order_by is not None:
                 q = q.order_by(order_by)
@@ -485,15 +425,17 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             print e
             return
 
-    def _query_all(self, q):
+    def _query_all(self, q, reraise=False):
         try:
             return q.all()
         except SQLAlchemyError, e:
+            if reraise:
+                raise
             print e
             return []
 
     def _retrieve_item(self, table, value, key='name', last=None,
-                       joins=None, filters=None, options=None):
+                       joins=None, filters=None, options=None, verbose=True):
     #         sess = self.get_session()
     #         if sess is None:
     #             return
@@ -545,11 +487,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 except StatementError:
                     self.debug(traceback.format_exc())
                     s.rollback()
+                    continue
                     #                 return __retrieve()
 
                 except MultipleResultsFound:
-                    self.debug(
-                        'multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
+                    if verbose:
+                        self.debug('multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
                                                                                           value))
                     try:
                         if hasattr(table, 'id'):
@@ -557,11 +500,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         return q.limit(1).all()[-1]
 
                     except (SQLAlchemyError, IndexError, AttributeError), e:
-                        self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
+                        if verbose:
+                            self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
+                        break
 
                 except NoResultFound:
-                    self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
-
+                    if verbose:
+                        self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
+                    break
         # no longer true: __retrieve is recursively called if a StatementError is raised
         # use retry loop instead
         with self.session_ctx() as s:

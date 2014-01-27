@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 # from traits.api import Instance, DelegatesTo
-from traits.api import HasTraits, Any, Int, Instance, Property, Bool, Event, \
+from traits.api import Any, Int, Instance, Property, Event, \
     Enum, String
 from traitsui.api import View, Item, VGroup, ButtonEditor, HGroup, Spring
 #============= standard library imports ========================
@@ -24,9 +24,9 @@ from traitsui.api import View, Item, VGroup, ButtonEditor, HGroup, Spring
 from fusions_logic_board import FusionsLogicBoard
 from threading import Timer, Event as TEvent
 from pychron.hardware.kerr.kerr_device import KerrDevice
-from pychron.ui.led_editor import LEDEditor, LED
+from pychron.core.ui.led_editor import LEDEditor, LED
 
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 from datetime import datetime, timedelta
 # from pychron.hardware.kerr.kerr_motor import KerrMotor
 FLOW_STATES = {'on':'Stop Flow', 'off':'Start Flow', 'purge':'Purging'}

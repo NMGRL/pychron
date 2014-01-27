@@ -16,15 +16,15 @@
 
 #============= enthought library imports =======================
 from traits.api import Button
-from traitsui.api import View, Item, HGroup, UItem, spring
+from traitsui.api import View, Item, HGroup, spring
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 
 
 class IsoEvoFitSelector(FilterFitSelector):
-    plot_button = Button('Plot')
 
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
@@ -32,23 +32,10 @@ class IsoEvoFitSelector(FilterFitSelector):
 
         super(IsoEvoFitSelector, self).load_fits(keys + bs, fits + bfs)
 
-    def _plot_button_fired(self):
-        self.update_needed = True
-
-    def _auto_update_changed(self):
-        self.update_needed = True
-
-    def traits_view(self):
-        v = View(
-            HGroup(UItem('plot_button',
-                         tooltip='Replot the isotope evolutions. \
-This may take awhile if many analyses are selected'),
-                   spring,
-                   Item('auto_update',
-                        label='Auto Plot',
-                        tooltip='Should the plot refresh after each change ie. "fit" or "show". \
-It is not advisable to use this option with many analyses')),
-            self._get_fit_group())
-        return v
+    # def traits_view(self):
+    #     v = View(
+    #         self
+    #         self._get_fit_group())
+    #     return v
 
         #============= EOF =============================================

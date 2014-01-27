@@ -26,12 +26,12 @@ from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
 from pychron.spectrometer.detector import Detector
-from pychron.pychron_constants import NULL_STR
-from pychron.ui.thread import Thread
+from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
+from pychron.core.ui.thread import Thread
 from pychron.paths import paths
 import os
-from pychron.helpers.isotope_utils import sort_isotopes
-# from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.helpers.isotope_utils import sort_isotopes
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class PeakCenterConfigHandler(Handler):
@@ -48,9 +48,12 @@ class PeakCenterConfig(HasTraits):
     isotope = Str('Ar40')
     isotopes = List(transient=True)
     dac = Float
-    use_current_dac=Bool(True)
-
+    use_current_dac = Bool(True)
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
     directions = Enum('Increase', 'Decrease', 'Oscillate')
+
+    def _integration_time_default(self):
+        return QTEGRA_INTEGRATION_TIMES[4] #1.048576
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, 'peak_center_config')
@@ -65,8 +68,9 @@ class PeakCenterConfig(HasTraits):
         v = View(Item('detector', editor=EnumEditor(name='detectors')),
                  Item('isotope', editor=EnumEditor(name='isotopes')),
                  HGroup(Item('use_current_dac',
-                        label='Use Current DAC'),
+                             label='Use Current DAC'),
                         Item('dac', enabled_when='not use_current_dac')),
+                 Item('integration_time'),
                  Item('directions'),
                  buttons=['OK', 'Cancel'],
                  kind='livemodal',
@@ -91,6 +95,8 @@ class IonOpticsManager(Manager):
 
     peak_center_result = None
 
+    _ointegration_time = None
+
     def get_mass(self, isotope_key):
         spec = self.spectrometer
         molweights = spec.molecular_weights
@@ -103,23 +109,29 @@ class IonOpticsManager(Manager):
         spec = self.spectrometer
         mag = spec.magnet
 
+        det = spec.get_detector(detector)
+        self.debug('detector {}'.format(det))
+
         if use_dac:
             dac = pos
         else:
             self.debug('POSITION {} {}'.format(pos, detector))
             if isinstance(pos, str):
-                # if the pos is an isotope then update the detectors
-                spec.update_isotopes(pos, detector)
+                if update_isotopes:
+                    # if the pos is an isotope then update the detectors
+                    spec.update_isotopes(pos, detector)
 
                 # pos is isotope
                 pos = self.get_mass(pos)
                 mag._mass = pos
+            else:
+                #get nearst isotope
+                self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
+                spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
             # pos is mass i.e 39.962
-            dac = mag.map_mass_to_dac(pos)
+            dac = mag.map_mass_to_dac(pos, det.name)
 
-        det = spec.get_detector(detector)
-        self.debug('detector {}'.format(det))
         if det:
             dac = spec.correct_dac(det, dac)
 
@@ -132,7 +144,7 @@ class IonOpticsManager(Manager):
 
         molweights = spec.molecular_weights
         mass = molweights[iso]
-        dac = spec.magnet.map_mass_to_dac(mass)
+        dac = spec.magnet.map_mass_to_dac(mass, det.name)
 
         # correct for deflection
         return spec.correct_dac(det, dac)
@@ -158,13 +170,17 @@ class IonOpticsManager(Manager):
             self._peak_center(*args)
 
     def setup_peak_center(self, detector=None, isotope=None,
-                          period=900,
+                          integration_time=1.04,
                           directions='Increase',
                           center_dac=None, plot_panel=None):
+
+        self._ointegration_time = self.spectrometer.integration_time
+
         if detector is None or isotope is None:
             pcc = self.peak_center_config
+            pcc.dac=self.spectrometer.magnet.dac
+
             info = pcc.edit_traits()
-            #             info = self.edit_traits(view='peak_center_config_view')
             if not info.result:
                 return
             else:
@@ -172,9 +188,13 @@ class IonOpticsManager(Manager):
                 detector = pcc.detector.name
                 isotope = pcc.isotope
                 directions = pcc.directions
+                integration_time=pcc.integration_time
 
                 if not pcc.use_current_dac:
                     center_dac = pcc.dac
+
+        self.spectrometer.set_integration_time(integration_time)
+        period = int(integration_time * 1000 * 0.9)
 
         if isinstance(detector, (tuple, list)):
             ref = detector[0]
@@ -257,7 +277,7 @@ class IonOpticsManager(Manager):
             #
             ## convert dac to axial units
             #dac_a = dac_d / det.relative_position
-            dac_a=spec.uncorrect_dac(det, dac_d)
+            dac_a = spec.uncorrect_dac(det, dac_d)
             self.info('converted to axial units {}'.format(dac_a))
 
             if save:
@@ -266,7 +286,7 @@ class IonOpticsManager(Manager):
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
                     save = self.confirmation_dialog(msg)
                 if save:
-                    spec.magnet.update_field_table(isotope, dac_a)
+                    spec.magnet.update_field_table(det, isotope, dac_a)
                     spec.magnet.set_dac(self.peak_center_result)
 
         elif not self.canceled:
@@ -281,6 +301,8 @@ class IonOpticsManager(Manager):
         # still necessary with qt? and tasks
 
         self.trait_set(alive=False)
+        if self._ointegration_time:
+            self.spectrometer.set_integration_time(self._ointegration_time)
 
     def close(self):
         self.cancel_peak_center()

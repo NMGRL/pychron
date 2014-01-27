@@ -24,7 +24,8 @@ from pyface.tasks.action.task_action import TaskAction
 #============= local library imports  ==========================
 
 
-#============= EOF ====================================
+
+
 class EasyFitAction(TaskAction):
     method = 'do_easy_fit'
     name = 'Easy Fit'
@@ -40,6 +41,16 @@ class EasyDiscriminationAction(TaskAction):
     name = 'Easy Disc.'
 
 
+class EasyICAction(TaskAction):
+    method = 'do_easy_ic'
+    name = 'Easy IC.'
+
+
+class EasyFluxAction(TaskAction):
+    method = 'do_easy_flux'
+    name = 'Easy Flux'
+
+
 class EasyFiguresAction(Action):
     name = 'Easy Figures'
 
@@ -47,7 +58,7 @@ class EasyFiguresAction(Action):
         from pychron.processing.easy.figures import EasyFigures
 
         e = EasyFigures()
-        e.make_figures()
+        e.make()
 
 
 class EasyTablesAction(Action):
@@ -57,5 +68,19 @@ class EasyTablesAction(Action):
         from pychron.processing.easy.tables import EasyTables
 
         e = EasyTables()
-        e.make_tables()
+        e.make()
+
+
+class EasySensitivityAction(Action):
+    name = 'Easy Sensitivity'
+
+    def perform(self, event):
+
+        from pychron.processing.easy.sensitivity import EasySensitivity
+
+        e = EasySensitivity()
+        e.make()
+
+#============= EOF ====================================
+
 

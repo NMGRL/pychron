@@ -14,15 +14,12 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 import random
 from traits.api import Instance, Int, Property, List, \
-    Any, Enum, Str, DelegatesTo, Event, Bool
+    Any, Enum, Str, DelegatesTo, Bool, TraitError
 
 #============= standard library imports ========================
-from ConfigParser import ConfigParser
 import os
 from numpy import array, argmin, abs
 #============= local library imports  ==========================
@@ -30,22 +27,31 @@ from pychron.spectrometer.source import Source
 from pychron.spectrometer.magnet import Magnet
 from pychron.spectrometer.detector import Detector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
-from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER
+from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
 #from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
 
 debug = False
-QTEGRA_INTEGRATION_TIMES = array([0.065536, 0.131072, 0.262144, 0.524288,
-                                  1.048576, 2.097152, 4.194304, 8.388608,
-                                  16.777216, 33.554432, 67.108864])
+
 
 
 def normalize_integration_time(it):
     """
         find the integration time closest to "it"
     """
-    x = QTEGRA_INTEGRATION_TIMES
+    x = array(QTEGRA_INTEGRATION_TIMES)
     return x[argmin(abs(x - it))]
+
+
+def calculate_radius(m_e, hv, mfield):
+    """
+        m_e= mass/charge
+        hv= accelerating voltage (V)
+        mfield= magnet field (H)
+    """
+    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
+
+    return r
 
 
 class Spectrometer(SpectrometerDevice):
@@ -55,9 +61,7 @@ class Spectrometer(SpectrometerDevice):
     detectors = List(Detector)
 
     microcontroller = Any
-    integration_time = Enum(0.065536, 0.131072, 0.262144, 0.524288,
-                            1.048576, 2.097152, 4.194304, 8.388608,
-                            16.777216, 33.554432, 67.108864)
+    integration_time = Enum(QTEGRA_INTEGRATION_TIMES)
 
     reference_detector = Str('H1')
 
@@ -85,15 +89,30 @@ class Spectrometer(SpectrometerDevice):
     dc_npeak_centers = Int(3)
 
     _alive = False
-    intensity_dirty = Event
+    #intensity_dirty = Event
 
     testcnt = 0
     send_config_on_startup = Bool
 
-    def set_integration_time(self, it):
+    def get_integration_time(self, current=True):
+        if current:
+            resp=self.microcontroller.ask('GetIntegrationTime')
+            if resp:
+                try:
+                    self.integration_time=float(resp)
+                    self.info('Integration Time {}'.format(self.integration_time))
+
+                except (TypeError, ValueError, TraitError):
+                    self.warning('Invalid integration time. resp={}'.format(resp))
+                    self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
+        return self.integration_time
+
+    def set_integration_time(self, it, force=False):
         it = normalize_integration_time(it)
-        name = 'SetIntegrationTime'
-        self.set_parameter(name, it)
+        if self.integration_time!=it or force:
+            name = 'SetIntegrationTime'
+            self.set_parameter(name, it)
+
         return it
 
     def send_configuration(self):
@@ -124,82 +143,8 @@ class Spectrometer(SpectrometerDevice):
 
         return next((det for det in self.detectors if det.name == name), None)
 
-    #    def get_hv_correction(self, current=False):
-    #        cur = self.source.current_hv
-    #        if current:
-    #            cur = self.source.read_hv()
-    #
-    #        if cur is None:
-    #            cor = 1
-    #        else:
-    #            cor = self.source.nominal_hv / cur
-    #        return cor
-
-    #    def get_relative_detector_position(self, det):
-    #        '''
-    #            return position relative to ref detector in dac space
-    #        '''
-    #        if det is None:
-    #            return 0
-    #        else:
-    #            return 0
-
-    #    def set_magnet_position(self, pos, detector=None):
-    #        #calculate the dac value for pos is on the reference detector
-    #        #the mftable should be set to the ref detector
-    #        dac = self.magnet.calculate_dac(pos)
-    #
-    #        #correct for detector
-    #        #calculate the dac so that this position is shifted onto the given
-    #        #detector.
-    # #        dac += self.get_detector_position(detector)
-    #
-    #        #correct for deflection
-    #        self.magnet.dac = dac
-    #
-    #        #correct for hv
-    #        dac *= self.get_hv_correction(current=True)
-
-    #===============================================================================
-    # change handlers
-    #===============================================================================
-    #    def _molecular_weight_changed(self):
-    #        self.set_magnet_position(MOLECULAR_WEIGHTS[self.molecular_weight])
-
-    #    def _integration_time_changed(self):
-    #        if self.microcontroller:
-    #            self.microcontroller.ask('SetIntegrationTime {}'.format(self.integration_time))
-    #            self.reset_scan_timer()
-
-    #===============================================================================
-    # timers
-    #===============================================================================
-
-    #    def reset_scan_timer(self):
-    #        if self.scan_timer is not None:
-    #            self.scan_timer.Stop()
-    #        self._timer_factory()
-    #
-    #    def stop(self):
-    #        if self._alive == True:
-    #            self.info('Calibration canceled by user')
-    #            self._alive = False
-    #            return False
-    #        else:
-    #            self._alive = False
-    #            return True
-    #        if self.centering_timer and self.centering_timer.IsRunning():
-    #            self.centering_timer.Stop()
-    #            self.info('Peak centering stopped by user')
-    #            self._timer_factory()
-    #        else:
-    #            return True
-    #===============================================================================
-    # peak centering
-    #===============================================================================
     def isAlive(self):
         return self._alive
-
 
     def update_isotopes(self, isotope, detector):
 
@@ -213,11 +158,9 @@ class Spectrometer(SpectrometerDevice):
                 mass = nmass - (i - index)
                 di.isotope = 'Ar{}'.format(mass)
 
-
-                #===============================================================================
-                # property get/set
-                #===============================================================================
-
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_detectors(self):
         ds = []
         for di in DETECTOR_ORDER:
@@ -253,9 +196,33 @@ class Spectrometer(SpectrometerDevice):
         self.molecular_weight = 'Ar40'
 
     def load(self):
+
         self.load_detectors()
 
+        p = os.path.join(paths.spectrometer_dir, 'config.cfg')
+        config = self.get_configuration_writer(p)
+        pd='Protection'
+        if config.has_section(pd):
+
+            self.magnet.use_beam_blank=self.config_get(config, pd, 'use_beam_blank',
+                                                       cast='boolean',default=False)
+            self.magnet.use_detector_protection=self.config_get(config, pd,
+                                                                'use_detector_protection',
+                                                                cast='boolean', default=False)
+            self.magnet.beam_blank_threshold=self.config_get(config, pd,
+                                                             'beam_blank_threshold',cast='float',default=0.1)
+            self.magnet.detector_protection_threshold=self.config_get(config, pd,
+                                                                      'detector_protection_threshold',
+                                                                      cast='float',default=0.1)
+            ds=self.config_get(config, pd, 'detectors')
+            if ds:
+                ds=ds.split(',')
+                self.magnet.protected_detectors = ds
+                for di in ds:
+                    self.info('Making protection available for detector "{}"'.format(di))
+
         self.magnet.load()
+
         self.debug('Detectors {}'.format(self.detectors))
         for d in self.detectors:
             d.load_deflection_coefficients()
@@ -271,7 +238,7 @@ class Spectrometer(SpectrometerDevice):
         p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
-            relative_position = self.config_get(config, name, 'relative_position', cast='float')
+            #relative_position = self.config_get(config, name, 'relative_position', cast='float')
             deflection_corrrection_sign = self.config_get(config, name, 'deflection_correction_sign', cast='int')
 
             color = self.config_get(config, name, 'color', default='black')
@@ -279,7 +246,7 @@ class Spectrometer(SpectrometerDevice):
             isotope = self.config_get(config, name, 'isotope')
             kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
             self.add_detector(name=name,
-                              relative_position=relative_position,
+                              #relative_position=relative_position,
                               deflection_corrrection_sign=deflection_corrrection_sign,
                               color=color,
                               active=default_state,
@@ -316,13 +283,17 @@ class Spectrometer(SpectrometerDevice):
         #             signals = [(ns + self.testcnt * 0.1) + random.random()
         #                         for ns in [1, 100, 3, 1, 1, 0]]
             signals = [1, 100, 3, 0.01, 0.01, 0.01]
-            signals=[si + random.random() for si in signals]
+            signals = [si + random.random() for si in signals]
             #             signals = [(i * 2 + self.testcnt * 0.1) + random.random() for i in range(6)]
             #self.testcnt += 1
             if tagged:
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
-        self.intensity_dirty = dict(zip(keys, signals))
+        for k, v in zip(keys, signals):
+            det=self.get_detector(k)
+            det.set_intensity(v)
+
+        #self.intensity_dirty = dict(zip(keys, signals))
         return keys, signals
 
     def get_intensity(self, dkeys):
@@ -330,7 +301,6 @@ class Spectrometer(SpectrometerDevice):
             dkeys: str or tuple of strs
 
         """
-        #        index = DETECTOR_ORDER.index(key)
         data = self.get_intensities()
         if data is not None:
             keys, signals = data
@@ -351,7 +321,7 @@ class Spectrometer(SpectrometerDevice):
             cor = source.nominal_hv / cur
         return cor
 
-    def correct_dac(self, det, dac):
+    def correct_dac(self, det, dac, current=True):
         """
             dac is in axial units
             convert to detector units
@@ -362,25 +332,25 @@ class Spectrometer(SpectrometerDevice):
             correct for deflection
             correct for hv
         """
-        #convert to detector units
-        dac *= det.relative_position
+        #self.debug('correct dac {} {} {}'.format(det, dac, current))
+        #dac is already in detector units.
+        #mftable has mappings for each detector
 
         #correct for deflection
-        dev = det.get_deflection_correction(current=True)
+        dev = det.get_deflection_correction(current=current)
         dac += dev
 
         #correct for hv
-        dac *= self.get_hv_correction(current=True)
+        dac *= self.get_hv_correction(current=current)
         return dac
 
-    def uncorrect_dac(self, det, dac):
+    def uncorrect_dac(self, det, dac, current=True):
         """
             inverse of correct_dac
         """
-        dac /= self.get_hv_correction(current=True)
-        dev = det.get_deflection_correction(current=True)
-        dac -= dev
-        dac /= det.relative_position
+        #self.debug('uncorrect dac {} {} {}'.format(det, dac, current))
+        dac /= self.get_hv_correction(current=current)
+        dac -= det.get_deflection_correction(current=current)
         return dac
 
     #===============================================================================
@@ -400,11 +370,10 @@ class Spectrometer(SpectrometerDevice):
         if self.microcontroller:
 
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-            config = ConfigParser()
-            config.read(p)
+            config=self.get_configuration_writer(p)
 
             for section in config.sections():
-                if section=='Default':
+                if section in ['Default','Protection']:
                     continue
 
                 for attr in config.options(section):
@@ -419,17 +388,16 @@ class Spectrometer(SpectrometerDevice):
 
                         self.set_parameter(cmd, v)
 
-                        #===============================================================================
-                        # defaults
-                        #===============================================================================
-
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _magnet_default(self):
         return Magnet(spectrometer=self)
 
     def _source_default(self):
         return Source(spectrometer=self)
+#============= EOF =============================================
 
-        #============= EOF =============================================
         #    def _peak_center_scan_step(self, di, graph, plotid, cond):
         # #       3print cond
         #        if self.first:
@@ -510,3 +478,76 @@ class Spectrometer(SpectrometerDevice):
 #        self._timer_factory()
 #
 #        return self.finish_peak_center(graph, dac_values, self.intensities)
+        #    def get_hv_correction(self, current=False):
+        #        cur = self.source.current_hv
+        #        if current:
+        #            cur = self.source.read_hv()
+        #
+        #        if cur is None:
+        #            cor = 1
+        #        else:
+        #            cor = self.source.nominal_hv / cur
+        #        return cor
+
+        #    def get_relative_detector_position(self, det):
+        #        '''
+        #            return position relative to ref detector in dac space
+        #        '''
+        #        if det is None:
+        #            return 0
+        #        else:
+        #            return 0
+
+        #    def set_magnet_position(self, pos, detector=None):
+        #        #calculate the dac value for pos is on the reference detector
+        #        #the mftable should be set to the ref detector
+        #        dac = self.magnet.calculate_dac(pos)
+        #
+        #        #correct for detector
+        #        #calculate the dac so that this position is shifted onto the given
+        #        #detector.
+        # #        dac += self.get_detector_position(detector)
+        #
+        #        #correct for deflection
+        #        self.magnet.dac = dac
+        #
+        #        #correct for hv
+        #        dac *= self.get_hv_correction(current=True)
+
+        #===============================================================================
+        # change handlers
+        #===============================================================================
+        #    def _molecular_weight_changed(self):
+        #        self.set_magnet_position(MOLECULAR_WEIGHTS[self.molecular_weight])
+
+        #    def _integration_time_changed(self):
+        #        if self.microcontroller:
+        #            self.microcontroller.ask('SetIntegrationTime {}'.format(self.integration_time))
+        #            self.reset_scan_timer()
+
+        #===============================================================================
+        # timers
+        #===============================================================================
+
+        #    def reset_scan_timer(self):
+        #        if self.scan_timer is not None:
+        #            self.scan_timer.Stop()
+        #        self._timer_factory()
+        #
+        #    def stop(self):
+        #        if self._alive == True:
+        #            self.info('Calibration canceled by user')
+        #            self._alive = False
+        #            return False
+        #        else:
+        #            self._alive = False
+        #            return True
+        #        if self.centering_timer and self.centering_timer.IsRunning():
+        #            self.centering_timer.Stop()
+        #            self.info('Peak centering stopped by user')
+        #            self._timer_factory()
+        #        else:
+        #            return True
+        #===============================================================================
+        # peak centering
+        #===============================================================================

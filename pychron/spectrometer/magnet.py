@@ -13,27 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.core.helpers.filetools import to_bool
 
 #============= enthought library imports =======================
 from scipy import optimize
-from traits.api import HasTraits, List, Any, Property, Float, Event, Str
+from traits.api import HasTraits, List, Any, Property, Float, Event, Str, Bool
 from traitsui.api import View, Item, VGroup, HGroup, Spring, \
-    TableEditor, RangeEditor
-from traitsui.table_column import ObjectColumn
+    RangeEditor
 
 #============= standard library imports ========================
 import os
 import csv
 import time
-from numpy import polyval, polyfit, array, min, nonzero, poly1d
+from numpy import min, nonzero, array, asarray
 #============= local library imports  ==========================
-from pychron.helpers.fits import convert_fit
 from pychron.paths import paths
 # import math
 # from pychron.graph.graph import Graph
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
-# from pychron.regression.ols_regressor import PolynomialRegressor
+# from pychron.core.regression.ols_regressor import PolynomialRegressor
 
 class CalibrationPoint(HasTraits):
     x = Float
@@ -50,8 +49,24 @@ def get_float(func):
     return dec
 
 
-class Magnet(SpectrometerDevice):
+def get_detector_name(det):
+    if not isinstance(det, (str, unicode)):
+        det = det.name
+    return det
 
+
+def mass_cal_func(p, x):
+    return p[2] + (p[0] ** 2 * x / p[1]) ** 0.5
+
+
+def least_squares(func, xs, ys, initial_guess):
+    xs, ys = asarray(xs), asarray(ys)
+    errfunc = lambda p, x, v: func(p, x) - v
+    ret, info = optimize.leastsq(errfunc, initial_guess, args=(xs, ys))
+    return ret
+
+
+class Magnet(SpectrometerDevice):
     _mftable = None
 
     dac = Property(depends_on='_dac')
@@ -74,17 +89,28 @@ class Magnet(SpectrometerDevice):
 
     dac_changed = Event
 
-    fitfunc=Str('parabolic')
+    fitfunc = Str('parabolic')
 
-    def update_field_table(self, isotope, dac):
+    protected_detectors=List
+
+    use_detector_protection=Bool
+    use_beam_blank=Bool
+
+    detector_protection_threshold=Float(0.1) #DAC units
+    beam_blank_threshold=Float(0.1) #DAC units
+
+    def update_field_table(self, det, isotope, dac):
         """
 
             dac needs to be in axial units
         """
+        det = get_detector_name(det)
 
         self.info('update mftable {} {}'.format(isotope, dac))
 
-        isos, xs, ys = self._get_mftable()
+        d, header = self._get_mftable()
+
+        isos, xs, ys = map(array, d[det][:3])
 
         try:
             refindex = min(nonzero(isos == isotope)[0])
@@ -92,11 +118,14 @@ class Magnet(SpectrometerDevice):
             delta = dac - ys[refindex]
             # need to calculate all ys
             # using simple linear offset
-            ys += delta
+            #ys += delta
+            for k, (iso, xx, yy, _) in d.iteritems():
+                ny = yy + delta
+                p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
+                d[k] = iso, xx, ny, p
 
-            self.dump(isos, xs, ys)
-
-            self._mftable = isos, xs, ys
+            self.dump(isos, header, d)
+            #self._mftable = isos, xs, ys
 
         except ValueError:
             import traceback
@@ -104,40 +133,40 @@ class Magnet(SpectrometerDevice):
             e = traceback.format_exc()
             self.debug('Magnet update field table {}'.format(e))
 
-    def mftable_view(self):
-        cols = [ObjectColumn(name='x', label='Mass'),
-                ObjectColumn(name='y', label='DAC'),
-        ]
-        teditor = TableEditor(columns=cols, editable=False)
-        v = View(HGroup(
-            Item('calibration_points', editor=teditor, show_label=False),
-            Item('graph', show_label=False, style='custom')
-        ),
-                 width=700,
-                 height=500,
-                 resizable=True
-
-        )
-        return v
-
     #===============================================================================
     # ##positioning
     #===============================================================================
     def set_dac(self, v, verbose=False):
         micro = self.microcontroller
-        unblank = False
-        if abs(self._dac - v) > 0.1:
-            if micro:
-                micro.ask('BlankBeam True', verbose=verbose)
-                unblank = True
-
-        self._dac = v
+        unprotect = False
+        unblank=False
         if micro:
-            self.microcontroller.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
+            if self.use_detector_protection:
+                if abs(self._dac - v) >self.detector_protection_threshold:
+                    for pd in self.protected_detectors:
+                        micro.ask('ProtectDetector {},On'.format(pd), verbose=verbose)
+                    unprotect = True
+
+            elif self.use_beam_blank:
+                if abs(self._dac - v) >self.beam_blank_threshold:
+                    micro.ask('BlankBeam True', verbose=verbose)
+                    unblank=True
+
+            micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
             time.sleep(self.settling_time)
+
+            for i in xrange(50):
+                if not to_bool(micro.ask('GetMagnetMoving')):
+                    break
+                time.sleep(0.25)
+
+            if unprotect:
+                for pd in self.protected_detectors:
+                    micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
             if unblank:
                 micro.ask('BlankBeam False', verbose=verbose)
 
+        self._dac = v
         self.dac_changed = True
 
     @get_float
@@ -154,6 +183,67 @@ class Magnet(SpectrometerDevice):
     def load(self):
         pass
 
+
+    def finish_loading(self):
+        d = self.read_dac()
+        if d is not None:
+            self._dac = d
+
+    def dump(self, isos, header, d):
+        p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
+        with open(p, 'w') as f:
+            writer = csv.writer(f)
+
+            writer.writerow(['iso'] + header)
+
+            for i, iso in enumerate(isos):
+                a = [iso]
+                for hi in header:
+                    iso, xs, ys, _ = d[hi]
+                    a.append(ys[i])
+
+                writer.writerow(a)
+
+    #===============================================================================
+    # mapping
+    #===============================================================================
+    def map_dac_to_mass(self, dac, detname):
+        detname = get_detector_name(detname)
+
+        d, _ = self._get_mftable()
+        _, xs, ys, p = d[detname]
+
+        def func(x, *args):
+            c = list(p)
+            c[-1] -= dac
+            return mass_cal_func(c, x)
+
+        mass = optimize.brentq(func, 0, 200)
+        return mass
+
+    def map_mass_to_dac(self, mass, detname):
+        detname = get_detector_name(detname)
+        d, _ = self._get_mftable()
+        _, xs, ys, p = d[detname]
+        dac = mass_cal_func(p, mass)
+
+        self.debug('map mass to dac {} >> {}'.format(mass, dac))
+
+        return dac
+
+    def map_dac_to_isotope(self, dac=None, det=None, current=True):
+        if dac is None:
+            dac = self._dac
+        if det is None:
+            det = self.detector
+
+        if det:
+            dac = self.spectrometer.uncorrect_dac(det, dac, current=current)
+
+        m = self.map_dac_to_mass(dac, det.name)
+        molweights = self.spectrometer.molecular_weights
+        return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
+
     def _get_mftable(self):
         if not self._mftable:
             self._mftable = self._load_mftable()
@@ -166,85 +256,42 @@ class Magnet(SpectrometerDevice):
         if os.path.isfile(p):
             with open(p, 'U') as f:
                 reader = csv.reader(f)
-                xs = []
-                ys = []
-                isos = []
+                if self.spectrometer:
+                    molweights = self.spectrometer.molecular_weights
+                else:
+                    from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
 
-                molweights = self.spectrometer.molecular_weights
+                header = map(str.strip, reader.next()[1:])
+                d = {}
                 for line in reader:
+                    iso = line[0]
                     try:
-                        fit=int(convert_fit(line[0]))
-                    except ValueError:
-                        pass
-
-                    try:
-                        iso = line[0]
-                        x, y = molweights[iso], float(line[1])
-                        isos.append(iso)
-                        xs.append(x)
-                        ys.append(y)
+                        mw = molweights[iso]
                     except KeyError:
-                        self.debug('no molecular weight for {}'.format(line[0]))
+                        continue
 
-            if fit is None:
-                fit='parabolic'
+                    for i, li in enumerate(line[1:]):
+                        hi = header[i]
+                        try:
+                            li = float(li)
+                        except (TypeError, ValueError):
+                            continue
 
-            return array(isos), array(xs), array(ys), fit
+                        if hi in d:
+                            isos, xs, ys = d[hi]
+                            isos.append(iso)
+                            xs.append(mw)
+                            ys.append(li)
+                        else:
+                            d[hi] = [iso], [mw], [li]
+
+            for k, (isos, xs, ys) in d.iteritems():
+                cs = least_squares(mass_cal_func, xs, ys, [ys[0], xs[0], 0])
+                d[k] = (isos, xs, ys, cs)
+
+            return d, header
         else:
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
-
-    def finish_loading(self):
-        d = self.read_dac()
-        if d is not None:
-            self._dac = d
-
-    def dump(self, isos, xs, ys):
-        p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
-        with open(p, 'w') as f:
-            writer = csv.writer(f)
-            for a in zip(isos, ys):
-                writer.writerow(a)
-
-            #===============================================================================
-            # mapping
-            #===============================================================================
-
-    def map_dac_to_mass(self, d):
-        _, xs, ys = self._get_mftable()
-        args = polyfit(xs, ys, 2)
-
-        args[-1] -= d
-        mass = optimize.brentq(poly1d(args), 0, 200)
-        #c = c - d
-        #m = (-b + (b * b - 4 * a * c) ** 0.5) / (2 * a)
-
-        return mass
-
-    def map_mass_to_dac(self, mass):
-        _, xs, ys, fit= self._get_mftable()
-
-        fit=convert_fit(fit)
-        if not isinstance(fit, int):
-            self.warning('invalid magnet dac fit= {}'.format(fit))
-            return 0
-
-        dac = polyval(polyfit(xs, ys, fit), mass)
-        self.debug('map mass to dac {} >> {}'.format(mass, dac))
-
-        return dac
-
-    def map_dac_to_isotope(self, dac=None, det=None):
-        if dac is None:
-            dac = self._dac
-        if det is None:
-            det = self.detector
-
-        if det:
-            dac = self.spectrometer.uncorrect_dac(det, dac)
-
-        m = self.map_dac_to_mass(dac)
-        molweights = self.spectrometer.molecular_weights
-        return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
     #===============================================================================
     # property get/set
@@ -253,13 +300,11 @@ class Magnet(SpectrometerDevice):
         return self._mass
 
     def _set_mass(self, m):
-    #        print 'set mass', m
-        dac = self.map_mass_to_dac(m)
         if self.detector:
+            dac = self.map_mass_to_dac(m, self.detector.name)
             dac = self.spectrometer.correct_dac(self.detector, dac)
-
-        self._mass = m
-        self.dac = dac
+            self._mass = m
+            self.dac = dac
 
     def _validate_dac(self, d):
         return self._validate_float(d)
@@ -303,17 +348,9 @@ class Magnet(SpectrometerDevice):
     def _set_massmax(self, v):
         self._massmax = v
 
-    #     def _get_calibration_points(self):
-    #
-    #         if self.mftable is not None:
-    #             molweights = MOLECULAR_WEIGHTS
-    # #            molweights = self.spectrometer.molecular_weights
-    #             xs, ys = self.mftable
-    #             return [CalibrationPoint(x=molweights[xi], y=yi) for xi, yi in zip(xs, ys)]
     #===============================================================================
     # views
     #===============================================================================
-
     def traits_view(self):
         v = View(
             VGroup(
@@ -343,45 +380,69 @@ class Magnet(SpectrometerDevice):
 
         return v
 
+        #     def _get_calibration_points(self):
+        #         if self.mftable is not None:
+        #             molweights = MOLECULAR_WEIGHTS
+        # #            molweights = self.spectrometer.molecular_weights
+        #             xs, ys = self.mftable
+        #             return [CalibrationPoint(x=molweights[xi], y=yi) for xi, yi in zip(xs, ys)]
+        #def mftable_view(self):
+        #    cols = [ObjectColumn(name='x', label='Mass'),
+        #            ObjectColumn(name='y', label='DAC')]
+        #
+        #    teditor = TableEditor(columns=cols, editable=False)
+        #    v = View(HGroup(
+        #        Item('calibration_points', editor=teditor, show_label=False),
+        #        Item('graph', show_label=False, style='custom')),
+        #             width=700,
+        #             height=500,
+        #             resizable=True)
+        #    return v
 
-if __name__ == '__main__':
-    from launchers.helpers import build_version
 
-    build_version('_experiment')
-    m = Magnet()
-    m.load()
-    m.configure_traits()
-#============= EOF =============================================
-# def get_dac_for_mass(self, mass):
-#        reg = self.regressor
-#        data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
-#                self.mftable[1]
-#                ]
-#        if isinstance(mass, str):
-#            mass = MOLECULAR_WEIGHTS[mass]
+# if __name__ == '__main__':
+#     from launchers.helpers import build_version
 #
-#        if data:
-#            dac_value = reg.get_value('parabolic', data, mass)
-#        else:
-#            dac_value = 4
+#     build_version('_dev')
 #
-#        return dac_value
+#     from pychron.core.helpers.logger_setup import logging_setup
 #
-#    def set_axial_mass(self, x, hv_correction=1, dac=None):
-#        '''
-#            set the axial detector to mass x
-#        '''
-#        reg = self.regressor
-#
-#        if dac is None:
-#            data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
-#                    self.mftable[1]
-#                    ]
-#            dac = reg.get_value('parabolic', data, x) * hv_correction
-#
-#        #print x, dac_value, hv_correction
-#
-#        self.set_dac(dac)
+#     logging_setup('magnet')
+#     m = Magnet()
+#     m.load()
+#     m.update_field_table('AX', 'Ar40', 5)
+    #m.configure_traits()
+    #============= EOF =============================================
+    # def get_dac_for_mass(self, mass):
+    #        reg = self.regressor
+    #        data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
+    #                self.mftable[1]
+    #                ]
+    #        if isinstance(mass, str):
+    #            mass = MOLECULAR_WEIGHTS[mass]
+    #
+    #        if data:
+    #            dac_value = reg.get_value('parabolic', data, mass)
+    #        else:
+    #            dac_value = 4
+    #
+    #        return dac_value
+    #
+    #    def set_axial_mass(self, x, hv_correction=1, dac=None):
+    #        '''
+    #            set the axial detector to mass x
+    #        '''
+    #        reg = self.regressor
+    #
+    #        if dac is None:
+    #            data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
+    #                    self.mftable[1]
+    #                    ]
+    #            dac = reg.get_value('parabolic', data, x) * hv_correction
+    #
+    #        #print x, dac_value, hv_correction
+    #
+    #        self.set_dac(dac)
     #    def set_graph(self, pts):
     #
     #        g = Graph(container_dict=dict(padding=10))

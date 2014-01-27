@@ -15,17 +15,19 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Button, String
-from traitsui.api import View, Item, ButtonEditor, HGroup
+from traits.api import Button, String
+from traitsui.api import View, Item, ButtonEditor
 from enable.component_editor import ComponentEditor
-from pychron.media_server.image_viewer import ImageViewer
 from chaco.abstract_overlay import AbstractOverlay
+
+from pychron.media_server.image_viewer import ImageViewer
+
 #============= standard library imports ========================
 from numpy import loadtxt
 import os
-from pychron.geometry.reference_point import ReferencePoint
+from pychron.core.geometry.reference_point import ReferencePoint
 from pychron.media_server.browser import ReferencePointsTool, ReferencePointsOverlay
-from pychron.geometry.affine import calculate_rigid_transform, AffineTransform
+from pychron.core.geometry.affine import calculate_rigid_transform, AffineTransform
 #============= local library imports  ==========================
 '''
     open a bse image

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Bool, Str, on_trait_change
+from traits.api import Instance, Bool, Str
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
@@ -28,7 +28,7 @@ from pychron.paths import paths
 from pychron.lasers.laser_managers.laser_script_executor import LaserScriptExecutor
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 from enable.component import Component
-from pychron.helpers.filetools import list_directory
+from pychron.core.helpers.filetools import list_directory
 
 
 class LaserManager(BaseLaserManager):
@@ -496,7 +496,7 @@ class LaserManager(BaseLaserManager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('calib')
     lm = LaserManager(name='FusionsDiode')
     lm.set_laser_power(10)
@@ -510,22 +510,3 @@ if __name__ == '__main__':
 
 #    lm.set_laser_power(10)
 #============= EOF ====================================
-#        import wx
-#        ls = self._get_optional_window_labels()
-#        if ls:
-#            for li in ls:
-#                w = wx.FindWindowByLabel(li)
-#                if w is not None:
-#                    w.Destroy()
-#
-#    def _get_optional_window_labels(self):
-#        labels = []
-#
-#        hl = self._get_optional_window_labels_hook()
-#        if hl:
-#            labels += hl
-#
-#        return labels
-#
-#    def _get_optional_window_labels_hook(self):
-#        pass

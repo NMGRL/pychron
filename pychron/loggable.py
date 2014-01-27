@@ -18,37 +18,45 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, String
 
-# from pyface.message_dialog import information, warning as nonmodal_warning, \
-#     MessageDialog
-# from pyface.confirmation_dialog import confirm, ConfirmationDialog
-# from pyface.api import confirm
-#
-# from traits.etsconfig.api import ETSConfig
-# if ETSConfig.toolkit == 'wx':
-#    from pyface.wx.dialog import confirmation, warning
-
-
-
 #============= standard library imports ========================
-# import wx
 #============= local library imports  ==========================
-# from pychron.helpers.logger_setup import add_console
 from pychron.globals import globalv
-from pychron.helpers.color_generators import colorname_generator
-from pychron.helpers.logger_setup import new_logger
+from pychron.core.helpers.color_generators import colorname_generator
+from pychron.core.helpers.logger_setup import new_logger
 from threading import current_thread
-from pychron.ui.thread import currentThreadName
+from pychron.core.ui.thread import currentThreadName
 
-from pychron.ui.dialogs import myConfirmationDialog, myMessageDialog
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
+from pychron.core.ui.gui import invoke_in_main_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
 
 
+def confirmation_dialog(msg, return_retval=False,
+                        cancel=False, title='', timeout=None, size=None):
+
+    if size is None:
+        size = (-1, -1)
+
+    dlg = myConfirmationDialog(
+        cancel=cancel,
+        message=msg,
+        title=title,
+        style='modal',
+        size=size)
+
+    retval = dlg.open(timeout)
+    if return_retval:
+        return retval
+    else:
+        from pyface.api import YES
+
+        return retval == YES
+
 class Loggable(HasTraits):
-    '''
-    '''
+    """
+    """
     application = Any
     logger = Any  # (transient=True)
     name = String
@@ -101,12 +109,11 @@ class Loggable(HasTraits):
 
     def warning_dialog(self, msg, sound=None, title='Warning'):
         dialog = myMessageDialog(
-            parent=None, message=msg,
+            parent=None, message=str(msg),
             title=title,
-            severity='warning'
-        )
+            severity='warning')
         #         if sound:
-        #             from pychron.helpers.media import loop_sound
+        #             from pychron.core.helpers.media import loop_sound
         #             evt = loop_sound(sound)
         #             dialog.close = lambda: self._close_warning(evt)
 
@@ -114,21 +121,8 @@ class Loggable(HasTraits):
         #         print current_thread()
         dialog.open()
     
-    def confirmation_dialog(self, msg, return_retval=False, 
-                            cancel=False, title='', timeout=None):
-    
-        dlg = myConfirmationDialog(
-            cancel=cancel,
-            message=msg,
-            title=title,
-            style='modal')
-        retval = dlg.open(timeout)
-        if return_retval:
-            return retval
-        else:
-            from pyface.api import YES
-
-            return retval == YES
+    def confirmation_dialog(self,*args, **kw):
+        return confirmation_dialog(*args, **kw)
 
     def information_dialog(self, msg, title='Information'):
         dlg = myMessageDialog(parent=None, message=msg,
@@ -151,8 +145,8 @@ class Loggable(HasTraits):
         self.info(msg)
 
     def warning(self, msg, decorate=True):
-        '''
-        '''
+        """
+        """
 
         if self.logger is not None:
             if self.use_warning_display:
@@ -165,14 +159,14 @@ class Loggable(HasTraits):
                     gWarningDisplay.add_text(
                         '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
 
-            if decorate:
-                msg = '****** {}'.format(msg)
+            # if decorate:
+            #     msg = '****** {}'.format(msg)
             self._log_('warning', msg)
 
     def info(self, msg, decorate=True, dolater=False, color=None):
-        '''
+        """
 
-        '''
+        """
         if self.logger is not None:
             if self.use_logger_display:
                 from pychron.displays.gdisplays import gLoggerDisplay
@@ -186,8 +180,8 @@ class Loggable(HasTraits):
                                                                           msg))
                     gLoggerDisplay.add_text(args, color=color)
 
-            if decorate:
-                msg = '====== {}'.format(msg)
+            # if decorate:
+            #     msg = '====== {}'.format(msg)
 
             self._log_('info', msg)
 
@@ -199,11 +193,11 @@ class Loggable(HasTraits):
         gMessageDisplay.close_ui()
 
     def debug(self, msg, decorate=True):
-        '''
-        '''
-
-        if decorate:
-            msg = '++++++ {}'.format(msg)
+        # '''
+        # '''
+        #
+        # if decorate:
+        #     msg = '++++++ {}'.format(msg)
 
         self._log_('debug', msg)
 
@@ -227,8 +221,11 @@ class Loggable(HasTraits):
         if isinstance(msg, (list, tuple)):
             msg=','.join(map(str, msg))
 
+        msg=self._post_process_msg(msg)
         func(msg, extra=extras)
 
+    def _post_process_msg(self, msg):
+        return msg
         #        func(msg)
 
 #============= EOF =============================================

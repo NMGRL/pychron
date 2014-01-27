@@ -22,7 +22,7 @@ import math
 from pychron.lasers.stage_managers.stage_map import StageMap
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import CalibrationObject
-from pychron.geometry.affine import AffineTransform
+from pychron.core.geometry.affine import AffineTransform
 
 class MapCanvas(SceneCanvas):
     _map = Instance(StageMap)

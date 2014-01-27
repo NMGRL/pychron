@@ -17,8 +17,8 @@
 #============= enthought library imports =======================
 from traits.api import Int, Property
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.helpers.color_generators import colornames
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.color_generators import colornames
+from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -37,7 +37,7 @@ class UnknownsAdapter(TabularAdapter):
     error_width = Int(60)
     tag_width = Int(50)
 
-    font = 'arial 12'
+    font = 'arial 10'
     #     record_id_text_color = Property
     #     tag_text_color = Property
     age_text = Property
@@ -45,10 +45,12 @@ class UnknownsAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'
-        if self.item.tag == 'invalid':
-            c = '#C9C5C5'
-        elif self.item.temp_status != 0:#and not self.item.tag:
-            c = '#FAC0C0'
+        if not isinstance(self.item, IsotopeRecordView):
+            if self.item.tag == 'invalid':
+                c = '#C9C5C5'
+            elif self.item.is_omitted():
+            #elif self.item.temp_status != 0:#and not self.item.tag:
+                c = '#FAC0C0'
         return c
 
     def _get_age_text(self):
@@ -93,7 +95,7 @@ class ReferencesAdapter(TabularAdapter):
     columns = [
         ('Run ID', 'record_id'),
     ]
-    font = 'arial 12'
+    font = 'arial 10'
 
 #     font = 'modern 10'
 #    record_id_width = Int(50)

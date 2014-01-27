@@ -15,52 +15,67 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance
 from pychron.pychron_constants import IC_ANALYSIS_TYPE_MAP
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 #============= standard library imports ========================
 from numpy import array
-from pychron.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.isotope_utils import sort_detectors
 #============= local library imports  ==========================
 from pychron.processing.tasks.detector_calibration.detector_calibration_tool import DetectorCalibrationTool
 
 
 class IntercalibrationFactorEditor(InterpolationEditor):
     standard_ratio = 1.0
-    tool = Instance(DetectorCalibrationTool)
+    # tool_klass =
+    # tool = Instance(DetectorCalibrationTool)
     auto_find = False
     pickle_path = 'ic_fits'
 
-    def save(self):
-        if not any([si.valid for si in self.tool.fits]):
+    def _get_dump_tool(self):
+        return self.tool.fits
+
+    def save(self, progress=None):
+        fs = [si for si in self.tool.fits if si.save]
+        if not fs:
             return
 
         db = self.processor.db
+
         with db.session_ctx():
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
 
-            for unk in self.unknowns:
+            n=len(self.analyses)
+            if n>1:
+                if progress is None:
+                    progress=self.processor.open_progress(n)
+                else:
+                    progress.increase_max(n)
+
+            set_id=self.processor.add_predictor_set(self._clean_references())
+
+            for unk in self.analyses:
+                if progress:
+                    progress.change_message('Saving ICs for {}'.format(unk.record_id))
+
                 meas_analysis = db.get_analysis_uuid(unk.uuid)
-
-                histories = getattr(meas_analysis, '{}_histories'.format(cname))
-                phistory = histories[-1] if histories else None
                 history = self.processor.add_history(meas_analysis, cname)
+
                 for si in self.tool.fits:
-                    if si.valid:
-                        self.debug('saving {} {}'.format(unk.record_id, si.name))
-                        self.processor.apply_correction(history, unk, si,
-                                                        self._clean_references(), cname)
+                    if si.save:
+                        # self.debug('saving {} {}'.format(unk.record_id, si.name))
+                        self.processor.apply_correction(history, unk, si, set_id, cname)
 
-                unk.sync(meas_analysis)
+                # unk.sync_detector_info(meas_analysis)
 
-                #if not si.use:
-                #    self.debug('using previous value {} {}'.format(unk.record_id, si.name))
-                #    self.processor.apply_fixed_value_correction(phistory, history, si, cname)
-                #else:
-                #    self.debug('saving {} {}'.format(unk.record_id, si.name))
-                #    self.processor.apply_correction(history, unk, si,
-                #                                    self.references, cname)
+            if self.auto_plot:
+                self.rebuild_graph()
+
+            fits=','.join(('{} {}'.format(fi.name,fi.fit) for fi in self.tool.fits))
+            self.processor.update_vcs_analyses(self.analyses,
+                                               'Update detector intercalibration fits={}'.format(fits))
+            if progress:
+                progress.soft_close()
 
     def _tool_default(self):
         with self.processor.db.session_ctx():
@@ -77,7 +92,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                     ntypes.append(ai)
 
             tool = DetectorCalibrationTool()
-            tool.analysis_types = ntypes
+            tool.analysis_types = ['']+ntypes
 
             dets = [det.name for det in self.processor.db.get_detectors()]
             tool.detectors = sort_detectors(dets)
@@ -94,38 +109,43 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
         self.tool.detectors = dets
 
-    def _set_interpolated_values(self, iso, reg, xs):
-        p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs, error_calc=self.tool.error_calc.lower())
-
+    def _set_interpolated_values(self, iso, ans,p_uys, p_ues):
         _, d = iso.split('/')
-        for ui, v, e in zip(self.sorted_unknowns, p_uys, p_ues):
+        for ui, v, e in zip(ans, p_uys, p_ues):
             ui.set_temporary_ic_factor(d, v, e)
 
-        return p_uys, p_ues
+    def _get_reference_values(self, dets, ans=None):
+        if ans is None:
+            ans=self.references
 
-    def _get_reference_values(self, dets):
+        if not self.tool.standard_ratio:
+            self.debug('no standard ratio set')
+            return None, None
+
         n, d = dets.split('/')
         self.debug('get reference values {}, {}'.format(n,d))
-        nys = [ri.get_isotope(detector=n) for ri in self.references]
-        dys = [ri.get_isotope(detector=d) for ri in self.references]
-        nys=array([ni.get_corrected_value() for ni in nys if ni is not None])
-        dys=array([di.get_corrected_value() for di in dys if di is not None])
+        nys = [ri.get_isotope(detector=n) for ri in ans]
+        dys = [ri.get_isotope(detector=d) for ri in ans]
+        nys = array([ni.get_corrected_value() for ni in nys if ni is not None])
+        dys = array([di.get_corrected_value() for di in dys if di is not None])
 
         try:
             rys = (nys / dys) / self.tool.standard_ratio
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])
-        except ZeroDivisionError:
+        except ZeroDivisionError, e:
+            import traceback
+
+            traceback.print_exc()
             return None, None
 
-            #rys = [ri.nominal_value for ri in rys]
-            #return rys, None
+    def _get_current_values(self, dets, ans=None):
+        if ans is None:
+            ans=self.analyses
 
-    def _get_current_values(self, dets):
         #return None, None
         n, d = dets.split('/')
-        nys = array([ri.get_ic_factor(n) for ri in self.unknowns])
-        dys = array([ri.get_ic_factor(d) for ri in self.unknowns])
+        nys = array([ri.get_ic_factor(n) for ri in ans])
+        dys = array([ri.get_ic_factor(d) for ri in ans])
         try:
             rys = dys / nys
             return zip(*[(ri.nominal_value, ri.std_dev) for ri in rys])

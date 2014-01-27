@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -23,9 +24,13 @@ from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 class RegressionInspectorTool(InfoInspector):
     def assemble_lines(self):
         reg = self.component.regressor
-        lines = [reg.make_equation()]
 
-        lines += map(unicode.strip, map(unicode, reg.tostring().split(',')))
+        valid='' if reg.valid_mswd else '*'
+        lines = [reg.make_equation(),
+                 'MSWD= {}{}, n={}'.format(valid,
+                     floatfmt(reg.mswd, n=3), reg.n)]
+
+        lines.extend(map(unicode.strip, map(unicode, reg.tostring().split(','))))
 
         return lines
 

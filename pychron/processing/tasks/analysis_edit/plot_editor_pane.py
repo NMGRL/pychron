@@ -84,6 +84,7 @@ def flatten(nested):
     try:
         if isinstance(nested, Plot):
             yield nested
+
         for sublist in nested.components:
             for element in flatten(sublist):
                 yield element
@@ -113,7 +114,12 @@ class PlotEditorPane(TraitsDockPane):
 
     def _component_changed(self):
         if self.component:
-            ncomps = flatten_container(self.component)
+            if hasattr(self.component, 'plotcontainer'):
+                comp=self.component.plotcontainer
+            else:
+                comp=self.component
+
+            ncomps = flatten_container(comp)
             if ncomps:
                 self.selectors = []
                 self.current_editor = None
@@ -126,7 +132,7 @@ class PlotEditorPane(TraitsDockPane):
                         self.current_editor = editor
                         self.suppress_pane_change = False
 
-                    st = SelectorTool(self.component, editor=editor)
+                    st = SelectorTool(comp, editor=editor)
                     st.on_trait_change(self.set_editor, 'editor_event')
 
                     so = SelectorOverlay(tool=st, component=plot)

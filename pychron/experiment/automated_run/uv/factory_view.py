@@ -16,11 +16,11 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance
-from traitsui.api import Item, VGroup, Spring, HGroup, ButtonEditor, EnumEditor
+from traitsui.api import Item, VGroup, Spring, HGroup, EnumEditor, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.automated_run.factory_view import FactoryView, POSITION_TOOLTIP, PATTERN_TOOLTIP
+from pychron.experiment.automated_run.factory_view import FactoryView, POSITION_TOOLTIP
 
 
 class UVFactoryView(FactoryView):
@@ -47,6 +47,7 @@ class UVFactoryView(FactoryView):
             ),
             HGroup(
                 Item('mask', editor=EnumEditor(name='masks')),
+                UItem('mask'),
                 Item('attenuator'),
                 Item('reprate'),
             ),

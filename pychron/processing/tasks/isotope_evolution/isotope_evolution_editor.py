@@ -15,19 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from threading import Thread
 #from chaco.label import Label
-from traits.api import Instance, Dict, Bool, Any
+from traits.api import Instance, Bool, Any
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import Inf, polyfit
 
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.helpers.fits import convert_fit
+from pychron.core.helpers.fits import convert_fit
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-#from pychron.ui.thread import Thread
+#from pychron.core.ui.thread import Thread
 
 
 class IsotopeEvolutionEditor(GraphEditor):
@@ -36,15 +35,16 @@ class IsotopeEvolutionEditor(GraphEditor):
     #component = Instance(VPlotContainer)
     #component = Instance(HPlotContainer)
     #component = Instance(GridPlotContainer)
-    graphs = Dict
+    # graphs = Dict
     _suppress_update = Bool
 
     #tool = Instance(IsoEvoFitSelector, ())
     tool = Instance(IsoEvoFitSelector)
     pickle_path = 'iso_fits'
     unpack_peaktime = True
-    update_on_unknowns = False
+    update_on_analyses = False
     calculate_age = True
+
 
     def _set_name(self):
         if not self.name:
@@ -55,41 +55,32 @@ class IsotopeEvolutionEditor(GraphEditor):
         return t
 
     def save(self):
+        self._save(None, None, None)
+
+    def _save(self, fits, filters, progress):
         proc = self.processor
-        prog = proc.open_progress(n=len(self.unknowns))
+        n=len(self.analyses)
+        if progress is None:
+            progress = proc.open_progress(n=n)
+        else:
+            progress.increase_max(n)
 
         db = proc.db
-        for unk in self.unknowns:
-            prog.change_message('{} Saving fits'.format(unk.record_id))
+        for unk in self.analyses:
+            progress.change_message('Saving Fits {}'.format(unk.record_id))
 
             meas_analysis = db.get_analysis_uuid(unk.uuid)
-            self._save_fit(unk, meas_analysis)
+            if fits and filters:
+                self._save_fit_dict(unk, meas_analysis, fits, filters)
+            else:
+                self._save_fit(unk, meas_analysis)
 
             #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
             #proc.save_arar(unk, meas_analysis)
-        prog.close()
+        progress.soft_close()
 
-    def save_fits(self, fits, filters):
-        proc = self.processor
-        prog = proc.open_progress(n=len(self.unknowns))
-
-        db = proc.db
-        for unk in self.unknowns:
-            prog.change_message('{} Saving fits'.format(unk.record_id))
-
-            meas_analysis = db.get_analysis_uuid(unk.uuid)
-            self._save_fit_dict(unk, meas_analysis, fits, filters)
-
-            #if unk.analysis_type in ('cocktail', 'unknown'):
-            #msg = '{} Saving ArAr age'.format(unk.record_id)
-            #prog.change_message(msg)
-
-            #update arar table
-            #proc.save_arar(unk, meas_analysis)
-
-            #else:
-            #    prog.increment()
-
+    def save_fits(self, fits, filters, progress=None):
+        self._save(fits, filters, progress)
 
     def _save_fit_dict(self, unk, meas_analysis, fits, filters):
         fit_hist = None
@@ -107,15 +98,21 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if 'if n' in fit:
                     fit = eval(fit, {'n': iso.n})
                 elif 'if x' in fit:
-                    fit = eval(fit, {'x': iso.xs[-1]})
+                    if len(iso.xs):
+                        fit = eval(fit, {'x': iso.xs[-1]})
+                    else:
+                        fit='linear'
+
                 elif 'if d' in fit:
-                    fit = eval(fit, {'d': iso.xs[-1] - iso.xs[0]})
+                    if len(iso.xs):
+                        fit = eval(fit, {'d': iso.xs[-1] - iso.xs[0]})
+                    else:
+                        fit = 'linear'
 
                 fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                              name, fit, filter_d)
             else:
                 self.warning('no isotope {} for analysis {}'.format(fname, unk.record_id))
-
 
     def _save_fit(self, unk, meas_analysis):
         fit_hist = None
@@ -133,7 +130,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, filter_dict):
         db = self.processor.db
-        print name
+        # print name
         if name.endswith('bs'):
             name = name[:-2]
             dbfit = unk.get_db_fit(name, meas_analysis, 'baseline')
@@ -151,7 +148,10 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         if dbfit != fit:
             v = iso.uvalue
-            iso.fit = convert_fit(fit)
+            f,e=convert_fit(fit)
+
+            iso.fit=f
+            # iso.fit = convert_fit(fit)
 
             if fit_hist is None:
                 fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
@@ -160,9 +160,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                           if iso.molecular_weight.name == name and
                              iso.kind == kind), None)
 
-            #if kind=='baseline':
-            #    for ix in meas_analysis.isotopes:
-            #        print ix.kind, ix.molecular_weight.name, kind, name, dbiso
             if fit_hist is None:
                 self.warning('Failed added fit history for {}'.format(unk.record_id))
                 return
@@ -176,14 +173,13 @@ class IsotopeEvolutionEditor(GraphEditor):
             db.add_isotope_result(dbiso, fit_hist,
                                   signal_=v, signal_err=e)
 
-            self.debug('adding {} fit {} - {}'.format(kind, name, fit))
+            # self.debug('adding {} fit {} - {}'.format(kind, name, fit))
 
         return fit_hist
 
-    def _plot_baselines(self, add_tools, fd, fit, g, i, isok, unk):
+    def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):
         isok = isok[:-2]
         iso = unk.isotopes[isok]
-        #iso.baseline.fit = fit.fit
         xs, ys = iso.baseline.xs, iso.baseline.ys
         g.new_series(xs, ys,
                      fit=fit.fit,
@@ -192,7 +188,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                      plotid=i)
         return xs
 
-    def _plot_signal(self, add_tools, fd, fit, g, i, isok, unk):
+    def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
         if not isok in unk.isotopes:
             return []
 
@@ -209,24 +205,26 @@ class IsotopeEvolutionEditor(GraphEditor):
         g.new_series(xs, ys,
                      fit=fit.fit,
                      filter_outliers_dict=fd,
+                     truncate=trunc,
                      add_tools=add_tools,
                      plotid=i)
         return xs
 
 
     def _rebuild_graph(self):
-        n = len(self.unknowns)
-        prog = None
-        if n > 1:
-            prog = self.processor.open_progress(n)
-            prog.change_message('Loading Plots')
-
-        t = Thread(target=self.__rebuild_graph)
-        t.start()
-        t.join()
-
-        if prog:
-            prog.close()
+        self.__rebuild_graph()
+        # n = len(self.unknowns)
+        # prog = None
+        # if n > 1:
+        #     prog = self.processor.open_progress(n)
+        #     prog.change_message('Loading Plots')
+        #
+        # t = Thread(target=self.__rebuild_graph)
+        # t.start()
+        # t.join()
+        #
+        # if prog:
+        #     prog.close()
 
 
     def __rebuild_graph(self):
@@ -234,7 +232,8 @@ class IsotopeEvolutionEditor(GraphEditor):
         if not fits:
             return
 
-        unk = self.unknowns
+        self.graphs=[]
+        unk = self.analyses
         n = len(unk)
         r, c = 1, 1
         if n >= 2:
@@ -244,17 +243,11 @@ class IsotopeEvolutionEditor(GraphEditor):
                     r += 1
 
         cg=self._container_factory((r, c))
-        self.component = cg#.plotcontainer
+        self.component = cg
 
-        #prog = None
-        n = len(self.unknowns)
-        #if n > 1:
-        #    prog = self.processor.open_progress(n)
-
-        #add_tools = bind_index = not self.tool.auto_update or n == 1
         add_tools = not self.tool.auto_update or n == 1
 
-        for j, unk in enumerate(self.unknowns):
+        for j, unk in enumerate(self.analyses):
             set_ytitle = j%c == 0
             padding=[40,10,40,40]
 
@@ -278,32 +271,37 @@ class IsotopeEvolutionEditor(GraphEditor):
                     if set_xtitle:
                         plot_kw['xtitle'] = 'Time (s)'
 
-                    p=g.new_plot(**plot_kw)
-
-                    fd = dict(filter_outlier_iterations=fit.filter_iterations,
-                              filter_outlier_std_devs=fit.filter_std_devs,
+                    g.new_plot(**plot_kw)
+                    fd = dict(iterations=fit.filter_iterations,
+                              std_devs=fit.filter_std_devs,
                               filter_outliers=fit.use_filter)
+                    trunc=fit.truncate
 
                     if isok.endswith('bs'):
-                        xs = self._plot_baselines(add_tools, fd, fit, g, i, isok, unk)
+                        xs = self._plot_baselines(add_tools, fd, fit, trunc, g, i, isok, unk)
                     else:
-                        xs = self._plot_signal(add_tools, fd, fit, g, i, isok, unk)
+                        xs = self._plot_signal(add_tools, fd, fit, trunc, g, i, isok, unk)
 
-                    ma = max(max(xs), ma)
+                    print xs
+                    if len(xs):
+                        ma = max(max(xs), ma)
+                    else:
+                        if not self.confirmation_dialog('No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
+                            break
                     i += 1
 
-            if set_x_flag:
+            if set_x_flag and ma>-Inf:
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 
             self.component.plotcontainer.add(g.plotcontainer)
-            print 'aaa',self.component.plotcontainer, g.plotcontainer
+            self.component.plotcontainer.on_trait_change(lambda x: g.plotcontainer.trait_set(bounds=x), 'bounds')
+
+            #need to store g in self.graphs to ensure bounds are updated
+            self.graphs.append(g)
 
     def traits_view(self):
         v=View(UItem('component', style='custom', editor=InstanceEditor()))
-        #v = View(UItem('component',
-        #               style='custom',
-        #               editor=ComponentEditor()))
         return v
 
     def _component_default(self):
@@ -313,8 +311,6 @@ class IsotopeEvolutionEditor(GraphEditor):
     def _container_factory(self, shape):
         g=Graph(container_dict=dict(kind='g', shape=shape, spacing=(1,1)))
         return g
-        #return GridPlotContainer(shape=shape,
-        #                         spacing=(1, 1))
 
     #============= deprecated =============================================
     def calculate_optimal_eqtime(self):
@@ -325,7 +321,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         from pychron.processing.utils.equilibration_utils import calc_optimal_eqtime
 
-        for unk in self.unknowns:
+        for unk in self.analyses:
 
             for fit in self.tool.fits:
                 if fit.fit and fit.use:

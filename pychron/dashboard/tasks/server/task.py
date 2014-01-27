@@ -21,7 +21,7 @@ from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.dashboard.tasks.server.panes import DashboardDevicePane, DashboardCentralPane
-from pychron.dashboard.tasks.server.server import DashboardServer
+from pychron.dashboard.server import DashboardServer
 from pychron.envisage.tasks.base_task import BaseTask
 
 

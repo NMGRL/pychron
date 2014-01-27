@@ -18,19 +18,23 @@
 
 #============= standard library imports ========================
 import math
+from copy import deepcopy
 
 from numpy import asarray, argmax, average
 from uncertainties import ufloat, umath
-# from copy import deepcopy
 from numpy import array
+
 from pychron.processing.arar_constants import ArArConstants
-from pychron.stats.core import calculate_weighted_mean
+from pychron.core.stats.core import calculate_weighted_mean
 
 #============= local library imports  ==========================
 
 
-def calculate_isochron(analyses):
-    from pychron.regression.new_york_regressor import ReedYorkRegressor
+def calculate_isochron(analyses, reg='Reed'):
+    if reg.lower() in ('newyork','new_york'):
+        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
+    else:
+        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
 
     ref=analyses[0]
     ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
@@ -48,7 +52,7 @@ def calculate_isochron(analyses):
     xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
     ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
 
-    reg = ReedYorkRegressor(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
+    reg = klass(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
     reg.calculate()
 
     xint = ufloat(reg.x_intercept, reg.x_intercept_error)
@@ -229,7 +233,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
     return atm36, cl36
 
 
-def calculate_R(isotopes,
+def calculate_F(isotopes,
                 decay_time,
                 interferences=None,
                 arar_constants=None):
@@ -267,12 +271,12 @@ def calculate_R(isotopes,
 
     rad40 = a40 - atm40 - k40
     try:
-        R = rad40 / k39
+        f = rad40 / k39
     except ZeroDivisionError:
-        R=ufloat(1.0,0)
+        f=ufloat(1.0,0)
 
-
-    r = ufloat(R.nominal_value, R.std_dev)
+    rf=deepcopy(f)
+    # f = ufloat(f.nominal_value, f.std_dev, tag='F')
 
     non_ar_isotopes = dict(k38=k38, k37=k37,
                            ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
@@ -297,18 +301,18 @@ def calculate_R(isotopes,
     ##clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
-    r_wo_irrad = R
+    f_wo_irrad = f
 
-    return r, r_wo_irrad, non_ar_isotopes, computed, interference_corrected
+    return rf, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def age_equation(j, R,
+def age_equation(j, f,
                  include_decay_error=False,
                  arar_constants=None):
     if isinstance(j, (tuple, str)):
         j = ufloat(j)
-    if isinstance(R, (tuple, str)):
-        R = ufloat(R)
+    if isinstance(f, (tuple, str)):
+        f = ufloat(f)
     if arar_constants is None:
         arar_constants = ArArConstants()
 
@@ -318,8 +322,8 @@ def age_equation(j, R,
     if not include_decay_error:
         lk = lk.nominal_value
     try:
-        return (lk ** -1 * umath.log(1 + j * R)) / scalar
-    except ValueError:
+        return (lk ** -1 * umath.log(1 + j * f)) / scalar
+    except (ValueError, TypeError):
         return ufloat(0,0)
 
 # plateau definition

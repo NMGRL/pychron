@@ -22,8 +22,8 @@ from pyface.timer.api import do_after as do_after_timer
 #=============standard library imports ========================
 from numpy import hstack, Inf
 #=============local library imports  ==========================
-from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
-from pychron.helpers.datetime_tools import current_time_generator as time_generator
+# from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
+from pychron.core.helpers.datetime_tools import current_time_generator as time_generator
 from stacked_graph import StackedGraph
 from graph import Graph
 
@@ -31,9 +31,9 @@ MAX_LIMIT = int(-1 * 60 * 60 * 24)
 
 
 class StreamGraph(Graph):
-    '''
-    '''
-    plot_editor_klass = StreamPlotEditor
+    """
+    """
+    # plot_editor_klass = StreamPlotEditor
     global_time_generator = None
 
     cur_min = None

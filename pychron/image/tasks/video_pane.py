@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, File, String, Int, Enum, Instance, Dict, \
     on_trait_change, Bool, Range
-from traitsui.api import View, Item, UItem, InstanceEditor, EnumEditor, RangeEditor
+from traitsui.api import View, Item, UItem, EnumEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from enable.component_editor import ComponentEditor
-from pychron.canvas.canvas2D.video_canvas import VideoCanvas
-from pychron.ui.stage_component_editor import VideoComponentEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+
+from pychron.canvas.canvas2D.video_canvas import VideoCanvas
+from pychron.core.ui.stage_component_editor import VideoComponentEditor
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class Source(HasTraits):

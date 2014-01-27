@@ -17,34 +17,28 @@ from traits.etsconfig.etsconfig import ETSConfig
 ETSConfig.toolkit = 'qt4'
 
 import math
-from skimage.filter.edges import sobel, vsobel
-from pychron.regression.least_squares_regressor import LeastSquaresRegressor
+from skimage.filter.edges import sobel
+from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
 
 
 # from numpy.lib.function_base import histogram
 import os
-import time
-from pychron.ui.thread import Thread
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.thread import Thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 from skimage.transform.hough_transform import probabilistic_hough, hough_line, \
     hough_peaks
 
 from pychron.graph.graph import Graph
 
-from numpy import array, diff, unique, argmax, bincount, ma, histogram, \
-    zeros_like, polyfit, polyval, linspace, max, mean, std, exp
-from pychron.image.image import Image
-from pychron.image.cv_wrapper import load_image, draw_circle, grayspace, colorspace, \
-    crop
-from chaco.image_data import ImageData
-from skimage import filter
+from numpy import diff, zeros_like, polyfit, polyval, linspace, max, mean, std, exp
+from pychron.image.cv_wrapper import load_image, grayspace, crop
 from skimage.draw import line
 # from skimage.segmentation._clear_border import clear_border
 # from skimage.feature.corner import corner_harris, corner_peaks, corner_subpix
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Button, Range, on_trait_change
-from traitsui.api import View, Item, UItem, HGroup
+from traits.api import HasTraits, Instance, Button, Range
+from traitsui.api import View, Item, UItem
 from pychron.mv.test_image import TestImage
 
 #============= standard library imports ========================

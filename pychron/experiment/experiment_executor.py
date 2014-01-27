@@ -18,7 +18,7 @@
 from traits.api import Event, Button, String, \
     Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change
 # from traitsui.api import View, Item
-from apptools.preferences.preference_binding import bind_preference
+# from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 
@@ -29,7 +29,7 @@ import time
 from sqlalchemy.orm.exc import NoResultFound
 import os
 #============= local library imports  ==========================
-# from pychron.ui.thread import Thread as uThread
+# from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
 from pychron.displays.display import DisplayController
 from pychron.experiment.utilities.identifier import convert_extract_device
@@ -46,13 +46,14 @@ from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_Mas
 
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.codetools.memory_usage import mem_available, mem_log
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.codetools.memory_usage import mem_available, mem_log
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.helpers.filetools import add_extension, str_to_bool
+from pychron.core.helpers.filetools import add_extension, to_bool
 from pychron.globals import globalv
+from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -130,11 +131,15 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     _prev_baselines = Dict
     _err_message = None
 
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
+
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
-        self.monitor=self._monitor_factory()
+        self.monitor = self._monitor_factory()
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -179,6 +184,21 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         bind_preference(self.massspec_importer.db, 'host', '{}.massspec_host'.format(prefid))
         bind_preference(self.massspec_importer.db, 'username', '{}.massspec_username'.format(prefid))
         bind_preference(self.massspec_importer.db, 'password', '{}.massspec_password'.format(prefid))
+
+        prefid = 'pychron.experiment'
+        #auto save
+        bind_preference(self, 'use_auto_save',
+                        '{}.use_auto_save'.format(prefid))
+        bind_preference(self, 'auto_save_delay',
+                        '{}.auto_save_delay'.format(prefid))
+
+        #colors
+        color_bind_preference(self, 'signal_color',
+                              '{}.signal_color'.format(prefid))
+        color_bind_preference(self, 'sniff_color',
+                              '{}.sniff_color'.format(prefid))
+        color_bind_preference(self, 'baseline_color',
+                              '{}.baseline_color'.format(prefid))
 
     def isAlive(self):
         return self._alive
@@ -232,6 +252,13 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
     def wait(self, t, msg=''):
         self._wait(t, msg)
+
+    def get_wait_control(self):
+        with self.wait_control_lock:
+            wd = self.wait_group.active_control
+            if wd.is_active():
+                wd = self.wait_group.add_control()
+        return wd
 
     def stop(self):
         if self.delaying_between_runs:
@@ -343,15 +370,14 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                     self.debug('stop iteration')
                     break
 
-                #                runargs = self._execute_run(spec)
+                self._check_run_aliquot(spec)
 
                 run = self._make_run(spec)
                 self.wait_group.active_control.page_name = run.runid
-                #                    self.wait_group.add_control(page_name=run.runid)
 
                 if spec.analysis_type == 'unknown' and spec.overlap:
                     self.info('overlaping')
-                    t = Thread(target=self._do_runA, args=(run,))
+                    t = Thread(target=self._do_run, args=(run,))
                     t.start()
                     run.wait_for_overlap()
 
@@ -361,26 +387,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                 else:
                     last_runid = run.runid
                     self._join_run(spec, run)
-                    #                if not runargs:
-                #                    pass
-                # #                     break
-                #                else:
-                #                    t, run = runargs
-                #                    self.wait_group.active_control.page_name = run.runid
-                # #                    self.wait_group.add_control(page_name=run.runid)
-                #
-                #                    if spec.analysis_type == 'unknown' and spec.overlap:
-                #                        self.info('overlaping')
-                #                        run.wait_for_overlap()
-                #                        self.debug('overlap finished. starting next run')
-                #
-                #                        con.add_consumable((t, run))
-                #                    else:
-                #                        last_runid = run.runid
-                #                        self._join_run(spec, t, run)
-
-                #                        print '{} =========================================='.format(cnt)
-                #                         calc_growth(before)
 
                 cnt += 1
                 total_cnt += 1
@@ -397,30 +403,25 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
-    #    def _execute_run(self, spec):
-    #
-    #        run = self._make_run(spec)
-    #        self.info('%%%%%%%%%%%%%%%%%%%% starting run {}'.format(run.runid))
-    # #
-    #        t = Thread(target=self._do_run,
-    #                    name=run.runid,
-    #                    args=(run,),
-    #                    )
-    #        t.start()
-    #        return t, run
+    def _join_run(self, spec, run):
+    #    def _join_run(self, spec, t, run):
+    #        t.join()
+        self._do_run(run)
 
-    #    _prev = 0
-    #    def _do_run(self, run):
-    # hp=hpy()
-    # #hp.setrelheap()
-    #         with MemCTX('sqlalchemy.orm.session.SessionMaker'):
-    #             self._do_runA(run)
-    #        self._do_runA(run)
-    #        gc.collect()
-    #         from pychron.codetools.memory_usage import count_instances
-    #         self._prev = count_instances(group='sqlalchemy', prev=self._prev)
+        self.debug('{} finished'.format(run.runid))
+        if self.isAlive():
+            self.debug('spec analysis type {}'.format(spec.analysis_type))
+            if spec.analysis_type.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    self._prev_blanks = pb
+                    self.debug('previous blanks ={}'.format(pb))
 
-    def _do_runA(self, run):
+        self._report_execution_state(run)
+        run.teardown()
+        mem_log('> end join')
+
+    def _do_run(self, run):
         mem_log('< start')
 
         run.state = 'not run'
@@ -431,12 +432,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         self.current_run = run
         st = time.time()
-        for step in (
-            '_start',
-            '_extraction',
-            '_measurement',
-            '_post_measurement'
-        ):
+        for step in ('_start',
+                     '_extraction',
+                     '_measurement',
+                     '_post_measurement'):
 
             if not self.isAlive():
                 break
@@ -467,23 +466,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         self.wait_group.pop()
 
         mem_log('end run')
-
-    def _join_run(self, spec, run):
-    #    def _join_run(self, spec, t, run):
-    #        t.join()
-        self._do_runA(run)
-
-        self.debug('{} finished'.format(run.runid))
-        if self.isAlive():
-
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blanks = pb
-
-        self._report_execution_state(run)
-        run.teardown()
-        mem_log('> end join')
 
     def _overlapped_run(self, v):
         self._overlapping = True
@@ -672,9 +654,11 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         self._wait(delay, msg)
         self.delaying_between_runs = False
 
+
     def _wait(self, delay, msg):
         wg = self.wait_group
-        wc = wg.active_control
+        wc = self.get_wait_control()
+        # wc = wg.active_control
         invoke_in_main_thread(wc.trait_set, wtime=delay, message=msg)
         #        wc.trait_set(wtime=delay,
         # #                     message=msg
@@ -682,6 +666,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         time.sleep(0.1)
         wc.reset()
         wc.start()
+        wg.pop(wc)
 
     def _set_extract_state(self, state, flash, color='green'):
 
@@ -869,7 +854,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             return True
 
         with self.db.session_ctx():
-            dbr = self._get_preceeding_blank_or_background(inform=inform)
+            dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
                 if dbr is None:
                     return
@@ -880,6 +865,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
+            msg='Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+            invoke_in_main_thread(self.warning_dialog, msg)
             return
 
         if self._check_memory():
@@ -901,8 +888,8 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         return True
 
-    def _get_preceeding_blank_or_background(self, inform=True):
-        msg = '''First "{}" not preceeded by a blank. 
+    def _get_preceding_blank_or_background(self, inform=True):
+        msg = '''First "{}" not preceded by a blank.
 If "Yes" use last "blank_{}" 
 Last Run= {}
 
@@ -924,13 +911,13 @@ If "No" select from database
             anidx = aruns.index(an)
             #find first blank_
             #if idx > than an idx need a blank
-            nopreceeding = True
+            nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
 
             if ban:
-                nopreceeding = aruns.index(ban) > anidx
+                nopreceding = aruns.index(ban) > anidx
 
-            if anidx == 0 or nopreceeding:
+            if anidx == 0 or nopreceding:
                 pdbr = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                        exp.extract_device,
                                        last=True)
@@ -1002,26 +989,34 @@ If "No" select from database
                 return dbr
 
     def _check_run_aliquot(self, arv):
-        '''
-            check the secondary database for this labnumber 
+        """
+            check the secondary database for this labnumber
             get last aliquot
-        '''
+
+        """
         if self.massspec_importer:
+            self.debug('Checking run {} aliquot'.format(arv.runid))
             db = self.massspec_importer.db
             if db.connected:
-                try:
-                    _ = int(arv.labnumber)
-                    al = db.get_lastest_analysis_aliquot(arv.labnumber)
-                    if al is not None:
-                        if al > arv.aliquot:
-                            old = arv.aliquot
-                            arv.aliquot = al + 1
-                            self.message('{}-{:02n} exists in secondary database. Modifying aliquot to {:02n}'.format(
-                                arv.labnumber,
-                                old,
-                                arv.aliquot))
-                except ValueError:
-                    pass
+            # try:
+            # _ = int(arv.labnumber)
+                identifier = self.massspec_importer.get_identifier(arv)
+
+                ai = db.get_analysis(identifier, arv.aliquot, arv.step)
+                if ai is not None:
+                    al = db.get_latest_analysis_aliquot(identifier)
+                    new_aliquot = al + 1
+                    self.message('{}-{}{} exists in secondary database. Modifying aliquot to {:02n}'.format(identifier,
+                                                                                                            arv.aliquot,
+                                                                                                            arv.step,
+                                                                                                            new_aliquot))
+                    arv.aliquot = new_aliquot
+                    #update aliquot for all runs with this labnumber
+                    i=1
+                    for ei in self.experiment_queue.cleaned_automated_runs:
+                        if ei.labnumber==identifier and ei!=arv:
+                            ei.aliquot=new_aliquot+i
+                            i+=1
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
@@ -1035,11 +1030,10 @@ If "No" select from database
             if not nonfound:
                 break
         else:
-        #        if nonfound:
-            self.info('experiment canceled because could not find managers {} ntries={}'.format(nonfound, n))
+            self.info('experiment canceled because could connect to managers {} ntries={}'.format(nonfound, n))
             if inform:
                 invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not find managers {}'.format(','.join(nonfound)))
+                                      'Canceled! Could not connect to managers {}. Check that these instances are running.'.format(','.join(nonfound)))
             return
 
         return True
@@ -1154,7 +1148,7 @@ If "No" select from database
             exp = ip.get_plugin('Experiment', category='general')
             monitor = exp.find('monitor')
             if monitor is not None:
-                if str_to_bool(monitor.get('enabled')):
+                if to_bool(monitor.get('enabled')):
                     host, port, kind = None, None, None
                     comms = monitor.find('communications')
                     host = comms.find('host')

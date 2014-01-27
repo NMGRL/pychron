@@ -16,8 +16,13 @@
 
 #============= enthought library imports =======================
 from datetime import timedelta
+from pyface.tasks.action.schema import SToolBar
 from traits.api import on_trait_change
 from traits.api import Any
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.easy.easy_manager import EasyManager
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
@@ -26,11 +31,33 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 
 
+class no_auto_ctx(object):
+    def __init__(self, obj):
+        self.obj=obj
+
+    def __enter__(self):
+        self.obj.auto_find=False
+        self.obj.update_on_analyses=False
+
+    def __exit__(self, *args):
+        self.obj.auto_find=True
+        self.obj.update_on_analyses=True
+
+
 class InterpolationTask(AnalysisEditTask):
     references_pane = Any
     references_adapter = ReferencesAdapter
     references_pane_klass = ReferencesPane
     default_reference_analysis_type = 'air'
+
+    tool_bars = [SToolBar(DatabaseSaveAction(),
+                          BinAnalysesAction()
+                          )]
+
+    def bin_analyses(self):
+        self.debug('binning analyses')
+        if self.active_editor:
+            self.active_editor.bin_analyses()
 
     def create_dock_panes(self):
         panes = super(InterpolationTask, self).create_dock_panes()
@@ -41,9 +68,13 @@ class InterpolationTask(AnalysisEditTask):
         self.references_pane = self.references_pane_klass(adapter_klass=self.references_adapter)
         self.references_pane.load()
 
-    @on_trait_change('references_pane:[items, update_needed]')
+    @on_trait_change('references_pane:[items, update_needed, dclicked]')
     def _update_references_runs(self, obj, name, old, new):
-        if not obj._no_update:
+        if name == 'dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif not obj._no_update:
             if self.active_editor:
                 self.active_editor.references = self.references_pane.items
 
@@ -53,6 +84,7 @@ class InterpolationTask(AnalysisEditTask):
 
     @on_trait_change('references_pane:[append_button, replace_button]')
     def _append_references(self, obj, name, old, new):
+
         is_append = name == 'append_button'
         if self.active_editor:
             refs = None
@@ -108,13 +140,25 @@ class InterpolationTask(AnalysisEditTask):
 
         db = self.manager.db
         with db.session_ctx():
-            ans = db.get_analyses_data_range(sd, ed,
+            ans = db.get_analyses_date_range(sd, ed,
                                              analysis_type=at,
                                              mass_spectrometer=ms,
-                                             extract_device=exd
-            )
+                                             extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
             self.danalysis_table.set_analyses(ans)
             return ans
+
+    def _do_easy_func(self):
+        if self.active_editor:
+            manager = EasyManager(db=self.manager.db,
+                                  func=self._easy_func)
+
+            manager.execute()
+            manager.edit_traits()
+        else:
+            self.warning_dialog('No active tab')
+
+    def _easy_func(self):
+        raise NotImplementedError
 
 #============= EOF =============================================

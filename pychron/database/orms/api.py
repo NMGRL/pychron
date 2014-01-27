@@ -14,8 +14,3 @@
 # limitations under the License.
 #===============================================================================
 
-from bakeout_orm import *
-from device_scan_orm import *
-from power_map_orm import *
-from power_orm import *
-from video_orm import *

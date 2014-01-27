@@ -15,64 +15,76 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Either, Float, Int, Callable, Bool
-from uncertainties import AffineScalarFunc
+import re
+from traits.api import Str, Either, Int, Callable, Bool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-class AutomatedRunCondition(HasTraits):
+from pychron.loggable import Loggable
+
+
+class AutomatedRunCondition(Loggable):
     attr = Str
     comp = Str
-    value = Either(Float, Int)
+    # value = Either(Float, Int)
+
     start_count = Int
     frequency = Int
     message = Str
-    def __init__(self, attr, comp, value,
+
+    _key = Str
+
+    def __init__(self, attr, comp,
                  start_count=0,
                  frequency=10,
-                  *args, **kw):
+                 *args, **kw):
+
         self.attr = attr
         self.comp = comp
-        self.value = value
+
+        m = re.findall(r'[A-Za-z]+\d*', comp)
+        if m:
+            self._key = m[0]
+        else:
+            self._key = self.attr
+
         self.start_count = start_count
         self.frequency = frequency
         super(AutomatedRunCondition, self).__init__(*args, **kw)
 
     def check(self, obj, cnt):
-        '''
+        """
              check condition if cnt is greater than start count
              cnt-start count is greater than 0
              and cnt-start count is divisable by frequency
-        '''
+        """
 
         if cnt > self.start_count and \
-            (cnt - self.start_count) > 0 and \
-                (cnt - self.start_count) % self.frequency == 0:
+                        (cnt - self.start_count) > 0 and \
+                                (cnt - self.start_count) % self.frequency == 0:
             return self._check(obj)
 
     def _check(self, obj):
-        if hasattr(obj, self.attr):
-            gvalue = getattr(obj, self.attr)
-            comp = self.comp
-            value = self.value
+        v = obj.get_value(self.attr)
+        cmd = self.comp
+        self.debug('testing {} key={} attr={} value={}'.format(cmd, self._key, self.attr, v))
+        if eval(cmd, {self._key: v}):
+            self.message = '{},value= {} {} is True'.format(self.attr, v, cmd)
+            return True
 
-            if isinstance(gvalue, AffineScalarFunc):
-                gvalue = gvalue.nominal_value
-
-            cmd = '{}{}{}'.format(gvalue, comp, value)
-            if eval(cmd):
-                self.message = '{}, {} is True'.format(self.attr, cmd)
-                return True
 
 class TruncationCondition(AutomatedRunCondition):
     abbreviated_count_ratio = 1.0
 
+
 class TerminationCondition(AutomatedRunCondition):
     pass
+
 
 class ActionCondition(AutomatedRunCondition):
     action = Either(Str, Callable)
     resume = Bool  # resume==True the script continues execution else break out of measure_iteration
+
     def perform(self, script):
         action = self.action
         if isinstance(action, str):

@@ -23,13 +23,7 @@ ETSConfig.toolkit = "qt4"
 
 setup_version_id = '_dev'
 from helpers import build_version
-'''
-    set_path=True inserts the pychron source directory into the PYTHONPATH
-    necessary if you are launching from commandline or eclipse(?). 
-    Use false (default) if your are launching from a standalone bundle. 
-'''
-DEBUG = True
-build_version('', setup_version_id, debug=DEBUG)
+build_version('', setup_version_id, debug=True)
 
 def main():
     """
@@ -37,7 +31,7 @@ def main():
     """
 
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # import application
@@ -47,7 +41,7 @@ def main():
     # build directories
     build_directories(paths)
 
-#    from pychron.helpers.paths import hidden_dir
+#    from pychron.core.helpers.paths import hidden_dir
 #    path = os.path.join(hidden_dir, 'version_info')
 #    a = VersionInfoDisplay(local_path=path,
 #                           src_path=os.path.join(SRC_DIR,
@@ -55,14 +49,14 @@ def main():
 #    a.check()
     logging_setup('pychron', level='DEBUG')
 
-#===============================================================================
-# test flag
-# set if you want to execute tests after startup
-# explicitly set the flag here once. mode is a readonly property
-#===============================================================================
-    from pychron.globals import globalv
-    globalv._test = False
-    globalv.debug = DEBUG
+# #===============================================================================
+# # test flag
+# # set if you want to execute tests after startup
+# # explicitly set the flag here once. mode is a readonly property
+# #===============================================================================
+#     from pychron.globals import globalv
+#     globalv._test = False
+#     globalv.debug = DEBUG
 
 #     from guppy import hpy
 #     app.hp = hp = hpy()

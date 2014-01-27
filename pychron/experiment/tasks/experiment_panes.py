@@ -24,12 +24,12 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-# from pychron.ui.tabular_editor import myTabularEditor
+# from pychron.core.ui.tabular_editor import myTabularEditor
 # from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
 #============= standard library imports ========================
@@ -76,16 +76,15 @@ class ExperimentFactoryPane(TraitsDockPane):
     def traits_view(self):
         add_button = icon_button_editor('add_button', 'add',
                                         enabled_when='ok_add',
-                                        tooltip='Add run'
-        )
+                                        tooltip='Add run')
 
         save_button = icon_button_editor('save_button', 'disk',
-                                         tooltip='Save queue to file'
-        )
+                                         tooltip='Save queue to file')
+
         edit_button = icon_button_editor('edit_mode_button', 'table_edit',
                                          enabled_when='edit_enabled',
-                                         tooltip='Toggle edit mode'
-        )
+                                         tooltip='Toggle edit mode')
+
         clear_button = icon_button_editor('clear_button',
                                           'table_row_delete',
                                           tooltip='Clear all runs added using "frequency"')
@@ -95,20 +94,15 @@ class ExperimentFactoryPane(TraitsDockPane):
             HGroup(
                 QFItem('mass_spectrometer',
                        show_label=False,
-                       editor=EnumEditor(name=make_qf_name('mass_spectrometers')),
-                ),
+                       editor=EnumEditor(name=make_qf_name('mass_spectrometers'))),
                 QFItem('extract_device',
                        show_label=False,
-                       editor=EnumEditor(name=make_qf_name('extract_devices')),
-                )
-            ),
+                       editor=EnumEditor(name=make_qf_name('extract_devices')))),
             QFItem('load_name',
                    show_label=False,
-                   editor=EnumEditor(name=make_qf_name('load_names'))
-            ),
+                   editor=EnumEditor(name=make_qf_name('load_names'))),
             QFItem('delay_before_analyses'),
-            QFItem('delay_between_analyses')
-        )
+            QFItem('delay_between_analyses'))
 
         button_bar = HGroup(
             save_button,
@@ -117,30 +111,25 @@ class ExperimentFactoryPane(TraitsDockPane):
             edit_button,
             CustomLabel(make_rf_name('edit_mode_label'),
                         color='red',
-                        width=40
-            ),
+                        width=40),
             spring,
             RFItem('end_after', width=30),
-            RFItem('skip')
-        )
+            RFItem('skip'))
         edit_grp = VFold(
             VGroup(
                 self._get_info_group(),
                 self._get_extract_group(),
-                label='General'
-            ),
+                label='General'),
             self._get_script_group(),
             self._get_truncate_group(),
-            enabled_when=make_qf_name('ok_make')
-        )
+            enabled_when=make_qf_name('ok_make'))
 
         lower_button_bar = HGroup(
             add_button,
             clear_button,
             Label('Auto Increment'),
             Item('auto_increment_id', label='L#'),
-            Item('auto_increment_position', label='Position'),
-        )
+            Item('auto_increment_position', label='Position'))
         v = View(
             VGroup(
                 queue_grp,
@@ -238,11 +227,16 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_truncate_group(self):
         grp = VGroup(
             HGroup(
-                RFItem('trunc_attr', show_label=False),
+                RFItem('trunc_attr',
+                       editor=EnumEditor(name=make_rf_name('trunc_attrs')),
+                       show_label=False),
                 RFItem('trunc_comp', show_label=False),
                 RFItem('trunc_crit', show_label=False),
                 spacer(-10),
                 RFItem('trunc_start', label='Start Count'),
+                icon_button_editor(make_rf_name('clear_truncation'),
+                                   'delete',
+                                   enabled_when=make_rf_name('edit_mode')),
                 show_border=True,
                 label='Simple'
             ),

@@ -23,21 +23,15 @@ ETSConfig.toolkit = "qt4"
 import os
 #============= local library imports  ==========================
 
-version_id = '_diode'
 from helpers import build_version
-'''
-    set_path=True inserts the pychron source directory into the PYTHONPATH
-    necessary if you are launching from commandline or eclipse(?). 
-    Use false (default) if your are launching from a standalone bundle. 
-'''
-build_version(version_id)
+build_version(setup_ver='_diode')
 
 def main():
-    '''
+    """
         entry point
-    '''
+    """
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # import application
@@ -50,7 +44,7 @@ def main():
 
     #
 
-#    from pychron.helpers.paths import hidden_dir
+#    from pychron.core.helpers.paths import hidden_dir
 #    path = os.path.join(hidden_dir, 'version_info')
 #    a = VersionInfoDisplay(local_path=path,
 #                           src_path=os.path.join(SRC_DIR,

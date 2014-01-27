@@ -32,7 +32,6 @@ class IsotopeRecordView(HasTraits):
     analysis_type = ''
     uuid = ''
     sample = ''
-    sample = ''
 
     iso_fit_status = False
     blank_fit_status = False
@@ -44,14 +43,23 @@ class IsotopeRecordView(HasTraits):
 
     record_id = ''
 
+    is_plateau_step = False
+    identifier = ''
+
+    def set_tag(self, tag):
+        self.tag = tag.name
+
     def create(self, dbrecord):
-#        print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
+    #        print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
         try:
             if dbrecord is None or not dbrecord.labnumber:
                 return
-            
+
             ln = dbrecord.labnumber
+
             self.labnumber = str(ln.identifier)
+            self.identifier = self.labnumber
+
             self.aliquot = dbrecord.aliquot
             self.step = dbrecord.step
             self.uuid = dbrecord.uuid

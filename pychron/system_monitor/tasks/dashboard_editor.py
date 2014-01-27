@@ -53,7 +53,7 @@ class DashboardEditor(SeriesEditor):
     measurements = Dict
     limit = Int(100)
 
-    def _dump_tool(self):
+    def _get_dump_tool(self):
         return self.tool
 
     def _load_tool(self, obj):

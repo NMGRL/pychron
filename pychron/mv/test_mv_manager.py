@@ -15,11 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Button, Instance
-from traitsui.api import View, Item
-from pychron.mv.machine_vision_manager import MachineVisionManager
 import time
+
+from traits.api import Button, Instance
+from traitsui.api import View, Item
+
+from pychron.mv.machine_vision_manager import MachineVisionManager
 from pychron.mv.test_image import TestImage
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -53,7 +56,7 @@ class TestMVManager(MachineVisionManager):
         im = self.setup_image()
 
 #         self._test2(im)
-        from pychron.ui.thread import Thread
+        from pychron.core.ui.thread import Thread
         t = Thread(target=self._test2, args=(im,))
         t.start()
         self._t = t
@@ -184,7 +187,7 @@ def test1():
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('mv')
     test()
 #============= EOF =============================================

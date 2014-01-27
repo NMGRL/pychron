@@ -18,7 +18,7 @@
 from traits.api import HasTraits, Int, Str, Property, Any
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import std_dev, nominal_value
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class TableBlank(HasTraits):
@@ -190,7 +190,7 @@ class BaseAdapter(TabularAdapter):
         return self._get_value('rad40_percent', n=1)
 
     def _get_R_text(self):
-        return self._get_value('R', n=2)
+        return self._get_value('F', n=2)
 
     def _get_age_text(self):
         return self._get_value('age')

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Color, Button, Float, Property, Bool
+from traits.api import Str, Color, Button, Float, Bool
 from traitsui.api import View, Item, VGroup, HGroup, \
     Spring, UItem, spring, RangeEditor
 #============= standard library imports ========================
@@ -23,8 +23,8 @@ from threading import Event
 import time
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.helpers.timer import Timer
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.helpers.timer import Timer
 
 class WaitControl(Loggable):
     page_name = Str('Wait')
@@ -70,6 +70,10 @@ class WaitControl(Loggable):
         self.debug('Join finished')
 
     def start(self, block=True, evt=None, wtime=None):
+        if self.timer:
+            self.timer.stop()
+            self.timer.wait_for_completion()
+
         if evt is None:
             evt = Event()
 
@@ -107,6 +111,7 @@ class WaitControl(Loggable):
     def _continue(self):
         self._continued = True
         self._end()
+        self.current_time = 0
 
     def _end(self):
         self.message = ''

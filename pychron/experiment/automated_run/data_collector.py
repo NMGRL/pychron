@@ -15,20 +15,19 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, List, CInt, Int, Bool
+from traits.api import Any, List, CInt, Int, Bool, Enum
 # from traitsui.api import View, Item
 # from pyface.timer.do_later import do_after
 #============= standard library imports ========================
 import time
 from threading import Event, Timer
-from numpy import Inf
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
-# from pychron.codetools.memory_usage import mem_log
-from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.codetools.memory_usage import mem_log
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class DataCollector(Loggable):
@@ -45,6 +44,7 @@ class DataCollector(Loggable):
     #grpname = Str
 
     is_baseline = Bool(False)
+    for_peak_hop = Bool(False)
     fits = List
     series_idx = Int
     #total_counts = CInt
@@ -55,10 +55,10 @@ class DataCollector(Loggable):
     starttime = None
     _alive = False
     _evt = None
-    _warned_no_fit=None
+    _warned_no_fit = None
+    _warned_no_det = None
 
-    def _detectors_changed(self):
-        self._idx_func = self._get_idx_func()
+    collection_kind = Enum(('sniff', 'signal', 'baseline'))
 
     def wait(self):
         st = time.time()
@@ -81,7 +81,8 @@ class DataCollector(Loggable):
             return
 
         self._truncate_signal = False
-        self._warned_no_fit=[]
+        self._warned_no_fit = []
+        self._warned_no_det = []
 
         st = time.time()
         if self.starttime is None:
@@ -157,6 +158,44 @@ class DataCollector(Loggable):
     def _save_data(self, x, keys, signals):
         self.data_writer(self.detectors, x, keys, signals)
 
+        #update arar_age
+        if self.is_baseline and self.for_peak_hop:
+            self._update_baseline_peak_hop(x, keys, signals)
+        else:
+            self._update_isotopes(x, keys, signals)
+
+    def _update_baseline_peak_hop(self, x, keys, signals):
+        a = self.arar_age
+        for iso in self.arar_age.isotopes.itervalues():
+            signal=self._get_signal(keys, signals, iso.detector)
+            if signal is not None:
+                if not a.append_data(iso.name, iso.detector, x, signal, 'baseline'):
+                    self.debug('baselines - failed appending data for {}. not a current isotope {}'.format(iso, a.isotope_keys))
+
+    def _update_isotopes(self, x, keys, signals):
+        a = self.arar_age
+
+        kind = self.collection_kind
+
+        for dn in keys:
+            dn = self._get_detector(dn)
+            if dn:
+                iso = dn.isotope
+                signal = self._get_signal(keys, signals, dn.name)
+                if signal is not None:
+                    if not a.append_data(iso, dn.name, x, signal, kind):
+                        self.debug('{} - failed appending data for {}. not a current isotope {}'.format(kind, iso, a.isotope_keys))
+
+    def _get_signal(self, keys, signals, det):
+        try:
+            return signals[keys.index(det)]
+        except ValueError:
+            if not det in self._warned_no_det:
+                self.warning('Detector {} is not available'.format(det))
+                self._warned_no_det.append(det)
+                self.canceled=True
+                self.stop()
+
     def _get_detector(self, d):
         if isinstance(d, str):
             d = next((di for di in self.detectors
@@ -166,95 +205,59 @@ class DataCollector(Loggable):
     def plot_data(self, *args, **kw):
         invoke_in_main_thread(self._plot_data, *args, **kw)
 
+    def _plot_baseline_for_peak_hop(self, i, x, keys, signals):
+        for k, v in self.arar_age.isotopes.iteritems():
+            signal = signals[keys.index(v.detector)]
+            self._set_plot_data(i, k, v.detector, x, signal)
+
+    def _plot_data_(self, cnt, x, keys, signals):
+        for i, dn in enumerate(keys):
+            dn = self._get_detector(dn)
+            if dn:
+                iso = dn.isotope
+                signal = signals[keys.index(dn.name)]
+                self._set_plot_data(cnt, iso, dn.name, x, signal)
+
+    def _set_plot_data(self, cnt, iso, det, x, signal):
+        try:
+            name=iso
+            iso=self.arar_age.isotopes[iso]
+        except KeyError:
+            name='{}{}'.format(iso, det)
+            iso=self.arar_age.isotopes[name]
+
+        if self.is_baseline:
+            fit=iso.baseline.get_fit(cnt)
+        else:
+            fit=iso.get_fit(cnt)
+
+        graph = self.plot_panel.isotope_graph
+        pid=graph.get_plotid_by_ytitle(name)
+
+        graph.add_datum((x, signal),
+                        series=self.series_idx,
+                        plotid=pid,
+                        update_y_limits=True,
+                        ypadding='0.1')
+
+        if fit:
+            graph.set_fit(fit, plotid=pid, series=self.series_idx)
+
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:
             x *= (self.period_ms * 0.001) ** -1
 
+        if self.is_baseline and self.for_peak_hop:
+            self._plot_baseline_for_peak_hop(i, x, keys, signals)
+        else:
+            self._plot_data_(i, x, keys, signals)
+
         graph = self.plot_panel.isotope_graph
-
-        nfs = self.get_fit_block(i)
-        #if self.grpname == 'signal':
-        #self.plot_panel.fits = nfs
-
-        np = len(graph.plots)
-        idx_func = self._idx_func
-
-        for dn in keys:
-            
-            dn = self._get_detector(dn)
-            if dn:
-                iso = dn.isotope
-                pi = idx_func(iso,dn.name)
-                try:
-                    fi = nfs[pi]
-                except IndexError:
-                    if not dn.name in self._warned_no_fit:
-                        self.warning('No fit defined for {}'.format(dn.name))
-                        self._warned_no_fit.append(dn.name)
-                    continue
-
-                if pi >= np:
-                    graph.new_plot()
-                    graph.new_series(type='scatter',
-                                     marker='circle',
-                                     plotid=pi)
-                    dn.series_idx = 0
-
-                series = self.series_idx
-                if hasattr(dn, 'series_idx'):
-                    series = dn.series_idx
-
-                miso = self.arar_age.isotopes[iso]
-                if self.is_baseline:
-                    miso.baseline.fit = fi
-                else:
-                    miso.fit = fi
-
-                signal = signals[keys.index(dn.name)]
-
-                #print i, x, pi, dn
-                graph.add_datum((x, signal),
-                                series=series,
-                                plotid=pi,
-                                update_y_limits=True,
-                                ypadding='0.1')
-                if fi:
-                    graph.set_fit(fi, plotid=pi, series=0)
-
         graph.refresh()
 
     #===============================================================================
     #
     #===============================================================================
-    def get_fit_block(self, iter_cnt, fits=None):
-        if fits is None:
-            fits = self.fits
-        return self._get_fit_block(iter_cnt, fits)
-
-    def _get_fit_block(self, iter_cnt, fits):
-        midx = None
-        me = -Inf
-        for i, (sli, fs) in enumerate(fits):
-            if sli:
-                s, e = sli
-                if s is None:
-                    s = 0
-                if e is None:
-                    e = Inf
-
-                if iter_cnt < 0:
-                    if me < e:
-                        me = e
-                        midx = i
-                else:
-                    if iter_cnt > s and iter_cnt < e:
-                        break
-
-        if midx is not None:
-            fs = fits[midx]
-
-        #        self.debug('fs {}'.format(fs))
-        return fs
 
     #===============================================================================
     # checks
@@ -271,23 +274,25 @@ class DataCollector(Loggable):
         j = i - 1
         user_counts = 0 if self.plot_panel is None else self.plot_panel.ncounts
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
-        original_counts=self.ncounts
-        count_args=(j, original_counts)
-
+        original_counts = self.ncounts
+        count_args = (j, original_counts)
+        # self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
+        #                                                                          script_counts,
+        #                                                                          original_counts))
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'
 
-        if user_counts!=original_counts:
-            if i>user_counts:
+        if user_counts != original_counts:
+            if i > user_counts:
                 self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 self.plot_panel.total_counts -= (original_counts - i)
                 return 'break'
-        elif script_counts!=original_counts:
-            if i>script_counts:
+        elif script_counts != original_counts:
+            if i > script_counts:
                 self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
                 return 'break'
-        elif i>original_counts:
+        elif i > original_counts:
             return 'break'
 
         if self._truncate_signal:
@@ -324,19 +329,5 @@ class DataCollector(Loggable):
                 action_condition.perform(self.measurement_script)
                 if not action_condition.resume:
                     return 'break'
-
-
-
-    def _get_idx_func(self):
-        original_idx = [(di.name, di.isotope) for di in self.detectors]
-        def idx_func(isot, detname):
-            idx=next((i for i, (n, ii) in enumerate(original_idx)
-                         if ii == isot), None)
-#            if idx is None:
-#                idx=next((i for i, (n, ii) in enumerate(original_idx)
-#                         if n == detname), None)
-            return idx
-        
-        return idx_func
 
         #============= EOF =============================================

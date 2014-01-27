@@ -108,8 +108,11 @@ class ConfigMixin(Loggable):
             self.debug(msg)
             self.warning_dialog(msg)
 
-    def get_configuration_writer(self):
+    def get_configuration_writer(self, p=None):
         config = ConfigParser.RawConfigParser()
+        if p:
+            config.read(p)
+
         return config
 
 

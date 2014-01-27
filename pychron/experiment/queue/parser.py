@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pychron.helpers.filetools import str_to_bool
+from pychron.core.helpers.filetools import to_bool
 #============= standard library imports ========================
 import re
 #============= local library imports  ==========================
@@ -89,7 +89,7 @@ class RunParser(Loggable):
                      'pattern',
                      'position',
                      'comment',
-#                     ('truncate', 'truncate_condition'),
+                     ('truncate', 'truncate_condition'),
                      # ver 1.0
                      'extract_units',
                      # ver 2.0
@@ -124,7 +124,7 @@ class RunParser(Loggable):
                     continue
 
                 if param.strip():
-                    bo = str_to_bool(param)
+                    bo = to_bool(param)
                     if bo is not None:
                         params[rattr] = bo
                     else:

@@ -40,6 +40,8 @@ class MeasurementPyScript(ValvePyScript):
     _time_zero_offset = 0
 
     _series_count = 0
+    _baseline_series = None
+
     _regress_id = 0
 
     _detectors = None
@@ -52,6 +54,7 @@ class MeasurementPyScript(ValvePyScript):
     def reset(self, arun):
         self.automated_run = arun
 
+        self._baseline_series = None
         self._series_count = 0
         self._time_zero = None
         self._regress_id = 0
@@ -75,7 +78,7 @@ class MeasurementPyScript(ValvePyScript):
     #        return cmds
 
     def get_variables(self):
-        return ['truncated','eqtime']
+        return ['truncated', 'eqtime']
 
     #===============================================================================
     # commands
@@ -138,17 +141,21 @@ class MeasurementPyScript(ValvePyScript):
             return
 
         self.ncounts = ncounts
+        if self._baseline_series:
+            series = self._baseline_series
+        else:
+            series = self._series_count
+
         if not self._automated_run_call('py_baselines', ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,
                                         mass,
                                         detector,
                                         settling_time=settling_time,
-                                        series=self._series_count,
-        ):
-        #
+                                        series=series):
             self.cancel()
-        self._series_count += 1
+        self._baseline_series = series
+        self._series_count += 2
 
     @count_verbose_skip
     @command_register
@@ -163,35 +170,35 @@ class MeasurementPyScript(ValvePyScript):
 
         else:
             self.warning_dialog('No such file {}'.format(p))
-    
+
     @count_verbose_skip
     @command_register
     def define_detectors(self, isotope, det, *args, **kw):
         self._automated_run_call('py_define_detectors', isotope, det)
-        
+
     @count_verbose_skip
     @command_register
-    def peak_hop(self, ncycles=5, hops=None, calc_time=False, baseline=False):
+    def define_hops(self, hops=None, **kw):
+        if hops is None:
+            return
+
+        self._automated_run_call('py_define_hops', hops)
+
+    @count_verbose_skip
+    @command_register
+    def peak_hop(self, ncycles=5, hops=None, calc_time=False):
         if hops is None:
             return
 
         integration_time = 1.1
 
         counts = sum([ci * integration_time + s for _h, ci, s in hops]) * ncycles
-        tt = 0
-        #for h,ci, s in hops:
-        #print ci, s, ci+s
-        #tt+=ci+s
-        #print 'tttt', tt, tt, tt*ncycles
         if calc_time:
             # counts = sum of counts for each hop
             self._estimated_duration += (counts * ESTIMATED_DURATION_FF)
             return
 
         group = 'signal'
-        if baseline:
-            group = 'baseline'
-
         self.ncounts = counts
         if not self._automated_run_call('py_peak_hop', ncycles,
                                         counts,
@@ -220,13 +227,14 @@ class MeasurementPyScript(ValvePyScript):
 
     @count_verbose_skip
     @command_register
-    def peak_center(self, detector='AX', isotope='Ar40', period=850, save=True, calc_time=False):
+    def peak_center(self, detector='AX', isotope='Ar40', integration_time=1.04, save=True, calc_time=False):
         if calc_time:
-            self._estimated_duration += 36
+            self._estimated_duration += 30 * integration_time
             return
 
         self._automated_run_call('py_peak_center', detector=detector,
-                                 isotope=isotope, period=period, save=save)
+                                 isotope=isotope, integration_time=integration_time,
+                                 save=save)
 
     @verbose_skip
     @command_register
@@ -252,13 +260,27 @@ class MeasurementPyScript(ValvePyScript):
             # wait for inlet to open
             evt.wait()
 
+    # @verbose_skip
+    # @command_register
+    # def regress(self, *fits):
+    #     if not fits:
+    #         fits = 'linear'
+    #
+    #     self._automated_run_call('py_set_regress_fits', fits)
+
     @verbose_skip
     @command_register
-    def regress(self, *fits):
+    def set_fits(self, *fits):
         if not fits:
             fits = 'linear'
+        self._automated_run_call('py_set_fits', fits)
 
-        self._automated_run_call('py_set_regress_fits', fits)
+    @verbose_skip
+    @command_register
+    def set_baseline_fits(self, *fits):
+        if not fits:
+            fits = 'average_SEM'
+        self._automated_run_call('py_set_baseline_fits', fits)
 
     @verbose_skip
     @command_register
@@ -341,35 +363,31 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, value, start_count=0, frequency=10):
-        self._automated_run_call('py_add_termination', attr, comp, value,
+    def add_termination(self, attr, comp, start_count=0, frequency=10):
+        self._automated_run_call('py_add_termination', attr, comp,
                                  start_count=start_count,
-                                 frequency=frequency
-        )
+                                 frequency=frequency)
 
     @verbose_skip
     @command_register
-    def add_truncation(self, attr, comp, value, start_count=0, frequency=10,
-                       abbreviated_count_ratio=1.0
-    ):
-        self._automated_run_call('py_add_truncation', attr, comp, value,
+    def add_truncation(self, attr, comp, start_count=0, frequency=10,
+                       abbreviated_count_ratio=1.0):
+        self._automated_run_call('py_add_truncation', attr, comp,
                                  start_count=start_count,
                                  frequency=frequency,
-                                 abbreviated_count_ratio=abbreviated_count_ratio
-        )
+                                 abbreviated_count_ratio=abbreviated_count_ratio)
 
     @verbose_skip
     @command_register
-    def add_action(self, attr, comp, value, start_count=0, frequency=10,
+    def add_action(self, attr, comp, start_count=0, frequency=10,
                    action=None,
-                   resume=False
-    ):
+                   resume=False):
 
     #        if self._syntax_checking:
     #            if isinstance(action, str):
     #                self.execute_snippet(action)
 
-        self._automated_run_call('py_add_action', attr, comp, value,
+        self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,
@@ -529,10 +547,10 @@ class MeasurementPyScript(ValvePyScript):
         if self.automated_run:
             return self._automated_run_call(lambda: self.automated_run.eqtime)
         else:
-            r=15
-            cg=self._get_config()
-            if cg.has_option('Default','eqtime'):
-                r=cg.getfloat('Default','eqtime',)
+            r = 15
+            cg = self._get_config()
+            if cg.has_option('Default', 'eqtime'):
+                r = cg.getfloat('Default', 'eqtime', )
             return r
 
 #===============================================================================
@@ -548,7 +566,7 @@ class MeasurementPyScript(ValvePyScript):
 #            pass
 
 # if __name__ == '__main__':
-#    from pychron.helpers.logger_setup import logging_setup
+#    from pychron.core.helpers.logger_setup import logging_setup
 #    paths.build('_test')
 #    logging_setup('m_pyscript')
 #

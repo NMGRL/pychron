@@ -21,11 +21,11 @@ from traitsui.api import View, UItem, HGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
-from pychron.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, CompuatedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 
 
 class MainView(HasTraits):
@@ -177,7 +177,9 @@ class MainView(HasTraits):
             try:
                 return niso / diso
             except ZeroDivisionError:
-                return ufloat(0, 1e-20)
+                pass
+
+        return ufloat(0, 1e-20)
 
     def _get_corrected_ratio(self, nd):
         n, d = nd.split('/')
@@ -185,8 +187,9 @@ class MainView(HasTraits):
         if niso and diso:
             try:
                 return niso.ic_corrected_value() / diso.ic_corrected_value(), diso.ic_factor / niso.ic_factor
-            except ZeroDivisionError:
-                return ufloat(0, 1e-20), 1
+            except (ZeroDivisionError, TypeError):
+                pass
+        return ufloat(0, 1e-20), 1
 
     def _update_ratios(self, an):
         for ci in self.computed_values:
@@ -223,8 +226,8 @@ class MainView(HasTraits):
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
-                 ('R','uR'),
-                 ('w/o Irrad', 'wo_irrad', '', 'R_err_wo_irrad'),)
+                 ('F','uF'),
+                 ('w/o Irrad', 'wo_irrad', '', 'F_err_wo_irrad'),)
         
         if new_list:
             def comp_factory(n, a, value=None, error_tag=None):
@@ -256,7 +259,7 @@ class MainView(HasTraits):
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j
                 elif attr=='wo_irrad':
-                    ci.error=an.R_err_wo_irrad
+                    ci.error=an.F_err_wo_irrad
                 else:
                     v = getattr(an, attr)
                     ci.value = floatfmt(nominal_value(v))

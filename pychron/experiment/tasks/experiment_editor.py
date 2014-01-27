@@ -22,12 +22,11 @@ from traitsui.api import View, UItem
 import os
 #============= local library imports  ==========================
 
-from pychron.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.helpers.filetools import add_extension
-from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
+from pychron.core.helpers.filetools import add_extension
 
 
 class ExperimentEditor(BaseTraitsEditor):

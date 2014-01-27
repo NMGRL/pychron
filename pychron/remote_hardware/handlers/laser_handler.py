@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from threading import Thread
 #============= local library imports  ==========================
 from base_remote_hardware_handler import BaseRemoteHardwareHandler
 from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
@@ -24,7 +23,7 @@ from pychron.remote_hardware.errors import InvalidArgumentsErrorCode
 from pychron.remote_hardware.errors.laser_errors import LogicBoardCommErrorCode, \
     EnableErrorCode, DisableErrorCode, InvalidSampleHolderErrorCode, \
     InvalidMotorErrorCode
-from pychron.helpers.filetools import str_to_bool
+from pychron.core.helpers.filetools import to_bool
 # from pychron.remote_hardware.errors.error import InvalidDirectoryErrorCode
 # from pychron.paths import paths
 # import os
@@ -270,7 +269,7 @@ class LaserHandler(BaseRemoteHardwareHandler):
     def GoToHole(self, manager, hole, autocenter, *args):
         try:
             hole = int(hole)
-            autocenter = str_to_bool(autocenter)
+            autocenter = to_bool(autocenter)
 
             err = manager.stage_manager.move_to_hole(str(hole),
                                                      correct_position=autocenter)
@@ -280,8 +279,12 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return self.error_response(err)
 
     def GetPatternNames(self, manager, *args):
+        ret=''
         jogs = manager.get_pattern_names()
-        return ','.join(jogs)
+        if jogs:
+            ret=','.join(jogs)
+
+        return ret
 
     def DoPattern(self, manager, name, *args, **kw):
         if name is None:
@@ -396,6 +399,10 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         manager.set_laser_output(p, units)
         return result
+
+    def GetAchievedOutput(self, manager, *args):
+        result=manager.get_achieved_output()
+        return str(result)
 
 #===============================================================================
 # Positioning

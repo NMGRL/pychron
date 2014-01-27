@@ -25,8 +25,8 @@ from numpy import linspace, argmin, argmax, random, asarray
 import time
 import os
 #============= local library imports  ==========================
-from pychron.time_series.time_series import smooth
-from pychron.image.cv_wrapper import grayspace, crop, resize, get_focus_measure
+from pychron.core.time_series.time_series import smooth
+from pychron.image.cv_wrapper import grayspace, crop, get_focus_measure
 # from pychron.image.cvwrapper import grayspace, get_focus_measure, crop, resize
 from scipy.ndimage.measurements import variance
 from scipy.ndimage.filters import generic_gradient_magnitude, sobel
@@ -38,9 +38,9 @@ from pychron.image.image import Image
 # from pychron.image.image_editor import ImageEditor
 from pychron.graph.graph import Graph
 from pychron.mv.focus.focus_parameters import FocusParameters
-from pychron.ui.image_editor import ImageEditor
-from pychron.ui.gui import invoke_in_main_thread
-from pychron.ui.thread import Thread
+from pychron.core.ui.image_editor import ImageEditor
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.core.ui.thread import Thread
 
 
 class ConfigureHandler(Handler):

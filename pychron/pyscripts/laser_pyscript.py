@@ -15,13 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
+import time
+
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.pyscript import makeRegistry, verbose_skip
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.ui.gui import invoke_in_main_thread
-import time
+from pychron.core.ui.gui import invoke_in_main_thread
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 command_register = makeRegistry()

@@ -16,22 +16,22 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
-    Str, CInt, Int, Tuple, Color
+    Str, CInt, Tuple, Color
 from traitsui.api import View, UItem, VGroup, HGroup, spring
 from pychron.graph.graph import Graph
 
 from pychron.graph.regression_graph import StackedRegressionGraph
-# from pychron.helpers.traitsui_shortcuts import instance_item
+# from pychron.core.helpers.traitsui_shortcuts import instance_item
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pychron_constants import PLUSMINUS
 #from pychron.processing.analyses.analysis_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
-# from pychron.helpers.formatting import floatfmt
-from pychron.ui.text_table import MultiTextTableAdapter
+# from pychron.core.helpers.formatting import floatfmt
+from pychron.core.ui.text_table import MultiTextTableAdapter
 # from pychron.database.records.ui.analysis_summary import SignalAdapter
 from pychron.loggable import Loggable
-from pychron.ui.custom_label_editor import CustomLabel
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.gui import invoke_in_main_thread
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -40,7 +40,7 @@ HEIGHT = 250
 ERROR_WIDTH = 10
 VALUE_WIDTH = 12
 
-# class SignalAdapter(SimpleTextTableAdapter):
+
 class SignalAdapter(MultiTextTableAdapter):
     columns = [
         [
@@ -84,69 +84,8 @@ class TraitsContainer(HasTraits):
             return {'object': self.model}
         return super(TraitsContainer, self).trait_context()
 
-#class DisplayContainer(TraitsContainer):
-#    model = Any
-#    def _get_display_group(self):
-#        results_grp = Group(
-##                             HGroup(
-##                                   Item('correct_for_baseline'),
-##                                   Item('correct_for_blank'),
-##                                   spring),
-#                            UItem('display_signals',
-#                                  editor=FastTextTableEditor(adapter=SignalAdapter(),
-#                                                         bg_color='lightyellow',
-#                                                         header_color='lightgray',
-#                                                         font_size=10,
-#                                                         ),
-##                                          width=0.8
-#                                         ),
-#                                label='Results'
-#                            )
-#
-#        ratios_grp = Group(UItem('display_ratios',
-#                                         editor=FastTextTableEditor(adapter=RatiosAdapter(),
-#                                                         bg_color='lightyellow',
-#                                                         header_color='lightgray'
-#                                                         ),
-#                                        ),
-#                           label='Ratios'
-#                           )
-#        summary_grp = Group(
-#                           UItem('display_summary',
-#                                 editor=FastTextTableEditor(adapter=ValueErrorAdapter(),
-#                                                        bg_color='lightyellow',
-#                                                        header_color='lightgray'
-#                                                        )
-#                                 ),
-#                            label='Summary'
-#                          )
-#        display_grp = Group(
-#                            results_grp,
-#                            ratios_grp,
-#                            summary_grp,
-#                            layout='tabbed'
-#                            )
-#
-#        return display_grp
-#
-#    def traits_view(self):
-#        v = View(
-#               VGroup(
-#                      Item('ncounts'),
-#                      self._get_display_group()
-#                     ),
-#               )
-#        return v
 
 class GraphContainer(TraitsContainer):
-
-#    graphs = List
-#    selected_tab = Any
-#    label = Str
-#     def _selected_tab_changed(self):
-#         print 'sel', self.selected_tab
-
-
     def traits_view(self):
         v = View(
             VGroup(
@@ -186,10 +125,10 @@ class PlotPanel(Loggable):
     plot_title = Str
     #analysis_id=DelegatesTo('analysis_view')
 
-    ncounts = Property(Int(enter_set=True, auto_set=False), depends_on='_ncounts')
+    ncounts = Property(CInt(enter_set=True, auto_set=False), depends_on='_ncounts')
     _ncounts = CInt
 
-    ncycles = Property(Int(enter_set=True, auto_set=False),
+    ncycles = Property(CInt(enter_set=True, auto_set=False),
                        depends_on='_ncycles')
     _ncycles = CInt
 
@@ -198,7 +137,7 @@ class PlotPanel(Loggable):
 
     detectors = List
     #fits = List
-    isotopes = Property(depends_on='detectors')
+    # isotopes = Property(depends_on='detectors')
 
     stack_order = 'bottom_to_top'
     series_cnt = 0
@@ -216,13 +155,14 @@ class PlotPanel(Loggable):
 
     is_baseline = Bool(False)
     is_peak_hop = Bool(False)
+    hops=List
 
     ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
 
     refresh_age = True
 
-    _plot_keys = List
+    #_plot_keys = List
 
     def set_peak_center_graph(self, graph):
         self.peak_center_graph = graph
@@ -241,10 +181,28 @@ class PlotPanel(Loggable):
             super(PlotPanel, self).info(*args, **kw)
 
     def reset(self):
-        #self.clear_displays()
-
         self.isotope_graph.clear()
         self.peak_center_graph.clear()
+
+    # def set_detectors(self, isos, dets):
+    #     """
+    #         isos: list of str
+    #         dets: list of str
+    #         set the detector for each isotope
+    #     """
+    #     a = self.arar_age
+    #     g=self.isotope_graph
+    #     for iso, det in zip(isos, dets):
+    #         try:
+    #             a.set_isotope_detector(det, iso=iso)
+    #         except KeyError:
+    #             self.debug('isotope {} not in ArArAge.isotopes. keys={}'.format(iso, ','.join(a.isotopes.keys())))
+    #             continue
+    #
+    #         #set plot labels
+    #         plot=g.get_plot_by_ytitle(iso, startswith=True)
+    #         if plot:
+    #             plot.y_axis.title=iso
 
     def create(self, dets):
         """
@@ -258,156 +216,31 @@ class PlotPanel(Loggable):
         g = self.isotope_graph
         self.selected_graph = g
 
-        self._plot_keys = []
-        for det in dets:
-            g.new_plot(
-                ytitle='{} {} (fA)'.format(det.name, det.isotope),
-                xtitle='time (s)',
-                padding_left=70,
-                padding_right=10)
-            self._plot_keys.append(det.isotope)
-
         self.detectors = dets
+        for det in dets:
+            self.new_plot()
 
-        #def clear_displays(self):
-        #    self._print_results()
+    def new_plot(self, **kw):
+        g=self.isotope_graph
+        plot = g.new_plot(xtitle='time (s)',padding_left=70,
+                          padding_right=10,
+                          **kw)
 
-        #def _make_display_summary(self):
-        #    def factory(n, v):
-        #        if isinstance(v, tuple):
-        #            sv, se = v
-        #        else:
-        #            sv = v.nominal_value
-        #            se = v.std_dev
-        #
-        #        return DisplayValue(name=n, value=sv, error=se)
-        #
-        #    arar_age = self.arar_age
-        #    summary = []
-        #    if arar_age:
-        #        # call age first
-        #        # loads all the other attrs
-        #        age = arar_age.calculate_age()
-        #        summary = [
-        #                   factory(name, v) for name, v in
-        #                   [
-        #                    ('Age', age),
-        #                    ('', ('', arar_age.age_error_wo_j)),
-        #                    ('J', arar_age.j),
-        #                    ('K/Ca', arar_age.kca),
-        #                    ('K/Cl', arar_age.kcl),
-        #                    ('*40Ar %', arar_age.rad40_percent),
-        #                    ('IC', arar_age.ic_factor)
-        #                    ]
-        #                 ]
-        #
-        #    return summary
-
-    #    def _get_signal_dicts(self):
-    #        sig, base, blank = {}, {}, {}
-    #        if self.arar_age:
-    #            isos = self.arar_age.isotopes.values()
-    ##            isos = [iso for iso in self.arar_age.isotopes.values()]
-    #
-    #            sig = dict([(v.name, v.uvalue) for v in isos])
-    #            base = dict([(v.name, v.baseline.uvalue) for v in isos])
-    #            blank = dict([(v.name, v.blank.uvalue) for v in isos])
-    #        return sig, base, blank
-    #
-    #    def _make_display_ratios(self):
-    #        cfb = self.correct_for_baseline
-    #        cfbl = self.correct_for_blank
-    ##         base = self.baselines
-    ##         blank = self.blanks
-    #        sig, base, blank = self._get_signal_dicts()
-    #
-    #        def factory(n, d, scalar=1):
-    #            r = DisplayRatio(name='{}/{}'.format(n, d))
-    #            try:
-    #                sn = sig[n]
-    #                sd = sig[d]
-    #            except KeyError:
-    #                return r
-    #
-    #            for ci, dd in ((cfb, base), (cfbl, blank)):
-    #                if ci:
-    #                    try:
-    #                        sn -= dd[n]
-    #                        sd -= dd[d]
-    #                    except KeyError:
-    #                        pass
-    #            try:
-    #                rr = (sn / sd) * scalar
-    #                v, e = rr.nominal_value, rr.std_dev
-    #            except ZeroDivisionError:
-    #                v, e = 0, 0
-    #            r.value = v
-    #            r.error = e
-    #
-    #            return r
-    #
-    #        ratios = [('Ar40', 'Ar39'), ('Ar40', 'Ar36')]
-    #        return [factory(*args) for args in ratios]
-
-    #    def _make_display_signals(self):
-    ##         sig = self.signals
-    ##         base = self.baselines
-    ##         blank = self.blanks
-    ##         sig=dict([(k,v) ])
-    #        sig, base, blank = self._get_signal_dicts()
-    #        cfb = self.correct_for_baseline
-    #        cfbl = self.correct_for_blank
-    #        def factory(det, fi):
-    #            iso = det.isotope
-    #            if iso in sig:
-    #                v = sig[iso]
-    #            else:
-    #                v = ufloat(0, 0)
-    #
-    #            if iso in base:
-    #                bv = base[iso]
-    #            else:
-    #                bv = ufloat(0, 0)
-    #
-    #            if iso in blank:
-    #                blv = blank[iso]
-    #            else:
-    #                blv = ufloat(0, 0)
-    #
-    #            iv = v
-    #            if cfb:
-    #                iv = iv - bv
-    #
-    #            if cfbl:
-    #                iv = iv - blv
-    #
-    #            return DisplaySignal(isotope=iso,
-    #                                 detector=det.name,
-    #                                 fit=fi[0].upper(),
-    #                                 intercept_value=iv.nominal_value,
-    #                                 intercept_error=iv.std_dev,
-    #                                 raw_value=v.nominal_value,
-    #                                 raw_error=v.std_dev,
-    #                                 baseline_value=bv.nominal_value,
-    #                                 baseline_error=bv.std_dev,
-    #                                 blank_value=blv.nominal_value,
-    #                                 blank_error=blv.std_dev,
-    #                                 )
-    #
-    #        return [factory(det, fi) for det, fi in zip(self.detectors, self.fits)]
+        plot.y_axis.title_spacing = 50
+        return plot
 
     def _get_ncounts(self):
         return self._ncounts
 
     def _set_ncounts(self, v):
 
-        o=self._ncounts
+        o = self._ncounts
 
         self.info('{} set to terminate after {} counts'.format(self.plot_title, v))
         self._ncounts = v
 
-        xmi,xma=self.isotope_graph.get_x_limits()
-        self.isotope_graph.set_x_limits(max_=max(xma, xma+(v-o)*1.05))
+        xmi, xma = self.isotope_graph.get_x_limits()
+        self.isotope_graph.set_x_limits(max_=max(xma, xma + (v - o) * 1.05))
 
     def _get_ncycles(self):
         return self._ncycles
@@ -415,6 +248,12 @@ class PlotPanel(Loggable):
     def _set_ncycles(self, v):
         self.info('{} set to terminate after {} ncycles'.format(self.plot_title, v))
         self._ncycles = v
+
+        if self.hops:
+            #update ncounts
+            integration_time = 1.1
+            counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
+            self.ncounts=counts
 
     def _graph_factory(self):
         return StackedRegressionGraph(container_dict=dict(padding=5, bgcolor='gray',
@@ -424,9 +263,8 @@ class PlotPanel(Loggable):
                                       use_data_tool=False,
                                       padding_bottom=35)
 
-
-    def _get_isotopes(self):
-        return [d.isotope for d in self.detectors]
+    # def _get_isotopes(self):
+    #     return [d.isotope for d in self.detectors]
 
     #===============================================================================
     # handlers
@@ -440,45 +278,75 @@ class PlotPanel(Loggable):
             p.page_name = 'Peak Center'
             self.graphs = [g, p]
 
-            #            self.graph_container.graphs = [g, p]
-
     def _plot_title_changed(self, new):
         self.graph_container.label = new
 
     @on_trait_change('isotope_graph:regression_results')
-    def _update_display(self, new):
+    def _update_display(self, obj, name, old, new):
         if new:
             arar_age = self.arar_age
 
-            for iso, reg in zip(self._plot_keys, new):
+            # for (detname, iso), reg in zip(self._plot_keys, new):
+            # for i, reg in enumerate(new):
+            for plot, reg in new:
                 if reg is None:
                     continue
 
-                try:
+                # print i, len(obj.plots), reg
+                # plot=obj.plots[i]
+                iso=plot.y_axis.title
+                if isinstance(reg, float):
+                    vv, ee = reg, 0
+                else:
                     vv = reg.predict(0)
                     ee = reg.predict_error(0)
-                    if self.is_baseline:
-                        arar_age.set_baseline(iso, (vv, ee))
+
+                v = vv, ee
+                if self.is_baseline:
+                    if self.is_peak_hop:
+
+                        detname=self.arar_age.isotopes[iso].detector
+                        for k, ii in self.arar_age.isotopes.iteritems():
+                            if ii.detector == detname:
+                                arar_age.set_baseline(k, v)
                     else:
-                        arar_age.set_isotope(iso, (vv, ee))
+                        arar_age.set_baseline(iso, v)
+                else:
+                    arar_age.set_isotope(iso, v)
 
-                except TypeError, e:
-                    print 'type error', e
-                    break
-                except AssertionError, e:
-                    print 'assertion error', e
-                    continue
-            else:
-                if self.refresh_age:
-                    arar_age.calculate_age(force=True)
+            if self.refresh_age:
+                arar_age.calculate_age(force=True)
 
-                self.analysis_view.load_computed(arar_age, new_list=False)
-                self.analysis_view.refresh_needed = True
+            self.analysis_view.load_computed(arar_age, new_list=False)
+            self.analysis_view.refresh_needed = True
 
-                #===============================================================================
-                # defaults
-                #===============================================================================
+            # else:
+            #     for det,reg in zip(self._plot_keys, new):
+            #         iso=det.name
+            #         if reg is None:
+            #             continue
+            #
+            #         if isinstance(reg, float):
+            #             vv, ee = reg, 0
+            #         else:
+            #             vv = reg.predict(0)
+            #             ee = reg.predict_error(0)
+            #
+            #         if self.is_baseline:
+            #             arar_age.set_baseline(iso, (vv, ee))
+            #         else:
+            #             arar_age.set_isotope(iso, (vv, ee))
+            #
+            #     else:
+            #         if self.refresh_age:
+            #             arar_age.calculate_age(force=True)
+            #
+            #         self.analysis_view.load_computed(arar_age, new_list=False)
+            #         self.analysis_view.refresh_needed = True
 
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _isotope_graph_default(self):
         return self._graph_factory()
 
@@ -486,10 +354,9 @@ class PlotPanel(Loggable):
         self.isotope_graph.page_name = 'Isotopes'
         self.peak_center_graph.page_name = 'Peak Center'
 
-        #        return GraphContainer(graphs=[self.graph, self.peak_center_graph])
         return GraphContainer(model=self)
 
     def _graphs_default(self):
         return [self.isotope_graph, self.peak_center_graph]
 
-        #============= EOF =============================================
+#============= EOF =============================================

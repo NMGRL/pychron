@@ -18,13 +18,11 @@
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
 #============= standard library imports ========================
-import os
 #============= local library imports  ==========================
 
-version_id = ''
-setup_version_id='_dev'
+
 from helpers import build_version
-build_version(version_id, setup_ver=setup_version_id)
+build_version()
 
 
 def main():
@@ -32,27 +30,19 @@ def main():
         entry point
     """
     from pychron.envisage.pychron_run import launch
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
     # build directories
     build_directories(paths)
 
-#    from pychron.helpers.paths import hidden_dir
+#    from pychron.core.helpers.paths import hidden_dir
 #    path = os.path.join(hidden_dir, 'version_info')
 #    a = VersionInfoDisplay(local_path=path,
 #                           src_path=os.path.join(SRC_DIR,
 #                           'version_info.txt'))
 #    a.check()
     logging_setup('pychron', level='DEBUG')
-
-#===============================================================================
-# test flag
-# set if you want to execute tests after startup
-# explicitly set the flag here once. mode is a readonly property
-#===============================================================================
-    from pychron.globals import globalv
-    globalv._test = False
 
     from pychron.applications.pyexperiment import PyExperiment as app
     launch(app)

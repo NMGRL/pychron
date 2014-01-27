@@ -180,12 +180,11 @@ class StackedGraph(Graph):
                         #                pi.padding_bottom = 0
 
     def new_series(self, *args, **kw):
-        if not 'plotid' in kw:
-            kw['plotid'] = 0
+        # if not 'plotid' in kw:
+        #     kw['plotid'] = 0
         if not 'bind_id' in kw:
             kw['bind_id'] = None
 
-        plotid = kw['plotid']
         bind_id = kw['bind_id']
         #print bind_id, self.bind_index, self
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
@@ -199,10 +198,10 @@ class StackedGraph(Graph):
         return s, _p
 
     def _bounds_changed(self, bounds):
-        '''
+        """
             vertically resizes the stacked graph.
             the plots are sized equally
-        '''
+        """
         if self.vertical_resize:
             self._update_bounds(bounds, self.plotcontainer.components)
 

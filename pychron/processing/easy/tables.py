@@ -19,7 +19,7 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.easy_parser import EasyParser
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import FusionTableEditor
 from pychron.processing.tasks.tables.editors.step_heat.step_heat_table_editor import StepHeatTableEditor

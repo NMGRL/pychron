@@ -24,10 +24,10 @@ from traits.api import Str
 # from pychron.pychron_constants import FIT_TYPES
 # from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
 from pychron.graph.regression_graph import StackedRegressionGraph
-# from pychron.regression.interpolation_regressor import InterpolationRegressor
-# from pychron.regression.ols_regressor import OLSRegressor
-# from pychron.regression.mean_regressor import MeanRegressor
-# from pychron.helpers.datetime_tools import convert_timestamp
+# from pychron.core.regression.interpolation_regressor import InterpolationRegressor
+# from pychron.core.regression.ols_regressor import OLSRegressor
+# from pychron.core.regression.mean_regressor import MeanRegressor
+# from pychron.core.helpers.datetime_tools import convert_timestamp
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
@@ -38,17 +38,14 @@ class BlanksEditor(InterpolationEditor):
 
     def load_fits(self, ref_ans):
         keys = ref_ans.isotope_keys
-        #print ref_ans
-        #print ref_ans.isotopes['Ar40'].blank.uvalue
         fits = [ref_ans.isotopes[ki].blank.fit or 'average_sem' for ki in keys]
         self.tool.load_fits(keys, fits)
 
     def do_fit(self, ans):
         pass
 
-    def save(self):
-
-        if not any([si.valid for si in self.tool.fits]):
+    def save(self, progress=None):
+        if not any([si.save for si in self.tool.fits]):
             return
 
         db = self.processor.db
@@ -56,14 +53,18 @@ class BlanksEditor(InterpolationEditor):
             cname = 'blanks'
             self.info('Attempting to save corrections to database')
 
-            n = len(self.unknowns)
-            prog = None
+            n = len(self.analyses)
             if n > 1:
-                prog = self.processor.open_progress(n)
+                if progress is None:
+                    progress=self.processor.open_progress(n)
+                else:
+                    progress.increase_max(n)
 
-            for unk in self.unknowns:
-                if prog:
-                    prog.change_message('Saving blanks for {}'.format(unk.record_id))
+            set_id=self.processor.add_predictor_set(self._clean_references())
+            
+            for unk in self.analyses:
+                if progress:
+                    progress.change_message('Saving blanks for {}'.format(unk.record_id))
 
                 meas_analysis = db.get_analysis_uuid(unk.uuid)
 
@@ -77,37 +78,31 @@ class BlanksEditor(InterpolationEditor):
                     else:
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
-                        self.processor.apply_correction(history, unk, si,
-                                                        self._clean_references(), cname)
-                unk.sync(meas_analysis)
+                        self.processor.apply_correction(history, unk, si, set_id, cname)
+                # unk.sync(meas_analysis)
 
-            self.rebuild_graph()
+            if self.auto_plot:
+                self.rebuild_graph()
 
-            #     def _update_unknowns_hook(self):
-            #         '''
-            #             load references based on unknowns
-            #         '''
+            fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
+            self.processor.update_vcs_analyses(self.analyses,
+                                               'Update blanks fits={}'.format(fits))
 
-            #         ans = set([ai for ui in self._unknowns
-            #                     for ai in self.processor.find_associated_analyses(ui)])
-            #
-            #         ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
-            #         ans = self.processor.make_analyses(ans)
-            #         self.task.references_pane.items = ans
+            if progress:
+                progress.soft_close()
+
+    def _set_interpolated_values(self, iso, ans, p_uys, p_ues):
+        for ui, v, e in zip(ans, p_uys, p_ues):
+            if v is not None and e is not None:
+                ui.set_temporary_blank(iso, v, e)
 
 
-    def _set_interpolated_values(self, iso, reg, xs):
-        p_uys = reg.predict(xs)
-        p_ues = reg.predict_error(xs)
+    def _get_current_values(self, iso, ans=None):
+        if ans is None:
+            ans=self.analyses
 
-        for ui, v, e in zip(self.sorted_unknowns, p_uys, p_ues):
-            ui.set_temporary_blank(iso, v, e)
-
-        return p_uys, p_ues
-
-    def _get_current_values(self, iso):
         return zip(*[self._get_isotope(ui, iso, 'blank')
-                     for ui in self.unknowns])
+                     for ui in ans])
 
     def _get_baseline_corrected(self, analysis, k):
         if k in analysis.isotopes:
@@ -117,9 +112,12 @@ class BlanksEditor(InterpolationEditor):
         else:
             return 0, 0
 
-    def _get_reference_values(self, iso):
+    def _get_reference_values(self, iso, ans=None):
+        if ans is None:
+            ans=self.references
+
         return zip(*[self._get_baseline_corrected(ui, iso)
-                     for ui in self.references])
+                     for ui in ans])
 
         #     def _rebuild_graph(self):
         #         graph = self.graph
@@ -190,7 +188,7 @@ class BlanksEditor(InterpolationEditor):
         #             if r_es and r_ys:
         #                 reg = None
         #                 # plot references
-        #                 if fit in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+        #                 if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
         #                     reg = InterpolationRegressor(xs=r_xs,
         #                                                  ys=r_ys,
         #                                                  yserr=r_es,

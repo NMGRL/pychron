@@ -4,7 +4,7 @@ __author__ = 'ross'
 
 import unittest
 
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 

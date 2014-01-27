@@ -20,7 +20,7 @@ ETSConfig.toolkit = 'qt4'
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Float, Button, Instance, Int, \
-     Event, Property, Bool, Any, Enum, on_trait_change, List, Str
+     Event, Property, Bool, Any, Enum, on_trait_change, List
 from traitsui.api import View, Item, VGroup, Group
 import apptools.sweet_pickle as pickle
 from pyface.timer.do_later import do_later
@@ -30,7 +30,6 @@ from threading import Event as TEvent
 from threading import Thread
 import os
 import time
-import wx
 import random
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
@@ -787,7 +786,7 @@ class FusionsCO2PowerCalibrationManager(PowerCalibrationManager):
         return g
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('pcm')
     pac = FusionsCO2PowerCalibrationManager()
     pac.configure_traits()

@@ -24,7 +24,7 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 import time
 from numpy import array
 #=============local library imports  ==========================
-from pychron.time_series.time_series import smooth, \
+from pychron.core.time_series.time_series import smooth, \
     seasonal_subseries, autocorrelation, downsample_1d
 
 from stacked_graph import StackedGraph

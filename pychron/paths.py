@@ -16,15 +16,13 @@
 
 
 
-'''
+"""
 Global path structure
 
 add a path verification function
 make sure directory exists and build if not
-'''
-from os import path, mkdir, getcwd
-
-
+"""
+from os import path, mkdir
 
 # host_url = 'https://arlab.googlecode.com/svn'
 # project_root = 'trunk'
@@ -35,7 +33,10 @@ from os import path, mkdir, getcwd
 #
 # project_home = join(host_url, project_root)
 
+
 class Paths():
+    dissertation = '/Users/ross/Programming/git/dissertation'
+
     version = None
     root = None
     bundle_root = None
@@ -57,8 +58,6 @@ class Paths():
     device_scan_root = device_scan_root = None
     device_scan_db = None
 
-    bakeout_db_root = bakeout_db_root = None
-    bakeout_db = None
     co2laser_db_root = None
     co2laser_db = None
 
@@ -104,13 +103,11 @@ class Paths():
     pattern_dir = None
     incremental_heat_template_dir = None
 
-    bakeout_config_dir = None
-    bakeout = None
-
     block_dir = None
     heating_schedule_dir = None
-    map_dir = map_dir = None
+    map_dir = None
     user_points_dir = None
+    irradiation_tray_maps_dir=None
     #==============================================================================
     # data
     #==============================================================================
@@ -129,6 +126,7 @@ class Paths():
     default_cache = None
     loading_dir = None
     power_map_dir = None
+    vcs_dir=None
     # initialization_dir = None
     # device_creator_dir = None
 
@@ -141,10 +139,21 @@ class Paths():
     # files
     #===========================================================================
     backup_recovery_file = None
-    def set_icon_search_path(self, app_rec=None):
-        self.app_resources=app_rec
+    last_experiment = None
+
+    def set_search_paths(self, app_rec=None):
+        self.app_resources = app_rec
+        self.set_icon_search_path()
+        self.set_sound_search_path()
+
+    def set_icon_search_path(self):
         self.icon_search_path = [self.icons,
                                  self.app_resources]
+
+    def set_sound_search_path(self):
+        self.sound_search_path = [self.sounds,
+                                  self.app_resources]
+
     def build(self, version):
         self.version = version
 
@@ -181,8 +190,7 @@ class Paths():
         db_path = stable_root
         self.device_scan_root = device_scan_root = join(db_path, 'device_scans')
         self.device_scan_db = join(device_scan_root, 'device_scans.sqlite')
-        self.bakeout_db_root = join(db_path, 'bakeoutdb')
-        self.bakeout_db = join(db_path, 'bakeouts.db')
+
         self.co2laser_db_root = join(db_path, 'co2laserdb')
         self.co2laser_db = join(db_path, 'co2.sqlite')
         self.uvlaser_db_root = join(db_path, 'uvlaserdb')
@@ -231,12 +239,11 @@ class Paths():
         self.pattern_dir = join(setup_dir, 'patterns')
         self.incremental_heat_template_dir = join(setup_dir, 'incremental_heat_templates')
 
-        self.bakeout_config_dir = join(setup_dir, 'bakeout_configurations')
-        self.bakeout = join(device_dir, 'bakeout')
-
         self.block_dir = join(setup_dir, 'blocks')
         self.map_dir = map_dir = join(setup_dir, 'tray_maps')
         self.user_points_dir = join(map_dir, 'user_points')
+
+        self.irradiation_tray_maps_dir = join(setup_dir, 'irradiation_tray_maps')
         #==============================================================================
         # data
         #==============================================================================
@@ -249,7 +256,7 @@ class Paths():
         self.video_dir = join(data_dir, 'videos')
         self.stage_visualizer_dir = join(data_dir, 'stage_visualizer')
 
-        self.arar_dir = join(data_dir, 'arar')
+        # self.arar_dir = join(data_dir, 'arar')
 
         self.isotope_dir = join(self.data_dir, 'isotopes')
         self.workspace_root_dir = join(self.data_dir, 'workspaces')
@@ -261,6 +268,7 @@ class Paths():
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
+        self.vcs_dir=join(self.data_dir, 'vcs')
         #==============================================================================
         # lovera exectuables
         #==============================================================================
@@ -271,21 +279,30 @@ class Paths():
         # files
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
+        self.last_experiment=join(self.hidden_dir, 'last_experiment')
+        self.set_search_paths()
 
-        self.set_icon_search_path()
 
-        
+
 paths = Paths()
 paths.build('_beta')
 
 
-def rec_make(pi):
-    if pi and not path.exists(pi):
+# def rec_make(pi):
+#     if pi and not path.exists(pi):
+#         try:
+#             mkdir(pi)
+#         except OSError:
+#             rec_make(path.split(pi)[0])
+#             mkdir(pi)
+
+def r_mkdir(p):
+    if p and not path.isdir(p):
         try:
-            mkdir(pi)
+            mkdir(p)
         except OSError:
-            rec_make(path.split(pi)[0])
-            mkdir(pi)
+            r_mkdir(path.dirname(p))
+            mkdir(p)
 
 
 def build_directories(paths):
@@ -294,6 +311,6 @@ def build_directories(paths):
 #    import copy
     for l in dir(paths):
         if l.endswith('_dir'):
-            rec_make(getattr(paths, l))
+            r_mkdir(getattr(paths, l))
 
 #============= EOF ==============================================

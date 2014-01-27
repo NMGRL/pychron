@@ -15,35 +15,34 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from apptools.preferences.preference_binding import PreferenceBinding
-from traits.api import HasTraits, Property, Float, Enum, Str, List, Either
-from uncertainties import ufloat
+from traits.api import HasTraits, Property, Float, Enum, Str
+from uncertainties import ufloat, nominal_value, std_dev
 
-from pychron.ui.preference_binding import bind_preference
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
 #=============local library imports  ==========================
 
-class ICFactor(HasTraits):
-    detector = Str
-    value = Float
+# class ICFactor(HasTraits):
+#     detector = Str
+#     value = Float
+#     error = Float
 
 
-class ICFactorPreferenceBinding(PreferenceBinding):
-    def _get_value(self, name, value):
-        path = self.preference_path.split('.')[:-1]
-        path.append('stored_ic_factors')
-        path = '.'.join(path)
-        ics = self.preferences.get(path)
-        ics = eval(ics)
-        ss = []
-        for ic in ics:
-            detector, v, e = ic.split(',')
-            ss.append(ICFactor(detector=detector,
-                               value=float(v),
-                               error=float(e)
-            ))
-        return ss
+# class ICFactorPreferenceBinding(PreferenceBinding):
+#     def _get_value(self, name, value):
+#         path = self.preference_path.split('.')[:-1]
+#         path.append('stored_ic_factors')
+#         path = '.'.join(path)
+#         ics = self.preferences.get(path)
+#         ics = eval(ics)
+#         ss = []
+#         for ic in ics:
+#             detector, v, e = ic.split(',')
+#             ss.append(ICFactor(detector=detector,
+#                                value=float(v),
+#                                error=float(e)))
+#         return ss
 
 
 class ArArConstants(HasTraits):
@@ -88,7 +87,7 @@ class ArArConstants(HasTraits):
     age_scalar = Property(depends_on='age_units')
     abundance_sensitivity = Float
 
-    ic_factors = Either(List, Str)
+    # ic_factors = Either(List, Str)
 
     atm4036_citation = Str#'Nier (1950)'
     atm4038_citation = Str#'Nier (1950)'
@@ -123,22 +122,36 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'age_units', 'pychron.arar.constants.age_units')
             bind_preference(self, 'abundance_sensitivity', 'pychron.arar.constants.abundance_sensitivity')
 
-            bind_preference(self, 'ic_factors', 'pychron.spectrometer.ic_factors',
-                            factory=ICFactorPreferenceBinding)
+            # bind_preference(self, 'ic_factors', 'pychron.spectrometer.ic_factors',
+            #                 factory=ICFactorPreferenceBinding)
 
             prefid = 'pychron.arar.constants'
             bind_preference(self, 'atm4036_citation', '{}.Ar40_Ar36_atm_citation'.format(prefid))
             bind_preference(self, 'atm4038_citation', '{}.Ar40_Ar38_atm_citation'.format(prefid))
-            bind_preference(self, 'lambda_b_citation' '{}.lambda_b_citation'.format(prefid))
+            bind_preference(self, 'lambda_b_citation', '{}.lambda_b_citation'.format(prefid))
             bind_preference(self, 'lambda_e_citation', '{}.lambda_e_citation'.format(prefid))
             bind_preference(self, 'lambda_Cl36_citation', '{}.lambda_Cl36_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar37_citation', '{}.lambda_Ar37_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
 
-        except Exception:
-            pass
+        except Exception, e:
+            print 'arar_constants ', e
+            import traceback
+            traceback.print_exc()
 
         super(ArArConstants, self).__init__(*args, **kw)
+
+    def to_dict(self):
+        d=dict()
+        for ai in ('fixed_k3739','atm4036','atm4038',
+                   'lambda_Cl36','lambda_Ar37','lambda_Ar39','lambda_k',):
+
+            v=getattr(self, ai)
+            d[ai]=nominal_value(v)
+            d['{}_err'.format(ai)]=float(std_dev(v))
+
+        d['abundance_sensitivity']=self.abundance_sensitivity
+        return d
 
     def _get_fixed_k3739(self):
         return self._get_ufloat('k3739')

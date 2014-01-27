@@ -15,59 +15,109 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
-    List
+    List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
-from pychron.codetools.simple_timeit import timethis
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
+from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
 
 
 class FigureEditor(GraphEditor):
-#     path = File
     table_editor = Any
     component = Any
-    #     plotter = Any
-    #     tool = Any
     plotter_options_manager = Any
     associated_editors = List
-    #     processor = Any
-    #     unknowns = List
-    #     _unknowns = List
-    #     _cached_unknowns = List
-    #     _suppress_rebuild = False
+
     tool = Any
 
     annotation_tool = Any
-
     figure_model = Any
 
-    def _null_component(self):
-        self.component = BasePlotContainer()
+    tag=Event
+    save_db_figure=Event
 
-    @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
-    def _handle_refresh(self, obj, name, old, new):
-        self.refresh_unknowns_table = True
-        #if not obj.suppress_associated:
-        #print 'figure editor refresh', id(self)
-        for e in self.associated_editors:
-            if isinstance(e, FigureEditor):
-                #e.rebuild_graph()
-                if e.model:
-                    for p in e.model.panels:
-                        for f in p.figures:
-                            f.replot()
+    saved_figure_id=Int
 
-    def traits_view(self):
-        v = View(UItem('component',
-                       style='custom',
-                       width=650,
-                       editor=EnableComponentEditor()))
-        return v
+    def save_figure(self, name, project, labnumbers):
+        db=self.processor.db
+        with db.session_ctx():
+
+            figure = db.add_figure(project=project, name=name)
+            for li in labnumbers:
+                db.add_figure_labnumber(figure, li)
+
+            for ai in self.analyses:
+                dban = db.get_analysis_uuid(ai.uuid)
+                aid = ai.record_id
+                if dban:
+                    db.add_figure_analysis(figure, dban,
+                                           status=ai.is_omitted('omit_{}'.format(self.basename)),
+                                           graph=ai.graph_id,
+                                           group=ai.group_id)
+                    self.debug('adding analysis {} to figure'.format(aid))
+                else:
+                    self.debug('{} not in database'.format(aid))
+
+            po = self.plotter_options_manager.plotter_options
+            blob = po.dump_yaml()
+            pref = db.add_figure_preference(figure, options=blob, kind=self.basename)
+            figure.preference = pref
+            return int(figure.id)
+
+    def set_interpreted_age(self):
+        ias = self.get_interpreted_ages()
+
+        iaf = InterpretedAgeFactory(groups=ias)
+        info = iaf.edit_traits()
+        if info.result:
+            self.add_interpreted_ages(ias)
+
+    def add_interpreted_ages(self, ias):
+        db = self.processor.db
+        with db.session_ctx():
+            for g in ias:
+                if g.use:
+                    ln = db.get_labnumber(g.identifier)
+                    if not ln:
+                        continue
+
+                    self.add_interpreted_age(ln, g)
+
+    def add_interpreted_age(self, ln, ia):
+        db=self.processor.db
+        with db.session_ctx():
+            hist=db.add_interpreted_age_history(ln)
+            db_ia=db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
+                                      age_err=ia.preferred_age_error or 0,
+                                      age_kind=ia.preferred_age_kind,
+                                      wtd_kca=float(ia.weighted_kca.nominal_value),
+                                      wtd_kca_err=float(ia.weighted_kca.std_dev),
+                                      mswd=float(ia.preferred_mswd))
+
+            for ai in ia.analyses:
+                plateau_step=ia.get_is_plateau_step(ai)
+
+                ai=db.get_analysis_uuid(ai.uuid)
+
+                db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
+
+    def get_interpreted_ages(self):
+        key = lambda x: x.group_id
+        unks = sorted(self.analyses, key=key)
+        ias = []
+        ok = 'omit_{}'.format(self.basename)
+        for gid, ans in groupby(unks, key=key):
+            ans = filter(lambda x: not x.is_omitted(ok), ans)
+            ias.append(InterpretedAge(analyses=ans, use=True))
+
+        return ias
 
     def add_text_box(self):
         if self.annotation_tool is None:
@@ -89,40 +139,23 @@ class FigureEditor(GraphEditor):
 
     def set_group(self, idxs, gid, refresh=True):
 
-        for i, uu in enumerate(self.unknowns):
-        #         for i, (ui, uu) in enumerate(zip(self._unknowns, self.unknowns)):
+        for i, uu in enumerate(self.analyses):
             if i in idxs:
-            #                 ui.group_id = gid
                 uu.group_id = gid
 
         if refresh:
-            self.rebuild(refresh_data=False)
+            self.rebuild()
 
-    def _rebuild_graph(self):
-        self.rebuild(refresh_data=False)
-
-    def _update_unknowns_hook(self):
-        ans = self.unknowns
-        for e in self.associated_editors:
-            if isinstance(e, FigureEditor):
-            #                e.analysis_cache = self.analysis_cache
-                #e.trait_set(unknowns=ans, trait_change_notify=False)
-                e.unknowns = ans
-            else:
-                e.items = ans
-
-    def rebuild(self, refresh_data=False, compress_groups=True):
-        ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
-
+    def rebuild(self):
+        # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
+        ans = self.analyses
         if ans:
             po = self.plotter_options_manager.plotter_options
-            model, comp = timethis(self.get_component, args=(ans, po),
-                                   msg='get_component {}'.format(self.__class__.__name__))
-            #comp = self._get_component(ans, po)
+            #model, comp = timethis(self.get_component, args=(ans, po),
+            #                       msg='get_component {}'.format(self.__class__.__name__))
+            model, comp = self.get_component(ans, po)
             if comp:
-                #do_later(comp.request_redraw)
                 comp.invalidate_and_redraw()
-                #if set_model:
                 self.figure_model = model
                 self.component = comp
                 self.component_changed = True
@@ -130,47 +163,85 @@ class FigureEditor(GraphEditor):
     def get_component(self, ans, po):
         pass
 
-        #         return self._get_component()
+    def _null_component(self):
+        self.component = BasePlotContainer()
 
-#         func = getattr(self.processor, self.func)
-#         return func(ans=ans, plotter_options=po)
+    @on_trait_change('figure_model:panels:graph:tag')
+    def _handle_tag(self, new):
+        self.tag=new
 
+    @on_trait_change('figure_model:panels:graph:save_db')
+    def _handle_save_db(self, new):
+        self.save_db_figure=new
 
-# class SeriesEditor(FigureEditor):
-#     plotter_options_manager = Instance(SeriesOptionsManager, ())
-#     func = 'new_series'
-#     plotter_options_manager = Instance(SeriesOptionsManager, ())
-#     def _get_component(self, ans, po):
-#         if ans:
-#             comp, plotter = self.processor.new_series(ans=ans,
-#                                                       options=dict(fits=self.tool.fits),
-#                                                       plotter_options=po)
-#             self.plotter = plotter
-#             return comp
+    @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
+    def _handle_refresh(self, obj, name, old, new):
+        self.refresh_unknowns_table = True
+        #if not obj.suppress_associated:
+        #print 'figure editor refresh', id(self)
+        for e in self.associated_editors:
+            if isinstance(e, FigureEditor):
+                #e.rebuild_graph()
+                if e.model:
+                    for p in e.model.panels:
+                        for f in p.figures:
+                            f.replot()
 
-#     def show_series(self, key, fit='Linear'):
-#         fi = next((ti for ti in self.tool.fits if ti.name == key), None)
-# #         self.tool.suppress_refresh_unknowns = True
-#         if fi:
-#             fi.trait_set(
-#                          fit=fit,
-#                          show=True,
-#                          trait_change_notify=False)
-#
-#         self.rebuild(refresh_data=False)
-#             fi.fit = fit
-#             fi.show = True
+    def traits_view(self):
+        v = View(UItem('component',
+                       style='custom',
+                       width=650,
+                       editor=EnableComponentEditor()))
+        return v
 
-#         self.tool.suppress_refresh_unknowns = False
+    def _rebuild_graph(self):
+        self.rebuild()
 
+    def _update_analyses_hook(self):
+        ans = self.analyses
+        for e in self.associated_editors:
+            e.set_items(ans)
+            # if isinstance(e, FigureEditor):
+            #     pass
+                # e.unknowns = ans
+                # else:
+                #     e.items = ans
 
+    def update_figure(self):
+        sid=self.saved_figure_id
 
+        db = self.processor.db
+        with db.session_ctx() as sess:
+            fig = db.get_figure(sid, key='id')
 
+            pom = self.plotter_options_manager
+            blob = pom.dump_yaml()
+            fig.preference.options = blob
 
+            for dbai in fig.analyses:
+                sess.delete(dbai)
 
-
+            for ai in self.analyses:
+                dbai = db.get_analysis_uuid(ai.uuid)
+                db.add_figure_analysis(fig, dbai,
+                                       status=ai.is_omitted('omit_{}'.format(self.basename)),
+                                       graph=ai.graph_id,
+                                       group=ai.group_id)
 
 #============= EOF =============================================
+# dbans = fig.analyses
+# uuids = [ai.uuid for ai in self.analyses]
+
+# for dbai in fig.analyses:
+#     if not dbai.analysis.uuid in uuids:
+#         #remove analysis
+#         sess.delete(dbai)
+#
+# for ai in self.analyses:
+#     if not next((dbai for dbai in dbans if dbai.analysis.uuid == ai.uuid), None):
+#         #add analysis
+#         ai = db.get_analysis_uuid(ai.uuid)
+#         db.add_figure_analysis(fig, ai)
 #
 #     def _gather_unknowns_cached(self):
 #         if self._cached_unknowns:

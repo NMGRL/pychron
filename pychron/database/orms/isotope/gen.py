@@ -18,7 +18,7 @@
 #============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-    ForeignKey, BLOB, Float, Boolean, DateTime
+    ForeignKey, BLOB, Float, Boolean, DateTime, CHAR
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Table
 #============= local library imports  ==========================
@@ -77,12 +77,13 @@ class gen_LabTable(Base, BaseMixin):
 
     irradiation_id = foreignkey('irrad_PositionTable')
     selected_flux_id = foreignkey('flux_HistoryTable')
-    #selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
+    selected_interpreted_age_id = foreignkey('proc_InterpretedAgeHistoryTable')
     note = stringcolumn(140)
 
     analyses = relationship('meas_AnalysisTable',
                             backref='labnumber')
 
+    figures = relationship('proc_FigureLabTable', backref='labnumber')
 
 class gen_MassSpectrometerTable(Base, NameMixin):
 #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
@@ -101,8 +102,7 @@ class gen_MolecularWeightTable(Base, NameMixin):
 
 association_table = Table('association', Base.metadata,
                           Column('project_id', Integer, ForeignKey('gen_ProjectTable.id')),
-                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')),
-)
+                          Column('user_id', Integer, ForeignKey('gen_UserTable.id')))
 
 
 class gen_ProjectTable(Base, NameMixin):
@@ -115,7 +115,17 @@ class gen_SampleTable(Base, NameMixin):
     material_id = foreignkey('gen_MaterialTable')
     project_id = foreignkey('gen_ProjectTable')
     labnumbers = relationship('gen_LabTable', backref='sample')
+    monitors = relationship('flux_MonitorTable', backref='sample')
 
+    igsn=Column(CHAR(9))
+    location=stringcolumn(80)
+    lat=Column(Float)
+    long=Column(Float)
+    elevation=Column(Float)
+    note=Column(BLOB)
+
+    alt_name=stringcolumn(80)
+    lithology=stringcolumn(80)
 
 class gen_SensitivityTable(Base, BaseMixin):
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')

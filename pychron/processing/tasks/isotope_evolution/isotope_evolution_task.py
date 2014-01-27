@@ -15,26 +15,36 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import traceback
+from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
-from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
-from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+from pychron.processing.tasks.analysis_edit.panes import ControlsPane
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
+from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
     name = 'Isotope Evolutions'
     iso_evo_editor_count = 1
-    id = 'pychron.analysis_edit.isotope_evolution',
+    id = 'pychron.processing.isotope_evolution',
     auto_select_analysis = False
+    tool_bars = [SToolBar(DatabaseSaveAction(),
+                          FindAssociatedAction(),
+                              image_size=(16, 16)),
+                     SToolBar(
+                         SavePDFFigureAction())
+                    ]
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit.isotope_evolution',
+            id='pychron.processing.isotope_evolution',
             left=HSplitter(
                 Tabbed(PaneItem('pychron.browser'),
                        PaneItem('pychron.search.query')
@@ -42,24 +52,18 @@ class IsotopeEvolutionTask(AnalysisEditTask):
                 VSplitter(
                     Tabbed(
                         PaneItem('pychron.plot_editor'),
-                        PaneItem('pychron.analysis_edit.unknowns')),
-                    PaneItem('pychron.analysis_edit.controls'))))
+                        PaneItem('pychron.processing.unknowns')),
+                    PaneItem('pychron.processing.controls'))))
 
     def create_dock_panes(self):
         self.unknowns_pane = self._create_unknowns_pane()
         self.controls_pane = ControlsPane()
         self.plot_editor_pane = PlotEditorPane()
 
-        panes = [
-
-            self.unknowns_pane,
-            self.controls_pane,
-            self.plot_editor_pane,
-            self._create_browser_pane()
-        ]
-        ps = self._create_db_panes()
-        if ps:
-            panes.extend(ps)
+        panes = [self.unknowns_pane,
+                 self.controls_pane,
+                 self.plot_editor_pane,
+                 self._create_browser_pane()]
 
         return panes
 
@@ -87,7 +91,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     #    #self.debug('refit disabled')
     #    #return
     #    #
-    #    #from pychron.ui.thread import Thread
+    #    #from pychron.core.ui.thread import Thread
     #    #
     #    #if not self._refit_thread or not self._refit_thread.isRunning():
     #    #    pd = self.manager.open_progress()
@@ -189,20 +193,37 @@ class IsotopeEvolutionTask(AnalysisEditTask):
     def do_easy_fit(self):
         self._do_easy(self._do_easy_fit)
 
-    def _do_easy_fit(self, db, ep):
+    def _do_easy_fit(self, db, ep, prog):
 
         doc = ep.doc('iso_fits')
         projects = doc['projects']
-        self.active_editor.unknowns = [ai for proj in projects
-                                       for si in db.get_samples(project=proj)
-                                       for ln in si.labnumbers
-                                       for ai in ln.analyses][:10]
+        unks = (ai for proj in projects \
+                for si in db.get_samples(project=proj) \
+                for ln in si.labnumbers \
+                for ai in ln.analyses)
+        found = []
+        while 1:
+            u = []
 
-        self.find_associated_analyses()
-        fits = doc['fit_isotopes']
-        filters = doc['filter_isotopes']
+            for _ in xrange(200):
+                try:
+                    u.append(unks.next())
+                except (Exception, StopIteration), e:
+                    self.debug(traceback.print_exc())
+                    break
 
-        self.active_editor.save_fits(fits, filters)
+            if u:
+                self.active_editor.set_items(u, use_cache=False, progress=prog)
+
+                found = self.find_associated_analyses(found=found, use_cache=False, progress=prog)
+                fits = doc['fit_isotopes']
+                filters = doc['filter_isotopes']
+
+                self.active_editor.save_fits(fits, filters, progress=prog)
+                db.sess.commit()
+            else:
+                break
+
         return True
 
         #def _dclicked_sample_changed(self, new):

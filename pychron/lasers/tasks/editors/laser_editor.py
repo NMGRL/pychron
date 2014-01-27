@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any
+from traits.api import Any, Bool
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -24,11 +24,13 @@ class LaserEditor(BaseTraitsEditor):
     _execute_thread = None
     was_executed = False
     _laser_manager = Any
+    completed=Bool(False)
 
     def stop(self):
         pass
 
     def do_execute(self, lm):
+        self.completed=False
         self._laser_manager = lm
         return self._do_execute()
 
@@ -38,5 +40,6 @@ class LaserEditor(BaseTraitsEditor):
     def block(self):
         if self._execute_thread:
             self._execute_thread.join()
+            self.completed=True
 
 #============= EOF =============================================

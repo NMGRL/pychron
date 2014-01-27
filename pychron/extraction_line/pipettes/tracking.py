@@ -15,14 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Int
 import cPickle as pickle
+
+from traits.api import Str, Int
+
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.helpers.datetime_tools import generate_datetimestamp
+from pychron.core.helpers.datetime_tools import generate_datetimestamp
 
 class PipetteTracker(Loggable):
     inner = Str

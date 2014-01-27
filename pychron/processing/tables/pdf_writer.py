@@ -20,15 +20,15 @@ from traits.api import Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.pdf.items import Superscript, Subscript, Row, NamedParameter
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Superscript, Subscript, Row, NamedParameter
 
 
-class TablePDFWriter(BasePDFWriter):
+class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
 
-    def _build(self, doc, ans, groups, title):
+    def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))
         title_para = self._new_paragraph(title)
 
@@ -184,4 +184,23 @@ class TablePDFWriter(BasePDFWriter):
             urow
         ]
 
+    def _new_row(self, obj, attrs, default_fontsize=6):
+        row = Row()
+        for args in attrs:
+            if len(args) == 3:
+                attr, fmt, fontsize = args
+            else:
+                attr, fmt = args
+                fontsize = default_fontsize
+
+            #if attr in ARGON_KEYS:
+            if attr in obj.isotopes:
+                v = obj.isotopes[attr].get_intensity()
+            else:
+                v = getattr(obj, attr)
+
+            #self.debug('{} {}'.format(attr, v))
+            row.add_item(value=v, fmt=fmt, fontsize=fontsize)
+
+        return row
     #============= EOF =============================================

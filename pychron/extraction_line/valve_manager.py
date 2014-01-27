@@ -793,7 +793,7 @@ if __name__ == '__main__':
             #    p = os.path.join(paths.extraction_line_dir, 'valves.xml')
             #    v._load_valves_from_file(p)
 
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('foo')
     f = Foo()
@@ -809,7 +809,7 @@ if __name__ == '__main__':
 #     def _load_system_dict(self):
 # #        config = self.configparser_factory()
 #
-#         from pychron.helpers.parsers.initialization_parser import InitializationParser
+#         from pychron.core.helpers.parsers.initialization_parser import InitializationParser
 # #        ip = InitializationParser(os.path.join(setup_dir, 'initialization.xml'))
 #         ip = InitializationParser()
 #

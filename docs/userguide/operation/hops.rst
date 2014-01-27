@@ -4,13 +4,12 @@ This section describes how to define a peak hopping sequence.
 
 
 
-A peak hop sequence,``HOPS``, is a list of peak hops (e.i. magnet moves).
+A peak hop sequence,``HOPS``, is a list of peak hops (i.e magnet moves).
 
 ::
 
     HOPS=[('Ar40:H1:10,     Ar39:AX,     Ar36:CDD',      5, 1),
-          ('Ar37:CDD',                                5, 1),
-          ]
+          ('Ar37:CDD',                                   5, 1)]
 
 
 A ``peak hop`` is a list of ``iso:detector`` pairs plus two configuration values,

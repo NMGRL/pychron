@@ -22,10 +22,10 @@ from pychron.paths import paths
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.initialization_parser import InitializationParser
 from loggable import Loggable
-from pychron.ui.progress_dialog import myProgressDialog
+from pychron.core.ui.progress_dialog import myProgressDialog
 import os
 from pychron.globals import globalv
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 # from pyface.ui.qt4.progress_dialog import ProgressDialog
 
 

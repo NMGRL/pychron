@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, on_trait_change, Int, List, Bool, Property, Instance
+from traits.api import Any, on_trait_change, Int, List, Bool, Instance
 from pyface.timer.do_later import do_later
 #============= standard library imports ========================
 
@@ -25,7 +25,7 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.queue.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class ExperimentQueue(BaseExperimentQueue):
@@ -109,24 +109,29 @@ class ExperimentQueue(BaseExperimentQueue):
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):
-
-    #             do_later(self.trait_set, automated_runs_scroll_to_row=idx)
-
-    #         if new > 1:
-    #             if self._test:
-    #                 self.executed_runs.append(new[0])
-    #                 self._test = False
-
-        if not self._no_update:
-            self.debug('automated runs len changed {}'.format(len(new)))
-            if new:
-                idx = self.automated_runs.index(new[-1])
-                self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
-                invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
-
-            if self.automated_runs:
-                self.update_needed = True
-                #                self.refresh_button = True
+        if new:
+            idx = self.automated_runs.index(new[-1])
+            self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
+    #
+    # #             do_later(self.trait_set, automated_runs_scroll_to_row=idx)
+    #
+    # #         if new > 1:
+    # #             if self._test:
+    # #                 self.executed_runs.append(new[0])
+    # #                 self._test = False
+    # #     print 'asdf', new
+    #     # if not self._no_update:
+    #     self.debug('automated runs len changed {}'.format(len(new)))
+    #     if new:
+    #         idx = self.automated_runs.index(new[-1])
+    #         self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+    #         self.automated_runs_scroll_to_row=idx
+    #         # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
+    #
+    #     # if self.automated_runs:
+    #     #     self.update_needed = True
+    #             #                self.refresh_button = True
 
     @on_trait_change('automated_runs:state')
     def _refresh_table1(self):

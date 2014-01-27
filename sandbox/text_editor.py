@@ -13,10 +13,10 @@ from traitsui.view import View
 d = os.path.dirname(os.getcwd())
 sys.path.append(d)
 
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
-from pychron.ui.text_editor import myTextEditor
+from pychron.core.ui.text_editor import myTextEditor
 
 
 class A(HasTraits):

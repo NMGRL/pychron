@@ -28,7 +28,7 @@ class IrradiationTrayOverlay(AbstractOverlay):
         with gc:
             comp = self.component
             gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
-            gc.set_fill_color((1, 0, 1))
+            # gc.set_fill_color((1, 0, 1))
             if self._cached_pts is None:
                 self._cached_pts = self._gather_points()
 
@@ -41,15 +41,12 @@ class IrradiationTrayOverlay(AbstractOverlay):
         super(IrradiationTrayOverlay, self).do_layout()
         self._cached_pts = None
 
-
     def _render_hole(self, gc, x, y, pts):
         with gc:
             #print x, y
             gc.translate_ctm(x, y)
             gc.lines(pts)
-            #gc.rect(0,0,10,10)
-            #gc.draw_path()
-            #gc.stroke_path()
+            gc.stroke_path()
 
     def _gather_points(self):
         pts = []

@@ -15,13 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool
-from traitsui.api import View, Item
-from pychron.loggable import Loggable
-from pychron.xml.xml_parser import XMLParser
-import httplib
-import urllib
-import urllib2
+from traits.api import Str, Bool
+from pychron.core.xml.xml_parser import XMLParser
 from pychron.processing.repository.http_repository import HTTPRepository
 #============= standard library imports ========================
 #============= local library imports  ==========================

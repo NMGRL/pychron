@@ -21,12 +21,6 @@ from pychron.displays.display import ErrorDisplay, DisplayController
 
 #============= local library imports  ==========================
 
-# from pychron.displays.rich_text_display import RichTextDisplay, ErrorDisplay
-# try:
-#    import wx
-#    sw, sh = wx.DisplaySize()
-# except:
-#    sw, sh = 1200, 900
 ds = get_display_size()
 
 gWarningDisplay = DisplayController(

@@ -24,9 +24,9 @@ from numpy import random, char
 
 #=============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
-# from pychron.ui.color_map_bar_editor import BarGaugeEditor
+# from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 import time
-from pychron.ui.color_map_bar_editor import BarGaugeEditor
+from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
 # from numpy import linspace
 # def gen():

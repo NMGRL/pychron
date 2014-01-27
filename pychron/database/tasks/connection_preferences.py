@@ -26,7 +26,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class ConnectionPreferences(FavoritesPreferencesHelper):

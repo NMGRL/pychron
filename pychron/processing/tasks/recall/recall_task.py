@@ -52,40 +52,34 @@ class RecallTask(AnalysisEditTask):
 
         self.append_unknown_analyses(ans)
 
-    def activated(self, load=False):
-        self.load_projects()
-        if load:
-            editor = RecallEditor()
-            self._open_editor(editor)
-
-            #db = self.manager.db
-            #db.selector.limit = 100
-            #db.selector.load_recent()
-
-            super(RecallTask, self).activated()
+    # def activated(self, load=False):
+    #     self.load_projects()
+    #     # if load:
+    #         # editor = RecallEditor()
+    #         # self._open_editor(editor)
+    #
+    #         #db = self.manager.db
+    #         #db.selector.limit = 100
+    #         #db.selector.load_recent()
+    #
+    #     super(RecallTask, self).activated()
 
     def new_editor(self):
         editor = RecallEditor()
         self._open_editor(editor)
 
-    def _set_selected_analysis(self, an):
-        if an and isinstance(self.active_editor, RecallEditor):
-        #             l, a, s = strip_runid(s)
-        #             an = self.manager.db.get_unique_analysis(l, a, s)
-        #    print 'asdfasfdasdfasdf'
-            if hasattr(an, '__iter__'):
-                an=an[0]
-
-            an = self.manager.make_analysis(an,
-                                            calculate_age=True)
-            #             an.load_isotopes(refit=False)
-            #self.active_editor.analysis_summary = an.analysis_summary
-            self.active_editor.analysis_view = an.analysis_view
-            self.controls_pane.tool = an.analysis_view.selection_tool
-            self.active_editor.model = an
-
-#    def create_dock_panes(self):
-#        return [self._create_browser_pane(multi_select=False)]
+    # def _set_selected_analysis(self, an):
+    #     if an and isinstance(self.active_editor, RecallEditor):
+    #         if hasattr(an, '__iter__'):
+    #             an=an[0]
+    #
+    #         an = self.manager.make_analysis(an, calculate_age=True)
+    #         self.active_editor.analysis_view = an.analysis_view
+    #         self.controls_pane.tool = an.analysis_view.selection_tool
+    #         self.active_editor.model = an
+    def _active_editor_changed(self):
+        if self.active_editor:
+            self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
 
     def _dclicked_sample_changed(self):
         pass
@@ -94,11 +88,8 @@ class RecallTask(AnalysisEditTask):
         return TaskLayout(
             id='pychron.recall',
             left=HSplitter(Tabbed(
-                PaneItem('pychron.browser'),
-                #PaneItem('pychron.search.query'),
-            ),
-                           PaneItem('pychron.analysis_edit.controls')
-            ))
+                PaneItem('pychron.browser')),
+                PaneItem('pychron.processing.controls')))
 
     def create_dock_panes(self):
         self.controls_pane = ControlsPane()
@@ -106,32 +97,9 @@ class RecallTask(AnalysisEditTask):
         panes = [
             self.controls_pane,
             self.plot_editor_pane,
-            self._create_browser_pane()
-        ]
-        #ps = self._create_db_panes()
-        #if ps:
-        #    panes.extend(ps)
-        return panes
+            self._create_browser_pane()]
 
-    #def recall(self, records):
-    #
-    #    ans = self.manager.make_analyses(records, calculate_age=True)
-    #
-    #    def func(rec):
-    #    #             rec.load_isotopes()
-    #        rec.calculate_age()
-    #        reditor = RecallEditor(analysis_view=rec.analysis_view)
-    #        self.editor_area.add_editor(reditor)
-    #
-    #    #             self.add_iso_evo(reditor.name, rec)
-    #
-    #    if ans:
-    #        for ri in ans:
-    #            func(ri)
-    #            #             self.manager._load_analyses(ans, func=func)
-    #
-    #        ed = self.editor_area.editors[-1]
-    #        self.editor_area.activate_editor(ed)
+        return panes
 
     def add_iso_evo(self, name=None, rec=None):
         if rec is None:
@@ -148,7 +116,7 @@ class RecallTask(AnalysisEditTask):
             name='IsoEvo {}'.format(name),
             processor=self.manager)
 
-        ieditor.unknowns = [rec]
+        ieditor.set_items([rec])
         self.editor_area.add_editor(ieditor)
 
     def add_diff(self):

@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 from traits.api import Any, List, \
-     Enum, Button, Property, Int, Str, Tuple, Instance
+     Enum, Button, Property, Int, Str, Tuple, Instance, Bool
 from pyface.api import FileDialog
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-from pychron.processing.analysis import NonDBAnalysis
+# from pychron.processing.analysis import NonDBAnalysis
+from pychron.processing.analyses.analysis import Analysis
+
 
 class FileSelector(Loggable):
     records = List
@@ -95,7 +97,7 @@ class FileSelector(Loggable):
         self.records = records
 
     def _make_xls_analysis(self, rs, header):
-        an = NonDBAnalysis()
+        an = Analysis()
 
         names = 'Age'
         age_idx = self._get_column_idx(names, header)
@@ -132,6 +134,8 @@ class DataSelector(Loggable):
     open_button = Button('open')
     append_button=Button
     replace_button=Button
+    append_enabled=Bool(True)
+    replace_enabled=Bool(True)
 
     #def _append_button_fired(self):
     #    print 'append'

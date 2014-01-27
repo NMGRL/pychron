@@ -15,24 +15,31 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any, Either, Bool
+    Date, Any, Either, Bool, List
 #============= standard library imports ========================
 import time
 from datetime import datetime
 from uncertainties import ufloat
 from collections import namedtuple
 #============= local library imports  ==========================
-from pychron.helpers.isotope_utils import extract_mass
+import yaml
+from pychron.core.helpers.isotope_utils import extract_mass
+from pychron.core.helpers.logger_setup import new_logger
+from pychron.paths import paths
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
+from pychron.processing.analyses.changes import FitChange, BlankChange
 from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.summary import AnalysisSummary
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
-from pychron.helpers.formatting import calc_percent_error
+from pychron.core.helpers.formatting import calc_percent_error
 
-Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs')
+Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
+
+logger = new_logger('Analysis')
 
 
 class Analysis(ArArAge):
@@ -47,22 +54,32 @@ class Analysis(ArArAge):
 
     aliquot_step_str = Str
 
+    is_plateau_step = False
     temp_status = Int
-    filter_omit = Bool
+    value_filter_omit = Bool
+    table_filter_omit = Bool
     tag = Str
 
     omit_ideo = False
     omit_spec = False
     omit_iso = False
+    omit_series = False
 
-    def is_omitted(self, omit_key=None):
-        omit=False
+    def is_temp_omitted(self, include_value_filtered=True):
+        return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
+
+    def is_tag_omitted(self, omit_key):
         if omit_key:
-            omit= getattr(self, omit_key)
+            return getattr(self, omit_key)
+
+    def is_omitted(self, omit_key=None, include_value_filtered=True):
+        omit = False
+        if omit_key:
+            omit = getattr(self, omit_key)
             #print ai.aliquot, r, omit, ai.filter_omit
         #return r or ai.filter_omit #or ai.tag == 'omit'
         #omit=False
-        return self.temp_status or self.filter_omit or omit
+        return self.is_temp_omitted(include_value_filtered) or omit
 
     def flush(self, *args, **kw):
         """
@@ -79,8 +96,8 @@ class Analysis(ArArAge):
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
     def _sync(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         return
 
     def _analysis_summary_default(self):
@@ -146,6 +163,9 @@ class DBAnalysis(Analysis):
     status_text = Property
     age_string = Property
 
+    blank_changes = List
+    fit_changes = List
+
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
         if iso:
@@ -169,6 +189,8 @@ class DBAnalysis(Analysis):
             r = self.ic_factors[det]
         else:
             #get the ic_factor from preferences if available otherwise 1.0
+            # storing ic_factor in preferences causing issues
+            # ic_factor stored in detectors.cfg
             r = ArArAge.get_ic_factor(self, det)
 
         return r
@@ -192,7 +214,7 @@ class DBAnalysis(Analysis):
         self.tag = name
 
         omit = name == 'omit'
-        for a in ('ideo', 'spec', 'iso'):
+        for a in ('ideo', 'spec', 'iso','series'):
             a = 'omit_{}'.format(a)
             v = getattr(tag, a)
             setattr(self, a, v)
@@ -210,35 +232,58 @@ class DBAnalysis(Analysis):
         """
         self._sync_irradiation(ln)
 
+    def sync_detector_info(self, meas_analysis, **kw):
+        self._sync_detector_info(meas_analysis, **kw)
 
-    def sync_arar(self, meas_analysis):
-        self.debug('not using db arar')
-        return
+    # def sync_arar(self, meas_analysis):
+    #     # self.debug('not using db arar')
+    #     return
+    #
+    #     hist = meas_analysis.selected_histories.selected_arar
+    #     if hist:
+    #         result = hist.arar_result
+    #         self.persisted_age = ufloat(result.age, result.age_err)
+    #         self.age = self.persisted_age / self.arar_constants.age_scalar
+    #
+    #         attrs = ['k39', 'ca37', 'cl36',
+    #                  'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'rad40']
+    #         d = dict()
+    #         f = lambda k: getattr(result, k)
+    #         for ai in attrs:
+    #             vs = map(f, (ai, '{}_err'.format(ai)))
+    #             d[ai] = ufloat(*vs)
+    #
+    #         d['age_err_wo_j'] = result.age_err_wo_j
+    #         self.arar_result.update(d)
 
-        hist = meas_analysis.selected_histories.selected_arar
-        if hist:
-            result = hist.arar_result
-            self.persisted_age = ufloat(result.age, result.age_err)
-            self.age = self.persisted_age / self.arar_constants.age_scalar
-
-            attrs = ['k39', 'ca37', 'cl36',
-                     'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'rad40']
-            d = dict()
-            f = lambda k: getattr(result, k)
-            for ai in attrs:
-                vs = map(f, (ai, '{}_err'.format(ai)))
-                d[ai] = ufloat(*vs)
-
-            d['age_err_wo_j'] = result.age_err_wo_j
-            self.arar_result.update(d)
-
-    def _sync(self, meas_analysis, unpack=False):
-        '''
+    def _sync(self, meas_analysis, unpack=True, load_changes=False):
+        """
             copy values from meas_AnalysisTable
             and other associated tables
-        '''
+        """
+
+        self._sync_meas_analysis_attributes(meas_analysis)
+        self._sync_analysis_info(meas_analysis)
+
+        # copy related table attrs
+        self._sync_experiment(meas_analysis)
+        self._sync_irradiation(meas_analysis.labnumber)
+
+        #this is the dominant time sink
+        self._sync_isotopes(meas_analysis, unpack)
+
+        self._sync_detector_info(meas_analysis)
+        self._sync_extraction(meas_analysis)
+
+        if load_changes:
+            self._sync_changes(meas_analysis)
+
+        self.analysis_type = self._get_analysis_type(meas_analysis)
+
+    def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
         nocast = lambda x: x
+
         attrs = [
             ('labnumber', 'labnumber', lambda x: x.identifier),
             ('aliquot', 'aliquot', int),
@@ -262,19 +307,11 @@ class DBAnalysis(Analysis):
             tag = meas_analysis.tag_item
             self.set_tag(tag)
 
-        #self.tag = tag or ''
-        #if self.tag:
-        #    self.temp_status = 1
 
-        # copy related table attrs
-        self._sync_experiment(meas_analysis)
-        self._sync_irradiation(meas_analysis.labnumber)
-        self._sync_isotopes(meas_analysis, unpack)
-        self._sync_detector_info(meas_analysis)
-        self._sync_extraction(meas_analysis)
-        self._sync_analysis_info(meas_analysis)
+    def _sync_changes(self, meas_analysis):
 
-        self.analysis_type = self._get_analysis_type(meas_analysis)
+        self.blank_changes = [BlankChange(bi) for bi in meas_analysis.blanks_histories]
+        self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
@@ -297,8 +334,8 @@ class DBAnalysis(Analysis):
             self.irradiation = irrad.name
 
             self._sync_chron_segments(irrad)
-            self._sync_production_ratios(irrad)
-            self._sync_interference_corrections(irrad)
+            self._sync_production_ratios(level)
+            self._sync_interference_corrections(level)
 
     def _sync_j(self, ln):
         s, e = 1, 0
@@ -309,8 +346,8 @@ class DBAnalysis(Analysis):
 
         self.j = ufloat(s, e)
 
-    def _sync_production_ratios(self, irradiation):
-        pr = irradiation.production
+    def _sync_production_ratios(self, level):
+        pr = level.production
         cak, clk = pr.Ca_K, pr.Cl_K
 
         self.production_ratios = dict(Ca_K=cak, Cl_K=clk)
@@ -326,27 +363,22 @@ class DBAnalysis(Analysis):
                 analts = datetime.fromtimestamp(analts)
 
             segments = []
-            for st, en in doses:
+            for pwr, st, en in doses:
                 if st is not None and en is not None:
                     dur = en - st
                     dt = analts - st
-                    #                             dt = 45
-                    segments.append((1, convert_days(dur), convert_days(dt)))
+                    segments.append((pwr, convert_days(dur), convert_days(dt)))
 
-            decay_time = 0
-            d_o = doses[0][0]
+            d_o = doses[0][1]
             it = 0
             if d_o is not None:
                 it = time.mktime(d_o.timetuple())
 
-                #decay_time = convert_days(analts - d_o)
-
-            #self.decay_time=decay_time
             self.irradiation_time = it
             self.chron_segments = segments
 
-    def _sync_interference_corrections(self, irradiation):
-        pr = irradiation.production
+    def _sync_interference_corrections(self, level):
+        pr = level.production
         prs = dict()
         for pk in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']:
             v, e = getattr(pr, pk), getattr(pr, '{}_err'.format(pk))
@@ -362,6 +394,13 @@ class DBAnalysis(Analysis):
     def _sync_extraction(self, meas_analysis):
         extraction = meas_analysis.extraction
         if extraction:
+            #sensitivity
+            shist = meas_analysis.selected_histories.selected_sensitivity
+            if shist:
+                sm = extraction.sensitivity_multiplier or 1
+                s = shist.sensitivity.value
+                self.sensitivity = sm * s
+
             self.extract_device = self._get_extraction_device(extraction)
             self.extract_value = extraction.extract_value
 
@@ -388,7 +427,6 @@ class DBAnalysis(Analysis):
                     v = ''
                 setattr(self, attr, v)
 
-
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
@@ -400,7 +438,7 @@ class DBAnalysis(Analysis):
         self.project = self._get_project(meas_analysis)
         self.mass_spectrometer = self._get_mass_spectrometer(meas_analysis)
 
-    def _sync_detector_info(self, meas_analysis):
+    def _sync_detector_info(self, meas_analysis, **kw):
 
         #disc_idx=['Ar36','Ar37','Ar38','Ar39','Ar40']
 
@@ -446,13 +484,6 @@ class DBAnalysis(Analysis):
         d = dict()
         for ki, v in self.isotopes.iteritems():
             d[ki] = get(v)
-
-        #for ki in ARGON_KEYS:
-        #    if self.isotopes.has_key(ki):
-        #        v = get(self.isotopes[ki])
-        #    else:
-        #        v = ufloat(0, 0)
-        #    d[ki] = v
 
         return d
 
@@ -506,22 +537,20 @@ class DBAnalysis(Analysis):
 
             iso = isotopes[name]
 
-            kw = dict(
-                dbrecord=dbiso,
-                name=name,
-                detector=det,
-                unpack=unpack)
+            kw = dict(dbrecord=dbiso,
+                      name=name,
+                      detector=det,
+                      unpack=unpack)
 
             if dbiso.kind == 'baseline':
                 result = None
                 if dbiso.results:
                     result = dbiso.results[-1]
-
-                r = Baseline(dbresult=result,
-                             **kw)
+                r = Baseline(dbresult=result, **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
                 if fit is None:
-                    fit = Fit(fit='average_sem',
+                    fit = Fit(fit='average',
+                              error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0)
@@ -564,40 +593,44 @@ class DBAnalysis(Analysis):
 
     def _get_signals(self, isodict, meas_analysis, unpack):
         for iso in meas_analysis.isotopes:
+
             if not iso.kind == 'signal' or not iso.molecular_weight:
                 continue
 
             name = iso.molecular_weight.name
-            if name not in isodict:
-                if not iso.detector:
-                    return
+            if name in isodict:
+                continue
 
-                det = iso.detector.name
-                result = None
+            if not iso.detector:
+                continue
 
-                if iso.results:
-                    result = iso.results[-1]
+            det = iso.detector.name
+            result = None
 
-                r = Isotope(
-                    mass=iso.molecular_weight.mass,
-                    dbrecord=iso,
-                    dbresult=result,
-                    name=name,
-                    detector=det,
-                    unpack=unpack)
+            if iso.results:
+                result = iso.results[-1]
 
-                if r.unpack_error:
-                    self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
-                    self.temp_status = 1
-                else:
-                    fit = self.get_db_fit(meas_analysis, name, 'signal')
+            r = Isotope(mass=iso.molecular_weight.mass,
+                        dbrecord=iso,
+                        dbresult=result,
+                        name=name,
+                        detector=det,
+                        unpack=unpack)
 
-                    if fit is None:
-                        fit = Fit(fit='linear', filter_outliers=False,
-                                  filter_outlier_iterations=1,
-                                  filter_outlier_std_devs=2)
-                    r.set_fit(fit)
-                    isodict[name] = r
+            if r.unpack_error:
+                self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
+                self.temp_status = 1
+            else:
+                fit = self.get_db_fit(meas_analysis, name, 'signal')
+
+                if fit is None:
+                    fit = Fit(fit='linear',
+                              error_type='SD',
+                              filter_outliers=False,
+                              filter_outlier_iterations=1,
+                              filter_outlier_std_devs=2)
+                r.set_fit(fit)
+                isodict[name] = r
 
     def _get_peak_center(self, meas_analysis):
         return ufloat(0, 0)
@@ -675,29 +708,106 @@ class DBAnalysis(Analysis):
     def _get_status_text(self):
         r = 'OK'
 
-        if self.temp_status != 0 or self.filter_omit:
+        if self.is_omitted():
+        # if self.temp_status != 0 or self.filter_omit:
             r = 'Omitted'
 
         return r
 
-        #def __getattr__(self, attr):
-        #    lattr = attr.lower()
-        #    #         print attr, ISOREGEX.match(attr)
-        #    #         if ISOREGEX.match(attr):
-        #    if '/' in attr:
-        #        #treat as ratio
-        #        n, d = attr.split('/')
-        #        return getattr(self, n) / getattr(self, d)
-        #
-        #    if lattr in ('ar40', 'ar39', 'ar38', 'ar37', 'ar36'):
-        #        return getattr(self, attr.capitalize())
-        #
-        #    if ISOREGEX.match(attr):
-        #        if attr in self.isotopes:
-        #            return self.isotopes[attr].uvalue
-        #
-        #    self.debug('no attribute {}'.format(attr))
-        #    raise AttributeError
+    def _post_process_msg(self, msg):
+        msg = '{} {}'.format(self.record_id, msg)
+        return msg
+
+
+class VCSAnalysis(DBAnalysis):
+    """
+        uses local data with db metadata
+    """
+
+    def _load_file(self):
+        pr=self.project.replace(' ','_')
+
+        p = os.path.join(paths.vcs_dir, pr, self.sample, self.labnumber, '{}.yaml'.format(self.record_id))
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                return yaml.load(fp)
+
+
+    def _sync(self, meas_analysis, unpack=False, load_changes=False):
+        """
+            if unpack is true load original signal data from db
+        """
+
+        self._sync_meas_analysis_attributes(meas_analysis)
+        self._sync_analysis_info(meas_analysis)
+        self.analysis_type = self._get_analysis_type(meas_analysis)
+        self._sync_extraction(meas_analysis)
+        self._sync_experiment(meas_analysis)
+
+        use_local = not unpack
+        if not unpack:
+            yd = self._load_file()
+            if not yd:
+                use_local = False
+
+        if use_local:
+            self._sync_irradiation(yd, meas_analysis.labnumber)
+            self._sync_isotopes(yd, meas_analysis, unpack)
+            self._sync_detector_info(yd, meas_analysis)
+        else:
+            super(VCSAnalysis, self)._sync_irradiation(meas_analysis.labnumber)
+            super(VCSAnalysis, self)._sync_isotopes(meas_analysis, unpack)
+            super(VCSAnalysis, self)._sync_detector_info(meas_analysis)
+
+        if load_changes:
+            self._sync_changes(meas_analysis)
+
+    def _sync_irradiation(self, yd, ln):
+
+        cs = []
+        for ci in yd['chron_segments']:
+            cs.append((ci['power'], ci['duration'], ci['dt']))
+
+        self.chron_segments = cs
+        self.production_ratios = yd['production_ratios']
+
+        ifc = yd['interference_corrections']
+        nifc = dict()
+        for k in ifc:
+            if k.endswith('_err'):
+                continue
+            nifc[k] = self._to_ufloat(ifc, k)
+
+        self.interference_corrections = nifc
+
+        self.j = ufloat(yd['j'],yd['j_err'])
+
+    def _sync_isotopes(self, yd, meas_analysis, unpack):
+        """
+            load isotopes from file
+        """
+        isos = {}
+        # print yd['isotopes']
+        for iso in yd['isotopes']:
+            ii = Isotope(name=iso['name'],
+                         detector=iso['detector'],
+                         ic_factor=self._to_ufloat(iso, 'ic_factor'),
+                         discrimination=self._to_ufloat(iso, 'discrimination'))
+
+            ii.trait_set(_value=iso['value'], _error=iso['error'])
+
+            ii.set_blank(iso['blank'], iso['blank_err'])
+            ii.set_baseline(iso['baseline'], iso['baseline_err'])
+
+            isos[iso['name']] = ii
+        self.isotopes = isos
+        # print self.isotopes
+
+    def _to_ufloat(self, obj, attr):
+        return ufloat(obj[attr], obj['{}_err'.format(attr)])
+
+    def _sync_detector_info(self,yd, meas_analysis, **kw):
+        pass
 
 
 if __name__ == '__main__':

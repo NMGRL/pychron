@@ -33,12 +33,12 @@ import time
 import sys
 #============= local library imports  ==========================
 from pychron.paths import paths
-# from pychron.helpers.paths import LOVERA_PATH
+# from pychron.core.helpers.paths import LOVERA_PATH
 from pychron.graph.diffusion_graph import DiffusionGraph  # , GROUPNAMES
 from pychron.loggable import Loggable
 from pychron.modeling.data_loader import DataLoader
 from pychron.modeling.model_data_directory import ModelDataDirectory
-from pychron.helpers.color_generators import colorname_generator, paired_colorname_generator
+from pychron.core.helpers.color_generators import paired_colorname_generator
 from pychron.modeling.fortran_process import FortranProcess
 from pychron.graph.diffusion_graph import GROUPNAMES
 

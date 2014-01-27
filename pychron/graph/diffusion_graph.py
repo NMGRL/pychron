@@ -21,7 +21,6 @@
 import os
 #============= local library imports  ==========================
 from graph import Graph
-from pychron.graph.editors.diffusion_plot_editor import DiffusionPlotEditor
 
 from pychron.graph.graph import name_generator
 from chaco.default_colormaps import color_map_name_dict
@@ -37,17 +36,17 @@ LABELS = dict(spectrum='Spectrum', arrhenius='Arrhenius', logr_ro='LogR/Ro',
 
 
 class DiffusionGraph(Graph):
-    '''
+    """
     a graph for displaying diffusion data
-    
-    contains upto 5 plots 
+
+    contains upto 5 plots
     1. age-spectrum
     2.log r/ro
     3.arrhenius
     4.cooling histories
     5.unconstrained thermal histories
-    '''
-    plot_editor_klass = DiffusionPlotEditor
+    """
+    # plot_editor_klass = DiffusionPlotEditor
 
     bindings = None
     runids = None

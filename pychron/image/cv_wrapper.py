@@ -16,12 +16,13 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import array, asarray, ndarray
 from collections import namedtuple
+
+from numpy import array, asarray, ndarray
 from scipy.ndimage.filters import laplace
 from numpy.lib.function_base import percentile
-
 from skimage.color.colorconv import gray2rgb, rgb2gray
+
 
 try:
     from cv2 import VideoCapture, VideoWriter, imwrite, line, fillPoly, polylines, \
@@ -42,7 +43,7 @@ except ImportError, e:
 
 
 #============= local library imports  ==========================
-from pychron.geometry.centroid import calculate_centroid
+from pychron.core.geometry.centroid import calculate_centroid
 
 
 def get_focus_measure(src, kind):

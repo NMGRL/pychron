@@ -26,13 +26,11 @@ from pychron.hardware.core.data_helper import make_bitarray
 
 
 from pychron.paths import paths
-from pychron.helpers.logger_setup import logging_setup
+from pychron.core.helpers.logger_setup import logging_setup
 logging_setup('prox')
 paths.build('_prox')
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item, TableEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.ncd import ON_MAP, OFF_MAP, STATE_MAP
@@ -132,7 +130,6 @@ class ProXR(NCDDevice):
 
 
 if __name__ == '__main__':
-    import time
     a = ProXR(name='proxr_actuator')
     a.bootstrap()
 #    a.open_channel(3)

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, File, Property, Interface, implements
+from traits.api import HasTraits, Str, Float, File, Property
 from traitsui.api import View, Item, FileEditor, VGroup, Group
 from traitsui.menu import OKCancelButtons
 #============= standard library imports ========================
@@ -23,14 +23,15 @@ import os
 import re
 #============= local library imports  ==========================
 from pychron.paths import paths
-first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-all_cap_re = re.compile('([a-z0-9])([A-Z])')
+
+
 def uncamelcase(name):
-    s1 = first_cap_re.sub(r'\1_\2', name)
-    return all_cap_re.sub(r'\1_\2', s1).lower()
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
 
 readonly = lambda x, **kw: Item(x, style='readonly', show_label=False,
-                                 **kw)
+                                **kw)
 
 
 # class ICommand(Interface):
@@ -43,22 +44,25 @@ class Command(HasTraits):
     description = Str
     example = Str
     name = Property
-#    implements(ICommand)
+    #    implements(ICommand)
+    def load_str(self, txt):
+        pass
 
     def _get_name(self):
         return self._get_command()
 
     def to_string(self):
         m = '{}({})'.format(
-                          self._get_command(),
-                          self._to_string()
-                          )
+            self._get_command(),
+            self._to_string())
         return m
-#        return self.indent(m)
+
+    #        return self.indent(m)
 
     def _get_command(self):
         return uncamelcase(self.__class__.__name__)
-#        return self.__class__.__name__.lower()
+
+    #        return self.__class__.__name__.lower()
 
     def _to_string(self):
         return ''
@@ -82,22 +86,20 @@ class Command(HasTraits):
         ts = '    ' * n
         return '{}{}'.format(ts, m)
 
-
     def get_text(self):
         ok = True
         if hasattr(self, '_get_view'):
-#            pass
+        #            pass
             info = self.edit_traits(kind='modal')
-#            ok = info.result
+        #            ok = info.result
 
-#        if ok:
+        #        if ok:
         return self.to_string()
 
     def traits_view(self):
         v = View(self._get_view(),
                  title=self.__class__.__name__,
-                 buttons=OKCancelButtons
-                 )
+                 buttons=OKCancelButtons)
         return v
 
     def help_view(self):
@@ -106,23 +108,19 @@ class Command(HasTraits):
 
     def _get_view(self):
         return Item()
-#        raise NotImplementedError
 
     def _get_help_view(self):
         return VGroup(
-                      Group(
-                            readonly('description'),
-                            show_border=True,
-                            label='Description',
-                            ),
-                      Group(
-                            readonly('example',
-                                     height=100
-                                     ),
-                            show_border=True,
-                            label='Example',
-                            ),
-                      )
+            Group(
+                readonly('description'),
+                show_border=True,
+                label='Description'),
+            Group(
+                readonly('example',
+                         height=100),
+                show_border=True,
+                label='Example'))
+
 
 class Wait(Command):
     def get_text(self):
@@ -137,11 +135,15 @@ class Info(Command):
 
     description = 'Display a message'
     example = "info('This is a message')"
+
     def _get_view(self):
         return Item('message', width=500)
 
     def _to_string(self):
         return self._keyword('message', self.message)
+
+    def load_str(self, txt):
+        self.message=txt.replace("'",'').replace('"','')
 
 class Sleep(Command):
     duration = Float
@@ -156,6 +158,12 @@ class Sleep(Command):
         return self._keyword('duration', self.duration,
                              number=True)
 
+    def load_str(self, txt):
+        try:
+            self.duration=float(txt)
+        except (ValueError, TypeError):
+            pass
+
 
 class Gosub(Command):
     path = File
@@ -168,29 +176,31 @@ If <root> is omitted the path to the script is determined by the script type. e.
 MeasurementPyScripts live in ../scripts/measurement
 
 '''
+
     def _get_view(self):
         return Item(
-                    'path',
-                    style='custom',
-                    show_label=False,
-                    editor=FileEditor(
-                                      filter=['*.py'],
-                                      root_path=paths.scripts_dir,
-                                      ),
-#                    width=600,
-                    )
+            'path',
+            style='custom',
+            show_label=False,
+            editor=FileEditor(
+                filter=['*.py'],
+                root_path=paths.scripts_dir,
+            ),
+            #                    width=600,
+        )
 
     def _to_string(self):
-        print self.path
         if os.path.isfile(self.path):
             head, tail = os.path.split(self.path)
             words = [('name', tail),
                      ('root', head),
-                     ]
+            ]
             return self._keywords(words)
+
 
 class BeginInterval(Command):
     duration = Float
+
     def _get_view(self):
         return Item('duration', label='Duration (s)')
 
@@ -204,13 +214,14 @@ class CompleteInterval(Command):
     def get_text(self):
         return self.indent('complete_interval()')
 
+
 class Interval(Command):
     pass
+
 
 class Exit(Command):
     def get_text(self):
         return self.indent('exit()')
-
 
 
 #============= EOF =============================================

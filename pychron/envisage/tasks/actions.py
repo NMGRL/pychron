@@ -35,6 +35,7 @@ class WebAction(Action):
 
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
+
     def perform(self, event):
         """
             goto issues page add an request or report bug
@@ -43,16 +44,26 @@ class IssueAction(WebAction):
         self._open_url(url)
 
 
+class AboutAction(Action):
+    name='About Pychron'
+    def perform(self, event):
+        app = event.task.window.application
+        app.about()
+
+
 class ResetLayoutAction(TaskAction):
     name = 'Reset Layout'
+
     def perform(self, event):
         self.task.window.reset_layout()
 
 
 class PositionAction(Action):
     name = 'Window Positions'
+
     def perform(self, event):
         from pychron.envisage.tasks.layout_manager import LayoutManager
+
         app = event.task.window.application
         lm = LayoutManager(app)
         lm.edit_traits()
@@ -61,6 +72,7 @@ class PositionAction(Action):
 class MinimizeAction(TaskAction):
     name = 'Minimize'
     accelerator = 'Ctrl+m'
+
     def perform(self, event):
         app = self.task.window.application
         app.active_window.control.showMinimized()
@@ -69,6 +81,7 @@ class MinimizeAction(TaskAction):
 class CloseAction(TaskAction):
     name = 'Close'
     accelerator = 'Ctrl+W'
+
     def perform(self, event):
         ok = YES
         if len(self.task.window.application.windows) == 1:
@@ -77,9 +90,11 @@ class CloseAction(TaskAction):
         if ok == YES:
             self.task.window.close()
 
+
 class CloseOthersAction(TaskAction):
     name = 'Close others'
     accelerator = 'Ctrl+Shift+W'
+
     def perform(self, event):
         win = self.task.window
         for wi in self.task.window.application.windows:
@@ -90,6 +105,7 @@ class CloseOthersAction(TaskAction):
 class RaiseAction(TaskAction):
     window = Any
     style = 'toggle'
+
     def perform(self, event):
         self.window.activate()
         self.checked = True
@@ -101,6 +117,7 @@ class RaiseAction(TaskAction):
 
 class RaiseUIAction(TaskAction):
     style = 'toggle'
+
     def perform(self, event):
         self.checked = True
 
@@ -108,6 +125,7 @@ class RaiseUIAction(TaskAction):
 class GenericSaveAction(TaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
+
     def perform(self, event):
         task = self.task
         if hasattr(task, 'save'):
@@ -117,14 +135,17 @@ class GenericSaveAction(TaskAction):
 class GenericSaveAsAction(TaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
+
     def perform(self, event):
         task = self.task
         if hasattr(task, 'save_as'):
             task.save_as()
 
+
 class GenericFindAction(TaskAction):
     accelerator = 'Ctrl+F'
     name = 'Find text...'
+
     def perform(self, event):
         task = self.task
         if hasattr(task, 'find'):

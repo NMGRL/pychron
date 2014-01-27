@@ -17,11 +17,12 @@
 #============= enthought library imports =======================
 from itertools import groupby
 from datetime import timedelta
+from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
-from pychron.experiment.easy_parser import EasyParser
-from pychron.helpers.datetime_tools import get_datetime
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
+from pychron.easy_parser import EasyParser
+from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -36,40 +37,37 @@ from pychron.processing.analyses.analysis import Analysis
 #============= local library imports  ==========================
 
 class AnalysisEditTask(BaseBrowserTask):
-    id = 'pychron.analysis_edit'
+    id = 'pychron.processing'
     unknowns_pane = Instance(TablePane)
     controls_pane = Instance(ControlsPane)
-    #    results_pane = Instance(ResultsPane)
     plot_editor_pane = Instance(PlotEditorPane)
     unknowns_adapter = UnknownsAdapter
     unknowns_pane_klass = UnknownsPane
 
-    #data_selector = Instance(DataSelector)
     _analysis_cache = List
 
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
-                          FindAssociatedAction(),
+                         # FindAssociatedAction(),
                           image_size=(16, 16))]
 
     external_recall_window = True
 
     def append_unknown_analyses(self, ans):
-        pane=self.unknowns_pane
+        pane = self.unknowns_pane
         if pane:
             pane.items.extend(ans)
 
     def replace_unkonwn_analyses(self, ans):
-        pane=self.unknowns_pane
+        pane = self.unknowns_pane
         if pane:
-            pane.items=ans
+            pane.items = ans
 
-    def find_associated_analyses(self):
-        #self.information_dialog('Find associated not yet implemented')
+    def find_associated_analyses(self, found=None, use_cache=True, progress=None):
 
         if self.active_editor:
-            unks = self.active_editor.unknowns
+            unks = self.active_editor.analyses
 
             key = lambda x: x.labnumber
             unks = sorted(unks, key=key)
@@ -77,16 +75,21 @@ class AnalysisEditTask(BaseBrowserTask):
             db = self.manager.db
             with db.session_ctx():
                 tans = []
-                uuids = []
+                if found is None:
+                    uuids = []
+                else:
+                    uuids = found
 
                 ngroups = len(list(groupby(unks, key=key)))
-                prog = self.manager.open_progress(ngroups + 1)
+                if progress is None:
+                    progress = self.manager.open_progress(ngroups + 1)
+                else:
+                    progress.increase_max(ngroups + 1)
 
                 for ln, ais in groupby(unks, key=key):
                     msg = 'find associated analyses for labnumber {}'.format(ln)
                     self.debug(msg)
-                    if prog:
-                        prog.change_message(msg)
+                    progress.change_message(msg)
 
                     ais = list(ais)
                     ts = [get_datetime(ai.timestamp) for ai in ais]
@@ -96,61 +99,68 @@ class AnalysisEditTask(BaseBrowserTask):
                     self.debug("{} {}".format(ms, ed))
                     for atype in ('blank_unknown', 'blank_air', 'blank_cocktail',
                                   'air', 'cocktail'):
-                        self.debug('find {}'.format(atype))
                         for i in range(10):
                             td = timedelta(hours=6 * (i + 1))
                             lpost, hpost = min(ts) - td, max(ts) + td
 
                             ans = db.get_date_range_analyses(lpost, hpost,
                                                              atype=atype,
-                                                             spectrometer=ms,
-                                                             # extract_device=ed if atype == 'blank_unknown' else None
-                            )
+                                                             spectrometer=ms)
 
-                            self.debug('{} to {}. nanalyses={}'.format(lpost, hpost, len(ans) if ans else 0))
                             if ans:
+                                self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
                                 ans = [ai for ai in ans if ai.uuid not in uuids]
-                                tans.extend(ans)
-                                uuids.extend([ai.uuid for ai in ans])
+                                self.debug('new ans {}'.format(len(ans)))
+                                if ans:
+                                    tans.extend(ans)
+                                    uuids.extend([ai.uuid for ai in ans])
                                 break
 
-                prog.close()
-                #ans=self.manager.make_analyses(ans)
-                self.active_editor.unknowns.extend(tans)
+                progress.soft_close()
 
+                self.active_editor.set_items(tans, is_append=True,
+                                             use_cache=use_cache, progress=progress)
+                return uuids
 
     def recall(self, records):
+        """
+            if analysis is already open activate the editor
+            otherwise open a new editor
+        """
+
         if not hasattr(records, '__iter__'):
             records = (records,)
 
-        ans = self.manager.make_analyses(records,
-                                         unpack=True,
-                                         calculate_age=True)
+        for editor in self.editor_area.editors:
+            if isinstance(editor, RecallEditor):
+                if editor.model:
+                    for r in records:
+                        if editor.model.uuid == r.uuid:
+                            self.activate_editor(editor)
+                            records.remove(r)
 
-        def func(rec):
-        #             rec.load_isotopes()
-        #    rec.calculate_age()
-            reditor = RecallEditor(analysis_view=rec.analysis_view,
-                                   model=rec)
-            self.editor_area.add_editor(reditor)
+        if records:
+            ans = self.manager.make_analyses(records,
+                                             unpack=True,
+                                             calculate_age=True,
+                                             load_changes=True)
 
-        if ans:
-            for ri in ans:
-                func(ri)
-                #             self.manager._load_analyses(ans, func=func)
+            if ans:
+                for rec in ans:
+                    editor = RecallEditor(analysis_view=rec.analysis_view,
+                                          model=rec)
+                    self.editor_area.add_editor(editor)
 
-            ed = self.editor_area.editors[-1]
-            self.editor_area.activate_editor(ed)
+                ed = self.editor_area.editors[-1]
+                self.editor_area.activate_editor(ed)
 
     def new_ic_factor(self):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import IntercalibrationFactorEditor
 
         editor = IntercalibrationFactorEditor(name='ICFactor {:03n}'.format(self.ic_factor_editor_count),
-                                              processor=self.manager
-        )
+                                              processor=self.manager)
         self._open_editor(editor)
         self.ic_factor_editor_count += 1
-
 
     def save_as(self):
         self.save()
@@ -162,7 +172,23 @@ class AnalysisEditTask(BaseBrowserTask):
         db = self.manager.db
         with db.session_ctx():
             self._save_to_db()
-        self.information_dialog('Changes saved to the database')
+        self.db_save_info()
+
+    def save_pdf_figure(self):
+        if self.active_editor:
+
+            from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+
+            p = self.save_file_dialog(ext='.pdf')
+            if p:
+                gc = PdfPlotGraphicsContext(filename=p)
+                #pc.do_layout(force=True)
+                # pc.use_backbuffer=False
+                comp = self.active_editor.component
+                if not issubclass(type(comp), Component):
+                    comp = comp.plotcontainer
+                gc.render_component(comp, valign='center')
+                gc.save()
 
     def set_tag(self):
         """
@@ -172,35 +198,44 @@ class AnalysisEditTask(BaseBrowserTask):
             analyses selected in figure e.g temp_status!=0
 
         """
-
-        tag = self._get_tagname()
-        if tag:
+        items = None
+        if self.unknowns_pane:
             items = self.unknowns_pane.selected
             if not items:
-                items = [i for i in self.unknowns_pane.items if i.temp_status != 0]
+                items = [i for i in self.unknowns_pane.items
+                         if i.is_temp_omitted()]
+                self.debug('Temp omitted analyses {}'.format(len(items)))
 
-            if items:
+        if not items:
+            items = self.analysis_table.selected
+
+        if not items:
+            self.warning_dialog('No analyses selected to Tag')
+        else:
+            a = self._get_tagname(items)
+            if a:
                 db = self.manager.db
-                name = tag.name
-                with db.session_ctx():
-                    def func(ai, x):
-                        self.debug('setting {} tag= {}'.format(ai.record_id, name))
-                        x.tag = name
+                tag, items = a
+                if tag:
+                    name = tag.name
+                    with db.session_ctx():
+                        for it in items:
+                            self.debug('setting {} tag= {}'.format(it.record_id, name))
 
-                        ai.set_tag(tag)
+                            ma = db.get_analysis_uuid(it.uuid)
+                            ma.tag = name
+                            it.set_tag(tag)
 
-                    for it in items:
-                        ma = db.get_analysis_uuid(it.uuid)
-                        func(it, ma)
+                    self.analysis_table.refresh_needed = True
+                    if self.unknowns_pane:
+                        self.unknowns_pane.refresh_needed = True
 
-                self.unknowns_pane.refresh_needed = True
-                self.active_editor.rebuild(refresh_data=False)
-            else:
-                self.warning_dialog('Not analyses selected to Tag')
+                    self.active_editor.filter_invalid_analyses()
 
     def prepare_destroy(self):
         if self.unknowns_pane:
             self.unknowns_pane.dump()
+
         super(AnalysisEditTask, self).prepare_destroy()
 
     def create_dock_panes(self):
@@ -221,49 +256,29 @@ class AnalysisEditTask(BaseBrowserTask):
             self.controls_pane = cp
             panes.append(cp)
 
-        #ps = self._create_db_panes()
-        #if ps:
-        #    panes.extend(ps)
-
         return panes
 
     def _create_control_pane(self):
         return ControlsPane()
-
-    def _create_db_panes(self):
-        return []
-        #if self.manager.db:
-        #    if self.manager.db.connected:
-        #        selector = self.manager.db.selector
-        #        #selector._search_fired()
-        #
-        #        #             from pychron.processing.selection.data_selector import DataSelector
-        #        #             from pychron.processing.tasks.search_panes import ResultsPane
-        #
-        #        ds = DataSelector(database_selector=selector)
-        #        self.data_selector = ds
-        #        #             return (QueryPane(model=ds), ResultsPane(model=ds))
-        #        return QueryPane(model=ds),
 
     def _create_unknowns_pane(self):
         up = self.unknowns_pane_klass(adapter_klass=self.unknowns_adapter)
         up.load()
         return up
 
-    def _get_tagname(self):
-        print 'asdf'
+    def _get_tagname(self, items):
         from pychron.processing.tasks.analysis_edit.tags import TagTableView
 
         db = self.manager.db
         with db.session_ctx():
-            v = TagTableView()
+            v = TagTableView(items=items)
             v.table.db = db
             v.table.load()
 
         info = v.edit_traits()
         if info.result:
             tag = v.selected
-            return tag
+            return tag, v.items
 
     def _open_ideogram_editor(self, ans, name, task=None):
         _id = 'pychron.processing.figures'
@@ -275,13 +290,6 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.active_editor:
             if hasattr(self.active_editor, 'save'):
                 self.active_editor.save()
-
-    #def _record_view_factory(self, pi, **kw):
-    #    db = self.manager.db
-    #    iso = IsotopeRecordView(**kw)
-    #    dbrecord = db.get_analysis(pi.uuid, key='uuid')
-    #    if iso.create(dbrecord):
-    #        return iso
 
     def _set_previous_selection(self, pane, new):
         if new and new.name != 'Previous Selection':
@@ -309,9 +317,16 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
-            #===============================================================================
-            # handlers
-            #===============================================================================
+    #===============================================================================
+    # handlers
+    #===============================================================================
+    def _dclicked_sample_changed(self):
+        if self.unknowns_pane:
+            self.debug('Dumping UnknownsPane selection')
+            self.unknowns_pane.dump_selection()
+            self.unknowns_pane.load_previous_selections()
+
+        super(AnalysisEditTask, self)._dclicked_sample_changed()
 
     def _active_editor_changed(self):
         if self.active_editor:
@@ -323,65 +338,43 @@ class AnalysisEditTask(BaseBrowserTask):
                 self.controls_pane.tool = tool
 
             if self.unknowns_pane:
-                if hasattr(self.unknowns_pane, 'previous_selections'):
-                    self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
-                if hasattr(self.active_editor, 'unknowns'):
+                # if hasattr(self.unknowns_pane, 'previous_selections'):
+                #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
+                if hasattr(self.active_editor, 'analyses'):
                     #if self.active_editor.unknowns:
-                    self.unknowns_pane.items = self.active_editor.unknowns
+                    self.unknowns_pane.items = self.active_editor.analyses
+
+    @on_trait_change('active_editor:save_event')
+    def _handle_save_event(self):
+        print 'asdfsadf'
+        self.save_to_db()
 
     @on_trait_change('active_editor:component_changed')
     def _update_component(self):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
 
-    @on_trait_change('unknowns_pane:[items, update_needed]')
+
+    @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
-        if not obj._no_update:
-            #print 'upadte unkownasdf pane', new,
-            if self.active_editor:
-                self.active_editor.unknowns = self.unknowns_pane.items
-            if self.plot_editor_pane:
-                self.plot_editor_pane.analyses = self.unknowns_pane.items
-                #                self._append_cache(self.active_editor)
+        if name == 'dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif name == 'refresh_editor_needed':
+            self.active_editor.rebuild()
+        else:
+            if not obj._no_update:
+                if self.active_editor:
+                    self.active_editor.set_items(self.unknowns_pane.items)
+                if self.plot_editor_pane:
+                    self.plot_editor_pane.analyses = self.unknowns_pane.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):
         if new:
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
-
-                #    def _append_cache(self, editor):
-                #        if hasattr(editor, 'unknowns'):
-                #            ans = editor.unknowns
-                #            ids = [ai.uuid for ai in self._analysis_cache]
-                #            c = [ai for ai in ans if ai.uuid not in ids]
-                #
-                #            if c:
-                #                self._analysis_cache.extend(c)
-                #
-                #        editor.analysis_cache = self._analysis_cache
-
-    #@on_trait_change('''unknowns_pane:dclicked, data_selector:selector:dclicked''')
-    @on_trait_change('''unknowns_pane:dclicked''')
-    def _selected_changed(self, new):
-        print new
-        if new:
-            print new.item
-            if isinstance(new.item, (IsotopeRecordView, Analysis)):
-                self._recall_item(new.item)
-                #                self._open_external_recall_editor(new.item)
-
-    #@on_trait_change('controls_pane:save_button')
-    #def _save_fired(self):
-    #    db = self.manager.db
-    #    commit = not self.controls_pane.dry_run
-    #    with db.session_ctx(commit=commit):
-    #        self._save_to_db()
-    #
-    #    if commit:
-    #        self.info('committing changes')
-    #    else:
-    #        self.info('dry run- not committing changes')
 
     @on_trait_change('[analysis_table, danalysis_table]:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):
@@ -417,56 +410,30 @@ class AnalysisEditTask(BaseBrowserTask):
     def _update_up_previous_selection(self, obj, name, old, new):
         self._set_previous_selection(obj, new)
 
-    def _get_selected_analyses(self, unks=None):
-        s = self.analysis_table.selected
-        if not s:
-            if self.selected_samples:
-                iv = not self.analysis_table.omit_invalid
-
-                uuids = []
-                if unks:
-                    uuids = [x.uuid for x in unks]
-
-                def test(aa):
-                    return not aa.uuid in uuids
-
-                s = [ai for ai in self._get_sample_analyses(self.selected_samples,
-                                                            include_invalid=iv)
-                     if test(ai)]
-
-        return s
-
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
-
         is_append = name == 'append_button'
 
         if self.active_editor:
             unks = None
             if is_append:
-                unks = self.active_editor.unknowns
+                unks = self.active_editor.analyses
 
             s = self._get_selected_analyses(unks)
             if s:
-                if is_append:
+                self.active_editor.set_items(s, is_append)
 
-                    unks = self.active_editor.unknowns
-                    unks.extend(s)
-
-                    #self.active_editor.unknowns=unks
-                else:
-                    self.active_editor.unknowns = s
-
-                #print 'asd', len(self.active_editor.unknowns)
-                #self.unknowns_pane.items=self.active_editor.unknowns
                 self._add_unknowns_hook()
 
     def _add_unknowns_hook(self, *args, **kw):
         pass
 
-    @on_trait_change('active_editor:unknowns')
+    @on_trait_change('active_editor:analyses')
     def _ac_unknowns_changed(self):
-        self.unknowns_pane.items = self.active_editor.unknowns
+        self.unknowns_pane._no_update = True
+        self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=True)
+        self.unknowns_pane._no_update = False
+        # self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=False)
 
     #@on_trait_change('data_selector:selector:key_pressed')
     #def _key_press(self, obj, name, old, new):
@@ -492,18 +459,18 @@ class AnalysisEditTask(BaseBrowserTask):
     def _do_easy(self, func):
         ep = EasyParser()
         db = self.manager.db
+
+        prog = self.manager.open_progress(n=10, close_at_end=False)
         with db.session_ctx() as sess:
-            ok = func(db, ep)
+            ok = func(db, ep, prog)
             if not ok:
                 sess.rollback()
 
+        prog.close()
         if ok:
-            self.information_dialog('Changes saved to the database')
+            self.db_save_info()
 
-
-
-            #===============================================================================
-
+#===============================================================================
 #
 #===============================================================================
 #    @on_trait_change('unknowns_pane:[+button]')

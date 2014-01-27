@@ -16,31 +16,37 @@
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
+import os
 from pyface.tasks.task_layout import TaskLayout, PaneItem, HSplitter, Tabbed
+from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.iterfuncs import partition
+from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.paths import r_mkdir
+from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
 
-from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
+from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 
 class BlanksTask(InterpolationTask):
-    id = 'pychron.analysis_edit.blanks'
+    id = 'pychron.processing.blanks'
     blank_editor_count = 1
     name = 'Blanks'
     default_reference_analysis_type = 'blank_unknown'
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit.blanks',
+            id='pychron.processing.blanks',
             left=HSplitter(
                 Tabbed(
                     PaneItem('pychron.browser'),
                     PaneItem('pychron.search.query'),
                 ),
                 Tabbed(
-                    PaneItem('pychron.analysis_edit.unknowns'),
-                    PaneItem('pychron.analysis_edit.references'),
-                    PaneItem('pychron.analysis_edit.controls')
+                    PaneItem('pychron.processing.unknowns'),
+                    PaneItem('pychron.processing.references'),
+                    PaneItem('pychron.processing.controls')
                 ),
             ),
         )
@@ -56,68 +62,95 @@ class BlanksTask(InterpolationTask):
         self._open_editor(editor)
         self.blank_editor_count += 1
 
-    def _set_selected_analysis(self, new):
-        if not new:
-            return
-        self._load_references(new)
+    #def _set_selected_analysis(self, new):
+    #    if not new:
+    #        return
+    #
+    #    self._load_references(new)
 
     def do_easy_blanks(self):
-        self._do_easy(self._easy_blanks)
+        self._do_easy_func()
 
-    def _easy_blanks(self, db, ep):
+    def _easy_func(self, ep, manager):
+        db=self.manager.db
+
         doc = ep.doc('blanks')
         fits = doc['blank_fit_isotopes']
         projects = doc['projects']
 
-        ans = [ai for proj in projects
+        unks = [ai for proj in projects
                for si in db.get_samples(project=proj)
                for ln in si.labnumbers
-               for ai in ln.analyses][:10]
+               for ai in ln.analyses]
 
-        prog = self.manager.open_progress(len(ans) + 1)
+        prog=manager.progress
+        # prog = self.manager.open_progress(len(ans) + 1)
         #bin analyses
-        for ais in self._bin_analyses(ans):
-            if prog.canceled:
-                return
-            elif prog.accepted:
-                break
+        prog.increase_max(len(unks))
 
-            for ai in ais:
+        preceding_fits, non_preceding_fits=map(list,partition(fits, lambda x: x['fit']=='preceding'))
+        if preceding_fits:
+            for ai in unks:
                 if prog.canceled:
                     return
                 elif prog.accepted:
                     break
                 l, a, s = ai.labnumber.identifier, ai.aliquot, ai.step
-                prog.change_message('Save preceeding blank for {}-{:02n}{}'.format(l, a, s))
+                prog.change_message('Save preceding blank for {}-{:02n}{}'.format(l, a, s))
                 hist = db.add_history(ai, 'blanks')
-
                 ai.selected_histories.selected_blanks = hist
+                for fi in preceding_fits:
+                    self._preceding_correct(db, fi, ai, hist)
 
-                for fi in fits:
-                    if fi['fit'] == 'preceeding':
-                        self._preceeding_correct(db, fi, ai, hist)
-                    else:
-                        pass
+        #make figure root dir
+        if doc['save_figures']:
+            root = doc['figure_root']
+            r_mkdir(root)
 
-        prog.increment()
+        with no_auto_ctx(self.active_editor):
+            if non_preceding_fits:
+                for ais in bin_analyses(unks):
+                    if prog.canceled:
+                        return
+                    elif prog.accepted:
+                        break
+
+                    self.active_editor.set_items(ais, progress=prog)
+                    self.active_editor.find_references(progress=prog)
+
+                    #refresh graph
+                    invoke_in_main_thread(self.active_editor.rebuild_graph)
+
+                    if not manager.wait_for_user():
+                        return
+
+                    #save a figure
+                    if doc['save_figures']:
+                        title=self.active_editor.make_title()
+                        p=os.path.join(root, add_extension(title,'.pdf'))
+                        self.active_editor.save_file(p)
+
+                    self.active_editor.save(progress=prog)
+
+                    self.active_editor.dump_tool()
         return True
 
-    def _preceeding_correct(self, db, fi, ai, hist):
-        pa = db.get_preceeding(ai.analysis_timestamp,
+    def _preceding_correct(self, db, fi, ai, hist):
+        pa = db.get_preceding(ai.analysis_timestamp,
                                ai.measurement.mass_spectrometer.name)
         if pa:
             an_pa = self.manager.make_analysis(pa)
             iso = fi['name']
-            print an_pa.record_id
+            # print an_pa.record_id
             if iso in an_pa.isotopes:
                 blank = an_pa.isotopes[iso].get_corrected_value()
-                print iso, blank.nominal_value, blank.std_dev
+                # print iso, blank.nominal_value, blank.std_dev
 
                 dbblank = db.add_blanks(hist,
                                         isotope=iso,
                                         user_value=float(blank.nominal_value),
                                         user_error=float(blank.std_dev),
-                                        fit='preceeding')
+                                        fit='preceding')
 
                 db.add_blanks_set(dbblank, pa)
 
@@ -125,35 +158,10 @@ class BlanksTask(InterpolationTask):
                 self.warning('{} does not have iso {}'.format(an_pa.record_id, iso))
 
         else:
-            self.warning('No preceeding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
+            self.warning('No preceding analyses for {}-{:02n}{}'.format(ai.labnumber.identifier,
                                                                          ai.aliquot, ai.step))
 
-    def _bin_analyses(self, ans):
-        ans = iter(sorted(ans, key=lambda x: x.analysis_timestamp))
 
-        def _bin():
-            ai = ans.next()
-            pt = ai.analysis_timestamp
-            g = [ai]
-            tol = 60 * 60
-            cnt = 0
-            while 1:
-                try:
-                    ai = ans.next()
-                    dev = ai.analysis_timestamp - pt
-                    pt = ai.analysis_timestamp
-                    if dev.total_seconds() > tol:
-                        yield g
-                        g = [ai]
-                    else:
-                        g.append(ai)
-
-                except StopIteration:
-                    break
-
-            yield g
-
-        return _bin()
 
 
 #============= EOF =============================================

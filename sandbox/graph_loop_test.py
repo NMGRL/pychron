@@ -24,8 +24,8 @@ from chaco.plot import Plot
 from chaco.lineplot import LinePlot
 from chaco.scatterplot import ScatterPlot
 from pychron.graph.regression_graph import StackedRegressionGraph
-from pychron.ui.gui import invoke_in_main_thread
-# from pychron.ui.thread import Thread
+from pychron.core.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.thread import Thread
 from threading import Event, Timer, Thread
 # from pychron.graph.stacked_graph import StackedGraph
 from traits.api import HasTraits, Instance, Button
@@ -35,7 +35,7 @@ from traitsui.api import View, Item, UItem
 # from pychron.graph.regression_graph import RegressionGraph, StackedRegressionGraph
 import time
 from pyface.timer.do_later import do_later, do_after
-from pychron.codetools.memory_usage import mem_log, get_current_mem, count_instances
+from pychron.core.codetools.memory_usage import mem_log, get_current_mem, count_instances
 #============= standard library imports ========================
 #============= local library imports  ==========================
 

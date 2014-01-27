@@ -16,7 +16,8 @@
 
 #============= enthought library imports =======================
 from reportlab.lib.pagesizes import letter
-from traits.api import Any, List, on_trait_change, Instance, Property, Event, File
+from traits.api import Any, List, on_trait_change, Property, Event, File
+from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 from numpy import asarray
@@ -31,11 +32,13 @@ from pychron.processing.tasks.editor import BaseUnknownsEditor
 
 
 class GraphEditor(BaseUnknownsEditor):
-    tool = Instance(FitSelector, ())
+    tool = Any
+    tool_klass = FitSelector
     graph = Any
     processor = Any
-    unknowns = List
-    #     _unknowns = List
+
+    analyses = List
+
     component = Property
     _component = Any
 
@@ -48,35 +51,57 @@ class GraphEditor(BaseUnknownsEditor):
     calculate_age = True
 
     auto_plot = Property
-    update_on_unknowns = True
+    update_on_analyses = True
+
+    @on_trait_change('tool:save_event')
+    def _handle_save_event(self):
+        self.save_event = True
+
+    def make_title(self):
+        names=[ai.record_id for ai in self.analyses]
+        return self._grouped_name(names)
 
     def prepare_destroy(self):
         self.dump_tool()
 
     def dump_tool(self):
-        p = os.path.join(paths.hidden_dir, self.pickle_path)
-        with open(p, 'w') as fp:
-            tool = self._dump_tool()
-            pickle.dump(tool, fp)
-
-    def _dump_tool(self):
         if self.tool:
-            return self.tool.fits
+            p = os.path.join(paths.hidden_dir, self.pickle_path)
+            self.debug('dumping tool {}, {}'.format(self.tool, p))
+            with open(p, 'w') as fp:
+                tool = self._get_dump_tool()
+                pickle.dump(tool, fp)
 
-    def load_tool(self):
+    def _get_dump_tool(self):
+        return dict(fits=self.tool.fits, auto_update=self.tool.auto_update)
+
+    def load_tool(self, tool=None):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
         if os.path.isfile(p):
+            self.debug('loading tool')
             with open(p, 'r') as fp:
                 try:
                     obj = pickle.load(fp)
-                    self._load_tool(obj)
-                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError):
+                    self._load_tool(obj, tool=tool)
+                except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError, TraitError),e:
+                    self.debug('exception loading tool {}'.format(e))
                     return
 
-    def _load_tool(self, fits):
+    def _load_tool(self, tooldict, tool):
+        if not isinstance(tooldict, dict):
+            self.warning('invalid pickled tool {}'.format(type(tooldict)))
+            return
+
+        if tool is None:
+            tool=self.tool
+
+        tool.auto_update=tooldict['auto_update']
+
+        fits=tooldict['fits']
         for fi in fits:
-            ff = next((fo for fo in self.tool.fits if fo.name == fi.name), None)
+            ff = next((fo for fo in tool.fits if fo.name == fi.name), None)
             if ff:
+                self.debug('setting fit {} {} {}'.format(fi.name, fi.fit, fi.use))
                 ff.trait_set(fit=fi.fit,
                              use=fi.use,
                              show=fi.show)
@@ -92,23 +117,41 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def set_items(self, unks):
-        self.unknowns = unks
+    def filter_invalid_analyses(self):
+        f=lambda x: not x.tag=='invalid'
+        self.analyses=filter(f, self.analyses)
+        self.rebuild()
 
-    @on_trait_change('unknowns[]')
-    def _update_unknowns(self, obj, name, old, new):
-        #print '11111', len(self.unknowns)
-        self._gather_unknowns(True)
-        #print '22222', new, len(self.unknowns)
-        if self.unknowns:
+    def set_items(self, unks, is_append=False, **kw):
+        ans = self.processor.make_analyses(unks,
+                                            calculate_age=self.calculate_age,
+                                            unpack=self.unpack_peaktime,
+                                            **kw)
+
+        if is_append:
+            pans = self.analyses
+            pans.extend(ans)
+            ans = pans
+
+        self.analyses=ans
+        self._update_analyses()
+        self.dump_tool()
+
+    def _update_analyses(self):
+        ans=self.analyses
+        if ans:
+            self.debug('analyses changed nanalyses={}'.format(len(ans)))
+            self._compress_analyses(ans)
+
+            refiso = ans[0]
+            self._load_refiso(refiso)
+
+            self._set_name()
+            self._update_analyses_hook()
             if self.auto_plot:
                 self.rebuild_graph()
-
-            refiso = self.unknowns[0]
-            self._load_refiso(refiso)
-            self._set_name()
-            self._update_unknowns_hook()
         else:
+            self.debug('analyses changed {}'.format(ans))
             self._null_component()
             self.component_changed = True
 
@@ -126,28 +169,23 @@ class GraphEditor(BaseUnknownsEditor):
                 self.load_tool()
 
     def _set_name(self):
-        na = list(set([ni.labnumber for ni in self.unknowns]))
+        na = list(set([ni.labnumber for ni in self.analyses]))
         na = self._grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 
-    def _update_unknowns_hook(self):
+    def _update_analyses_hook(self):
         pass
 
     @on_trait_change('tool:update_needed')
     def _tool_refresh(self):
-        print 'tool update'
+        self.debug('tool refresh')
         self.rebuild_graph()
-        #if not self.tool.suppress_refresh_unknowns:
-        self.refresh_unknowns()
-
-    def refresh_unknowns(self):
-        pass
+        self.dump_tool()
 
     def rebuild(self, *args, **kw):
         pass
 
     def rebuild_graph(self):
-        #if not self.suppress_rebuild:
         graph = self.graph
 
         graph.clear()
@@ -170,8 +208,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _graph_factory(self, **kw):
         g = StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom',
                                                        use_backbuffer=True,
-                                                       spacing=5),
-                                   **kw)
+                                                       spacing=5), **kw)
         return g
 
     def _graph_generator(self):
@@ -182,7 +219,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_component(self):
         return self.graph.plotcontainer
 
-    def save_file(self, path, force_layout=False):
+    def save_file(self, path, force_layout=True):
         _, tail = os.path.splitext(path)
         if tail not in ('.pdf', '.png'):
             path = '{}.pdf'.format(path)
@@ -193,7 +230,6 @@ class GraphEditor(BaseUnknownsEditor):
             chaco becomes less responsive after saving if 
             use_backbuffer is false and using pdf 
         '''
-
         c.do_layout(size=letter, force=force_layout)
 
         _, tail = os.path.splitext(path)
@@ -203,6 +239,7 @@ class GraphEditor(BaseUnknownsEditor):
             gc = PdfPlotGraphicsContext(filename=path)
             gc.render_component(c, valign='center')
             gc.save()
+
         else:
             from chaco.plot_graphics_context import PlotGraphicsContext
 
@@ -210,56 +247,9 @@ class GraphEditor(BaseUnknownsEditor):
             gc.render_component(c)
             gc.save(path)
 
-            #         with gc:
-            #         self.rebuild_graph()
+        self.rebuild_graph()
 
-    def _gather_unknowns(self, refresh_data,
-                         exclude='invalid',
-                         compress_groups=True):
-        '''
-            use cached runs
-            
-            use exclude keyward to specific tags that will not be 
-            gathered
-            
-        '''
-
-        ans = self.unknowns
-        if refresh_data or not ans:
-            #ids = [ai.uuid for ai in self.analysis_cache]
-            #aa = [ai for ai in self.unknowns if ai.uuid not in ids]
-            #
-            #nids = (ai.uuid for ai in self.unknowns if ai.uuid in ids)
-            #bb = [next((ai for ai in self.analysis_cache if ai.uuid == i)) for i in nids]
-            #aa = list(aa)
-            #aa=self.unknowns
-
-            if ans:
-                ans=self.processor.make_analyses(ans, exclude=exclude,
-                                                 calculate_age=self.calculate_age,
-                                                 unpack=self.unpack_peaktime)
-
-                #ans = timethis(self.processor.make_analyses,
-                #               args=(ans,),
-                #               kwargs={'exclude': exclude,
-                #                       'calculate_age': self.calculate_age,
-                #                       'unpack': self.unpack_peaktime},
-                #               msg='MAKE ANALYSES TOTAL')
-
-
-            if compress_groups:
-                # compress groups
-                self._compress_unknowns(ans)
-
-            #self.trait_set(unknowns=ans, trait_change_notify=False)
-            self.unknowns = ans
-        else:
-            if exclude:
-                ans = self.processor.filter_analysis_tag(ans, exclude)
-
-        return ans
-
-    def _compress_unknowns(self, ans):
+    def _compress_analyses(self, ans):
         if not ans:
             return
 
@@ -276,6 +266,55 @@ class GraphEditor(BaseUnknownsEditor):
                 ai.group_id = gid - mgid
 
     def _get_auto_plot(self):
-        return len(self.unknowns) == 1 or self.update_on_unknowns
+        return len(self.analyses) == 1 or self.update_on_analyses
 
-        #============= EOF =============================================
+    def _tool_default(self):
+        t=self.tool_klass()
+        self.load_tool(t)
+        return t
+#============= EOF =============================================
+# def _gather_unknowns(self, refresh_data,
+    #                      exclude='invalid',
+    #                      compress_groups=True):
+    #     '''
+    #         use cached runs
+    #
+    #         use exclude keyward to specific tags that will not be
+    #         gathered
+    #
+    #     '''
+    #
+    #     ans = self.unknowns
+    #     if refresh_data or not ans:
+    #         #ids = [ai.uuid for ai in self.analysis_cache]
+    #         #aa = [ai for ai in self.unknowns if ai.uuid not in ids]
+    #         #
+    #         #nids = (ai.uuid for ai in self.unknowns if ai.uuid in ids)
+    #         #bb = [next((ai for ai in self.analysis_cache if ai.uuid == i)) for i in nids]
+    #         #aa = list(aa)
+    #         #aa=self.unknowns
+    #
+    #         if ans:
+    #             ans=self.processor.make_analyses(ans, exclude=exclude,
+    #                                              calculate_age=self.calculate_age,
+    #                                              unpack=self.unpack_peaktime)
+    #
+    #             #ans = timethis(self.processor.make_analyses,
+    #             #               args=(ans,),
+    #             #               kwargs={'exclude': exclude,
+    #             #                       'calculate_age': self.calculate_age,
+    #             #                       'unpack': self.unpack_peaktime},
+    #             #               msg='MAKE ANALYSES TOTAL')
+    #
+    #
+    #         if compress_groups:
+    #             # compress groups
+    #             self._compress_unknowns(ans)
+    #
+    #         #self.trait_set(unknowns=ans, trait_change_notify=False)
+    #         self.unknowns = ans
+    #     else:
+    #         if exclude:
+    #             ans = self.processor.filter_analysis_tag(ans, exclude)
+    #
+    #     return ans

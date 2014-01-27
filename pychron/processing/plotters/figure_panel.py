@@ -18,10 +18,9 @@
 from traits.api import HasTraits, Any, on_trait_change, List, Int
 #============= standard library imports ========================
 from itertools import groupby
-from pychron.graph.stacked_graph import StackedGraph
-from numpy.core.numeric import Inf
 
 #============= local library imports  ==========================
+from pychron.processing.analysis_graph import AnalysisStackedGraph
 
 
 class FigurePanel(HasTraits):
@@ -29,9 +28,9 @@ class FigurePanel(HasTraits):
     graph = Any
     analyses = Any
     plot_options = Any
-    _index_attr = None
+    _index_attr = ''
     equi_stack = False
-    graph_klass = StackedGraph
+    graph_klass = AnalysisStackedGraph
     graph_spacing = Int
     meta = Any
 
@@ -46,11 +45,11 @@ class FigurePanel(HasTraits):
               for gid, ais in groupby(ans, key=key)]
         return gs
 
-    def dump_metadata(self):
-        return self.graph.dump_metadata()
-
-    def load_metadata(self, md):
-        self.graph.load_metadata(md)
+    # def dump_metadata(self):
+    #     return self.graph.dump_metadata()
+    #
+    # def load_metadata(self, md):
+    #     self.graph.load_metadata(md)
 
     def make_graph(self):
 
@@ -60,14 +59,19 @@ class FigurePanel(HasTraits):
 
         po = self.plot_options
         attr = self._index_attr
-        mi, ma = -Inf, Inf
-        if attr:
-            xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                               for i in self.figures])
-            mi, ma = min(xmis), max(xmas)
+
+        # center=None
+        # mi,ma=None, None
+        xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                           for i in self.figures])
+        mi, ma = min(xmis), max(xmas)
+
+        cs = [i.mean_x(attr) for i in self.figures]
+        center = sum(cs) / len(cs)
 
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
+                          center=center,
                           options=po,
                           graph=g)
 
@@ -77,14 +81,19 @@ class FigurePanel(HasTraits):
                 fig.build(plots)
                 #print fig
             fig.plot(plots)
-
+            ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
             #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
 
-        #meta=self.meta
-        #print 'meta',meta
-        #if meta:
-        #    g.load_metadata(meta)
+            #meta=self.meta
+            #print 'meta',meta
+            #if meta:
+            #    g.load_metadata(meta)
+            # if mi==-Inf and ma==Inf:
+            # mi,ma=0, 100
+        if mi is None and ma is None:
+            mi, ma = 0, 100
 
+        g.set_x_limits(mi, ma)
         self.graph = g
         #print self.graph
         return g.plotcontainer

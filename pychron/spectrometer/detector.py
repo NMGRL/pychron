@@ -16,9 +16,9 @@
 
 #============= enthought library imports =======================
 from traits.api import Float, Str, Bool, Property, Color, \
-    Int, on_trait_change, Array
+    Int, Array
 from traitsui.api import View, Item, HGroup, \
-    spring, Spring
+    spring
 #============= standard library imports ========================
 import os
 from numpy import loadtxt, polyfit, polyval, hstack, poly1d
@@ -26,8 +26,7 @@ from scipy import optimize
 #============= local library imports  ==========================
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
-from pychron.ui.qt.color_square_editor import ColorSquareEditor
+from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
 
 
 charge = 1.6021764874e-19
@@ -35,7 +34,6 @@ charge = 1.6021764874e-19
 
 class Detector(SpectrometerDevice):
     name = Str
-    relative_position = Float(1)
 
     kind = Str
 
@@ -59,30 +57,7 @@ class Detector(SpectrometerDevice):
     isotope = Str
 
     isotopes = Property
-    color_square = None
-    #    @cached_property
-    #    def _get_intensity(self):
-    #        return self.spectrometer.get_intensity(self.name)
-    @on_trait_change('spectrometer:intensity_dirty')
-    def _intensity_changed(self, new):
-        if new:
-            n = self.nstd
-            try:
-                intensity = new[self.name]
-                self.intensities = hstack((self.intensities[-n:], [intensity]))
-                self.std = '{:0.5f}'.format(self.intensities.std())
-
-                self.intensity = '{:0.5f}'.format(intensity)
-            except KeyError:
-                self.intensity = NULL_STR
-                self.std = NULL_STR
-
-    def _get_isotopes(self):
-        molweights = self.spectrometer.molecular_weights
-        return sorted(molweights.keys(), key=lambda x: int(x[2:]))
-
-    def __repr__(self):
-        return self.name
+    #color_square = None
 
     def load(self):
         self.read_deflection()
@@ -96,13 +71,6 @@ class Detector(SpectrometerDevice):
         y -= y[0]
         coeffs = polyfit(x, y, 1)
         self._deflection_correction_factors = coeffs
-
-    def _set_deflection(self, v):
-        self._deflection = v
-        self.ask('SetDeflection {},{}'.format(self.name, v))
-
-    def _get_deflection(self):
-        return self._deflection
 
     def read_deflection(self):
         r = self.ask('GetDeflection {}'.format(self.name))
@@ -131,21 +99,37 @@ class Detector(SpectrometerDevice):
         c[-1] -= dac
         return optimize.newton(poly1d(c), 1)
 
-    def intensity_view(self):
-        v = View(HGroup(
-            Item('color',
-                 editor=ColorSquareEditor(),
-                 width=20),
-            Item('name', style='readonly'),
-            spring,
-            Item('intensity', style='readonly'),
-            Spring(springy=False, width=150),
-            Item('std', style='readonly'),
-            Spring(springy=False, width=100),
-            show_labels=False
-        )
-        )
-        return v
+    def _get_isotopes(self):
+        molweights = self.spectrometer.molecular_weights
+        return sorted(molweights.keys(), key=lambda x: int(x[2:]))
+
+    def _set_deflection(self, v):
+        self._deflection = v
+        self.ask('SetDeflection {},{}'.format(self.name, v))
+
+    def _get_deflection(self):
+        return self._deflection
+
+    def set_intensity(self, v):
+        if v is not None:
+            n = self.nstd
+            self.intensities = hstack((self.intensities[-n:], [v]))
+            self.std = '{:0.5f}'.format(self.intensities.std())
+            self.intensity = '{:0.5f}'.format(v)
+
+    #def intensity_view(self):
+    #    v = View(HGroup(
+    #        Item('color',
+    #             editor=ColorSquareEditor(),
+    #             width=20),
+    #        Item('name', style='readonly'),
+    #        spring,
+    #        Item('intensity', style='readonly'),
+    #        Spring(springy=False, width=150),
+    #        Item('std', style='readonly'),
+    #        Spring(springy=False, width=100),
+    #        show_labels=False))
+    #    return v
 
     def traits_view(self):
         v = View(HGroup(Item('active'),
@@ -156,19 +140,6 @@ class Detector(SpectrometerDevice):
                         show_labels=False))
         return v
 
-
-if __name__ == '__main__':
-    d = Detector()
-
-
+    def __repr__(self):
+        return self.name
 #============= EOF =============================================
-#    def calc_deflection(self, ht):
-#        ht *= 1000 #accelerating voltage V
-#        mass = 39.962
-#        L = 1
-#        velocity = math.sqrt(2 * charge * ht / mass)
-#        flight_time = L / velocity
-#        d = 0.1
-#        E = -self._deflection / d
-#        F = charge * E
-#        delta = 0.5 * math.sqrt(F / mass) * flight_time ** 2

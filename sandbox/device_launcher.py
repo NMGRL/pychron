@@ -41,7 +41,7 @@ def launch_device(name, path):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('device_launcher')
     name = 'PIDController'

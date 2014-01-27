@@ -15,10 +15,10 @@
 #===============================================================================
 from traits.etsconfig.etsconfig import ETSConfig
 from test.database import isotope_manager_factory
-# from pychron.helpers import logger_setup
-from pychron.helpers.logger_setup import logging_setup
+# from pychron.core.helpers import logger_setup
+from pychron.core.helpers.logger_setup import logging_setup
 from pychron.spectrometer.spectrometer_manager import SpectrometerManager
-# from pychron.codetools.memory_usage import count_instances
+# from pychron.core.codetools.memory_usage import count_instances
 from pychron.globals import globalv
 ETSConfig.toolkit = 'qt4'
 

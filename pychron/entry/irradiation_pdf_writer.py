@@ -23,13 +23,14 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.units import inch
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
-from pychron.entry.level import load_holder_canvas
+# from pychron.entry.level import load_holder_canvas
+from pychron.entry.editors.level_editor import load_holder_canvas
 from pychron.loading.component_flowable import ComponentFlowable
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.pdf.items import Row
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Row
 
 
-class IrradiationPDFWriter(BasePDFWriter):
+class IrradiationPDFWriter(BasePDFTableWriter):
     page_break_between_levels = Bool(True)
     show_page_numbers = True
 
@@ -158,9 +159,9 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         dur = 0
         if chron:
             doses = chron.get_doses()
-            for st, en in doses:
+            for pwr, st, en in doses:
                 dur += (en - st).total_seconds()
-            _, date = chron.get_doses(tofloat=False)[-1]
+            _, _, date = chron.get_doses(tofloat=False)[-1]
 
         dur /= (60 * 60.)
         date = 'Irradiation Date: {}'.format(date)

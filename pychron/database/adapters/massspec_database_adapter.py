@@ -20,6 +20,7 @@
 
 #=============local library imports  ==========================
 import binascii
+from numpy import Inf
 
 from sqlalchemy.sql.expression import func, distinct
 
@@ -47,6 +48,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
             return q.all()
+
+    def get_production_ratio_by_level(self, irrad, name):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationLevelTable)
+            q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
+            q = q.filter(IrradiationLevelTable.Level == name)
+            return q.one().production
 
     def get_production_ratio_by_irradname(self, name):
 #         sess = self.get_session()
@@ -97,8 +105,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_samples(self, **kw):
         return self._get_items(SampleTable, globals(), **kw)
 
-    def get_database_version(self):
-        return self._retrieve_items(DatabaseVersionTable)
+    def get_database_version(self, **kw):
+        return self._retrieve_items(DatabaseVersionTable, **kw)
 #===============================================================================
 # getters
 #===============================================================================
@@ -112,10 +120,10 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
                                    )
 
-    def get_lastest_analysis_aliquot(self, labnumber):
-        '''
+    def get_latest_analysis_aliquot(self, labnumber):
+        """
             return the analysis with the greatest aliquot with this labnumber
-        '''
+        """
         with self.session_ctx() as sess:
     #         sess = self.get_session()
             q = sess.query(AnalysesTable.Aliquot)
@@ -391,11 +399,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #                           baseline, baseline_err,
 #                           blank, blank_err
                            ):
-        '''
+        """
             intercept, baseline and blank should be ufloats
-            
+
             mass spec does not propogate baseline error
-        '''
+        """
 
         isotope = self.get_isotope(isotope,)
 
@@ -413,15 +421,23 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         detector = self.get_detector(detector,)
 
+        i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
+        ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
+        iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
+        isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+
+        b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
+        be = float(blank.nominal_value) if blank.std_dev != Inf else 0
+
         iso_r = IsotopeResultsTable(DataReductionSessionID=data_reduction_session_id,
-                                    Intercept=intercept.nominal_value,
-                                    InterceptEr=float(intercept.std_dev),
+                                    Intercept=i,
+                                    InterceptEr=ie,
 
-                                    Iso=isotope_value.nominal_value,
-                                    IsoEr=float(isotope_value.std_dev),
+                                    Iso=iso,
+                                    IsoEr=isoe,
 
-                                    Bkgd=blank.nominal_value,
-                                    BkgdEr=float(blank.std_dev),
+                                    Bkgd=b,
+                                    BkgdEr=be,
 
                                     BkgdDetTypeID=detector.DetectorTypeID,
 
@@ -864,7 +880,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #                     ).filter_by(AnalysisID=a_id).all()
 #        return p,sess
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('ia')
     ia = MassSpecDatabaseAdapter()
     ia.connect()

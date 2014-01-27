@@ -1,4 +1,4 @@
-from pychron.regression.new_york_regressor import ReedYorkRegressor
+from pychron.core.regression.new_york_regressor import ReedYorkRegressor
 
 __author__ = 'ross'
 

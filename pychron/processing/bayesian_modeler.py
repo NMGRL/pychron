@@ -28,7 +28,7 @@ import time
 from numpy.core.fromnumeric import argmax
 # from scipy.stats.stats import mode
 # from numpy.lib.function_base import median
-from pychron.time_series.time_series import smooth
+from pychron.core.time_series.time_series import smooth
 
 
 #============= local library imports  ==========================

@@ -25,9 +25,9 @@ from pychron.graph.plot_record import PlotRecord
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.database.data_warehouse import DataWarehouse
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
-from pychron.helpers.datetime_tools import generate_datetimestamp
+from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
 from pychron.graph.graph import Graph
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph

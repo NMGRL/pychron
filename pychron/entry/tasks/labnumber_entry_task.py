@@ -15,13 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.experiment.importer.import_manager import ImportManager
-from pychron.experiment.tasks.browser.browser_mixin import BrowserMixin
+from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.entry.project_entry import ProjectEntry
 from pychron.entry.sample_entry import SampleEntry
 from pychron.entry.labnumber_entry import LabnumberEntry
@@ -95,6 +96,14 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             self.manager.make_irradiation_load_template(path)
             #self.information_dialog('Template saved to {}'.format(p))
             self.view_xls(path)
+
+    def import_sample_metadata(self):
+        path='/Users/ross/Programming/git/dissertation/data/minnabluff/sample.xls'
+        if not os.path.isfile(path):
+            path=self.open_file_dialog()
+
+        if path:
+            self.manager.import_sample_metadata(path)
 
     def _manager_default(self):
         return LabnumberEntry(application=self.application)

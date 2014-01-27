@@ -23,7 +23,7 @@ import csv
 from pychron.loggable import Loggable
 from pychron.pychron_constants import ARGON_KEYS, IRRADIATION_KEYS, DECAY_KEYS
 #============= local library imports  ==========================
-# from pychron.stats import calculate_mswd, calculate_weighted_mean
+# from pychron.core.stats import calculate_mswd, calculate_weighted_mean
 # from pychron.data_processing.argon_calculations import calculate_arar_age, find_plateaus
 
 

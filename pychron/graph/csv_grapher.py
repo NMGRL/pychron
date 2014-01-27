@@ -33,7 +33,7 @@ from pychron.graph.regression_graph import StackedRegressionGraph, RegressionGra
 from pychron.pychron_constants import FIT_TYPES, NULL_STR, DELIMITERS
 from pychron.paths import paths
 from pychron.loggable import Loggable
-from pychron.time_series.time_series import smooth
+from pychron.core.time_series.time_series import smooth
 
 
 class DataSelector(HasTraits):

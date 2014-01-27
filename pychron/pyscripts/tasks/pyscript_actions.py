@@ -15,15 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 from pyface.action.action import Action
+from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.resources import icon
+
+
 class OpenPyScriptAction(Action):
-    '''
-    '''
+    """
+    """
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
@@ -36,16 +38,16 @@ class OpenPyScriptAction(Action):
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout('pychron.pyscript',
                                                              size=(1200, 100)
-                                                             ),
-
-                                            )
+                                                             ))
             task = win.active_task
-            if task.open():
+            test_path='/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+            # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
+            if task.open(path=test_path):
                 win.open()
 
 class NewPyScriptAction(Action):
-    '''
-    '''
+    """
+    """
     description = 'New pyscript'
     name = 'New Script'
 #    accelerator = 'Shift+Ctrl+O'
@@ -62,4 +64,9 @@ class NewPyScriptAction(Action):
                 win.open()
 
 
+class JumpToGosubAction(TaskAction):
+    name='Jump to Gosub'
+    image = icon('script_go.png')
+    method='jump_to_gosub'
+    tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
 #============= EOF =============================================

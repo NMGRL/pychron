@@ -21,7 +21,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
     StageControlPane, AxesPane, SupplementalPane
-from pychron.ui.led_editor import LEDEditor
+from pychron.core.ui.led_editor import LEDEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================

@@ -19,10 +19,9 @@ from traits.api import Array, Event
 from traitsui.api import View, UItem
 #============= standard library imports ========================
 from numpy import asarray, array, ndarray
-from scipy.ndimage.interpolation import zoom
 #============= local library imports  ==========================
 from pychron.viewable import Viewable
-from pychron.ui.image_editor import ImageEditor
+from pychron.core.ui.image_editor import ImageEditor
 
 
 class StandAloneImage(Viewable):

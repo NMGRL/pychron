@@ -15,14 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String
+from traits.api import HasTraits, Str, Bool, Property, Int, Enum, List, String, Tuple, Float, Dict
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 
-class PlotterOption(HasTraits):
+class AuxPlotOptions(HasTraits):
     use = Bool
     name=Str(NULL_STR)
     plot_name=Property(Str, depends_on='name')
@@ -41,10 +41,35 @@ class PlotterOption(HasTraits):
 
     normalize = None
     use_time_axis = False
+    initialized=False
+
+    ylimits=Tuple(Float, Float, transient=True)
+    overlay_positions=Dict(transient=True)
+    _has_ylimits=Bool(False)
+
+    def set_overlay_position(self, k, v):
+        self.overlay_positions[k]=v
+
+    def has_ylimits(self):
+        return self._has_ylimits
+
+    def dump_yaml(self):
+        d=dict()
+        attrs=('use','name', 'scale','height',
+               'x_error','y_error', 'show_labels','filter_str')
+        for attr in attrs:
+            d[attr]=getattr(self, attr)
+
+        d['ylimits']=map(float, self.ylimits)
+        d['overlay_positions']=dict(self.overlay_positions)
+
+        return d
 
     def _name_changed(self):
-        if self.name != NULL_STR:
-            self.use = True
+        if self.initialized:
+            if self.name != NULL_STR:
+                self.use = True
+                print 'setting use true', self.name
 
     def _get_plot_name(self):
         if self.name in self.names:
@@ -63,16 +88,14 @@ class PlotterOption(HasTraits):
     #            'relative_probability': 'Ideogram'}
 
 
-class FitPlotterOption(PlotterOption):
+class FitPlotterOptions(AuxPlotOptions):
     fit = Enum(['', ] + FIT_TYPES)
 
 
-class SpectrumPlotOption(PlotterOption):
-    names = List([NULL_STR, 'StackedAnalysis #', 'Analysis #',
-                       '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
+class SpectrumPlotOptions(AuxPlotOptions):
+    names = List([NULL_STR, '%40Ar*', 'K/Ca', 'K/Cl', 'Mol K39', 'Age'])
 
-    _plot_names = List(['', 'analysis_number_stacked', 'analysis_number', 'radiogenic_yield',
-                    'kca', 'kcl', 'moles_k39', 'age_spectrum'])
+    _plot_names = List(['', 'radiogenic_yield', 'kca', 'kcl', 'moles_k39', 'age_spectrum'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
     #            'radiogenic_yield': 'Radiogenic 40Ar',
@@ -82,7 +105,7 @@ class SpectrumPlotOption(PlotterOption):
     #            'age_spectrum': 'Age'}
 
 
-class InverseIsochronPlotOption(PlotterOption):
+class InverseIsochronPlotOptions(AuxPlotOptions):
     names = List([NULL_STR, 'Inv. Isochron'])
 
     _plot_names = List(['', 'inverse_isochron'])
@@ -95,7 +118,7 @@ class InverseIsochronPlotOption(PlotterOption):
                 #'inverse_isochron': 'Inv. Isochron'}
 
 
-class SystemMonitorPlotOption(PlotterOption):
+class SystemMonitorPlotOptions(AuxPlotOptions):
     _auto_set_use = False
     normalize = 'now'
     use_time_axis = True

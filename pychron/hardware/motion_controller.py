@@ -22,7 +22,7 @@ from traitsui.api import View, VGroup, Item, RangeEditor
 import os
 import time
 #============= local library imports  ==========================
-from pychron.helpers.timer import Timer
+from pychron.core.helpers.timer import Timer
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.motion.motion_profiler import MotionProfiler
 # from pychron.hardware.utilities import limit_frequency
@@ -188,9 +188,9 @@ class MotionController(CoreDevice):
 
         c = getattr(self, '_{}_position'.format(name))
         disp = abs(c - v)
+        self.debug('set axis {} to {}. current pos={}'.format(name, v, c))
         self.single_axis_move(name, v, update=disp > 4, **kw)
 
-        setattr(self, '_{}_position'.format(name), v)
         self.axes[name].position = v
 
         if disp <= 4:
@@ -314,11 +314,11 @@ class MotionController(CoreDevice):
         return self._validate(v, 'z', self._z_position)
 
     def _validate(self, v, key, cur):
-        '''
-        '''
+        """
+        """
         mi = self.axes[key].negative_limit
         ma = self.axes[key].positive_limit
-
+        self.debug('validate {} {} {}'.format(v, key, cur))
         try:
             v = float(v)
             if not mi <= v <= ma:
@@ -330,6 +330,7 @@ class MotionController(CoreDevice):
         except ValueError:
             v = None
 
+        self.debug('validate return {}'.format(v))
         return v
 
     def _get_xaxes_max(self):

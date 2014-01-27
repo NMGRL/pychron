@@ -15,29 +15,29 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Any, Bool, DelegatesTo, Dict, Property, Int
-from pyface.confirmation_dialog import confirm  # from pyface.wx.dialog import confirmation
+from traits.api import Str, Any, Bool, Property, Int
+from pyface.confirmation_dialog import confirm
 #============= standard library imports ========================
 import time
 import os
 import inspect
 from threading import Event, Thread, Lock
+import traceback
 #============= local library imports  ==========================
 
 from pychron.loggable import Loggable
 
-from Queue import Queue, Empty, LifoQueue
+from Queue import Empty, LifoQueue
 # from pychron.globals import globalv
-# from pychron.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.gui import invoke_in_main_thread
 import sys
 # import bdb
-# from pychron.ui.thread import Thread
+# from pychron.core.ui.thread import Thread
 import weakref
 from pychron.globals import globalv
 from pychron.wait.wait_control import WaitControl
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
-from pychron.ui.gui import invoke_in_main_thread
 
 
 class IntervalContext(object):
@@ -197,8 +197,11 @@ class PyScript(Loggable):
 
     def calculate_estimated_duration(self):
         self._estimated_duration = 0
-        self._set_syntax_checked(False)
-        self.test()
+        if not self._syntax_checked:
+            self.debug('calculate_estimated duration. syntax requires testing')
+            self.test()
+        # self._set_syntax_checked(False)
+        # self.test()
         return self.get_estimated_duration()
 
     def traceit(self, frame, event, arg):
@@ -261,11 +264,11 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
+            self.syntax_checked = True
             self.testing_syntax = True
             self._syntax_error = True
 
             r = self._execute(argv=argv)
-
             if r is not None:
                 self.info('invalid syntax')
                 ee = PyscriptError(self.filename, r)
@@ -278,16 +281,12 @@ class PyScript(Loggable):
                 self.info('syntax checking passed')
                 self._syntax_error = False
 
-            self.syntax_checked = True
             self.testing_syntax = False
 
     def compile_snippet(self, snippet):
         try:
             code = compile(snippet, '<string>', 'exec')
         except Exception, e:
-            import traceback
-
-            traceback.print_exc()
             return e
         else:
             return code
@@ -306,7 +305,7 @@ class PyScript(Loggable):
         else:
             snippet = self.text
 
-        if os.path.isfile(snippet):
+        if trace:
             sys.settrace(self.traceit)
             import imp
 
@@ -329,25 +328,26 @@ class PyScript(Loggable):
                 try:
                     exec code_or_err in safe_dict
                     func=safe_dict['main']
-                    try:
-                        func(*argv)
-                    except TypeError:
-                        func()
-                        
+                    if argv is None:
+                        argv=tuple()
+                    func(*argv)
+
                 except KeyError, e:
                     return MainError()
                 except Exception, e:
-                    import traceback
-
-                    traceback.print_exc()
-                    # #            self.warning_dialog(str(e))
-                    return e
+                    return traceback.format_exc()
             else:
                 return code_or_err
 
-
     def syntax_ok(self):
-        return not self._syntax_error
+        try:
+            self.test()
+        except PyscriptError, e:
+            self.warning_dialog(e)
+            return False
+
+        return True
+        # return not self._syntax_error
 
     def check_for_modifications(self):
         old = self.toblob()
@@ -641,8 +641,8 @@ class PyScript(Loggable):
         self._truncate = False
 
         error = self.execute_snippet(trace, argv)
-
         if error:
+            self.warning(str(error))
             return error
 
         if self.testing_syntax:
@@ -701,10 +701,7 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self, timeout, message):
         if self.manager:
-            with self.manager.wait_control_lock:
-                wd = self.manager.wait_group.active_control
-                if wd.is_active():
-                    wd = self.manager.wait_group.add_control()
+            wd=self.manager.get_wait_control()
         else:
             wd = self._wait_control
 
@@ -740,7 +737,7 @@ class PyScript(Loggable):
             wd.join()
 
             if self.manager:
-                self.manager.wait_group.pop()
+                self.manager.wait_group.pop(wd)
 
             if wd.is_canceled():
                 self.cancel()
@@ -802,7 +799,7 @@ if __name__ == '__main__':
         def close_valve(self, *args, **kw):
             self.info('close valve')
 
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup('pscript')
     #    execute_script(t)

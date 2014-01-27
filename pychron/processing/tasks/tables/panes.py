@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, Item, UItem, VGroup, EnumEditor
+from traitsui.api import View, Item, VGroup, EnumEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 #============= standard library imports ========================
@@ -32,7 +32,7 @@ class TableEditorPane(TraitsDockPane):
                         Item('subtitle_font_size'),
                         Item('use_alternating_background'),
                         Item('notes_template', editor=EnumEditor(name='notes_templates')),
-                        Item('age_type', editor=EnumEditor(name='age_types')),
+                        Item('age_kind', editor=EnumEditor(name='age_kinds')),
 #                         constants_grp,
                         )
 

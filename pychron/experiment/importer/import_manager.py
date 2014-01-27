@@ -25,8 +25,8 @@ from pychron.experiment.importer.mass_spec_extractor import Extractor, \
     MassSpecExtractor
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.pychron_constants import NULL_STR
-from pychron.ui.qt.thread import Thread
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.qt.thread import Thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 records = namedtuple('Record', 'name')

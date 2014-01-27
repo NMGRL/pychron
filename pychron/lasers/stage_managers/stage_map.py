@@ -25,10 +25,10 @@ import os
 from numpy import array
 import pickle
 #============= local library imports  ==========================
-from pychron.helpers.filetools import parse_file
+from pychron.core.helpers.filetools import parse_file
 from pychron.paths import paths
 from pychron.loggable import Loggable
-from pychron.geometry.affine import AffineTransform
+from pychron.core.geometry.affine import AffineTransform
 
 class SampleHole(HasTraits):
     id = Str

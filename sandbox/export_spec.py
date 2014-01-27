@@ -5,7 +5,7 @@ import sys
 d = os.path.dirname(os.getcwd())
 sys.path.append(d)
 
-from pychron.ui import set_toolkit
+from pychron.core.ui import set_toolkit
 
 set_toolkit('qt4')
 
@@ -14,7 +14,7 @@ set_toolkit('qt4')
 #for iso,det in
 
 #
-#from pychron.ui.dialogs import myConfirmationDialog
+#from pychron.core.ui.dialogs import myConfirmationDialog
 #
 #from traits.api import HasTraits, Button
 #from traitsui.api import View

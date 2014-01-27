@@ -22,9 +22,9 @@ from traitsui.api import Handler
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.utils import IsQt
+# from pychron.utils import IsQt
 from pychron.loggable import Loggable
-from pychron.ui.gui import invoke_in_main_thread
+from pychron.core.ui.gui import invoke_in_main_thread
 
 
 # class ViewableHandler(Controller):
@@ -50,10 +50,10 @@ class ViewableHandler(Handler):
     def object_raised_changed(self, info):
         if info.initialized:
             if info.ui:
-                if IsQt():
-                    info.ui.control.show()
-                else:
-                    info.ui.control.Raise()
+                # if IsQt():
+                info.ui.control.show()
+                # else:
+                #     info.ui.control.Raise()
 
     def close(self, info, is_ok):
         return info.object.close(is_ok)

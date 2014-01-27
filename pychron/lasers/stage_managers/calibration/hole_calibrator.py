@@ -18,7 +18,7 @@
 from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.geometry.reference_point import  ReferenceHole
+from pychron.core.geometry.reference_point import  ReferenceHole
 from pychron.lasers.stage_managers.calibration.free_calibrator import FreeCalibrator
 
 

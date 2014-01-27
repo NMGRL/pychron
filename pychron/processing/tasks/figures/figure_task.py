@@ -15,22 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import on_trait_change, Instance
+from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
-from itertools import groupby
-import cPickle as pickle
 #============= local library imports  ==========================
-from pychron.processing.analysis_group import InterpretedAge
+from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
+from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
-    OpenFigureAction, NewIdeogramAction, AppendIdeogramAction, NewSpectrumAction, \
-    AppendSpectrumAction, AddTextBoxAction
+    NewIdeogramAction, NewSpectrumAction, \
+    SavePDFFigureAction, SaveAsFigureAction
 
 import weakref
 
@@ -39,10 +37,12 @@ from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
+from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
+
 
 
 class FigureTask(AnalysisEditTask):
@@ -51,28 +51,36 @@ class FigureTask(AnalysisEditTask):
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
         SToolBar(
+            SavePDFFigureAction(),
             SaveFigureAction(),
-            OpenFigureAction(),
-            name='Figure',
-            image_size=(16, 16)),
+            SaveAsFigureAction(),
+            name='Figure'),
         SToolBar(
             NewIdeogramAction(),
-            AppendIdeogramAction(),
-            name='Ideogram',
-            image_size=(16, 16)),
+            # AppendIdeogramAction(),
+            name='Ideogram'),
         SToolBar(
             NewSpectrumAction(),
-            AppendSpectrumAction(),
-            name='Spectrum',
-            image_size=(16, 16)),
-        SToolBar(AddTextBoxAction(),
-                 image_size=(16, 16)
-        )
+            # AppendSpectrumAction(),
+            name='Spectrum'),
+        SToolBar(SetInterpretedAgeTBAction(),
+                 BrowseInterpretedAgeTBAction())
+        # SToolBar(AddTextBoxAction())
     ]
 
     auto_select_analysis = False
 
-    #===============================================================================
+    figures_help = 'Double-click to open'
+    figure_kind = Enum('All','Ideogram','Spectrum','Inv Iso')
+    delete_figure_button=Button
+
+    figures = List
+    ofigures = List
+
+    selected_figures = Any
+    dclicked_figure = Event
+    #
+    # ===============================================================================
     # task protocol
     #===============================================================================
     def prepare_destroy(self):
@@ -82,33 +90,13 @@ class FigureTask(AnalysisEditTask):
                 pom.close()
         super(FigureTask, self).prepare_destroy()
 
-        #def activated(self):
-        #    super(FigureTask, self).activated()
-
-        #uk=self.unknowns_pane
-        #uk.previous_selection=uk.previous_selections[0]
-
-        #comp=self.active_editor.component
-        #print 'comp', comp
-        #self.plot_editor_pane.component=comp
-        #self.plot_editor_pane._component_changed()
-
     def create_dock_panes(self):
         panes = super(FigureTask, self).create_dock_panes()
         self.plotter_options_pane = PlotterOptionsPane()
-        self.figure_selector_pane = FigureSelectorPane()
-
-        #fs = [fi.name for fi in self.manager.db.get_figures()]
-        #if fs:
-        #    self.figure_selector_pane.trait_set(figures=fs, figure=fs[0])
+        self.figure_selector_pane = FigureSelectorPane(model=self)
 
         return panes + [self.plotter_options_pane,
-                        self.figure_selector_pane,
-                        #MultiSelectAnalysisBrowser(model=self)
-        ]
-
-    def _create_control_pane(self):
-        pass
+                        self.figure_selector_pane]
 
     #===============================================================================
     # grouping
@@ -147,40 +135,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # figures
     #===============================================================================
-
-    def add_text_box(self):
-        ac = self.active_editor
-        if ac and ac.component and hasattr(ac, 'add_text_box'):
-
-            self.active_editor.add_text_box()
-
-            at = self.active_editor.annotation_tool
-            if at:
-                at.on_trait_change(self.plot_editor_pane.set_annotation_component,
-                                   'component')
-
-                self.plot_editor_pane.set_annotation_tool(at)
-
-    def tb_new_ideogram(self):
-        if isinstance(self.active_editor, IdeogramEditor) and \
-                not self.unknowns_pane.items:
-            self.append_ideogram()
-        else:
-            self.new_ideogram()
-
-    def tb_new_spectrum(self):
-        if isinstance(self.active_editor, SpectrumEditor) and \
-                not self.unknowns_pane.items:
-            self.append_spectrum()
-        else:
-            self.new_spectrum()
-
-    def append_spectrum(self):
-        self._append_figure(SpectrumEditor)
-
-    def append_ideogram(self):
-        self._append_figure(IdeogramEditor)
-
     def new_ideogram(self, ans=None, klass=None, tklass=None,
                      name='Ideo', set_ans=True,
                      add_table=True, add_iso=True):
@@ -191,9 +145,9 @@ class FigureTask(AnalysisEditTask):
         if tklass is None:
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
-#            from pychron.processing.tasks.tables.editors.fusion_table_editor \
-#                import FusionTableEditor as tklass
-             
+            #            from pychron.processing.tasks.tables.editors.fusion_table_editor \
+        #                import FusionTableEditor as tklass
+
         return self._new_figure(ans, name, klass, tklass,
                                 set_ans=set_ans,
                                 add_iso=add_iso,
@@ -222,7 +176,7 @@ class FigureTask(AnalysisEditTask):
         if tklass is None:
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
-                
+
         feditor = self._new_figure(ans, name, klass, tklass,
                                    add_iso=False)
 
@@ -241,147 +195,61 @@ class FigureTask(AnalysisEditTask):
                                 add_iso=add_iso,
                                 add_table=add_table)
 
-
     #===============================================================================
     # actions
     #===============================================================================
     def save_figure(self):
-        self._save_figure()
+        sid=self.active_editor.saved_figure_id
+        if sid:
+            self._save_figure()
+        else:
+            self._save_as_figure()
 
-    def open_figure(self):
-        self._open_figure()
+    def save_as_figure(self):
+        self._save_as_figure()
 
     def set_interpreted_age(self):
-        key=lambda x: x.group_id
-        unks=sorted(self.active_editor.unknowns, key=key)
-        ias=[]
-        ok='omit_{}'.format(self.active_editor.basename)
-        for gid, ans in groupby(unks, key=key):
-            ans=filter(lambda x: not x.is_omitted(ok), ans)
-            ias.append(InterpretedAge(analyses=ans, use=True))
+        if self.active_editor:
+            self.active_editor.set_interpreted_age()
 
-        iaf=InterpretedAgeFactory(groups=ias)
-        info=iaf.edit_traits()
-        if info.result:
-            for g in iaf.groups:
-                db=self.manager.db
-                if g.use:
-                    with db.session_ctx():
-                        ln=db.get_labnumber(g.identifier)
-                        if not ln:
-                            continue
+    def browse_interpreted_age(self):
+        app=self.application
+        app.open_task('pychron.processing.interpreted_age')
 
-                        hist=db.add_interpreted_age_history(ln)
-                        ia=db.add_interpreted_age(hist, age=g.preferred_age_value or 0,
-                                                  age_err=g.preferred_age_error or 0,
-                                                  age_kind=g.preferred_age_kind)
-                        for ai in g.analyses:
-                            ai=db.get_analysis_uuid(ai.uuid)
-                            db.add_interpreted_age_set(ia, ai)
+    def add_text_box(self):
+        ac = self.active_editor
+        if ac and ac.component and hasattr(ac, 'add_text_box'):
+
+            self.active_editor.add_text_box()
+
+            at = self.active_editor.annotation_tool
+            if at:
+                at.on_trait_change(self.plot_editor_pane.set_annotation_component,
+                                   'component')
+
+                self.plot_editor_pane.set_annotation_tool(at)
+
+    def tb_new_ideogram(self):
+        if isinstance(self.active_editor, IdeogramEditor) and \
+                not self.unknowns_pane.items:
+            self.append_ideogram()
+        else:
+            self.new_ideogram()
+
+    def tb_new_spectrum(self):
+        if isinstance(self.active_editor, SpectrumEditor) and \
+                not self.unknowns_pane.items:
+            self.append_spectrum()
+        else:
+            self.new_spectrum()
+    #===============================================================================
+    #
+    #===============================================================================
 
 
     #===============================================================================
-    # db persistence
+    # private
     #===============================================================================
-    def _open_figure(self, name=None):
-        if name is None:
-            name = self.figure_selector_pane.figure
-
-        if not name:
-            return
-
-        db = self.manager.db
-
-        # get the name of the figure for the user
-        fig = db.get_figure(name)
-        if not fig:
-            return
-            # load options
-
-        # load analyses
-        items = [self._record_view_factory(ai.analysis) for ai in fig.analyses]
-        self.unknowns_pane.items = items
-
-    def _save_figure(self):
-        db = self.manager.db
-        if not isinstance(self.active_editor, FigureEditor):
-            return
-
-        with db.session_ctx():
-            figure = db.add_figure()
-
-            for ai in self.active_editor.unknowns:
-                dban = db.get_analysis_uuid(ai.uuid)
-                aid = ai.record_id
-                if dban:
-                    db.add_figure_analysis(figure, dban,
-                                           status=ai.temp_status and ai.status,
-                                           graph=ai.graph_id,
-                                           group=ai.group_id,
-                    )
-                    self.debug('adding analysis {} to figure'.format(aid))
-                else:
-                    self.debug('{} not in database'.format(aid))
-
-            po = self.active_editor.plotter_options_manager.plotter_options
-
-            #             refg = self.active_editor.graphs[0]
-
-            panel = self.active_editor._model.panels[0]
-            refg = panel.graph
-
-            r = refg.plots[0].index_mapper.range
-            xbounds = '{}, {}'.format(r.low, r.high)
-            ys = []
-            for pi in refg.plots:
-                r = pi.value_mapper.range
-                ys.append('{},{}'.format(r.low, r.high))
-
-            ybounds = '|'.join(ys)
-
-            blob = pickle.dumps(po)
-            db.add_figure_preference(figure,
-                                     xbounds=xbounds,
-                                     ybounds=ybounds,
-                                     options_pickle=blob)
-
-            #===============================================================================
-            #
-            #===============================================================================
-
-    def _append_figure(self, klass):
-        """
-            if selected_samples append all analyses
-            else append selected analyses
-
-        """
-        return
-
-        if isinstance(self.active_editor, klass):
-            sa = self.analysis_table.selected
-            if sa:
-                ts = self.manager.make_analyses(sa)
-            else:
-                ts = [ai for si in self.selected_sample
-                      for ai in self._get_sample_analyses(si)]
-
-            ans = self.manager.make_analyses(ts)
-            if ans:
-                pans = self.active_editor.unknowns
-                uuids = [p.uuid for p in pans]
-                fans = [ai for ai in ans if ai.uuid not in uuids]
-
-                pans.extend(fans)
-                self.active_editor.trait_set(unknowns=pans)
-
-            gid = 0
-            for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
-                for ai in gans:
-                    ai.group_id = gid
-                gid += 1
-
-            self.active_editor.rebuild(compress_groups=False)
-
     def _new_figure(self, ans, name, klass, tklass=None,
                     add_table=True,
                     add_iso=True,
@@ -389,8 +257,7 @@ class FigureTask(AnalysisEditTask):
         # new figure editor
         editor = klass(
             name=name,
-            processor=self.manager,
-        )
+            processor=self.manager)
 
         if ans is None:
             ans = self.unknowns_pane.items
@@ -402,34 +269,35 @@ class FigureTask(AnalysisEditTask):
 
         self._open_editor(editor)
 
-        if tklass and add_table:
-            # open table
-            teditor = self._new_table(ans, name, tklass)
-            if teditor:
-                editor.associated_editors.append(weakref.ref(teditor)())
+        add_associated=False
+        if not add_associated:
+            self.debug('Not adding associated editors')
+        else:
+            if tklass and add_table:
+                # open table
+                teditor = self._new_table(ans, name, tklass)
+                if teditor:
+                    editor.associated_editors.append(weakref.ref(teditor)())
 
-        if add_iso:
-            # open associated isochron
-            ieditor = self._new_associated_isochron(ans, name)
-            if ieditor:
-                editor.associated_editors.append(weakref.ref(ieditor)())
-                ieditor.parent_editor = editor
+            if add_iso:
+                # open associated isochron
+                ieditor = self._new_associated_isochron(ans, name)
+                if ieditor:
+                    editor.associated_editors.append(weakref.ref(ieditor)())
+                    ieditor.parent_editor = editor
 
         # activate figure editor
         self.editor_area.activate_editor(editor)
         return editor
 
-    def _new_associated_isochron(self, ans, name):
-        name = '{}-isochron'.format(name)
-        editor = InverseIsochronEditor(name=name,
-                                       processor=self.manager
-        )
-        return self._add_editor(editor, ans)
+    def _group_by(self, key):
 
-    def _new_table(self, ans, name, klass):
-        name = '{}-table'.format(name)
-        editor = klass(name=name)
-        return self._add_editor(editor, ans)
+        editor = self.active_editor
+        if editor:
+            items = self.unknowns_pane.items
+            group_analyses_by_key(editor, items, key)
+            self.unknowns_pane.refresh_needed = True
+            editor.rebuild()
 
     def _add_editor(self, editor, ans):
         ed = None
@@ -449,6 +317,15 @@ class FigureTask(AnalysisEditTask):
 
         return editor
 
+    def _add_unknowns_hook(self, *args, **kw):
+        if self.active_editor:
+            if hasattr(self.active_editor, 'auto_group'):
+                if self.active_editor.auto_group:
+                    self.group_by_labnumber()
+                    for ai in self.active_editor.associated_editors:
+                        if isinstance(ai, FigureEditor):
+                            ai.rebuild_graph()
+
     def _get_unique_group_id(self):
         gids = {i.group_id for i in self.unknowns_pane.items}
         return max(gids) + 1
@@ -457,61 +334,239 @@ class FigureTask(AnalysisEditTask):
         items = self.unknowns_pane.items
         return [items.index(si) for si in self.unknowns_pane.selected]
 
-    def _add_unknowns_hook(self, *args, **kw):
-        self.group_by_labnumber()
+    def _new_associated_isochron(self, ans, name):
+        name = '{}-isochron'.format(name)
+        editor = InverseIsochronEditor(name=name,
+                                       processor=self.manager)
+        return self._add_editor(editor, ans)
 
+    def _new_table(self, ans, name, klass):
+        name = '{}-table'.format(name)
+        editor = klass(name=name)
+        return self._add_editor(editor, ans)
+
+    def _create_control_pane(self):
+        pass
+
+    def _load_project_figures(self, new):
+        if new:
+            db = self.manager.db
+            with db.session_ctx():
+                proj = [p.name for p in new]
+                figs = db.get_project_figures(proj)
+                self.ofigures = [self._dbfigure_factory(f) for f in figs]
+                self.figures = self.ofigures
+                self._figure_kind_changed()
+
+    def _load_sample_figures(self, new):
+        if new:
+            db = self.manager.db
+            with db.session_ctx():
+                lns = [p.labnumber for p in new]
+                figs = db.get_labnumber_figures(lns)
+                figs=[self._dbfigure_factory(f) for f in figs]
+                figs=[f for f in figs if f]
+                self.ofigures = figs
+                self.figures = self.ofigures
+                self._figure_kind_changed()
+
+    def _dbfigure_factory(self, f):
+        if f.preference:
+            dbf = DBFigure(name=f.name or '',
+                           project=f.project.name,
+                           identifiers=[s.labnumber.identifier for s in f.labnumbers],
+                           samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
+                           kind=f.preference.kind,
+                           id=f.id)
+            return dbf
+
+    def _get_sample_obj(self, s):
+        return next((sr for sr in self.samples if sr.labnumber == s), None)
+
+    def _get_project_obj(self, p):
+        return next((sr for sr in self.projects if sr.name == p), None)
+
+    def _save_figure(self):
+        """
+
+            update preferences
+            update analyses
+        """
         if self.active_editor:
-            for ai in self.active_editor.associated_editors:
-                if isinstance(ai, FigureEditor):
-                    ai.rebuild_graph()
+            self.active_editor.update_figure()
+            self.db_save_info()
 
-    @classmethod
-    def group_by(cls, editor, items, key):
-        ids = []
-        for it in items:
-            v = key(it)
-            if not v in ids:
-                ids.append(v)
+        # db=self.manager.db
+        # with db.session_ctx() as sess:
+        #     fig=db.get_figure(sid, key='id')
+        #     print sid, fig
+        #
+        #     pom=self.active_editor.plotter_options_manager
+        #     blob = pom.dump_yaml()
+        #     fig.preference.options=blob
+        #
+        #     dbans=fig.analyses
+        #     uuids=[ai.uuid for ai in self.active_editor.analyses]
+        #
+        #     for dbai in fig.analyses:
+        #         if not dbai.analysis.uuid in uuids:
+        #             #remove analysis
+        #             sess.delete(dbai)
+        #
+        #     for ai in self.active_editor.analyses:
+        #         if not next((dbai for dbai in dbans if dbai.analysis.uuid==ai.uuid), None):
+        #             #add analysis
+        #             ai=db.get_analysis_uuid(ai.uuid)
+        #             db.add_figure_analysis(fig, ai)
 
-        sitems = sorted(items, key=key)
-        #for i, (_, analyses) in enumerate(groupby(sitems, key=key)):
-        for k, analyses in groupby(sitems, key=key):
-            gid = ids.index(k)
-            idxs = [items.index(ai) for ai in analyses]
-            editor.set_group(idxs, gid, refresh=False)
-
-    def _group_by(self, key):
-
-        editor = self.active_editor
-        if editor:
-            #items = editor.unknowns
-            items = self.unknowns_pane.items
-            group_analyses_by_key(editor, items, key)
-            self.unknowns_pane.refresh_needed = True
-            editor.rebuild(refresh_data=False)
-
-            #===============================================================================
-            # handlers
-            #===============================================================================
-            #     @on_trait_change('plotter_options_pane:pom:plotter_options:aux_plots:x_error')
-            #     def _update_x_error(self):
-
-
-    @on_trait_change('plotter_options_pane:pom:plotter_options:[+, aux_plots:+]')
-    def _options_update(self, name, new):
-        if name == 'initialized':
+    def _save_as_figure(self):
+        """
+            add a new figure to the database
+        """
+        db = self.manager.db
+        if not isinstance(self.active_editor, FigureEditor):
             return
 
-        self.active_editor.rebuild(refresh_data=False)
+        with db.session_ctx():
+            #use dialog to ask user for figure name and associated project
+            dlg = SaveFigureDialog(projects=self.projects,
+                                   samples=self.samples)
 
-    #         do_later(self.active_editor.rebuild, refresh_data=False)
-    #         self.active_editor.rebuild()
+            # if self.selected_projects:
+            #     dlg.selected_project = self.selected_projects[0]
+            #
+            projects = list(set([ai.project for ai in self.active_editor.analyses]))
+            if projects:
+                proj = self._get_project_obj(projects[0])
+                if proj:
+                    dlg.selected_project = proj
 
-    #        self.active_editor.dirty = True
+            identifiers = list(set([ai.labnumber for ai in self.active_editor.analyses]))
+            # print samples
+            ss = [self._get_sample_obj(si) for si in identifiers]
+            # # print ss
+            ss = filter(lambda x: not x is None, ss)
+            # # print ss
+            dlg.selected_samples = ss
+
+            while 1:
+                info = dlg.edit_traits(kind='livemodal')
+                if not info.result:
+                    return
+                if dlg.name:
+                    break
+                else:
+                    if not self.confirmation_dialog('Need to set the name of a "figure" to save. Continue?'):
+                        return
+
+            project = None
+            if dlg.selected_project:
+                project = dlg.selected_project.name
+
+            identifiers = [si.labnumber for si in dlg.selected_samples]
+            fid=self.active_editor.save_figure(dlg.name, project, identifiers)
+            self._load_sample_figures(dlg.selected_samples)
+
+            idx=next((i for i, o in enumerate(self.ofigures) if o.id ==fid), None)
+            if idx is not None:
+                self.active_editor.saved_figure_id=idx
+
+    def _delete_figures(self, figs):
+        db=self.manager.db
+        with db.session_ctx() as sess:
+            for fi in figs:
+                dbfig=db.get_figure(fi.id, key='id')
+
+                sess.delete(dbfig.preference)
+                for si in dbfig.labnumbers:
+                    sess.delete(si)
+
+                for ai in dbfig.analyses:
+                    sess.delete(ai)
+
+                sess.delete(dbfig)
+
+    #===============================================================================
+    # handlers
+    #===============================================================================
+    def _selected_projects_changed(self, new):
+        self._load_project_figures(new)
+        super(FigureTask, self)._selected_projects_changed(new)
+
+    def _selected_samples_changed(self, new):
+        self._load_sample_figures(new)
+        super(FigureTask, self)._selected_samples_changed(new)
+
+    def _delete_figure_button_fired(self):
+        if self.selected_figures:
+
+            if self.confirmation_dialog('Are you sure you want to delete the selected figures?'):
+                self._delete_figures(self.selected_figures)
+                if self.selected_samples:
+                    self._load_sample_figures(self.selected_samples)
+                else:
+                    self._load_project_figures(self.selected_projects)
+
+    def _figure_kind_changed(self):
+        self.selected_figures=[]
+        if self.figure_kind:
+            if self.figure_kind=='All':
+                self.figures=self.ofigures
+            else:
+                kind=self.figure_kind[:4].lower()
+                self.figures=filter(lambda x:x.kind==kind, self.ofigures)
+
+    def _dclicked_sample_changed(self):
+        if self.active_editor:
+            self.active_editor.saved_figure_id=0
+        super(FigureTask, self)._dclicked_sample_changed()
+
+    def _dclicked_figure_changed(self):
+        sf = self.selected_figures
+        if sf:
+            db = self.manager.db
+            with db.session_ctx():
+                sf = sf[0]
+                db_fig = db.get_figure(sf.id, key='id')
+
+                blob = db_fig.preference.options
+
+                kind = db_fig.preference.kind
+                open_editor_needed=True
+                if self.active_editor:
+                    open_editor_needed=self.active_editor.basename!=kind
+
+                if open_editor_needed:
+                    #open new editor of this kind
+                    if kind=='spec':
+                        if self.active_editor:
+                            self.active_editor.close()
+                        self.new_spectrum()
+                    elif kind=='ideo':
+                        if self.active_editor:
+                            self.active_editor.close()
+                        self.new_ideogram()
+
+                if self.active_editor:
+                    self.active_editor.plotter_options_manager.load_yaml(blob)
+                    self.active_editor.saved_figure_id=int(sf.id)
+
+                    self.active_editor.set_items([a.analysis for a in db_fig.analyses])
+                    for ai,dbai in zip(self.active_editor.analyses, db_fig.analyses):
+                        ai.group_id=int(dbai.group or 0)
+                        ai.graph_id=int(dbai.graph or 0)
+
+                    self.active_editor.rebuild()
+
+    @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
+    def _options_update(self, obj, name, old, new):
+        if name == 'initialized':
+            return
+        if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
+            self.active_editor.rebuild()
 
     def _active_editor_changed(self):
         if self.active_editor:
-        #             if hasattr(self.active_editor, 'plotter_options_manager'):
             if isinstance(self.active_editor, FigureEditor):
                 self.plotter_options_pane.pom = self.active_editor.plotter_options_manager
 
@@ -522,49 +577,74 @@ class FigureTask(AnalysisEditTask):
         if self.unknowns_pane:
             self.unknowns_pane.refresh_needed = True
 
+    @on_trait_change('active_editor:tag')
+    def _handle_graph_tag(self, new):
+        self.set_tag()
+
+    @on_trait_change('active_editor:save_db_figure')
+    def _handle_save_db_figure(self):
+        self._save_as_figure()
+
     #===========================================================================
     # browser protocol
     #===========================================================================
-    def _dclicked_sample_changed(self, new):
-        if self.unknowns_pane.items:
 
-            #editor = IdeogramEditor(processor=self.manager)
-
-            #for sa in self.selected_samples:
-            ans = self._get_sample_analyses(self.selected_samples)
-            ans = self.manager.make_analyses(ans)
-            self.new_ideogram(ans, set_ans=False)
-
-            #self.unknowns_pane.items=ans
-            #print sa, ans
-        else:
-            ans = self._get_sample_analyses(self.selected_samples)
-            self.unknowns_pane.items = ans
-
-            #             sam = next((si
-            #                         for si in self.active_editor.items
-            #                             if si.sample == sa.name), None)
-            #             if sam is None:
-            #                 man = self.manager
-            #                 ans = self._get_sample_analyses(sa)
-            #                 ans = man.make_analyses(ans)
-
-            #===============================================================================
-            # defaults
-            #===============================================================================
-
+    #===============================================================================
+    # defaults
+    #===============================================================================
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit',
+            id='pychron.processing',
             left=HSplitter(
                 PaneItem('pychron.browser'),
                 Tabbed(
-                    PaneItem('pychron.analysis_edit.unknowns'),
+                    PaneItem('pychron.processing.figures.saved_figures'),
+                    PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.figures.plotter_options'),
-                    PaneItem('pychron.plot_editor')
-                    #PaneItem('pychron.analysis_edit.controls'),
-                ),
-            ),
-        )
-
+                    PaneItem('pychron.plot_editor'))))
 #============= EOF =============================================
+#@classmethod
+# def group_by(cls, editor, items, key):
+#     ids = []
+#     for it in items:
+#         v = key(it)
+#         if not v in ids:
+#             ids.append(v)
+#
+#     sitems = sorted(items, key=key)
+#     for k, analyses in groupby(sitems, key=key):
+#         gid = ids.index(k)
+#         idxs = [items.index(ai) for ai in analyses]
+#         editor.set_group(idxs, gid, refresh=False)
+# def _append_figure(self, klass):
+#     """
+#         if selected_samples append all analyses
+#         else append selected analyses
+#
+#     """
+#     return
+#
+#     if isinstance(self.active_editor, klass):
+#         sa = self.analysis_table.selected
+#         if sa:
+#             ts = self.manager.make_analyses(sa)
+#         else:
+#             ts = [ai for si in self.selected_sample
+#                   for ai in self._get_sample_analyses(si)]
+#
+#         ans = self.manager.make_analyses(ts)
+#         if ans:
+#             pans = self.active_editor.analyses
+#             uuids = [p.uuid for p in pans]
+#             fans = [ai for ai in ans if ai.uuid not in uuids]
+#
+#             pans.extend(fans)
+#             self.active_editor.trait_set(unknowns=pans)
+#
+#         gid = 0
+#         for _, gans in groupby(self.active_editor.unknowns, key=lambda x: x.sample):
+#             for ai in gans:
+#                 ai.group_id = gid
+#             gid += 1
+#
+#         self.active_editor.rebuild(compress_groups=False)

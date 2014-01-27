@@ -25,8 +25,8 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.ui.tabular_editor import myTabularEditor
-from pychron.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 # from pychron.database.core.query import Query
 from pychron.paths import paths
 

@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 from PySide.QtCore import Qt
-from pyface.timer.do_later import do_later
 from traits.api import Instance, List, on_trait_change
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed, VSplitter
@@ -36,7 +35,7 @@ from pychron.system_monitor.tasks.panes import ConnectionPane, AnalysisPane, Das
 from pychron.system_monitor.tasks.system_monitor_editor import SystemMonitorEditor
 
 from traitsui.api import View, Item, EnumEditor
-from pychron.ui.preference_binding import bind_preference
+from pychron.core.ui.preference_binding import bind_preference
 
 
 class SystemMonitorTask(FigureTask):
@@ -147,10 +146,10 @@ class SystemMonitorTask(FigureTask):
                 self.connection_pane.conn_spec = self.active_editor.conn_spec
 
             if self.unknowns_pane:
-                if hasattr(self.active_editor, 'unknowns'):
+                if hasattr(self.active_editor, 'analyses'):
                     #print self.active_editor, len(self.active_editor.unknowns)
                     #self.unknowns_pane._no_update=True
-                    self.unknowns_pane.items = self.active_editor.unknowns
+                    self.unknowns_pane.items = self.active_editor.analyses
                     #self.unknowns_pane._no_update=False
 
     def _prompt_for_save(self):
@@ -198,7 +197,7 @@ class SystemMonitorTask(FigureTask):
             left=Splitter(
                 Splitter(
                     PaneItem('pychron.sys_mon.connection'),
-                    PaneItem('pychron.analysis_edit.controls'),
+                    PaneItem('pychron.processing.controls'),
                     orientation='vertical'),
                 PaneItem('pychron.sys_mon.analyses'),
                 orientation='horizontal'),

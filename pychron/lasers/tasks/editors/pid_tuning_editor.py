@@ -37,11 +37,19 @@ class PIDTuningScanner(Scanner):
     #def _write_calibration(self, data):
     #    dm = self.csv_data_manager
     #    dm.write_to_frame(data)
+    def _stop_hook(self):
+        self._set_power_hook(0)
+
+    def _set_power_hook(self, t):
+        if self.manager:
+            self.manager.set_laser_temperature(t, set_pid=False)
 
     def start_control_hook(self, ydict):
         self.csv_data_manager = dm = CSVDataManager()
         p = os.path.join(paths.data_dir, 'pid_tune')
+
         dm.new_frame(directory=p)
+        self.debug('Save autotuned pid to {}'.format(dm.get_current_path()))
 
         aggr = ydict['autotune_aggressiveness']
         setpoint = ydict['autotune_setpoint']
@@ -50,71 +58,65 @@ class PIDTuningScanner(Scanner):
             tc.autotune_setpoint = setpoint
             tc.autotune_aggressiveness = aggr
 
-    def _write_pid_parameters(self, setpoint):
+    def _write_pid_parameters(self, setpoint, max_output):
         dm=self.csv_data_manager
 
         tc = self.manager.get_device('temperature_controller')
-        args=tc.report_pid()
-        if args:
-            ph, pc, i, d=args
-            d=(setpoint, ph,pc, i, d)
-            dm.write_to_frame(d)
+        if tc:
+            args=tc.report_pid()
+            if args:
+                ph, pc, i, d=args
+                d=(setpoint, ph, 0, i, d, max_output)
+                dm.write_to_frame(d)
 
-    def _maintain_setpoint(self, t, d):
+    def _maintain_setpoint(self, t, d, max_output):
         if d == 'autotune':
+            self._set_max_output(max_output)
             self._autotune(t)
-            self._write_pid_parameters(t)
+            self._write_pid_parameters(t, max_output)
+            self._cool_down()
             #py, tc = self._equilibrate(t)
             #self._write_calibration((t, py, tc))
 
         else:
             super(PIDTuningScanner, self)._maintain_setpoint(t, d)
 
+    def _set_max_output(self, v):
+        tc = self.manager.get_device('temperature_controller')
+        if tc:
+            tc.max_output=v
+
+    def _cool_down(self):
+        """
+            wait until temp is below threshold
+        """
+        self._set_power_hook(0)
+        threshold=300
+        tm=self.manager.get_device('temperature_monitor')
+        ct=tm.get_process_value()
+        while ct>threshold:
+            time.sleep(0.5)
+            ct=tm.get_process_value()
+
     def _autotune(self, ctemp):
-
-        #ctemp=self._current_setpoint
-        #ctemp = self.manager.map_temperature(temp)
-
-        #py = self.manager.get_device('pyrometer')
-        #tc = self.manager.get_device('temperature_monitor')
-        #temps = []
-        #n = 10
-        #tol = self._eq_tol
-        #std = self._eq_std
         tc=self.manager.get_device('temperature_controller')
 
         self.info('starting autotune')
+        ott=tc.enable_tru_tune
         tc.enable_tru_tune = False
         tc.start_autotune()
 
         st=time.time()
         while self._scanning:
             sti = time.time()
-            if self.autotune_finished():
+            if tc.autotune_finished():
                 break
             elapsed = time.time() - sti
             time.sleep(max(0.0001, min(1, 1 - elapsed)))
 
+        tc.enable_tru_tune=ott
         tt=time.time()-st
-        self.info('total tuning time for {}C ={0.1f}s'.format(ctemp, tt))
-        #nn = 30
-        #ptemps = []
-        #ctemps = []
-        #for _ in range(nn):
-        #    if not self._scanning:
-        #        break
-        #
-        #    sti = time.time()
-        #
-        #    py_t = py.temperature
-        #    tc_t = tc.process_value
-        #
-        #    ptemps.append(py_t)
-        #    ctemps.append(tc_t)
-        #    elapsed = time.time() - sti
-        #    time.sleep(max(0.0001, min(1, 1 - elapsed)))
-        #
-        #return array(ptemps).mean(), array(ctemps).mean()
+        self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
 
 
 class PIDTuningEditor(LaserEditor):
@@ -122,6 +124,7 @@ class PIDTuningEditor(LaserEditor):
 
     def stop(self):
         self.scanner.stop()
+        self.completed=True
 
     def _scan_pyrometer(self):
         d = self._pyrometer

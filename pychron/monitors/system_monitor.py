@@ -107,7 +107,6 @@ class SystemMonitor(Monitor):
 # import datetime
 # #from thread import *
 # from threading import Thread
-# import wx
 # import logging
 ##=============local library imports  ==========================
 # #from globals import ghome, gpressuredelay

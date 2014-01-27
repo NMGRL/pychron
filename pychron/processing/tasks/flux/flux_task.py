@@ -24,6 +24,10 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 from numpy import asarray, average
 #============= local library imports  ==========================
 from uncertainties import ufloat
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.easy_parser import EasyParser
+from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.tasks.flux.flux_editor import FluxEditor
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
 from pychron.processing.tasks.flux.panes import IrradiationPane
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
@@ -53,18 +57,18 @@ class ReferencesAdapter(LevelAdapter):
 
 
 class UnknownsPane(TablePane):
-    id = 'pychron.analysis_edit.unknowns'
+    id = 'pychron.processing.unknowns'
     name = 'Unknowns'
 
 
 class ReferencesPane(TablePane):
     name = 'References'
-    id = 'pychron.analysis_edit.references'
+    id = 'pychron.processing.references'
 
 
 class FluxTask(InterpolationTask):
     name = 'Flux'
-    id = 'pychron.analysis_edit.flux'
+    id = 'pychron.processing.flux'
     flux_editor_count = 1
     unknowns_adapter = UnknownsAdapter
     references_adapter = ReferencesAdapter
@@ -76,26 +80,23 @@ class FluxTask(InterpolationTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            id='pychron.analysis_edit',
+            id='pychron.processing',
             left=HSplitter(
                 VSplitter(
-                    PaneItem('pychron.analysis_edit.irradiation'),
+                    PaneItem('pychron.processing.irradiation'),
                     Tabbed(
-                        PaneItem('pychron.analysis_edit.unknowns'),
-                        PaneItem('pychron.analysis_edit.references')),
-                    PaneItem('pychron.analysis_edit.controls'))
+                        PaneItem('pychron.processing.unknowns'),
+                        PaneItem('pychron.processing.references')),
+                    PaneItem('pychron.processing.controls'))
             ),
         )
 
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
         return panes + [
-            IrradiationPane(model=self.manager)
-        ]
+            IrradiationPane(model=self.manager)]
 
     def new_flux(self):
-        from pychron.processing.tasks.flux.flux_editor import FluxEditor
-
         editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
                             processor=self.manager)
 
@@ -117,24 +118,51 @@ class FluxTask(InterpolationTask):
                     self.unknowns_pane.items = u
                     self.references_pane.items = r
 
-                    #self.active_editor.unknowns=u
-                    #self.active_editor.references= r
+                    # self.active_editor.set_items(u)
+                    # self.active_editor.references= r
 
     @on_trait_change('active_editor:tool:calculate_button')
     def _calculate_flux(self):
-        editor = self.active_editor
-        editor.monitor_positions = {}
+        if self.references_pane.items:
+            editor = self.active_editor
+            editor.monitor_positions = {}
+            editor.positions_dirty=True
+            editor.suppress_update=True
+            db=self.manager.db
+            with db.session_ctx():
+                geom = self._get_geometry()
+                editor.geometry = geom
+                def add_pos(i, use=False):
+                    if i.identifier:
+                        ref = db.get_labnumber(i.identifier)
+                        pid = ref.irradiation_position.position
+                        ident = ref.identifier
+                        sample=''
+                        if ref.sample:
+                            sample=ref.sample.name
 
-        with self.manager.db.session_ctx():
-            geom = self._get_geometry()
-            editor.geometry = geom
+                        cj = ref.selected_flux_history.flux.j
+                        cjerr = ref.selected_flux_history.flux.j_err
+                        x, y, r = geom[pid - 1]
 
-        if editor.tool.data_source == 'database':
-            self._calculate_flux_db(editor)
-        else:
-            self._calculate_flux_file(editor)
+                        editor.add_position(int(pid), ident, sample, x, y, cj, cjerr, use)
 
-        editor.rebuild_graph()
+                for ii in self.unknowns_pane.items:
+                    add_pos(ii, use=False)
+
+                for ii in self.references_pane.items:
+                    add_pos(ii, use=True)
+
+                editor.positions_dirty=True
+
+                if editor.tool.data_source == 'database':
+                    self._calculate_flux_db(editor)
+                else:
+                    self._calculate_flux_file(editor)
+
+                editor.rebuild_graph()
+                editor.set_unknown_j()
+                editor.suppress_update = False
 
     def _calculate_flux_file(self, editor):
         #p = self.open_file_dialog()
@@ -170,13 +198,14 @@ class FluxTask(InterpolationTask):
     def _calculate_flux_db(self, editor):
 
         monitor_age = editor.tool.monitor_age
-        if not monitor_age:
-            monitor_age = 28.02e6
 
         # helper funcs
         def calc_j(ai):
-            ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
-            ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
+            ar40=ai.get_interference_corrected_value('Ar40')
+            ar39=ai.get_interference_corrected_value('Ar39')
+
+            # ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
+            # ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
             return calculate_flux(ar40, ar39, monitor_age)
 
         def mean_j(ans):
@@ -193,7 +222,7 @@ class FluxTask(InterpolationTask):
             ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier) for ri in refs])
             #print ans
             #print tcs
-            prog = proc.open_progress(n=sum(tcs))
+            prog = proc.open_progress(n=sum(tcs), close_at_end=False)
 
             geom = self._get_geometry()
             editor = self.active_editor
@@ -204,11 +233,19 @@ class FluxTask(InterpolationTask):
                     ref = ais[0]
                     pid = ref.labnumber.irradiation_position.position
                     ident = ref.labnumber.identifier
-
+                    cj=ref.labnumber.selected_flux_history.flux.j
                     x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     j = mean_j(aa)
-                    editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev)
+
+                    dev=100
+                    if cj:
+                        dev=(j.nominal_value-cj)/cj*100
+
+                    editor.set_position_j(ident, j.nominal_value, j.std_dev, dev)
+                    # editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
+
+            prog.close()
 
     def _get_geometry(self, irrad=None, level=None, holder=None):
         man = self.manager
@@ -229,4 +266,68 @@ class FluxTask(InterpolationTask):
             return [struct.unpack('>fff', geom[i:i + 12])
                     for i in xrange(0, len(geom), 12)]
 
+    @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
+    def _update_unknowns_runs(self, obj, name, old, new):
+        if name == 'dclicked':
+            if new:
+                if isinstance(new.item, (IsotopeRecordView, Analysis)):
+                    self._recall_item(new.item)
+        elif name == 'refresh_editor_needed':
+            self.active_editor.rebuild()
+        # else:
+        #     if not obj._no_update:
+        #         if self.active_editor:
+        #             self.active_editor.set_items(self.unknowns_pane.items)
+        #         if self.plot_editor_pane:
+        #             self.plot_editor_pane.analyses = self.unknowns_pane.items
+
+    def _active_editor_changed(self):
+        if self.active_editor:
+            if self.controls_pane:
+                tool = None
+                if hasattr(self.active_editor, 'tool'):
+                    tool = self.active_editor.tool
+
+                self.controls_pane.tool = tool
+
+            # if self.unknowns_pane:
+            #     # if hasattr(self.unknowns_pane, 'previous_selections'):
+            #     #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
+            #     if hasattr(self.active_editor, 'analyses'):
+            #         #if self.active_editor.unknowns:
+            #         self.unknowns_pane.items = self.active_editor.analyses
+
+
+    def do_easy_flux(self):
+        ep=EasyParser()
+        # db = self.manager.db
+        doc = ep.doc('flux')
+
+        # projects = doc['projects']
+        # identifiers = doc.get('identifiers')
+        levels = doc.get('levels')
+        print levels
+        # editor = FluxEditor(processor=self)
+        # prog=self.manager.open_progress(n=len(levels))
+
+        if levels:
+            editor=self.active_editor
+            mon_age=doc.get('monitor_age', 28.201e6)
+            editor.tool.monitor_ge=mon_age
+            for li_str in levels:
+                irrad, level = li_str.split(' ')
+                # print irrad, level
+                self.manager.irradiation=irrad
+                self.manager.level=level
+                # print self.manager
+
+        #         #unknowns and refs now loaded
+                self._calculate_flux()
+        #         self._calculate_flux_db(self.active_editor)
+        #
+        #         #update flux in db for all positions
+                editor.set_save_all(True)
+                editor.save()
+        # prog.close()
+        return True
 #============= EOF =============================================

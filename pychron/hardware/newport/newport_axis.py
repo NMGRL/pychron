@@ -18,13 +18,13 @@
 
 
 #=============enthought library imports=======================
-from traits.api import Property, Str, Float, CInt, Int, Button
+from traits.api import Property, Str, Float, Int, Button
 from traitsui.api import View, Item, Group, EnumEditor, HGroup, VGroup, spring
 
 #=============standard library imports ========================
 #=============local library imports  ==========================
 from pychron.hardware.axis import Axis
-from pychron.helpers.filetools import parse_file
+from pychron.core.helpers.filetools import parse_file
 
 from pychron.hardware.results_report import ResultsReport
 KINDS = ['Undefined',
@@ -149,8 +149,8 @@ def int_binstr(n):
 
 
 class NewportAxis(Axis):
-    '''
-    '''
+    """
+    """
     loaded = False
 
     loadposition = Float

@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.has_traits import HasTraits, on_trait_change
-from traits.trait_types import List, Event, Bool
+from traits.trait_types import List, Event, Bool, Button
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -24,24 +24,49 @@ from traits.trait_types import List, Event, Bool
 
 from traitsui.editors import EnumEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.item import UItem
+from traitsui.group import HGroup, VGroup
+from traitsui.item import UItem, spring, Item
 from traitsui.table_column import ObjectColumn
 from traitsui.view import View
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.fit import Fit
-from pychron.ui.table_editor import myTableEditor
+from pychron.core.ui.table_editor import myTableEditor
 
 
 class FitSelector(HasTraits):
     fits = List(Fit)
     update_needed = Event
     suppress_refresh_unknowns = Bool
+    save_event = Event
 
     fit_klass = Fit
     command_key = Bool
     auto_update = Bool(True)
 
+    plot_button = Button('Plot')
+
+    def _plot_button_fired(self):
+        self.update_needed = True
+
+    def _auto_update_changed(self):
+        self.update_needed = True
+
+    def _get_auto_group(self):
+        return HGroup(icon_button_editor('plot_button', 'chart_curve_go',
+                                         tooltip='Replot the isotope evolutions. '
+                                                 'This may take awhile if many analyses are selected'),
+                      icon_button_editor('save_event', 'database_save',
+                                         tooltip='Save fits to database'),
+                      spring,
+                      Item('auto_update',
+                           label='Auto Plot',
+                           tooltip='Should the plot refresh after each change ie. "fit" or "show". '
+                                   'It is not advisable to use this option with many analyses'))
+
     def traits_view(self):
-        v = View(self._get_fit_group())
+
+        v = View(VGroup(self._get_auto_group(),
+                        self._get_fit_group()))
         return v
 
     def _get_columns(self):
@@ -49,7 +74,10 @@ class FitSelector(HasTraits):
                 CheckboxColumn(name='show'),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
-                             width=75),
+                             width=150),
+                ObjectColumn(name='error_type',
+                             editor=EnumEditor(name='error_types'),
+                             width=50),
                 CheckboxColumn(name='use', label='Save DB')]
 
         return cols
@@ -99,9 +127,8 @@ class FitSelector(HasTraits):
             fits = []
 
         fs = [
-            self.fit_klass(name='{}bs'.format(ki), fit='average_sem')
-            for ki in keys
-        ]
+            self.fit_klass(name='{}bs'.format(ki), fit='average')
+            for ki in keys]
 
         fits.extend(fs)
         self.fits = fits
@@ -111,7 +138,7 @@ class FitSelector(HasTraits):
         if not fits:
             fits = []
 
-        fs = self.fit_klass(name='PC', fit='average_sem')
+        fs = self.fit_klass(name='PC', fit='average')
 
         fits.append(fs)
         self.fits = fits
@@ -122,7 +149,7 @@ class FitSelector(HasTraits):
             fits = []
 
         fs = [
-            self.fit_klass(name='{}E'.format(ki), fit='average_sem')
+            self.fit_klass(name='{}E'.format(ki), fit='average')
             for ki in keys
         ]
 

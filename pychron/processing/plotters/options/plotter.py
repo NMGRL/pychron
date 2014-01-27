@@ -48,7 +48,6 @@ class PlotterOptions(BasePlotterOptions):
     auto_generate_title = Bool
     #     data_type = Str('database')
 
-
     xtick_font = Property
     xtick_font_size = Enum(*SIZES)
     xtick_font_name = Enum(*FONTS)
@@ -78,9 +77,9 @@ class PlotterOptions(BasePlotterOptions):
     #        return True
 
     def construct_plots(self, plist):
-        '''
+        """
             plist is a list of dictionaries
-        '''
+        """
         ps = [self.plot_option_klass(**pi) for pi in plist]
         self.aux_plots = ps
 
@@ -95,14 +94,14 @@ class PlotterOptions(BasePlotterOptions):
             spring,
             Item('{}{}_font_name'.format(axis, name), show_label=False),
             Item('{}{}_font_size'.format(axis, name), show_label=False),
-            Spring(width=125, springy=False)
-        )
+            Spring(width=125, springy=False))
         return hg
 
     def _get_dump_attrs(self):
-        attrs = ['title', 'auto_generate_title',
+        attrs = super(PlotterOptions, self)._get_dump_attrs()
+        attrs += ['title', 'auto_generate_title',
                  #                  'data_type',
-                 'aux_plots',
+
                  'xtick_font_size',
                  'xtick_font_name',
                  'xtitle_font_size',
@@ -113,6 +112,7 @@ class PlotterOptions(BasePlotterOptions):
                  'ytitle_font_name',
                  'x_filter_str'
         ]
+
         return attrs
 
     #===============================================================================
@@ -171,20 +171,25 @@ class PlotterOptions(BasePlotterOptions):
             label='X')
         return v
 
+    # def _get_info_group(self):
+    #     return Group()
+    def _get_title_group(self):
+        return HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
+               Item('title', springy=True, enabled_when='not auto_generate_title',
+                    tooltip='User specified plot title'))
+
     def _get_main_group(self):
         main_grp = Group(
             VGroup(
-                HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
-                       Item('title', springy=True, enabled_when='not auto_generate_title',
-                            tooltip='User specified plot title')),
-                HGroup(Item('show_info',label='Display Info'),
-                       Item('show_mean_info', label='Mean',enabled_when='show_info'),
-                       Item('show_error_type_info',label='Error Type',enabled_when='show_info'),
-                       show_border=True, label='Info'),
+                # self._get_refresh_group(),
+                # HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
+                #        Item('title', springy=True, enabled_when='not auto_generate_title',
+                #             tooltip='User specified plot title')),
+                # self._get_info_group(),
                 self._get_aux_plots_group(),
                 HGroup(Item('x_filter_str', label='X Filter'))
                 ),
-            label='Plot')
+            label='Plots')
 
         return main_grp
 
@@ -223,13 +228,13 @@ class PlotterOptions(BasePlotterOptions):
         main_grp = self._get_main_group()
 
         g = Group(main_grp,
-                  axis_grp,
+                  # axis_grp,
                   layout='tabbed')
         grps = self._get_groups()
         if grps:
             g.content.extend(grps)
 
-        v = View(g)
+        v = View(VGroup(self._get_refresh_group(),g))
         return v
 
 #============= EOF =============================================

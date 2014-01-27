@@ -26,17 +26,17 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.time_series_graph import TimeSeriesGraph
 from pychron.graph.stacked_graph import StackedGraph
-from pychron.regression.ols_regressor import PolynomialRegressor
-from pychron.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 # from pychron.displays.rich_text_display import RichTextDisplay
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-from pychron.regression.wls_regressor import WeightedPolynomialRegressor
-from pychron.regression.least_squares_regressor import LeastSquaresRegressor
-from pychron.regression.base_regressor import BaseRegressor
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+from pychron.core.regression.base_regressor import BaseRegressor
 
 
 class StatsFilterParameters(object):
@@ -157,9 +157,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._update_graph()
 
     def update_metadata(self, obj, name, old, new):
-        '''
+        """
             fired when the index metadata changes e.i user selection
-        '''
+        """
         #         sel = obj.metadata.get('selections', None)
         #
         #         if sel:
@@ -279,8 +279,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     sel = list(csel - fpts)
 
             nmeta = dict(selections=sel,
-                         filtered=None
-            )
+                         filtered=None)
             index.trait_set(metadata=nmeta)
 
         else:
@@ -443,7 +442,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     f = 'averageSD'
                 #                if not (f.endswith('sd') or f.endswith('sem')):
                 #                    f = 'averageSD'
-                #            elif f in ['preceeding', 'bracketing interpolate', 'bracketing average']:
+                #            elif f in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 #                f = f
             else:
                 f = None

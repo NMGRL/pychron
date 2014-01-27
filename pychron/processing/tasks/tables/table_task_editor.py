@@ -15,9 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Float, Int, Bool, Enum
-from traitsui.api import View, Item
-from pychron.helpers.filetools import list_directory
+from traits.api import HasTraits, Str, List, Int, Bool
+from pychron.core.helpers.filetools import list_directory
 from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -38,9 +37,9 @@ class TableTaskEditor(HasTraits):
     notes_template = Str
     notes_templates = List
 
-    age_type = Str
-    age_types = List
-#     age_type = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Integrated')
+    age_kind = Str
+    age_kinds = List
+#     age_kind = Enum('Weighted Mean', 'Plateau', 'Isochron', 'Integrated')
     def _notes_templates_default(self):
         return [''] + list_directory(paths.template_dir)
 

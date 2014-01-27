@@ -19,7 +19,7 @@
 import unittest
 #============= local library imports  ==========================
 from test.database import isotope_manager_factory
-from pychron.codetools.simple_timeit import timethis
+from pychron.core.codetools.simple_timeit import timethis
 
 
 class AnalysisTest(unittest.TestCase):

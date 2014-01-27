@@ -19,12 +19,12 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.plotters.options.age import AgeOptions
-from pychron.processing.plotters.options.option import InverseIsochronPlotOption
+from pychron.processing.plotters.options.option import InverseIsochronPlotOptions
 
 
 class InverseIsochronOptions(AgeOptions):
-    plot_option_name = 'inverse_isochron'
-    plot_option_klass = InverseIsochronPlotOption
+    plot_option_name = 'Inv. Isochron'
+    plot_option_klass = InverseIsochronPlotOptions
 
 
 #============= EOF =============================================

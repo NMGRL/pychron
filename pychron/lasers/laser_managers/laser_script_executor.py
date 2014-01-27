@@ -13,18 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from traits.api import HasTraits, Any, Event, \
-    Property, Bool, Enum, Button
+import time
+from threading import Thread
+import os
+
+from traits.api import Any, Property, Bool, Enum, Button
 from traitsui.api import View, Item, ButtonEditor
 import yaml
-import time
 from numpy import linspace, array
-from threading import Thread
+
 from pychron.loggable import Loggable
-import os
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 from pychron.graph.stream_graph import StreamStackedGraph
+
 
 class LaserScriptExecutor(Loggable):
     laser_manager = Any

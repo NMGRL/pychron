@@ -15,13 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Int, Str
+from traits.api import Int, Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pdf.base_pdf_writer import BasePDFWriter
-from pychron.helpers.formatting import floatfmt
-from pychron.pdf.items import Row, Subscript, Superscript, NamedParameter, \
-    FootNoteRow, FooterRow
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
+from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 import os
@@ -33,7 +32,7 @@ def DefaultInt(value=40):
 
 
 
-class SummaryTablePDFWriter(BasePDFWriter):
+class SummaryPDFTableWriter(BasePDFTableWriter):
     notes_template = Str('summary_table.temp')
 
     def _build(self, doc, samples, title):
@@ -57,11 +56,8 @@ class SummaryTablePDFWriter(BasePDFWriter):
 
         return mat
 
-    def _make_table(self, samples):
-        style = self._new_style(
-#                                 debug_grid=True,
-                                header_line_idx=1
-                                )
+    def _make_table(self, interpreted_ages):
+        style = self._new_style(header_line_idx=1)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
@@ -69,62 +65,37 @@ class SummaryTablePDFWriter(BasePDFWriter):
 
         data = []
 
-        # make meta
-#         meta = self._make_meta(analyses, style)
-#         data.extend(meta)
-#
         # make header
         header = self._make_header(style)
         data.extend(header)
 
         cnt = len(data)
-        for i, sam in enumerate(samples):
+        for i, sam in enumerate(interpreted_ages):
 
-            r = self._make_sample_row(sam)
+            r = self._make_interpreted_age_row(sam)
             data.append(r)
 
-            if self.use_alternating_background:
+            if self.options.use_alternating_background:
                 idx = cnt + i
                 if i % 2 != 0:
-                    style.add('BACKGROUND', (0, idx), (-1, idx),
-                              colors.lightgrey,
-                              )
 
-#         for i, sam in enumerate(samples[:1]):
-#
-#             r = self._make_sample_row(sam)
-#             data.append(r)
-#
-#             idx = cnt + i * 2
-#             style.add('BACKGROUND', (0, idx), (-1, idx),
-#                       colors.lightgrey,
-#                       )
+                    style.add('BACKGROUND', (0, idx), (-1, idx),
+                              self.options.get_alternating_background())
 
         idx = len(data) - 1
         self._new_line(style, idx)
-#         s = self._make_summary_rows(means, idx + 1, style)
-#         data.extend(s)
 
         self._make_notes(data, style)
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(data[1:-1])
 
         t = self._new_table(style, data,
-                            repeatRows=3)
-
-#         r = Row()
-#         r.add_blank_item(10)
-#         fdata = [r]
-#         style = self._new_style()
-#         style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
-#         self._make_footnote_rows(fdata, style)
-#         self._make_footer_rows(fdata, style)
-#         ft = self._new_table(style, fdata, extend_last=True)
-
-
+                            repeatRows=2)
         return t
 
     def _make_header(self, style):
         PMS = u'\u00b1 1\u03c3'
-
 
         pr = Row()
         pr.add_blank_item(6)
@@ -148,86 +119,26 @@ class SummaryTablePDFWriter(BasePDFWriter):
         r.add_item(value=PMS)
 
         return (pr, r,)
-#         sigma = u'\u00b1 1\u03c3'
-# #         sigma = self._plusminus_sigma()
-#         super_ar = lambda x: '{}Ar'.format(Superscript(x))
-#
-#         _102fa = '(10{} fA)'.format(Superscript(2))
-#         _103fa = '(10{} fA)'.format(Superscript(3))
-#         minus_102fa = '(10{} fA)'.format(Superscript(-2))
-#
-# #         blank = self._make_footnote('BLANK',
-# #                                    'Blank Type', 'LR= Linear Regression, AVE= Average',
-# #                                    'Blank')
-# #         blank = 'Blank Type'
-#         line = [
-#                 ('', ''),
-#                 ('N', ''),
-#                 ('Power', '(%)'),
-#                 (super_ar(40), ''),
-#                 (super_ar(40), _103fa), (sigma, ''),
-#                 (super_ar(39), _103fa), (sigma, ''),
-#                 (super_ar(38), ''), (sigma, ''),
-#                 (super_ar(37), ''), (sigma, ''),
-#                 (super_ar(36), ''), (sigma, minus_102fa),
-#                 ('%{}*'.format(super_ar(40)), ''),
-#                 ('{}*/{}{}'.format(super_ar(40),
-#                                    super_ar(39),
-#                                    Subscript('K')), ''),
-#                 ('Age', '(Ma)'), (sigma, ''),
-#                 ('K/Ca', ''),
-#                 (sigma, ''),
-# #                 (blank, 'type'),
-# #                 (super_ar(40), ''), (sigma, ''),
-# #                 (super_ar(39), ''), (sigma, ''),
-# #                 (super_ar(38), ''), (sigma, ''),
-# #                 (super_ar(37), ''), (sigma, ''),
-# #                 (super_ar(36), ''), (sigma, ''),
-#               ]
-#
-#         name_row, unit_row = zip(*line)
-#
-#         default_fontsize = 8
-#         nrow = Row(fontsize=default_fontsize)
-#         for i, ni in enumerate(name_row):
-#             nrow.add_item(value=ni)
-#
-#         default_fontsize = 7
-#         urow = Row(fontsize=default_fontsize)
-#         for ni in unit_row:
-#             urow.add_item(value=ni)
-#
-#         name_row_idx = 2
-#         unit_row_idx = 3
-#         # set style for name header
-#         style.add('LINEABOVE', (0, name_row_idx),
-#                   (-1, name_row_idx), 1.5, colors.black)
-#
-#         # set style for unit header
-#         style.add('LINEBELOW', (0, unit_row_idx),
-#                   (-1, unit_row_idx), 1.5, colors.black)
-#
-#         return [
-#                 nrow,
-#                 urow
-#                 ]
 
-    def _make_sample_row(self, sample):
+    def _make_interpreted_age_row(self, interpreted_age):
         row = Row()
-        row.add_item(value=sample.sample)
-        row.add_item(value=sample.identifier)
-        row.add_item(value=sample.irradiation)
-        row.add_item(value=self._short_material_name(sample.material))
-        row.add_item(value=sample.age_type)
-        row.add_item(value=sample.nanalyses)
-        row.add_item(value=floatfmt(sample.mswd, n=1))
-        row.add_item(value=self._value(n=1)(sample.weighted_kca))
-        row.add_item(value=self._error(n=1)(sample.weighted_kca))
-        row.add_item(value=self._value(n=4)(sample.weighted_age))
-        row.add_item(value=self._error(n=4)(sample.weighted_age))
+        row.add_item(value=interpreted_age.sample)
+        row.add_item(value=interpreted_age.identifier)
+        row.add_item(value=interpreted_age.irradiation)
+        row.add_item(value=self._short_material_name(interpreted_age.material))
+        row.add_item(value=interpreted_age.age_kind)
+        row.add_item(value=interpreted_age.nanalyses)
+        row.add_item(value=floatfmt(interpreted_age.mswd, n=1))
+        # row.add_item(value=self._value(n=1)(interpreted_age.weighted_kca))
+        # row.add_item(value=self._error(n=1)(interpreted_age.weighted_kca))
+        # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
+        # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
+        row.add_item(value=floatfmt(interpreted_age.wtd_kca, n=4))
+        row.add_item(value=floatfmt(interpreted_age.wtd_kca_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age_err, n=4))
 
         return row
-
 
     def _set_row_heights(self, table, data):
         a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))

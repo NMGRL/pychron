@@ -20,11 +20,11 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.helpers.formatting import floatfmt
-from pychron.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
+from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from pychron.processing.tables.pdf_writer import TablePDFWriter
+from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
 
 
 def DefaultInt(value=40):
@@ -42,31 +42,7 @@ def extract_text(txt):
     return 'X' * t
 
 
-class StepHeatTablePDFWriter(TablePDFWriter):
-    def _calculate_col_widths(self, *rows):
-        def get_width(pa):
-            if pa.frags:
-                ft = ''
-                fs = 0
-                for f in pa.frags:
-                    ft += f.text
-                    fs = max(fs, f.fontSize)
-
-                w = stringWidth(ft, fontName=f.fontName,
-                                fontSize=fs) + 6
-            else:
-                w = 8
-
-            return w
-
-        wcols = []
-        for cols in zip(*rows):
-            ws = max([get_width(ci) for ci in cols])
-            #self.debug('max {}'.format(ws))
-            #self.debug('-------------------')
-            wcols.append(ws)
-            #aaa
-        self.col_widths = wcols
+class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
     def _make_table(self, group,
                     double_first_line=True,
@@ -90,6 +66,14 @@ class StepHeatTablePDFWriter(TablePDFWriter):
 
         data = []
         bdata = []
+        #set extract units/label before making meta rows
+        if analyses[0].extract_device=='Furnace':
+            self.extract_label='Temp'
+            self.extract_units='C'
+        else:
+            self.extract_label='Power'
+            self.extract_units='W'
+
         # make meta
         meta = self._make_meta(analyses, style,
                                include_footnotes=include_footnotes)
@@ -117,12 +101,10 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             data.append(r)
             bdata.append(b)
 
-            if self.use_alternating_background:
+            if self.options.use_alternating_background:
                 idx = cnt + i
                 if idx % 2 == 0:
-                    style.add('BACKGROUND', (0, idx), (-1, idx),
-                              colors.lightgrey,
-                    )
+                    style.add('BACKGROUND', (0, idx), (-1, idx), self.options.alternating_background)
                     #         data.extend([self._make_analysis_row(ai)
                     #                      for ai in analyses])
 
@@ -130,7 +112,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
                     #         data.extend([self._make_blank_row(ai) for ai in analyses])
         auto_col_widths = True
         if auto_col_widths:
-            self._calculate_col_widths(*data[2:])
+            self._calculate_col_widths(data[2:])
 
         idx = len(data) - 1
         self._new_line(style, idx)
@@ -189,7 +171,7 @@ class StepHeatTablePDFWriter(TablePDFWriter):
             ('uage', value(n=2)),
             ('age_err_wo_j', error(n=4)),
             ('rad40_percent', value(n=1)),
-            ('R', value(n=5)),
+            ('F', value(n=5)),
             ('kca', value(n=1)),
             ('kca', error(n=1)),
 

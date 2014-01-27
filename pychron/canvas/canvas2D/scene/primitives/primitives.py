@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
-    Color, on_trait_change, String, cached_property, Either, RGBColor
+    Color, on_trait_change, String, cached_property, Either
 from traitsui.api import View, VGroup, HGroup, Item, Group
 from chaco.default_colormaps import color_map_name_dict
 from chaco.data_range_1d import DataRange1D
@@ -26,7 +26,7 @@ from kiva.fonttools import str_to_font
 import math
 from numpy import array
 #============= local library imports  ==========================
-from pychron.geometry.convex_hull import convex_hull
+from pychron.core.geometry.convex_hull import convex_hull
 # from pyface.image_resource import ImageResource
 # from pychron.paths import paths
 from kiva.agg.agg import GraphicsContextArray

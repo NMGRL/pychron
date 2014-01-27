@@ -18,13 +18,13 @@
 # from traits.api import HasTraits
 # from traitsui.api import View, Item
 from pychron.applications.pychron_application import PychronApplication
-from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class PyExperiment(PychronApplication):
     id = 'pychron.experiment.application'
     name = 'pyExperiment'
+
 #     default_layout = [
 #                      TaskWindowLayout('tasks.hardware',),
 # #                     TaskWindowLayout('pychron.experiment',),

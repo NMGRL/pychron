@@ -15,18 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 from pyface.tasks.action.task_action import TaskAction
-from pyface.image_resource import ImageResource
-from pychron.paths import paths
+from pychron.envisage.resources import icon
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 class SaveLoadingAction(TaskAction):
     name = 'Save PDF'
     method = 'save_loading'
-    image = ImageResource(name='file_pdf.png',
-                         search_path=paths.icon_search_path
-                         )
+    image = icon('file_pdf.png')
 #============= EOF =============================================

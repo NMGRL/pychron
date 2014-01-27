@@ -15,11 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, List, Instance, String, on_trait_change, \
-    Button, Bool, Enum, Event, Int, Float, Tuple, Str
-from traitsui.api import View, Item, HSplit, TreeEditor, ListStrEditor, HGroup, spring, VGroup, \
-    ButtonEditor
-from chaco.api import HPlotContainer, ArrayPlotData, Plot
+from traits.api import Any, List, Instance, String, on_trait_change, \
+    Button, Tuple
+from traitsui.api import View, Item, VGroup
 from enable.component_editor import ComponentEditor
 from enable.base_tool import BaseTool
 #============= standard library imports ========================
@@ -28,11 +26,11 @@ import os
 # from numpy import array
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
-# from pychron.helpers.parsers.xml_parser import XMLParser
-# #from pychron.ui.custom_label_editor import CustomLabelEditor
+# from pychron.core.helpers.parsers.xml_parser import XMLParser
+# #from pychron.core.ui.custom_label_editor import CustomLabelEditor
 # from pychron.graph.tools.xy_inspector import XYInspectorOverlay, XYInspector
 # from pychron.graph.image_underlay import ImageUnderlay
-# from pychron.geometry.reference_point import ReferencePoint
+# from pychron.core.geometry.reference_point import ReferencePoint
 from chaco.abstract_overlay import AbstractOverlay
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
@@ -170,7 +168,7 @@ class MediaBrowser(Loggable):
 if __name__ == '__main__':
 
     from pychron.media_server.client import MediaClient
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('media')
     mc = MediaClient(host='localhost',
                      use_cache=True,

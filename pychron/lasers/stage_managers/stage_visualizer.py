@@ -32,7 +32,7 @@ from pychron.canvas.canvas2D.stage_visualization_canvas import StageVisualizatio
     SampleHole
 from pychron.lasers.stage_managers.stage_map import StageMap
 from pychron.paths import paths
-from pychron.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path
 
 
 class StageVisualizer(Manager):
@@ -338,7 +338,7 @@ class StageVisualizer(Manager):
 
 
 if __name__ == '__main__':
-    from pychron.helpers.logger_setup import logging_setup
+    from pychron.core.helpers.logger_setup import logging_setup
     logging_setup('sv')
     sv = StageVisualizer()
 #    sv.load_visualization()

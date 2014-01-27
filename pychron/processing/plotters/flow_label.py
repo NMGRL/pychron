@@ -15,23 +15,62 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool
+from chaco.plot_label import PlotLabel
+from traits.api import Bool, Str
 from chaco.data_label import DataLabel
 #============= standard library imports ========================
 from numpy import max
 #============= local library imports  ==========================
 
+class FlowPlotLabel(PlotLabel):
+    def overlay(self, component, gc, *args, **kw):
+        # face name was getting set to "Helvetica" by reportlab during pdf generation
+        # set face_name back to "" to prevent font display issue. see issue #72
+        self._label.font.face_name = ''
+
+        super(FlowPlotLabel, self).overlay(component, gc, *args, **kw)
+
 class FlowDataLabel(DataLabel):
-    '''
+    """
         this label repositions itself if doesn't fit within the
         its component bounds.
-        
-        
-    '''
+
+
+    """
     constrain_x = Bool(True)
     constrain_y = Bool(True)
-    def do_layout(self, size=None, force=False):
-        DataLabel.do_layout(self, size=size, force=force)
+    # position_event=Event
+    id=Str
+    # _ox=None
+
+    # def _draw(self, gc, **kw):
+    #     self.font='modern 18'
+    #     gc.set_font(self.font)
+    #     print 'draw', self.font
+    #     super(FlowDataLabel, self)._draw(gc,**kw)
+
+    # def _set_x(self, val):
+    #     super(FlowDataLabel, self)._set_x(val)
+    #     if self._ox is None:
+    #         self._ox = val
+    #     elif self._ox != val:
+    #         self.position_event=(self.x, self.y)
+    #
+    # def _set_y(self, val):
+    #     super(FlowDataLabel, self)._set_y(val)
+    #     if val>0:
+    #         self.position_event = (self.x, self.y)
+
+    def overlay(self, component, gc, *args, **kw):
+
+        # face name was getting set to "Helvetica" by reportlab during pdf generation
+        # set face_name back to "" to prevent font display issue. see issue #72
+        self.font.face_name=''
+
+        super(FlowDataLabel, self).overlay(component, gc, *args, **kw)
+
+    def do_layout(self, **kw):
+        DataLabel.do_layout(self, **kw)
 
         ws, hs = self._cached_line_sizes.T
         if self.constrain_x:
