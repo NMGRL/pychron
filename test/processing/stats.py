@@ -19,7 +19,7 @@ class MSWDTestCase(unittest.TestCase):
         ey = 1 / wy ** 0.5
 
         v = 1.4833
-        m = calculate_mswd2(x, y, ex, ey, a, b, correlated_errors=False)
+        m = calculate_mswd2(x, y, ex, ey, a, b, correlated_errors=True)
         self.assertAlmostEqual(m, v, 4)
 
         v = 2.2045
