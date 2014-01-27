@@ -88,9 +88,9 @@ class MulticollectTestCase(unittest.TestCase):
     def _measure(self):
         a = self.arun
 
-        counts = 50
+        counts = 5
         dets = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
-        a.measurement_script.ncounts = 50
+        a.measurement_script.ncounts =5
         a.py_position_magnet('Ar40', 'H1')
         a.py_activate_detectors(dets)
         st = time.time()

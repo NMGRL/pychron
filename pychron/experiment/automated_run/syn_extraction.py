@@ -28,6 +28,7 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
 
@@ -39,13 +40,24 @@ class SynExtractionSpec(HasTraits):
 
     end_threshold = Property
     script = Property
+    post_measurement_script = Property
     identifier = Property
+    delay_between = Property
 
     def _get_script(self):
-        name=self._get_value('measurement_script','')
-        p=add_extension(name, '.py')
-        p = os.path.join(paths.scripts_dir, 'measurement', p)
+        return self._get_script_value('measurement')
+
+    def _get_post_measurement_script(self):
+        return self._get_script_value('post_measurement')
+
+    def _get_script_value(self, attr):
+        name = self._get_value(attr, '')
+        p = add_extension(name, '.py')
+        p = os.path.join(paths.scripts_dir, attr, p)
         return p
+
+    def _get_delay_between(self):
+        return self._get_value('delay_between', 0)
 
     def _get_end_threshold(self):
         return self._get_value('end_threshold', 0)
@@ -101,6 +113,8 @@ class SynExtractionCollector(Loggable):
             if not script:
                 break
 
+            script, post_script=script
+
             if spec.mode == 'static':
                 rem = self.extraction_duration - spec.end_threshold - et
                 if spec.duration > rem:
@@ -113,7 +127,7 @@ class SynExtractionCollector(Loggable):
                                                                                    et))
                     break
                 else:
-                    if not self._do_syn_extract(spec, script):
+                    if not self._do_syn_extract(spec, script, post_script):
                         self.debug('do syn extraction failed')
                         break
             else:
@@ -126,7 +140,7 @@ class SynExtractionCollector(Loggable):
                                                                                    et))
                     break
                 else:
-                    if not self._do_syn_extract(spec, script):
+                    if not self._do_syn_extract(spec, script,post_script):
                         self.debug('do syn extraction failed')
                         break
 
@@ -146,13 +160,19 @@ class SynExtractionCollector(Loggable):
             if ms.bootstrap():
                 if ms.syntax_ok(warn=False):
                     spec.duration = ms.get_estimated_duration()
-                    return ms
+                    pms=None
+                    p=spec.post_measurement_script
+                    if p and os.path.isfile(p):
+                        self.debug('measurement script "{}"'.format(p))
+                        pms=ExtractionPyScript(root=os.path.dirname(p),
+                                               name=os.path.basename(p))
+                    return ms, pms
                 else:
                     self.debug('invalid syntax {}'.format(ms.name))
 
         self.debug('invalid measurement script "{}"'.format(p))
 
-    def _do_syn_extract(self, spec, script):
+    def _do_syn_extract(self, spec, script, post_script):
         self.debug('Executing SynExtraction mode="{}"'.format(spec.mode))
 
         #modify the persister. the original persister for the automated run is saved at self.persister
@@ -161,6 +181,7 @@ class SynExtractionCollector(Loggable):
         last_aq=self.arun.persister.get_last_aliquot(identifier)
         if last_aq is None:
             self.warning('invalid identifier "{}". Does not exist in database'.format(identifier))
+
         else:
             runid=make_runid(identifier, last_aq+1)
             self.arun.info('Starting SynExtraction run {}'.format(runid))
@@ -168,7 +189,16 @@ class SynExtractionCollector(Loggable):
                                           runid=runid,
                                           uuid=str(uuid.uuid4()))
 
-            return self.arun.do_measurement(script=script)
+            if self.arun.do_measurement(script=script, use_post_on_fail=False):
+                if post_script:
+                    self.debug('starting post measurement')
+                    if not self.arun.do_post_measurement(script=post_script):
+                        return
+
+                self.debug('delay between syn extractions {}'.format(spec.delay_between))
+                self.arun.wait(spec.delay_between)
+
+                return True
 
     def _spec_generator(self, config):
         pattern = config.get('pattern', 'S')
