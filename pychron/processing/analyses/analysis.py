@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import os
+import struct
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
     Date, Any, Either, Bool, List
 #============= standard library imports ========================
@@ -153,7 +154,8 @@ class DBAnalysis(Analysis):
     timestamp = Float
     rundate = Date
 
-    peak_center = Any
+    peak_center = Float
+    peak_center_data = Any
 
     ic_factors = Dict
 
@@ -478,7 +480,9 @@ class DBAnalysis(Analysis):
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
 
-        self.peak_center = self._get_peak_center(meas_analysis)
+        pc,data = self._get_peak_center(meas_analysis)
+        self.peak_center=pc
+        self.peak_center_data=data
 
     def _get_isotope_dict(self, get):
         d = dict()
@@ -633,7 +637,15 @@ class DBAnalysis(Analysis):
                 isodict[name] = r
 
     def _get_peak_center(self, meas_analysis):
-        return ufloat(0, 0)
+
+        pc=meas_analysis.peak_center
+        if pc:
+            center=float(pc.center)
+            packed_xy=pc.points
+            return center, zip(*[struct.unpack('<ff', packed_xy[i:i+8])
+                                 for i in xrange(0,len(packed_xy),8)])
+        else:
+            return 0.0, None
 
     def _get_extraction_device(self, extraction):
         r = ''

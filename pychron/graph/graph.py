@@ -720,13 +720,13 @@ class Graph(Viewable, ContextMenuMixin):
         self._set_title('x_axis', title, plotid, **font)
 
     def set_y_title(self, title, plotid=0, **font):
-        '''
-        '''
+        """
+        """
         self._set_title('y_axis', title, plotid, **font)
 
-    def add_plot_label(self, txt, x, y, plotid=0, **kw):
-        '''
-        '''
+    def add_plot_label(self, txt, plotid=0, **kw):
+        """
+        """
 
         #        print x, y
         # #        x, y = .map_screen([(x, y)])[0]
