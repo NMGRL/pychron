@@ -878,7 +878,7 @@ class AutomatedRun(Loggable):
             self.info_color = None
             return False
 
-    def do_measurement(self, script=None):
+    def do_measurement(self, script=None, use_post_on_fail=True):
         self.debug('do measurement')
         if not self._alive:
             self.warning('run is not alive')
@@ -916,8 +916,9 @@ class AutomatedRun(Loggable):
             return self.post_measurement_save()
 
         else:
-            self.do_post_equilibration()
-            self.do_post_measurement()
+            if use_post_on_fail:
+                self.do_post_equilibration()
+                self.do_post_measurement()
             self.finish()
 
             self.info('======== Measurement Finished unsuccessfully ========', color='red')
@@ -925,20 +926,23 @@ class AutomatedRun(Loggable):
             self.info_color = None
             return False
 
-    def do_post_measurement(self):
-        if not self.post_measurement_script:
+    def do_post_measurement(self, script=None):
+        if script is None:
+            script=self.post_measurement_script
+
+        if not script:
             return True
 
         if not self._alive:
             return
 
-        msg = 'Post Measurement Started {}'.format(self.post_measurement_script.name)
+        msg = 'Post Measurement Started {}'.format(script.name)
         self.info('======== {} ========'.format(msg))
         #        self.state = 'extraction'
-        self.post_measurement_script.runner = self.runner
-        self.post_measurement_script.manager = self.experiment_executor
+        script.runner = self.runner
+        script.manager = self.experiment_executor
 
-        if self.post_measurement_script.execute():
+        if script.execute():
             self.info('======== Post Measurement Finished ========')
             return True
         else:
