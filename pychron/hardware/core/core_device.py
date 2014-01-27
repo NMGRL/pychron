@@ -15,7 +15,7 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import HasTraits, Str, implements, Any, List, \
+from traits.api import HasTraits, Str, Any, List, \
     Bool, Enum
 # from pyface.timer.api import Timer
 #=============standard library imports ========================
@@ -23,6 +23,7 @@ import random
 # from threading import Lock
 from datetime import datetime
 #=============local library imports  ==========================
+from traits.has_traits import provides
 from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
@@ -69,13 +70,15 @@ class Alarm(HasTraits):
 
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
 
-
+@provides(ICoreDevice)
 class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
-    '''
-    '''
+    """
+    """
     #    graph_klass = TimeSeriesStreamGraph
 
-    implements(ICoreDevice)
+    # implements(ICoreDevice)
+    # provides(ICoreDevice)
+
     name = Str
     #    id_query = ''
     #    id_response = ''

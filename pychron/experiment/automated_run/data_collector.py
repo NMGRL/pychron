@@ -233,15 +233,15 @@ class DataCollector(Loggable):
 
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
+        if pid is not None:
+            graph.add_datum((x, signal),
+                            series=self.series_idx,
+                            plotid=pid,
+                            update_y_limits=True,
+                            ypadding='0.1')
 
-        graph.add_datum((x, signal),
-                        series=self.series_idx,
-                        plotid=pid,
-                        update_y_limits=True,
-                        ypadding='0.1')
-
-        if fit:
-            graph.set_fit(fit, plotid=pid, series=self.series_idx)
+            if fit:
+                graph.set_fit(fit, plotid=pid, series=self.series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:
@@ -276,9 +276,9 @@ class DataCollector(Loggable):
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
         original_counts = self.ncounts
         count_args = (j, original_counts)
-        # self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
-        #                                                                          script_counts,
-        #                                                                          original_counts))
+        self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
+                                                                                 script_counts,
+                                                                                 original_counts))
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'

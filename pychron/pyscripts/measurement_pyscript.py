@@ -114,7 +114,9 @@ class MeasurementPyScript(ValvePyScript):
         if self.abbreviated_count_ratio:
             ncounts *= self.abbreviated_count_ratio
 
-        if not self._automated_run_call('py_data_collection', ncounts,
+        if not self._automated_run_call('py_data_collection',
+                                        self,
+                                        ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,
                                         series=self._series_count):

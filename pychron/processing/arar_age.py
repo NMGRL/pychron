@@ -151,6 +151,8 @@ class ArArAge(Loggable):
                         e=c.getfloat(si,'ic_factor_err')
                     ic=v,e
                     break
+        else:
+            self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
 
         r = ufloat(*ic)
         return r

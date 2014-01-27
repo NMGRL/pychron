@@ -240,8 +240,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             #             self._prev_baselines = dict()
             #             self._prev_blanks = dict()
 
-            self.pyscript_runner.connect()
-            self.massspec_importer.connect()
+            # self.pyscript_runner.connect()
+            # self.massspec_importer.connect()
+
             self.experiment_queue.executed = True
             t = Thread(name='execute_{}'.format(name),
                        target=self._execute)
@@ -570,9 +571,12 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
     def _extraction(self, ai):
         ret = True
-        self.extracting = True
-        if not ai.do_extraction():
-            ret = self._failed_execution_step('Extraction Failed')
+        if ai.start_extraction():
+            self.extracting = True
+            if not ai.do_extraction():
+                ret = self._failed_execution_step('Extraction Failed')
+        else:
+            ret=ai.isAlive()
 
         self.trait_set(extraction_state_label='', extracting=False)
 
@@ -624,19 +628,22 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             used for analysis recovery
         '''
         self._add_backup(arun.uuid)
-        arun.experiment_identifier = exp.database_identifier
-        arun.load_name = exp.load_name
+
         arun.integration_time = 1.04
 
-        #        if self.current_run is None:
         arun.experiment_executor = weakref.ref(self)()
 
         arun.spectrometer_manager = self.spectrometer_manager
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
-        #arun.data_manager = self.data_manager
-        arun.db = self.db
-        arun.massspec_importer = self.massspec_importer
+
+        arun.persister.db=self.db
+        arun.persister.massspec_importer=self.massspec_importer
+        arun.persister.experiment_identifier = exp.database_identifier
+        arun.persister.load_name = exp.load_name
+
+        arun.use_syn_extraction=True
+
         arun.runner = self.pyscript_runner
         arun.extract_device = exp.extract_device
 
@@ -644,6 +651,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         if mon is not None:
             mon.automated_run = weakref.ref(arun)()
             arun.monitor = mon
+            arun.persister.monitor=mon
 
         return arun
 

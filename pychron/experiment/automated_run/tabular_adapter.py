@@ -58,6 +58,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
     truncate_condition_width = Int(80)
+    syn_extraction_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
     #    extraction_script_width = Int(125)
@@ -171,6 +172,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
+            ('SynExtraction', 'syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')
@@ -197,6 +199,7 @@ class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
+            ('SynExtraction','syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')
