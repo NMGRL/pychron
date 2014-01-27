@@ -318,7 +318,8 @@ class PyScript(Loggable):
                 script.main(*argv)
             except TypeError:
                 script.main()
-            except AttributeError:
+            except AttributeError, e:
+                self.debug(e)
                 return MainError
 
         else:
@@ -333,6 +334,7 @@ class PyScript(Loggable):
                     func(*argv)
 
                 except KeyError, e:
+                    self.debug(e)
                     return MainError()
                 except Exception, e:
                     return traceback.format_exc()

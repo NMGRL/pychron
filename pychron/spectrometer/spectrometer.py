@@ -150,13 +150,16 @@ class Spectrometer(SpectrometerDevice):
 
         if isotope != NULL_STR:
             det = self.get_detector(detector)
-            det.isotope = isotope
-            index = self.detectors.index(det)
+            if not det:
+                self.debug('cannot update detector "{}"'.format(detector))
+            else:
+                det.isotope = isotope
+                index = self.detectors.index(det)
 
-            nmass = int(isotope[2:])
-            for i, di in enumerate(self.detectors):
-                mass = nmass - (i - index)
-                di.isotope = 'Ar{}'.format(mass)
+                nmass = int(isotope[2:])
+                for i, di in enumerate(self.detectors):
+                    mass = nmass - (i - index)
+                    di.isotope = 'Ar{}'.format(mass)
 
     #===============================================================================
     # property get/set

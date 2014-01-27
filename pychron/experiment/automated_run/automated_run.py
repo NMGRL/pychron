@@ -249,6 +249,8 @@ class AutomatedRun(Loggable):
         return evt
 
     def py_sniff(self, ncounts, starttime, starttime_offset, series=0):
+        self.debug('py_sniff')
+
         if not self._alive:
             return
         p = self.plot_panel
@@ -599,6 +601,12 @@ class AutomatedRun(Loggable):
         self._alive = False
         self.collector.stop()
 
+    def wait(self, t, msg=''):
+        if self.experiment_executor:
+            self.experiment_executor.wait(t, msg)
+        else:
+            time.sleep(t / 10.)
+
     def info(self, msg, color=None, *args, **kw):
         super(AutomatedRun, self).info(msg, *args, **kw)
         if self.experiment_executor:
@@ -755,6 +763,7 @@ class AutomatedRun(Loggable):
 
         #load extraction metadata
         self.eqtime = self._get_extraction_parameter('eqtime', 15)
+
         #setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
 
@@ -801,24 +810,7 @@ class AutomatedRun(Loggable):
                                  runscript_name=script_name,
                                  runscript_blob=script_blob)
 
-    def _assemble_extraction_blob(self):
-        _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))
-        return txt
-
-    def _assemble_script_blob(self, kinds=None):
-        if kinds is None:
-            kinds = 'extraction', 'measurement', 'post_equilibration', 'post_measurement'
-        okinds = []
-        bs = []
-        for s in kinds:  # ('extraction', 'post_equilibration', 'post_measurement'):
-            sc = getattr(self, '{}_script'.format(s))
-            if sc is not None:
-                bs.append((sc.name, sc.toblob()))
-                okinds.append(s)
-
-        return assemble_script_blob(bs, kinds=okinds)
-        #===============================================================================
-
+    #===============================================================================
     # doers
     #===============================================================================
     def do_extraction(self):
@@ -889,19 +881,23 @@ class AutomatedRun(Loggable):
             return
         return True
 
-    def do_measurement(self):
+    def do_measurement(self, script=None):
         if not self._alive:
             return
             #if not self.measurement_script:
         #    return True
+        if script is None:
+            script=self.measurement_script
 
-        self.measurement_script.runner = self.runner
-        self.measurement_script.manager = self.experiment_executor
+        # self.measurement_script.runner = self.runner
+        # self.measurement_script.manager = self.experiment_executor
+        script.trait_set(runner=self.runner,
+                         manager=self.experiment_executor)
 
         # use a measurement_script to explicitly define
         # measurement sequence
         self.info_color = MEASUREMENT_COLOR
-        msg = 'Measurement Started {}'.format(self.measurement_script.name)
+        msg = 'Measurement Started {}'.format(script.name)
         self.info('======== {} ========'.format(msg))
         self.state = 'measurement'
 
@@ -915,13 +911,13 @@ class AutomatedRun(Loggable):
         #         hp = self.experiment_executor.application.hp
         #         hp.setrelheap()
 
-        if self.measurement_script.execute():
+        if script.execute():
             mem_log('post measurement execute')
             self.info('======== Measurement Finished ========')
             self.measuring = False
             self.info_color = None
 
-            self.pmeasured = True
+            self._measured = True
             return self.post_measurement_save()
 
         else:
@@ -1159,11 +1155,7 @@ anaylsis_type={}
 
                 self.py_add_truncation(attr, c, int(start), freq, acr)
 
-    def wait(self, t, msg=''):
-        if self.experiment_executor:
-            self.experiment_executor.wait(t, msg)
-        else:
-            time.sleep(t / 10.)
+
 
     def _make_iterable(self, pos):
         if '(' in pos and ')' in pos and ',' in pos:
@@ -1449,8 +1441,7 @@ anaylsis_type={}
             if self.spectrometer_manager:
                 self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                          defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                         active_detectors=self._active_detectors,
-                )
+                                         active_detectors=self._active_detectors)
 
             self.persister.post_measurement_save()
             if self.persister.secondary_database_fail:
@@ -1645,8 +1636,24 @@ anaylsis_type={}
     def _get_collector(self):
         return self.peak_hop_collector if self.is_peak_hop else self.multi_collector
 
-        #===============================================================================
+    def _assemble_extraction_blob(self):
+        _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))
+        return txt
 
+    def _assemble_script_blob(self, kinds=None):
+        if kinds is None:
+            kinds = 'extraction', 'measurement', 'post_equilibration', 'post_measurement'
+        okinds = []
+        bs = []
+        for s in kinds:  # ('extraction', 'post_equilibration', 'post_measurement'):
+            sc = getattr(self, '{}_script'.format(s))
+            if sc is not None:
+                bs.append((sc.name, sc.toblob()))
+                okinds.append(s)
+
+        return assemble_script_blob(bs, kinds=okinds)
+
+    #===============================================================================
     # handlers
     #===============================================================================
     def _state_changed(self, old, new):

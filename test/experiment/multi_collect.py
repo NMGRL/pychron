@@ -13,7 +13,6 @@ from pychron.core.helpers.logger_setup import logging_setup
 logging_setup('peak_hop')
 
 from threading import Thread
-from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.processing.arar_age import ArArAge
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.spectrometer_manager import SpectrometerManager
@@ -88,9 +87,6 @@ class MulticollectTestCase(unittest.TestCase):
 
     def _measure(self):
         a = self.arun
-        a.use_syn_extraction=True
-
-        a.do_extraction()
 
         counts = 50
         dets = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
@@ -101,15 +97,28 @@ class MulticollectTestCase(unittest.TestCase):
         a.py_data_collection(counts, st, 0)
         a.py_baselines(10, st, 0, 39.5, 'H1', series=1)
 
-    def test_multicollect_save(self):
-        self.measure()
+    # def test_syn_extraction(self):
+    #     a=self.arun
+    #     a.use_syn_extraction = True
+    #     ret=a.do_extraction()
+    #     self.assertTrue(ret)
 
-        msi = MassSpecDatabaseImporter()
-        msi.connect()
-        arun = self.arun
-        arun.persister.massspec_importer = msi
-        ret = arun.post_measurement_save()
-        self.assertTrue(ret)
+    def test_persister_runid(self):
+        a = self.arun
+        a.use_syn_extraction = True
+        a.do_extraction()
+        self.assertEqual(a.persister.runid, '17005-82')
+
+
+        # def test_multicollect_save(self):
+    #     self.measure()
+    #
+    #     msi = MassSpecDatabaseImporter()
+    #     msi.connect(warn=False)
+    #     arun = self.arun
+    #     arun.persister.massspec_importer = msi
+    #     ret = arun.post_measurement_save()
+    #     self.assertTrue(ret)
 
         #def test_peak_hop_setup(self):
         #    a=self.arun

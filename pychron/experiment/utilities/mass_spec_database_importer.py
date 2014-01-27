@@ -57,8 +57,8 @@ class MassSpecDatabaseImporter(Loggable):
     _current_spec = None
     _analysis = None
 
-    def connect(self):
-        return self.db.connect()
+    def connect(self, *args, **kw):
+        return self.db.connect(*args, **kw)
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:

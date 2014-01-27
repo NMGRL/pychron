@@ -70,6 +70,7 @@ class AutomatedRunPersister(Loggable):
 
     previous_blanks=Dict
     secondary_database_fail=False
+    use_secondary_database=True
 
     runid=Str
     uuid=Str
@@ -239,23 +240,22 @@ class AutomatedRunPersister(Loggable):
                 # save monitor
                 self._save_monitor_info(a)
 
-                sess.commit()
-
                 mem_log('post pychron save')
 
                 pt = time.time() - pt
                 self.debug('pychron save time= {:0.3f} '.format(pt))
                 file_log(pt)
 
-        if not self.massspec_importer or not self.massspec_importer.db.connected:
-            self.debug('Secondary database is not available')
-        else:
-            self.debug('saving post measurement to secondary database')
-            # save to massspec
-            mt = time.time()
-            self._save_to_massspec(cp)
-            self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
-            mem_log('post mass spec save')
+        if self.use_secondary_database:
+            if not self.massspec_importer or not self.massspec_importer.db.connected:
+                self.debug('Secondary database is not available')
+            else:
+                self.debug('saving post measurement to secondary database')
+                # save to massspec
+                mt = time.time()
+                self._save_to_massspec(cp)
+                self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
+                mem_log('post mass spec save')
 
         #clear is_peak hop flag
         # self.is_peak_hop = False
