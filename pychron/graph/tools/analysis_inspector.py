@@ -29,32 +29,35 @@ class AnalysisPointInspector(PointInspector):
     def assemble_lines(self):
         lines = []
         if self.current_position:
-            ind = self.get_selected_index()
-            if ind is not None:
-                ind = ind[0]
-                analysis = self.analyses[ind]
+            inds = self.get_selected_index()
+            if inds is not None:
+                for ind in inds:
+                    analysis = self.analyses[ind]
 
-                rid = analysis.record_id
-                name = self.component.container.y_axis.title
+                    rid = analysis.record_id
+                    name = self.component.container.y_axis.title
 
-                y = self.component.value.get_data()[ind]
-                if self.value_format:
-                    y = self.value_format(y)
+                    y = self.component.value.get_data()[ind]
+                    if self.value_format:
+                        y = self.value_format(y)
 
-#                 if analysis.status == 0 and analysis.temp_status != 0:
-#                     status = 'Temp. Omitted'
-#                 else:
-                status = analysis.status_text
-                tag = analysis.tag
+    #                 if analysis.status == 0 and analysis.temp_status != 0:
+    #                     status = 'Temp. Omitted'
+    #                 else:
+                    status = analysis.status_text
+                    tag = analysis.tag
 
-                lines = ['Analysis= {}'.format(rid),
-                         'Status= {}'.format(status),
-                         'Tag= {}'.format(tag),
-                         '{}= {}'.format(name, y)]
+                    lines.extend(['Analysis= {}'.format(rid),
+                             'Status= {}'.format(status),
+                             'Tag= {}'.format(tag),
+                             '{}= {}'.format(name, y)])
 
+                    if self.additional_info is not None:
+                        lines.append(self.additional_info(analysis))
+                    lines.append('           ')
 
-                if self.additional_info is not None:
-                    lines.append(self.additional_info(analysis))
+                #remove last new line
+                lines=lines[:-1]
 
         return lines
 
