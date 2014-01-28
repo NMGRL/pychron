@@ -80,7 +80,10 @@ class FigurePanel(HasTraits):
             if i == 0:
                 fig.build(plots)
                 #print fig
+
+            fig.suppress_ylimits_update=True
             fig.plot(plots)
+            fig.suppress_ylimits_update=False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
             #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
 

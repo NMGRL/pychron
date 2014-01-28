@@ -51,7 +51,7 @@ class AuxPlotOptions(HasTraits):
         self.overlay_positions[k]=v
 
     def has_ylimits(self):
-        return self._has_ylimits
+        return self._has_ylimits or (self.ylimits is not None and self.ylimits[0] !=self.ylimits[1])
 
     def dump_yaml(self):
         d=dict()

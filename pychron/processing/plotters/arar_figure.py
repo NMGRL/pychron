@@ -59,7 +59,7 @@ class BaseArArFigure(HasTraits):
 
     refresh_unknowns_table = Event
     _suppress_table_update = False
-
+    suppress_ylimits_update=False
     _omit_key=None
 
     def _add_limit_tool(self, plot, orientation):
@@ -198,7 +198,6 @@ class BaseArArFigure(HasTraits):
     def _update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
-
         ap.ylimits = self.graph.get_y_limits(pid)
 
     #===========================================================================
@@ -376,7 +375,9 @@ class BaseArArFigure(HasTraits):
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj,name, old, new):
         if not isinstance(new, bool):
-            # print 'aaa',new.low, new.high
+            if self.suppress_ylimits_update:
+                return
+
             for p in self.graph.plots:
                 if p.value_mapper==obj:
                     plot=p
