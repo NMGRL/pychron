@@ -51,7 +51,7 @@ class BaseMeasurement(HasTraits):
     endianness = '>'
     reverse_unpack = False
 
-    def __init__(self, dbrecord=None, unpack=True, unpacker=None, *args, **kw):
+    def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
 
         if dbrecord and unpack:

@@ -258,7 +258,7 @@ class DBAnalysis(Analysis):
     #         d['age_err_wo_j'] = result.age_err_wo_j
     #         self.arar_result.update(d)
 
-    def _sync(self, meas_analysis, unpack=True, load_changes=False):
+    def _sync(self, meas_analysis, unpack=False, load_changes=False):
         """
             copy values from meas_AnalysisTable
             and other associated tables
