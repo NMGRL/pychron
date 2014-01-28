@@ -95,6 +95,9 @@ class ReedRegressionTest(unittest.TestCase):
     def testInterceptError(self):
         err = self.reg.get_intercept_error()
         self.assertAlmostEqual(err, 0.3555, 4)
+
+    def testMSWD(self):
+        self.assertAlmostEqual(self.reg.mswd, 1.4833)
 # #
 #     def testPredict(self):
 #         y = self.reg.predict(0)

@@ -35,7 +35,7 @@ from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
-from pychron.core.helpers.formatting import calc_percent_error
+from pychron.core.helpers.formatting import format_percent_error
 
 Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
 
@@ -472,7 +472,7 @@ class DBAnalysis(Analysis):
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                idisc=ufloat(idisc.nominal_value, disc.std_dev)
+                # idisc=ufloat(idisc.nominal_value, disc.std_dev)
 
             iso.discrimination = idisc
 
@@ -716,7 +716,7 @@ class DBAnalysis(Analysis):
         a = self.age
         e = self.age_err_wo_j
 
-        pe = calc_percent_error(a, e)
+        pe = format_percent_error(a, e)
 
         return u'{:0.3f} +/-{:0.3f} ({}%)'.format(a, e, pe)
 

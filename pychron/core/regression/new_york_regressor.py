@@ -59,6 +59,9 @@ class YorkRegressor(OLSRegressor):
         self._calculate()
 
     def _calculate_correlation_coefficients(self):
+        print self.xds
+        print self.yns
+        print self.xns
         if len(self.xds):
             fd = self.xdes / self.xds  # f40Ar
 
@@ -142,7 +145,10 @@ class YorkRegressor(OLSRegressor):
         sx = self.xserr
         sy = self.yserr
 
-        return calculate_mswd2(x, y, sx, sy, a, b, corrcoeffs=self._calculate_coefficients())
+        print self.xds
+
+        print self._calculate_correlation_coefficients()
+        return calculate_mswd2(x, y, sx, sy, a, b, corrcoeffs=self._calculate_correlation_coefficients())
 
 
 class NewYorkRegressor(YorkRegressor):

@@ -22,7 +22,7 @@ from chaco.array_data_source import ArrayDataSource
 from numpy import linspace, delete
 #============= local library imports  ==========================
 
-from pychron.core.helpers.formatting import calc_percent_error, floatfmt
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.processing.argon_calculations import calculate_isochron, extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
@@ -122,7 +122,9 @@ class InverseIsochron(Isochron):
         #self._scatter = scatter
         graph.set_series_label('data{}'.format(self.group_id))
 
-        eo = ErrorEllipseOverlay(component=scatter)
+        eo = ErrorEllipseOverlay(component=scatter,
+                                 reg=reg
+                                 )
         scatter.overlays.append(eo)
 
         mi, ma = graph.get_x_limits()
@@ -169,7 +171,8 @@ class InverseIsochron(Isochron):
 
         try:
             inv_intercept = intercept ** -1
-            p = calc_percent_error(inv_intercept, err)
+            p = calc_percent_error(inv_intercept, err, scale=1)
+            err=inv_intercept*p
 
             v = floatfmt(inv_intercept, s=3)
             e = floatfmt(err, s=3)
@@ -184,7 +187,7 @@ class InverseIsochron(Isochron):
 
         ratio_line = 'Ar40/Ar36= {} +/-{} ({}%) mse= {}'.format(v, e, p, mse)
 
-        j = self._ref_j
+        # j = self._ref_j
         u = self._ref_age_units
 
         #xint = ufloat(reg.x_intercept, reg.x_intercept_error)

@@ -71,7 +71,7 @@ class PointInspector(InfoInspector):
                     y=floatfmt(y, n=6, s=3)
                     y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
 
-                    lines.extend(u'x= {}'.format(x), u'y= {}'.format(y))
+                    lines.extend([u'x= {}'.format(x), u'y= {}'.format(y)])
                     if hasattr(self.component, 'display_index'):
                         x = self.component.display_index.get_data()[i]
                         lines.append(u'{}'.format(x))

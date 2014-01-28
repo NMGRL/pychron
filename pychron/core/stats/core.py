@@ -64,15 +64,15 @@ def calculate_weighted_mean(x, errs, error=0):
 
 
 def validate_mswd(mswd, n, k=1):
-    '''
+    """
          is mswd acceptable based on Mahon 1996
-         
+
          does the mswd fall in the %95 confidence interval of the reduced chi2
          reduced chi2 =chi2/dof
-         
+
          http://en.wikipedia.org/wiki/Goodness_of_fit
          http://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html#scipy.stats.chi2
-    '''
+    """
     if n < 2:
         return
 
@@ -110,6 +110,7 @@ def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     sy = asarray(sy)
 
     k=0
+    print corrcoeffs
     if corrcoeffs is not None:
         # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
         k = 2 * b * corrcoeffs * sx * sy

@@ -332,6 +332,7 @@ class Isotope(BaseIsotope):
         disc = self.discrimination
         if disc is None:
             disc = 1
+
         return self.get_corrected_value() * disc
 
     def ic_corrected_value(self):

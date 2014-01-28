@@ -20,7 +20,7 @@
 from chaco.api import AbstractOverlay
 
 #============= standard library imports ========================
-from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack
+from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack, array
 from numpy.linalg import eig
 import math
 
@@ -56,7 +56,7 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
 
     a, b = a * SCALE_FACTOR, b * SCALE_FACTOR
     #        print aspectratio, dx, dy, width, height
-    rotation = 0.5 * math.atan2(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
+    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
     #print rotation, math.atan2(v[0][1], v[0][0]), math.atan2(v[0][0], v[1][0])
     #rotation = 0.5 * math.atan2((2 * covar)/(aspectratio*(sx ** 2 - sy ** 2)))
 
@@ -77,10 +77,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
         xer = component.xerror.get_data()
         yer = component.yerror.get_data()
 
-        # pxy = corrcoef(x, y)[0][1]
-        #pxy, _pvalue=pearsonr(x,y)
-        #print pxy, corrcoef(x,y)[0][1]
-
+        pxy=array(self.reg._calculate_correlation_coefficients())
         dx = abs(component.index_mapper.range.low -
                  component.index_mapper.range.high)
         dy = abs(component.value_mapper.range.low -
@@ -91,8 +88,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         aspectratio = (dy / height) / (dx / width)
         try:
-            for cx, cy, sx, sy in zip(x, y, xer, yer):
-                a, b, rot = error_ellipse(sx, sy, pxy,
+            for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
+                a, b, rot = error_ellipse(sx, sy, pxyi,
                                           aspectratio=aspectratio)
                 #print a,b,rot
                 #a, b, rot = self.calculate_ellipse(component, cx, cy, ox, oy, pxy)

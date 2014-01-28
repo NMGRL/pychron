@@ -25,7 +25,7 @@ from traits.traits import Property
 
 #============= EOF =============================================
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -171,15 +171,15 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     def _get_baseline_percent_error_text(self, *args):
         b = self.item.baseline
-        return calc_percent_error(b.value, b.error)
+        return format_percent_error(b.value, b.error)
 
     def _get_blank_percent_error_text(self, *args):
         b = self.item.blank
-        return calc_percent_error(b.value, b.error)
+        return format_percent_error(b.value, b.error)
 
     def _get_value_percent_error_text(self, *args):
         cv = self.item.get_corrected_value()
-        return calc_percent_error(cv.nominal_value, cv.std_dev)
+        return format_percent_error(cv.nominal_value, cv.std_dev)
 
     def _get_age_error_component_text(self):
         return floatfmt(self.item.age_error_component, n=1)

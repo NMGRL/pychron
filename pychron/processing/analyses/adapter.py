@@ -19,7 +19,7 @@
 from pychron.core.ui.text_table import TextTableAdapter, BoldCell, TextCell, TextRow, \
     TextTable, SimpleTextTableAdapter, HeaderRow
 from pychron.core.helpers.formatting import errorfmt, floatfmt, pfloatfmt, \
-    calc_percent_error
+    format_percent_error
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -61,13 +61,13 @@ class AgeAdapter(TextTableAdapter):
     def _make_tables(self, record):
         age = record.age.nominal_value
         age_error = record.age.std_dev
-        age_perror = calc_percent_error(age, age_error, n=3)
+        age_perror = format_percent_error(age, age_error, n=3)
         woj_age_error = record.age_error_wo_j
-        woj_age_perror = calc_percent_error(age, woj_age_error, n=3)
+        woj_age_perror = format_percent_error(age, woj_age_error, n=3)
 
         ar40_39 = record.Ar40_39.nominal_value
         ar40_39_error = record.Ar40_39.std_dev
-        ar40_39_perror = calc_percent_error(ar40_39, ar40_39_error, n=3)
+        ar40_39_perror = format_percent_error(ar40_39, ar40_39_error, n=3)
 
         tt = TextTable(
             HeaderRow(TextCell(''), TextCell('Value'),
