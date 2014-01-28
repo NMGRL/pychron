@@ -162,7 +162,7 @@ class IsotopicMeasurement(BaseMeasurement):
                                              iterations=int(fit.filter_outlier_iterations),
                                              std_devs=int(fit.filter_outlier_std_devs))
             self.fit = fit.fit
-            self.error_type=fit.error_type or 'SD'
+            self.error_type=fit.error_type or 'SEM'
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
