@@ -207,8 +207,6 @@ class NewYorkRegressor(YorkRegressor):
             return self._calculate_slope_intercept(b, nb, cnt + 1)
 
     def _calculate_W(self, b):
-        # sig_x = self._clean_array(self.xserr)
-        # sig_y = self._clean_array(self.yserr)
         sig_x = self.clean_xserr
         sig_y = self.clean_yserr
 

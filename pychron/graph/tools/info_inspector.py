@@ -91,7 +91,7 @@ class InfoOverlay(AbstractOverlay):
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
         lw = max(lws)
-        lh = sum(lhs)+ 4 * (len(lhs)-1)
+        lh = sum(lhs)*1.1+ 4 * (len(lhs)-1)
 
         xoffset = 12
         yoffset = 10

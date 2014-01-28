@@ -85,6 +85,8 @@ class FigurePanel(HasTraits):
             fig.plot(plots)
             fig.suppress_ylimits_update=False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+
+
             #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
 
             #meta=self.meta
@@ -95,8 +97,9 @@ class FigurePanel(HasTraits):
             # mi,ma=0, 100
         if mi is None and ma is None:
             mi, ma = 0, 100
+        g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
-        g.set_x_limits(mi, ma)
+
         self.graph = g
         #print self.graph
         return g.plotcontainer

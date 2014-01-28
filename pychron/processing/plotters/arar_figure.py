@@ -62,6 +62,7 @@ class BaseArArFigure(HasTraits):
     _suppress_table_update = False
     suppress_ylimits_update=False
     _omit_key=None
+    xpad=None
 
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
