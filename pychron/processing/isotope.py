@@ -176,7 +176,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def _mean_regressor_factory(self):
         reg = MeanRegressor(xs=self.xs, ys=self.ys,
                             filter_outliers_dict=self.filter_outliers_dict,
-                            error_type=self.error_type)
+                            error_calc_type=self.error_type or 'SEM')
         return reg
 
     def _set_error(self, v):
@@ -209,7 +209,7 @@ class IsotopicMeasurement(BaseMeasurement):
             reg = PolynomialRegressor(xs=self.xs,
                                       ys=self.ys,
                                       degree=self.fit,
-                                      error_type=self.error_type,
+                                      error_calc_type=self.error_type,
                                       filter_outliers_dict=self.filter_outliers_dict)
 
         # except Exception, e:
