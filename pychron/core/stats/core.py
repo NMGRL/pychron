@@ -85,7 +85,7 @@ def validate_mswd(mswd, n, k=1):
     return bool(low <= mswd <= high)
 
 
-def chi_squared(x, y, sx, sy, a, b, correlated_errors=True):
+def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     """
         Press et. al 2007 Numerical Recipes
         chi2=Sum((y_i-(a+b*x_i)^2*W_i)
@@ -110,9 +110,9 @@ def chi_squared(x, y, sx, sy, a, b, correlated_errors=True):
     sy = asarray(sy)
 
     k=0
-    if correlated_errors:
-        p=((1+sy**2)*(1+sx**2))**-2
-        k = 2 * b * p * sx * sy
+    if corrcoeffs is not None:
+        # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
+        k = 2 * b * corrcoeffs * sx * sy
 
     w = (sy ** 2 + (b * sx) ** 2 - k) ** -1
 
@@ -121,7 +121,7 @@ def chi_squared(x, y, sx, sy, a, b, correlated_errors=True):
     return c
 
 
-def calculate_mswd2(x, y, ex, ey, a, b, correlated_errors=True):
+def calculate_mswd2(x, y, ex, ey, a, b, corrcoeffs=None):
     """
         see Murray 1994, Press 2007
 
@@ -130,7 +130,7 @@ def calculate_mswd2(x, y, ex, ey, a, b, correlated_errors=True):
     """
     n = len(x)
 
-    return chi_squared(x, y, ex, ey, a, b, correlated_errors) / (n - 2)
+    return chi_squared(x, y, ex, ey, a, b, corrcoeffs) / (n - 2)
 
 #============= EOF =============================================
 

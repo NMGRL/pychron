@@ -47,10 +47,6 @@ def extract_isochron_xy(analyses):
 
 
 def calculate_isochron(analyses, reg='Reed'):
-    if reg.lower() in ('newyork','new_york'):
-        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
-    else:
-        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
 
     ref=analyses[0]
     xxyy=extract_isochron_xy(analyses)
@@ -60,19 +56,27 @@ def calculate_isochron(analyses, reg='Reed'):
     xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
     ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
 
-    reg = klass(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
-    reg.calculate()
-
+    reg=isochron_regressor(xs,xerrs,ys,yerrs, reg)
     xint = ufloat(reg.x_intercept, reg.x_intercept_error)
     try:
         R = xint ** -1
     except ZeroDivisionError:
         R = 0
 
-    age=ufloat(0,0)
+    age = ufloat(0, 0)
     if R > 0:
         age = age_equation(ref.j, R, arar_constants=ref.arar_constants)
-    return age, reg, (xs,ys,xerrs,yerrs)
+    return age, reg, (xs, ys, xerrs, yerrs)
+
+def isochron_regressor(xs,xes,ys,yes, reg='Reed'):
+    if reg.lower() in ('newyork', 'new_york'):
+        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
+    else:
+        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
+
+    reg = klass(xs=xs, ys=ys, xserr=xes, yserr=yes)
+    reg.calculate()
+    return reg
 
 
 def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):

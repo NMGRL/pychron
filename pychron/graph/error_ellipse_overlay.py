@@ -56,7 +56,7 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
 
     a, b = a * SCALE_FACTOR, b * SCALE_FACTOR
     #        print aspectratio, dx, dy, width, height
-    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
+    rotation = 0.5 * math.atan2(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
     #print rotation, math.atan2(v[0][1], v[0][0]), math.atan2(v[0][0], v[1][0])
     #rotation = 0.5 * math.atan2((2 * covar)/(aspectratio*(sx ** 2 - sy ** 2)))
 
@@ -77,7 +77,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
         xer = component.xerror.get_data()
         yer = component.yerror.get_data()
 
-        pxy = corrcoef(x, y)[0][1]
+        # pxy = corrcoef(x, y)[0][1]
         #pxy, _pvalue=pearsonr(x,y)
         #print pxy, corrcoef(x,y)[0][1]
 
