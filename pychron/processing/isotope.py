@@ -53,7 +53,7 @@ class BaseMeasurement(HasTraits):
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
-
+        # print 'uasdf', unpack, self.name, type(self)
         if dbrecord and unpack:
             try:
                 if unpacker is None:

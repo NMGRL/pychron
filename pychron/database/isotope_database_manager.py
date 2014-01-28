@@ -357,7 +357,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         synced=False
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
-                ai.sync(meas_analysis, load_changes=load_changes)
+                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
                 synced=True
 

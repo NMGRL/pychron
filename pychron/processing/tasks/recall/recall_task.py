@@ -81,6 +81,8 @@ class RecallTask(AnalysisEditTask):
         if self.active_editor:
             if hasattr(self.active_editor,'analysis_view'):
                 self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
+            else:
+                self.controls_pane.tool=self.active_editor.tool
 
     def _dclicked_sample_changed(self):
         pass
@@ -112,13 +114,14 @@ class RecallTask(AnalysisEditTask):
             return
 
         from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
-
-        ieditor = IsotopeEvolutionEditor(
-            name='IsoEvo {}'.format(name),
-            processor=self.manager)
-
-        ieditor.set_items([rec])
-        self.editor_area.add_editor(ieditor)
+        name='IsoEvo {}'.format(name)
+        editor=self.get_editor(name)
+        if editor:
+            self.activate_editor(editor)
+        else:
+            ieditor = IsotopeEvolutionEditor(name=name,processor=self.manager)
+            ieditor.set_items([rec])
+            self.editor_area.add_editor(ieditor)
 
     def add_diff(self):
         left = None
