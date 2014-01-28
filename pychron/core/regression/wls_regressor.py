@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import asarray, delete
+from numpy import delete
 
 from statsmodels.api import WLS
 #============= local library imports  ==========================
@@ -69,7 +69,8 @@ class WeightedPolynomialRegressor(OLSRegressor):
         return True
 
     def _get_weights(self):
-        es = asarray(self._clean_array(self.yserr))
+        es=self.clean_yserr
+        # es = asarray(self._clean_array(self.yserr))
         return es ** -2
 
 

@@ -46,8 +46,8 @@ class OLSRegressor(BaseRegressor):
             self.calculate()
 
     def calculate(self):
-        cxs = self.get_clean_xs()
-        cys = self.get_clean_ys()
+        cxs = self.clean_xs
+        cys = self.clean_ys
 
         if not self._check_integrity(cxs,cys):
             # self.debug('A integrity check failed')
@@ -262,7 +262,7 @@ class OLSRegressor(BaseRegressor):
                 ]
         """
         if xs is None:
-            xs = self.get_clean_xs()
+            xs = self.clean_xs
 
         cols = [pow(xs, i) for i in range(self.degree + 1)]
         X = column_stack(cols)
@@ -291,11 +291,11 @@ class OLSRegressor(BaseRegressor):
                 if not len(sy):
                     sy=zeros(self.n)
 
-                x=self._clean_array(x)
-                y=self._clean_array(y)
-                sx=self._clean_array(sx)
-                sy=self._clean_array(sy)
-
+                # x=self._clean_array(x)
+                # y=self._clean_array(y)
+                # sx=self._clean_array(sx)
+                # sy=self._clean_array(sy)
+                x,y,sx,sy=self.clean_xs,self.clean_ys, self.clean_xserr, self.clean_yserr
                 m=calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
                 self.valid_mswd=validate_mswd(m, len(ys), k=2)
                 return m
@@ -323,7 +323,7 @@ class MultipleLinearRegressor(OLSRegressor):
 
     def _get_X(self, xs=None):
         if xs is None:
-            xs = self.get_clean_xs()
+            xs = self.clean_xs
 
         r, c = xs.shape
         if c == 2:

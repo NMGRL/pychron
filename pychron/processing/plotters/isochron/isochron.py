@@ -19,7 +19,7 @@ from traits.api import Array
 from chaco.plot_label import PlotLabel
 from chaco.array_data_source import ArrayDataSource
 #============= standard library imports ========================
-from numpy import linspace, delete
+from numpy import linspace
 #============= local library imports  ==========================
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
@@ -171,7 +171,8 @@ class InverseIsochron(Isochron):
 
         try:
             inv_intercept = intercept ** -1
-            p = calc_percent_error(inv_intercept, err, scale=1)
+            p = calc_percent_error(intercept, err, scale=1)
+
             err=inv_intercept*p
 
             v = floatfmt(inv_intercept, s=3)
@@ -179,8 +180,7 @@ class InverseIsochron(Isochron):
 
             mse = err * mswd ** 0.5
             mse = floatfmt(mse, s=3)
-            #v = '{:0.2f}'.format(inv_intercept)
-            #e = '{:0.3f}'.format(err)
+            p=floatfmt(p,n=2)
 
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
@@ -246,16 +246,18 @@ class InverseIsochron(Isochron):
 
         if self._cached_data:
             reg=self._cached_reg
-            xs, ys, xerr, yerr = self._cached_data
+            # xs, ys, xerr, yerr = self._cached_data
 
-            nxs = delete(xs, sel)
-            nys = delete(ys, sel)
-            nxerr = delete(xerr, sel)
-            nyerr = delete(yerr, sel)
+            # nxs = delete(xs, sel)
+            # nys = delete(ys, sel)
+            # nxerr = delete(xerr, sel)
+            # nyerr = delete(yerr, sel)
 
             # reg = ReedYorkRegressor(xs=nxs, ys=nys,
             #                         xserr=nxerr, yserr=nyerr)
-            reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
+            # reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
+            reg.user_excluded=sel
+            reg.dirty=True
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]

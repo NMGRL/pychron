@@ -110,7 +110,6 @@ def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
     sy = asarray(sy)
 
     k=0
-    print corrcoeffs
     if corrcoeffs is not None:
         # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
         k = 2 * b * corrcoeffs * sx * sy

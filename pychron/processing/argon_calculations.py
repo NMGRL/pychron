@@ -36,9 +36,9 @@ def extract_isochron_xy(analyses):
             ai.get_interference_corrected_value('Ar40'))
            for ai in analyses]
     a39, a36, a40 = array(ans).T
-    print 'a40',a40
-    print 'a39',a39
-    print 'a36',a36
+    # print 'a40',a40
+    # print 'a39',a39
+    # print 'a36',a36
     try:
         xx = a39 / a40
         yy = a36 / a40

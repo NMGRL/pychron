@@ -59,14 +59,19 @@ class YorkRegressor(OLSRegressor):
         self._calculate()
 
     def _calculate_correlation_coefficients(self):
-        print self.xds
-        print self.yns
-        print self.xns
-        if len(self.xds):
-            fd = self.xdes / self.xds  # f40Ar
 
-            fyn = self.ynes / self.yns  # f36Ar
-            fxn = self.xnes / self.xns  # f39Ar
+        if len(self.xds):
+            xds=self._clean_array(self.xds)
+            xns=self._clean_array(self.xns)
+            xdes=self._clean_array(self.xdes)
+            xnes=self._clean_array(self.xnes)
+            yns=self._clean_array(self.yns)
+            ynes=self._clean_array(self.ynes)
+
+            fd = xdes / xds  # f40Ar
+
+            fyn = ynes / yns  # f36Ar
+            fxn = xnes / xns  # f39Ar
 
             a = (1 + (fyn / fd) ** 2)
             b = (1 + (fxn / fd) ** 2)
@@ -81,20 +86,25 @@ class YorkRegressor(OLSRegressor):
         raise NotImplementedError
 
     def _get_weights(self):
-        Wx = 1 / self.xserr ** 2
-        Wy = 1 / self.yserr ** 2
+        ex = self.clean_xserr
+        ey = self.clean_yserr
+        Wx = 1 / ex ** 2
+        Wy = 1 / ey ** 2
         return Wx, Wy
 
     def _calculate_UV(self, W):
-        xs, ys = self.xs, self.ys
+        xs=self.clean_xs
+        ys=self.clean_ys
+
+        # xs, ys = self.xs, self.ys
         x_bar, y_bar = self._calculate_xy_bar(W)
         U = xs - x_bar
         V = ys - y_bar
         return U, V
 
     def _calculate_xy_bar(self, W):
-        xs, ys = self.xs, self.ys
-
+        # xs, ys = self.xs, self.ys
+        xs,ys=self.clean_xs, self.clean_ys
         sW = sum(W)
         try:
             x_bar = sum(W * xs) / sW
@@ -139,15 +149,12 @@ class YorkRegressor(OLSRegressor):
 
         a = self.intercept
         b = self.slope
-        x = self.xs
-        y = self.ys
-
-        sx = self.xserr
-        sy = self.yserr
-
-        print self.xds
-
-        print self._calculate_correlation_coefficients()
+        # x = self._clean_array(self.xs)
+        # y = self._clean_array(self.ys)
+        #
+        # sx = self._clean_array(self.xserr)
+        # sy = self._clean_array(self.yserr)
+        x,y,sx,sy=self.clean_xs,self.clean_ys,self.clean_xserr, self.clean_yserr
         return calculate_mswd2(x, y, sx, sy, a, b, corrcoeffs=self._calculate_correlation_coefficients())
 
 
@@ -182,8 +189,8 @@ class NewYorkRegressor(YorkRegressor):
             a = YBar - b * XBar
             return b, a, cnt
         else:
-            sig_x = self.xserr
-            sig_y = self.yserr
+            sig_x=self.clean_xserr
+            sig_y=self.clean_yserr
 
             r = self._calculate_correlation_coefficients()
 
@@ -192,19 +199,23 @@ class NewYorkRegressor(YorkRegressor):
 
             W = self._calculate_W(b)
             U, V = self._calculate_UV(W)
+
             sumA = sum(W ** 2 * V * (U * var_y + b * V * var_x - r * V * sig_x * sig_y))
             sumB = sum(W ** 2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y))
             nb = sumA / sumB
 
             return self._calculate_slope_intercept(b, nb, cnt + 1)
 
-
     def _calculate_W(self, b):
-        sig_x = self.xserr
-        sig_y = self.yserr
+        # sig_x = self._clean_array(self.xserr)
+        # sig_y = self._clean_array(self.yserr)
+        sig_x = self.clean_xserr
+        sig_y = self.clean_yserr
+
         var_x = sig_x ** 2
         var_y = sig_y ** 2
         r = self._calculate_correlation_coefficients()
+        # print var_x.shape, var_y.shape, r.shape, b
         return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
     def get_intercept_variance(self):
@@ -219,8 +230,9 @@ class NewYorkRegressor(YorkRegressor):
         W = self._calculate_W(b)
         U, V = self._calculate_UV(W)
 
-        sx = self.xserr
-        sy = self.yserr
+        sx = self.clean_xserr
+        sy = self.clean_yserr
+
         var_x = sx ** 2
         var_y = sy ** 2
 
