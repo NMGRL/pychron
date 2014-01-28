@@ -108,7 +108,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='xs,ys, fit, dirty, error_type')
+    regressor = Property(depends_on='xs, ys, fit, dirty, error_type')
     dirty = Event
 
     def __init__(self, dbresult=None, *args, **kw):
@@ -156,13 +156,13 @@ class IsotopicMeasurement(BaseMeasurement):
         else:
             return self.fit
 
-    def set_fit(self, fit):
+    def set_fit(self, fit, notify=True):
         if fit is not None:
             self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                              iterations=int(fit.filter_outlier_iterations),
                                              std_devs=int(fit.filter_outlier_std_devs))
-            self.fit = fit.fit
             self.error_type=fit.error_type or 'SEM'
+            self.trait_set(fit=fit.fit, trait_change_notify=notify)
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):

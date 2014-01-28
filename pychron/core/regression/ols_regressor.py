@@ -101,6 +101,7 @@ class OLSRegressor(BaseRegressor):
         if isinstance(x, (float, int)):
             x = [x]
             return_single = True
+
         if error_calc=='CI':
             e=self.calculate_ci_error(x)
         else:
@@ -132,7 +133,7 @@ class OLSRegressor(BaseRegressor):
 
         return [calc_error(xi) for xi in x]
 
-    def predict_error_matrix(self, x, error_calc='sem'):
+    def predict_error_matrix(self, x, error_calc='SEM'):
         """
             predict the error in y using matrix math
             draper and smith chapter 2.4 page 56
@@ -151,7 +152,7 @@ class OLSRegressor(BaseRegressor):
             varY_hat = (Xk.T * covarM * Xk)
             varY_hat = varY_hat[0, 0]
 
-            if error_calc == 'sem':
+            if error_calc == 'SEM':
                 se = se * sqrt(varY_hat)
             else:
                 se = sqrt(se ** 2 + se ** 2 * varY_hat)

@@ -559,7 +559,7 @@ class DBAnalysis(Analysis):
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0)
 
-                r.set_fit(fit)
+                r.set_fit(fit, notify=False)
                 iso.baseline = r
 
             elif dbiso.kind == 'sniff':
@@ -629,11 +629,11 @@ class DBAnalysis(Analysis):
 
                 if fit is None:
                     fit = Fit(fit='linear',
-                              error_type='SD',
+                              error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=1,
                               filter_outlier_std_devs=2)
-                r.set_fit(fit)
+                r.set_fit(fit, notify=False)
                 isodict[name] = r
 
     def _get_peak_center(self, meas_analysis):
