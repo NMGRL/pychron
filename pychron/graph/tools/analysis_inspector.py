@@ -38,12 +38,23 @@ class AnalysisPointInspector(PointInspector):
                     name = self.component.container.y_axis.title
 
                     y = self.component.value.get_data()[ind]
-                    if self.value_format:
-                        y = self.value_format(y)
 
-    #                 if analysis.status == 0 and analysis.temp_status != 0:
-    #                     status = 'Temp. Omitted'
-    #                 else:
+                    if hasattr(self.component, 'yerror'):
+                        ye = self.component.yerror.get_data()[ind]
+                        pe=self.percent_error(y,ye)
+                        if self.value_format:
+                            ye=self.value_format(ye)
+                        if self.value_format:
+                            y = self.value_format(y)
+
+                        y='{} +/-{} {}'.format(y,ye, pe)
+                    else:
+                        if self.value_format:
+                            y = self.value_format(y)
+
+                        #                 if analysis.status == 0 and analysis.temp_status != 0:
+                        #                     status = 'Temp. Omitted'
+                        #                 else:
                     status = analysis.status_text
                     tag = analysis.tag
 

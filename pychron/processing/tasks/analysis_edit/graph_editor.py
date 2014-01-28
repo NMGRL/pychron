@@ -101,7 +101,7 @@ class GraphEditor(BaseUnknownsEditor):
         for fi in fits:
             ff = next((fo for fo in tool.fits if fo.name == fi.name), None)
             if ff:
-                self.debug('setting fit {} {} {}'.format(fi.name, fi.fit, fi.use))
+                # self.debug('setting fit {} {} {}'.format(fi.name, fi.fit, fi.use))
                 ff.trait_set(fit=fi.fit,
                              use=fi.use,
                              show=fi.show)

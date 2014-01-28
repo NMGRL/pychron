@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 import re
 from chaco.array_data_source import ArrayDataSource
+from numpy import Inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
@@ -123,6 +124,15 @@ class BaseArArFigure(HasTraits):
 
     def replot(self, *args, **kw):
         pass
+
+    def max_x(self, *args):
+        return -Inf
+
+    def min_x(self, *args):
+        return Inf
+
+    def mean_x(self, *args):
+        return 0
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)

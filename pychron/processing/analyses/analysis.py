@@ -26,7 +26,6 @@ from uncertainties import ufloat
 from collections import namedtuple
 #============= local library imports  ==========================
 import yaml
-from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
@@ -167,6 +166,7 @@ class DBAnalysis(Analysis):
 
     blank_changes = List
     fit_changes = List
+    has_raw_data=Bool
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -263,6 +263,7 @@ class DBAnalysis(Analysis):
             copy values from meas_AnalysisTable
             and other associated tables
         """
+        self.has_raw_data=unpack
 
         self._sync_meas_analysis_attributes(meas_analysis)
         self._sync_analysis_info(meas_analysis)
@@ -341,6 +342,7 @@ class DBAnalysis(Analysis):
 
     def _sync_j(self, ln):
         s, e = 1, 0
+
         if ln.selected_flux_history:
             f = ln.selected_flux_history.flux
             s = f.j
@@ -454,22 +456,23 @@ class DBAnalysis(Analysis):
 
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
-                mass = extract_mass(iso.name)
+                # mass = extract_mass(iso.name)
 
                 disc, refmass = discriminations[det]
-                ni = mass - round(refmass)
+                # ni = mass - round(refmass)
 
                 mass = iso.mass
                 n = mass - refmass
+                # print n
                 #self.info('{} {} {}'.format(iso.name, n, ni))
                 #calculate discrimination
                 idisc = disc ** n
-
+                # print idisc.nominal_value
                 #e=disc
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                #idisc=ufloat(idisc.nominal_value, e.std_dev)
+                idisc=ufloat(idisc.nominal_value, disc.std_dev)
 
             iso.discrimination = idisc
 
@@ -756,6 +759,7 @@ class VCSAnalysis(DBAnalysis):
         self._sync_extraction(meas_analysis)
         self._sync_experiment(meas_analysis)
 
+        self.has_raw_data=unpack
         use_local = not unpack
         if not unpack:
             yd = self._load_file()

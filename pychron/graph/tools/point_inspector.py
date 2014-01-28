@@ -38,11 +38,10 @@ class PointInspector(InfoInspector):
             tol = 0.001
             return where(abs(d - x) < tol)[0]
 
-
     def percent_error(self, s, e):
-        v = 'Inf'
+        v ='(Inf%)'
         try:
-            v = abs(e / s) * 100
+            return '({:0.2f}%)'.format(abs(e / s) * 100)
         except ZeroDivisionError:
             pass
         return v
@@ -70,7 +69,7 @@ class PointInspector(InfoInspector):
                     # y = fmt.format(y)
                     ye=floatfmt(ye, n=6, s=3)
                     y=floatfmt(y, n=6, s=3)
-                    y = u'{} {}{}({:0.2f}%)'.format(y, '+/-', ye, pe)
+                    y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
 
                     lines.extend(u'x= {}'.format(x), u'y= {}'.format(y))
                     if hasattr(self.component, 'display_index'):

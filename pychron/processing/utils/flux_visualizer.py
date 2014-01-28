@@ -25,7 +25,8 @@ from pylab import show, meshgrid, zeros, \
 import math
 # from itertools import groupby
 import matplotlib.pyplot as plt
-from pychron.core.regression.ols_regressor import MultipleLinearRegressor, FluxRegressor
+from pychron.core.regression.ols_regressor import MultipleLinearRegressor
+from pychron.core.regression.flux_regressor import PlaneFluxRegressor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -150,7 +151,7 @@ def flux_contour2d(xx, yy, z, ze, holes, hole_ids, fit_dev=False, age_space=0):
     ylabel('Y (mm)')
     rc('font', **{'size': 24})
 
-def model_flux(n, xx, yy, XX, YY, z, klass=FluxRegressor):
+def model_flux(n, xx, yy, XX, YY, z, klass=PlaneFluxRegressor):
     nz = zeros((n, n))
     xy = zip(xx, yy)
     reg = klass(xs=xy, ys=z)
@@ -257,8 +258,8 @@ def interpolate_flux(pholes, p, holder, delim=','):
 
     (xx, yy, z, ze), hole_ids = load_flux_xls(p, holes)
     xy = zip(xx, yy)
-    reg = FluxRegressor(xs=xy, ys=z)
-
+    reg = PlaneFluxRegressor(xs=xy, ys=z, yserr=ze, error_calc_type='SEM')
+    reg.calculate()
     output = []
     for hi in pholes:
         x, y, t = holes[hi - 1]
@@ -290,8 +291,8 @@ if __name__ == '__main__':
     p = '/Users/ross/Sandbox/flux_visualizer/J_nm-258_tray_G.xls'
     p = '/Users/ross/Sandbox/flux_visualizer/J_nm-258_tray_G2.xls'
     p = '/Users/ross/Sandbox/flux_visualizer/J_NM-259A.xls'
-    p = '/Users/ross/Sandbox/flux_visualizer/J_NM-259A2.xls'
-    p = '/Users/ross/Sandbox/flux_visualizer/Tray_I_NM-261.xls'
+    # p = '/Users/ross/Sandbox/flux_visualizer/J_NM-259A2.xls'
+    # p = '/Users/ross/Sandbox/flux_visualizer/Tray_I_NM-261.xls'
     #     p = '/Users/ross/Sandbox/flux_visualizer/runid_contour.txt'
     #    p = '/Users/ross/Sandbox/flux_visualizer/J_data_for_nm-258_tray_G.txt'
     holder = '/Users/ross/Sandbox/flux_visualizer/irradiation_tray_maps/1_75mm_3level'

@@ -22,7 +22,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List
 
 #============= standard library imports ========================
-from uncertainties import ufloat, Variable, AffineScalarFunc, nominal_value
+from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
@@ -332,8 +332,7 @@ class Isotope(BaseIsotope):
         disc = self.discrimination
         if disc is None:
             disc = 1
-
-        return self.get_corrected_value() * nominal_value(disc)
+        return self.get_corrected_value() * disc
 
     def ic_corrected_value(self):
         return self.get_corrected_value() * (self.ic_factor or 1.0)

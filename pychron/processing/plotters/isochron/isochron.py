@@ -19,11 +19,11 @@ from traits.api import Array
 from chaco.plot_label import PlotLabel
 from chaco.array_data_source import ArrayDataSource
 #============= standard library imports ========================
-from numpy import array, linspace, delete
+from numpy import linspace, delete
 #============= local library imports  ==========================
 
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
-from pychron.processing.argon_calculations import calculate_isochron
+from pychron.processing.argon_calculations import calculate_isochron, extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
@@ -127,8 +127,8 @@ class InverseIsochron(Isochron):
 
         mi, ma = graph.get_x_limits()
 
-        ma = max(ma, max(xs))
-        mi = min(mi, min(xs))
+        # ma = max(ma, max(xs))
+        # mi = min(mi, min(xs))
         rxs = linspace(mi, ma)
         rys = reg.predict(rxs)
 
@@ -139,7 +139,22 @@ class InverseIsochron(Isochron):
 
         if po.show_labels:
             self._add_point_labels(scatter)
-        self._add_scatter_inspector(scatter)
+
+        def ad(ai):
+            a=ai.isotopes['Ar39'].get_interference_corrected_value()
+            b=ai.isotopes['Ar40'].get_interference_corrected_value()
+            r=a/b
+            v=r.nominal_value
+            e=r.std_dev
+
+            try:
+                pe='({:0.2f}%)'.format(e/v*100)
+            except ZeroDivisionError:
+                pe='(Inf%)'
+
+            return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
+
+        self._add_scatter_inspector(scatter, additional_info=ad)
 
         self._add_info(plot, reg, text_color=scatter.color)
 
@@ -211,10 +226,6 @@ class InverseIsochron(Isochron):
         label.text = '{}'.format(lines)
         label.request_redraw()
 
-    def update_index_mapper(self, obj, name, old, new):
-        if new is True:
-            self.update_graph_metadata(None, name, old, new)
-
     def replot(self):
         self.suppress = True
 
@@ -261,14 +272,29 @@ class InverseIsochron(Isochron):
         if obj:
             self._filter_metadata_changes(obj, self._rebuild_iso, self.analyses)
 
+    def update_index_mapper(self, obj, name, old, new):
+        if new is True:
+            self.update_graph_metadata(None, name, old, new)
+
+
     #===============================================================================
     # utils
     #===============================================================================
-    def _get_age_errors(self, ans):
-        ages, errors = zip(*[(ai.age.nominal_value,
-                              ai.age.std_dev)
-                             for ai in self.sorted_analyses])
-        return array(ages), array(errors)
+    def max_x(self, *args):
+        xx,yy=extract_isochron_xy(self.analyses)
+        try:
+            return max([ai.nominal_value + ai.std_dev
+                        for ai in xx])
+        except (AttributeError, ValueError):
+            return 0
+
+    def min_x(self, *args):
+        xx, yy = extract_isochron_xy(self.analyses)
+        try:
+            return min([ai.nominal_value + ai.std_dev
+                        for ai in xx])
+        except (AttributeError, ValueError):
+            return 0
 
     def _add_aux_plot(self, ys, title, vk, pid, **kw):
         graph = self.graph
@@ -278,6 +304,12 @@ class InverseIsochron(Isochron):
         xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
         s = self._add_plot(xs, ys, es, pid, **kw)
         return s
+
+        # def _get_age_errors(self, ans):
+        #     ages, errors = zip(*[(ai.age.nominal_value,
+        #                           ai.age.std_dev)
+        #                          for ai in self.sorted_analyses])
+        #     return array(ages), array(errors)
 
         #def _calculate_stats(self, ages, errors, xs, ys):
         #    mswd, valid_mswd, n = self._get_mswd(ages, errors)

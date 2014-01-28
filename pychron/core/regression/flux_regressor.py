@@ -19,9 +19,10 @@
 #============= standard library imports ========================
 from numpy import asarray, column_stack, ones_like
 #============= local library imports  ==========================
-from pychron.core.regression.wls_regressor import WeightedMultipleLinearRegressor
-#class FluxRegressor(MultipleLinearRegressor):
-class BowlFluxRegressor(WeightedMultipleLinearRegressor):
+from pychron.core.regression.ols_regressor import MultipleLinearRegressor
+
+
+class BowlFluxRegressor(MultipleLinearRegressor):
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.xs
@@ -30,7 +31,7 @@ class BowlFluxRegressor(WeightedMultipleLinearRegressor):
         return column_stack((x1, x2, x1 ** 2, x2 ** 2, x1 * x2, ones_like(x1)))
 
 
-class PlaneFluxRegressor(WeightedMultipleLinearRegressor):
+class PlaneFluxRegressor(MultipleLinearRegressor):
     pass
 
 #============= EOF =============================================

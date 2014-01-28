@@ -30,6 +30,22 @@ from pychron.core.stats.core import calculate_weighted_mean
 #============= local library imports  ==========================
 
 
+def extract_isochron_xy(analyses):
+    ans = [(ai.get_interference_corrected_value('Ar39'),
+            ai.get_interference_corrected_value('Ar36'),
+            ai.get_interference_corrected_value('Ar40'))
+           for ai in analyses]
+    a39, a36, a40 = array(ans).T
+
+    try:
+        xx = a39 / a40
+        yy = a36 / a40
+    except ZeroDivisionError:
+        return
+
+    return xx,yy
+
+
 def calculate_isochron(analyses, reg='Reed'):
     if reg.lower() in ('newyork','new_york'):
         from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
@@ -37,18 +53,10 @@ def calculate_isochron(analyses, reg='Reed'):
         from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
 
     ref=analyses[0]
-    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
-            ai.isotopes['Ar36'].get_interference_corrected_value(),
-            ai.isotopes['Ar40'].get_interference_corrected_value())
-           for ai in analyses]
-
-    a39, a36, a40 = array(ans).T
-    try:
-        xx = a39 / a40
-        yy = a36 / a40
-    except ZeroDivisionError:
+    xxyy=extract_isochron_xy(analyses)
+    if not xxyy:
         return
-
+    xx,yy=xxyy
     xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
     ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
 
@@ -64,7 +72,6 @@ def calculate_isochron(analyses, reg='Reed'):
     age=ufloat(0,0)
     if R > 0:
         age = age_equation(ref.j, R, arar_constants=ref.arar_constants)
-
     return age, reg, (xs,ys,xerrs,yerrs)
 
 
@@ -97,13 +104,13 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
 
 
 def calculate_flux(rad40, k39, age, arar_constants=None):
-    '''
+    """
         rad40: radiogenic 40Ar
         k39: 39Ar from potassium
         age: age of monitor in years
-        
+
         solve age equation for J
-    '''
+    """
     if isinstance(rad40, (list, tuple)):
         rad40 = ufloat(*rad40)
     if isinstance(k39, (list, tuple)):
@@ -122,7 +129,6 @@ def calculate_flux(rad40, k39, age, arar_constants=None):
 
 #    return j
 def calculate_decay_time(dc, f):
-    print dc, f
     return math.log(f) / dc
 
 
