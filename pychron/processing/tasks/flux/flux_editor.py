@@ -119,6 +119,11 @@ class FluxEditor(GraphEditor):
             for pp in self.monitor_positions.itervalues():
                 if pp.save:
                     db.save_flux(pp.identifier, pp.j, pp.jerr, inform=False)
+                    #remove all analyses of this identifier from the cache
+                    self._remove_analyses(pp.identifier)
+
+    def _remove_analyses(self, identifier):
+        pass
 
     def _gather_unknowns(self, refresh_data,
                          exclude='invalid',
@@ -158,9 +163,11 @@ class FluxEditor(GraphEditor):
         for p in self.positions:
             if not p.use:
                 j = reg.predict([(p.x, p.y)])[0]
+                je = reg.predict_error([[(p.x, p.y)]])[0]
                 oj = p.j
                 p.j = j
-                p.jerr = j
+                p.jerr =je
+                print je
 
                 p.dev = (oj - j) / j * 100
         self.positions_dirty = True
@@ -276,7 +283,7 @@ class FluxEditor(GraphEditor):
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-        reg = klass(xs=xy, ys=z, yserr=ze)
+        reg = klass(xs=xy, ys=z, yserr=ze, error_calc_type='SD')
         reg.calculate()
         return reg
 

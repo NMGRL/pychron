@@ -25,6 +25,8 @@ from traits.traits import Property
 
 #============= EOF =============================================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.helpers.formatting import format_percent_error
+from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 
 SIGMA_1 = u'\u00b11\u03c3'
@@ -86,11 +88,51 @@ class ExtractionTabularAdapter(BaseTabularAdapter):
 class CompuatedValueTabularAdapter(BaseTabularAdapter):
     columns = [('Name', 'name'),
                ('Value', 'value'),
-               (SIGMA_1, 'error'),
-    ]
+               (SIGMA_1, 'error')]
     name_width = Int(80)
     value_width = Int(80)
     units_width = Int(40)
+
+
+class IntermediateTabularAdapter(BaseTabularAdapter):
+    columns=[('Iso.','name'),
+            ('Intercept-Bs', 'bs_corrected'),
+            (SIGMA_1, 'bs_corrected_error'),
+            ('%', 'bs_corrected_percent_error'),
+            ('Intercept-Bs-Bk', 'bs_bk_corrected'),
+            (SIGMA_1, 'bs_bk_corrected_error'),
+            ('%', 'bs_bk_corrected_percent_error'),
+            ]
+    bs_corrected_text=Property
+    bs_corrected_error_text=Property
+    bs_corrected_percent_error_text=Property
+    bs_bk_corrected_text = Property
+    bs_bk_corrected_error_text = Property
+    bs_bk_corrected_percent_error_text = Property
+
+    def _get_bs_corrected_text(self):
+        v=self.item.get_baseline_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    def _get_bs_corrected_error_text(self):
+        v = self.item.get_baseline_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    def _get_bs_corrected_percent_error_text(self):
+        v = self.item.get_baseline_corrected_value()
+        return calc_percent_error(v.nominal_value,v.std_dev)
+
+    def _get_bs_bk_corrected_text(self):
+        v = self.item.get_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    def _get_bs_bk_corrected_error_text(self):
+        v = self.item.get_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    def _get_bs_bk_corrected_percent_error_text(self):
+        v = self.item.get_corrected_value()
+        return calc_percent_error(v.nominal_value, v.std_dev)
 
 
 class IsotopeTabularAdapter(BaseTabularAdapter):
@@ -108,6 +150,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
                (SIGMA_1, 'blank_error'),
                ('%', 'blank_percent_error'),
                ('IC', 'ic_factor'),
+               ('Disc','discrimination'),
                ('Error Comp.', 'age_error_component')]
 
     value_text = Property
@@ -117,6 +160,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     blank_value_text = Property
     blank_error_text = Property
     ic_factor_text=Property
+    discrimination_text=Property
 
     value_percent_error_text = Property
     blank_percent_error_text = Property
@@ -149,6 +193,15 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
         return floatfmt(v, n=2)
 
+    def _get_discrimination_text(self):
+        ic = self.item.discrimination
+        if ic is None:
+            v,e= 1.0,0
+        else:
+            v,e=nominal_value(ic), std_dev(ic)
+
+        return '{}+/-{}'.format(floatfmt(v, n=4),floatfmt(e))
+
     def _get_value_text(self, *args, **kw):
         v = self.item.get_corrected_value()
         return floatfmt(v.nominal_value)
@@ -171,15 +224,15 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     def _get_baseline_percent_error_text(self, *args):
         b = self.item.baseline
-        return calc_percent_error(b.value, b.error)
+        return format_percent_error(b.value, b.error)
 
     def _get_blank_percent_error_text(self, *args):
         b = self.item.blank
-        return calc_percent_error(b.value, b.error)
+        return format_percent_error(b.value, b.error)
 
     def _get_value_percent_error_text(self, *args):
         cv = self.item.get_corrected_value()
-        return calc_percent_error(cv.nominal_value, cv.std_dev)
+        return format_percent_error(cv.nominal_value, cv.std_dev)
 
     def _get_age_error_component_text(self):
         return floatfmt(self.item.age_error_component, n=1)

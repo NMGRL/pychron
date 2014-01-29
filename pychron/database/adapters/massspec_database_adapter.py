@@ -494,7 +494,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
 
         b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
-        be = float(blank.nominal_value) if blank.std_dev != Inf else 0
+        be = float(blank.std_dev) if blank.std_dev != Inf else 0
 
         iso_r = IsotopeResultsTable(DataReductionSessionID=data_reduction_session_id,
                                     Intercept=i,

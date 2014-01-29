@@ -26,7 +26,6 @@ from uncertainties import ufloat
 from collections import namedtuple
 #============= local library imports  ==========================
 import yaml
-from pychron.core.helpers.isotope_utils import extract_mass
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.processing.analyses.analysis_view import DBAnalysisView, AnalysisView
@@ -36,7 +35,7 @@ from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_runid, make_aliquot_step
 from pychron.processing.isotope import Isotope, Blank, Baseline, Sniff
-from pychron.core.helpers.formatting import calc_percent_error
+from pychron.core.helpers.formatting import format_percent_error
 
 Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
 
@@ -457,22 +456,21 @@ class DBAnalysis(Analysis):
 
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
-                mass = extract_mass(iso.name)
+                
 
                 disc, refmass = discriminations[det]
-                ni = mass - round(refmass)
+                # ni = mass - round(refmass)
 
                 mass = iso.mass
                 n = mass - refmass
                 #self.info('{} {} {}'.format(iso.name, n, ni))
                 #calculate discrimination
                 idisc = disc ** n
-
-                #e=disc
+                e=disc
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                #idisc=ufloat(idisc.nominal_value, e.std_dev)
+                idisc=ufloat(idisc.nominal_value, e.std_dev)
 
             iso.discrimination = idisc
 
@@ -562,7 +560,7 @@ class DBAnalysis(Analysis):
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0)
 
-                r.set_fit(fit)
+                r.set_fit(fit, notify=False)
                 iso.baseline = r
 
             elif dbiso.kind == 'sniff':
@@ -632,11 +630,11 @@ class DBAnalysis(Analysis):
 
                 if fit is None:
                     fit = Fit(fit='linear',
-                              error_type='SD',
+                              error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=1,
                               filter_outlier_std_devs=2)
-                r.set_fit(fit)
+                r.set_fit(fit, notify=False)
                 isodict[name] = r
 
     def _get_peak_center(self, meas_analysis):
@@ -716,7 +714,7 @@ class DBAnalysis(Analysis):
         a = self.age
         e = self.age_err_wo_j
 
-        pe = calc_percent_error(a, e)
+        pe = format_percent_error(a, e)
 
         return u'{:0.3f} +/-{:0.3f} ({}%)'.format(a, e, pe)
 
@@ -759,6 +757,7 @@ class VCSAnalysis(DBAnalysis):
         self._sync_extraction(meas_analysis)
         self._sync_experiment(meas_analysis)
 
+        self.has_raw_data=unpack
         use_local = not unpack
         if not unpack:
             yd = self._load_file()

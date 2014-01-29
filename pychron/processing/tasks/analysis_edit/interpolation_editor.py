@@ -357,12 +357,12 @@ class InterpolationEditor(GraphEditor):
         if r_ys:
             reg = None
             # plot references
-
-            if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            efit=fit[0]
+            if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 reg = InterpolationRegressor(xs=r_xs,
                                              ys=r_ys,
                                              yserr=r_es,
-                                             kind=fit)
+                                             kind=efit)
                 s, _p = graph.new_series(r_xs, r_ys,
                                          yerror=r_es,
                                          type='scatter',

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import re
 from traits.api import Array, List, Event, Property, Any, \
-    Dict, Str, Bool
+    Dict, Str, Bool, cached_property
 #============= standard library imports ========================
 import math
 from numpy import where, delete
@@ -62,6 +62,10 @@ class BaseRegressor(Loggable):
     mswd=Property(depends_on='dirty, xs, ys')
     valid_mswd=Bool
 
+    clean_xs=Property(depends_on='dirty, xs, ys')
+    clean_ys=Property(depends_on='dirty, xs, ys')
+    clean_xserr=Property(depends_on='dirty, xs, ys')
+    clean_yserr=Property(depends_on='dirty, xs, ys')
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
     #     self.calculate()
@@ -89,11 +93,27 @@ class BaseRegressor(Loggable):
     def _delete_filtered_hook(self, outliers):
         pass
 
-    def get_clean_xs(self):
+    # def get_clean_xs(self):
+    #     return self._clean_array(self.xs)
+    #
+    # def get_clean_ys(self):
+    #     return self._clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xs(self):
         return self._clean_array(self.xs)
 
-    def get_clean_ys(self):
+    @cached_property
+    def _get_clean_ys(self):
         return self._clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xserr(self):
+        return self._clean_array(self.xserr)
+
+    @cached_property
+    def _get_clean_yserr(self):
+        return self._clean_array(self.yserr)
 
     def _clean_array(self, v):
         exc = list(set(self.user_excluded + self.truncate_excluded))
@@ -175,7 +195,6 @@ class BaseRegressor(Loggable):
 
         n = res.shape[0]
         q=len(self.coefficients)
-
         s = (ss_res / (n - q)) ** 0.5
         return s
 
@@ -310,8 +329,11 @@ class BaseRegressor(Loggable):
 
     def _get_mswd(self):
         self.valid_mswd=False
-        ys=self._clean_array(self.ys)
-        yserr=self._clean_array(self.yserr)
+        # ys=self._clean_array(self.ys)
+        # yserr=self._clean_array(self.yserr)
+        ys=self.clean_ys
+        yserr=self.clean_yserr
+
         if self._check_integrity(ys,yserr):
 
             mswd=calculate_mswd(ys, yserr)

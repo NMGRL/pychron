@@ -87,10 +87,11 @@ class InfoOverlay(AbstractOverlay):
 
         gc.set_font(Font('Arial'))
         gc.set_fill_color((0.8, 0.8, 0.8))
+
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
         lw = max(lws)
-        lh = sum(lhs) * 1.25 + 2 * len(lhs)
+        lh = sum(lhs)*1.1+ 4 * (len(lhs)-1)
 
         xoffset = 12
         yoffset = 10
@@ -111,8 +112,7 @@ class InfoOverlay(AbstractOverlay):
 
         for i, mi in enumerate(lines):
             gc.set_text_position(x + 2,
-                                 y - h * (i + 1)
-            )
+                                 y - h * (i + 1))
             gc.show_text(mi)
 
 #============= EOF =============================================

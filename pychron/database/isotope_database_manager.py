@@ -192,6 +192,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                       progress=None,
                       exclude=None,
                       use_cache=True,
+                      unpack=False,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -214,18 +215,27 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     #partition into cached and non cached analyses
                     cached_ans, no_db_ans = partition(no_db_ans,
                                                       lambda x: x.uuid in ANALYSIS_CACHE)
-
                     cached_ans = list(cached_ans)
+                    no_db_ans = list(no_db_ans)
 
-                    #add analyses from cache to db_ans
-                    db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
+                    #if unpack is true make sure cached analyses have raw data
+                    if unpack:
+                        for ci in cached_ans:
+                            ca=ANALYSIS_CACHE[ci.uuid]
+                            if not ca.has_raw_data:
+                                print ca.record_id, 'no rawasffas'
+                                no_db_ans.append(ci)
+                            else:
+                                db_ans.append(ca)
+                    else:
+                        #add analyses from cache to db_ans
+                        db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
                     #increment value in cache_count
                     for ci in cached_ans:
                         self._add_to_cache(ci)
 
                     #load remaining analyses
-                    no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
 
@@ -258,7 +268,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._construct_analysis(ai, progress, **kw)
+                            a = self._construct_analysis(ai, progress, unpack=unpack, **kw)
                             if a:
                                 if use_cache:
                                     self._add_to_cache(a)
@@ -357,7 +367,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         synced=False
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
-                ai.sync(meas_analysis, load_changes=load_changes)
+                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
                 synced=True
 

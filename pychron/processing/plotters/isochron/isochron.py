@@ -15,15 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Array
+from chaco.abstract_overlay import AbstractOverlay
+from kiva.trait_defs.kiva_font_trait import KivaFont
+from traits.api import Array, Float
 from chaco.plot_label import PlotLabel
 from chaco.array_data_source import ArrayDataSource
 #============= standard library imports ========================
-from numpy import array, linspace, delete
+from numpy import linspace
 #============= local library imports  ==========================
 
-from pychron.core.helpers.formatting import calc_percent_error, floatfmt
-from pychron.processing.argon_calculations import calculate_isochron
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.processing.argon_calculations import calculate_isochron, extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
@@ -40,6 +42,24 @@ class OffsetPlotLabel(PlotLabel):
             gc.translate_ctm(*self.offset)
         super(OffsetPlotLabel, self).overlay(component, gc, view_bounds, mode)
 
+class AtmInterceptOverlay(AbstractOverlay):
+    line_width=Float(1.5)
+    font=KivaFont("arial 10")
+
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        x,y=component.map_screen((0, 1/295.5))
+        xo=component.x
+        with gc:
+            gc.set_line_width(self.line_width)
+            gc.move_to(xo,y)
+            gc.line_to(xo+15,y)
+            gc.draw_path()
+
+            txt='Atm.'
+            gc.set_font(self.font)
+            w,h=gc.get_full_text_extent(txt)[:2]
+            gc.set_text_position(xo-w-2, y)
+            gc.show_text(txt)
 
 class Isochron(BaseArArFigure):
     _omit_key = 'omit_iso'
@@ -53,6 +73,7 @@ class InverseIsochron(Isochron):
     _cached_data = None
     _plot_label = None
     suppress = False
+    xpad='0.1'
 
     def plot(self, plots):
         """
@@ -122,13 +143,18 @@ class InverseIsochron(Isochron):
         #self._scatter = scatter
         graph.set_series_label('data{}'.format(self.group_id))
 
-        eo = ErrorEllipseOverlay(component=scatter)
+        eo = ErrorEllipseOverlay(component=scatter,
+                                 reg=reg
+                                 )
         scatter.overlays.append(eo)
 
-        mi, ma = graph.get_x_limits()
+        # mi, ma = graph.get_x_limits()
 
-        ma = max(ma, max(xs))
-        mi = min(mi, min(xs))
+        # ma = max(ma, max(xs))
+        # mi = min(mi, min(xs))
+        mi,ma=min(xs),max(xs)
+        # print len(xs),mi,ma
+        mi=0
         rxs = linspace(mi, ma)
         rys = reg.predict(rxs)
 
@@ -139,13 +165,33 @@ class InverseIsochron(Isochron):
 
         if po.show_labels:
             self._add_point_labels(scatter)
-        self._add_scatter_inspector(scatter)
+
+        def ad(ai):
+            a=ai.isotopes['Ar39'].get_interference_corrected_value()
+            b=ai.isotopes['Ar40'].get_interference_corrected_value()
+            r=a/b
+            v=r.nominal_value
+            e=r.std_dev
+
+            try:
+                pe='({:0.2f}%)'.format(e/v*100)
+            except ZeroDivisionError:
+                pe='(Inf%)'
+
+            return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
+
+        self._add_scatter_inspector(scatter, additional_info=ad)
 
         self._add_info(plot, reg, text_color=scatter.color)
+        self._add_atm_overlay(plot)
 
     #===============================================================================
     # overlays
     #===============================================================================
+
+    def _add_atm_overlay(self, plot):
+        plot.overlays.append(AtmInterceptOverlay(component=plot))
+
     def _add_info(self, plot, reg, label=None, text_color='black'):
         intercept = reg.predict(0)
         err = reg.get_intercept_error()
@@ -154,22 +200,23 @@ class InverseIsochron(Isochron):
 
         try:
             inv_intercept = intercept ** -1
-            p = calc_percent_error(inv_intercept, err)
+            p = calc_percent_error(intercept, err, scale=1)
+
+            err=inv_intercept*p
 
             v = floatfmt(inv_intercept, s=3)
             e = floatfmt(err, s=3)
 
             mse = err * mswd ** 0.5
             mse = floatfmt(mse, s=3)
-            #v = '{:0.2f}'.format(inv_intercept)
-            #e = '{:0.3f}'.format(err)
+            p=floatfmt(p,n=2)
 
         except ZeroDivisionError:
             v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
 
         ratio_line = 'Ar40/Ar36= {} +/-{} ({}%) mse= {}'.format(v, e, p, mse)
 
-        j = self._ref_j
+        # j = self._ref_j
         u = self._ref_age_units
 
         #xint = ufloat(reg.x_intercept, reg.x_intercept_error)
@@ -211,10 +258,6 @@ class InverseIsochron(Isochron):
         label.text = '{}'.format(lines)
         label.request_redraw()
 
-    def update_index_mapper(self, obj, name, old, new):
-        if new is True:
-            self.update_graph_metadata(None, name, old, new)
-
     def replot(self):
         self.suppress = True
 
@@ -232,16 +275,18 @@ class InverseIsochron(Isochron):
 
         if self._cached_data:
             reg=self._cached_reg
-            xs, ys, xerr, yerr = self._cached_data
+            # xs, ys, xerr, yerr = self._cached_data
 
-            nxs = delete(xs, sel)
-            nys = delete(ys, sel)
-            nxerr = delete(xerr, sel)
-            nyerr = delete(yerr, sel)
+            # nxs = delete(xs, sel)
+            # nys = delete(ys, sel)
+            # nxerr = delete(xerr, sel)
+            # nyerr = delete(yerr, sel)
 
             # reg = ReedYorkRegressor(xs=nxs, ys=nys,
             #                         xserr=nxerr, yserr=nyerr)
-            reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
+            # reg.trait_set(xs=nxs, ys=nys,xserr=nxerr, yserr=nyerr)
+            reg.user_excluded=sel
+            reg.dirty=True
             reg.calculate()
 
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
@@ -261,14 +306,29 @@ class InverseIsochron(Isochron):
         if obj:
             self._filter_metadata_changes(obj, self._rebuild_iso, self.analyses)
 
+    def update_index_mapper(self, obj, name, old, new):
+        if new is True:
+            self.update_graph_metadata(None, name, old, new)
+
+
     #===============================================================================
     # utils
     #===============================================================================
-    def _get_age_errors(self, ans):
-        ages, errors = zip(*[(ai.age.nominal_value,
-                              ai.age.std_dev)
-                             for ai in self.sorted_analyses])
-        return array(ages), array(errors)
+    def max_x(self, *args):
+        xx,yy=extract_isochron_xy(self.analyses)
+        try:
+            return max([ai.nominal_value + ai.std_dev
+                        for ai in xx])
+        except (AttributeError, ValueError):
+            return 0
+
+    def min_x(self, *args):
+        xx, yy = extract_isochron_xy(self.analyses)
+        try:
+            return min([ai.nominal_value - ai.std_dev
+                        for ai in xx])
+        except (AttributeError, ValueError):
+            return 0
 
     def _add_aux_plot(self, ys, title, vk, pid, **kw):
         graph = self.graph
@@ -278,6 +338,12 @@ class InverseIsochron(Isochron):
         xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
         s = self._add_plot(xs, ys, es, pid, **kw)
         return s
+
+        # def _get_age_errors(self, ans):
+        #     ages, errors = zip(*[(ai.age.nominal_value,
+        #                           ai.age.std_dev)
+        #                          for ai in self.sorted_analyses])
+        #     return array(ages), array(errors)
 
         #def _calculate_stats(self, ages, errors, xs, ys):
         #    mswd, valid_mswd, n = self._get_mswd(ages, errors)

@@ -361,11 +361,13 @@ class ArArAge(Loggable):
         isos[1] *= self.ar39decayfactor
         isos[3] *= self.ar37decayfactor
 
+        # print isos[4]
+        # print 'ifc',self.interference_corrections
         f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(isos,
                                                                               decay_time=self.decay_days,
                                                                               interferences=self.interference_corrections,
                                                                               arar_constants=self.arar_constants)
-
+        # print 'c',interference_corrected['Ar36']
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']

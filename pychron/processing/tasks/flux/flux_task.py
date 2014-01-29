@@ -21,9 +21,9 @@ from traits.api import on_trait_change
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
 #============= standard library imports ========================
-from numpy import asarray, average
 #============= local library imports  ==========================
 from uncertainties import ufloat
+from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
 from pychron.processing.analyses.analysis import Analysis
@@ -196,7 +196,7 @@ class FluxTask(InterpolationTask):
             prog.close()
 
     def _calculate_flux_db(self, editor):
-
+        reg=WeightedMeanRegressor()
         monitor_age = editor.tool.monitor_age
 
         # helper funcs
@@ -210,10 +210,10 @@ class FluxTask(InterpolationTask):
 
         def mean_j(ans):
             js, errs = zip(*[calc_j(ai) for ai in ans])
-            errs = asarray(errs)
-            wts = errs ** -2
-            m, ss = average(js, weights=wts, returned=True)
-            return ufloat(m, ss ** -0.5)
+            reg.trait_set(ys=js, yserr=errs)
+            return ufloat(reg.predict([0]), reg.predict_error([0]))
+            # m, ss = average(js, weights=wts, returned=True)
+            # return ufloat(m, ss ** -0.5)
 
         proc = self.manager
         db = proc.db
@@ -231,13 +231,12 @@ class FluxTask(InterpolationTask):
             for ais in ans:
                 if ais:
                     ref = ais[0]
-                    pid = ref.labnumber.irradiation_position.position
+                    # pid = ref.labnumber.irradiation_position.position
                     ident = ref.labnumber.identifier
                     cj=ref.labnumber.selected_flux_history.flux.j
-                    x, y, r = geom[pid - 1]
+                    # x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     j = mean_j(aa)
-
                     dev=100
                     if cj:
                         dev=(j.nominal_value-cj)/cj*100

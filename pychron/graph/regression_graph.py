@@ -277,6 +277,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.trait_set(xs=x, ys=y,
                     user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
+        r.dirty=True
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True

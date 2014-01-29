@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 import re
 from chaco.array_data_source import ArrayDataSource
+from numpy import Inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
@@ -59,8 +60,9 @@ class BaseArArFigure(HasTraits):
 
     refresh_unknowns_table = Event
     _suppress_table_update = False
-
+    suppress_ylimits_update=False
     _omit_key=None
+    xpad=None
 
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
@@ -123,6 +125,15 @@ class BaseArArFigure(HasTraits):
 
     def replot(self, *args, **kw):
         pass
+
+    def max_x(self, *args):
+        return -Inf
+
+    def min_x(self, *args):
+        return Inf
+
+    def mean_x(self, *args):
+        return 0
 
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
@@ -198,7 +209,6 @@ class BaseArArFigure(HasTraits):
     def _update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
-
         ap.ylimits = self.graph.get_y_limits(pid)
 
     #===========================================================================
@@ -376,7 +386,9 @@ class BaseArArFigure(HasTraits):
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj,name, old, new):
         if not isinstance(new, bool):
-            # print 'aaa',new.low, new.high
+            if self.suppress_ylimits_update:
+                return
+
             for p in self.graph.plots:
                 if p.value_mapper==obj:
                     plot=p

@@ -20,7 +20,7 @@
 from chaco.api import AbstractOverlay
 
 #============= standard library imports ========================
-from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack
+from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
 import math
 
@@ -77,9 +77,13 @@ class ErrorEllipseOverlay(AbstractOverlay):
         xer = component.xerror.get_data()
         yer = component.yerror.get_data()
 
-        pxy = corrcoef(x, y)[0][1]
-        #pxy, _pvalue=pearsonr(x,y)
-        #print pxy, corrcoef(x,y)[0][1]
+        sel=component.index.metadata['selections']
+
+        x=delete(x, sel)
+        y=delete(y, sel)
+        xer=delete(xer, sel)
+        yer=delete(yer, sel)
+        pxy=array(self.reg._calculate_correlation_coefficients())
 
         dx = abs(component.index_mapper.range.low -
                  component.index_mapper.range.high)
@@ -91,8 +95,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         aspectratio = (dy / height) / (dx / width)
         try:
-            for cx, cy, sx, sy in zip(x, y, xer, yer):
-                a, b, rot = error_ellipse(sx, sy, pxy,
+            for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
+                a, b, rot = error_ellipse(sx, sy, pxyi,
                                           aspectratio=aspectratio)
                 #print a,b,rot
                 #a, b, rot = self.calculate_ellipse(component, cx, cy, ox, oy, pxy)
