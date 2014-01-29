@@ -100,6 +100,10 @@ class DatabaseBridge(Loggable):
 
             self._copy_table(dest, src, ln.selected_flux_history.id, 'flux_HistoryTable')
             self._copy_table(dest, src, ln.selected_flux_history.flux.id, 'flux_FluxTable')
+            if ln.selected_interpreted_age:
+                self._copy_table(dest, src, ln.selected_interpreted_age.id, 'proc_InterpretedAgeHistoryTable')
+                self._copy_table(dest, src, ln.selected_interpreted_age.interpreted_age.id, 'proc_InterpretedAgeTable')
+
 
             self._copy_table(dest, src, ai.lab_id, 'gen_labtable')
 

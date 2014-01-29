@@ -19,6 +19,7 @@ import os
 import struct
 import base64
 from traits.api import Instance, on_trait_change
+from uncertainties import nominal_value, std_dev
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 
@@ -103,7 +104,10 @@ class MassSpecExporter(Exporter):
         self.importer.add_irradiation(irrad, level, prodid)
         self.importer.add_irradiation_position(spec.irradpos,
                                                '{}{}'.format(irrad, level),
-                                               spec.irradiation_position)
+                                               spec.irradiation_position,
+                                               j=float(nominal_value(spec.j or 0)),
+                                               jerr=float(std_dev(spec.j or 0))
+                                               )
 
         if db.get_analysis(rid, spec.aliquot, spec.step):
             self.debug('analysis {} already exists in database'.format(rid))

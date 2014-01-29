@@ -60,6 +60,7 @@ class ExportSpec(Loggable):
     chron_dosages=List
     interference_corrections = Dict
     production_name=Str
+    j=Any
 
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
@@ -103,7 +104,7 @@ class ExportSpec(Loggable):
         for a in ('chron_dosages',
                   'production_ratios',
                   'interference_corrections',
-                   'production_name'):
+                   'production_name','j'):
             if hasattr(record, a):
                 setattr(self, a, getattr(record, a))
 

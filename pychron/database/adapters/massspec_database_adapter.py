@@ -240,7 +240,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                                     **kw)
             self._add_item(i)
 
-    def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=0):
+    def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
         with self.session_ctx() as sess:
             q=sess.query(IrradiationPositionTable)
             q=q.filter(IrradiationPositionTable.IrradPosition==identifier)
@@ -249,7 +249,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                                            IrradiationLevel=irrad_level,
                                            HoleNumber=hole,
                                            Material=material,
-                                           SampleID=sample
+                                           SampleID=sample,
+                                           J=j,JEr=jerr
                                            )
                 self._add_item(i)
 

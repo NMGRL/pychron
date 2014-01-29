@@ -120,9 +120,9 @@ class MassSpecDatabaseImporter(Loggable):
             sid=0
             self.db.add_irradiation_level(irrad, level, sid, pid)
 
-    def add_irradiation_position(self, identifier, levelname, hole):
+    def add_irradiation_position(self, identifier, levelname, hole, **kw):
         with self.db.session_ctx():
-            return self.db.add_irradiation_position(identifier, levelname, hole)
+            return self.db.add_irradiation_position(identifier, levelname, hole, **kw)
 
     def add_irradiation_production(self, name, prdict, ifdict):
         with self.db.session_ctx():
