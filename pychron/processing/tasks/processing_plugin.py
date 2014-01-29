@@ -37,6 +37,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+from pychron.processing.tasks.dataset.dataset_task import DataSetTask
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
@@ -206,7 +207,9 @@ Install to enable MS Excel export''')
             ('pychron.processing.vcs',
              self._vcs_data_task_factory, 'VCS', '', ''),
             ('pychron.export',
-             self._export_task_factory, 'Export', '', '')
+             self._export_task_factory, 'Export', '', ''),
+            ('pychron.data_set',
+            self._data_set_factory, 'DataSet', '','')
         ]
 
         return [
@@ -216,6 +219,9 @@ Install to enable MS Excel export''')
 
     def _processor_factory(self):
         return Processor(application=self.application)
+
+    def _dataset_factory(self):
+        return DataSetTask(manager=self._prcoessor_factory())
 
     def _blanks_edit_task_factory(self):
         from pychron.processing.tasks.blanks.blanks_task import BlanksTask

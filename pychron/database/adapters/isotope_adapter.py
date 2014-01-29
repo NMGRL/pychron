@@ -1601,7 +1601,20 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
-    def get_labnumbers(self, last=None, **kw):
+    def get_labnumbers(self, identifiers=None, **kw):
+        if identifiers:
+            f=gen_LabTable.identifier.in_(identifiers)
+            if 'filters' in kw:
+                kw['filters'].append(f)
+            else:
+                kw['filters']=[f]
+
+        # print self.name, identifiers
+        # with self.session_ctx() as sess:
+        #     q=sess.query(gen_LabTable)
+        #     # q=q.filter(gen_LabTable.identifier=='61551')
+        #     return q.all()
+        # print identifiers, kw, self.name
         return self._retrieve_items(gen_LabTable, **kw)
 
     def get_flux_monitors(self, **kw):

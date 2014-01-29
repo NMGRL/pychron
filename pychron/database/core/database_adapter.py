@@ -156,7 +156,9 @@ class DatabaseAdapter(Loggable):
                 test = False
 
             if not self.enabled:
-                self.warning_dialog('Database type not set. Set in Preferences')
+
+                self.warning_dialog('Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
+                                                                                                               self.kind))
 
             else:
                 url = self.url
