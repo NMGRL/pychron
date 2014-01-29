@@ -159,8 +159,8 @@ class IsotopicMeasurement(BaseMeasurement):
     def set_fit(self, fit, notify=True):
         if fit is not None:
             self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                                             iterations=int(fit.filter_outlier_iterations),
-                                             std_devs=int(fit.filter_outlier_std_devs))
+                                             iterations=int(fit.filter_outlier_iterations or 0),
+                                             std_devs=int(fit.filter_outlier_std_devs or 0))
             self.error_type=fit.error_type or 'SEM'
             self.trait_set(fit=fit.fit, trait_change_notify=notify)
 

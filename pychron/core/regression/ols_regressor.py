@@ -18,7 +18,7 @@
 from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
-    matrix, sqrt, abs, zeros
+    matrix, sqrt, abs
 from pychron.core.stats import calculate_mswd2, validate_mswd
 
 try:
@@ -280,27 +280,32 @@ class OLSRegressor(BaseRegressor):
                 coeffs = self._calculate_coefficients()
 
             if len(coeffs):
-                x = self.xs
-                y = self.ys
+                # x = self.xs
+                # y = self.ys
+                #
+                # sx = self.xserr
+                # sy = self.yserr
 
-                sx = self.xserr
-                sy = self.yserr
-
-                if not len(sx):
-                    sx=zeros(self.n)
-                if not len(sy):
-                    sy=zeros(self.n)
+                # if not len(sx):
+                #     sx=zeros(self.n)
+                # if not len(sy):
+                #     sy=zeros(self.n)
 
                 # x=self._clean_array(x)
                 # y=self._clean_array(y)
                 # sx=self._clean_array(sx)
                 # sy=self._clean_array(sy)
                 x,y,sx,sy=self.clean_xs,self.clean_ys, self.clean_xserr, self.clean_yserr
-                m=calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
-                self.valid_mswd=validate_mswd(m, len(ys), k=2)
-                return m
+                if self._check_integrity(x,y) and \
+                    self._check_integrity(x,sx) and \
+                        self._check_integrity(x,sy):
+                    m=calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+                    self.valid_mswd=validate_mswd(m, len(ys), k=2)
+                    return m
+                else:
+                    return 'NaN'
             else:
-                return 0
+                return 'NaN'
         else:
             return super(OLSRegressor, self)._get_mswd()
 
