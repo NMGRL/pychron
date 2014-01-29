@@ -307,9 +307,12 @@ def calculate_F(isotopes,
 
     rf = deepcopy(f)
     # f = ufloat(f.nominal_value, f.std_dev, tag='F')
-
-    non_ar_isotopes = dict(k38=k38, k37=k37,
-                           ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
+    non_ar_isotopes = dict(ca39=ca39,
+                           k38=k38,
+                           ca38=ca38,
+                           k37=k37,
+                           ca37=ca37,
+                           ca36=ca36,
                            cl36=cl36)
 
     try:
@@ -321,13 +324,11 @@ def calculate_F(isotopes,
                     k39=k39)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
-
-
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38 - k38 - ca38,
-                                  Ar37=a37 - ca37 - k37,
-                                  Ar36=a36 - ca36)
+                                  Ar38=a38, #- k38 - ca38,
+                                  Ar37=a37, #- ca37 - k37,
+                                  Ar36=atm36)
     ##clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0

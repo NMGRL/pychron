@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, HGroup
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, CompuatedValueTabularAdapter, \
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -222,27 +222,33 @@ class MainView(HasTraits):
     def _load_unknown_computed(self, an, new_list):
 
         attrs = (('Age', 'uage'),
-                 ('w/o J', 'wo_j', '', 'age_err_wo_j'),
+                 ('w/o J', 'wo_j', '', 'uage','age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
                  ('F','uF'),
-                 ('w/o Irrad', 'wo_irrad', '', 'F_err_wo_irrad'),)
+                 ('w/o Irrad', 'wo_irrad', '', 'uF','F_err_wo_irrad'),)
         
         if new_list:
-            def comp_factory(n, a, value=None, error_tag=None):
+            def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
                 if value is None:
-                    aa = getattr(an, a)
-                    value = floatfmt(nominal_value(aa))
+                    value = getattr(an, a)
+
+                display_value = True
+                if value_tag:
+                    value=getattr(an, value_tag)
+                    display_value=False
+
                 if error_tag:
                     e = getattr(an, error_tag)
                 else:
-                    e = std_dev(aa)
+                    e = std_dev(value)
 
                 return ComputedValue(name=n,
                                      tag=a,
-                                     value=value,
-                                     error=floatfmt(e))
+                                     value = nominal_value(value),
+                                     display_value=display_value,
+                                     error=e)
 
             cv = [comp_factory(*args)
                   for args in attrs]
@@ -262,15 +268,15 @@ class MainView(HasTraits):
                     ci.error=an.F_err_wo_irrad
                 else:
                     v = getattr(an, attr)
-                    ci.value = floatfmt(nominal_value(v))
-                    ci.error = floatfmt(std_dev(v))
+                    ci.value = nominal_value(v)
+                    ci.error = std_dev(v)
 
     def _get_editors(self):
         teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
                                   editable=False,
                                   refresh='refresh_needed')
 
-        adapter = CompuatedValueTabularAdapter
+        adapter = ComputedValueTabularAdapter
         if self.analysis_type in ('air', 'cocktail',
                                   'blank_unknown', 'blank_air',
                                   'blank_cocktail'):

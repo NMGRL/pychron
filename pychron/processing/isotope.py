@@ -320,15 +320,18 @@ class Isotope(BaseIsotope):
     interference_corrected_value = Either(Variable, AffineScalarFunc)
 
     def get_interference_corrected_value(self):
-        return self.interference_corrected_value
+        if self.interference_corrected_value is not None:
+            return self.interference_corrected_value
+        else:
+            return ufloat(0, 0, tag=self.name)
 
     def get_intensity(self):
         """
             return the discrimination and ic_factor corrected value
         """
-        return self.disc_corrected_value() * (self.ic_factor or 1.0)
+        return self.get_disc_corrected_value() * (self.ic_factor or 1.0)
 
-    def disc_corrected_value(self):
+    def get_disc_corrected_value(self):
         disc = self.discrimination
         if disc is None:
             disc = 1
