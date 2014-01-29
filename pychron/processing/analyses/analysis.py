@@ -166,7 +166,6 @@ class DBAnalysis(Analysis):
 
     blank_changes = List
     fit_changes = List
-    has_raw_data=Bool
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -258,12 +257,11 @@ class DBAnalysis(Analysis):
     #         d['age_err_wo_j'] = result.age_err_wo_j
     #         self.arar_result.update(d)
 
-    def _sync(self, meas_analysis, unpack=False, load_changes=False):
+    def _sync(self, meas_analysis, unpack=True, load_changes=False):
         """
             copy values from meas_AnalysisTable
             and other associated tables
         """
-        self.has_raw_data=unpack
 
         self._sync_meas_analysis_attributes(meas_analysis)
         self._sync_analysis_info(meas_analysis)
@@ -340,9 +338,10 @@ class DBAnalysis(Analysis):
             self._sync_production_ratios(level)
             self._sync_interference_corrections(level)
 
+            self.production_name=level.production.name
+
     def _sync_j(self, ln):
         s, e = 1, 0
-
         if ln.selected_flux_history:
             f = ln.selected_flux_history.flux
             s = f.j
@@ -380,6 +379,7 @@ class DBAnalysis(Analysis):
 
             self.irradiation_time = it
             self.chron_segments = segments
+            self.chron_dosages=chron.get_doses()
 
     def _sync_interference_corrections(self, level):
         pr = level.production
@@ -456,23 +456,21 @@ class DBAnalysis(Analysis):
 
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
-                # mass = extract_mass(iso.name)
+                
 
                 disc, refmass = discriminations[det]
                 # ni = mass - round(refmass)
 
                 mass = iso.mass
                 n = mass - refmass
-                # print n
                 #self.info('{} {} {}'.format(iso.name, n, ni))
                 #calculate discrimination
                 idisc = disc ** n
-                # print idisc.nominal_value
-                #e=disc
+                e=disc
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                # idisc=ufloat(idisc.nominal_value, disc.std_dev)
+                idisc=ufloat(idisc.nominal_value, e.std_dev)
 
             iso.discrimination = idisc
 

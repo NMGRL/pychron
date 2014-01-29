@@ -156,8 +156,9 @@ class DatabaseAdapter(Loggable):
                 test = False
 
             if not self.enabled:
-                self.warning_dialog('Database type not set. Set in Preferences')
-
+                self.warning_dialog(
+                    'Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
+                                                                                               self.kind))                
             else:
                 url = self.url
                 if url is not None:
@@ -316,6 +317,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 sess.rollback()
 
 
+
                 #     def _add_item(self, obj, sess=None):
 
                 #         def func(s):
@@ -426,13 +428,23 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             return
 
     def _query_all(self, q, reraise=False):
+        ret=self._query(q, 'all', reraise)
+        if not ret:
+            ret=[]
+
+        return ret
+
+    def _query(self,q, func, reraise):
+        f=getattr(q,func)
         try:
-            return q.all()
-        except SQLAlchemyError, e:
+            return f()
+        except SQLAlchemyError,e:
             if reraise:
                 raise
             print e
-            return []
+
+    def _query_one(self, q, reraise=False):
+        return self._query(q,'one',reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True):

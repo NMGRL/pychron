@@ -229,12 +229,12 @@ class MassSpecPychronTestCase(unittest.TestCase):
 
     def _baseline_corrected(self, k):
         an = self.analysis
-        v = an.isotopes[k].baseline_corrected_value()
+        v = an.isotopes[k].get_baseline_corrected_value()
         self._almost_equal(v.nominal_value, '{}_BslnCorOnly'.format(k))
 
     def _baseline_corrected_err(self, k):
         an = self.analysis
-        v = an.isotopes[k].baseline_corrected_value()
+        v = an.isotopes[k].get_baseline_corrected_value()
         self._almost_equal(v.std_dev, '{}_Er_BslnCorOnly'.format(k))
 
     def _interference_corrected(self, k):

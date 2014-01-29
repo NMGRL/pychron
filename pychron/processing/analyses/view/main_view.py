@@ -23,7 +23,7 @@ from traitsui.api import View, UItem, HGroup
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, CompuatedValueTabularAdapter, \
-    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter
+    DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
 
@@ -279,16 +279,20 @@ class MainView(HasTraits):
                                   editable=False,
                                   refresh='refresh_needed')
 
+        ieditor = myTabularEditor(adapter=IntermediateTabularAdapter(),
+                                  editable=False,
+                                  refresh='refresh_needed')
+
         eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
                                   editable=False, )
         meditor = myTabularEditor(adapter=MeasurementTabularAdapter(),
                                   editable=False)
 
-        return teditor, ceditor, eeditor, meditor
+        return teditor, ieditor, ceditor, eeditor, meditor
 
 
     def traits_view(self):
-        teditor, ceditor, eeditor, meditor = self._get_editors()
+        teditor, ieditor, ceditor, eeditor, meditor = self._get_editors()
 
         v = View(
             HGroup(
@@ -299,6 +303,8 @@ class MainView(HasTraits):
             ),
             UItem('isotopes',
                   editor=teditor),
+            UItem('isotopes',
+                  editor=ieditor),
             UItem('computed_values',
                   editor=ceditor
             )

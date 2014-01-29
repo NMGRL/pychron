@@ -112,7 +112,7 @@ class ExportSpec(Loggable):
 
     def get_blank_uvalue(self, iso):
         try:
-            b = self.isotopes[iso].blank.baseline_corrected_value()
+            b = self.isotopes[iso].blank.get_baseline_corrected_value()
         except KeyError:
             self.debug('no blank for {} {}'.format(iso, self.isotopes.keys()))
             b = ufloat(0, 0)

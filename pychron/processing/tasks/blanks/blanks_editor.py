@@ -107,7 +107,7 @@ class BlanksEditor(InterpolationEditor):
     def _get_baseline_corrected(self, analysis, k):
         if k in analysis.isotopes:
             iso = analysis.isotopes[k]
-            v = iso.baseline_corrected_value()
+            v = iso.get_baseline_corrected_value()
             return v.nominal_value, v.std_dev
         else:
             return 0, 0

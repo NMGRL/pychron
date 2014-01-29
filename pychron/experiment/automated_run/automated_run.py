@@ -1016,7 +1016,7 @@ anaylsis_type={}
     def get_baseline_corrected_signals(self):
         d = dict()
         for k, iso in self.arar_age.isotopes.iteritems():
-            d[k] = iso.baseline_corrected_value()
+            d[k] = iso.get_baseline_corrected_value()
         return d
 
     def get_position_list(self):

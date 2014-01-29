@@ -290,7 +290,7 @@ class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
-    def baseline_corrected_value(self):
+    def get_baseline_corrected_value(self):
         nv = self.uvalue - self.baseline.uvalue.nominal_value
         return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
@@ -339,7 +339,7 @@ class Isotope(BaseIsotope):
         return self.get_corrected_value() * (self.ic_factor or 1.0)
 
     def get_corrected_value(self):
-        v = self.baseline_corrected_value()
+        v = self.get_baseline_corrected_value()
 
         if self.correct_for_blank:
             v = v - self.blank.uvalue
@@ -353,23 +353,23 @@ class Isotope(BaseIsotope):
         self.baseline=Baseline(_value=v, _error=e)
 
     def __eq__(self, other):
-        return self.baseline_corrected_value().__eq__(other)
+        return self.get_baseline_corrected_value().__eq__(other)
 
     def __le__(self, other):
-        return self.baseline_corrected_value().__le__(other)
+        return self.get_baseline_corrected_value().__le__(other)
 
     def __ge__(self, other):
-        return self.baseline_corrected_value().__ge__(other)
+        return self.get_baseline_corrected_value().__ge__(other)
 
     def __gt__(self, other):
-        return self.baseline_corrected_value().__gt__(other)
+        return self.get_baseline_corrected_value().__gt__(other)
 
     def __lt__(self, other):
-        return self.baseline_corrected_value().__lt__(other)
+        return self.get_baseline_corrected_value().__lt__(other)
 
     def __str__(self):
         try:
-            return '{} {}'.format(self.name, self.baseline_corrected_value())
+            return '{} {}'.format(self.name, self.get_baseline_corrected_value())
         except (OverflowError, ValueError, AttributeError, TypeError),e:
             return '{} {}'.format(self.name, e)
 #============= EOF =============================================
