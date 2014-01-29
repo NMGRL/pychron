@@ -85,33 +85,72 @@ class ExtractionTabularAdapter(BaseTabularAdapter):
     units_width = Int(40)
 
 
-class CompuatedValueTabularAdapter(BaseTabularAdapter):
+class ComputedValueTabularAdapter(BaseTabularAdapter):
     columns = [('Name', 'name'),
                ('Value', 'value'),
-               (SIGMA_1, 'error')]
+               (SIGMA_1, 'error'),
+               ('%', 'percent_error'),
+
+               ]
     name_width = Int(80)
     value_width = Int(80)
     units_width = Int(40)
+    error_text=Property
+    percent_error_text=Property
+    value_text=Property
 
+    def _get_value_text(self):
+        if self.item.display_value:
+            v=self.item.value
+            return floatfmt(v)
+        else:
+            return ''
+
+    def _get_error_text(self):
+        v = self.item.error
+        return floatfmt(v)
+
+    def _get_percent_error_text(self):
+        e = self.item.error
+        v = self.item.value
+
+        return format_percent_error(v,e)
 
 class IntermediateTabularAdapter(BaseTabularAdapter):
-    columns=[('Iso.','name'),
-            ('Intercept-Bs', 'bs_corrected'),
-            (SIGMA_1, 'bs_corrected_error'),
-            ('%', 'bs_corrected_percent_error'),
-            ('Intercept-Bs-Bk', 'bs_bk_corrected'),
-            (SIGMA_1, 'bs_bk_corrected_error'),
-            ('%', 'bs_bk_corrected_percent_error'),
-            ]
-    bs_corrected_text=Property
-    bs_corrected_error_text=Property
-    bs_corrected_percent_error_text=Property
+    columns = [('Iso.', 'name'),
+               ('I-Bs', 'bs_corrected'),
+               (SIGMA_1, 'bs_corrected_error'),
+               ('%', 'bs_corrected_percent_error'),
+               ('I-Bs-Bk', 'bs_bk_corrected'),
+               (SIGMA_1, 'bs_bk_corrected_error'),
+               ('%', 'bs_bk_corrected_percent_error'),
+
+               ('(I-Bs-Bk)*D', 'disc_corrected'),
+               (SIGMA_1, 'disc_corrected_error'),
+               ('%', 'disc_corrected_percent_error'),
+
+               ('Int', 'intensity'),
+               (SIGMA_1, 'intensity_error'),
+               ('%', 'intensity_percent_error'),
+    ]
+    bs_corrected_text = Property
+    bs_corrected_error_text = Property
+    bs_corrected_percent_error_text = Property
+
     bs_bk_corrected_text = Property
     bs_bk_corrected_error_text = Property
     bs_bk_corrected_percent_error_text = Property
 
+    disc_corrected_text = Property
+    disc_corrected_error_text = Property
+    disc_corrected_percent_error_text = Property
+
+    intensity_text = Property
+    intensity_error_text = Property
+    intensity_percent_error_text = Property
+
     def _get_bs_corrected_text(self):
-        v=self.item.get_baseline_corrected_value()
+        v = self.item.get_baseline_corrected_value()
         return floatfmt(nominal_value(v), n=7)
 
     def _get_bs_corrected_error_text(self):
@@ -120,8 +159,9 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
 
     def _get_bs_corrected_percent_error_text(self):
         v = self.item.get_baseline_corrected_value()
-        return calc_percent_error(v.nominal_value,v.std_dev)
+        return calc_percent_error(v.nominal_value, v.std_dev)
 
+    #============================================================
     def _get_bs_bk_corrected_text(self):
         v = self.item.get_corrected_value()
         return floatfmt(nominal_value(v), n=7)
@@ -134,6 +174,31 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
         v = self.item.get_corrected_value()
         return calc_percent_error(v.nominal_value, v.std_dev)
 
+    #============================================================
+    def _get_intensity_text(self):
+        v = self.item.get_intensity()
+        return floatfmt(nominal_value(v), n=7)
+
+    def _get_intensity_error_text(self):
+        v = self.item.get_intensity()
+        return floatfmt(std_dev(v), n=7)
+
+    def _get_intensity_percent_error_text(self):
+        v = self.item.get_intensity()
+        return calc_percent_error(v.nominal_value, v.std_dev)
+
+    #============================================================
+    def _get_disc_corrected_text(self):
+        v = self.item.get_disc_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    def _get_disc_corrected_error_text(self):
+        v = self.item.get_disc_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    def _get_disc_corrected_percent_error_text(self):
+        v = self.item.get_disc_corrected_value()
+        return calc_percent_error(v.nominal_value, v.std_dev)
 
 class IsotopeTabularAdapter(BaseTabularAdapter):
     columns = [('Iso.', 'name'),
@@ -150,7 +215,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
                (SIGMA_1, 'blank_error'),
                ('%', 'blank_percent_error'),
                ('IC', 'ic_factor'),
-               ('Disc','discrimination'),
+               ('Disc', 'discrimination'),
                ('Error Comp.', 'age_error_component')]
 
     value_text = Property
@@ -159,8 +224,8 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     base_error_text = Property
     blank_value_text = Property
     blank_error_text = Property
-    ic_factor_text=Property
-    discrimination_text=Property
+    ic_factor_text = Property
+    discrimination_text = Property
 
     value_percent_error_text = Property
     blank_percent_error_text = Property
@@ -187,20 +252,20 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
         if ic is None:
-            v=0.0
+            v = 0.0
         else:
-            v=ic.nominal_value
+            v = ic.nominal_value
 
         return floatfmt(v, n=2)
 
     def _get_discrimination_text(self):
         ic = self.item.discrimination
         if ic is None:
-            v,e= 1.0,0
+            v, e = 1.0, 0
         else:
-            v,e=nominal_value(ic), std_dev(ic)
+            v, e = nominal_value(ic), std_dev(ic)
 
-        return '{}+/-{}'.format(floatfmt(v, n=4),floatfmt(e))
+        return '{}+/-{}'.format(floatfmt(v, n=4), floatfmt(e))
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_corrected_value()

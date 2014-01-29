@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Either, Float, Int, Property
+from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -27,6 +27,7 @@ class NamedValue(HasTraits):
 class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
     tag = Str
+    display_value=Bool(True)
 
 
 class DetectorRatio(ComputedValue):
