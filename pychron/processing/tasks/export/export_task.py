@@ -18,14 +18,13 @@
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed
-from traits.api import List, Button, Instance, Enum
+from traits.api import List, Button, Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.resources import icon
-from pychron.processing.export.export_spec import ExportSpec
-from pychron.processing.export.exporter import Exporter, XMLExporter, MassSpecExporter
+from pychron.processing.export.export_manager import ExportManager
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.browser.panes import BrowserPane
 from pychron.processing.tasks.export.panes import ExportCentralPane, DestinationPane
@@ -45,53 +44,15 @@ class ExportTask(AnalysisEditTask, BrowserMixin):
     append_button = Button
     replace_button = Button
     export_button = Button
-
-    kind = Enum('MassSpec', 'XML')
-    exporter = Instance(Exporter)
-
+    export_manager=Instance(ExportManager)
     tool_bars = [SToolBar(ExportAction())]
+
+    def _export_manager_default(self):
+        return ExportManager(manager=self.manager)
 
     def do_export(self):
         if self.export_analyses:
-            if self.exporter.start_export():
-                n = len(self.export_analyses)
-                prog = self.manager.open_progress(n)
-                for ei in self.export_analyses:
-                    self._export_analysis(ei, prog)
-                prog.close()
-
-    def _exporter_default(self):
-        return MassSpecExporter()
-
-    def _kind_changed(self):
-        if self.kind == 'MassSpec':
-            self.exporter = MassSpecExporter()
-        else:
-            self.exporter = XMLExporter()
-
-    def _export_analysis(self, ai, prog):
-        # db=self.manager.db
-        # with db.session_ctx():
-        # dest=self.destination
-        espec = self._make_export_spec(ai)
-        self.exporter.add(espec)
-        prog.change_message('Export analysis {}'.format(ai.record_id))
-
-    def _make_export_spec(self, ai):
-        ai = self.manager.make_analysis(ai, use_cache=False)
-
-        # rs_name, rs_text=assemble_script_blob()
-        rs_name, rs_text = '', ''
-        rid = ai.record_id
-
-        exp = ExportSpec(runid=rid,
-                         runscript_name=rs_name,
-                         runscript_text=rs_text,
-                         mass_spectrometer=ai.mass_spectrometer.capitalize(),
-                         isotopes=ai.isotopes)
-
-        exp.load_record(ai)
-        return exp
+            self.export_manager.export(self.export_analyses)
 
     def _append_button_fired(self):
         s = self._get_selected_analyses()

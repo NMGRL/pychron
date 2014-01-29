@@ -339,6 +339,8 @@ class DBAnalysis(Analysis):
             self._sync_production_ratios(level)
             self._sync_interference_corrections(level)
 
+            self.production_name=level.production.name
+
     def _sync_j(self, ln):
         s, e = 1, 0
         if ln.selected_flux_history:
@@ -378,6 +380,7 @@ class DBAnalysis(Analysis):
 
             self.irradiation_time = it
             self.chron_segments = segments
+            self.chron_dosages=chron.get_doses()
 
     def _sync_interference_corrections(self, level):
         pr = level.production

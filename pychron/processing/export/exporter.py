@@ -42,10 +42,10 @@ class MassSpecExporter(Exporter):
     destination = Instance(MassSpecDestination, ())
 
     def __init__(self, *args, **kw):
-        '''
-            destination: dict. 
+        """
+            destination: dict.
                 dict, required keys are (username, password, host, name)
-        '''
+        """
         super(MassSpecExporter, self).__init__(*args, **kw)
         importer = MassSpecDatabaseImporter()
         self.importer = importer
@@ -91,12 +91,25 @@ class MassSpecExporter(Exporter):
         #         rid = '4358'
         rid = self.importer.get_identifier(spec)
 
+        irrad = spec.irradiation
+        level = spec.level
+
+        prodid = self.importer.add_irradiation_production(spec.production_name,
+                                                          spec.production_ratios,
+                                                          spec.interference_corrections)
+
+        self.importer.add_irradiation_chronology(irrad, spec.chron_dosages)
+
+        self.importer.add_irradiation(irrad, level, prodid)
+        self.importer.add_irradiation_position(spec.irradpos,
+                                               '{}{}'.format(irrad, level),
+                                               spec.irradiation_position)
+
         if db.get_analysis(rid, spec.aliquot, spec.step):
             self.debug('analysis {} already exists in database'.format(rid))
         else:
             spec.update_rundatetime = True
             self.importer.add_analysis(spec)
-            # self.importer.db.reset()
             return True
 
 

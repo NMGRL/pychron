@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import CStr, Str, CInt, Float, \
-    TraitError, Property, Any, Either, Dict, Bool
+    TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
 from pychron.loggable import Loggable
 #============= standard library imports ========================
@@ -56,6 +56,11 @@ class ExportSpec(Loggable):
     ic_factor_v = Float
     ic_factor_e = Float
 
+    pr_dict=Dict
+    chron_dosages=List
+    interference_corrections = Dict
+    production_name=Str
+
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
@@ -66,7 +71,11 @@ class ExportSpec(Loggable):
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
                  ('duration_at_request', 'duration'), ('first_stage_delay', 'cleanup'),
-                 ('comment', 'comment'), ]
+                 ('comment', 'comment'),
+                 ('irradiation','irradiation'),
+                 ('irradiation_position','irradiation_pos'),
+                 ('level','irradiation_level'),
+                 ]
 
         if hasattr(record, 'spec'):
             spec = record.spec
@@ -90,6 +99,13 @@ class ExportSpec(Loggable):
             self.ic_factor_e = float(ic.std_dev)
         else:
             self.debug('{} has no ic_factor attribute'.format(record, ))
+
+        for a in ('chron_dosages',
+                  'production_ratios',
+                  'interference_corrections',
+                   'production_name'):
+            if hasattr(record, a):
+                setattr(self, a, getattr(record, a))
 
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)
