@@ -134,10 +134,9 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Ar37_citation', '{}.lambda_Ar37_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
 
-        except Exception, e:
-            print 'arar_constants ', e
-            import traceback
-            traceback.print_exc()
+        except AttributeError:
+            print 'cannot bind to ArArConstants preferences'
+
 
         super(ArArConstants, self).__init__(*args, **kw)
 

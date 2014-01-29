@@ -202,8 +202,8 @@ class DetectorTypeTable(Base):
 
 
 class IrradiationPositionTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'IrradiationPositionTable'
 
     IrradPosition = Column(Integer, primary_key=True)

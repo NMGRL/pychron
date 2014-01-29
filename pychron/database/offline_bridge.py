@@ -137,8 +137,6 @@ class DatabaseBridge(Loggable):
                     self._copy_table(dest, src, bi.id, 'proc_DetectorIntercalibrationTable')
 
             self._copy_table(dest, src, ai.selected_histories.id, 'proc_selectedhistoriestable')
-
-
             dest.commit()
 
     def _copy_table(self, dest, src, pid, tn, verbose=True, attr='id'):

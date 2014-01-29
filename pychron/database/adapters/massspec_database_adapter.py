@@ -23,6 +23,7 @@ import binascii
 from numpy import Inf
 
 from sqlalchemy.sql.expression import func, distinct
+from uncertainties import std_dev, nominal_value
 
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -32,7 +33,7 @@ from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
     BaselinesChangeableItemsTable, SampleLoadingTable, MachineTable, \
     AnalysisPositionTable, LoginSessionTable, RunScriptTable, \
-    IrradiationChronologyTable, IrradiationLevelTable
+    IrradiationChronologyTable, IrradiationLevelTable, IrradiationProductionTable
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.functions import delete_one
 from pychron.database.selectors.massspec_selector import MassSpecSelector
@@ -219,9 +220,75 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_runscript(self, value):
         return self._retrieve_item(RunScriptTable, value, key='RunScriptID',)
+
+    def get_irradiation_level(self, irrad, name):
+        with self.session_ctx() as sess:
+            q=sess.query(IrradiationLevelTable)
+            q=q.filter(IrradiationLevelTable.Level==name)
+            q=q.filter(IrradiationLevelTable.IrradBaseID==irrad)
+            return self._query_one(q)
 #===============================================================================
 # adders
 #===============================================================================
+
+    def add_irradiation_level(self, irrad, name, holder, production, **kw):
+        if not self.get_irradiation_level(irrad, name):
+            i=IrradiationLevelTable(IrradBaseID=irrad,
+                                    Level=name,
+                                    SampleHolder=holder,
+                                    ProductionRatiosID=production,
+                                    **kw)
+            self._add_item(i)
+
+    def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=0):
+        with self.session_ctx() as sess:
+            q=sess.query(IrradiationPositionTable)
+            q=q.filter(IrradiationPositionTable.IrradPosition==identifier)
+            if not self._query_one(q):
+                i=IrradiationPositionTable(IrradPosition=identifier,
+                                           IrradiationLevel=irrad_level,
+                                           HoleNumber=hole,
+                                           Material=material,
+                                           SampleID=sample
+                                           )
+                self._add_item(i)
+
+    def add_irradiation_production(self, name, pr, ifc):
+        kw={}
+        for k,v in ifc.iteritems():
+            if k=='cl3638':
+                k='P36Cl38Cl'
+            else:
+                k=k.capitalize()
+
+            kw[k]=float(nominal_value(v))
+            kw['{}Er'.format(k)]=float(std_dev(v))
+
+        kw['ClOverKMultiplier']=pr['Cl_K']
+        kw['ClOverKMultiplierEr']=0
+        kw['CaOverKMultiplier']=pr['Ca_K']
+        kw['CaOverKMultiplierEr']=0
+        v=binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
+        with self.session_ctx() as sess:
+            q=sess.query(IrradiationProductionTable)
+            q=q.filter(IrradiationProductionTable.ProductionRatiosID==v)
+            if not self._query_one(q):
+                i=IrradiationProductionTable(Label=name,
+                                             ProductionRatiosID=v,
+                                             **kw)
+                self._add_item(i)
+        return v
+
+    def add_irradiation_chronology_segment(self, irrad, s, e):
+        with self.session_ctx() as sess:
+            q=sess.query(IrradiationChronologyTable)
+            q=q.filter(IrradiationChronologyTable.IrradBaseID==irrad)
+            q=q.filter(IrradiationChronologyTable.StartTime==s)
+            q=q.filter(IrradiationChronologyTable.EndTime==e)
+            if not self._query_one(q):
+                i=IrradiationChronologyTable(IrradBaseID=irrad, StartTime=s, EndTime=e)
+                self._add_item(i)
+
     def add_sample_loading(self, ms, tray):
 
         if isinstance(ms, str):

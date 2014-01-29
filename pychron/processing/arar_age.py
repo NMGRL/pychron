@@ -44,10 +44,12 @@ class ArArAge(Loggable):
     irradiation_level = Str
     irradiation_pos = Str
     irradiation_time = Float
+    production_name = Str
 
     irradiation_label = Property(depends_on='irradiation, irradiation_level,irradiation_pos')
 
     chron_segments = List
+    chron_dosages = List
     interference_corrections = Dict
     production_ratios = Dict
 

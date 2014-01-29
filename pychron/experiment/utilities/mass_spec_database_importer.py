@@ -115,6 +115,25 @@ class MassSpecDatabaseImporter(Loggable):
                 identifier = '4359'
         return identifier
 
+    def add_irradiation(self, irrad, level, pid):
+        with self.db.session_ctx():
+            sid=0
+            self.db.add_irradiation_level(irrad, level, sid, pid)
+
+    def add_irradiation_position(self, identifier, levelname, hole):
+        with self.db.session_ctx():
+            return self.db.add_irradiation_position(identifier, levelname, hole)
+
+    def add_irradiation_production(self, name, prdict, ifdict):
+        with self.db.session_ctx():
+            return self.db.add_irradiation_production(name, prdict, ifdict)
+
+    def add_irradiation_chronology(self, irrad, doses):
+
+        with self.db.session_ctx():
+            for pwr,st,et in doses:
+                self.db.add_irradiation_chronology_segment(irrad, st,et)
+
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
             irradpos = spec.irradpos
@@ -180,7 +199,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sample_id = db_irradpos.SampleID
             else:
                 self.warning(
-                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
+                        'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
                 return
                 # add runscript
         rs = db.add_runscript(spec.runscript_name,
