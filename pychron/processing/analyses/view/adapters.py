@@ -149,6 +149,23 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     intensity_error_text = Property
     intensity_percent_error_text = Property
 
+    name_width = Int(40)
+    bs_corrected_width = Int(65)
+    bs_corrected_error_width = Int(65)
+    bs_corrected_percent_error_width = Int(65)
+
+    bs_bk_corrected_width = Int(65)
+    bs_bk_corrected_error_width = Int(65)
+    bs_bk_corrected_percent_error_width = Int(65)
+
+    disc_corrected_width = Int(65)
+    disc_corrected_error_width = Int(65)
+    disc_corrected_percent_error_width = Int(65)
+
+    intensity_width = Int(65)
+    intensity_error_width = Int(65)
+    intensity_percent_error_width = Int(65)
+
     def _get_bs_corrected_text(self):
         v = self.item.get_baseline_corrected_value()
         return floatfmt(nominal_value(v), n=7)

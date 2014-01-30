@@ -215,6 +215,12 @@ class ArArAge(Loggable):
         iso.detector = det
         iso.ic_factor = self.get_ic_factor(det)
 
+    def get_baseline_corrected_value(self, iso):
+        if iso in self.isotopes:
+            return self.isotopes[iso].get_baseline_corrected_value()
+        else:
+            return ufloat(0, 0, tag=iso)
+
     def get_isotope(self, name=None, detector=None):
         if name is None and detector is None:
             raise NotImplementedError('name or detector required')

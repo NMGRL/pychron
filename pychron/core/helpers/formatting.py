@@ -20,8 +20,8 @@
 import math
 from functools import partial
 #============= local library imports  ==========================
+
 def format_percent_error(v, e, n=2):
-    print v, e
     p=calc_percent_error(v,e)
     if p is not None:
         sigpee = '{{:0.{}f}}'.format(n).format(p)

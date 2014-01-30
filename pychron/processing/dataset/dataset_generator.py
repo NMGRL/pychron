@@ -159,6 +159,8 @@ class DataSetGenerator(HasTraits):
             sql = fp.read()
             sess.execute(sql)
 
+            sess.execute('Insert into alembic_version version_num 123456')
+
     def _make_blank_massspec_database(self, sess):
         p = os.path.join(os.path.dirname(__file__), 'massspec_dataset.sql')
         with open(p, 'r') as fp:

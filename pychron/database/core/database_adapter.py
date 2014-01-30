@@ -172,11 +172,13 @@ class DatabaseAdapter(Loggable):
                     else:
                         self.connected = True
 
+                    print self.connected
                     if self.connected:
                         self.info('connected to db')
                         self.initialize_database()
                     elif warn:
-                        self.warning_dialog('Not Connected to Database {}.\nAccess Denied for user= {} \
+
+                        self.warning_dialog('Not Connected to Database "{}".\nAccess Denied for user= {} \
 host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
         self.connection_parameters_changed = False

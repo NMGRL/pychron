@@ -71,6 +71,7 @@ class AutoupdateParser(Loggable):
                 get_value = lambda x, **kw: self._get_value(x, header, line, **kw)
 
                 sample = get_value('Sample', cast=str)
+
                 if not sample:
                     break
 
@@ -93,7 +94,11 @@ class AutoupdateParser(Loggable):
                 params['j'] = get_value('J')
                 params['j_err'] = get_value('J_Er')
 
-                params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
+                try:
+                    params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
+                except ZeroDivisionError:
+                    params['k_ca']=0
+
                 params['k_ca_err'] = get_value('Ca_Over_K_Er')
 
                 params['rad40_percent'] = get_value('PctAr40Rad')
@@ -140,7 +145,10 @@ class AutoupdateParser(Loggable):
         try:
             v = line[header.index(key)]
             if cast:
-                v = cast(v)
+                try:
+                    v = cast(v)
+                except ValueError:
+                    v=0
         except IndexError:
             v = default
 

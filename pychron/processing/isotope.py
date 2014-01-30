@@ -53,7 +53,7 @@ class BaseMeasurement(HasTraits):
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
-        # print 'uasdf', unpack, self.name, type(self)
+        print 'uasdf', unpack, self.name, type(self)
         if dbrecord and unpack:
             try:
                 if unpacker is None:
@@ -291,7 +291,7 @@ class BaseIsotope(IsotopicMeasurement):
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
     def get_baseline_corrected_value(self):
-        nv = self.uvalue - self.baseline.uvalue.nominal_value
+        nv = self.uvalue - self.baseline.uvalue#.nominal_value
         return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
     def _get_baseline_fit_abbreviation(self):
