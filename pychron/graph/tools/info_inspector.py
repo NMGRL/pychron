@@ -105,7 +105,7 @@ class InfoOverlay(AbstractOverlay):
         if x + lw > x2:
             x = x2 - lw - 3
 
-        gc.rect(x, y - lh + 2, lw + 4, lh)
+        gc.rect(x, y - lh - 4, lw + 4, lh+2)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
         h = lhs[0] * 1.25

@@ -44,6 +44,7 @@ class FitSelector(HasTraits):
     auto_update = Bool(True)
 
     plot_button = Button('Plot')
+    default_error_type='SD'
 
     def _plot_button_fired(self):
         self.update_needed = True
@@ -109,7 +110,7 @@ class FitSelector(HasTraits):
         for ki, fi in zip(keys, fits):
             pf = next((fa for fa in self.fits if fa.name == ki), None)
             if pf is None:
-                pf = self.fit_klass(name=ki, fit=fi)
+                pf = self.fit_klass(name=ki, fit=fi, error_type=self.default_error_type)
             else:
                 pf.fit = fi
             nfs.append(pf)

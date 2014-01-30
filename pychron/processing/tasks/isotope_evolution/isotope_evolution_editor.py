@@ -126,9 +126,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                       std_devs=fi.filter_std_devs)
 
             fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
-                                         fi.name, fi.fit, fd)
+                                         fi.name, fi.fit, fi.error_type, fd)
 
-    def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, filter_dict):
+    def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict):
         db = self.processor.db
         # print name
         if name.endswith('bs'):
@@ -151,6 +151,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             f,e=convert_fit(fit)
 
             iso.fit=f
+            iso.error_type=et or e
             # iso.fit = convert_fit(fit)
 
             if fit_hist is None:
@@ -165,6 +166,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 return
 
             db.add_fit(fit_hist, dbiso, fit=fit,
+                       error_type=iso.error_type,
                        filter_outliers=iso.filter_outliers,
                        filter_outlier_iterations=iso.filter_outlier_iterations,
                        filter_outlier_std_devs=iso.filter_outlier_std_devs)
