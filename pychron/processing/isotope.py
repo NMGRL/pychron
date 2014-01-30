@@ -203,7 +203,7 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_regressor(self):
         # print '{} getting regerssior'.format(self.name)
         # try:
-        if self.fit.lower() =='average':
+        if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
             reg = PolynomialRegressor(xs=self.xs,
