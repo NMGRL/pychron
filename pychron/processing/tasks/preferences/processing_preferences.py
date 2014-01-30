@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from canopy.plugin.preferences import PreferencesPane
+from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Int, Bool, Property
 from traitsui.api import View, Item, Group
 
