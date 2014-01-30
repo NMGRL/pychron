@@ -20,7 +20,7 @@
 
 #=============local library imports  ==========================
 import binascii
-from numpy import Inf
+import math
 
 from sqlalchemy.sql.expression import func, distinct
 
@@ -421,13 +421,26 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         detector = self.get_detector(detector,)
 
-        i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
-        ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
-        iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
-        isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+        def clean_value(x, k='nominal_value'):
+            v=getattr(x, k)
+            return float(v) if not (math.isnan(v) or math.isinf(v)) else 0
 
-        b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
-        be = float(blank.std_dev) if blank.std_dev != Inf else 0
+        i=clean_value(intercept)
+        ie=clean_value(intercept, 'std_dev')
+
+        iso = clean_value(isotope_value)
+        isoe = clean_value(isotope_value, 'std_dev')
+
+        b = clean_value(blank)
+        be = clean_value(blank, 'std_dev')
+
+        # i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
+        # ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
+        # iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
+        # isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+        #
+        # b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
+        # be = float(blank.std_dev) if blank.std_dev != Inf else 0
 
         iso_r = IsotopeResultsTable(DataReductionSessionID=data_reduction_session_id,
                                     Intercept=i,

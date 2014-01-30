@@ -21,7 +21,7 @@ from traitsui.api import View, Item
 
 #============= standard library imports ========================
 import struct
-from numpy import array
+from numpy import array, mean, std
 #============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
@@ -297,7 +297,10 @@ class MassSpecDatabaseImporter(Loggable):
 
         tb, vb = spec.get_signal_data(iso, odet)
 
-        baseline = spec.get_baseline_uvalue(iso)
+        # baseline = spec.get_baseline_uvalue(iso)
+        tbase, vbase=spec.get_baseline_data(iso, odet)
+        baseline=ufloat(mean(vbase),std(vbase))
+
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
