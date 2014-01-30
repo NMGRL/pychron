@@ -25,7 +25,6 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ProcessingPreferences(BasePreferencesHelper):
-    use_easy = Bool
     recent_hours = Int
     preferences_path = 'pychron.processing'
 
@@ -45,8 +44,12 @@ class ProcessingPreferencesPane(PreferencesPane):
         return v
 
 
+class EasyPreferences(BasePreferencesHelper):
+    use_easy = Bool
+    preferences_path = 'pychron.processing'
+
 class EasyPreferencesPane(PreferencesPane):
-    model_factory = ProcessingPreferences
+    model_factory = EasyPreferences
     category = 'Processing'
 
     def traits_view(self):

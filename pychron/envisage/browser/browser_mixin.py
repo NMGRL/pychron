@@ -179,12 +179,18 @@ class BrowserMixin(ColumnSorterMixin):
             self.sample_filter_values = [getattr(si, p) for si in sams]
 
     def _set_recent_samples(self, recent_name):
+        if not self.search_criteria.recent_hours:
+            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
+                                '"Recent Hours" is located in the "Processing" category')
+            return []
+
         args = recent_name.split(' ')
         ms = ' '.join(args[1:])
 
         db = self.manager.db
         with db.session_ctx():
             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+
             self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
             lns = db.get_recent_labnumbers(lpost, ms)
 
