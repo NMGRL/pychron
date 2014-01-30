@@ -291,7 +291,7 @@ class BaseIsotope(IsotopicMeasurement):
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
 
     def get_baseline_corrected_value(self):
-        nv = self.uvalue - self.baseline.uvalue#.nominal_value
+        nv = self.uvalue - self.baseline.uvalue.nominal_value
         return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
     def _get_baseline_fit_abbreviation(self):
