@@ -64,6 +64,7 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+    has_raw_data = False
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
@@ -167,6 +168,7 @@ class DBAnalysis(Analysis):
     blank_changes = List
     fit_changes = List
 
+
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
         if iso:
@@ -216,7 +218,7 @@ class DBAnalysis(Analysis):
         self.tag = name
 
         omit = name == 'omit'
-        for a in ('ideo', 'spec', 'iso','series'):
+        for a in ('ideo', 'spec', 'iso', 'series'):
             a = 'omit_{}'.format(a)
             v = getattr(tag, a)
             setattr(self, a, v)
@@ -339,7 +341,7 @@ class DBAnalysis(Analysis):
             self._sync_production_ratios(level)
             self._sync_interference_corrections(level)
 
-            self.production_name=level.production.name
+            self.production_name = level.production.name
 
     def _sync_j(self, ln):
         s, e = 1, 0
@@ -380,7 +382,7 @@ class DBAnalysis(Analysis):
 
             self.irradiation_time = it
             self.chron_segments = segments
-            self.chron_dosages=chron.get_doses()
+            self.chron_dosages = chron.get_doses()
 
     def _sync_interference_corrections(self, level):
         pr = level.production
@@ -457,8 +459,6 @@ class DBAnalysis(Analysis):
 
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
-                
-
                 disc, refmass = discriminations[det]
                 # ni = mass - round(refmass)
 
@@ -467,11 +467,11 @@ class DBAnalysis(Analysis):
                 #self.info('{} {} {}'.format(iso.name, n, ni))
                 #calculate discrimination
                 idisc = disc ** n
-                e=disc
+                e = disc
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                idisc=ufloat(idisc.nominal_value, e.std_dev)
+                idisc = ufloat(idisc.nominal_value, e.std_dev)
 
             iso.discrimination = idisc
 
@@ -482,9 +482,9 @@ class DBAnalysis(Analysis):
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
 
-        pc,data = self._get_peak_center(meas_analysis)
-        self.peak_center=pc
-        self.peak_center_data=data
+        pc, data = self._get_peak_center(meas_analysis)
+        self.peak_center = pc
+        self.peak_center_data = data
 
     def _get_isotope_dict(self, get):
         d = dict()
@@ -640,12 +640,12 @@ class DBAnalysis(Analysis):
 
     def _get_peak_center(self, meas_analysis):
 
-        pc=meas_analysis.peak_center
+        pc = meas_analysis.peak_center
         if pc:
-            center=float(pc.center)
-            packed_xy=pc.points
-            return center, zip(*[struct.unpack('<ff', packed_xy[i:i+8])
-                                 for i in xrange(0,len(packed_xy),8)])
+            center = float(pc.center)
+            packed_xy = pc.points
+            return center, zip(*[struct.unpack('<ff', packed_xy[i:i + 8])
+                                 for i in xrange(0, len(packed_xy), 8)])
         else:
             return 0.0, None
 
@@ -739,7 +739,7 @@ class VCSAnalysis(DBAnalysis):
     """
 
     def _load_file(self):
-        pr=self.project.replace(' ','_')
+        pr = self.project.replace(' ', '_')
 
         p = os.path.join(paths.vcs_dir, pr, self.sample, self.labnumber, '{}.yaml'.format(self.record_id))
         if os.path.isfile(p):
@@ -758,7 +758,7 @@ class VCSAnalysis(DBAnalysis):
         self._sync_extraction(meas_analysis)
         self._sync_experiment(meas_analysis)
 
-        self.has_raw_data=unpack
+        self.has_raw_data = unpack
         use_local = not unpack
         if not unpack:
             yd = self._load_file()
@@ -795,7 +795,7 @@ class VCSAnalysis(DBAnalysis):
 
         self.interference_corrections = nifc
 
-        self.j = ufloat(yd['j'],yd['j_err'])
+        self.j = ufloat(yd['j'], yd['j_err'])
 
     def _sync_isotopes(self, yd, meas_analysis, unpack):
         """
@@ -821,7 +821,7 @@ class VCSAnalysis(DBAnalysis):
     def _to_ufloat(self, obj, attr):
         return ufloat(obj[attr], obj['{}_err'.format(attr)])
 
-    def _sync_detector_info(self,yd, meas_analysis, **kw):
+    def _sync_detector_info(self, yd, meas_analysis, **kw):
         pass
 
 
