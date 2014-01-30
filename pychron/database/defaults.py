@@ -57,7 +57,7 @@ def load_isotopedb_defaults(db):
         for mi in ['obama', 'jan', 'nmgrl map']:
             db.add_mass_spectrometer(mi)
 
-        project = db.add_project('references')
+        project = db.add_project('REFERENCES')
         #print project
         for i, di in enumerate(['blank_air',
                                 'blank_cocktail',

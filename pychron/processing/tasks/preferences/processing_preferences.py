@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from canopy.plugin.preferences import PreferencesPane
-from traits.api import Int, Bool
+from traits.api import Int, Bool, Property
 from traitsui.api import View, Item, Group
 
 #============= standard library imports ========================
@@ -25,9 +25,21 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ProcessingPreferences(BasePreferencesHelper):
-    recent_hours = Int
+    recent_hours = Property(Int, depends_on='_recent_hours')
     preferences_path = 'pychron.processing'
+    _recent_hours=Int
+    def _get_recent_hours(self):
+        return self._recent_hours
 
+    def _set_recent_hours(self,v):
+        if v:
+            self._recent_hours=v
+
+    def _validate_recent_hours(self,v):
+        if v<0:
+            return
+        else:
+            return v
 
 class ProcessingPreferencesPane(PreferencesPane):
     model_factory = ProcessingPreferences
@@ -47,6 +59,7 @@ class ProcessingPreferencesPane(PreferencesPane):
 class EasyPreferences(BasePreferencesHelper):
     use_easy = Bool
     preferences_path = 'pychron.processing'
+
 
 class EasyPreferencesPane(PreferencesPane):
     model_factory = EasyPreferences
