@@ -1,49 +1,29 @@
-import unittest
-from pychron.processing.dataset.tests.mixin import IntensityMixin, analysis_args
+from pychron.processing.dataset.tests.mixin import IntensityMixin
 
 
-class BaselineCorrectedTestCase(IntensityMixin):
-# ======= baseline only
-    def test_Ar40_baseline_corrected(self):
-        k = 'Ar40'
-        self._baseline_corrected(k)
+class BaselineMeta(type):
+    def __new__(mcs, name, bases, d):
+        def gen_test(k):
+            def test(self):
+                self._baseline_corrected(k)
 
-    def test_Ar39_baseline_corrected(self):
-        k = 'Ar39'
-        self._baseline_corrected(k)
+            return test
 
-    def test_Ar38_baseline_corrected(self):
-        k = 'Ar38'
-        self._baseline_corrected(k)
+        def gen_etest(k):
+            def test(self):
+                self._baseline_corrected_err(k)
 
-    def test_Ar37_baseline_corrected(self):
-        k = 'Ar37'
-        self._baseline_corrected(k)
+            return test
 
-    def test_Ar36_baseline_corrected(self):
-        k = 'Ar36'
-        self._baseline_corrected(k)
+        for k in ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'):
+            d['test_{}_baseline'.format(k)] = gen_test(k)
+            d['test_{}_baseline_err'.format(k)] = gen_etest(k)
 
-    # ======= baseline only error
-    def test_Ar40_baseline_corrected_err(self):
-        k = 'Ar40'
-        self._baseline_corrected_err(k)
+        return type.__new__(mcs, name, bases, d)
 
-    def test_Ar39_baseline_corrected_err(self):
-        k = 'Ar39'
-        self._baseline_corrected_err(k)
 
-    def test_Ar38_baseline_corrected_err(self):
-        k = 'Ar38'
-        self._baseline_corrected_err(k)
-
-    def test_Ar37_baseline_corrected_err(self):
-        k = 'Ar37'
-        self._baseline_corrected_err(k)
-
-    def test_Ar36_baseline_corrected_err(self):
-        k = 'Ar36'
-        self._baseline_corrected_err(k)
+class BaselineCorrectedTest(IntensityMixin):
+    __metaclass__ = BaselineMeta
 
     def _baseline_corrected(self, k):
         an = self.analysis
@@ -55,33 +35,3 @@ class BaselineCorrectedTestCase(IntensityMixin):
         v = an.get_baseline_corrected_value(k)
         self._almost_equal(v.std_dev, '{}_Er_BslnCorOnly'.format(k))
 
-class BaselineCorrectedTestCase_A(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args+(0,)
-
-class BaselineCorrectedTestCase_B(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (1,)
-
-class BaselineCorrectedTestCase_C(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (2,)
-class BaselineCorrectedTestCase_D(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (3,)
-
-class BaselineCorrectedTestCase_E(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (4,)
-
-class BaselineCorrectedTestCase_F(BaselineCorrectedTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (5,)
-if __name__ == '__main__':
-    unittest.main()

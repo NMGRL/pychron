@@ -14,15 +14,14 @@ pp=os.path.join(os.path.dirname(os.path.dirname(__file__)),'data','massspec_data
 parser = AutoupdateParser()
 parser.parse(pp)
 
-analysis_args=('Unknown',
-'MB06-507',
-'Minna Bluff')
+msid='Unknown'
+sid='MB06-507'
+pid='Minna Bluff'
 
 class IntensityMixin(object):
     @classmethod
     def setUpClass(cls):
-        msid, sid, pid, aid=cls.set_analysis()
-
+        aid=cls.analysis_id
         cls.sample_id = msid
         cls.analysis_id = aid
         db=isotope_man.db
@@ -33,6 +32,13 @@ class IntensityMixin(object):
             cls.analysis = an
 
         cls.parser=parser
+
+    def setup(self):
+        for k in ('Ar40','Ar39'):
+            setattr(self, 'test_{}_blank'.format(k),
+                    lambda: self._blank(k))
+            setattr(self, 'test_{}_blank_err'.format(k),
+                    lambda: self._blank_err(k))
 
     def _almost_equal(self, v, k):
         ev, cnt = self.get_expected_value(k)
@@ -55,12 +61,15 @@ class IntensityMixin(object):
         s = p.samples[self.sample_id]
         an = s.analyses[self.analysis_id]
         ev = getattr(an, k)
+        try:
+            sev = str(ev)
+            if '.' in sev:
+                cnt = len(str(ev).split('.')[1])
+            else:
+                cnt = int(abs(math.log(ev, 10)))
+        except ValueError:
+            ev,cnt=0,1
 
-        sev = str(ev)
-        if '.' in sev:
-            cnt = len(str(ev).split('.')[1])
-        else:
-            cnt = int(abs(math.log(ev, 10)))
         return ev,cnt
 
     def _almost_equal(self, v, k):
@@ -75,4 +84,8 @@ class IntensityMixin(object):
             acnt = len(a)
 
         cnt = min(acnt, cnt)
+
+        # dev=abs(v-ev)/v*1000
+        # self.assertLess(dev, 1)
         self.assertAlmostEqual(v, ev, cnt-1)
+

@@ -457,18 +457,13 @@ class DBAnalysis(Analysis):
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
                 disc, refmass = discriminations[det]
-                # ni = mass - round(refmass)
+
                 # disc=ufloat(1,0.01)
                 mass = iso.mass
                 n = mass - refmass
-                #self.info('{} {} {}'.format(iso.name, n, ni))
+
                 #calculate discrimination
                 idisc = disc ** n
-                # e=disc
-                #for i in range(int(ni)-1):
-                #    e*=disc
-                #
-                # idisc=ufloat(idisc.nominal_value, 0.01)
 
             iso.discrimination = idisc
 

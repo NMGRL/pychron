@@ -1,9 +1,8 @@
-import unittest
-from pychron.processing.dataset.tests.mixin import analysis_args, IntensityMixin
+
+from pychron.processing.dataset.tests.mixin import  IntensityMixin
 
 
-class IsochronTestCase(IntensityMixin):
-# ======= ratios
+class IsochronTest(IntensityMixin):
 
     def test_Ar39_Ar40(self):
         an = self.analysis
@@ -39,19 +38,4 @@ class IsochronTestCase(IntensityMixin):
         self._almost_equal(r.std_dev / r.nominal_value * 100, 'Isoch_36_40err')
 
 
-# #==============================================================================================================
-class IsochronTestCase_A(IsochronTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (0,)
-
-class IsochronTestCase_B(IsochronTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args + (1,)
-
-class IsochronTestCase_C(IsochronTestCase, unittest.TestCase):
-    @classmethod
-    def set_analysis(cls):
-        return analysis_args+(2,)
 
