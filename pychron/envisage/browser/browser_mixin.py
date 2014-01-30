@@ -154,7 +154,7 @@ class BrowserMixin(ColumnSorterMixin):
             #move references project to after Recent
             p=next((p for p in pss if p.name.lower()=='references'),None)
             if p is not None:
-                rp=pss.pop()
+                rp=pss.pop(pss.index(p))
                 pss.insert(0, rp)
 
             ad = recents + pss

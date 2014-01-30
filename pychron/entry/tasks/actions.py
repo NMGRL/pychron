@@ -91,6 +91,11 @@ class GenerateLabnumbersAction(TaskAction):
 
     method = 'generate_labnumbers'
 
+class GenerateTrayAction(TaskAction):
+    name = 'Generate Tray'
+    image = icon('table_lightning.png')
+
+    method = 'generate_tray'
 
 class ImportIrradiationLevelAction(TaskAction):
     name = 'Import Level'
