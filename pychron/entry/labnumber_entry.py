@@ -45,8 +45,10 @@ from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 class save_ctx(object):
     def __init__(self, p):
         self._p = p
+
     def __enter__(self):
         pass
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._p.information_dialog('Changes saved to database')
 
