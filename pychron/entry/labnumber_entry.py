@@ -107,7 +107,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def save_tray_to_db(self, p, name):
         with save_ctx(self):
             with self.db.session_ctx():
-                load_irradiation_map(self.db, p, name)
+                load_irradiation_map(self.db, p, name, overwrite_geometry=True)
 
     def set_selected_sample(self, new):
         self.selected_sample = new

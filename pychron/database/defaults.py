@@ -73,23 +73,12 @@ def load_isotopedb_defaults(db):
 
         for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
                                ('Fusions Diode', '810nm diode', 'photon machines'),
-                               ('Fusions UV', '193nm eximer', 'photon machines')
-        ]:
+                               ('Fusions UV', '193nm eximer', 'photon machines')]:
             db.add_extraction_device(name=hi,
                                      kind=kind,
-                                     make=make,
-            )
+                                     make=make)
 
-        mdir = os.path.join(paths.setup_dir, 'irradiation_tray_maps')
         mdir=paths.irradiation_tray_maps_dir
-        # if not os.path.isdir(mdir):
-        #     if information(None, 'No irradiation_tray_maps directory. add to .../setupfiles'):
-        #         try:
-        #             os.mkdir(mdir)
-        #         except OSError,e:
-        #             warning(None, 'Failed making {}: error={}'.format(mdir, e))
-        #
-        # else:
         for p, name in iterdir(mdir, exclude=('.zip',)):
             load_irradiation_map(db, p, name)
 
@@ -138,8 +127,8 @@ def parse_irradiation_tray_map(p):
         return
 
 
-def load_irradiation_map(db, p, name):
-    overwrite_geometry = False
+def load_irradiation_map(db, p, name, overwrite_geometry=False):
+
 
     holes=parse_irradiation_tray_map(p)
     if holes is not None:

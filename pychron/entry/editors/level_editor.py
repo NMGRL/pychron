@@ -348,7 +348,7 @@ class LevelEditor(Loggable):
                     db = self.db
                     with db.session_ctx():
                         load_irradiation_map(db, dlg.path,
-                                             os.path.basename(dlg.path))
+                                             os.path.basename(dlg.path), overwrite_geometry=True)
 
 
 #============= EOF =============================================

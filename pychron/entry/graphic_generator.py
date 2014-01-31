@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
-from traitsui.api import View, Controller, UItem
+from traitsui.api import View, Controller, UItem, Item
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
@@ -60,6 +60,7 @@ class GraphicGeneratorController(Controller):
         w, h = 750, 750
         v = View(
                  UItem('srcpath'),
+                 Item('rotation'),
                  UItem('container', editor=ComponentEditor(), style='custom'),
                  width=w + 2,
                  height=h + 56,
@@ -74,6 +75,7 @@ class GraphicModel(HasTraits):
     container = Instance(OverlayPlotContainer)
     name=Property
     _name=Str
+    rotation=Float(enter_set=True, auto_set=False)
 
     def _get_name(self):
         return os.path.splitext(self._name if self._name else os.path.basename(self.srcpath))[0]
@@ -199,6 +201,7 @@ class GraphicModel(HasTraits):
                 plot.overlays.append(label)
 
         self.container.add(p)
+        self.container.invalidate_and_redraw()
 
     def _srcpath_changed(self):
 
@@ -209,20 +212,26 @@ class GraphicModel(HasTraits):
         # use_label=use_label,
         # make=make,
         # rotate=rotate)
+        self._reload()
+
+    def _rotation_changed(self):
+        self._reload()
+
+    def _reload(self):
+        self.container=self._container_factory()
         if os.path.isfile(self.srcpath):
             p = make_xml(self.srcpath,
                          default_bounds=(2.54, 2.54),
                          default_radius=0.0175 * 2.54,
+                         rotate=self.rotation,
                          convert_mm=True)
             self.load(p)
 
     def _container_default(self):
+        return self._container_factory()
 
-        c = OverlayPlotContainer(bgcolor='white',
-                                 )
-        c = RotatingContainer(bgcolor='white',
-                                 )
-        return c
+    def _container_factory(self):
+        return RotatingContainer(bgcolor='white')
 
 def make_xml(path, offset=100, default_bounds=(50, 50),
              default_radius=3, convert_mm=False,
@@ -270,11 +279,14 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
     i = 0
     off = 0
     reader = csv.reader(open(path, 'r'), delimiter=',')
-    writer = open(path + 'angles.txt', 'w')
-    nwriter = csv.writer(open(path + 'rotated_{}.txt'.format(rotate), 'w'))
+    # writer = open(path + 'angles.txt', 'w')
+    nwriter=None
+    if rotate:
+        nwriter = csv.writer(open(path + 'rotated_{}.txt'.format(rotate), 'w'))
 
     header = reader.next()
-    nwriter.writerow(header)
+    if nwriter:
+        nwriter.writerow(header)
 
     theta = math.radians(rotate)
     for k, row in enumerate(reader):
@@ -285,12 +297,28 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
             x, y, l = Element('x'), Element('y'), Element('label')
 
             xx, yy = float(row[0]), float(row[1])
+            try:
+                r=float(row[2])
+                rr=Element('radius')
+                if convert_mm:
+                    r*=2.54
+
+                rr.text=str(r)
+                e.append(rr)
+            except IndexError:
+                r=None
 
             px = math.cos(theta) * xx - math.sin(theta) * yy
             py = math.sin(theta) * xx + math.cos(theta) * yy
 
             xx, yy = px, py
-            nwriter.writerow(('{:0.2f}'.format(xx), '{:0.2f}'.format(yy)))
+            if nwriter:
+                data= ['{:0.4f}'.format(xx),
+                       '{:0.4f}'.format(yy)]
+                if r is not None:
+                    data.append('{:0.4f}'.format(rr))
+
+                nwriter.writerow(data)
 
             if convert_mm:
                 xx = xx * 2.54
@@ -299,12 +327,13 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
             x.text = str(xx)
             y.text = str(yy)
 
-            a = math.degrees(math.atan2(yy, xx))
-            writer.write('{} {}\n'.format(k + 1, a))
+            # a = math.degrees(math.atan2(yy, xx))
+            # writer.write('{} {}\n'.format(k + 1, a))
             l.text = str(i + 1 + off)
             e.append(l)
             e.append(x)
             e.append(y)
+
             circles.append(e)
             i += 1
         else:
