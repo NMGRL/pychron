@@ -108,7 +108,10 @@ class Series(BaseArArFigure):
                                     yerror=yerr,
                                     fit=po.fit,
                                     plotid=pid,
-                                    type='scatter')
+                                    type='scatter',
+                                    add_inspector=False,
+                                    # add_tools=False
+                                    )
             if len(args) == 2:
                 scatter, p = args
             else:
@@ -117,6 +120,8 @@ class Series(BaseArArFigure):
             sel=scatter.index.metadata.get('selections',[])
             sel+=omits
             scatter.index.metadata['selections']=list(set(sel))
+
+            self._add_scatter_inspector(scatter)
 
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
@@ -152,6 +157,34 @@ class Series(BaseArArFigure):
             #else:
             #    return super(Series, self)._unpack_attr(attr)
 
+    def update_graph_metadata(self, obj, name, old, new):
+        sorted_ans = self.sorted_analyses
+        if obj:
+            hover = obj.metadata.get('hover')
+            if hover:
+                hoverid = hover[0]
+                try:
+                    self.selected_analysis = sorted_ans[hoverid]
+
+                except IndexError, e:
+                    print 'asaaaaa', e
+                    return
+            else:
+                self.selected_analysis = None
+
+            sel = self._filter_metadata_changes(obj, lambda x: x, sorted_ans)
+            # self._set_renderer_selection()
+            #self._set_selected(sorted_ans, sel)
+            # set the temp_status for all the analyses
+            #for i, a in enumerate(sorted_ans):
+            #    a.temp_status = 1 if i in sel else 0
+        # else:
+            #sel = [i for i, a in enumerate(sorted_ans)
+            #            if a.temp_status]
+            # sel = self._get_omitted(sorted_ans, omit='omit_ideo')
+            #print 'update graph meta'
+            # self._rebuild_ideo(sel)
+            # self.
 #===============================================================================
 # plotters
 #===============================================================================

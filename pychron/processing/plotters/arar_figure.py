@@ -143,7 +143,6 @@ class BaseArArFigure(HasTraits):
         for i, a in enumerate(ans):
             if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
                 a.temp_status = 1 if i in sel else 0
-
         self.refresh_unknowns_table = True
 
     def _filter_metadata_changes(self, obj, func, ans):
@@ -298,9 +297,8 @@ class BaseArArFigure(HasTraits):
             scatter.overlays.append(pinspector_overlay)
             broadcaster.tools.append(point_inspector)
 
-            u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
-            scatter.index.on_trait_change(u, 'metadata_changed')
-
+            # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
+            scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
             #===============================================================================
             # labels
             #===============================================================================

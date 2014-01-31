@@ -23,6 +23,7 @@ from pyface.tasks.action.schema import SToolBar
 #============= local library imports  ==========================
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
+from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
@@ -584,6 +585,11 @@ class FigureTask(AnalysisEditTask):
     @on_trait_change('active_editor:save_db_figure')
     def _handle_save_db_figure(self):
         self._save_as_figure()
+
+    @on_trait_change('active_editor:invalid')
+    def _handle_save_db_figure(self):
+
+        self.set_tag(Tag(name='invalid'))
 
     #===========================================================================
     # browser protocol

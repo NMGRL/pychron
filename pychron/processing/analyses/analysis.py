@@ -213,17 +213,20 @@ class DBAnalysis(Analysis):
             pass
 
     def set_tag(self, tag):
+        if isinstance(tag, str):
+            self.tag=tag
+            omit= tag=='invalid'
+        else:
+            name = tag.name
+            self.tag = name
 
-        name = tag.name
-        self.tag = name
-
-        omit = name == 'omit'
-        for a in ('ideo', 'spec', 'iso', 'series'):
-            a = 'omit_{}'.format(a)
-            v = getattr(tag, a)
-            setattr(self, a, v)
-            if v:
-                omit = True
+            omit = name == 'omit'
+            for a in ('ideo', 'spec', 'iso', 'series'):
+                a = 'omit_{}'.format(a)
+                v = getattr(tag, a)
+                setattr(self, a, v)
+                if v:
+                    omit = True
 
         self.temp_status = 1 if omit else 0
 

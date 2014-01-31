@@ -20,11 +20,11 @@ from traits.api import List, Callable
 #============= local library imports  ==========================
 from pychron.graph.tools.point_inspector import PointInspector
 
-
 class AnalysisPointInspector(PointInspector):
     analyses = List
     value_format = Callable
     additional_info = Callable
+
 
     def assemble_lines(self):
         lines = []

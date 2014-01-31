@@ -205,7 +205,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
         return items
 
-    def set_tag(self):
+    def set_tag(self, tag=None):
         """
             set tag for either
             analyses selected in unknowns pane
@@ -218,25 +218,33 @@ class AnalysisEditTask(BaseBrowserTask):
         if not items:
             self.warning_dialog('No analyses selected to Tag')
         else:
-            a = self._get_tagname(items)
-            if a:
-                db = self.manager.db
-                tag, items = a
-                if tag:
-                    name = tag.name
-                    with db.session_ctx():
-                        for it in items:
-                            self.debug('setting {} tag= {}'.format(it.record_id, name))
+            db = self.manager.db
+            if tag is None:
+                a = self._get_tagname(items)
+                if a:
+                    tag, items = a
+                    if tag:
+                        name = tag.name
+            else:
+                name=tag.name
 
-                            ma = db.get_analysis_uuid(it.uuid)
-                            ma.tag = name
-                            it.set_tag(tag)
+            if name and items:
+                with db.session_ctx():
+                    for it in items:
+                        self.debug('setting {} tag= {}'.format(it.record_id, name))
 
-                    self.analysis_table.refresh_needed = True
-                    if self.unknowns_pane:
-                        self.unknowns_pane.refresh_needed = True
+                        ma = db.get_analysis_uuid(it.uuid)
+                        ma.tag = name
+                        it.set_tag(tag)
 
-                    self.active_editor.filter_invalid_analyses()
+                self.active_editor.filter_invalid_analyses()
+                self.analysis_table.refresh_needed = True
+                if self.unknowns_pane:
+                    self.unknowns_pane.refresh_needed = True
+                self._set_tag_hook()
+
+    def _set_tag_hook(self):
+        pass
 
     def prepare_destroy(self):
         if self.unknowns_pane:

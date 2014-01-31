@@ -26,7 +26,8 @@ from pychron.graph.stacked_graph import StackedGraph
 
 class AnalysisGraph(Graph):
     tag=Event
-    save_db=Event
+    save_db_figure=Event
+    invalid=Event
 
     def get_contextual_menu_save_actions(self):
         s=super(AnalysisGraph,self).get_contextual_menu_save_actions()
@@ -34,14 +35,18 @@ class AnalysisGraph(Graph):
         return s
 
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Set tag', '_set_tag')]
+        return [self.action_factory('Set tag', '_set_tag'),
+                self.action_factory('Set INVALID','_set_invalid')]
 
     def _save_to_database(self):
         print 'save to database'
-        self.save_db=True
+        self.save_db_figure=True
 
     def _set_tag(self):
         self.tag=True
+
+    def _set_invalid(self):
+        self.invalid=True
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
     pass

@@ -54,6 +54,10 @@ class InterpolationTask(AnalysisEditTask):
                           BinAnalysesAction()
                           )]
 
+    def _set_tag_hook(self):
+        if self.references_pane:
+            self.references_pane.refresh_needed=True
+
     def _get_analyses_to_tag(self):
         ritems = None
         if self.references_pane:

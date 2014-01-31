@@ -42,6 +42,7 @@ class FigureEditor(GraphEditor):
 
     tag=Event
     save_db_figure=Event
+    invalid=Event
 
     saved_figure_id=Int
 
@@ -166,13 +167,15 @@ class FigureEditor(GraphEditor):
     def _null_component(self):
         self.component = BasePlotContainer()
 
-    @on_trait_change('figure_model:panels:graph:tag')
-    def _handle_tag(self, new):
-        self.tag=new
+    @on_trait_change('figure_model:panels:graph:[tag, save_db_figure, invalid]')
+    def _handle_graph_event(self, name, new):
+        #propograte event to task
+        setattr(self, name, new)
 
-    @on_trait_change('figure_model:panels:graph:save_db')
-    def _handle_save_db(self, new):
-        self.save_db_figure=new
+    # @on_trait_change('figure_model:panels:graph:save_db')
+    # def _handle_save_db(self, new):
+    #     #propograte event to task
+    #     self.save_db_figure=new
 
     @on_trait_change('figure_model:panels:figures:refresh_unknowns_table')
     def _handle_refresh(self, obj, name, old, new):
