@@ -18,7 +18,7 @@
 import os
 import struct
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any, Either, Bool, List
+    Date, Any, Either, Bool, List, Event
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -65,6 +65,24 @@ class Analysis(ArArAge):
     omit_iso = False
     omit_series = False
     has_raw_data = False
+
+    recall_event = Event
+    tag_event = Event
+    invalid_event = Event
+
+    def trigger_recall(self):
+        self.recall_event=self
+
+    def trigger_tag(self, analyses=None):
+        if analyses is None:
+            analyses=[self,]
+
+        self.tag_event=analyses
+
+    def trigger_invalid(self, analyses=None):
+        if analyses is None:
+            analyses = [self, ]
+        self.invalid_event=analyses
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False

@@ -52,10 +52,17 @@ class GraphEditor(BaseUnknownsEditor):
 
     auto_plot = Property
     update_on_analyses = True
+    recall_event = Event
+    tag_event = Event
+    invalid_event = Event
 
     @on_trait_change('tool:save_event')
     def _handle_save_event(self):
         self.save_event = True
+
+    @on_trait_change('analyses:[recall_event,tag_event, invalid_event]')
+    def _handle_event(self, name, new):
+        setattr(self, name, new)
 
     def make_title(self):
         names=[ai.record_id for ai in self.analyses]
@@ -122,9 +129,15 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def filter_invalid_analyses(self):
-        f=lambda x: not x.tag=='invalid'
-        self.analyses=filter(f, self.analyses)
+    def filter_invalid_analyses(self, items=None):
+        if items is None:
+            f=lambda x: not x.tag=='invalid'
+            self.analyses=filter(f, self.analyses)
+        else:
+            for ai in self.analyses:
+                if ai in items:
+                    self.analyses.remove(ai)
+
         self.rebuild()
 
     def set_items(self, unks, is_append=False, **kw):
