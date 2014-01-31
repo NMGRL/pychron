@@ -565,6 +565,7 @@ class FigureTask(AnalysisEditTask):
             return
         if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
             self.active_editor.rebuild()
+            self.active_editor.dump_tool()
 
     def _active_editor_changed(self):
         if self.active_editor:

@@ -78,13 +78,18 @@ class GraphEditor(BaseUnknownsEditor):
     def load_tool(self, tool=None):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
         if os.path.isfile(p):
-            self.debug('loading tool')
+            self.debug('loading tool at {}'.format(p))
             with open(p, 'r') as fp:
                 try:
                     obj = pickle.load(fp)
-                    self._load_tool(obj, tool=tool)
+                    if not obj:
+                        os.unlink(p)
+                    else:
+                        self._load_tool(obj, tool=tool)
+
                 except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError, TraitError),e:
                     self.debug('exception loading tool {}'.format(e))
+                    os.unlink(p)
                     return
 
     def _load_tool(self, tooldict, tool):
@@ -166,7 +171,7 @@ class GraphEditor(BaseUnknownsEditor):
             if self.tool:
                 self.tool.load_fits(refiso.isotope_keys,
                                     refiso.isotope_fits)
-                self.load_tool()
+            self.load_tool()
 
     def _set_name(self):
         na = list(set([ni.labnumber for ni in self.analyses]))
