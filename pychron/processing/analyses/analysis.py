@@ -18,7 +18,7 @@
 import os
 import struct
 from traits.api import Instance, Int, Str, Float, Dict, Property, \
-    Date, Any, Either, Bool, List
+    Date, Any, Either, Bool, List, Event
 #============= standard library imports ========================
 import time
 from datetime import datetime
@@ -64,6 +64,25 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+    has_raw_data = False
+
+    recall_event = Event
+    tag_event = Event
+    invalid_event = Event
+
+    def trigger_recall(self):
+        self.recall_event=self
+
+    def trigger_tag(self, analyses=None):
+        if analyses is None:
+            analyses=[self,]
+
+        self.tag_event=analyses
+
+    def trigger_invalid(self, analyses=None):
+        if analyses is None:
+            analyses = [self, ]
+        self.invalid_event=analyses
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
@@ -189,10 +208,11 @@ class DBAnalysis(Analysis):
         if det in self.ic_factors:
             r = self.ic_factors[det]
         else:
+            r = ufloat(1, 1e-20)
             #get the ic_factor from preferences if available otherwise 1.0
             # storing ic_factor in preferences causing issues
             # ic_factor stored in detectors.cfg
-            r = ArArAge.get_ic_factor(self, det)
+            # r = ArArAge.get_ic_factor(self, det)
 
         return r
 
@@ -210,17 +230,20 @@ class DBAnalysis(Analysis):
             pass
 
     def set_tag(self, tag):
+        if isinstance(tag, str):
+            self.tag=tag
+            omit= tag=='invalid'
+        else:
+            name = tag.name
+            self.tag = name
 
-        name = tag.name
-        self.tag = name
-
-        omit = name == 'omit'
-        for a in ('ideo', 'spec', 'iso','series'):
-            a = 'omit_{}'.format(a)
-            v = getattr(tag, a)
-            setattr(self, a, v)
-            if v:
-                omit = True
+            omit = name == 'omit'
+            for a in ('ideo', 'spec', 'iso', 'series'):
+                a = 'omit_{}'.format(a)
+                v = getattr(tag, a)
+                setattr(self, a, v)
+                if v:
+                    omit = True
 
         self.temp_status = 1 if omit else 0
 
@@ -474,9 +497,9 @@ class DBAnalysis(Analysis):
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
 
-        pc,data = self._get_peak_center(meas_analysis)
-        self.peak_center=pc
-        self.peak_center_data=data
+        pc, data = self._get_peak_center(meas_analysis)
+        self.peak_center = pc
+        self.peak_center_data = data
 
     def _get_isotope_dict(self, get):
         d = dict()
@@ -632,12 +655,12 @@ class DBAnalysis(Analysis):
 
     def _get_peak_center(self, meas_analysis):
 
-        pc=meas_analysis.peak_center
+        pc = meas_analysis.peak_center
         if pc:
-            center=float(pc.center)
-            packed_xy=pc.points
-            return center, zip(*[struct.unpack('<ff', packed_xy[i:i+8])
-                                 for i in xrange(0,len(packed_xy),8)])
+            center = float(pc.center)
+            packed_xy = pc.points
+            return center, zip(*[struct.unpack('<ff', packed_xy[i:i + 8])
+                                 for i in xrange(0, len(packed_xy), 8)])
         else:
             return 0.0, None
 
@@ -731,7 +754,7 @@ class VCSAnalysis(DBAnalysis):
     """
 
     def _load_file(self):
-        pr=self.project.replace(' ','_')
+        pr = self.project.replace(' ', '_')
 
         p = os.path.join(paths.vcs_dir, pr, self.sample, self.labnumber, '{}.yaml'.format(self.record_id))
         if os.path.isfile(p):
@@ -750,7 +773,7 @@ class VCSAnalysis(DBAnalysis):
         self._sync_extraction(meas_analysis)
         self._sync_experiment(meas_analysis)
 
-        self.has_raw_data=unpack
+        self.has_raw_data = unpack
         use_local = not unpack
         if not unpack:
             yd = self._load_file()
@@ -787,7 +810,7 @@ class VCSAnalysis(DBAnalysis):
 
         self.interference_corrections = nifc
 
-        self.j = ufloat(yd['j'],yd['j_err'])
+        self.j = ufloat(yd['j'], yd['j_err'])
 
     def _sync_isotopes(self, yd, meas_analysis, unpack):
         """
@@ -813,7 +836,7 @@ class VCSAnalysis(DBAnalysis):
     def _to_ufloat(self, obj, attr):
         return ufloat(obj[attr], obj['{}_err'.format(attr)])
 
-    def _sync_detector_info(self,yd, meas_analysis, **kw):
+    def _sync_detector_info(self, yd, meas_analysis, **kw):
         pass
 
 

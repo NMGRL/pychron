@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
@@ -170,6 +171,20 @@ class ExportSpec(Loggable):
     def get_signal_data(self, iso, det, **kw):
         self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
+
+    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
+        m,s=0,0
+        if iso in self.isotopes:
+            xs,ys=iso.baseline.xs, iso.baseline.ys
+            for i in range(niter):
+                m,s=mean(ys), std(ys)
+                res=abs(ys-m)
+
+                outliers=where(res > (s * nsigma))[0]
+                ys=delete(ys, outliers)
+            m, s = mean(ys), std(ys)
+
+        return ufloat(m, s)
 
     def get_baseline_uvalue(self, iso):
         try:

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Instance, Any, Float
+from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
 from traitsui.api import View, Controller, UItem
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
@@ -51,6 +51,7 @@ class RotatingContainer(OverlayPlotContainer):
         gc.rotate_ctm(math.radians(self.rotation))
         gc.translate_ctm(-w2, -h2)
         super(RotatingContainer, self)._draw(gc, *args, **kw)
+
 class GraphicGeneratorController(Controller):
     def save(self, info):
         self.model.save()
@@ -58,16 +59,25 @@ class GraphicGeneratorController(Controller):
     def traits_view(self):
         w, h = 750, 750
         v = View(
+                 UItem('srcpath'),
                  UItem('container', editor=ComponentEditor(), style='custom'),
                  width=w + 2,
                  height=h + 56,
                  resizable=True,
-                 buttons=[Action(name='Save', action='save')]
+                 buttons=[Action(name='Save', action='save'), 'OK','Cancel']
                  )
         return v
 
 class GraphicModel(HasTraits):
+    srcpath=File
+    xmlpath=File
     container = Instance(OverlayPlotContainer)
+    name=Property
+    _name=Str
+
+    def _get_name(self):
+        return os.path.splitext(self._name if self._name else os.path.basename(self.srcpath))[0]
+
     def save(self, path=None):
 #        print self.container.bounds
 
@@ -99,11 +109,11 @@ class GraphicModel(HasTraits):
                 except Exception:
                     pass
 
-
             c.use_backbuffer = False
             gc.render_component(c)
 #            c.use_backbuffer = True
             gc.save(path)
+            self._name=os.path.basename(path)
 
     def load(self, path):
         parser = ElementTree(file=open(path, 'r'))
@@ -190,6 +200,22 @@ class GraphicModel(HasTraits):
 
         self.container.add(p)
 
+    def _srcpath_changed(self):
+
+
+        # default_radius=radius,
+        # default_bounds=bounds,
+        # convert_mm=convert_mm,
+        # use_label=use_label,
+        # make=make,
+        # rotate=rotate)
+        if os.path.isfile(self.srcpath):
+            p = make_xml(self.srcpath,
+                         default_bounds=(2.54, 2.54),
+                         default_radius=0.0175 * 2.54,
+                         convert_mm=True)
+            self.load(p)
+
     def _container_default(self):
 
         c = OverlayPlotContainer(bgcolor='white',
@@ -202,16 +228,15 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
              default_radius=3, convert_mm=False,
              make=True,
              use_label=True,
-             rotate=0
-):
-    '''
+             rotate=0):
+    """
         convert a csv into an xml
-        
+
         use blank line as a group marker
         circle labels are offset by ``offset*group_id``
         ie. group 0. 1,2,3
             group 1. 101,102,103
-    '''
+    """
     out = '{}_from_csv.xml'.format(os.path.splitext(path)[0])
     if not make:
         return out
@@ -253,7 +278,7 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
 
     theta = math.radians(rotate)
     for k, row in enumerate(reader):
-        print k, row
+        # print k, row
         row = map(str.strip, row)
         if row:
             e = Element('point')
@@ -305,14 +330,17 @@ def open_txt(p, bounds, radius,
                  convert_mm=convert_mm,
                  use_label=use_label,
                  make=make,
-                 rotate=rotate
-    )
-    print p
+                 rotate=rotate)
+
 #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
     gm.load(p)
     gcc = GraphicGeneratorController(model=gm)
 
     return gcc, gm
+
+
+
+
 if __name__ == '__main__':
     gm = GraphicModel()
     p = '/Users/ross/Sandbox/2mmirrad.txt'

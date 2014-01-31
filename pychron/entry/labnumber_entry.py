@@ -26,6 +26,7 @@ from pyface.image_resource import ImageResource
 import os
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
 from pychron.entry.loaders.irradiation_loader import XLSIrradiationLoader
@@ -39,6 +40,15 @@ from pychron.pychron_constants import NULL_STR
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
+
+
+class save_ctx(object):
+    def __init__(self, p):
+        self._p = p
+    def __enter__(self):
+        pass
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._p.information_dialog('Changes saved to database')
 
 
 class LabnumberEntry(IsotopeDatabaseManager):
@@ -80,8 +90,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
     #labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
 
-    _level_editor=None
-    _irradiation_editor=None
+    _level_editor = None
+    _irradiation_editor = None
 
     def __init__(self, *args, **kw):
         super(LabnumberEntry, self).__init__(*args, **kw)
@@ -94,6 +104,11 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         'pychron.experiment.monitor_name')
 
     #    self.populate_default_tables()
+    def save_tray_to_db(self, p, name):
+        with save_ctx(self):
+            with self.db.session_ctx():
+                load_irradiation_map(self.db, p, name)
+
     def set_selected_sample(self, new):
         self.selected_sample = new
         #self.canvas.selected_samples=new
@@ -105,7 +120,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self.warning_dialog(str(e))
             return
 
-        sample_loader=SampleLoader()
+        sample_loader = SampleLoader()
         sample_loader.do_import(self, p)
 
     def make_labbook(self, out):
@@ -141,7 +156,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
                 w.build(out, irrad)
 
     def save(self):
-        self._save_to_db()
+        with save_ctx(self):
+            self._save_to_db()
 
     def generate_labnumbers(self):
         ok = True
@@ -189,7 +205,6 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
                                          for c, (x, y, r) in iter_geom(geom)]
             self.initialized = True
-
 
         elif holder.name:
             self._load_holder_positons_from_file(holder.name)
@@ -284,10 +299,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
                                                                         self.level,
                                                                         irs.hole,
                                                                         dbln.identifier))
-
         self.dirty = False
-        self.info('changes saved to database')
         self._level_changed()
+
+        # self.info('Changes saved to database')
 
     def _increment(self, name):
         """
@@ -367,38 +382,38 @@ THIS CHANGE CANNOT BE UNDONE')
             self._load_positions_from_file(p)
 
     def _add_irradiation_button_fired(self):
-        name=self._auto_increment_irradiation()
-        irrad=self._get_irradiation_editor(name=name)
+        name = self._auto_increment_irradiation()
+        irrad = self._get_irradiation_editor(name=name)
 
-        new_irrad=irrad.add()
+        new_irrad = irrad.add()
         if new_irrad:
-            self.irradiation=new_irrad
+            self.irradiation = new_irrad
             self.updated = True
 
     def _edit_irradiation_button_fired(self):
-        irrad=self._get_irradiation_editor(name=self.irradiation)
+        irrad = self._get_irradiation_editor(name=self.irradiation)
 
-        new_irrad=irrad.edit()
+        new_irrad = irrad.edit()
         if new_irrad:
             self.irradiation = new_irrad
         self.updated = True
 
     def _edit_level_button_fired(self):
-        editor=self._get_level_editor(name=self.level,
-                                      irradiation=self.irradiation)
-        new_level=editor.edit()
+        editor = self._get_level_editor(name=self.level,
+                                        irradiation=self.irradiation)
+        new_level = editor.edit()
         if new_level:
-            self.level=new_level
+            self.level = new_level
 
-        self.updated=True
+        self.updated = True
         self._level_changed()
 
     def _add_level_button_fired(self):
-        editor=self._get_level_editor(irradiation=self.irradiation)
-        new_level=editor.add()
+        editor = self._get_level_editor(irradiation=self.irradiation)
+        new_level = editor.add()
         if new_level:
-            self.level=new_level
-            self.updated=True
+            self.level = new_level
+            self.updated = True
 
     def _level_changed(self):
         self.debug('level changed')

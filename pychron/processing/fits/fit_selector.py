@@ -134,28 +134,28 @@ class FitSelector(HasTraits):
         fits.extend(fs)
         self.fits = fits
 
-    def add_peak_center_fit(self):
-        fits = self.fits
-        if not fits:
-            fits = []
-
-        fs = self.fit_klass(name='PC', fit='average')
-
-        fits.append(fs)
-        self.fits = fits
-
-    def add_derivated_fits(self, keys):
-        fits = self.fits
-        if not fits:
-            fits = []
-
-        fs = [
-            self.fit_klass(name='{}E'.format(ki), fit='average')
-            for ki in keys
-        ]
-
-        fits.extend(fs)
-        self.fits = fits
+    # def add_peak_center_fit(self):
+    #     fits = self.fits
+    #     if not fits:
+    #         fits = []
+    #
+    #     fs = self.fit_klass(name='PC', fit='average')
+    #
+    #     fits.append(fs)
+    #     self.fits = fits
+    #
+    # def add_derivated_fits(self, keys):
+    #     fits = self.fits
+    #     if not fits:
+    #         fits = []
+    #
+    #     fs = [
+    #         self.fit_klass(name='{}E'.format(ki), fit='average')
+    #         for ki in keys
+    #     ]
+    #
+    #     fits.extend(fs)
+    #     self.fits = fits
 
     def _update_command_key(self, new):
         self.command_key = new

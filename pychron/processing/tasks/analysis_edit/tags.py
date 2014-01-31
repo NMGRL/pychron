@@ -140,6 +140,7 @@ class TagTableView(Loggable):
 
     selected = Any
     items = List
+    use_filter=Bool(True)
 
     def save(self):
         self.table.save()
@@ -205,6 +206,7 @@ class TagTableView(Loggable):
                  UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
                                                      multi_select=True,
                                                      operations=['delete'])),
+                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure')),
 
                  resizable=True,
                  width=500,

@@ -148,10 +148,16 @@ class BrowserMixin(ColumnSorterMixin):
         with db.session_ctx():
             ps = db.get_projects(order=gen_ProjectTable.name.asc())
             ms = db.get_mass_spectrometers()
-            recents = [ProjectRecordView('Recent {}'.format(mi.name.capitalize())) for mi in ms]
+            recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
+            pss=[ProjectRecordView(p) for p in ps]
 
-            ad = recents + [ProjectRecordView(p) for p in ps]
+            #move references project to after Recent
+            p=next((p for p in pss if p.name.lower()=='references'),None)
+            if p is not None:
+                rp=pss.pop(pss.index(p))
+                pss.insert(0, rp)
 
+            ad = recents + pss
             self.projects = ad
             self.oprojects = ad
 
@@ -164,7 +170,7 @@ class BrowserMixin(ColumnSorterMixin):
                 else:
                     name = new.name
 
-                if name.startswith('Recent'):
+                if name.startswith('RECENT'):
                     sams = self._set_recent_samples(name)
                 else:
                     sams = self._set_samples()
@@ -179,12 +185,18 @@ class BrowserMixin(ColumnSorterMixin):
             self.sample_filter_values = [getattr(si, p) for si in sams]
 
     def _set_recent_samples(self, recent_name):
+        if not self.search_criteria.recent_hours:
+            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
+                                '"Recent Hours" is located in the "Processing" category')
+            return []
+
         args = recent_name.split(' ')
         ms = ' '.join(args[1:])
 
         db = self.manager.db
         with db.session_ctx():
             lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+
             self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
             lns = db.get_recent_labnumbers(lpost, ms)
 

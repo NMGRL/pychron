@@ -23,7 +23,7 @@ from pyface.action.group import Group
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
-from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction
+from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, GenerateTrayAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -44,16 +44,20 @@ class EntryPlugin(BaseTaskPlugin):
                           actions=[
                               SchemaAddition(id='import_sample_metadata',
                                              factory=ImportSampleMetadataAction,
-                                             path='MenuBar/Tools',),
+                                             path='MenuBar/tools.menu',),
+                              SchemaAddition(id='generate_tray',
+                                             factory=GenerateTrayAction,
+                                             path='MenuBar/tools.menu', ),
                               SchemaAddition(factory=lambda: Group(SaveLabbookPDFAction(),
                                                                    MakeIrradiationTemplateAction()),
-                                             path='MenuBar/Tools')]),
+                                             path='MenuBar/tools.menu')]),
             TaskExtension(
                 actions=[
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
                                    path='MenuBar/Edit',
                                    absolute_position='first',),
+
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
                                    path='MenuBar/Edit',

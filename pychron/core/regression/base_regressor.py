@@ -211,7 +211,7 @@ class BaseRegressor(Loggable):
         raise NotImplementedError
 
     def calculate_residuals(self):
-        return self.predict(self.xs) - self.ys
+        return self.predict(self.clean_xs) - self.clean_ys
 
     def calculate_ci(self, rx, rmodel=None):
         cors=self.calculate_ci_error(rx, rmodel)

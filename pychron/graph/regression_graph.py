@@ -17,7 +17,6 @@ from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
-from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
 from numpy import linspace, random
 import weakref
@@ -458,8 +457,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             line.tools.append(tool)
             line.overlays.append(overlay)
 
-        broadcaster = BroadcasterTool()
-        scatter.tools.append(broadcaster)
+        # broadcaster = BroadcasterTool()
+        # scatter.tools.append(broadcaster)
 
         if add_inspector:
             point_inspector = PointInspector(scatter,
@@ -468,13 +467,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                        tool=point_inspector)
 
             scatter.overlays.append(pinspector_overlay)
-            broadcaster.tools.append(point_inspector)
+            # broadcaster.tools.append(point_inspector)
 
         rect_tool = RectSelectionTool(scatter)
         rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
         scatter.overlays.append(rect_overlay)
-        broadcaster.tools.append(rect_tool)
+        # broadcaster.tools.append(rect_tool)
 
     def _bind_index(self, *args, **kw):
         pass

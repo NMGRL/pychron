@@ -52,10 +52,17 @@ class GraphEditor(BaseUnknownsEditor):
 
     auto_plot = Property
     update_on_analyses = True
+    recall_event = Event
+    tag_event = Event
+    invalid_event = Event
 
     @on_trait_change('tool:save_event')
     def _handle_save_event(self):
         self.save_event = True
+
+    @on_trait_change('analyses:[recall_event,tag_event, invalid_event]')
+    def _handle_event(self, name, new):
+        setattr(self, name, new)
 
     def make_title(self):
         names=[ai.record_id for ai in self.analyses]
@@ -78,13 +85,18 @@ class GraphEditor(BaseUnknownsEditor):
     def load_tool(self, tool=None):
         p = os.path.join(paths.hidden_dir, self.pickle_path)
         if os.path.isfile(p):
-            self.debug('loading tool')
+            self.debug('loading tool at {}'.format(p))
             with open(p, 'r') as fp:
                 try:
                     obj = pickle.load(fp)
-                    self._load_tool(obj, tool=tool)
+                    if not obj:
+                        os.unlink(p)
+                    else:
+                        self._load_tool(obj, tool=tool)
+
                 except (pickle.PickleError, OSError, EOFError, AttributeError, ImportError, TraitError),e:
                     self.debug('exception loading tool {}'.format(e))
+                    os.unlink(p)
                     return
 
     def _load_tool(self, tooldict, tool):
@@ -117,9 +129,15 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def filter_invalid_analyses(self):
-        f=lambda x: not x.tag=='invalid'
-        self.analyses=filter(f, self.analyses)
+    def filter_invalid_analyses(self, items=None):
+        if items is None:
+            f=lambda x: not x.tag=='invalid'
+            self.analyses=filter(f, self.analyses)
+        else:
+            for ai in self.analyses:
+                if ai in items:
+                    self.analyses.remove(ai)
+
         self.rebuild()
 
     def set_items(self, unks, is_append=False, **kw):
@@ -166,7 +184,7 @@ class GraphEditor(BaseUnknownsEditor):
             if self.tool:
                 self.tool.load_fits(refiso.isotope_keys,
                                     refiso.isotope_fits)
-                self.load_tool()
+            self.load_tool()
 
     def _set_name(self):
         na = list(set([ni.labnumber for ni in self.analyses]))

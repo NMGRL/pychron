@@ -273,7 +273,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
         else:
             v = ic.nominal_value
 
-        return floatfmt(v, n=2)
+        return floatfmt(v, n=4)
 
     def _get_discrimination_text(self):
         ic = self.item.discrimination

@@ -25,6 +25,7 @@ from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
+from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
@@ -53,6 +54,7 @@ class AnalysisEditTask(BaseBrowserTask):
                           image_size=(16, 16))]
 
     external_recall_window = True
+    _tag_table_view = None
 
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
@@ -190,7 +192,22 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc.render_component(comp, valign='center')
                 gc.save()
 
-    def set_tag(self):
+    def _get_analyses_to_tag(self):
+        items = None
+
+        if self.unknowns_pane:
+            items = [i for i in self.unknowns_pane.items
+                     if i.is_temp_omitted()]
+            self.debug('Temp omitted analyses {}'.format(len(items)))
+            if not items:
+                items = self.unknowns_pane.selected
+
+        if not items:
+            items = self.analysis_table.selected
+
+        return items
+
+    def set_tag(self, tag=None, items=None, use_filter = True):
         """
             set tag for either
             analyses selected in unknowns pane
@@ -198,39 +215,42 @@ class AnalysisEditTask(BaseBrowserTask):
             analyses selected in figure e.g temp_status!=0
 
         """
-        items = None
-        if self.unknowns_pane:
-            items = self.unknowns_pane.selected
-            if not items:
-                items = [i for i in self.unknowns_pane.items
-                         if i.is_temp_omitted()]
-                self.debug('Temp omitted analyses {}'.format(len(items)))
-
-        if not items:
-            items = self.analysis_table.selected
+        if items is None:
+            items=self._get_analyses_to_tag()
 
         if not items:
             self.warning_dialog('No analyses selected to Tag')
         else:
-            a = self._get_tagname(items)
-            if a:
-                db = self.manager.db
-                tag, items = a
-                if tag:
-                    name = tag.name
-                    with db.session_ctx():
-                        for it in items:
-                            self.debug('setting {} tag= {}'.format(it.record_id, name))
+            db = self.manager.db
+            name=None
+            if tag is None:
+                a = self._get_tagname(items)
+                if a:
+                    tag, items, use_filter = a
+                    if tag:
+                        name = tag.name
+            else:
+                name=tag.name
 
-                            ma = db.get_analysis_uuid(it.uuid)
-                            ma.tag = name
-                            it.set_tag(tag)
+            if name and items:
+                with db.session_ctx():
+                    for it in items:
+                        self.debug('setting {} tag= {}'.format(it.record_id, name))
 
-                    self.analysis_table.refresh_needed = True
-                    if self.unknowns_pane:
-                        self.unknowns_pane.refresh_needed = True
+                        ma = db.get_analysis_uuid(it.uuid)
+                        ma.tag = name
+                        it.set_tag(tag)
 
-                    self.active_editor.filter_invalid_analyses()
+                if use_filter:
+                    self.active_editor.filter_invalid_analyses(items)
+
+                self.analysis_table.refresh_needed = True
+                if self.unknowns_pane:
+                    self.unknowns_pane.refresh_needed = True
+                self._set_tag_hook()
+
+    def _set_tag_hook(self):
+        pass
 
     def prepare_destroy(self):
         if self.unknowns_pane:
@@ -269,16 +289,22 @@ class AnalysisEditTask(BaseBrowserTask):
     def _get_tagname(self, items):
         from pychron.processing.tasks.analysis_edit.tags import TagTableView
 
+        tv=self._tag_table_view
+        if not tv:
+            tv=TagTableView()
+
         db = self.manager.db
         with db.session_ctx():
-            v = TagTableView(items=items)
-            v.table.db = db
-            v.table.load()
+            tv.items=items
+            # tv = TagTableView(items=items)
+            tv.table.db = db
+            tv.table.load()
 
-        info = v.edit_traits()
+        info = tv.edit_traits()
         if info.result:
-            tag = v.selected
-            return tag, v.items
+            tag = tv.selected
+            self._tag_table_view=tv
+            return tag, tv.items, tv.use_filter
 
     def _open_ideogram_editor(self, ans, name, task=None):
         _id = 'pychron.processing.figures'
@@ -336,12 +362,8 @@ class AnalysisEditTask(BaseBrowserTask):
                     tool = self.active_editor.tool
 
                 self.controls_pane.tool = tool
-
             if self.unknowns_pane:
-                # if hasattr(self.unknowns_pane, 'previous_selections'):
-                #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
                 if hasattr(self.active_editor, 'analyses'):
-                    #if self.active_editor.unknowns:
                     self.unknowns_pane.items = self.active_editor.analyses
 
     @on_trait_change('active_editor:save_event')
@@ -434,6 +456,19 @@ class AnalysisEditTask(BaseBrowserTask):
         self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=True)
         self.unknowns_pane._no_update = False
         # self.unknowns_pane.trait_set(items=self.active_editor.analyses, trait_change_notify=False)
+
+    @on_trait_change('active_editor:recall_event')
+    def _handle_recall(self, new):
+        self._recall_item(new)
+
+    @on_trait_change('active_editor:tag_event')
+    def _handle_tag(self, new):
+        self.set_tag(items=new)
+
+    @on_trait_change('active_editor:invalid_event')
+    def _handle_invalid(self, new):
+        self.set_tag(tag=Tag(name='invalid'),
+                     items=new)
 
     #@on_trait_change('data_selector:selector:key_pressed')
     #def _key_press(self, obj, name, old, new):

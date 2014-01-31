@@ -316,7 +316,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         tb, vb = spec.get_signal_data(iso, odet)
 
-        baseline = spec.get_baseline_uvalue(iso)
+        # baseline = spec.get_baseline_uvalue(iso)
+        baseline = spec.get_filtered_baseline_uvalue(iso)
+
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
