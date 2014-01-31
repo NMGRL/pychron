@@ -149,7 +149,7 @@ class LevelEditor(Loggable):
         with db.session_ctx():
             level = db.get_irradiation_level(self.irradiation, self.name)
 
-            self.z = level.z
+            self.z = level.z or 0
             if level.production:
                 self.selected_production = next((p for p in self.productions
                                                  if p.name == level.production.name), None)

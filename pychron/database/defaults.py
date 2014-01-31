@@ -129,7 +129,6 @@ def parse_irradiation_tray_map(p):
 
 def load_irradiation_map(db, p, name, overwrite_geometry=False):
 
-
     holes=parse_irradiation_tray_map(p)
     if holes is not None:
         try:
