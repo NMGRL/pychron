@@ -190,6 +190,21 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc.render_component(comp, valign='center')
                 gc.save()
 
+    def _get_analyses_to_tag(self):
+        items = None
+
+        if self.unknowns_pane:
+            items = [i for i in self.unknowns_pane.items
+                     if i.is_temp_omitted()]
+            self.debug('Temp omitted analyses {}'.format(len(items)))
+            if not items:
+                items = self.unknowns_pane.selected
+
+        if not items:
+            items = self.analysis_table.selected
+
+        return items
+
     def set_tag(self):
         """
             set tag for either
@@ -198,17 +213,8 @@ class AnalysisEditTask(BaseBrowserTask):
             analyses selected in figure e.g temp_status!=0
 
         """
-        items = None
-        if self.unknowns_pane:
-            items = self.unknowns_pane.selected
-            if not items:
-                items = [i for i in self.unknowns_pane.items
-                         if i.is_temp_omitted()]
-                self.debug('Temp omitted analyses {}'.format(len(items)))
 
-        if not items:
-            items = self.analysis_table.selected
-
+        items=self._get_analyses_to_tag()
         if not items:
             self.warning_dialog('No analyses selected to Tag')
         else:

@@ -54,6 +54,24 @@ class InterpolationTask(AnalysisEditTask):
                           BinAnalysesAction()
                           )]
 
+    def _get_analyses_to_tag(self):
+        ritems = None
+        if self.references_pane:
+            ritems = [i for i in self.references_pane.items
+                      if i.is_temp_omitted()]
+            self.debug('Temp omitted analyses {}'.format(len(ritems)))
+            if not ritems:
+                ritems = self.references_pane.selected
+
+        items=super(InterpolationTask, self)._get_analyses_to_tag()
+        if ritems:
+            if items:
+                items.extend(ritems)
+            else:
+                items=ritems
+
+        return items
+
     def bin_analyses(self):
         self.debug('binning analyses')
         if self.active_editor:
