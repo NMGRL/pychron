@@ -15,8 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Event, Bool, Any, Property, Str, Float
-from traits.has_traits import provides
+from traits.api import Instance, Event, Bool, Any, Property, Str, Float, implements
+# from traits.has_traits import provides
 
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
@@ -28,9 +28,9 @@ from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-@provides(ILaserManager)
+# @provides(ILaserManager)
 class BaseLaserManager(Manager):
-    # implements(ILaserManager)
+    implements(ILaserManager)
     # provides(ILaserManager)
     pattern_executor = Instance(PatternExecutor)
     use_video = Bool(False)

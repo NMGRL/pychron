@@ -15,25 +15,36 @@
 #===============================================================================
 
 #=============enthought library imports=======================
+import inspect
 from traits.api import HasTraits, Str, Any, List, \
-    Bool, Enum
+    Bool, Enum, implements
 # from pyface.timer.api import Timer
 #=============standard library imports ========================
 import random
 # from threading import Lock
 from datetime import datetime
 #=============local library imports  ==========================
-from traits.has_traits import provides
+# from traits.has_traits import provides
 from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.hardware.core.communicators.modbus_communicator import CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.consumer_mixin import ConsumerMixin
 
+def crc_caller(func):
+    def d(*args, **kw):
+        try:
+            return func(*args, **kw)
+        except CRCError:
+            stack = inspect.stack()
+            print '{} called by {}'.format(func.func_name, stack[1][3])
+
+    return d
 
 class Alarm(HasTraits):
     alarm_str = Str
@@ -70,13 +81,13 @@ class Alarm(HasTraits):
 
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
 
-@provides(ICoreDevice)
+# @provides(ICoreDevice)
 class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     """
     """
     #    graph_klass = TimeSeriesStreamGraph
 
-    # implements(ICoreDevice)
+    implements(ICoreDevice)
     # provides(ICoreDevice)
 
     name = Str
@@ -105,10 +116,10 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         self.last_response = r if r else ''
 
     def load(self, *args, **kw):
-        '''
-            Load a configuration file.  
+        """
+            Load a configuration file.
             Get Communications info to make a new communicator
-        '''
+        """
         config = self.get_configuration()
         if config:
 
@@ -141,13 +152,14 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         return a and b
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
         return True
 
+    @crc_caller
     def ask(self, cmd, **kw):
-        '''
-        '''
+        """
+        """
         comm = self._communicator
         if comm is not None:
             if comm.scheduler:
@@ -161,24 +173,27 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         else:
             self.info('no communicator for this device {}'.format(self.name))
 
+    @crc_caller
     def write(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         self.tell(*args, **kw)
 
+    @crc_caller
     def tell(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         if self._communicator is not None:
             cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
             self._communicate_hook(cmd, '-')
             return self._communicator.tell(*args, **kw)
 
+    @crc_caller
     def read(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         if self._communicator is not None:
-            return self._communicator.read(*args, **kw)
+           return self._communicator.read(*args, **kw)
 
     def get(self):
         return self.current_scan_value
