@@ -316,7 +316,7 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
                 data= ['{:0.4f}'.format(xx),
                        '{:0.4f}'.format(yy)]
                 if r is not None:
-                    data.append('{:0.4f}'.format(rr))
+                    data.append('{:0.4f}'.format(r))
 
                 nwriter.writerow(data)
 
