@@ -66,29 +66,30 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
         self.load_projects()
 
     def generate_tray(self):
-        p='/Users/ross/Sandbox/entry_tray'
+        # p='/Users/ross/Sandbox/entry_tray'
+        p=self.open_file_dialog()
+        if p is not None:
+            gm = GraphicModel()
 
-        gm = GraphicModel()
+            # op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
 
-        op='/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
-
-        gm.srcpath = op
-        gm.xmlpath=p
-        # p = make_xml(p,
-        #              default_radius=radius,
-        #              default_bounds=bounds,
-        #              convert_mm=convert_mm,
-        #              use_label=use_label,
-        #              make=make,
-        #              rotate=rotate)
-        #
-        # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
-        # gm.load(p)
-        gcc = GraphicGeneratorController(model=gm)
-        info=gcc.edit_traits(kind='livemodal')
-        if info.result:
-            if self.confirmation_dialog('Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
-                self.manager.save_tray_to_db(gm.srcpath, gm.name)
+            gm.srcpath = p
+            # gm.xmlpath=p
+            # p = make_xml(p,
+            #              default_radius=radius,
+            #              default_bounds=bounds,
+            #              convert_mm=convert_mm,
+            #              use_label=use_label,
+            #              make=make,
+            #              rotate=rotate)
+            #
+            # #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
+            # gm.load(p)
+            gcc = GraphicGeneratorController(model=gm)
+            info=gcc.edit_traits(kind='livemodal')
+            if info.result:
+                if self.confirmation_dialog('Do you want to save this tray to the database. Saving tray as "{}"'.format(gm.name)):
+                    self.manager.save_tray_to_db(gm.srcpath, gm.name)
 
 
     def save_pdf(self):
