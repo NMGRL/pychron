@@ -16,13 +16,28 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import average, ones, asarray
+from numpy import average, ones, asarray, where
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
 
 class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
+
+    def calculate(self):
+        cxs,cys=self.ys,self.ys
+        if not self._filtering:
+            #prevent infinite recursion
+            fx, fy = self.get_filtered_data(cxs, cys)
+        else:
+            fx, fy = cxs, cys
+
+    def calculate_outliers(self, nsigma=2):
+        # res = self.calculate_residuals()
+        res=abs(self.clean_ys-self.mean)
+        s=self.std
+        return where(res > (s * nsigma))[0]
+
     def _calculate_coefficients(self):
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
