@@ -576,7 +576,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             if not ai.do_extraction():
                 ret = self._failed_execution_step('Extraction Failed')
         else:
-            ret=ai.isAlive()
+            ret = ai.isAlive()
 
         self.trait_set(extraction_state_label='', extracting=False)
 
@@ -637,12 +637,12 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
 
-        arun.persister.db=self.db
-        arun.persister.massspec_importer=self.massspec_importer
+        arun.persister.db = self.db
+        arun.persister.massspec_importer = self.massspec_importer
         arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
 
-        arun.use_syn_extraction=True
+        arun.use_syn_extraction = True
 
         arun.runner = self.pyscript_runner
         arun.extract_device = exp.extract_device
@@ -651,7 +651,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         if mon is not None:
             mon.automated_run = weakref.ref(arun)()
             arun.monitor = mon
-            arun.persister.monitor=mon
+            arun.persister.monitor = mon
 
         return arun
 
@@ -819,15 +819,15 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             return True
 
     def _wait_for_save(self):
-        '''
+        """
             wait for experiment queue to be saved.
-            
+
             actually wait until time out or self.executable==True
             executable set higher up by the Experimentor
-            
+
             if timed out auto save or cancel
-            
-        '''
+
+        """
         st = time.time()
         delay = self.auto_save_delay
         auto_save = self.use_auto_save
@@ -840,8 +840,7 @@ class ExperimentExecutor(IsotopeDatabaseManager):
                 time.sleep(1)
                 if time.time() - st < delay:
                     self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
-                                           flash=False
-                    )
+                                           flash=False)
                     cnt += 1
                 else:
                     break
@@ -861,6 +860,21 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
             return True
 
+        if self._check_memory():
+            return
+
+        if not self.massspec_importer.connect():
+            if not self.confirmation_dialog(
+                    'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
+                return
+
+        if not self._check_managers(inform=inform):
+            return
+
+        #check all aliquots before starting
+        if not self._check_all_aliquots_queue():
+            return
+
         with self.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
@@ -873,28 +887,36 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
-            msg='Failed connecting to a pyscript_runner. Is the extraction line computer running?'
+            msg = 'Failed connecting to a pyscript_runner. Is the extraction line computer running?'
             invoke_in_main_thread(self.warning_dialog, msg)
             return
 
-        if self._check_memory():
-            return
-
-        if not self.massspec_importer.connect():
-            if not self.confirmation_dialog(
-                    'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
-                return
-
-        if not self._check_managers(inform=inform):
-            return
-
-        exp = self.experiment_queue
-
+        # exp = self.experiment_queue
         # check the first aliquot before delaying
-        arv = exp.cleaned_automated_runs[0]
-        self._check_run_aliquot(arv)
-
+        # arv = exp.cleaned_automated_runs[0]
+        # self._check_run_aliquot(arv)
         return True
+
+    def _check_all_aliquots_queue(self):
+        for ei in self.experiment_queues:
+            if self._check_all_aliquots(ei):
+                break
+
+    def _check_all_aliquots(self, eq):
+        db = self.massspec_importer.db
+        with db.session_ctx():
+            for ai in eq.cleaned_automated_runs:
+                if self._analysis_exists(db, ai):
+                    return True
+
+    def _analysis_exists(self, db, ai):
+        ident = ai.labnumber
+        aliquot = ai.aliquot
+        step = ai.step
+        if db.get_analysis(ident, aliquot, step):
+            self.warning_dialog('Analysis {} already exists in secondary database. '
+                                'Modify your experiment accordingly'.format(ai.record_id))
+            return True
 
     def _get_preceding_blank_or_background(self, inform=True):
         msg = '''First "{}" not preceded by a blank.
@@ -1012,19 +1034,35 @@ If "No" select from database
 
                 ai = db.get_analysis(identifier, arv.aliquot, arv.step)
                 if ai is not None:
-                    al = db.get_latest_analysis_aliquot(identifier)
-                    new_aliquot = al + 1
-                    self.message('{}-{}{} exists in secondary database. Modifying aliquot to {:02n}'.format(identifier,
-                                                                                                            arv.aliquot,
-                                                                                                            arv.step,
-                                                                                                            new_aliquot))
+                    al, st = db.get_latest_analysis_aliquot(identifier)
+                    if arv.step:
+                        new_step = st + 1
+                        new_aliquot = al
+                    else:
+                        new_aliquot = al + 1
+                        new_step = ''
+
+                    self.message(
+                        '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
+                                                                                                             arv.aliquot,
+                                                                                                             arv.step,
+                                                                                                             identifier,
+                                                                                                             new_aliquot,
+                                                                                                             new_step))
                     arv.aliquot = new_aliquot
+                    arv.step = new_step
                     #update aliquot for all runs with this labnumber
-                    i=1
+                    i = 1
+                    j = 1
                     for ei in self.experiment_queue.cleaned_automated_runs:
-                        if ei.labnumber==identifier and ei!=arv:
-                            ei.aliquot=new_aliquot+i
-                            i+=1
+                        if ei.labnumber == identifier and ei != arv:
+                            if ei.step:
+                                ei.aliquot = new_aliquot
+                                ei.step = new_step + j
+                                j += 1
+                            else:
+                                ei.aliquot = new_aliquot + i
+                                i += 1
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
@@ -1041,7 +1079,8 @@ If "No" select from database
             self.info('experiment canceled because could connect to managers {} ntries={}'.format(nonfound, n))
             if inform:
                 invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not connect to managers {}. Check that these instances are running.'.format(','.join(nonfound)))
+                                      'Canceled! Could not connect to managers {}. Check that these instances are running.'.format(
+                                          ','.join(nonfound)))
             return
 
         return True

@@ -78,7 +78,7 @@ def load_isotopedb_defaults(db):
                                      kind=kind,
                                      make=make)
 
-        mdir=paths.irradiation_tray_maps_dir
+        mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
             load_irradiation_map(db, p, name)
 
@@ -99,6 +99,7 @@ def _load_tray_map(db, p, name):
     blob = ''.join([struct.pack('>fff', si.x, si.y, r)
                     for si in sm.sample_holes])
     db.add_load_holder(name, geometry=blob)
+
 
 def parse_irradiation_tray_map(p):
     """
@@ -128,8 +129,7 @@ def parse_irradiation_tray_map(p):
 
 
 def load_irradiation_map(db, p, name, overwrite_geometry=False):
-
-    holes=parse_irradiation_tray_map(p)
+    holes = parse_irradiation_tray_map(p)
     if holes is not None:
         try:
             blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
@@ -142,18 +142,18 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
             print p, name, e
             db.sess.rollback()
 
-    # with open(p, 'r') as f:
-    #     try:
-    #
-    #
-    #         blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
-    #         name, _ = os.path.splitext(name)
-    #
-    #         h = db.add_irradiation_holder(name, geometry=blob)
-    #         if overwrite_geometry:
-    #             h.geometry = blob
-    #
-    #     except Exception, e:
-    #         print p, name, e
-    #         db.sess.rollback()
+            # with open(p, 'r') as f:
+            #     try:
+            #
+            #
+            #         blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            #         name, _ = os.path.splitext(name)
+            #
+            #         h = db.add_irradiation_holder(name, geometry=blob)
+            #         if overwrite_geometry:
+            #             h.geometry = blob
+            #
+            #     except Exception, e:
+            #         print p, name, e
+            #         db.sess.rollback()
 

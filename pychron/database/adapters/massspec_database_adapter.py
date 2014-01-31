@@ -107,18 +107,16 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_database_version(self, **kw):
         return self._retrieve_items(DatabaseVersionTable, **kw)
+
 #===============================================================================
 # getters
 #===============================================================================
     def get_sample_loading(self, value):
         return self._retrieve_item(SampleLoadingTable, value,
-                                   key='SampleLoadingID',
-                                   )
+                                   key='SampleLoadingID')
 
     def get_login_session(self, value):
-        return self._retrieve_item(LoginSessionTable, value, key='LoginSessionID',
-
-                                   )
+        return self._retrieve_item(LoginSessionTable, value, key='LoginSessionID')
 
     def get_latest_analysis_aliquot(self, labnumber):
         """
@@ -126,20 +124,19 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         """
         with self.session_ctx() as sess:
     #         sess = self.get_session()
-            q = sess.query(AnalysesTable.Aliquot)
+            q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
             q = q.filter(AnalysesTable.IrradPosition == labnumber)
-            q = q.order_by(AnalysesTable.RunDateTime.desc())
+            q = q.order_by(AnalysesTable.Aliquot.desc())
+            q = q.order_by(AnalysesTable.Increment.desc())
             q = q.limit(1)
             try:
-                a = q.one()
-
-                if a:
-                    a = int(a[0])
+                a,s = q.one()
+                ret = int(a),s
             except Exception, e:
                 self.debug(e)
-                a = None
+                ret = None
 
-            return a
+            return ret
 
     def get_analysis(self, value, aliquot=None, step=None):
 #        key = 'RID'
