@@ -78,10 +78,12 @@ class SynExtractionCollector(Loggable):
     _alive = Bool(False)
 
     extraction_duration = Float
+    persister=None
 
     def start(self):
         yd = self._load_config()
         if yd:
+            self.info('Start syn extraction {}'.format(self.path))
             self._alive = True
             t = Thread(target=self._do_collection, args=(yd, ))
             t.start()
@@ -92,7 +94,8 @@ class SynExtractionCollector(Loggable):
     def stop(self):
         self._alive = False
         #return the persister to its original configuration
-        self.arun.persister=self.persister
+        if self.persister:
+            self.arun.persister=self.persister
 
     def _do_collection(self, cfg):
         self.info('Starting syn extraction collection')

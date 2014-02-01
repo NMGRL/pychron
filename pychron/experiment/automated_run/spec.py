@@ -339,5 +339,9 @@ class AutomatedRunSpec(Loggable):
     def _get_executable(self):
         return self._executable and not self.identifier_error
 
+    #mirror labnumber for now. deprecate labnumber and replace with identifier
+    @property
+    def identifier(self):
+        return self.labnumber
 
             #============= EOF =============================================

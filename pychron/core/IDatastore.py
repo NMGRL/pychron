@@ -33,4 +33,6 @@ class IDatastore(Interface):
     def connect(self, *args, **kw):
         pass
 
+    def is_connected(self):
+        pass
 #============= EOF =============================================

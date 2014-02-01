@@ -246,9 +246,9 @@ class MainView(HasTraits):
 
                 return ComputedValue(name=n,
                                      tag=a,
-                                     value = nominal_value(value),
+                                     value = nominal_value(value) or 0,
                                      display_value=display_value,
-                                     error=e)
+                                     error=e or 0)
 
             cv = [comp_factory(*args)
                   for args in attrs]

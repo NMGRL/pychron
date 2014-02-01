@@ -276,9 +276,9 @@ class DataCollector(Loggable):
         script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
         original_counts = self.ncounts
         count_args = (j, original_counts)
-        self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
-                                                                                 script_counts,
-                                                                                 original_counts))
+        # self.debug('user_counts={}, script_counts={}, original_counts={}'.format(user_counts,
+        #                                                                          script_counts,
+        #                                                                          original_counts))
         if not self._alive:
             self.info('measurement iteration executed {}/{} counts'.format(*count_args))
             return 'cancel'

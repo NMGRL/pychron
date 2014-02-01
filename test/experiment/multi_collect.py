@@ -1,6 +1,5 @@
 import time
 from pychron.core.ui import set_toolkit
-
 set_toolkit('qt4')
 
 from pychron.paths import paths, build_directories
@@ -10,7 +9,6 @@ build_directories(paths)
 
 from pychron.core.helpers.logger_setup import logging_setup
 
-logging_setup('peak_hop')
 
 from threading import Thread
 from pychron.processing.arar_age import ArArAge
@@ -20,7 +18,9 @@ from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 
 import unittest
+logging_setup('peak_hop')
 
+from pychron.experiment.datahub import Datahub
 #HOPS = [('Ar40:H1:10,     Ar39:AX,     Ar36:CDD', 5, 1),
 #        #('Ar40:L2,     Ar39:CDD',                   5, 1)
 #        #('Ar38:CDD',                                5, 1)
@@ -69,6 +69,13 @@ class MulticollectTestCase(unittest.TestCase):
         a.spec = aspec
         a._measured = True
         a.persister.save_enabled = True
+        a.persister.datahub=dh=Datahub(bind_mainstore=False)
+        dh.mainstore.db.kind='mysql'
+        dh.mainstore.db.username='root'
+        dh.mainstore.db.name='pychrondata_dev'
+        dh.mainstore.db.password='Argon'
+        dh.mainstore.db.connect()
+
 
         cls.arun = a
 
@@ -105,7 +112,7 @@ class MulticollectTestCase(unittest.TestCase):
 
     def test_persister_runid(self):
         a = self.arun
-        a.use_syn_extraction = True
+        a.use_syn_extraction = False
         a.do_extraction()
         self.assertEqual(a.persister.runid, '17005-82')
 

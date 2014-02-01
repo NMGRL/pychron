@@ -175,7 +175,9 @@ class ExperimentExecutor(Loggable):
         self.console_updated = '{}|{}'.format(color, msg)
 
     def bind_preferences(self):
-        super(ExperimentExecutor, self).bind_preferences()
+        # super(ExperimentExecutor, self).bind_preferences()
+
+        self.datahub.bind_preferences()
 
         prefid = 'pychron.experiment'
         #auto save
@@ -305,7 +307,7 @@ class ExperimentExecutor(Loggable):
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
 
-        self.datahub.add_experiment(exp.path)
+        self.datahub.add_experiment(exp)
         # with self.db.session_ctx():
         #     dbexp = self.db.add_experiment(exp.path)
         #     exp.database_identifier = int(dbexp.id)
@@ -605,11 +607,10 @@ class ExperimentExecutor(Loggable):
         if spec.end_after:
             self.end_at_run_completion = True
 
-        arun = spec.make_run(run=self.current_run)
-
-        if not self._set_run_aliquot(arun):
+        if not self._set_run_aliquot(spec):
             return
 
+        arun = spec.make_run(run=self.current_run)
         '''
             save this runs uuid to a hidden file
             used for analysis recovery
@@ -652,7 +653,8 @@ class ExperimentExecutor(Loggable):
             self._canceled=True
             self._err_message='Databases are in conflict. {}'.format(conflict)
             if self.confirmation_dialog('Databases are in conflict. '
-                                       'Do you want to modify the Run Identifier to {}'.format(dh.new_runid)):
+                                       'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
+                                        timeout=5):
                 dh.update_spec(spec)
                 ret=True
                 self._canceled=False

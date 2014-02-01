@@ -56,9 +56,10 @@ class AutomatedRunPersister(Loggable):
     experiment_queue_blob=Str
 
     extraction_name = Str
-    exttraction_blob = Str
+    extraction_blob = Str
     measurement_name = Str
     measurement_blob = Str
+    positions=List
 
     #for saving to mass spec
     runscript_name = Str
@@ -228,7 +229,7 @@ class AutomatedRunPersister(Loggable):
                     dbext = db.get_extraction(ext, key='id')
                     a.extraction_id = dbext.id
                     # save sensitivity info to extraction
-                    self._save_sensitivity(db, dbext, meas)
+                    self._save_sensitivity(dbext, meas)
 
                 else:
                     self.debug('no extraction to associate with this run')
@@ -380,12 +381,12 @@ class AutomatedRunPersister(Loggable):
         self.debug('Script id {}'.format(exp.id))
         ext.experiment_blob_id = exp.id
 
-        if self.extraction_script:
+        if self.extraction_name:
             script = db.add_script(self.extraction_name,
                                    self.extraction_blob)
             ext.script_id = script.id
 
-        for pi in self.get_position_list():
+        for pi in self.positions:
             if isinstance(pi, tuple):
                 if len(pi) > 1:
 
@@ -405,8 +406,8 @@ class AutomatedRunPersister(Loggable):
     def _save_spectrometer_info(self, db, meas):
         self.info('saving spectrometer info')
 
-        if self.run_spec_dict:
-            db.add_spectrometer_parameters(meas, self.run_spec_dict)
+        if self.spec_dict:
+            db.add_spectrometer_parameters(meas, self.spec_dict)
             for det, deflection in self.defl_dict.iteritems():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
@@ -439,9 +440,9 @@ class AutomatedRunPersister(Loggable):
                                                  user_value=float(uv),
                                                  user_error=float(ue))
 
-    def _save_blank_info(self, analysis):
+    def _save_blank_info(self, db, analysis):
         self.info('saving blank info')
-        self._save_history_info(analysis, 'blanks', self.previous_blanks)
+        self._save_history_info(db, analysis, 'blanks', self.previous_blanks)
 
     def _save_history_info(self, db, analysis, name, values):
         if not values:
@@ -574,7 +575,7 @@ class AutomatedRunPersister(Loggable):
                 isogrp = dm.new_group(iso, parent='/{}'.format(gn))
                 dm.new_table(isogrp, name)
 
-    def _build_peak_hop_tables(self, gn, hops):
+    def build_peak_hop_tables(self, gn, hops):
         dm = self.data_manager
 
         with dm.open_file(self._current_data_frame):

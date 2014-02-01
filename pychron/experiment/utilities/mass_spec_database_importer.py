@@ -67,6 +67,8 @@ class MassSpecDatabaseImporter(Loggable):
     def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
+            identifier=self.get_identifier(identifier)
+
             ret = self.db.get_latest_analysis(identifier)
             if ret:
                 _, s = ret
@@ -76,14 +78,21 @@ class MassSpecDatabaseImporter(Loggable):
     def get_greatest_step(self, identifier, aliquot):
         ret = 0
         if self.db:
+            identifier = self.get_identifier(identifier)
+
             ret=self.db.get_latest_analysis(identifier, aliquot)
             if ret:
                 ret,_=ret
         return ret
 
-    #========================================================================================
+    def is_connected(self):
+        if self.db:
+            return self.db.connected
+
     def connect(self, *args, **kw):
         return self.db.connect(*args, **kw)
+
+    #========================================================================================
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
@@ -100,7 +109,6 @@ class MassSpecDatabaseImporter(Loggable):
         with db.session_ctx() as sess:
             ls = db.add_login_session(ms)
             sess.flush()
-            #         db.flush()
             self.login_session_id = ls.LoginSessionID
 
     def add_data_reduction_session(self):
@@ -109,7 +117,6 @@ class MassSpecDatabaseImporter(Loggable):
             with db.session_ctx() as sess:
                 dr = db.add_data_reduction_session()
                 sess.flush()
-                #             db.flush()
                 self.data_reduction_session_id = dr.DataReductionSessionID
 
     def create_import_session(self, spectrometer, tray):
@@ -130,10 +137,15 @@ class MassSpecDatabaseImporter(Loggable):
         self._current_spec = None
 
     def get_identifier(self, spec):
-        rid = spec.runid
-        trid = rid.lower()
-        identifier = spec.labnumber
-        if trid.startswith('c'):
+        """
+            convert cocktails into mass spec labnumbers
+
+            spec is either ExportSpec, int or str
+            return identifier
+        """
+        identifier=str(spec if isinstance(spec, (int, str)) else spec.labnumber)
+
+        if identifier.startswith('c'):
             if spec.mass_spectrometer.lower() in ('obama', 'pychron obama'):
                 identifier = '4358'
             else:
@@ -216,7 +228,6 @@ class MassSpecDatabaseImporter(Loggable):
         # add the reference detector
         refdbdet = db.add_detector('H1', Label='H1')
 
-        # remember new rid in case duplicate entry error and need to augment rid
         spec.runid = rid
         analysis = db.add_analysis(rid, spec.aliquot, spec.step,
                                    irradpos,

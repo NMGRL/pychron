@@ -55,14 +55,14 @@ class AnalysisPositionTable(Base):
 
 
 class AnalysesTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'AnalysesTable'
     AnalysisID = Column(Integer, primary_key=True)
     RID = Column(String(40))
 
     IrradPosition = Column(Integer, ForeignKey('IrradiationPositionTable.IrradPosition'))
-    Aliquot = Column(Integer)
+    Aliquot = Column(String(10))
     Increment = Column(String(20))
     SpecParametersID = Column(Integer, default=0)
     RunScriptID = Column(Integer, ForeignKey('RunScriptTable.RunScriptID'))

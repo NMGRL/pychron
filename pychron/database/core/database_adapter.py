@@ -136,9 +136,6 @@ class DatabaseAdapter(Loggable):
     def reset_connection(self, obj, name, old, new):
         self.connection_parameters_changed = True
 
-    def isConnected(self):
-        return self.connected
-
     def connect(self, test=True, force=False, warn=True):
         if force:
             self.debug('forcing database connection')
@@ -150,7 +147,7 @@ class DatabaseAdapter(Loggable):
 
         #        print not self.isConnected() or force, self.connection_parameters_changed
 
-        if not self.isConnected() or force:
+        if not self.connected or force:
             self.connected = True if self.kind == 'sqlite' else False
             if self.kind == 'sqlite':
                 test = False
@@ -444,6 +441,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             print e
 
     def _query_one(self, q, reraise=False):
+        q = q.limit(1)
         return self._query(q,'one',reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
