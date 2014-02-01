@@ -56,7 +56,7 @@ class Datahub(Loggable):
 
     def is_conflict(self, spec):
         """
-            return True if databases are in conflict
+            return str listing the differences if databases are in conflict
         """
         self._new_step = ''
         self._new_aliquot = 1
@@ -81,8 +81,9 @@ class Datahub(Loggable):
             for ln, lv in zip(ns[1:], vs[1:]):
                 if lv != hv:
                     txt.append('{}!={} {}!={}'.format(hn, ln, hv, lv))
-
-            return ', '.join(txt)
+            err=', '.join(txt)
+            self.warning('Datastore conflicts. {}'.format(err))
+            return
 
     def update_spec(self, spec):
         spec.aliquot = self._new_aliquot
