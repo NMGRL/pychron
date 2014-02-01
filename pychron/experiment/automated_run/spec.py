@@ -120,7 +120,7 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
 
     def is_step_heat(self):
-        return bool(self.step.strip())
+        return self.aliquot
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',

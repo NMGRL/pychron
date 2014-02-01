@@ -44,6 +44,7 @@ from pychron.database.selectors.massspec_selector import MassSpecSelector
 class MassSpecDatabaseAdapter(DatabaseAdapter):
     selector_klass = MassSpecSelector
     test_func = 'get_database_version'
+    kind = 'mysql'
 
     def get_irradiation_positions(self, name, level):
 #         sess = self.get_session()

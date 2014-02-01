@@ -320,7 +320,7 @@ class PyScript(Loggable):
             except TypeError:
                 script.main()
             except AttributeError, e:
-                self.debug(e)
+                self.debug('{} {}'.format(e,traceback.format_exc()))
                 return MainError
 
         else:
@@ -335,7 +335,7 @@ class PyScript(Loggable):
                     func(*argv)
 
                 except KeyError, e:
-                    self.debug(e)
+                    self.debug('{} {}'.format(e, traceback.format_exc()))
                     return MainError()
                 except Exception, e:
                     return traceback.format_exc()

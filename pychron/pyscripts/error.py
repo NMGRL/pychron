@@ -24,6 +24,7 @@ class GosubError(Exception):
     def __str__(self):
         return 'GosubError: {} does not exist'.format(self.path)
 
+
 def KlassError(Exceotion):
     def __init__(self, klass):
         self.klass = klass
@@ -44,6 +45,7 @@ class PyscriptError(Exception):
 class IntervalError(Exception):
     def __str__(self):
         return 'Poorly matched BeginInterval-CompleteInterval'
+
 
 class MainError(Exception):
     def __str__(self):

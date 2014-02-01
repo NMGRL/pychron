@@ -1289,7 +1289,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.order_by(meas_AnalysisTable.step.desc())
                 result = self._query_one(q)
                 if result:
-                    return ALPHAS.index(result[0])
+                    step=result[0]
+                    return ALPHAS.index(step) if step else -1
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
