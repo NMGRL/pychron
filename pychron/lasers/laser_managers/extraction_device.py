@@ -22,13 +22,16 @@ from traits.api import Interface
 class IExtractionDevice(Interface):
     def extract(self, *args, **kw):
         pass
+
     def end_extract(self, *args, **kw):
         pass
-    def move_to_position(self, *args, **kw):
+
+    def move_to_position(self, pos, *args, **kw):
         pass
 
     def prepare(self, *args, **kw):
         pass
-    def is_ready(self, *args, **kw):
+
+    def is_ready(self):
         pass
 #============= EOF =============================================

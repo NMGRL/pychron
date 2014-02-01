@@ -57,6 +57,7 @@ class BaseLaserManager(Manager):
     def initialize_video(self):
         if self.use_video:
             self.stage_manager.initialize_video()
+
     def is_ready(self):
         return True
 
@@ -69,7 +70,7 @@ class BaseLaserManager(Manager):
     def extract(self, *args, **kw):
         pass
 
-    def prepare(self):
+    def prepare(self, *args, **kw):
         pass
 
     def set_motor_lock(self, name, value):
@@ -131,12 +132,12 @@ class BaseLaserManager(Manager):
         pm = PatternExecutor(application=self.application, controller=controller)
         return pm
 
-    def move_to_position(self, pos, autocenter, *args, **kw):
+    def move_to_position(self, pos, *args, **kw):
         if not isinstance(pos, list):
             pos = [pos]
 
-        for pi in pos:
-            self._move_to_position(pi, autocenter)
+        for p in pos:
+            self._move_to_position(p, *args, **kw)
 
         return True
 

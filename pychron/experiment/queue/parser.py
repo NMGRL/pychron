@@ -68,9 +68,11 @@ class RunParser(Loggable):
             if idx:
                 try:
                     v=args[idx]
-                    return ai, cast(v) if cast else v
+                    if v.strip():
+                        return ai, cast(v) if cast else v
                 except IndexError, e:
                     pass
+                    #print attr, args[idx], idx
 
     def _load_strings(self, header, args, params):
         for attr in [
