@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR
+from pychron.pychron_constants import LINE_STR, ALPHAS
 
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
@@ -164,6 +164,12 @@ def strip_runid(r):
 
     return l, int(a), s
 
+
+def make_step(s):
+    if isinstance(s, (float, int, long)):
+        s=ALPHAS[int(s)]
+
+    return s
 
 def make_aliquot_step(a, s):
     if not isinstance(a, str):

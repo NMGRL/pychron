@@ -26,11 +26,10 @@ import math
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
-from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.peak_hop_collector import parse_hops
+from pychron.experiment.datahub import Datahub
 
-from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
@@ -42,9 +41,10 @@ DEBUG=False
 
 
 class AutomatedRunPersister(Loggable):
-    db = Instance(IsotopeAdapter)
+    # db = Instance(IsotopeAdapter)
     local_lab_db = Instance(LocalLabAdapter)
-    massspec_importer = Instance(MassSpecDatabaseImporter)
+    # massspec_importer = Instance(MassSpecDatabaseImporter)
+    datahub=Instance(Datahub)
     run_spec=Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
 
@@ -83,15 +83,15 @@ class AutomatedRunPersister(Loggable):
     _db_extraction_id=None
 
     def get_last_aliquot(self, identifier):
-        if self.db:
-            with self.db.session_ctx():
-                a=self.db.get_last_analysis(ln=identifier, ret='aliquot')
-                if a is not None:
-                    if not isinstance(a, (float, int)):
-                        a=int(a.aliquot)
-
-                    return a
-
+        return self.datahub.get_greatest_aliquot(identifier)
+        # if self.db:
+        #     with self.db.session_ctx():
+        #         a=self.db.get_last_analysis(ln=identifier, ret='aliquot')
+        #         if a is not None:
+        #             if not isinstance(a, (float, int)):
+        #                 a=int(a.aliquot)
+        #
+        #             return a
 
     def writer_ctx(self):
         return self.data_manager.open_file(self._current_data_frame)
@@ -107,15 +107,15 @@ class AutomatedRunPersister(Loggable):
             self.debug('Not saving extraction to database')
             return
 
-        db = self.db
-        if self.db:
+        db = self.datahub.mainstore.db
+        if db:
             with db.session_ctx() as sess:
                 loadtable = db.get_loadtable(self.load_name)
                 if loadtable is None:
                     loadtable = db.add_load(self.load_name)
                     #             db.flush()
 
-                ext = self._save_extraction(loadtable=loadtable)
+                ext = self._save_extraction(db, loadtable=loadtable)
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:
@@ -186,7 +186,7 @@ class AutomatedRunPersister(Loggable):
         self._local_db_save()
 
         # save to a database
-        db = self.db
+        db = self.datahub.mainstore.db
         #         if db and db.connect(force=True):
         if not db or not db.connected:
             self.warning('No database instanc. Not saving post measurement to primary database')
@@ -221,36 +221,36 @@ class AutomatedRunPersister(Loggable):
                     self.warning('no experiment found for {}'.format(self.experiment_identifier))
 
                 # save measurement
-                meas = self._save_measurement(a)
+                meas = self._save_measurement(db, a)
                 # save extraction
                 ext = self._db_extraction_id
                 if ext is not None:
                     dbext = db.get_extraction(ext, key='id')
                     a.extraction_id = dbext.id
                     # save sensitivity info to extraction
-                    self._save_sensitivity(dbext, meas)
+                    self._save_sensitivity(db, dbext, meas)
 
                 else:
                     self.debug('no extraction to associate with this run')
 
-                self._save_spectrometer_info(meas)
+                self._save_spectrometer_info(db, meas)
 
                 # add selected history
                 db.add_selected_histories(a)
                 # self._save_isotope_info(a, ss)
-                self._save_isotope_data(a)
+                self._save_isotope_data(db, a)
 
                 # save ic factor
-                self._save_detector_intercalibration(a)
+                self._save_detector_intercalibration(db,a)
 
                 # save blanks
-                self._save_blank_info(a)
+                self._save_blank_info(db, a)
 
                 # save peak center
-                self._save_peak_center(a, cp)
+                self._save_peak_center(db, a, cp)
 
                 # save monitor
-                self._save_monitor_info(a)
+                self._save_monitor_info(db, a)
 
                 mem_log('post pychron save')
 
@@ -259,7 +259,8 @@ class AutomatedRunPersister(Loggable):
                 file_log(pt)
 
         if self.use_secondary_database:
-            if not self.massspec_importer or not self.massspec_importer.db.connected:
+            if self.datahub.has_secondary_store():
+            # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
             else:
                 self.debug('saving post measurement to secondary database')
@@ -274,9 +275,9 @@ class AutomatedRunPersister(Loggable):
         # self.plot_panel.is_peak_hop = False
         # return True
 
-    def _save_isotope_data(self, analysis):
+    def _save_isotope_data(self,db, analysis):
         self.debug('saving isotopes')
-        db = self.db
+
         dbhist = db.add_fit_history(analysis,
                                     user=self.run_spec.username)
 
@@ -287,15 +288,14 @@ class AutomatedRunPersister(Loggable):
                 dbdet = db.add_detector(detname)
                 # db.sess.flush()
 
-            self._save_signal_data(dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
-            self._save_signal_data(dbhist, analysis, dbdet, iso, iso, 'signal')
-            self._save_signal_data(dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
+            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
+            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
+            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
-    def _save_signal_data(self, dbhist, analysis, dbdet, iso, m, kind):
+    def _save_signal_data(self,db,  dbhist, analysis, dbdet, iso, m, kind):
 
         self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
 
-        db = self.db
         dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
 
         data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
@@ -328,27 +328,24 @@ class AutomatedRunPersister(Loggable):
             if sens:
                 extraction.sensitivity = sens[-1]
 
-    def _save_peak_center(self, analysis, cp):
+    def _save_peak_center(self,db, analysis, cp):
         self.info('saving peakcenter')
 
         dm = self.data_manager
         with dm.open_table(cp, 'peak_center') as tab:
             if tab is not None:
-                db = self.db
                 packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
                 points = ''.join(packed_xy)
                 center = tab.attrs.center_dac
                 pc = db.add_peak_center(
                     analysis,
                     center=float(center),
-                    points=points,
-                )
+                    points=points)
                 return pc
 
-    def _save_measurement(self, analysis):
+    def _save_measurement(self, db,analysis):
         self.info('saving measurement')
 
-        db = self.db
         meas = db.add_measurement(
             analysis,
             self.run_spec.analysis_type,
@@ -359,10 +356,8 @@ class AutomatedRunPersister(Loggable):
 
         return meas
 
-    def _save_extraction(self, analysis=None, loadtable=None):
+    def _save_extraction(self,db, analysis=None, loadtable=None):
         self.info('saving extraction')
-
-        db = self.db
 
         spec = self.run_spec
 
@@ -407,16 +402,16 @@ class AutomatedRunPersister(Loggable):
 
         return ext
 
-    def _save_spectrometer_info(self, meas):
+    def _save_spectrometer_info(self, db, meas):
         self.info('saving spectrometer info')
-        db = self.db
+
         if self.run_spec_dict:
             db.add_spectrometer_parameters(meas, self.run_spec_dict)
             for det, deflection in self.defl_dict.iteritems():
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 
-    def _save_detector_intercalibration(self, analysis):
+    def _save_detector_intercalibration(self,db, analysis):
         self.info('saving detector intercalibration')
         if self.arar_age:
             history = None
@@ -429,7 +424,6 @@ class AutomatedRunPersister(Loggable):
                     self.cdd_ic_factor = ic
                     self.debug('default cdd_ic_factor={}'.format(ic))
 
-                db = self.db
                 user = self.run_spec.username
                 user = user if user else NULL_STR
 
@@ -449,14 +443,14 @@ class AutomatedRunPersister(Loggable):
         self.info('saving blank info')
         self._save_history_info(analysis, 'blanks', self.previous_blanks)
 
-    def _save_history_info(self, analysis, name, values):
+    def _save_history_info(self, db, analysis, name, values):
         if not values:
             self.debug('no previous {} to save {}'.format(name,values))
             return
         if self.run_spec.analysis_type.startswith('blank') or \
                 self.run_spec.analysis_type.startswith('background'):
             return
-        db = self.db
+
         user = self.run_spec.username
         user = user if user else '---'
 
@@ -476,7 +470,7 @@ class AutomatedRunPersister(Loggable):
             func(history, user_value=uv, user_error=ue,
                  isotope=isotope)
 
-    def _save_monitor_info(self, analysis):
+    def _save_monitor_info(self, db, analysis):
         if self.monitor:
             self.info('saving monitor info')
 
@@ -487,18 +481,18 @@ class AutomatedRunPersister(Loggable):
                               comparator=ci.comparator, tripped=ci.tripped,
                               data=data)
 
-                self.db.add_monitor(analysis, **params)
+                db.add_monitor(analysis, **params)
 
     def _save_to_massspec(self, p):
         #dm = self.data_manager
-
-        h = self.massspec_importer.db.host
-        dn = self.massspec_importer.db.name
+        ms=self.datahub.secondarystore
+        h = ms.db.host
+        dn = ms.db.name
         self.info('saving to massspec database {}/{}'.format(h, dn))
 
         exp = self._export_spec_factory()
         self.secondary_database_fail = False
-        if self.massspec_importer.add_analysis(exp):
+        if ms.add_analysis(exp):
             self.info('analysis added to mass spec database')
         else:
             self.secondary_database_fail='Could not save {} to Mass Spec database'.format(self.runid)

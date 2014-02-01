@@ -69,6 +69,8 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, proc_SensitivityHistoryTable, proc_SensitivityTable
 
 # @todo: change rundate and runtime to DateTime columns
+from pychron.pychron_constants import ALPHAS
+
 
 class InterpretedAge(HasTraits):
     create_date = Date
@@ -1257,6 +1259,37 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound, e:
                 self.debug('get last labnumber {}'.format(e))
                 return
+
+    def get_greatest_aliquot(self, ln):
+        with self.session_ctx() as sess:
+            if ln:
+                ln = self.get_labnumber(ln)
+                if not ln:
+                    return
+                q = sess.query(meas_AnalysisTable.aliquot)
+                q =q.filter(meas_AnalysisTable.labnumber==ln)
+                q = q.order_by(meas_AnalysisTable.aliquot.desc())
+                result=self._query_one(q)
+                if result:
+                    return int(result[0])
+
+    def get_greatest_step(self, ln, aliquot):
+        """
+            return greatest step for this labnumber and aliquot.
+            return step as an integer. A=0, B=1...
+        """
+        with self.session_ctx() as sess:
+            if ln:
+                ln = self.get_labnumber(ln)
+                if not ln:
+                    return
+                q = sess.query(meas_AnalysisTable.step)
+                q = q.filter(meas_AnalysisTable.labnumber == ln)
+                q = q.filter(meas_AnalysisTable.aliquot == aliquot)
+                q = q.order_by(meas_AnalysisTable.step.desc())
+                result = self._query_one(q)
+                if result:
+                    return ALPHAS.index(result[0])
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))

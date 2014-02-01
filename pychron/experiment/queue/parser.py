@@ -88,7 +88,6 @@ class RunParser(Loggable):
         for attr in ['duration',
                      'cleanup',
                      'ramp_duration',
-                     ('extract_group', 'e_group'),
                      'weight',
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam')]:

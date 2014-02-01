@@ -101,14 +101,7 @@ class FactoryView(HasTraits):
             ),
             Item('edit_template',
                  show_label=False,
-                 editor=ButtonEditor(label_value='edit_template_label')
-            ),
-            Item('extract_group_button', show_label=False,
-                 tooltip='Group selected runs as a step heating experiment'
-            ),
-            Item('extract_group', label='Group ID'),
-
-        )
+                 editor=ButtonEditor(label_value='edit_template_label')))
         return grp
 
         #============= EOF =============================================

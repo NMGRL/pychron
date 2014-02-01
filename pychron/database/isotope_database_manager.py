@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 from traits.api import String, Property, Event, \
-    cached_property, Any, Bool
+    cached_property, Any, Bool, Int
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import weakref
 #============= local library imports  ==========================
+from traits.has_traits import provides
+from pychron.core.IDatastore import IDatastore
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
@@ -36,10 +38,14 @@ ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 500
 
 
+@provides(IDatastore)
 class BaseIsotopeDatabaseManager(Loggable):
+
     db = Any
     _db_klass = Any
     datasource_url = Property
+    precedence=Int(0)
+
     def __init__(self, bind=True, connect=True, warn=True, *args, **kw):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
@@ -53,6 +59,23 @@ class BaseIsotopeDatabaseManager(Loggable):
 
         if connect:
             self.db.connect(warn=warn)
+
+    #IDatastore protocol
+    def get_greatest_aliquot(self, identifier):
+        ret=0
+        if self.db:
+            ret= self.db.get_greatest_aliquot(identifier)
+        return ret
+
+    def get_greatest_step(self, identifier, aliquot):
+        ret=0
+        if self.db:
+            ret=self.db.get_greatest_step(identifier, aliquot)
+        return ret
+
+    def connect(self, *args,**kw):
+        if self.db:
+            return self.db.connect(*args,**kw)
 
     def isConnected(self):
         if self.db:

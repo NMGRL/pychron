@@ -1,5 +1,5 @@
 #===============================================================================
-# Copyright 2011 Jake Ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,27 +14,23 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 from traits.api import Interface
-
 #============= standard library imports ========================
-
 #============= local library imports  ==========================
+import traits.has_traits
+
+traits.has_traits.CHECK_INTERFACES = 2
 
 
-class ICoreDevice(Interface):
-    def get(self):
-        """
-        """
+class IDatastore(Interface):
+    def get_greatest_aliquot(self, identifier):
+        pass
 
-    def set(self, v):
-        """
-        """
+    def get_greatest_step(self, identifier, aliquot):
+        pass
 
-    def close(self):
-        """
-        """
-#============= views ===================================
-#============= EOF ====================================
+    def connect(self, *args, **kw):
+        pass
+
+#============= EOF =============================================

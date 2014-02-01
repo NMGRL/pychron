@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
-from traits.api import Instance, Button
+from traits.api import Instance, Button, Int
+from traits.has_traits import provides
 from traitsui.api import View, Item
 
 #============= standard library imports ========================
 import struct
 from numpy import array
 #============= local library imports  ==========================
+from pychron.core.IDatastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
@@ -32,6 +34,7 @@ from pychron.core.regression.mean_regressor import MeanRegressor
 from uncertainties import ufloat
 from pychron.experiment.utilities.info_blob import encode_infoblob
 import time
+from pychron.pychron_constants import ALPHAS
 
 mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
 
@@ -47,8 +50,11 @@ ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 DEBUG = True
 
-
+@provides(IDatastore)
 class MassSpecDatabaseImporter(Loggable):
+
+    precedence=Int(0)
+
     db = Instance(MassSpecDatabaseAdapter)
     test = Button
     sample_loading_id = None
@@ -57,6 +63,25 @@ class MassSpecDatabaseImporter(Loggable):
     _current_spec = None
     _analysis = None
 
+    #IDatastore protocol
+    def get_greatest_aliquot(self, identifier):
+        ret = 0
+        if self.db:
+            ret = self.db.get_latest_analysis(identifier)
+            if ret:
+                _, s = ret
+                ret=ALPHAS.index(s)
+        return ret
+
+    def get_greatest_step(self, identifier, aliquot):
+        ret = 0
+        if self.db:
+            ret=self.db.get_latest_analysis(identifier, aliquot)
+            if ret:
+                ret,_=ret
+        return ret
+
+    #========================================================================================
     def connect(self, *args, **kw):
         return self.db.connect(*args, **kw)
 

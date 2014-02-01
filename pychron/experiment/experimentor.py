@@ -30,8 +30,7 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
 # from pychron.experiment.executor import ExperimentExecutor
 #from pychron.experiment.utilities.file_listener import FileListener
-from pychron.experiment.utilities.identifier import convert_identifier, \
-    ANALYSIS_MAPPING
+from pychron.experiment.utilities.identifier import convert_identifier
 #from pychron.deprecate import deprecated
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
@@ -46,7 +45,7 @@ class Experimentor(IsotopeDatabaseManager):
     stats = Instance(StatsGroup, ())
 
     mode = None
-    unique_executor_db = False
+    # unique_executor_db = False
 
     save_enabled = Bool
 
@@ -105,7 +104,7 @@ class Experimentor(IsotopeDatabaseManager):
         if queues is None:
             queues = self.experiment_queues
 
-        return [ai for ei in self.experiment_queues
+        return [ai for ei in queues
                 for ai in ei.executed_runs + ei.automated_runs
                 if ai.executable]
     
@@ -137,19 +136,20 @@ class Experimentor(IsotopeDatabaseManager):
         self.debug('get all runs n={}'.format(len(ans)))
 
         #         print len([i for i in ans])
-        exclude = ('dg', 'pa')
+        # exclude = ('dg', 'pa')
         #        timethis(self._modify_aliquots_steps, args=(ans,), kwargs=dict(exclude=exclude))
-        self._modify_aliquots_steps(ans, exclude=exclude)
+        # self._modify_aliquots_steps(ans, exclude=exclude)
+        self._set_analysis_metatata()
 
         self.debug('info updated')
         for qi in queues:
             qi.refresh_table_needed = True
 
     def _get_labnumber(self, ln):
-        '''
+        """
             dont use cache
             cache labnumbers for quick retrieval
-        '''
+        """
         db = self.db
         ln = convert_identifier(ln)
         dbln = db.get_labnumber(ln)
@@ -157,9 +157,9 @@ class Experimentor(IsotopeDatabaseManager):
         return dbln
 
     def _group_analyses(self, ans, exclude=None):
-        '''
+        """
         sort, group and filter by labnumber
-        '''
+        """
         if exclude is None:
             exclude = tuple()
         key = lambda x: x.labnumber
@@ -169,8 +169,10 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _get_analysis_info(self, li):
         dbln = self.db.get_labnumber(li)
-        project, sample, material, irradiation = '', '', '', ''
-        if dbln:
+        if not dbln:
+            return None
+        else:
+            project, sample, material, irradiation = '', '', '', ''
             sample = dbln.sample
             if sample:
                 if sample.project:
@@ -180,136 +182,47 @@ class Experimentor(IsotopeDatabaseManager):
                     material = sample.material.name
                 sample = sample.name
 
-
             dbpos = dbln.irradiation_position
             if dbpos:
                 level = dbpos.level
                 irradiation = '{} {}:{}'.format(level.irradiation.name,
-                                               level.name, dbpos.position)
+                                                level.name, dbpos.position)
 
-        dban = self.db.get_last_analysis(li)
-        aliquot = 0
-        step = -1
-        if dban:
-            aliquot = dban.aliquot
-            step = dban.step
+        return project, sample, material, irradiation
 
-        #            self.debug('{} {} {}'.format(li, analysis, sample))
-        return project, sample, material, irradiation, aliquot, step
-
-    def _modify_aliquots_steps(self, ans, exclude=None):
+    def _set_analysis_metatata(self):
         cache = dict()
-        ecache = dict()
         db = self.db
-        
-        aruns=self._get_all_automated_runs()
-        def _not_run(a):
-            return a in aruns
-          
+        aruns = self._get_all_automated_runs()
+
         with db.session_ctx():
-            for ai in ans:
+            for ai in aruns:
                 if ai.skip:
                     continue
 
                 ln = ai.labnumber
-                
+
                 # is run in cache
                 if not ln in cache:
-                    project, sample, material, irrad, aliquot, step = self._get_analysis_info(ln)
-                    cache[ln] = dict(project=project, sample=sample,
-                                     material=material,
-                                     irradiation=irrad,
-                                     aliquot=aliquot,
-                                     step=step,
-                                     egrp=-1)
-
-                last = cache[ln]
-                aq = ai.aliquot
-                s = -1
-                #egrp = -1
-
-                special = self._is_special(ln)
-                egrp = ai.extract_group
-                # is run part of aq step heat
-                if egrp and not special:
-                    en = '{}_{}'.format(ln, egrp)
-                    if not en in ecache:
-                        ecache[en] = dict(egrp=-1,
-                                          step=-1,
-                                          aliquot=last['aliquot'])
-
-                    s = 0
-                    elast = ecache[en]
-
-                    aq = elast['aliquot']
-                    if egrp == elast['egrp']:
-                        s = elast['step'] + 1
+                    info=self._get_analysis_info(ln)
+                    if not info:
+                        cache[ln]=dict(identifier_error=True)
                     else:
-                        aq += 1
+                        project, sample, material, irrad =info
 
-                        #print ai.runid, ai.state, ai.user_defined_aliquot
-                        #print ai.runid, ai.user_defined_aliquot
-                    if ai.user_defined_aliquot:
-                        aq = ai.user_defined_aliquot
-                        if ai.state not in ('success', 'failed', 'canceled'):
-                            if egrp == elast['egrp']:
-                                s = elast['step'] + 1
-                            else:
-                                dban = db.get_last_analysis(ln, aliquot=aq)
-                                if dban:
-                                    if dban.step:
-                                        s = LAlphas.index(dban.step) + 1
-                    if not _not_run(ai):
-#                    if ai.state != 'not run':
-                        s = LAlphas.index(ai.step)
+                        cache[ln] = dict(project=project, sample=sample,
+                                        material=material,
+                                        irradiation=irrad, identifier_error=False)
 
-                    elast['step'] = s
-                    elast['egrp'] = ai.extract_group
-                    elast['aliquot'] = aq
+                ai.trait_set(**cache[ln])
 
-                    last['aliquot'] = max(aq, last['aliquot'])
-
-                    ecache[en] = elast
-                #                     last['step'] = st
-
-                else:
-                    if not ai.user_defined_aliquot:
-                        aq = last['aliquot'] + 1
-                        last['aliquot'] = aq
-
-                if special:
-                    s = ''
-                    egrp = -1
-
-                if _not_run(ai):
-#                if ai.state == 'not run':
-                    ai.trait_set(aliquot=int(aq),
-                                 project=last['project'] or '',
-                                 sample=last['sample'] or '',
-                                 irradiation=last['irradiation'] or '',
-                                 material=last['material'] or '',
-                                 step=s)
-
-                cache[ln] = last
-
-    def _is_special(self, ln):
-        special = False
-        if '-' in ln:
-            special = ln.split('-')[0] in ANALYSIS_MAPPING
-        return special
-
-    #     def execute_queues(self, queues, path, text, text_hash):
     def execute_queues(self, queues):
         self.debug('setup executor')
 
         self.executor.trait_set(
             experiment_queues=queues,
             experiment_queue=queues[0],
-            #                                 path=path,
-            stats=self.stats,
-            #                                 text=text,
-            #                                 text_hash=text_hash,
-        )
+            stats=self.stats)
 
         return self.executor.execute()
 
@@ -339,8 +252,6 @@ class Experimentor(IsotopeDatabaseManager):
         """
         self.debug('%%%%%%%%%%%%%%%%%% Start fired')
         if not self.executor.isAlive():
-        #             self.update_info()
-
             self.debug('%%%%%%%%%%%%%%%%%% Execute event true')
             self.execute_event = True
 
@@ -382,8 +293,6 @@ class Experimentor(IsotopeDatabaseManager):
     def _refresh3(self):
         self.debug('update info needed fired')
         self.update_info()
-
-    #         self.executor.clear_run_states()
 
     @on_trait_change('executor:queue_modified')
     def _refresh5(self, new):
@@ -436,14 +345,9 @@ class Experimentor(IsotopeDatabaseManager):
         rf = ef.run_factory
         rf.special_labnumber = 'Special Labnumber'
 
-        #rf._labnumber = NULL_STR
-        #rf.labnumber = ''
-        #         rf.edit_mode = True
 
         rf.suppress_update = True
         rf.set_selected_runs(new)
-
-    #        rf.suppress_update = True
 
     #===============================================================================
     # property get/set
@@ -463,15 +367,14 @@ class Experimentor(IsotopeDatabaseManager):
                       spectrometer_manager=spec,
                       ion_optics_manager=self.application.get_service(p3), )
 
-        if not self.unique_executor_db:
-            kw['db'] = self.db
-            kw['connect'] = False
+        # if not self.unique_executor_db:
+        #     kw['db'] = self.db
+        #     kw['connect'] = False
 
         e = ExperimentExecutor(
             mode=self.mode,
             application=self.application,
-            **kw
-        )
+            **kw)
 
         return e
 
@@ -502,130 +405,229 @@ class Experimentor(IsotopeDatabaseManager):
         #            e.queue_factory.extract_device = 'Fusions Diode'
 
         return e
+#============= EOF =============================================
+#     def start_file_listener(self, path):
+#         fl = FileListener(
+#                           path,
+#                           callback=self._reload_from_disk,
+#                           check=self._check_for_file_mods
+#                           )
+#         self.filelistener = fl
+#
+#     # @deprecated
+#     def stop_file_listener(self):
+#         if self.filelistener:
+#             self.filelistener.stop()
+#def _modify_aliquots_steps2(self, ans, exclude=None):
+#        '''
+#        '''
+#
+#        def get_is_special(ln):
+#            special = False
+#            if '-' in ln:
+#                special = ln.split('-')[0] in ANALYSIS_MAPPING
+#            return ln, special
+#
+#        def get_analysis_info(li):
+#            sample, irradiationpos = '', ''
+#
+#            #            analysis = db.get_last_analysis(li)
+#            #            if analysis:
+#            #                dbln = analysis.labnumber
+#            dbln = db.get_labnumber(li)
+#            if dbln:
+#                sample = dbln.sample
+#                if sample:
+#                    sample = sample.name
+#
+#                dbpos = dbln.irradiation_position
+#                if dbpos:
+#                    level = dbpos.level
+#                    irradiationpos = '{}{}'.format(level.irradiation.name,
+#                                                   level.name)
+#                    #            self.debug('{} {} {}'.format(li, analysis, sample))
+#            return sample, irradiationpos
+#
+#        db = self.db
+#        with db.session_ctx():
+#            groups = self._group_analyses(ans, exclude=exclude)
+#            for ln, analyses in groups:
+#                ln, special = get_is_special(ln)
+#                cln = convert_identifier(ln)
+#
+#                sample, irradiationpos = get_analysis_info(cln)
+#
+#                aliquot_key = lambda x: x._aliquot
+#                egroup_key = lambda x: x.extract_group
+#                if not special:
+#                    a = sorted(analyses, key=aliquot_key)
+#                    for aliquot, aa in groupby(a, key=aliquot_key):
+#                        aa = sorted(aa, key=egroup_key)
+#                        aliquot_start = None
+#
+#                        for egroup, ais in groupby(aa, key=egroup_key):
+#                            ast = self._set_aliquot_step(ais, special, cln,
+#                                                         aliquot,
+#                                                         aliquot_start,
+#                                                         egroup,
+#                                                         sample,
+#                                                         irradiationpos)
+#                            aliquot_start = ast + 1
+#
+#                else:
+#                    aliquot_start = None
+#                    egroup = 0
+#                    ans = sorted(analyses, key=aliquot_key)
+#                    for aliquot, ais in groupby(ans, key=aliquot_key):
+#                        self._set_aliquot_step(ais, special, cln, aliquot,
+#                                               aliquot_start,
+#                                               egroup,
+#                                               sample, irradiationpos)
+#
+#    def _set_aliquot_step(self, ais, special, cln,
+#                          aliquot,
+#                          aliquot_start,
+#                          egroup,
+#                          sample, irradiationpos):
+#        db = self.db
+#
+#        #         step_start = 0
+#        an = db.get_last_analysis(cln, aliquot=aliquot)
+#        if aliquot_start is None:
+#            aliquot_start = 0
+#            if an:
+#                aliquot_start = an.aliquot
+#                #                 print an.aliquot, aliquot
+#                #                 if an.step and an.aliquot == aliquot:
+#                #                     step_start = LAlphas.index(an.step) + 1
+#
+#        step_cnt = 0
+#        aliquot_cnt = 0
+#        for arun in ais:
+#        #             for arun in aruns:
+#            arun.trait_set(sample=sample or '', irradiation=irradiationpos or '')
+#            if arun.skip:
+#                arun.aliquot = 0
+#                continue
+#
+#            if arun.state in ('failed', 'canceled'):
+#                continue
+#
+#            if not arun.user_defined_aliquot:
+#                if arun.state in ('not run', 'extraction', 'measurement'):
+#                #                     print arun.runid, egroup, aliquot_start, aliquot_cnt
+#                    arun.assigned_aliquot = int(aliquot_start + aliquot_cnt + 1)
+#                    if special or not egroup:
+#                        aliquot_cnt += 1
+#
+#            if not special and egroup:
+#                step_start = 0
+#                #                 an = db.get_last_analysis(cln, aliquot=aliquot)
+#                if an and an.step and an.aliquot == arun.aliquot:
+#                    step_start = LAlphas.index(an.step) + 1
+#
+#                arun.step = int(step_start + step_cnt)
+#                #                 print arun.aliquot, arun.step, step_start, step_cnt
+#                step_cnt += 1
+#
+#        return aliquot_start
+#     def _modify_aliquots_steps(self, ans, exclude=None):
+#         cache = dict()
+#         ecache = dict()
+#         db = self.db
+#
+#         aruns=self._get_all_automated_runs()
+#         def _not_run(a):
+#             return a in aruns
+#
+#         with db.session_ctx():
+#             for ai in ans:
+#                 if ai.skip:
+#                     continue
+#
+#                 ln = ai.labnumber
+#
+#                 # is run in cache
+#                 if not ln in cache:
+#                     project, sample, material, irrad, aliquot, step = self._get_analysis_info(ln)
+#                     cache[ln] = dict(project=project, sample=sample,
+#                                      material=material,
+#                                      irradiation=irrad,
+#                                      aliquot=aliquot,
+#                                      step=step,
+#                                      egrp=-1)
+#
+#                 last = cache[ln]
+#                 aq = ai.aliquot
+#                 s = -1
+#                 #egrp = -1
+#
+#                 special = self._is_special(ln)
+#                 egrp = ai.extract_group
+#                 # is run part of aq step heat
+#                 if egrp and not special:
+#                     en = '{}_{}'.format(ln, egrp)
+#                     if not en in ecache:
+#                         ecache[en] = dict(egrp=-1,
+#                                           step=-1,
+#                                           aliquot=last['aliquot'])
+#
+#                     s = 0
+#                     elast = ecache[en]
+#
+#                     aq = elast['aliquot']
+#                     if egrp == elast['egrp']:
+#                         s = elast['step'] + 1
+#                     else:
+#                         aq += 1
+#
+#                         #print ai.runid, ai.state, ai.user_defined_aliquot
+#                         #print ai.runid, ai.user_defined_aliquot
+#                     if ai.user_defined_aliquot:
+#                         aq = ai.user_defined_aliquot
+#                         if ai.state not in ('success', 'failed', 'canceled'):
+#                             if egrp == elast['egrp']:
+#                                 s = elast['step'] + 1
+#                             else:
+#                                 dban = db.get_last_analysis(ln, aliquot=aq)
+#                                 if dban:
+#                                     if dban.step:
+#                                         s = LAlphas.index(dban.step) + 1
+#                     if not _not_run(ai):
+# #                    if ai.state != 'not run':
+#                         s = LAlphas.index(ai.step)
+#
+#                     elast['step'] = s
+#                     elast['egrp'] = ai.extract_group
+#                     elast['aliquot'] = aq
+#
+#                     last['aliquot'] = max(aq, last['aliquot'])
+#
+#                     ecache[en] = elast
+#                 #                     last['step'] = st
+#
+#                 else:
+#                     if not ai.user_defined_aliquot:
+#                         aq = last['aliquot'] + 1
+#                         last['aliquot'] = aq
+#
+#                 if special:
+#                     s = ''
+#                     egrp = -1
+#
+#                 if _not_run(ai):
+# #                if ai.state == 'not run':
+#                     ai.trait_set(aliquot=int(aq),
+#                                  project=last['project'] or '',
+#                                  sample=last['sample'] or '',
+#                                  irradiation=last['irradiation'] or '',
+#                                  material=last['material'] or '',
+#                                  step=s)
+#
+#                 cache[ln] = last
 
-        #============= EOF =============================================
-        #     def start_file_listener(self, path):
-        #         fl = FileListener(
-        #                           path,
-        #                           callback=self._reload_from_disk,
-        #                           check=self._check_for_file_mods
-        #                           )
-        #         self.filelistener = fl
-        #
-        #     # @deprecated
-        #     def stop_file_listener(self):
-        #         if self.filelistener:
-        #             self.filelistener.stop()
-        #def _modify_aliquots_steps2(self, ans, exclude=None):
-        #        '''
-        #        '''
-        #
-        #        def get_is_special(ln):
-        #            special = False
-        #            if '-' in ln:
-        #                special = ln.split('-')[0] in ANALYSIS_MAPPING
-        #            return ln, special
-        #
-        #        def get_analysis_info(li):
-        #            sample, irradiationpos = '', ''
-        #
-        #            #            analysis = db.get_last_analysis(li)
-        #            #            if analysis:
-        #            #                dbln = analysis.labnumber
-        #            dbln = db.get_labnumber(li)
-        #            if dbln:
-        #                sample = dbln.sample
-        #                if sample:
-        #                    sample = sample.name
-        #
-        #                dbpos = dbln.irradiation_position
-        #                if dbpos:
-        #                    level = dbpos.level
-        #                    irradiationpos = '{}{}'.format(level.irradiation.name,
-        #                                                   level.name)
-        #                    #            self.debug('{} {} {}'.format(li, analysis, sample))
-        #            return sample, irradiationpos
-        #
-        #        db = self.db
-        #        with db.session_ctx():
-        #            groups = self._group_analyses(ans, exclude=exclude)
-        #            for ln, analyses in groups:
-        #                ln, special = get_is_special(ln)
-        #                cln = convert_identifier(ln)
-        #
-        #                sample, irradiationpos = get_analysis_info(cln)
-        #
-        #                aliquot_key = lambda x: x._aliquot
-        #                egroup_key = lambda x: x.extract_group
-        #                if not special:
-        #                    a = sorted(analyses, key=aliquot_key)
-        #                    for aliquot, aa in groupby(a, key=aliquot_key):
-        #                        aa = sorted(aa, key=egroup_key)
-        #                        aliquot_start = None
-        #
-        #                        for egroup, ais in groupby(aa, key=egroup_key):
-        #                            ast = self._set_aliquot_step(ais, special, cln,
-        #                                                         aliquot,
-        #                                                         aliquot_start,
-        #                                                         egroup,
-        #                                                         sample,
-        #                                                         irradiationpos)
-        #                            aliquot_start = ast + 1
-        #
-        #                else:
-        #                    aliquot_start = None
-        #                    egroup = 0
-        #                    ans = sorted(analyses, key=aliquot_key)
-        #                    for aliquot, ais in groupby(ans, key=aliquot_key):
-        #                        self._set_aliquot_step(ais, special, cln, aliquot,
-        #                                               aliquot_start,
-        #                                               egroup,
-        #                                               sample, irradiationpos)
-        #
-        #    def _set_aliquot_step(self, ais, special, cln,
-        #                          aliquot,
-        #                          aliquot_start,
-        #                          egroup,
-        #                          sample, irradiationpos):
-        #        db = self.db
-        #
-        #        #         step_start = 0
-        #        an = db.get_last_analysis(cln, aliquot=aliquot)
-        #        if aliquot_start is None:
-        #            aliquot_start = 0
-        #            if an:
-        #                aliquot_start = an.aliquot
-        #                #                 print an.aliquot, aliquot
-        #                #                 if an.step and an.aliquot == aliquot:
-        #                #                     step_start = LAlphas.index(an.step) + 1
-        #
-        #        step_cnt = 0
-        #        aliquot_cnt = 0
-        #        for arun in ais:
-        #        #             for arun in aruns:
-        #            arun.trait_set(sample=sample or '', irradiation=irradiationpos or '')
-        #            if arun.skip:
-        #                arun.aliquot = 0
-        #                continue
-        #
-        #            if arun.state in ('failed', 'canceled'):
-        #                continue
-        #
-        #            if not arun.user_defined_aliquot:
-        #                if arun.state in ('not run', 'extraction', 'measurement'):
-        #                #                     print arun.runid, egroup, aliquot_start, aliquot_cnt
-        #                    arun.assigned_aliquot = int(aliquot_start + aliquot_cnt + 1)
-        #                    if special or not egroup:
-        #                        aliquot_cnt += 1
-        #
-        #            if not special and egroup:
-        #                step_start = 0
-        #                #                 an = db.get_last_analysis(cln, aliquot=aliquot)
-        #                if an and an.step and an.aliquot == arun.aliquot:
-        #                    step_start = LAlphas.index(an.step) + 1
-        #
-        #                arun.step = int(step_start + step_cnt)
-        #                #                 print arun.aliquot, arun.step, step_start, step_cnt
-        #                step_cnt += 1
-        #
-        #        return aliquot_start
+# def _is_special(self, ln):
+#     special = False
+#     if '-' in ln:
+#         special = ln.split('-')[0] in ANALYSIS_MAPPING
+#     return special
