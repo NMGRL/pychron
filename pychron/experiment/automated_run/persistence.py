@@ -528,6 +528,29 @@ class AutomatedRunPersister(Loggable):
     #===============================================================================
     # data writing
     #===============================================================================
+    def save_peak_center_to_file(self, pc):
+        dm=self.data_manager
+        with dm.open_file(self._current_data_frame):
+            tab = dm.new_table('/', 'peak_center')
+            xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
+
+            for xi, yi in zip(xs, ys):
+                nrow = tab.row
+                nrow['time'] = xi
+                nrow['value'] = yi
+                nrow.append()
+
+            xs, ys, _mx, _my = pc.result
+            attrs = tab.attrs
+            attrs.low_dac = xs[0]
+            attrs.center_dac = xs[1]
+            attrs.high_dac = xs[2]
+
+            attrs.low_signal = ys[0]
+            attrs.center_signal = ys[1]
+            attrs.high_signal = ys[2]
+            tab.flush()
+
     def get_data_writer(self, grpname):
         def write_data(dets, x, keys, signals):
             dm = self.data_manager
