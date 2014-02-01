@@ -86,14 +86,6 @@ class AutomatedRunPersister(Loggable):
 
     def get_last_aliquot(self, identifier):
         return self.datahub.get_greatest_aliquot(identifier)
-        # if self.db:
-        #     with self.db.session_ctx():
-        #         a=self.db.get_last_analysis(ln=identifier, ret='aliquot')
-        #         if a is not None:
-        #             if not isinstance(a, (float, int)):
-        #                 a=int(a.aliquot)
-        #
-        #             return a
 
     def writer_ctx(self):
         return self.data_manager.open_file(self._current_data_frame)
@@ -166,20 +158,14 @@ class AutomatedRunPersister(Loggable):
             self.info('Database saving disabled')
             return
 
-        cp = self._current_data_frame
-        # do preliminary processing of data
-        # returns signals dict
-        # try:
-        #     ss = self._preliminary_processing(cp)
-        # except Exception, e:
-        #     import traceback
-        #
-        #     self.debug('preliminary_processing - {}'.format(traceback.format_exc()))
-        #     self.warning('could not process isotope signals. not saving to database')
-        #     mem_log('post pychron save')
-        #     return
+        #check for conflicts immediately before saving
+        #automatically update if there is an issue
+        conflict=self.datahub.is_conflict(self.run_spec)
+        if conflict:
+            self.debug('post measurement datastore conflict found. Automatically updating the aliquot and step')
+            self.datahub.update_spec(self.run_spec)
 
-        # self._processed_signals_dict = ss
+        cp = self._current_data_frame
 
         ln = self.run_spec.labnumber
         aliquot = self.run_spec.aliquot
