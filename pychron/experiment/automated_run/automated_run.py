@@ -134,7 +134,6 @@ class AutomatedRun(Loggable):
     _alive = False
     _truncate_signal = Bool
     _equilibration_done = False
-    _current_data_frame = None
     _integration_seconds = Float(1.0)
 
 
@@ -435,28 +434,7 @@ class AutomatedRun(Loggable):
             ion.do_peak_center(new_thread=False, save=save)
 
             if pc.result:
-                dm = self.persister.data_manager
-
-                with dm.open_file(self._current_data_frame):
-                    tab = dm.new_table('/', 'peak_center')
-                    xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
-
-                    for xi, yi in zip(xs, ys):
-                        nrow = tab.row
-                        nrow['time'] = xi
-                        nrow['value'] = yi
-                        nrow.append()
-
-                    xs, ys, _mx, _my = pc.result
-                    attrs = tab.attrs
-                    attrs.low_dac = xs[0]
-                    attrs.center_dac = xs[1]
-                    attrs.high_dac = xs[2]
-
-                    attrs.low_signal = ys[0]
-                    attrs.center_signal = ys[1]
-                    attrs.high_signal = ys[2]
-                    tab.flush()
+                self.persister.save_peak_center_to_file(pc)
 
     def py_coincidence_scan(self):
         sm = self.spectrometer_manager
