@@ -36,7 +36,6 @@ from pychron.core.geometry.geometry import calc_point_along_line
 from pychron.paths import paths
 from threading import Thread
 
-# @todo: don't save mask and attenuator when programming points, only xyz
 
 class FusionsUVManager(FusionsLaserManager):
     """
