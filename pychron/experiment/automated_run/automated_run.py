@@ -176,7 +176,11 @@ class AutomatedRun(Loggable):
 
         fits = dict([f.split(':') for f in fits])
         for k, iso in isotopes.iteritems():
-            iso.set_fit_blocks(fits[k])
+            if k in fits:
+                iso.set_fit_blocks(fits[k])
+            else:
+                self.warning('Invalid fit "{}". '
+                             'check the measurement script "{}"'.format(k,self.measurement_script.name))
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes

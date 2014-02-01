@@ -64,23 +64,24 @@ class MassSpecDatabaseImporter(Loggable):
     _analysis = None
 
     #IDatastore protocol
-    def get_greatest_aliquot(self, identifier):
+    def get_greatest_step(self, identifier, aliquot):
+
         ret = 0
         if self.db:
             identifier=self.get_identifier(identifier)
+            ret = self.db.get_latest_analysis(identifier, aliquot)
 
-            ret = self.db.get_latest_analysis(identifier)
             if ret:
                 _, s = ret
-                ret=ALPHAS.index(s)
+                ret=ALPHAS.index(s) if s else -1
         return ret
 
-    def get_greatest_step(self, identifier, aliquot):
+    def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
             identifier = self.get_identifier(identifier)
 
-            ret=self.db.get_latest_analysis(identifier, aliquot)
+            ret=self.db.get_latest_analysis(identifier)
             if ret:
                 ret,_=ret
         return ret

@@ -32,10 +32,9 @@ from pychron.core.ui.gui import invoke_in_main_thread
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class myMessageMixin(object):
-    '''
-        makes  message dialogs thread save. 
-    
-    '''
+    """
+        makes  message dialogs thread save.
+    """
     timeout_return_code = YES
 
     def open(self, timeout=0):

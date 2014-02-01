@@ -47,6 +47,7 @@ class AutomatedRunPersister(Loggable):
     datahub=Instance(Datahub)
     run_spec=Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
+    monitor=Any
 
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
@@ -260,7 +261,7 @@ class AutomatedRunPersister(Loggable):
                 file_log(pt)
 
         if self.use_secondary_database:
-            if self.datahub.has_secondary_store():
+            if not self.datahub.has_secondary_store() or not self.datahub.secondary_connect():
             # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
             else:
@@ -502,7 +503,7 @@ class AutomatedRunPersister(Loggable):
         # dc = self.collector
         # fb = dc.get_fit_block(-1, self.fits)
 
-        rs_name, rs_text = self._assemble_script_blob()
+        # rs_name, rs_text = self._assemble_script_blob()
         rid = self.runid
 
         # blanks = self.get_previous_blanks()
@@ -512,8 +513,8 @@ class AutomatedRunPersister(Loggable):
         # p = self._current_data_frame
 
         exp = ExportSpec(runid=rid,
-                         runscript_name=rs_name,
-                         runscript_text=rs_text,
+                         runscript_name=self.runscript_name,
+                         runscript_text=self.runscript_blob,
                          # signal_fits=sf,
                          mass_spectrometer=self.run_spec.mass_spectrometer.capitalize(),
                          # blanks=blanks,

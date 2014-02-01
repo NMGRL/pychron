@@ -40,7 +40,6 @@ class Datahub(Loggable):
     secondarystore = Instance(MassSpecDatabaseImporter, ())
 
     def bind_preferences(self):
-
         prefid = 'pychron.database'
 
         bind_preference(self.secondarystore.db, 'name', '{}.massspec_dbname'.format(prefid))
@@ -63,14 +62,15 @@ class Datahub(Loggable):
         self._new_aliquot = 1
 
         if spec.is_step_heat():
-            ps, ns, vs = self._get_greatest_step(spec.identifier, spec.aliquot)
+            ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
             step = make_step(vs[0] + 1)
+            print ps, ns, vs, spec.identifier
             self._new_runid = make_aliquot_step(spec.aliquot, step)
             self._new_step = step
             self._new_aliquot = spec.aliquot
         else:
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
-            print ps, ns, vs, spec.identifier
+            print 'b',ps, ns, vs, spec.identifier
             self._new_runid = make_aliquot_step(vs[0] + 1, '')
             self._new_aliquot = vs[0] + 1
 
@@ -125,10 +125,9 @@ class Datahub(Loggable):
                      for store in self.sorted_stores])
 
     def _get_greatest_steps(self, identifier, aliquot):
-        vs = [(store.precedence, store.name,
-               store.get_greatest_step(identifier, aliquot) if store.is_connected() else 0)
-              for store in (self.mainstore, self.secondarystore)]
-        return vs
+        return zip(*[(store.precedence, store.db.name,
+                      store.get_greatest_step(identifier, aliquot) if store.is_connected() else -1)
+                     for store in self.sorted_stores])
 
     _sorted_stores = None
 
@@ -160,7 +159,8 @@ class Datahub(Loggable):
     def _datastores_default(self):
         return []
 
-    bind_mainstore=True
+    bind_mainstore = True
+
     def _mainstore_default(self):
         mainstore = IsotopeDatabaseManager(precedence=1,
                                            connect=self.bind_mainstore,
