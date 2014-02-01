@@ -881,7 +881,7 @@ class ExperimentExecutor(Loggable):
         if not self._check_managers(inform=inform):
             return
 
-        with self.db.session_ctx():
+        with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
                 if dbr is None:
@@ -961,7 +961,7 @@ If "No" select from database
         return True
 
     def _get_blank(self, kind, ms, ed, last=False):
-        db = self.db
+        db=self.datahub.mainstore.db
         sel = db.selector_factory(style='single')
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)

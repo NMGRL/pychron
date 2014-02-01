@@ -61,7 +61,6 @@ class Datahub(Loggable):
         self._new_step = ''
         self._new_aliquot = 1
 
-        print spec
         if spec.is_step_heat():
             k='Stepheat'
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)

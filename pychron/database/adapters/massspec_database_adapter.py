@@ -129,7 +129,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         """
         with self.session_ctx() as sess:
             q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
-            q = q.filter(AnalysesTable.IrradPosition == labnumber)
+            q = q.filter(AnalysesTable.RID.like('{}%'.format(labnumber)))
             if aliquot is not None:
                 q=q.filter(AnalysesTable.Aliquot==aliquot)
             else:
