@@ -454,7 +454,6 @@ class AutomatedRunFactory(Loggable):
 
         for attr in ('labnumber',
                      'extract_value', 'extract_units', 'cleanup', 'duration',
-                     'extract_group',
                      'pattern', 'beam_diameter',
                      'position',
                      'weight', 'comment'):

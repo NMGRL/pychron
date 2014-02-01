@@ -77,7 +77,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         if self.db:
             return self.db.connect(*args,**kw)
 
-    def isConnected(self):
+    def is_connected(self):
         if self.db:
             return self.db.connected
 

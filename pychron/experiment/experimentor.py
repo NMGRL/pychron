@@ -375,6 +375,7 @@ class Experimentor(IsotopeDatabaseManager):
             mode=self.mode,
             application=self.application,
             **kw)
+        e.bind_preferences()
 
         return e
 

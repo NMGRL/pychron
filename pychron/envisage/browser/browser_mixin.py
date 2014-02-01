@@ -60,7 +60,7 @@ class BrowserMixin(ColumnSorterMixin):
     sample_filter_values = List
     sample_filter_parameter = Str('Sample')
     sample_filter_comparator = Enum('=', 'not =')
-    sample_filter_parameters = List(['Sample', 'Material', 'Labnumber'])
+    sample_filter_parameters = List(['Sample', 'Material', 'Identifier'])
 
     configure_sample_table = Button
     clear_selection_button = Button

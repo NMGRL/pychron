@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime
 from itertools import groupby
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float
@@ -53,7 +52,6 @@ from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.experiment.automated_run.multi_collector import MultiCollector
-from pychron.processing.analyses.analysis import DBAnalysis
 
 DEBUG = False
 
@@ -395,8 +393,8 @@ class AutomatedRun(Loggable):
         self.persister.save_as_peak_hop = True
         self.is_peak_hop = True
 
-        self._build_peak_hop_tables(group, hops)
-        writer = self._get_data_writer(group)
+        self.persister.build_peak_hop_tables(group, hops)
+        writer = self.persister.get_data_writer(group)
 
         check_conditions = True
         self._add_truncate_condition()
@@ -712,24 +710,7 @@ class AutomatedRun(Loggable):
 
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
-            db=self.persister.db
-            with db.session_ctx():
-                ln = db.get_labnumber(ln)
-                if ln:
-                    an = DBAnalysis()
-                    x = datetime.now()
-                    now = time.mktime(x.timetuple())
-                    an.timestamp = now
-                    an.sync_irradiation(ln)
-
-                    self.arar_age.trait_set(j=an.j,
-                                            production_ratios=an.production_ratios,
-                                            interference_corrections=an.interference_corrections,
-                                            chron_segments=an.chron_segments,
-                                            irradiation_time=an.irradiation_time,
-                                            timestamp=now)
-
-                    self.arar_age.calculate_decay_factors()
+            self.persister.datahub.load_analysis_backend(ln, self.arar_age)
 
         self.info('Start automated run {}'.format(self.runid))
 
@@ -801,11 +782,12 @@ class AutomatedRun(Loggable):
                                  save_as_peak_hop=False,
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
+                                 positions=self.get_position_list(),
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,
                                  experiment_queue_blob=eqb,
                                  extraction_name=ext_name,
-                                 exttraction_blob=ext_blob,
+                                 extraction_blob=ext_blob,
                                  measurement_name=ms_name,
                                  measurement_blob=ms_blob,
                                  previous_blanks=pb,
@@ -1009,7 +991,7 @@ anaylsis_type={}
 #===============================================================================
 {}
 {}
-'''.format(self.runid, self.persiter.rundate, self.persister.runtime,
+'''.format(self.runid, self.persister.rundate, self.persister.runtime,
            self.spec.analysis_type,
            signal_string, age_string)
 

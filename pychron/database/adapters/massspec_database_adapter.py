@@ -21,6 +21,8 @@
 #=============local library imports  ==========================
 import binascii
 import math
+from sqlalchemy import Integer
+from sqlalchemy.sql.expression import func, distinct, cast
 
 from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
@@ -125,13 +127,20 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return the analysis with the greatest aliquot with this labnumber
         """
         with self.session_ctx() as sess:
-    #         sess = self.get_session()
             q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
             q = q.filter(AnalysesTable.IrradPosition == labnumber)
             if aliquot is not None:
                 q=q.filter(AnalysesTable.Aliquot==aliquot)
             else:
-                q = q.order_by(AnalysesTable.Aliquot.desc())
+                #!!!!!
+                #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+                #sorts lexicographically instead of numerically
+                #so '100'<'001'
+                #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+                #use option 2. this is a low use query and performance is not and issue
+                #switch to option 3. if performance increase is desired
+                #!!!!!
+                q = q.order_by(cast(AnalysesTable.Aliquot, Integer).desc())
 
             q = q.order_by(AnalysesTable.Increment.desc())
             q = q.limit(1)
