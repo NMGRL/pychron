@@ -68,7 +68,6 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, proc_SensitivityHistoryTable, proc_SensitivityTable
 
-# @todo: change rundate and runtime to DateTime columns
 from pychron.pychron_constants import ALPHAS
 
 
