@@ -99,7 +99,7 @@ class AutomatedRun(Loggable):
     uuid = Str
     extract_device = Str
     analysis_type = Property
-    user_defined_aliquot = Bool(False)
+    # user_defined_aliquot = Bool(False)
     fits = List
     eqtime = Float
 
@@ -178,9 +178,11 @@ class AutomatedRun(Loggable):
         for k, iso in isotopes.iteritems():
             if k in fits:
                 iso.set_fit_blocks(fits[k])
+                # print iso.fit_block
             else:
                 self.warning('Invalid fit "{}". '
                              'check the measurement script "{}"'.format(k,self.measurement_script.name))
+
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes

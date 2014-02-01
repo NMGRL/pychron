@@ -118,9 +118,10 @@ class AutomatedRunSpec(Loggable):
     _changed = False
 
     rundate = Property
+    _step_heat = False
 
     def is_step_heat(self):
-        return self.aliquot
+        return bool(self.user_defined_aliquot)
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -203,6 +204,9 @@ class AutomatedRunSpec(Loggable):
 
         if new_uuid:
             run.uuid = str(uuid.uuid4())
+
+            # self._step_heat = bool(self.aliquot)
+            # print self._step_heat, bool(self.aliquot), self.aliquot
 
         run.spec = weakref.ref(self)()
 

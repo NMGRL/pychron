@@ -15,10 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.orms.local_lab_orm import LabTable
 from sqlalchemy.schema import MetaData, Table, Column
 from sqlalchemy.types import Integer, DateTime, String
+
+from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.orms.local_lab_orm import LabTable
+
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -27,13 +29,15 @@ class LocalLabAdapter(DatabaseAdapter):
     kind = 'sqlite'
     def build_database(self):
         self.connect(test=False)
-        if not os.path.isfile(self.name):
+        if not os.path.isfile(self.path):
             sess = self.get_session()
             meta = MetaData()
             bt = Table('LabTable', meta,
                         Column('id', Integer, primary_key=True),
-                        Column('labnumber', Integer),
+                        Column('labnumber', String(40)),
                         Column('aliquot', Integer),
+                        Column('step', String(20)),
+                        Column('uuid', String(40)),
                         Column('collection_path', String(200)),
                         Column('repository_path', String(200)),
                         Column('create_date', DateTime))
