@@ -1443,6 +1443,9 @@ anaylsis_type={}
     #             attrs['TIMESTAMP'] = time.time()
     def post_measurement_save(self):
         if self._measured:
+
+            #@todo: check for conflicts before saving. automatically update the aliquot/step
+
             if self.spectrometer_manager:
                 self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
                                          defl_dict=self.spectrometer_manager.make_deflections_dict(),
