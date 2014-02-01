@@ -278,7 +278,6 @@ class BaseExperimentQueue(Loggable):
                'duration', 'cleanup',
                ('beam_diam', 'beam_diameter'),
                'pattern',
-               ('e_group', 'extract_group'),
                ('extraction', 'extraction_script'),
                ('measurement', 'measurement_script'),
                ('truncate','truncate_condition'),

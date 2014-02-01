@@ -165,9 +165,6 @@ class AutomatedRunFactory(Loggable):
     extract_units_names = List(['', 'watts', 'temp', 'percent'])
     _default_extract_units = 'watts'
 
-    extract_group = Int(enter_set=True, auto_set=False)
-    extract_group_button = Button('Group Selected')
-
     ramp_duration = EKlass(Float)
 
     duration = EKlass(Float)
@@ -230,7 +227,6 @@ class AutomatedRunFactory(Loggable):
     #===========================================================================
     _selected_runs = List
     _spec_klass = AutomatedRunSpec
-    _extract_group_cnt = 1
 
     extractable = Property(depends_on='labnumber')
     update_info_needed = Event
@@ -319,15 +315,13 @@ class AutomatedRunFactory(Loggable):
             s.extract_device = new
 
     def new_runs(self, positions=None, auto_increment_position=False,
-                 auto_increment_id=False,
-                 extract_group_cnt=0):
+                 auto_increment_id=False):
         """
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
 
-        arvs, freq = self._new_runs(positions=positions,
-                                    extract_group_cnt=extract_group_cnt)
+        arvs, freq = self._new_runs(positions=positions)
 
         if auto_increment_id:
             v=increment_value(self.labnumber)
@@ -343,7 +337,8 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # private
     #===============================================================================
-    def _new_runs(self, positions, extract_group_cnt=0):
+    # def _new_runs(self, positions, extract_group_cnt=0):
+    def _new_runs(self, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
 
@@ -352,13 +347,13 @@ class AutomatedRunFactory(Loggable):
                 positions = self.position
 
             template = self._use_template() and not freq
-            arvs = self._new_runs_by_position(positions, template, extract_group_cnt)
+            arvs = self._new_runs_by_position(positions, template)
         else:
             arvs = [self._new_run()]
 
         return arvs, freq
 
-    def _new_runs_by_position(self, pos, template=False, extract_group_cnt=0):
+    def _new_runs_by_position(self, pos, template=False):
         arvs = []
         positions=generate_positions(pos)
 
@@ -366,8 +361,7 @@ class AutomatedRunFactory(Loggable):
             # if set_pos:
             p = str(i)
             if template:
-                arvs.extend(self._render_template(p, extract_group_cnt))
-                extract_group_cnt += 1
+                arvs.extend(self._render_template(p))
             else:
                 arvs.append(self._new_run(position=str(p),
                                           excludes=['position']))
@@ -504,15 +498,14 @@ class AutomatedRunFactory(Loggable):
 
         return template
 
-    def _render_template(self, position, cnt):
+    def _render_template(self, position):
         arvs = []
         template = self._new_template()
         self.debug('rendering template {}'.format(template.name))
 
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
-                arv = self._new_run(extract_group=cnt + 1,
-                                    step=st.step_id,
+                arv = self._new_run(#step=st.step_id,
                                     position=position,
                                     excludes=['position'])
                 arv.trait_set(**st.make_dict(self.duration, self.cleanup))
@@ -893,13 +886,6 @@ class AutomatedRunFactory(Loggable):
     def _load_defaults_button_fired(self):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
-
-    def _extract_group_button_fired(self):
-        if self.edit_mode and \
-                self._selected_runs and \
-                not self.suppress_update:
-            eg = self._selected_runs[0].extract_group + 1
-            self.extract_group = eg
 
     @on_trait_change('trunc_+, truncation_path')
     def _edit_truncation(self, obj, name, old, new):

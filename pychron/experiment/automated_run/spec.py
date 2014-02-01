@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
-from traits.api import Str, CInt, Int, Bool, Float, Property, \
+from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr
 #============= standard library imports ========================
 import uuid
@@ -76,7 +76,6 @@ class AutomatedRunSpec(Loggable):
     #===========================================================================
     # extraction
     #===========================================================================
-    extract_group = CInt
     extract_value = Float
     extract_units = Str
     position = Str
@@ -108,7 +107,10 @@ class AutomatedRunSpec(Loggable):
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
 
-    executable = Bool(True)
+    identifier_error=Bool(False)
+    _executable = Bool(True)
+    executable=Property(depends_on='identifier_error, _executable')
+
     frequency_added = False
 
     runid = Property
@@ -116,6 +118,9 @@ class AutomatedRunSpec(Loggable):
     _changed = False
 
     rundate = Property
+
+    def is_step_heat(self):
+        return bool(self.step.strip())
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -168,7 +173,7 @@ class AutomatedRunSpec(Loggable):
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
 
-        self.executable = all(script_oks)
+        self._executable = all(script_oks)
         return s
 
     def get_estimated_duration(self, script_context, warned, force=False):
@@ -269,10 +274,8 @@ class AutomatedRunSpec(Loggable):
     #         print 'upda', new
     #         self.aliquot = new
 
-    @on_trait_change(''' 
-    measurment_script, post_measurment_script,
-    post_equilibration_script, extraction_script,extract_+, position, duration, cleanup
-    ''')
+    @on_trait_change('''measurment_script, post_measurment_script,
+    post_equilibration_script, extraction_script,extract_+, position, duration, cleanup''')
     def _script_changed(self, name, new):
         if new == 'None':
         #            self.trait_set(trait_change_notify=False, **{name: ''})
@@ -280,8 +283,7 @@ class AutomatedRunSpec(Loggable):
         else:
             self._changed = True
 
-    @on_trait_change('''extract_+, position, duration, cleanup
-    ''')
+    @on_trait_change('''extract_+, position, duration, cleanup ''')
     def _extract_changed(self):
         self._changed = True
 
@@ -331,4 +333,11 @@ class AutomatedRunSpec(Loggable):
     def _get_rundate(self):
         return datetime.now()
 
-        #============= EOF =============================================
+    def _set_executable(self, v):
+        self._executable = v
+
+    def _get_executable(self):
+        return self._executable and not self.identifier_error
+
+
+            #============= EOF =============================================

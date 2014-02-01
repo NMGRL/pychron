@@ -103,6 +103,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_analyses(self, **kw):
         return self._get_items(AnalysesTable, globals(), **kw)
+
     def get_samples(self, **kw):
         return self._get_items(SampleTable, globals(), **kw)
 
@@ -119,7 +120,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_login_session(self, value):
         return self._retrieve_item(LoginSessionTable, value, key='LoginSessionID')
 
-    def get_latest_analysis_aliquot(self, labnumber):
+    def get_latest_analysis(self, labnumber, aliquot=None):
         """
             return the analysis with the greatest aliquot with this labnumber
         """
@@ -127,17 +128,17 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     #         sess = self.get_session()
             q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
             q = q.filter(AnalysesTable.IrradPosition == labnumber)
-            q = q.order_by(AnalysesTable.Aliquot.desc())
+            if aliquot is not None:
+                q=q.filter(AnalysesTable.Aliquot==aliquot)
+            else:
+                q = q.order_by(AnalysesTable.Aliquot.desc())
+
             q = q.order_by(AnalysesTable.Increment.desc())
             q = q.limit(1)
-            try:
-                a,s = q.one()
-                ret = int(a),s
-            except Exception, e:
-                self.debug(e)
-                ret = None
-
-            return ret
+            v=self._query_one(q)
+            if v is not None:
+                a, s = v
+                return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
 #        key = 'RID'

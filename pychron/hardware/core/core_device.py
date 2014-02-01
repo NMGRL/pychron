@@ -107,10 +107,18 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
     _scheduler_name = None
 
+    #ICoreDevice protocol
     def close(self):
         if self._communicator:
             self._communicator.close()
 
+    def get(self):
+        return self.current_scan_value
+
+    def set(self, v):
+        pass
+
+    #==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
         self.last_response = r if r else ''
@@ -195,15 +203,8 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator is not None:
            return self._communicator.read(*args, **kw)
 
-    def get(self):
-        return self.current_scan_value
-
     #        if self.simulation:
     #            return 'simulation'
-
-    def set(self, v):
-        pass
-
 
     #            gdict = globals()
     #            if communicator_type in gdict:

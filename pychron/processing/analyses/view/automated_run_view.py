@@ -45,7 +45,7 @@ class AutomatedRunAnalysisView(MainView):
         return self._j
 
     def traits_view(self):
-        teditor, ceditor, eeditor, meditor = es = self._get_editors()
+        teditor, ceditor, ieditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
             ei.adapter.font = 'arial 10'
 

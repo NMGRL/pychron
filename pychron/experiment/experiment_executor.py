@@ -32,8 +32,10 @@ import os
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
 from pychron.displays.display import DisplayController
+from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.initialization_parser import InitializationParser
+from pychron.loggable import Loggable
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
     RemoteAutomatedRunMonitor
@@ -44,8 +46,6 @@ from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
 from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, gen_AnalysisTypeTable
 
-from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
-from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
@@ -57,10 +57,9 @@ from pychron.core.ui.preference_binding import bind_preference, color_bind_prefe
 from pychron.wait.wait_group import WaitGroup
 
 
-class ExperimentExecutor(IsotopeDatabaseManager):
+class ExperimentExecutor(Loggable):
     experiment_queues = List
     experiment_queue = Any
-
     #===========================================================================
     # control
     #===========================================================================
@@ -101,12 +100,12 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     spectrometer_manager = Any
     extraction_line_manager = Any
     ion_optics_manager = Any
-    massspec_importer = Instance(MassSpecDatabaseImporter, ())
-    #data_manager = Instance(H5DataManager, ())
+
     pyscript_runner = Instance(PyScriptRunner)
     monitor = Instance(AutomatedRunMonitor)
     current_run = Instance(AutomatedRun)
 
+    datahub = Instance(Datahub)
     #===========================================================================
     #
     #===========================================================================
@@ -178,13 +177,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
     def bind_preferences(self):
         super(ExperimentExecutor, self).bind_preferences()
 
-        prefid = 'pychron.database'
-
-        bind_preference(self.massspec_importer.db, 'name', '{}.massspec_dbname'.format(prefid))
-        bind_preference(self.massspec_importer.db, 'host', '{}.massspec_host'.format(prefid))
-        bind_preference(self.massspec_importer.db, 'username', '{}.massspec_username'.format(prefid))
-        bind_preference(self.massspec_importer.db, 'password', '{}.massspec_password'.format(prefid))
-
         prefid = 'pychron.experiment'
         #auto save
         bind_preference(self, 'use_auto_save',
@@ -237,12 +229,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             self._canceled = False
             self.extraction_state_label = ''
 
-            #             self._prev_baselines = dict()
-            #             self._prev_blanks = dict()
-
-            # self.pyscript_runner.connect()
-            # self.massspec_importer.connect()
-
             self.experiment_queue.executed = True
             t = Thread(name='execute_{}'.format(name),
                        target=self._execute)
@@ -291,17 +277,13 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         else:
             self.warning('{} is not a valid file'.format(path))
 
-            #===============================================================================
-            # private
-            #===============================================================================
-
+    #===============================================================================
+    # private
+    #===============================================================================
     def _execute(self):
 
     #         self._alive = True
     #
-    #         # check the first aliquot before delaying
-    #         arv = exp.cleaned_automated_runs[0]
-    #         self._check_run_aliquot(arv)
 
         # delay before starting
         exp = self.experiment_queue
@@ -323,9 +305,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         # save experiment to database
         self.info('saving experiment "{}" to database'.format(exp.name))
 
-        with self.db.session_ctx():
-            dbexp = self.db.add_experiment(exp.path)
-            exp.database_identifier = int(dbexp.id)
+        self.datahub.add_experiment(exp.path)
+        # with self.db.session_ctx():
+        #     dbexp = self.db.add_experiment(exp.path)
+        #     exp.database_identifier = int(dbexp.id)
 
         exp.executed = True
         # scroll to the first run
@@ -366,14 +349,14 @@ class ExperimentExecutor(IsotopeDatabaseManager):
 
                 try:
                     spec = rgen.next()
-
                 except StopIteration:
                     self.debug('stop iteration')
                     break
 
-                self._check_run_aliquot(spec)
-
                 run = self._make_run(spec)
+                if run is None:
+                    break
+
                 self.wait_group.active_control.page_name = run.runid
 
                 if spec.analysis_type == 'unknown' and spec.overlap:
@@ -623,6 +606,10 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             self.end_at_run_completion = True
 
         arun = spec.make_run(run=self.current_run)
+
+        if not self._set_run_aliquot(arun):
+            return
+
         '''
             save this runs uuid to a hidden file
             used for analysis recovery
@@ -637,8 +624,9 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         arun.extraction_line_manager = self.extraction_line_manager
         arun.ion_optics_manager = self.ion_optics_manager
 
-        arun.persister.db = self.db
-        arun.persister.massspec_importer = self.massspec_importer
+        # arun.persister.db = self.db
+        # arun.persister.massspec_importer = self.massspec_importer
+        arun.persister.datahub=self.datahub
         arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
 
@@ -654,6 +642,25 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             arun.persister.monitor = mon
 
         return arun
+
+    def _set_run_aliquot(self, spec):
+        dh=self.datahub
+        ret=True
+        conflict=dh.is_conflict(spec)
+        if conflict:
+            ret=False
+            self._canceled=True
+            self._err_message='Databases are in conflict. {}'.format(conflict)
+            if self.confirmation_dialog('Databases are in conflict. '
+                                       'Do you want to modify the Run Identifier to {}'.format(dh.new_runid)):
+                dh.update_spec(spec)
+                ret=True
+                self._canceled=False
+                self._err_message=''
+        else:
+            dh.update_spec(spec)
+
+        return ret
 
     def _delay(self, delay, message='between'):
     #        self.delaying_between_runs = True
@@ -741,15 +748,15 @@ class ExperimentExecutor(IsotopeDatabaseManager):
             #===============================================================================
 
     def _check_run_at_end(self, run):
-        '''
+        """
             check to see if an action should be taken
-            
+
             if runs  are overlapping this will be a problem.
-            
+
             dont overlay onto blanks
-    
+
             execute the action and continue the queue
-        '''
+        """
         exp = self.experiment_queue
         for action in exp.queue_actions:
             if action.check_run(run):
@@ -863,16 +870,12 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         if self._check_memory():
             return
 
-        if not self.massspec_importer.connect():
+        if not self.datahub.secondary_connect():
             if not self.confirmation_dialog(
                     'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
                 return
 
         if not self._check_managers(inform=inform):
-            return
-
-        #check all aliquots before starting
-        if not self._check_all_aliquots_queue():
             return
 
         with self.db.session_ctx():
@@ -896,27 +899,6 @@ class ExperimentExecutor(IsotopeDatabaseManager):
         # arv = exp.cleaned_automated_runs[0]
         # self._check_run_aliquot(arv)
         return True
-
-    def _check_all_aliquots_queue(self):
-        for ei in self.experiment_queues:
-            if self._check_all_aliquots(ei):
-                break
-
-    def _check_all_aliquots(self, eq):
-        db = self.massspec_importer.db
-        with db.session_ctx():
-            for ai in eq.cleaned_automated_runs:
-                if self._analysis_exists(db, ai):
-                    return True
-
-    def _analysis_exists(self, db, ai):
-        ident = ai.labnumber
-        aliquot = ai.aliquot
-        step = ai.step
-        if db.get_analysis(ident, aliquot, step):
-            self.warning_dialog('Analysis {} already exists in secondary database. '
-                                'Modify your experiment accordingly'.format(ai.record_id))
-            return True
 
     def _get_preceding_blank_or_background(self, inform=True):
         msg = '''First "{}" not preceded by a blank.
@@ -1012,57 +994,8 @@ If "No" select from database
                     dbr = sel.selected
 
             if dbr:
-            #                print dbr.aliquot
-            #    dbr = self.make_analyses([dbr])[0]
                 dbr = self.make_analysis(dbr)
-                #                dbr = sel._record_factory(dbr)
                 return dbr
-
-    def _check_run_aliquot(self, arv):
-        """
-            check the secondary database for this labnumber
-            get last aliquot
-
-        """
-        if self.massspec_importer:
-            self.debug('Checking run {} aliquot'.format(arv.runid))
-            db = self.massspec_importer.db
-            if db.connected:
-            # try:
-            # _ = int(arv.labnumber)
-                identifier = self.massspec_importer.get_identifier(arv)
-
-                ai = db.get_analysis(identifier, arv.aliquot, arv.step)
-                if ai is not None:
-                    al, st = db.get_latest_analysis_aliquot(identifier)
-                    if arv.step:
-                        new_step = st + 1
-                        new_aliquot = al
-                    else:
-                        new_aliquot = al + 1
-                        new_step = ''
-
-                    self.message(
-                        '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
-                                                                                                             arv.aliquot,
-                                                                                                             arv.step,
-                                                                                                             identifier,
-                                                                                                             new_aliquot,
-                                                                                                             new_step))
-                    arv.aliquot = new_aliquot
-                    arv.step = new_step
-                    #update aliquot for all runs with this labnumber
-                    i = 1
-                    j = 1
-                    for ei in self.experiment_queue.cleaned_automated_runs:
-                        if ei.labnumber == identifier and ei != arv:
-                            if ei.step:
-                                ei.aliquot = new_aliquot
-                                ei.step = new_step + j
-                                j += 1
-                            else:
-                                ei.aliquot = new_aliquot + i
-                                i += 1
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
@@ -1115,16 +1048,11 @@ If "No" select from database
     #===============================================================================
     # handlers
     #===============================================================================
-    #     def _resume_button_fired(self):
-    #         self.resume_runs = True
     @on_trait_change('experiment_queue:automated_runs[]')
     def _update_automated_runs(self):
         if self.isAlive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
             self.current_run.is_last = is_last
-            #            if self.current_run.measurement_script:
-            #                self.current_run.measurement_script.setup_context(is_last=is_last)
-            #                self.debug('$$$$$$$$$$$$$$$$$$$$$$ Setting is_last {}'.format(is_last))
 
     def _cancel_run_button_fired(self):
         self.debug('cancel run {}'.format(self.isAlive()))
@@ -1140,25 +1068,24 @@ If "No" select from database
         if self.current_run:
             self.current_run.truncate_run(self.truncate_style)
 
-            #===============================================================================
-            # property get/set
-            #===============================================================================
-            #     def _get_execute_label(self):
-            #         return 'Start Queue' if not self._alive else 'Stop Queue'
-
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_can_start(self):
         return self.executable and not self.isAlive()
 
     #===============================================================================
     # defaults
     #===============================================================================
-    def _console_display_default(self):
+    def _datahub_default(self):
+        dh=Datahub()
+        return dh
 
+    def _console_display_default(self):
         return DisplayController(
             bgcolor='black',
             default_color='limegreen',
-            max_blocks=100
-        )
+            max_blocks=100)
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':
@@ -1223,3 +1150,68 @@ If "No" select from database
                     'no automated run monitor avaliable. Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
 #============= EOF =============================================
+# def _check_all_aliquots_queue(self):
+    #     for ei in self.experiment_queues:
+    #         if self._check_all_aliquots(ei):
+    #             break
+    #
+    # def _check_all_aliquots(self, eq):
+    #     db = self.massspec_importer.db
+    #     with db.session_ctx():
+    #         for ai in eq.cleaned_automated_runs:
+    #             if self._analysis_exists(db, ai):
+    #                 return True
+    #
+    # def _analysis_exists(self, db, ai):
+    #     ident = ai.labnumber
+    #     aliquot = ai.aliquot
+    #     step = ai.step
+    #     if db.get_analysis(ident, aliquot, step):
+    #         self.warning_dialog('Analysis {} already exists in secondary database. '
+    #                             'Modify your experiment accordingly'.format(ai.record_id))
+    #         return True
+# def _check_run_aliquot(self, arv):
+#     """
+#         check the secondary database for this labnumber
+#         get last aliquot
+#
+#     """
+#     if self.massspec_importer:
+#         self.debug('Checking run {} aliquot'.format(arv.runid))
+#         db = self.massspec_importer.db
+#         if db.connected:
+#         # try:
+#         # _ = int(arv.labnumber)
+#             identifier = self.massspec_importer.get_identifier(arv)
+#
+#             ai = db.get_analysis(identifier, arv.aliquot, arv.step)
+#             if ai is not None:
+#                 al, st = db.get_latest_analysis_aliquot(identifier)
+#                 if arv.step:
+#                     new_step = st + 1
+#                     new_aliquot = al
+#                 else:
+#                     new_aliquot = al + 1
+#                     new_step = ''
+#
+#                 self.message(
+#                     '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
+#                                                                                                          arv.aliquot,
+#                                                                                                          arv.step,
+#                                                                                                          identifier,
+#                                                                                                          new_aliquot,
+#                                                                                                          new_step))
+#                 arv.aliquot = new_aliquot
+#                 arv.step = new_step
+#                 #update aliquot for all runs with this labnumber
+#                 i = 1
+#                 j = 1
+#                 for ei in self.experiment_queue.cleaned_automated_runs:
+#                     if ei.labnumber == identifier and ei != arv:
+#                         if ei.step:
+#                             ei.aliquot = new_aliquot
+#                             ei.step = new_step + j
+#                             j += 1
+#                         else:
+#                             ei.aliquot = new_aliquot + i
+#                             i += 1
