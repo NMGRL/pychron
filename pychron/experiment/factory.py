@@ -186,9 +186,9 @@ extract_device, delay_+, tray, username, load_name]''')
     # property get/set
     #===============================================================================
     def _get_ok_add(self):
-        '''
+        """
             tol should be a user permission
-        '''
+        """
         return self._username and \
                not self._mass_spectrometer in ('', 'Spectrometer', LINE_STR) and \
                self._labnumber
