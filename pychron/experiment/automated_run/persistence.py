@@ -261,7 +261,7 @@ class AutomatedRunPersister(Loggable):
                 file_log(pt)
 
         if self.use_secondary_database:
-            if not self.datahub.has_secondary_store() or not self.datahub.secondary_connect():
+            if not self.datahub.secondary_connect():
             # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
             else:
@@ -523,7 +523,7 @@ class AutomatedRunPersister(Loggable):
                          # signal_intercepts=si,
                          # signal_intercepts=self._processed_signals_dict,
                          is_peak_hop=self.save_as_peak_hop)
-        exp.load_record(self)
+        exp.load_record(self.run_spec)
         return exp
 
     def _assemble_extraction_parameters(self, edict):

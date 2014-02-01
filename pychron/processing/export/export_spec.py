@@ -175,6 +175,7 @@ class ExportSpec(Loggable):
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
         m,s=0,0
         if iso in self.isotopes:
+            iso=self.isotopes[iso]
             xs,ys=iso.baseline.xs, iso.baseline.ys
             for i in range(niter):
                 m,s=mean(ys), std(ys)
