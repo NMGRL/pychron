@@ -63,7 +63,7 @@ class Datahub(Loggable):
 
         if spec.is_step_heat():
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
-            step = make_step(vs[0] + 1)
+            step = make_step(max(vs) + 1)
             print ps, ns, vs, spec.identifier
             self._new_runid = make_aliquot_step(spec.aliquot, step)
             self._new_step = step
@@ -71,11 +71,10 @@ class Datahub(Loggable):
         else:
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
             print 'b',ps, ns, vs, spec.identifier
-            self._new_runid = make_aliquot_step(vs[0] + 1, '')
-            self._new_aliquot = vs[0] + 1
+            mv=max(vs)
+            self._new_runid = make_aliquot_step(mv + 1, '')
+            self._new_aliquot = mv + 1
 
-
-        # if sum(vs)/float(len(vs))!=vs[0]:
         if not checkEqual6502(vs):
             hn, hv = ns[0], vs[0]
             txt = []
@@ -136,7 +135,9 @@ class Datahub(Loggable):
         if self._sorted_stores:
             return self._sorted_stores
         else:
-            r = sorted(filter(lambda x: x.is_connected(), (self.mainstore, self.secondarystore)))
+            r = sorted(filter(lambda x: x.is_connected(),
+                              (self.mainstore, self.secondarystore)),
+                       key=lambda x: x.precedence)
             # r=sorted((self.mainstore, self.secondarystore))
             self._sorted_stores = r
             return r
