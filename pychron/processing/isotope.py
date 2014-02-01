@@ -146,15 +146,20 @@ class IsotopicMeasurement(BaseMeasurement):
             self.fit=fit
 
     def get_fit(self, cnt):
+        r=self.get_fit_block(cnt)
+        if r is not None:
+            self.fit=r
+
+        return self.fit
+
+    def get_fit_block(self, cnt):
         if self.fit_blocks:
-            if cnt<0:
+            if cnt < 0:
                 return self.fit_blocks[-1][2]
             else:
-                for s,e,f in self.fit_blocks:
-                    if s<cnt<e:
+                for s, e, f in self.fit_blocks:
+                    if s < cnt < e:
                         return f
-        else:
-            return self.fit
 
     def set_fit(self, fit, notify=True):
         if fit is not None:

@@ -138,11 +138,16 @@ class AutomatedRunPersister(Loggable):
         with ldb.session_ctx():
             ln = self.run_spec.labnumber
             aliquot = self.run_spec.aliquot
+            step = self.run_spec.step
+            uuid = self.uuid
             cp = self._current_data_frame
 
             ldb.add_analysis(labnumber=ln,
                              aliquot=aliquot,
-                             collection_path=cp)
+                             uuid=uuid,
+                             step=step,
+                             collection_path=cp,
+                             )
             #ldb.commit()
             #ldb.close()
             #del ldb
@@ -577,9 +582,10 @@ class AutomatedRunPersister(Loggable):
     def _local_lab_db_factory(self):
         if self.local_lab_db:
             return self.local_lab_db
-        name = os.path.join(paths.hidden_dir, 'local_lab.db')
+        path = os.path.join(paths.hidden_dir, 'local_lab.db')
         # name = '/Users/ross/Sandbox/local.db'
-        ldb = LocalLabAdapter(name=name)
+        ldb = LocalLabAdapter(path=path)
+        ldb.connect()
         ldb.build_database()
         return ldb
 #============= EOF =============================================

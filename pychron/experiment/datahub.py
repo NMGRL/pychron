@@ -61,21 +61,26 @@ class Datahub(Loggable):
         self._new_step = ''
         self._new_aliquot = 1
 
+        print spec
         if spec.is_step_heat():
+            k='Stepheat'
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
             step = make_step(max(vs) + 1)
-            print ps, ns, vs, spec.identifier
+            # print ps, ns, vs, spec.identifier
             self._new_runid = make_aliquot_step(spec.aliquot, step)
             self._new_step = step
             self._new_aliquot = spec.aliquot
         else:
+            k='Fusion'
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
-            print 'b',ps, ns, vs, spec.identifier
+
+            # print 'b',ps, ns, vs, spec.identifier
             mv=max(vs)
             self._new_runid = make_aliquot_step(mv + 1, '')
             self._new_aliquot = mv + 1
 
-        if not checkEqual6502(vs):
+        self.debug('{} conflict args. precedence={}, names={}, values={}'.format(k, ps, ns, vs))
+        if not checkEqual6502(list(vs)):
             hn, hv = ns[0], vs[0]
             txt = []
             for ln, lv in zip(ns[1:], vs[1:]):
@@ -83,7 +88,7 @@ class Datahub(Loggable):
                     txt.append('{}!={} {}!={}'.format(hn, ln, hv, lv))
             err=', '.join(txt)
             self.warning('Datastore conflicts. {}'.format(err))
-            return
+            return err
 
     def update_spec(self, spec):
         spec.aliquot = self._new_aliquot
@@ -110,6 +115,12 @@ class Datahub(Loggable):
                                    timestamp=now)
 
                 arar_age.calculate_decay_factors()
+
+    def add_experiment(self, exp):
+        db = self.mainstore.db
+        with db.session_ctx():
+            dbexp = db.add_experiment(exp.path)
+            exp.database_identifier = int(dbexp.id)
 
     @property
     def new_runid(self):
@@ -143,20 +154,6 @@ class Datahub(Loggable):
             self._sorted_stores = r
             return r
 
-            # if store and store.db:
-            #     db=store.db
-            #     with db.session_ctx():
-            #         a=db.get_last_analysis(ln=identifier, ret='aliquot')
-            #         if a is not None:
-            #             if not isinstance(a, (float, int)):
-            #                 a=int(a.aliquot)
-            #             return a
-
-    def add_experiment(self, exp):
-        db = self.mainstore.db
-        with db.session_ctx():
-            dbexp = db.add_experiment(exp.path)
-            exp.database_identifier = int(dbexp.id)
 
     def _datastores_default(self):
         return []
