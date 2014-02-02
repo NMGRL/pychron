@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 import re
+
 from chaco.array_data_source import ArrayDataSource
 from numpy import Inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
@@ -253,7 +255,7 @@ class BaseArArFigure(HasTraits):
         labels = ['{:02n}{}'.format(si.aliquot, si.step) for si in self.sorted_analyses]
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels)
-        scatter.underlays.append(ov)
+        scatter.overlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
                         visible=True):
