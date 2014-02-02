@@ -216,7 +216,7 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-
+        print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
         scatter, _p = graph.new_series(x=bins, y=probs, plotid=pid)
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 

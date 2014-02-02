@@ -16,11 +16,13 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.analysis_group import InterpretedAge
@@ -138,13 +140,20 @@ class FigureEditor(GraphEditor):
         else:
             self.annotation_tool = None
 
-    def set_group(self, idxs, gid, refresh=True):
+    def set_group(self, idxs, gid, **kw):
+        self._set_group(idxs, gid, 'group_id', **kw)
 
-        for i, uu in enumerate(self.analyses):
-            if i in idxs:
-                uu.group_id = gid
+    def set_graph_group(self, idxs, gid, **kw):
 
-        if refresh:
+        self._set_group(idxs, gid, 'graph_id', **kw)
+
+    def _set_group(self, idxs, gid, attr, rebuild=True):
+        ans = self.analyses
+        for i in idxs:
+            a = ans[i]
+            setattr(a, attr, gid)
+
+        if rebuild:
             self.rebuild()
 
     def rebuild(self):

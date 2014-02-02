@@ -267,15 +267,50 @@ class GraphEditor(BaseUnknownsEditor):
 
         self.rebuild_graph()
 
+    def compress_analyses(self, ans=None):
+        if ans is None:
+            ans=self.analyses
+        self._compress_analyses(ans)
+
     def _compress_analyses(self, ans):
+        if not ans:
+            return
+        self._compress_graphs(ans)
+
+    def _compress_graphs(self, ans):
+        if not ans:
+            return
+
+        key = lambda x: x.graph_id
+        ans = sorted(ans, key=key)
+        groups = groupby(ans, key)
+        try:
+            mgid, analyses = groups.next()
+        except StopIteration:
+            return
+
+        for ai in analyses:
+            ai.graph_id = 0
+        self._compress_groups(analyses)
+
+        for gid, analyses in groups:
+            for ai in analyses:
+                ai.graph_id=gid-mgid
+
+            self._compress_groups(analyses)
+
+    def _compress_groups(self, ans):
         if not ans:
             return
 
         key = lambda x: x.group_id
         ans = sorted(ans, key=key)
         groups = groupby(ans, key)
+        try:
+            mgid, analyses = groups.next()
+        except StopIteration:
+            return
 
-        mgid, analyses = groups.next()
         for ai in analyses:
             ai.group_id = 0
 

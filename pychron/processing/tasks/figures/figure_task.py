@@ -100,6 +100,22 @@ class FigureTask(AnalysisEditTask):
                         self.figure_selector_pane]
 
     #===============================================================================
+    # graph grouping
+    #===============================================================================
+    def graph_group_selected(self):
+        if self.unknowns_pane.selected:
+            idxs=self._get_selected_indices()
+            all_idxs = range(len(self.unknowns_pane.items))
+            selection=list(set(all_idxs)-set(idxs))
+
+            self.clear_grouping(refresh=False, selection=selection)
+            self.active_editor.set_graph_group(
+                self._get_selected_indices(),
+                self._get_unique_graph_id(), rebuild=False)
+
+            self.active_editor.compress_analyses()
+            self.active_editor.rebuild()
+    #===============================================================================
     # grouping
     #===============================================================================
     def group_by_aliquot(self):
@@ -117,21 +133,24 @@ class FigureTask(AnalysisEditTask):
                 self._get_selected_indices(),
                 self._get_unique_group_id())
 
-    def clear_grouping(self):
+    def clear_grouping(self, refresh=True, selection=None):
         """
             if selected then set selected group_id to 0
             else set all to 0
         """
         if self.active_editor:
-            sel = self.unknowns_pane.selected
-            if sel:
-                idx = self._get_selected_indices()
+            if selection is None:
+                sel = self.unknowns_pane.selected
+                if sel:
+                    idx = self._get_selected_indices()
+                else:
+                    idx = range(len(self.unknowns_pane.items))
             else:
-                idx = range(len(self.unknowns_pane.items))
+                idx=selection
 
             self.active_editor.set_group(idx, 0)
-            #             self.unknowns_pane.update_needed = True
-            self.unknowns_pane.refresh_needed = True
+            if refresh:
+                self.unknowns_pane.refresh_needed = True
 
     #===============================================================================
     # figures
@@ -329,6 +348,10 @@ class FigureTask(AnalysisEditTask):
 
     def _get_unique_group_id(self):
         gids = {i.group_id for i in self.unknowns_pane.items}
+        return max(gids) + 1
+
+    def _get_unique_graph_id(self):
+        gids = {i.graph_id for i in self.unknowns_pane.items}
         return max(gids) + 1
 
     def _get_selected_indices(self):

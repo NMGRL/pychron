@@ -78,6 +78,11 @@ class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
 
+
+class GraphGroupSelectedAction(GroupAction):
+    name = 'Graph Group Selected'
+    method = 'graph_group_selected'
+
 #     def perform(self, event):
 #         task = event.task
 #         if task.id == 'pychron.processing.figures':
