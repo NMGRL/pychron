@@ -64,6 +64,7 @@ class Ideogram(BaseArArFigure):
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=self.index_key)]).T
         except (ValueError, AttributeError):
+            print 'asdfasdf'
             return
 
         omit = self._get_omitted(self.sorted_analyses,
@@ -71,7 +72,13 @@ class Ideogram(BaseArArFigure):
                                  include_value_filtered=False)
         omit=set(omit)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            try:
+                args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            except AttributeError:
+                import traceback
+                traceback.print_exc()
+                continue
+
             if args:
                 scatter, omits=args
                 omit=omit.union(set(omits))
@@ -216,7 +223,7 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-        print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
+        # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
         scatter, _p = graph.new_series(x=bins, y=probs, plotid=pid)
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 

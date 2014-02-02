@@ -27,10 +27,11 @@ from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
 
-from pychron.processing.analyses.analysis import DBAnalysis, VCSAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.processing.analyses.dbanalysis import DBAnalysis
+from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 
 
 ANALYSIS_CACHE = {}

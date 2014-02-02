@@ -132,20 +132,9 @@ class FigureAction(Action):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.processing.figures')
-        #         task = event.task
-        #         if not task.id == 'pychron.processing.figures':
-        #             app = task.window.application
-        #             win = app.create_window(TaskWindowLayout(
-        #                                                'pychron.processing.figures'
-        #                                                )
-        #                               )
-        #             win.open()
-        #             task = win.active_task
-
         if hasattr(task, self.method):
             getattr(task, self.method)()
 
-#         task.new_ideogram()
 
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
@@ -164,26 +153,17 @@ class SeriesAction(FigureAction):
     accelerator = 'Ctrl+U'
     method = 'new_series'
 
-#     def perform(self, event):
-#
-#         task = event.task
-#         if not task.id == 'pychron.processing.figures':
-#             app = task.window.application
-#             win = app.create_window(TaskWindowLayout(
-#                                                'pychron.processing.figures'
-#                                                )
-#                               )
-#             win.open()
-#             task = win.active_task
-#
-#         task.new_spectrum()
-
 
 class InverseIsochronAction(FigureAction):
     name = 'Inverse Isochron'
     method = 'new_inverse_isochron'
     accelerator = 'Ctrl+i'
 
+
+class FigureFromFile(FigureAction):
+    name='Ideogram from File'
+    method='new_ideogram_from_file'
+    accelerator = 'Ctrl+shift+j'
 #===============================================================================
 #
 #===============================================================================
@@ -249,6 +229,8 @@ class ExportAnalysesAction(Action):
     def perform(self, event):
         app = event.task.window.application
         app.open_task('pychron.export')
+
+
 
 #============= EOF =============================================
 

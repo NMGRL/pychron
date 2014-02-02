@@ -215,6 +215,11 @@ class FigureTask(AnalysisEditTask):
                                 add_iso=add_iso,
                                 add_table=add_table)
 
+    def new_ideogram_from_file(self):
+        p='/Users/ross/Sandbox/ideogram_from_file.txt'
+        self.new_ideogram(add_iso=False, add_table=False)
+        self.active_editor.set_items_from_file(p)
+
     #===============================================================================
     # actions
     #===============================================================================
@@ -543,6 +548,8 @@ class FigureTask(AnalysisEditTask):
     def _dclicked_sample_changed(self):
         if self.active_editor:
             self.active_editor.saved_figure_id=0
+            self.active_editor.clear_aux_plot_limits()
+
         super(FigureTask, self)._dclicked_sample_changed()
 
     def _dclicked_figure_changed(self):

@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+import os
 
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
@@ -23,9 +24,11 @@ from traits.api import Any, on_trait_change, \
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.analysis_group import InterpretedAge
+from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -47,6 +50,29 @@ class FigureEditor(GraphEditor):
     invalid=Event
 
     saved_figure_id=Int
+
+    def clear_aux_plot_limits(self):
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            ap._has_ylimits=False
+            ap.ylimits=(0,0)
+
+    def set_items_from_file(self, p):
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                pass
+
+        ans = [FileAnalysis(record_id='foo',age=10, age_err=0.4),
+               FileAnalysis(record_id='bar',age=9, age_err=0.5), ]
+
+        po=self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            if ap.name.lower() not in ('ideogram', 'analysis number','analysis number stacked'):
+                ap.use=False
+
+        self.analyses = ans
+        self._update_analyses()
+        self.dump_tool()
 
     def save_figure(self, name, project, labnumbers):
         db=self.processor.db
