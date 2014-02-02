@@ -502,12 +502,16 @@ class AutomatedRunFactory(Loggable):
         template = self._new_template()
         self.debug('rendering template {}'.format(template.name))
 
+        al=self.db.get_greatest_aliquot(self.labnumber) or 0
+
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
                 arv = self._new_run(#step=st.step_id,
                                     position=position,
                                     excludes=['position'])
-                arv.trait_set(**st.make_dict(self.duration, self.cleanup))
+
+                arv.trait_set(aliquot=al+1,**st.make_dict(self.duration,
+                                             self.cleanup))
                 arvs.append(arv)
 
         return arvs
