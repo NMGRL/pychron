@@ -16,16 +16,20 @@
 
 #============= enthought library imports =======================
 from collections import namedtuple
+import os
 import struct
+
 from traits.api import on_trait_change
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
+from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.flux.flux_editor import FluxEditor
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
@@ -298,7 +302,8 @@ class FluxTask(InterpolationTask):
 
 
     def do_easy_flux(self):
-        ep=EasyParser()
+        path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
+        ep=EasyParser(path=path)
         # db = self.manager.db
         doc = ep.doc('flux')
 

@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import List, Int
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -34,18 +36,18 @@ class EasyParser(Loggable):
     _docs = List
     _ndocs = Int
 
-    def __init__(self, name=None, *args, **kw):
+    def __init__(self, path=None, name=None, *args, **kw):
         super(EasyParser, self).__init__(*args, **kw)
         # if name is None:
         #     name = 'minna_bluff_prj3'
 
         # name = add_extension(name, '.yaml')
         # p = os.path.join(paths., name)
+        if path is None:
+            path=os.path.join(paths.dissertation, 'data','minnabluff','spectra_unknowns.yaml')
 
-        p=os.path.join(paths.dissertation, 'data','minnabluff','ideo_unknowns.yaml')
-
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
+        if os.path.isfile(path):
+            with open(path, 'r') as fp:
                 md = yaml.load_all(fp)
                 self._docs = list(md)
                 self._ndocs = len(self._docs)

@@ -40,10 +40,12 @@ def convert_fit(f):
             f = fits.index(f) + 1
         elif f.startswith('average'):
             f='average'
-            err='SEM' if 'sem' in f else 'SD'
+            if not err:
+                err='SEM' if 'sem' in f else 'SD'
         elif f.startswith('weightedmean'):
             f = 'weightedmean'
-            err = 'SEM' if 'sem' in f else 'SD'
+            if not err:
+                err = 'SEM' if 'sem' in f else 'SD'
         else:
             f = None
 

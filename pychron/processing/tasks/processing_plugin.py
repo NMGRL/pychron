@@ -109,12 +109,6 @@ Install to enable MS Excel export''')
                          DeleteInterpretedAgeGroupAction(),
                          MakeGroupFromFileAction())
 
-        def easy_group():
-            return Group(EasyImportAction(),
-                         EasyFiguresAction(),
-                         EasyTablesAction(),
-                         EasySensitivityAction())
-
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
@@ -141,19 +135,26 @@ Install to enable MS Excel export''')
 
         use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
         if use_easy:
+            def easy_group():
+                return Group(EasyImportAction(),
+                             EasyFiguresAction(),
+                             EasyTablesAction(),
+                             EasySensitivityAction(),
+                             id='easy.group')
+
             grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])
             a = self._make_task_extension(
                 [('optimal_equilibration', CalcOptimalEquilibrationAction, 'MenuBar/tools.menu'),
-                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu/easy.group')],
+                 ('easy_fit', EasyFitAction, 'MenuBar/tools.menu')],
                 task_id='pychron.processing.isotope_evolution')
 
-            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/Tools/easy.group')],
+            b = self._make_task_extension([('easy_blanks', EasyBlanksAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.blanks')
 
-            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu/easy.group')],
+            c = self._make_task_extension([('easy_disc', EasyDiscriminationAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.discrimination')
 
-            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu/easy.group')],
+            d = self._make_task_extension([('easy_ic', EasyICAction, 'MenuBar/tools.menu')],
                                           task_id='pychron.processing.ic_factor')
 
             e = self._make_task_extension([('easy_flux', EasyFluxAction, 'MenuBar/tools.menu')],

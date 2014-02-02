@@ -18,11 +18,13 @@
 from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import List, on_trait_change, Bool, \
     Property, cached_property, HasTraits, Tuple
+
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+
 
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
@@ -377,6 +379,7 @@ class InterpolationEditor(GraphEditor):
                 self._add_error_bars(s, r_es)
                 series_id=(series_id + 1)*2
             else:
+
                 series_id=(series_id + 1) * 3
                 _p, s, l = graph.new_series(r_xs, r_ys,
                                             display_index=ArrayDataSource(data=display_xs),

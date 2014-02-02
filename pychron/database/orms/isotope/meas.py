@@ -16,12 +16,14 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+from time import mktime
 import uuid
 
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
+
 
 
 #============= local library imports  ==========================
@@ -48,6 +50,7 @@ class meas_AnalysisTable(Base, BaseMixin):
 
     uuid = stringcolumn(40, default=lambda: str(uuid.uuid4()))
     analysis_timestamp = Column(DateTime, default=func.now())
+
     endtime = Column(Time)
     status = Column(Integer, default=0)
     aliquot = Column(Integer)
@@ -87,6 +90,9 @@ class meas_AnalysisTable(Base, BaseMixin):
     notes = relationship('proc_NotesTable', backref='analysis')
     monitors = relationship('meas_MonitorTable', backref='analysis')
 
+    @property
+    def timestamp(self):
+        return mktime(self.analysis_timestamp.timetuple())
 
 class meas_ExperimentTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='experiment')
