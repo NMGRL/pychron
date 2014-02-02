@@ -254,7 +254,9 @@ class BaseArArFigure(HasTraits):
     def _add_point_labels(self, scatter):
         labels = ['{:02n}{}'.format(si.aliquot, si.step) for si in self.sorted_analyses]
         ov = PointsLabelOverlay(component=scatter,
-                                labels=labels)
+                                labels=labels,
+                                label_box=self.options.label_box
+                                )
         scatter.overlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
