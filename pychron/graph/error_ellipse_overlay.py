@@ -18,7 +18,7 @@
 
 #============= enthought library imports =======================
 from chaco.api import AbstractOverlay
-
+from traits.api import Bool
 #============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, power, corrcoef, column_stack, array, delete
 from numpy.linalg import eig
@@ -58,13 +58,14 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
     #        print aspectratio, dx, dy, width, height
     rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
     #print rotation, math.atan2(v[0][1], v[0][0]), math.atan2(v[0][0], v[1][0])
-    #rotation = 0.5 * math.atan2((2 * covar)/(aspectratio*(sx ** 2 - sy ** 2)))
-
+    rotation = 0.5 * math.atan2((2 * covar), (aspectratio*(sx ** 2 - sy ** 2)))
 
     return a, b, rotation
 
 
 class ErrorEllipseOverlay(AbstractOverlay):
+    fill=Bool(True)
+
     def overlay(self, component, gc, view_bounds=None, mode='normal'):
         """
 
@@ -85,19 +86,19 @@ class ErrorEllipseOverlay(AbstractOverlay):
         yer=delete(yer, sel)
         pxy=array(self.reg._calculate_correlation_coefficients())
 
-        dx = abs(component.index_mapper.range.low -
-                 component.index_mapper.range.high)
-        dy = abs(component.value_mapper.range.low -
-                 component.value_mapper.range.high)
+        # dx = abs(component.index_mapper.range.low -
+        #          component.index_mapper.range.high)
+        # dy = abs(component.value_mapper.range.low -
+        #          component.value_mapper.range.high)
+        #
+        # height = component.height
+        # width = component.width
 
-        height = component.height
-        width = component.width
+        # aspectratio = (dy / height) / (dx / width)
 
-        aspectratio = (dy / height) / (dx / width)
         try:
             for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
-                a, b, rot = error_ellipse(sx, sy, pxyi,
-                                          aspectratio=aspectratio)
+                a, b, rot = error_ellipse(sx, sy, pxyi)
                 #print a,b,rot
                 #a, b, rot = self.calculate_ellipse(component, cx, cy, ox, oy, pxy)
                 #gc.save_state()
@@ -129,8 +130,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         #print math.degrees(rot)
 
-        #gc.rotate_ctm(rot)
-        #gc.rotate_ctm(rot-pi/2.9)
+        # gc.rotate_ctm(rot)
+        gc.rotate_ctm(rot)
         gc.translate_ctm(-ox, -oy)
         #gc.translate_ctm(-scx, -scy)
 
@@ -138,7 +139,11 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         gc.begin_path()
         gc.lines(pts)
-        gc.stroke_path()
+        if self.fill:
+            gc.set_fill_color((0,0,0,0.5))
+            gc.fill_path()
+        else:
+            gc.stroke_path()
 
 
 if __name__ == '__main__':
@@ -154,8 +159,7 @@ if __name__ == '__main__':
 
     covar = ox * oy * pxy
     covmat = [[ox * ox, covar],
-              [covar, oy * oy]
-    ]
+              [covar, oy * oy]]
     w, _v = eig(covmat)
 
     if ox > oy:

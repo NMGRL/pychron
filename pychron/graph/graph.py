@@ -1083,21 +1083,19 @@ class Graph(Viewable, ContextMenuMixin):
 
         l = GuideOverlay(plot, value=v, orientation='v', **kw)
 
-        plot.overlays.append(l)
+        plot.underlays.append(l)
         return l
 
     def add_horizontal_rule(self, v, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
-
         l = GuideOverlay(plot, value=v, **kw)
-
-        plot.overlays.append(l)
+        plot.underlays.append(l)
 
     def add_opposite_ticks(self, plotid=0, key=None):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
         if key is None:
             for key in ['x', 'y']:

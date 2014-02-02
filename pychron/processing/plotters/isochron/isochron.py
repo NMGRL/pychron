@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
+from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
 from traits.api import Array, Float
 from chaco.plot_label import PlotLabel
@@ -45,14 +46,16 @@ class OffsetPlotLabel(PlotLabel):
 class AtmInterceptOverlay(AbstractOverlay):
     line_width=Float(1.5)
     font=KivaFont("arial 10")
-
+    line_style=LineStyle('dash')
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         x,y=component.map_screen((0, 1/295.5))
         xo=component.x
+
         with gc:
             gc.set_line_width(self.line_width)
+            gc.set_line_dash(self.line_style_)
             gc.move_to(xo,y)
-            gc.line_to(xo+15,y)
+            gc.line_to(x,y)
             gc.draw_path()
 
             txt='Atm.'
@@ -144,8 +147,7 @@ class InverseIsochron(Isochron):
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
-                                 reg=reg
-                                 )
+                                 reg=reg)
         scatter.overlays.append(eo)
 
         # mi, ma = graph.get_x_limits()
@@ -163,9 +165,6 @@ class InverseIsochron(Isochron):
         graph.new_series(rxs, rys, color=scatter.color)
         graph.set_series_label('fit{}'.format(self.group_id))
 
-        if po.show_labels:
-            self._add_point_labels(scatter)
-
         def ad(ai):
             a=ai.isotopes['Ar39'].get_interference_corrected_value()
             b=ai.isotopes['Ar40'].get_interference_corrected_value()
@@ -180,10 +179,16 @@ class InverseIsochron(Isochron):
 
             return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
 
-        self._add_scatter_inspector(scatter, additional_info=ad)
 
+
+        graph.add_vertical_rule(0, color='black')
         self._add_info(plot, reg, text_color=scatter.color)
+
         self._add_atm_overlay(plot)
+        if po.show_labels:
+            self._add_point_labels(scatter)
+
+        self._add_scatter_inspector(scatter, additional_info=ad)
 
     #===============================================================================
     # overlays
@@ -246,10 +251,12 @@ class InverseIsochron(Isochron):
         mswd_line = 'N= {} mswd= {}'.format(n, mswd)
         if label is None:
             label = OffsetPlotLabel(
-                offset=(0, 50 * self.group_id),
+                offset=(1, 1+50 * self.group_id),
                 component=plot,
                 overlay_position='inside bottom',
                 hjustify='left',
+                bgcolor='white',
+
                 color=text_color)
             plot.overlays.append(label)
             self._plot_label = label
