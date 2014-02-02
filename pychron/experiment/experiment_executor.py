@@ -627,7 +627,7 @@ class ExperimentExecutor(Loggable):
 
         # arun.persister.db = self.db
         # arun.persister.massspec_importer = self.massspec_importer
-        arun.persister.datahub=self.datahub
+        arun.persister.datahub = self.datahub
         arun.persister.experiment_identifier = exp.database_identifier
         arun.persister.load_name = exp.load_name
 
@@ -645,21 +645,21 @@ class ExperimentExecutor(Loggable):
         return arun
 
     def _set_run_aliquot(self, spec):
-        dh=self.datahub
-        ret=True
-        conflict=dh.is_conflict(spec)
+        dh = self.datahub
+        ret = True
+        conflict = dh.is_conflict(spec)
         if conflict:
-            ret=False
-            self._canceled=True
-            self._err_message='Databases are in conflict. {}'.format(conflict)
+            ret = False
+            self._canceled = True
+            self._err_message = 'Databases are in conflict. {}'.format(conflict)
             if self.confirmation_dialog('Databases are in conflict. '
-                                       'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
+                                        'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
                                         timeout_ret=False,
                                         timeout=30):
                 dh.update_spec(spec)
-                ret=True
-                self._canceled=False
-                self._err_message=''
+                ret = True
+                self._canceled = False
+                self._err_message = ''
         else:
             dh.update_spec(spec)
 
@@ -961,7 +961,8 @@ If "No" select from database
         return True
 
     def _get_blank(self, kind, ms, ed, last=False):
-        db=self.datahub.mainstore.db
+        mainstore = self.datahub.mainstore
+        db = mainstore.db
         sel = db.selector_factory(style='single')
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
@@ -997,7 +998,7 @@ If "No" select from database
                     dbr = sel.selected
 
             if dbr:
-                dbr = self.make_analysis(dbr)
+                dbr = mainstore.make_analysis(dbr)
                 return dbr
 
     def _check_managers(self, inform=True, n=1):
@@ -1081,7 +1082,7 @@ If "No" select from database
     # defaults
     #===============================================================================
     def _datahub_default(self):
-        dh=Datahub()
+        dh = Datahub()
         return dh
 
     def _console_display_default(self):
@@ -1152,69 +1153,69 @@ If "No" select from database
                 self.warning(
                     'no automated run monitor avaliable. Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
 
-#============= EOF =============================================
-# def _check_all_aliquots_queue(self):
-    #     for ei in self.experiment_queues:
-    #         if self._check_all_aliquots(ei):
-    #             break
-    #
-    # def _check_all_aliquots(self, eq):
-    #     db = self.massspec_importer.db
-    #     with db.session_ctx():
-    #         for ai in eq.cleaned_automated_runs:
-    #             if self._analysis_exists(db, ai):
-    #                 return True
-    #
-    # def _analysis_exists(self, db, ai):
-    #     ident = ai.labnumber
-    #     aliquot = ai.aliquot
-    #     step = ai.step
-    #     if db.get_analysis(ident, aliquot, step):
-    #         self.warning_dialog('Analysis {} already exists in secondary database. '
-    #                             'Modify your experiment accordingly'.format(ai.record_id))
-    #         return True
-# def _check_run_aliquot(self, arv):
-#     """
-#         check the secondary database for this labnumber
-#         get last aliquot
-#
-#     """
-#     if self.massspec_importer:
-#         self.debug('Checking run {} aliquot'.format(arv.runid))
-#         db = self.massspec_importer.db
-#         if db.connected:
-#         # try:
-#         # _ = int(arv.labnumber)
-#             identifier = self.massspec_importer.get_identifier(arv)
-#
-#             ai = db.get_analysis(identifier, arv.aliquot, arv.step)
-#             if ai is not None:
-#                 al, st = db.get_latest_analysis_aliquot(identifier)
-#                 if arv.step:
-#                     new_step = st + 1
-#                     new_aliquot = al
-#                 else:
-#                     new_aliquot = al + 1
-#                     new_step = ''
-#
-#                 self.message(
-#                     '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
-#                                                                                                          arv.aliquot,
-#                                                                                                          arv.step,
-#                                                                                                          identifier,
-#                                                                                                          new_aliquot,
-#                                                                                                          new_step))
-#                 arv.aliquot = new_aliquot
-#                 arv.step = new_step
-#                 #update aliquot for all runs with this labnumber
-#                 i = 1
-#                 j = 1
-#                 for ei in self.experiment_queue.cleaned_automated_runs:
-#                     if ei.labnumber == identifier and ei != arv:
-#                         if ei.step:
-#                             ei.aliquot = new_aliquot
-#                             ei.step = new_step + j
-#                             j += 1
-#                         else:
-#                             ei.aliquot = new_aliquot + i
-#                             i += 1
+                #============= EOF =============================================
+                # def _check_all_aliquots_queue(self):
+                #     for ei in self.experiment_queues:
+                #         if self._check_all_aliquots(ei):
+                #             break
+                #
+                # def _check_all_aliquots(self, eq):
+                #     db = self.massspec_importer.db
+                #     with db.session_ctx():
+                #         for ai in eq.cleaned_automated_runs:
+                #             if self._analysis_exists(db, ai):
+                #                 return True
+                #
+                # def _analysis_exists(self, db, ai):
+                #     ident = ai.labnumber
+                #     aliquot = ai.aliquot
+                #     step = ai.step
+                #     if db.get_analysis(ident, aliquot, step):
+                #         self.warning_dialog('Analysis {} already exists in secondary database. '
+                #                             'Modify your experiment accordingly'.format(ai.record_id))
+                #         return True
+                # def _check_run_aliquot(self, arv):
+                #     """
+                #         check the secondary database for this labnumber
+                #         get last aliquot
+                #
+                #     """
+                #     if self.massspec_importer:
+                #         self.debug('Checking run {} aliquot'.format(arv.runid))
+                #         db = self.massspec_importer.db
+                #         if db.connected:
+                #         # try:
+                #         # _ = int(arv.labnumber)
+                #             identifier = self.massspec_importer.get_identifier(arv)
+                #
+                #             ai = db.get_analysis(identifier, arv.aliquot, arv.step)
+                #             if ai is not None:
+                #                 al, st = db.get_latest_analysis_aliquot(identifier)
+                #                 if arv.step:
+                #                     new_step = st + 1
+                #                     new_aliquot = al
+                #                 else:
+                #                     new_aliquot = al + 1
+                #                     new_step = ''
+                #
+                #                 self.message(
+                #                     '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
+                #                                                                                                          arv.aliquot,
+                #                                                                                                          arv.step,
+                #                                                                                                          identifier,
+                #                                                                                                          new_aliquot,
+                #                                                                                                          new_step))
+                #                 arv.aliquot = new_aliquot
+                #                 arv.step = new_step
+                #                 #update aliquot for all runs with this labnumber
+                #                 i = 1
+                #                 j = 1
+                #                 for ei in self.experiment_queue.cleaned_automated_runs:
+                #                     if ei.labnumber == identifier and ei != arv:
+                #                         if ei.step:
+                #                             ei.aliquot = new_aliquot
+                #                             ei.step = new_step + j
+                #                             j += 1
+                #                         else:
+                #                             ei.aliquot = new_aliquot + i
+                #                             i += 1

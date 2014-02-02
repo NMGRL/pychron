@@ -197,7 +197,7 @@ class DBAnalysis(Analysis):
             iso.temporary_blank = Blank(value=v, error=e)
 
     def get_baseline_corrected_signal_dict(self):
-        get = lambda iso: iso.baseline_corrected_value()
+        get = lambda iso: iso.get_baseline_corrected_value()
         return self._get_isotope_dict(get)
 
     def get_baseline_dict(self):
