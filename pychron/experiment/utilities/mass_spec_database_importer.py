@@ -50,10 +50,10 @@ ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
 DEBUG = True
 
+
 @provides(IDatastore)
 class MassSpecDatabaseImporter(Loggable):
-
-    precedence=Int(0)
+    precedence = Int(0)
 
     db = Instance(MassSpecDatabaseAdapter)
     test = Button
@@ -68,22 +68,22 @@ class MassSpecDatabaseImporter(Loggable):
 
         ret = 0
         if self.db:
-            identifier=self.get_identifier(identifier)
+            identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier, aliquot)
 
             if ret:
                 _, s = ret
-                ret=ALPHAS.index(s) if s else -1
+                ret = ALPHAS.index(s) if s else -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
         ret = 0
         if self.db:
             identifier = self.get_identifier(identifier)
-            ret=self.db.get_latest_analysis(identifier)
+            ret = self.db.get_latest_analysis(identifier)
             print identifier, ret
             if ret:
-                ret,_=ret
+                ret, _ = ret
         return ret
 
     def is_connected(self):
@@ -144,10 +144,24 @@ class MassSpecDatabaseImporter(Loggable):
             spec is either ExportSpec, int or str
             return identifier
         """
-        identifier=str(spec if isinstance(spec, (int, str)) else spec.labnumber)
+        if isinstance(spec, (int, str)):
+            identifier = spec
+            mass_spectrometer = ''
+            if isinstance(identifier, str):
+                if '-' in identifier:
+                    a = identifier.split('-')[-1]
+                    if a.lower() == 'o':
+                        mass_spectrometer = 'obama'
+                    elif a.lower() == 'j':
+                        mass_spectrometer = 'jan'
+
+        else:
+            mass_spectrometer = spec.mass_spectrometer.lower()
+
+        identifier = str(spec if isinstance(spec, (int, str)) else spec.labnumber)
 
         if identifier.startswith('c'):
-            if spec.mass_spectrometer.lower() in ('obama', 'pychron obama'):
+            if mass_spectrometer.lower() in ('obama', 'pychron obama'):
                 identifier = '4358'
             else:
                 identifier = '4359'
