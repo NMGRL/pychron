@@ -79,14 +79,21 @@ class UVExtractionPyScript(ExtractionPyScript):
     @verbose_skip
     @command_register
     def extract(self, power='', units='', position=None):
+        if power == '':
+            power=self.extract_value
+        if units:
+            units=self.extract_units
+
         if not position is None:
             self.move_to_position(position)
 
-            if position.startswith('l'):
+            po=position[0]
+
+            if po in ('r','l'):
                 self.trace_path(power, position)
-            elif position.startswith('s'):
+            elif po=='s':
                 self.trace_path(power, position, kind='step')
-            elif position.startswith('d'):
+            elif po=='d':
                 self.drill_point(power, position)
             else:
                 super(UVExtractionPyScript, self).extract(power=power, units=units)

@@ -35,17 +35,17 @@ from pychron.paths import paths
 
 
 class PychronLaserManager(BaseLaserManager):
-    '''
-    A PychronLaserManager is used to control an instance of 
-    pychron remotely. 
-    
-    Common laser functions such as enable_laser are converted to 
+    """
+    A PychronLaserManager is used to control an instance of
+    pychron remotely.
+
+    Common laser functions such as enable_laser are converted to
     the RemoteHardwareServer equivalent and sent by the _communicator
-    
+
     e.g enable_laser ==> self._communicator.ask('Enable')
-    
+
     The communicators connection arguments are set in initialization.xml
-    
+
     use a communicator block
     <plugin enabled="true" fire_mode="client">FusionsDiode
         ...
@@ -55,7 +55,7 @@ class PychronLaserManager(BaseLaserManager):
           <kind>UDP</kind>
         </communications>
     </plugin>
-    '''
+    """
 
     port = CInt
     host = Str
