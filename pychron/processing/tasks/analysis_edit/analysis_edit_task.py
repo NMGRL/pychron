@@ -17,9 +17,11 @@
 #============= enthought library imports =======================
 from itertools import groupby
 from datetime import timedelta
+
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
+
 from pychron.easy_parser import EasyParser
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -29,6 +31,7 @@ from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -375,7 +378,9 @@ class AnalysisEditTask(BaseBrowserTask):
     def _update_component(self):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
-
+            opt=self.active_editor.plotter_options_manager.plotter_options
+            index_attr=opt.index_attr
+            self.plot_editor_pane.index_attr=index_attr
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
@@ -386,11 +391,12 @@ class AnalysisEditTask(BaseBrowserTask):
         elif name == 'refresh_editor_needed':
             self.active_editor.rebuild()
         else:
-            if not obj._no_update:
-                if self.active_editor:
-                    self.active_editor.set_items(self.unknowns_pane.items)
-                if self.plot_editor_pane:
-                    self.plot_editor_pane.analyses = self.unknowns_pane.items
+            # if not obj._no_update:
+            if self.active_editor:
+                self.active_editor.set_items(self.unknowns_pane.items)
+
+            if self.plot_editor_pane:
+                self.plot_editor_pane.analyses = self.unknowns_pane.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):

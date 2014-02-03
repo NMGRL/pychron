@@ -55,9 +55,8 @@ class FigureModel(HasTraits):
         ans = sorted(self.analyses, key=key)
         gs = [self._panel_klass(analyses=list(ais),
                                 plot_options=self.plot_options,
-                                group_id=gid)
+                                graph_id=gid)
               for gid, ais in groupby(ans, key=key)]
-
         return gs
 
     def _get_npanels(self):

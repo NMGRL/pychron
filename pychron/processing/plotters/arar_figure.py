@@ -37,6 +37,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.pychron_constants import ARGON_KEYS
 
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
@@ -192,8 +193,12 @@ class BaseArArFigure(HasTraits):
                         yield ai.isotopes[n].get_intensity()/ai.isotopes[d].get_intensity()
         else:
             def gen():
+                f=lambda x: x
+                if attr in ARGON_KEYS:
+                    f=lambda x: x.get_intensity()
+
                 for ai in self.sorted_analyses:
-                    yield ai.get_value(attr)
+                    yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -254,15 +259,20 @@ class BaseArArFigure(HasTraits):
     def _add_point_labels(self, scatter):
         labels = ['{:02n}{}'.format(si.aliquot, si.step) for si in self.sorted_analyses]
         ov = PointsLabelOverlay(component=scatter,
-                                labels=labels)
+                                labels=labels,
+                                label_box=self.options.label_box
+                                )
         scatter.overlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
+                        end_caps,
                         visible=True):
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
-                              visible=visible)
+                              visible=visible,
+                              use_end_caps=end_caps
+                              )
 
         scatter.underlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
@@ -350,11 +360,15 @@ class BaseArArFigure(HasTraits):
 
         x = floatfmt(x, 3)
         we = floatfmt(we, 4)
-        pm = '+/-'
 
-        age_units = self._get_age_units()
+        if self.options.index_attr in ('uF','Ar40/Ar36'):
+            me='{} +/-{}'.format(x,we)
+        else:
+            age_units = self._get_age_units()
+            me='{} +/-{} {}'.format(x,we,age_units)
 
-        return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
+        return u'{} {} {}'.format(me, mswd, n)
+        # return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
 
     def _get_age_units(self):
         a = 'Ma'

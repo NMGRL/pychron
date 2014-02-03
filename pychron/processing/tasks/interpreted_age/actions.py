@@ -24,6 +24,12 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
+class PlotIdeogramAction(TaskAction):
+    name = 'Ideogram'
+    method = 'plot_ideogram'
+    image = icon('file_pdf')
+
+
 class SavePDFTablesAction(TaskAction):
     name = 'Save PDF Tables'
     method = 'save_pdf_tables'
@@ -66,9 +72,9 @@ class OpenInterpretedAgeGroupAction(TaskAction):
 
 
 class MakeGroupFromFileAction(TaskAction):
-    name='Group From File'
-    method='make_group_from_file'
-    image=icon('document-open-2.png')
+    name = 'Group From File'
+    method = 'make_group_from_file'
+    image = icon('document-open-2.png')
 
     def perform(self, event=None):
         app = self.task.window.application
@@ -81,10 +87,11 @@ class MakeGroupFromFileAction(TaskAction):
             if method:
                 method()
 
+
 class DeleteInterpretedAgeGroupAction(TaskAction):
-    name='Delete Group'
-    method='delete_group'
-    image=icon('delete.png')
+    name = 'Delete Group'
+    method = 'delete_group'
+    image = icon('delete.png')
 
     def perform(self, event=None):
         app = self.task.window.application

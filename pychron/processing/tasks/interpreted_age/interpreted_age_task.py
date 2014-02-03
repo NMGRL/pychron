@@ -19,12 +19,15 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import os
+
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 import yaml
+
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction,\
-    OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, DeleteInterpretedAgeGroupAction
+    OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, DeleteInterpretedAgeGroupAction, \
+    PlotIdeogramAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
 
@@ -37,7 +40,17 @@ class InterpretedAgeTask(BaseBrowserTask):
                           SaveInterpretedAgeGroupAction(),
                           OpenInterpretedAgeGroupAction(),
                           MakeGroupFromFileAction(),
-                          DeleteInterpretedAgeGroupAction())]
+                          DeleteInterpretedAgeGroupAction()),
+                 SToolBar(PlotIdeogramAction())
+                 ]
+
+    def plot_ideogram(self):
+
+        if self.active_editor:
+            iages=self.active_editor.interpreted_ages
+            task=self.window.application.get_task('pychron.processing.figures')
+            task.new_ideogram()
+            task.active_editor.plot_interpreted_ages(iages)
 
     def external_delete_group(self):
         self.load_projects()

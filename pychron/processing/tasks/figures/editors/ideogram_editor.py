@@ -19,6 +19,7 @@ from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.figure_container import FigureContainer
@@ -27,6 +28,18 @@ from pychron.processing.plotters.figure_container import FigureContainer
 class IdeogramEditor(FigureEditor):
     plotter_options_manager = Instance(IdeogramOptionsManager, ())
     basename = 'ideo'
+
+    def plot_interpreted_ages(self, iages):
+        def construct(a):
+            i=InterpretedAgeAnalysis(record_id='{} ({})'.format(a.sample,a.identifier),
+                                     age=a.age,
+                                     age_err=a.age_err)
+            return i
+
+        ans=[construct(ia) for ia in iages]
+        self.analyses=ans
+        self._update_analyses()
+        self.dump_tool()
 
     def get_component(self, ans, plotter_options):
         # meta = None

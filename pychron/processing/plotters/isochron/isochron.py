@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from enable.enable_traits import LineStyle
 from kiva.trait_defs.kiva_font_trait import KivaFont
-from traits.api import Array, Float
+from traits.api import Array, Float, Str
 from chaco.plot_label import PlotLabel
 from chaco.array_data_source import ArrayDataSource
 #============= standard library imports ========================
@@ -47,8 +47,11 @@ class AtmInterceptOverlay(AbstractOverlay):
     line_width=Float(1.5)
     font=KivaFont("arial 10")
     line_style=LineStyle('dash')
+    label=Str
+    value=Float
+
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
-        x,y=component.map_screen((0, 1/295.5))
+        x,y=component.map_screen((0, self.value))
         xo=component.x
 
         with gc:
@@ -58,7 +61,7 @@ class AtmInterceptOverlay(AbstractOverlay):
             gc.line_to(x,y)
             gc.draw_path()
 
-            txt='Atm.'
+            txt=self.label
             gc.set_font(self.font)
             w,h=gc.get_full_text_extent(txt)[:2]
             gc.set_text_position(xo-w-2, y)
@@ -147,7 +150,9 @@ class InverseIsochron(Isochron):
         graph.set_series_label('data{}'.format(self.group_id))
 
         eo = ErrorEllipseOverlay(component=scatter,
-                                 reg=reg)
+                                 reg=reg,
+                                 fill=self.options.fill_ellipses
+                                 )
         scatter.overlays.append(eo)
 
         # mi, ma = graph.get_x_limits()
@@ -179,12 +184,12 @@ class InverseIsochron(Isochron):
 
             return '39Ar/40Ar = {} +/-{} {}'.format(floatfmt(v, n=6), floatfmt(e, n=7), pe)
 
-
-
         graph.add_vertical_rule(0, color='black')
         self._add_info(plot, reg, text_color=scatter.color)
 
-        self._add_atm_overlay(plot)
+        if self.options.show_nominal_intercept:
+            self._add_atm_overlay(plot)
+
         if po.show_labels:
             self._add_point_labels(scatter)
 
@@ -195,7 +200,11 @@ class InverseIsochron(Isochron):
     #===============================================================================
 
     def _add_atm_overlay(self, plot):
-        plot.overlays.append(AtmInterceptOverlay(component=plot))
+        v=self.options.nominal_intercept_value
+        plot.overlays.append(AtmInterceptOverlay(component=plot,
+                                                 label=self.options.nominal_intercept_label,
+                                                 value=v
+                                                 ))
 
     def _add_info(self, plot, reg, label=None, text_color='black'):
         intercept = reg.predict(0)

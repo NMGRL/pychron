@@ -1,5 +1,5 @@
 #===============================================================================
-# Copyright 2013 Jake Ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,32 +15,30 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Enum
+from traits.api import Str, Property, cached_property
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.plotters.options.plotter import PlotterOptions
+from uncertainties import ufloat
+from pychron.processing.analyses.analysis import Analysis
 
 
-class AgeOptions(PlotterOptions):
-    include_j_error = Bool(True)
-    include_irradiation_error = Bool(True)
-    include_decay_error = Bool(False)
-    nsigma = Enum(1, 2, 3)
-    show_info = Bool(True)
-    show_mean_info=Bool(True)
-    show_error_type_info=Bool(True)
-    label_box = Bool(False)
-    index_attr=None
+class NonDBAnalysis(Analysis):
+    record_id = Str
 
-    def _get_dump_attrs(self):
-        attrs = super(AgeOptions, self)._get_dump_attrs()
-        attrs += ['include_j_error',
-                  'include_irradiation_error',
-                  'include_decay_error',
-                  'nsigma','label_box',
-                  'show_info', 'show_mean_info','show_error_type_info']
-        return attrs
+    uage = Property(depends_on='age, age_err')
 
+    @cached_property
+    def _get_uage(self):
+        return ufloat(self.age, self.age_err)
+
+
+class FileAnalysis(NonDBAnalysis):
+    pass
+
+
+class InterpretedAgeAnalysis(NonDBAnalysis):
+    pass
 
 #============= EOF =============================================
+

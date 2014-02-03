@@ -229,10 +229,13 @@ class PlotterOptions(BasePlotterOptions):
 
         g = Group(main_grp,
                   # axis_grp,
-                  layout='tabbed')
+                  orientation='vertical'
+                  )
         grps = self._get_groups()
         if grps:
             g.content.extend(grps)
+            g.layout='fold'
+
 
         v = View(VGroup(self._get_refresh_group(),g))
         return v

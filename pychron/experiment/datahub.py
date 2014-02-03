@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 from datetime import datetime
 import time
+
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -28,7 +30,7 @@ from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDat
 from pychron.loggable import Loggable
 
 # http://stackoverflow.com/q/3844931/
-from pychron.processing.analyses.analysis import DBAnalysis
+from pychron.processing.analyses.dbanalysis import DBAnalysis
 
 
 def checkEqual6502(lst):

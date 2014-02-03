@@ -128,7 +128,7 @@ def parse_irradiation_tray_map(p):
 
 
 def load_irradiation_map(db, p, name, overwrite_geometry=False):
-    holes=parse_irradiation_tray_map(p)
+    holes = parse_irradiation_tray_map(p)
     if holes is not None:
         try:
             blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
@@ -141,3 +141,4 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
             print p, name, e
             db.sess.rollback()
 
+            

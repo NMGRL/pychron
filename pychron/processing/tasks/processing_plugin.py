@@ -32,7 +32,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction, \
+    GraphGroupSelectedAction, FigureFromFile
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -81,7 +82,9 @@ Install to enable MS Excel export''')
                 SpectrumAction(),
                 IdeogramAction(),
                 InverseIsochronAction(),
-                SeriesAction())
+                SeriesAction(),
+                FigureFromFile()
+                )
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
@@ -93,7 +96,10 @@ Install to enable MS Excel export''')
             return Group(GroupSelectedAction(),
                          GroupbyAliquotAction(),
                          GroupbyLabnumberAction(),
-                         ClearGroupAction())
+                         ClearGroupAction(),)
+
+        def graph_grouping_group():
+            return Group(GraphGroupSelectedAction())
 
         def reduction_group():
             return Group(IsotopeEvolutionAction(),
@@ -121,6 +127,7 @@ Install to enable MS Excel export''')
                            ('tag', TagAction, 'MenuBar/data.menu'),
                            ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
                            ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+                           ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
                            ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]

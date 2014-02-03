@@ -49,6 +49,7 @@ class SpectrumOptions(AgeOptions):
     extend_plateau_end_caps = Bool(True)
     plateau_line_width=Float
     plateau_line_color=Color
+
     # def _get_info_group(self):
     #     g = VGroup(
     #         HGroup(Item('show_info', label='Display Info'),

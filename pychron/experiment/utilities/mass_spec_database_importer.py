@@ -20,11 +20,12 @@ from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 from traitsui.api import View, Item
 
+
 #============= standard library imports ========================
 import struct
 from numpy import array
 #============= local library imports  ==========================
-from pychron.core.IDatastore import IDatastore
+from pychron.core.i_datastore import IDatastore
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
@@ -92,8 +93,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     def connect(self, *args, **kw):
         return self.db.connect(*args, **kw)
-
-    #========================================================================================
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:

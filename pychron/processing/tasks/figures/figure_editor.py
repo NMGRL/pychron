@@ -16,14 +16,22 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+import os
+
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
+
+
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
+from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -45,6 +53,33 @@ class FigureEditor(GraphEditor):
     invalid=Event
 
     saved_figure_id=Int
+
+    def clear_aux_plot_limits(self):
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            ap.clear_ylimits()
+
+    def set_items_from_file(self, p):
+        if os.path.isfile(p):
+            def construct(d):
+                f=FileAnalysis(age=float(d['age']),
+                               age_err=float(d['age_err']),
+                               record_id=d['runid'])
+                return f
+
+            par=CSVParser()
+            par.load(p)
+            ans=[construct(args)
+                    for args in par.itervalues()]
+
+        po=self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            if ap.name.lower() not in ('ideogram', 'analysis number','analysis number stacked'):
+                ap.use=False
+
+        self.analyses = ans
+        self._update_analyses()
+        self.dump_tool()
 
     def save_figure(self, name, project, labnumbers):
         db=self.processor.db
@@ -138,13 +173,20 @@ class FigureEditor(GraphEditor):
         else:
             self.annotation_tool = None
 
-    def set_group(self, idxs, gid, refresh=True):
+    def set_group(self, idxs, gid, **kw):
+        self._set_group(idxs, gid, 'group_id', **kw)
 
-        for i, uu in enumerate(self.analyses):
-            if i in idxs:
-                uu.group_id = gid
+    def set_graph_group(self, idxs, gid, **kw):
 
-        if refresh:
+        self._set_group(idxs, gid, 'graph_id', **kw)
+
+    def _set_group(self, idxs, gid, attr, rebuild=True):
+        ans = self.analyses
+        for i in idxs:
+            a = ans[i]
+            setattr(a, attr, gid)
+
+        if rebuild:
             self.rebuild()
 
     def rebuild(self):
