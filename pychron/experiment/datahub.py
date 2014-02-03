@@ -133,12 +133,12 @@ class Datahub(Loggable):
 
     def _get_greatest_aliquots(self, identifier):
         return zip(*[(store.precedence, store.db.name,
-                      store.get_greatest_aliquot(identifier) if store.is_connected() else 0)
+                      store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
                      for store in self.sorted_stores])
 
     def _get_greatest_steps(self, identifier, aliquot):
         return zip(*[(store.precedence, store.db.name,
-                      store.get_greatest_step(identifier, aliquot) if store.is_connected() else -1)
+                      store.get_greatest_step(identifier, aliquot) or -1 if store.is_connected() else -1)
                      for store in self.sorted_stores])
 
     _sorted_stores = None

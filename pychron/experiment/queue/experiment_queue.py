@@ -54,6 +54,10 @@ class ExperimentQueue(BaseExperimentQueue):
         self._no_update = True
         for ei in reversed(ens):
             ei.state = 'not run'
+            if not ei.is_step_heat():
+                ei.aliquot=0
+
+            ei.step = ''
             ans.insert(0, ei)
 
         self.executed_runs = []

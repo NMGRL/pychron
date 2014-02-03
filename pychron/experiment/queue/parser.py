@@ -64,15 +64,17 @@ class RunParser(Loggable):
 
     def _get_attr_value(self, header, args, attr, cast=None):
         for hi, ai in self._get_attr(attr):
-            idx = self._get_idx(header, hi)
+            idx = self._get_idx(header, ai)
+            #print header
+            #print hi, ai, idx
             if idx:
                 try:
                     v=args[idx]
                     if v.strip():
-                        return ai, cast(v) if cast else v
+                        return hi, cast(v) if cast else v
                 except IndexError, e:
                     pass
-                    #print attr, args[idx], idx
+                    #print e, attr, idx, args
 
     def _load_strings(self, header, args, params):
         for attr in [
@@ -95,6 +97,7 @@ class RunParser(Loggable):
                      ('beam_diameter', 'beam_diam')]:
 
             v=self._get_attr_value(header, args, attr, cast=float)
+            print attr, v
             if v is not None:
                 params[v[0]]=v[1]
 
