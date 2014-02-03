@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 import re
+
 from traits.api import Array, List, Event, Property, Any, \
     Dict, Str, Bool, cached_property
+
 #============= standard library imports ========================
 import math
 from numpy import where, delete
@@ -214,6 +216,9 @@ class BaseRegressor(Loggable):
         return self.predict(self.clean_xs) - self.clean_ys
 
     def calculate_ci(self, rx, rmodel=None):
+        if rmodel is None:
+            rmodel = self.predict(rx)
+
         cors=self.calculate_ci_error(rx, rmodel)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
@@ -230,8 +235,8 @@ class BaseRegressor(Loggable):
         if isinstance(rx, (float, int)):
             rx = [rx]
 
-        X = self.xs
-        Y = self.ys
+        X = self.clean_xs
+        Y = self.clean_ys
         cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
         return cors
 

@@ -57,8 +57,6 @@ def error_ellipse(sx, sy, pxy, aspectratio=1):
     a, b = a * SCALE_FACTOR, b * SCALE_FACTOR
     #        print aspectratio, dx, dy, width, height
     rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
-    #print rotation, math.atan2(v[0][1], v[0][0]), math.atan2(v[0][0], v[1][0])
-    rotation = 0.5 * math.atan2((2 * covar), (aspectratio*(sx ** 2 - sy ** 2)))
 
     return a, b, rotation
 
@@ -86,19 +84,22 @@ class ErrorEllipseOverlay(AbstractOverlay):
         yer=delete(yer, sel)
         pxy=array(self.reg._calculate_correlation_coefficients())
 
-        # dx = abs(component.index_mapper.range.low -
-        #          component.index_mapper.range.high)
-        # dy = abs(component.value_mapper.range.low -
-        #          component.value_mapper.range.high)
-        #
-        # height = component.height
-        # width = component.width
+        dx = abs(component.index_mapper.range.low -
+                 component.index_mapper.range.high)
+        dy = abs(component.value_mapper.range.low -
+                 component.value_mapper.range.high)
 
-        # aspectratio = (dy / height) / (dx / width)
+        height = component.height
+        width = component.width
 
+        aspectratio = (dy / height) / (dx / width)
+        # aspectratio=(height/width)
+        # aspectratio=(dy/dx)
+        # aspectratio=self.component.aspect_ratio
+        aspectratio=1
         try:
             for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
-                a, b, rot = error_ellipse(sx, sy, pxyi)
+                a, b, rot = error_ellipse(sx, sy, pxyi, aspectratio=aspectratio)
                 #print a,b,rot
                 #a, b, rot = self.calculate_ellipse(component, cx, cy, ox, oy, pxy)
                 #gc.save_state()
@@ -128,10 +129,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
 
         gc.translate_ctm(scx, scy)
 
-        #print math.degrees(rot)
-
-        # gc.rotate_ctm(rot)
         gc.rotate_ctm(rot)
+        # gc.rotate_ctm(rot-math.pi/2.0)
         gc.translate_ctm(-ox, -oy)
         #gc.translate_ctm(-scx, -scy)
 
