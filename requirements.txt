@@ -1,8 +1,6 @@
 Genshi==0.6
 GitPython==0.3.2.RC1
 Jinja2==2.6
-MDP==3.2
-MKL==10.3
 PIL==1.1.7
 Paste==1.7.5.1
 PasteDeploy==1.5.0
