@@ -2,12 +2,9 @@ Genshi==0.6
 GitPython==0.3.2.RC1
 Jinja2==2.6
 PIL==1.1.7
-Paste==1.7.5.1
-PasteDeploy==1.5.0
-PasteScript==1.7.5
 PyMySQL==0.5
 PyOpenGL==3.0.1
-PySide==1.1.0
+PySide>=1.1.0
 PyWebDAV==0.9.8
 PyYAML==3.10
 Pycluster==1.50
