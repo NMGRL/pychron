@@ -64,7 +64,7 @@ class Datahub(Loggable):
         self._new_aliquot = 1
 
         if spec.is_step_heat():
-            k='Stepheat'
+            k = 'Stepheat'
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
             step = make_step(max(vs) + 1)
             # print ps, ns, vs, spec.identifier
@@ -72,11 +72,11 @@ class Datahub(Loggable):
             self._new_step = step
             self._new_aliquot = spec.aliquot
         else:
-            k='Fusion'
+            k = 'Fusion'
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
             # print 'b',ps, ns, vs, spec.identifier
-            mv=max(vs)
+            mv = max(vs)
             self._new_runid = make_aliquot_step(mv + 1, '')
             self._new_aliquot = mv + 1
 
@@ -87,7 +87,7 @@ class Datahub(Loggable):
             for ln, lv in zip(ns[1:], vs[1:]):
                 if lv != hv:
                     txt.append('{}!={} {}!={}'.format(hn, ln, hv, lv))
-            err=', '.join(txt)
+            err = ', '.join(txt)
             self.warning('Datastore conflicts. {}'.format(err))
             return err
 
@@ -137,8 +137,9 @@ class Datahub(Loggable):
                      for store in self.sorted_stores])
 
     def _get_greatest_steps(self, identifier, aliquot):
+        f = lambda x: x if x is not None else -1
         return zip(*[(store.precedence, store.db.name,
-                      store.get_greatest_step(identifier, aliquot) or -1 if store.is_connected() else -1)
+                      f(store.get_greatest_step(identifier, aliquot)) if store.is_connected() else -1)
                      for store in self.sorted_stores])
 
     _sorted_stores = None
