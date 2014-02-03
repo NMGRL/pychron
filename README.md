@@ -1,6 +1,8 @@
 Pychron
 ========
 
+.. image:: https://travis-ci.org/NMGRL/pychron.png?branch=develop   :target: https://travis-ci.org/NMGRL/pychron
+
 What is Pychron
 ===============
 
