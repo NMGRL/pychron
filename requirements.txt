@@ -7,7 +7,6 @@ PyOpenGL==3.0.1
 PySide>=1.1.0
 PyWebDAV==0.9.8
 PyYAML==3.10
-Pycluster==1.50
 Pydap==3.1.RC1
 Pygments==1.4
 Qt==4.7.3
