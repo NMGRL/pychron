@@ -32,6 +32,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -378,9 +379,10 @@ class AnalysisEditTask(BaseBrowserTask):
     def _update_component(self):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
-            opt=self.active_editor.plotter_options_manager.plotter_options
-            index_attr=opt.index_attr
-            self.plot_editor_pane.index_attr=index_attr
+            if hasattr(self.active_editor, 'plotter_options_manager'):
+                opt=self.active_editor.plotter_options_manager.plotter_options
+                index_attr=opt.index_attr
+                self.plot_editor_pane.index_attr=index_attr
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
