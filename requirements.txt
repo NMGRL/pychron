@@ -4,12 +4,10 @@ Jinja2==2.6
 PIL==1.1.7
 PyMySQL==0.5
 PyOpenGL==3.0.1
-PySide>=1.1.0
 PyWebDAV==0.9.8
 PyYAML==3.10
 Pydap==3.1.RC1
 Pygments==1.4
-Qt==4.7.3
 Reportlab==2.5
 SQLAlchemy==0.7.1
 SquareMap==1.0.1
