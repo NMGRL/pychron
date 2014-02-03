@@ -183,9 +183,12 @@ class ExperimentEditorTask(EditorTask):
         editor = klass(path=path)
         editor.new_queue(txt)
         self._open_editor(editor)
+
         # loading queue editor set dirty
         # clear dirty flag
         editor.dirty = False
+
+        self._show_pane(self.experiment_factory_pane)
 
     def _open_xls(self, path):
         """
@@ -263,7 +266,7 @@ class ExperimentEditorTask(EditorTask):
                     #                     manager.update_queues()
                     #                    manager.start_file_listener(path)
 
-            self._show_pane(self.experiment_factory_pane)
+            # do_later(self._show_pane,self.experiment_factory_pane)
 
             return True
         else:
@@ -305,7 +308,7 @@ class ExperimentEditorTask(EditorTask):
         editor.new_queue(mass_spectrometer=ms)
 
         self._open_editor(editor)
-        self._show_pane(self.experiment_factory_pane)
+        # self._show_pane(self.experiment_factory_pane)
 
         if not self.manager.executor.isAlive():
             self.manager.executor.executable = False
@@ -320,6 +323,7 @@ class ExperimentEditorTask(EditorTask):
     def _active_editor_changed(self):
         if self.active_editor:
             self.manager.experiment_queue = self.active_editor.queue
+            self._show_pane(self.experiment_factory_pane)
 
     def _publish_notification(self, run):
         if self.use_notifications:
@@ -524,7 +528,6 @@ class ExperimentEditorTask(EditorTask):
     def _edit_event(self):
         p = self.experiment_factory_pane
         self._show_pane(p)
-
 
     @on_trait_change('manager:[save_event, executor:auto_save_event]')
     def _save_queue(self):
