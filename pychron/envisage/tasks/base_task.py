@@ -17,8 +17,11 @@
 #============= enthought library imports =======================
 import os
 import subprocess
+
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
+from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
+
 # from traitsui.api import View, Item
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
@@ -219,20 +222,15 @@ class TaskGroup(Group):
 class BaseTask(Task, Loggable):
     application = DelegatesTo('window')
 
-    #suppress_pane_change=False
-    #@on_trait_change('window:closing')
-    #def _handle_window_closed(self):
-    #    print self.application
-
     def _show_pane(self, p):
-        #if not self.suppress_pane_change:
         def _show():
             ctrl = p.control
             if not p.visible:
                 ctrl.show()
             ctrl.raise_()
 
-        invoke_in_main_thread(_show)
+        self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
+        do_later(invoke_in_main_thread,_show)
 
     def _menu_bar_factory(self, menus=None):
         if not menus:

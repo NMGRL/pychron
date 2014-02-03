@@ -19,7 +19,6 @@ set_toolkit('qt4')
 from traits.api import List, Any, Event, Callable
 #============= standard library imports ========================
 from numpy import linspace, random
-import weakref
 
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -442,8 +441,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _add_error_envelope_overlay(self, line):
 
-        o = ErrorEnvelopeOverlay(component=weakref.ref(line)())
-        line.overlays.append(o)
+        o = ErrorEnvelopeOverlay(component=line)
+        line.underlays.append(o)
         line.error_envelope = o
 
     def add_tools(self, plot, scatter, line=None,

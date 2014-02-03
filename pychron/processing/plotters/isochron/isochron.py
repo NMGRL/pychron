@@ -26,6 +26,7 @@ from numpy import linspace
 #============= local library imports  ==========================
 
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.processing.argon_calculations import calculate_isochron, extract_isochron_xy
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 
@@ -90,7 +91,7 @@ class InverseIsochron(Isochron):
         #self._plot_inverse_isochron(graph.plots[0], 0)
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid + 1)
+            getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
 
         #for si in self.sorted_analyses:
         #    print si.record_id, si.group_id
@@ -131,8 +132,10 @@ class InverseIsochron(Isochron):
         self._age = age
 
         graph = self.graph
-        graph.set_x_title('39Ar/40Ar')
-        graph.set_y_title('36Ar/40Ar')
+        graph.set_x_title('39Ar/40Ar', plotid=pid)
+        graph.set_y_title('36Ar/40Ar', plotid=pid)
+        p=graph.plots[pid]
+        p.y_axis.title_spacing = 50
 
         graph.set_grid_traits(visible=False)
         graph.set_grid_traits(visible=False, grid='y')
@@ -167,8 +170,17 @@ class InverseIsochron(Isochron):
 
         graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
 
-        graph.new_series(rxs, rys, color=scatter.color)
+        l, _=graph.new_series(rxs, rys, color=scatter.color)
         graph.set_series_label('fit{}'.format(self.group_id))
+
+        # l.index.set_data(rxs)
+        # l.value.set_data(rys)
+        xs=l.index.get_data()
+        lci, uci=reg.calculate_ci(xs)
+        ee=ErrorEnvelopeOverlay(component=l,
+                                upper=uci, lower=lci)
+        l.underlays.append(ee)
+        l.error_envelope=ee
 
         def ad(ai):
             a=ai.isotopes['Ar39'].get_interference_corrected_value()
@@ -308,12 +320,16 @@ class InverseIsochron(Isochron):
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
             mi, ma = self.graph.get_x_limits()
-            rxs = linspace(mi, ma, 10)
+            rxs = linspace(mi, ma)
 
             rys = reg.predict(rxs)
 
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
+
+            lci,uci=reg.calculate_ci(rxs)
+            fit.error_envelope.lower=lci
+            fit.error_envelope.upper=uci
 
             if self._plot_label:
                 self._add_info(self.graph.plots[0], reg, label=self._plot_label)
