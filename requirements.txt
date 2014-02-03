@@ -7,7 +7,7 @@ PasteDeploy==1.5.0
 PasteScript==1.7.5
 PyMySQL==0.5
 PyOpenGL==3.0.1
-PySide==1.0.5
+PySide==1.1.0
 PyWebDAV==0.9.8
 PyYAML==3.10
 Pycluster==1.50
