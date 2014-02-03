@@ -22,7 +22,7 @@ from apptools.preferences.preference_binding import bind_preference
 import weakref
 #============= local library imports  ==========================
 from traits.has_traits import provides
-from pychron.core.IDatastore import IDatastore
+from pychron.core.i_datastore import IDatastore
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog

@@ -140,8 +140,6 @@ class GraphEditor(BaseUnknownsEditor):
 
         self.rebuild()
 
-
-
     def set_items(self, unks, is_append=False, **kw):
         ans = self.processor.make_analyses(unks,
                                             calculate_age=self.calculate_age,

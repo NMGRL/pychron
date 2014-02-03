@@ -15,30 +15,26 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Property, cached_property
-
+from traits.api import Interface
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from uncertainties import ufloat
-from pychron.processing.analyses.analysis import Analysis
+import traits.has_traits
+
+traits.has_traits.CHECK_INTERFACES = 2
 
 
-class NonDBAnalysis(Analysis):
-    record_id = Str
-
-    uage = Property(depends_on='age, age_err')
-
-    @cached_property
-    def _get_uage(self):
-        return ufloat(self.age, self.age_err)
-
-
-class FileAnalysis(NonDBAnalysis):
-    pass
-
-
-class InterpretedAgeAnalysis(NonDBAnalysis):
-    pass
+class IColumnParser(Interface):
+    def load(self, p, header_idx=0):
+        pass
+    def has_key(self, key):
+        pass
+    def itervalues(self, keys=None):
+        pass
+    def iternrows(self):
+        pass
+    def get_value(self, ri, ci):
+        pass
+    def _get_index(self,ks):
+        pass
 
 #============= EOF =============================================
-

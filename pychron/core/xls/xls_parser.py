@@ -20,39 +20,48 @@
 #============= local library imports  ==========================
 import xlrd
 
+from pychron.core.csv.csv_parser import BaseColumnParser
 
-class XLSParser(object):
-    def load(self, p, header_idx=0):
+
+
+# @provides(IColumnParser)
+class XLSParser(BaseColumnParser):
+    # def load(self, p, header_idx=0):
+        # wb = xlrd.open_workbook(p)
+        # sheet = wb.sheet_by_index(0)
+        # self._sheet = sheet
+        # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+        # self._header_offset=header_idx+1
+    def _load(self, p, header_idx):
         wb = xlrd.open_workbook(p)
+
         sheet = wb.sheet_by_index(0)
         self._sheet = sheet
         self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
-        self._header_offset=header_idx+1
-
-    def has_key(self, key):
-        """
-            if key is an int return true if key valid index
-            if key is a str return true if key in _header
-        """
-        if isinstance(key, int):
-            return 0<=key<len(self._header)
-        else:
-            return key in self._header
-
-    def itervalues(self, keys=None):
-        """
-            returns a row iterator
-            each iteration is a dictionary containing "keys"
-            if keys is None return all values
-
-        """
-        if keys is None:
-            keys=self._header
-
-        return (dict([(ki,self.get_value(ri, ki)) for ki in keys]) for ri in self.iternrows())
-
-    def iternrows(self):
-        return xrange(self._header_offset, self._sheet.nrows, 1)
+    # def has_key(self, key):
+    #     """
+    #         if key is an int return true if key valid index
+    #         if key is a str return true if key in _header
+    #     """
+    #     if isinstance(key, int):
+    #         return 0<=key<len(self._header)
+    #     else:
+    #         return key in self._header
+    #
+    # def itervalues(self, keys=None):
+    #     """
+    #         returns a row iterator
+    #         each iteration is a dictionary containing "keys"
+    #         if keys is None return all values
+    #
+    #     """
+    #     if keys is None:
+    #         keys=self._header
+    #
+    #     return (dict([(ki,self.get_value(ri, ki)) for ki in keys]) for ri in self.iternrows())
+    #
+    # def iternrows(self):
+    #     return xrange(self._header_offset, self._sheet.nrows, 1)
 
     def get_value(self, ri, ci):
         if not isinstance(ci, int):
@@ -60,17 +69,17 @@ class XLSParser(object):
 
         return self._sheet.cell_value(ri, ci)
 
-    def _get_index(self, ks):
-
-        if not isinstance(ks, (list, tuple)):
-            ks = (ks,)
-
-        for k in ks:
-            for ki in (k, k.upper(), k.lower(), k.capitalize(), k.replace('_', '')):
-                try:
-                    return self._header.index(ki)
-                except ValueError, e:
-                    print 'exep',e
+    # def _get_index(self, ks):
+    #
+    #     if not isinstance(ks, (list, tuple)):
+    #         ks = (ks,)
+    #
+    #     for k in ks:
+    #         for ki in (k, k.upper(), k.lower(), k.capitalize(), k.replace('_', '')):
+    #             try:
+    #                 return self._header.index(ki)
+    #             except ValueError, e:
+    #                 print 'exep',e
 
     @property
     def nrows(self):

@@ -25,8 +25,10 @@ from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -59,11 +61,17 @@ class FigureEditor(GraphEditor):
 
     def set_items_from_file(self, p):
         if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                pass
+            def construct(d):
+                f=FileAnalysis(age=float(d['age']),
+                               age_err=float(d['age_err']),
+                               record_id=d['runid']
+                               )
+                return f
 
-        ans = [FileAnalysis(record_id='foo',age=10, age_err=0.4),
-               FileAnalysis(record_id='bar',age=9, age_err=0.5), ]
+            par=CSVParser()
+            par.load(p)
+            ans=[construct(args)
+                    for args in par.itervalues()]
 
         po=self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
