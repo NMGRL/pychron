@@ -12,7 +12,6 @@ Reportlab==2.5
 SQLAlchemy==0.7.1
 SquareMap==1.0.1
 Twisted==11.1.0
-VTK==5.6.0
 alembic==0.6.2
 appinst==2.1.0
 apptools==4.0.1
