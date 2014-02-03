@@ -21,13 +21,14 @@ from traits.api import Instance, Int, Str, Bool, Event, Property
 #============= standard library imports ========================
 from collections import namedtuple
 #============= local library imports  ==========================
-from pychron.core.helpers.formatting import format_percent_error
+from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.processing.analyses.analysis_view import AnalysisView
 from pychron.processing.arar_age import ArArAge
 #from pychron.processing.analyses.summary import AnalysisSummary
 #from pychron.processing.analyses.db_summary import DBAnalysisSummary
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
+from pychron.processing.isotope import Isotope
 
 Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
 
@@ -135,13 +136,24 @@ class Analysis(ArArAge):
         return make_runid(self.labnumber, self.aliquot, self.step)
 
     def _get_age_string(self):
-
         a = self.age
         e = self.age_err
-
         pe = format_percent_error(a, e)
 
-        return u'{:0.3f} +/-{:0.3f} ({}%)'.format(a, e, pe)
+        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+
+    def value_string(self, t):
+        if t == 'uF':
+            a,e=self.F, self.F_err
+        elif t == 'uage':
+            a, e = self.age, self.age_err
+        else:
+            v=self.get_value(t)
+            if isinstance(v, Isotope):
+                v=v.get_intensity()
+            a,e=v.nominal_value, v.std_dev
+        pe = format_percent_error(a, e)
+        return  u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
 
     def _get_status_text(self):
         r = 'OK'

@@ -26,6 +26,7 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVParser
@@ -56,16 +57,14 @@ class FigureEditor(GraphEditor):
     def clear_aux_plot_limits(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            ap._has_ylimits=False
-            ap.ylimits=(0,0)
+            ap.clear_ylimits()
 
     def set_items_from_file(self, p):
         if os.path.isfile(p):
             def construct(d):
                 f=FileAnalysis(age=float(d['age']),
                                age_err=float(d['age_err']),
-                               record_id=d['runid']
-                               )
+                               record_id=d['runid'])
                 return f
 
             par=CSVParser()

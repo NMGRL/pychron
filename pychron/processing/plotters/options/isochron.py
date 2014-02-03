@@ -28,7 +28,7 @@ class InverseIsochronOptions(AgeOptions):
     plot_option_klass = InverseIsochronPlotOptions
 
     fill_ellipses=Bool(False)
-    label_box=Bool(False)
+
     show_nominal_intercept=Bool(False)
     nominal_intercept_label=String('Atm',enter_set=True, auto_set=False)
     nominal_intercept_value=Property(Float, depends_on='_nominal_intercept_value')
@@ -37,7 +37,7 @@ class InverseIsochronOptions(AgeOptions):
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
-        attrs += ['fill_ellipses', 'label_box',
+        attrs += ['fill_ellipses',
                   'show_nominal_intercept',
                   'nominal_intercept_label',
                   '_nominal_intercept_value',

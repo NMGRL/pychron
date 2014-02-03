@@ -36,8 +36,7 @@ class AnalysisPointInspector(PointInspector):
                  Action(name='Set tag',
                         on_perform=self._set_tag),
                  Action(name='Set INVALID',
-                        on_perform=self._set_invalid)
-            )
+                        on_perform=self._set_invalid))
         # menu = MenuManager(name='recall', *actions)
         # contents = [menu, ]
         return actions

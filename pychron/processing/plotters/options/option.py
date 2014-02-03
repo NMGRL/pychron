@@ -53,6 +53,10 @@ class AuxPlotOptions(HasTraits):
     def has_ylimits(self):
         return self._has_ylimits or (self.ylimits is not None and self.ylimits[0] !=self.ylimits[1])
 
+    def clear_ylimits(self):
+        self._has_ylimits=False
+        self.ylimits=(0,0)
+
     def dump_yaml(self):
         d=dict()
         attrs=('use','name', 'scale','height',

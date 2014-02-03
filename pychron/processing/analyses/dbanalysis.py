@@ -19,7 +19,7 @@ class DBAnalysis(Analysis):
     analysis_view_klass = DBAnalysisView
     #     status = Int
 
-    record_id = Str
+    # record_id = Str
     uuid = Str
 
     persisted_age = None
