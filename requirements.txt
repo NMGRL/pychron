@@ -17,7 +17,7 @@ appinst==2.1.0
 apptools==4.0.1
 arrayterator==1.0.1
 async==0.6.1
-basemap==1.0.1
+basemap>=1.0.1
 bitarray==0.3.5
 bsdiff4==1.0.1
 chaco==4.1.0
