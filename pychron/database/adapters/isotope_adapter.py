@@ -15,13 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from sqlalchemy import Integer
 from traits.api import Long, HasTraits, Date, Float, Str, Int
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
 
-from sqlalchemy.sql.expression import and_, func, not_
+from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
@@ -1267,7 +1268,7 @@ class IsotopeAdapter(DatabaseAdapter):
                     return
                 q = sess.query(meas_AnalysisTable.aliquot)
                 q =q.filter(meas_AnalysisTable.labnumber==ln)
-                q = q.order_by(meas_AnalysisTable.aliquot.desc())
+                q = q.order_by(cast(meas_AnalysisTable.aliquot, Integer(unsigned=True)).desc())
                 result=self._query_one(q)
                 if result:
                     return int(result[0])

@@ -21,7 +21,7 @@
 #=============local library imports  ==========================
 import binascii
 import math
-from sqlalchemy import Integer
+from sqlalchemy import Integer, INTEGER
 from sqlalchemy.sql.expression import func, distinct, cast
 
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
@@ -140,7 +140,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #!!!!!
                 q = q.order_by(cast(AnalysesTable.Aliquot, Integer).desc())
 
-            q = q.order_by(AnalysesTable.Increment.desc())
+            q = q.order_by(cast(AnalysesTable.Increment, Integer(unsigned=True)).desc())
             q = q.limit(1)
             v=self._query_one(q)
             if v is not None:
