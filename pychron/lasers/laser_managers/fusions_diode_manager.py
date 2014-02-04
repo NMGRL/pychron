@@ -151,15 +151,15 @@ class FusionsDiodeManager(FusionsLaserManager):
         return v
 
     def get_pyrometer_temperature(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._try('pyrometer',
                          'read_temperature', kw)
 
 
     def get_laser_internal_temperature(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._try('control_module_manager',
                          'get_internal_temperature', kw)
 
@@ -211,20 +211,24 @@ class FusionsDiodeManager(FusionsLaserManager):
             if self.fiber_light.auto_onoff and self.fiber_light.state:
                 self.fiber_light.power_off()
 
+            if self.pyrometer:
+                self.pyrometer.start_scan()
+
             return self.control_module_manager.enable()
 
     def _disable_hook(self):
         if self.fiber_light.auto_onoff and not self.fiber_light.state:
-
-            fl_on = lambda: self.fiber_light.power_on()
             if self._recording_power_state:
-                t = Timer(7, fl_on)
+                t = Timer(7, self.fiber_light.power_on)
                 t.start()
             else:
-                fl_on()
+                self.fiber_light.power_on()
 
         self.temperature_controller.disable()
         self.control_module_manager.disable()
+        if self.pyrometer:
+            self.pyrometer.stop_scan()
+
         return super(FusionsDiodeManager, self)._disable_hook()
 
     def _try(self, obj, func, kw):

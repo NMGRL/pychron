@@ -22,17 +22,22 @@
 # from pychron.core.ui.thread import Thread
 from threading import Thread
 from Queue import Queue, Empty
+import time
+
 from pychron.core.ui.gui import invoke_in_main_thread
 
+
 class ConsumerMixin(object):
-    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False):
+    _consumer_queue = None
+
+    def setup_consumer(self, func=None, buftime=None, auto_start=True, main=False, timeout=None):
         self._consume_func = func
         self._main = main
         self._buftime = buftime  # ms
         self._consumer_queue = Queue()
         self._consumer = Thread(target=self._consume,
-                                name='consumer'
-                                )
+                                args=(timeout, ),
+                                name='consumer')
         self._should_consume = True
         if auto_start:
             self._consumer.setDaemon(1)
@@ -57,11 +62,13 @@ class ConsumerMixin(object):
         if self._consumer:
             self._should_consume = False
 
-    def add_consumable(self, v):
-        if self._consumer_queue:
-            self._consumer_queue.put(v)
+    def add_consumable(self, v, timeout=None):
+        if not self._consumer_queue:
+            self.setup_consumer(timeout=timeout)
 
-    def _consume(self):
+        self._consumer_queue.put(v)
+
+    def _consume(self, timeout):
         bt = self._buftime
         if bt:
             bt = bt / 1000.
@@ -83,7 +90,15 @@ class ConsumerMixin(object):
 
         cfunc = self._consume_func
 
+        st = time.time()
         while self._should_consume:
+            if timeout:
+                if time.time() - st > timeout:
+                    self._should_consume = False
+                    self._consumer_queue = None
+                    print 'consumer time out'
+                    break
+
             try:
                 v = get_func()
                 if v:
