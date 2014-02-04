@@ -16,6 +16,8 @@
 
 #============= enthought library imports =======================
 from sqlalchemy import Integer
+from sqlalchemy.dialects.mysql import INTEGER
+
 from traits.api import Long, HasTraits, Date, Float, Str, Int
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
@@ -1287,7 +1289,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = sess.query(meas_AnalysisTable.step)
                 q = q.filter(meas_AnalysisTable.labnumber == ln)
                 q = q.filter(meas_AnalysisTable.aliquot == aliquot)
-                q = q.order_by(cast(meas_AnalysisTable.step, Integer(unsigned=True)).desc())
+                q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
                 result = self._query_one(q)
                 if result:
                     step = result[0]

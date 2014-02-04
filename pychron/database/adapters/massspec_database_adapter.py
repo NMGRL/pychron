@@ -21,8 +21,10 @@
 #=============local library imports  ==========================
 import binascii
 import math
-from sqlalchemy import Integer, INTEGER
+# from sqlalchemy import INTEGER
+from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy.sql.expression import func, distinct, cast
+from pychron.database.core.query import compile_query
 
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -125,26 +127,39 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return the analysis with the greatest aliquot with this labnumber
         """
         with self.session_ctx() as sess:
-            q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
-            q = q.filter(AnalysesTable.RID.like('{}%'.format(labnumber)))
             if aliquot is not None:
-                q = q.filter(AnalysesTable.Aliquot == str(aliquot))
-                q = q.order_by(cast(AnalysesTable.Increment, Integer(unsigned=True)).desc())
+                sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                    'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" AND `AnalysesTable`.`Aliquot` = {} ' \
+                    'ORDER BY CAST(`AnalysesTable`.`Increment` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber, aliquot)
             else:
-                #!!!!!
-                #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
-                #sorts lexicographically instead of numerically
-                #so '100'<'001'
-                #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
-                #use option 2. this is a low use query and performance is not and issue
-                #switch to option 3. if performance increase is desired
-                #!!!!!
-                q = q.order_by(cast(AnalysesTable.Aliquot, Integer(unsigned=True)).desc())
+                sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                    'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+                    'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
 
-            q = q.limit(1)
-            v = self._query_one(q)
+            v=sess.execute(sql)
+            # q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
+            # q = q.filter(AnalysesTable.RID.like('"{}%"'.format(labnumber)))
+            #
+            # if aliquot is not None:
+            #     q = q.filter(AnalysesTable.Aliquot == str(aliquot))
+            #     q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
+            # else:
+            #     #!!!!!
+            #     #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+            #     #sorts lexicographically instead of numerically
+            #     #so '100'<'001'
+            #     #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+            #     #use option 2. this is a low use query and performance is not and issue
+            #     #switch to option 3. if performance increase is desired
+            #     #!!!!!
+            #     q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER(unsigned=True)).desc())
+            #
+            # q = q.limit(1)
+            # v = self._query_one(q)
+            print v
+            # print compile_query(q)
             if v is not None:
-                a, s = v
+                a, s = v.fetchone()
                 return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
