@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 import os
 import re
-from traits.api import List, Str, Bool, Any, Enum, Button, Int
+
+from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached_property
 import apptools.sweet_pickle as pickle
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -36,6 +38,30 @@ DEFAULT_ED = 'Extraction Device'
 
 from traits.api import HasTraits, Instance
 
+
+def filter_func(new, attr=None, comp=None):
+    comp_keys = {'=': '__eq__',
+                 '<': '__lt__',
+                 '>': '__gt__',
+                 '<=': '__le__',
+                 '>=': '__ge__',
+                 'not =': '__ne__'}
+    if comp:
+        if comp in comp_keys:
+            comp_key = comp_keys[comp]
+        else:
+            comp_key = comp
+
+    def func(x):
+        if attr:
+            x = getattr(x, attr.lower())
+
+        if comp is None:
+            return x.lower().startswith(new.lower())
+        else:
+            return getattr(x, comp_key)(str(new))
+
+    return func
 
 class SearchCriteria(HasTraits):
     recent_hours = Int
@@ -58,10 +84,9 @@ class BrowserMixin(ColumnSorterMixin):
     auto_select_analysis = Bool(False)
 
     sample_filter_values = List
-    sample_filter_parameter = Str('Sample')
+    sample_filter_parameter = Str('name')
     sample_filter_comparator = Enum('=', 'not =')
-    sample_filter_parameters = List(['Sample', 'Material', 'Identifier'])
-
+    sample_filter_parameters = Property(List, depends_on='sample_tabular_adapter.columns')
     configure_sample_table = Button
     clear_selection_button = Button
 
@@ -71,6 +96,10 @@ class BrowserMixin(ColumnSorterMixin):
 
     #    recent_hours = Int#(48)
     search_criteria = Instance(SearchCriteria, ())
+
+    @cached_property
+    def _get_sample_filter_parameters(self):
+        return dict([(ci[1], ci[0]) for ci in self.sample_tabular_adapter.columns])
 
     def load_browser_selection(self):
         #self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
@@ -244,37 +273,13 @@ class BrowserMixin(ColumnSorterMixin):
         #self.samples = sams
         #self.osamples = sams
 
-    def _filter_func(self, new, attr=None, comp=None):
-        comp_keys = {'=': '__eq__',
-                     '<': '__lt__',
-                     '>': '__gt__',
-                     '<=': '__le__',
-                     '>=': '__ge__',
-                     'not =': '__ne__'}
-        if comp:
-            if comp in comp_keys:
-                comp_key = comp_keys[comp]
-            else:
-                comp_key = comp
-
-        def func(x):
-            if attr:
-                x = getattr(x, attr.lower())
-
-            if comp is None:
-                return x.lower().startswith(new.lower())
-            else:
-                return getattr(x, comp_key)(new)
-
-        return func
-
     def _project_filter_changed(self, new):
-        self.projects = filter(self._filter_func(new, 'name'), self.oprojects)
+        self.projects = filter(filter_func(new, 'name'), self.oprojects)
 
     def _sample_filter_changed(self, new):
         name = self._get_sample_filter_parameter()
         #comp=self.sample_filter_comparator
-        self.samples = filter(self._filter_func(new, name), self.osamples)
+        self.samples = filter(filter_func(new, name), self.osamples)
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter

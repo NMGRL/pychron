@@ -127,32 +127,37 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
                (SIGMA_1, 'bs_bk_corrected_error'),
                ('%', 'bs_bk_corrected_percent_error'),
 
-               ('(I-Bs-Bk)*D', 'disc_corrected'),
+               ('S*D', 'disc_corrected'),
                (SIGMA_1, 'disc_corrected_error'),
                ('%', 'disc_corrected_percent_error'),
 
-               ('Int', 'intensity'),
-               (SIGMA_1, 'intensity_error'),
-               ('%', 'intensity_percent_error')]
+               ('IFC', 'interference_corrected'),
+               (SIGMA_1, 'interference_corrected_error'),
+               ('%', 'interference_corrected_percent_error')]
 
     intercept_text= Property
     intercept_error_text= Property
+    intercept_tooltip=Str('Isotope regression t-zero (I)ntercept')
 
     bs_corrected_text = Property
     bs_corrected_error_text = Property
     bs_corrected_percent_error_text = Property
+    bs_corrected_tooltip = Str('Baseline (Bs) corrected intercept')
 
     bs_bk_corrected_text = Property
     bs_bk_corrected_error_text = Property
     bs_bk_corrected_percent_error_text = Property
+    bs_bk_corrected_tooltip = Str('Baseline (Bs) and Blank (Bk) corrected intercept. (S)ignal)')
 
     disc_corrected_text = Property
     disc_corrected_error_text = Property
     disc_corrected_percent_error_text = Property
+    disc_corrected_tooltip = Str('(D)iscrimination corrected signal')
 
-    intensity_text = Property
-    intensity_error_text = Property
-    intensity_percent_error_text = Property
+    interference_corrected_text = Property
+    interference_corrected_error_text = Property
+    interference_corrected_percent_error_text = Property
+    interference_corrected_tooltip = Str('Interference corrected isotopic value')
 
     bs_corrected_width = Int(60)
     bs_corrected_error_width = Int(60)
@@ -165,10 +170,6 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     disc_corrected_width = Int(60)
     disc_corrected_error_width = Int(60)
     disc_corrected_percent_error_width = Int(60)
-
-    intensity_width = Int(60)
-    intensity_error_width = Int(60)
-    intensity_percent_error_width = Int(60)
 
     name_width = Int(40)
     intercept_width = Int(60)
@@ -219,6 +220,20 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     def _get_disc_corrected_percent_error_text(self):
         v = self.item.get_disc_corrected_value()
         return calc_percent_error(v.nominal_value, v.std_dev)
+
+    #============================================================
+    def _get_interference_corrected_text(self):
+        v = self.item.get_interference_corrected_value()
+        return floatfmt(nominal_value(v), n=7)
+
+    def _get_interference_corrected_error_text(self):
+        v = self.item.get_interference_corrected_value()
+        return floatfmt(std_dev(v), n=7)
+
+    def _get_interference_corrected_percent_error_text(self):
+        v = self.item.get_interference_corrected_value()
+        return calc_percent_error(v.nominal_value, v.std_dev)
+
 
 class IsotopeTabularAdapter(BaseTabularAdapter):
     columns = [('Iso.', 'name'),

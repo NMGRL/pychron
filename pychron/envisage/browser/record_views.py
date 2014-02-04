@@ -36,6 +36,8 @@ class LabnumberRecordView(RecordView):
     project = Str
     labnumber = Str
     identifier = Property
+    sample=Str
+
     lat=Float
     lon=Float
     elevation=Float

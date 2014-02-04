@@ -85,6 +85,7 @@ class SampleTableConfigurer(TableConfigurer):
         return v
 
 
+
 #    column_mapper={'Sample':'name',
 #                   'Material':'material'}
 #    available_columns=(['Sample','Material'])
