@@ -243,7 +243,7 @@ class AutomatedRunSpec(Loggable):
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
             if attrname == 'labnumber':
-                if self.user_defined_aliquot:
+                if self.user_defined_aliquot and not self.is_special():
                     v = make_rid(self.labnumber, self.aliquot)
                 else:
                     v = self.labnumber
