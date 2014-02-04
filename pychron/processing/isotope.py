@@ -104,7 +104,7 @@ class IsotopicMeasurement(BaseMeasurement):
     fit = String
     fit_abbreviation = Property(depends_on='fit')
     fit_blocks=List
-    error_type=String
+    error_type=String('SEM')
 
     filter_outliers_dict = Dict
 
