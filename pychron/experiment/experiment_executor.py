@@ -354,7 +354,6 @@ class ExperimentExecutor(Loggable):
                 except StopIteration:
                     self.debug('stop iteration')
                     break
-
                 run = self._make_run(spec)
                 if run is None:
                     break
@@ -392,6 +391,7 @@ class ExperimentExecutor(Loggable):
     def _join_run(self, spec, run):
     #    def _join_run(self, spec, t, run):
     #        t.join()
+        self.debug('join run')
         self._do_run(run)
 
         self.debug('{} finished'.format(run.runid))
@@ -408,6 +408,7 @@ class ExperimentExecutor(Loggable):
         mem_log('> end join')
 
     def _do_run(self, run):
+        self.debug('do run')
         mem_log('< start')
 
         run.state = 'not run'
@@ -602,6 +603,7 @@ class ExperimentExecutor(Loggable):
         pass
 
     def _make_run(self, spec):
+
         exp = self.experiment_queue
 
         if spec.end_after:
@@ -802,12 +804,13 @@ class ExperimentExecutor(Loggable):
         """
             return True to stop execution loop
         """
+        self.debug('pre run check')
         if self._check_memory():
             self._err_message = 'Not enough memory'
             return True
 
         if not self._check_managers(n=3):
-            self._err_message = 'Not all managers availabley'
+            self._err_message = 'Not all managers available'
             return True
 
         if self.monitor:
@@ -819,6 +822,7 @@ class ExperimentExecutor(Loggable):
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.
         self._wait_for_save()
+        self.debug('pre run finished')
 
     def _check_memory(self, threshold=50):
         """
@@ -910,6 +914,7 @@ class ExperimentExecutor(Loggable):
         # check the first aliquot before delaying
         # arv = exp.cleaned_automated_runs[0]
         # self._check_run_aliquot(arv)
+        self.debug('pre check complete')
         return True
 
     def _get_preceding_blank_or_background(self, inform=True):

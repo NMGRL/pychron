@@ -83,7 +83,6 @@ class MassSpecDatabaseImporter(Loggable):
         if self.db:
             identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier)
-            print identifier, ret
             if ret:
                 ret, _ = ret
         return ret
