@@ -312,12 +312,9 @@ class AutomatedRunSpec(Loggable):
 
     #
     def _get_aliquot(self):
-        if self.is_special():
-            a = 0
-        else:
+        a=self._aliquot
+        if not self.is_special():
             a = self.user_defined_aliquot
-            if not a:
-                a = self._aliquot
 
         return a
         #a = self.assigned_aliquot
