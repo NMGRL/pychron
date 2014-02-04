@@ -21,7 +21,6 @@ from traits.api import HasTraits, String, Property, Str, List, Button, Any, \
     Bool, cached_property, Event
 from traitsui.api import View, Item, EnumEditor, HGroup, CheckListEditor, \
     VGroup
-from sqlalchemy.sql.expression import and_
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -91,8 +90,7 @@ class Query(HasTraits):
     comparator = Str('=')
     comparisons = List(['=', '<', '>', '<=', '>=', 'not =',
                         'starts with',
-                        'contains'
-    ])
+                        'contains', 'between'])
     criterion = String('')
     #    criterion = String('')
     criteria = Property(depends_on='parameter,criteria_dirty')
@@ -134,8 +132,9 @@ class Query(HasTraits):
             d = datetime.today()
             if '=' in comp:
                 d = d - timedelta(days=d.day, seconds=d.second, hours=d.hour, minutes=d.minute)
-                query = query.filter(and_(attr <= today,
-                                          attr >= d))
+                # query = query.filter(and_(attr <= today,
+                #                           attr >= d))
+                query = query.filter(attr.between(today, d))
                 return query
 
             else:
@@ -151,26 +150,38 @@ class Query(HasTraits):
         query = query.filter(getattr(attr, comp)(dt))
         return query
 
-    def date_query(self, query, attr):
+    def date_query(self, q, attr):
         criterion = self.criterion
         comp = self.comparator
         comp = self._convert_comparator(comp)
         c = criterion.replace('/', '-')
         if c in ('this month', 'yesterday', 'this week'):
-            return self._named_date_query(query, attr, comp, c)
+            return self._named_date_query(q, attr, comp, c)
         else:
 
             if c.count('-') == 2:
-                fmt = '%m-%d-%Y'
+                y = c.split('-')[0]
+                y = 'y' if len(y) == 2 else 'Y'
+
+                fmt = '%m-%d-%{}'.format(y)
             elif c.count('-') == 1:
-                fmt = '%m-%Y'
+                y = c.split('-')[0]
+                y = 'y' if len(y) == 2 else 'Y'
+
+                fmt = '%m-%{}'.format(y)
             else:
-                fmt = '%Y'
+                fmt = '%Y' if len(c) == 4 else '%y'
+
             d = datetime.strptime(c, fmt)
-            print attr, comp, c, d
-            query = query.filter(getattr(attr, comp)(d))
+            # print attr, comp, c, d
+
+            if comp == 'between':
+                d = (d, datetime.strptime(self.rcriterion, fmt))
+            else:
+                d = (d, )
+            q = q.filter(getattr(attr, comp)(*d))
             #        c = '{}'.format(c)
-        return query
+        return q
 
     #
     #===============================================================================
@@ -289,36 +300,26 @@ class Query(HasTraits):
 
         top = HGroup(
 
-            NItem('parameter', editor=EnumEditor(name='parameters'),
-                  #                     width= -100
-            ),
-            #                Spring(springy=False,
-            #                       width= -5),
+            NItem('parameter', editor=EnumEditor(name='parameters')),
             NItem('comparator',
-                  editor=EnumEditor(name='comparisons'),
-            ),
-            #                NItem('add'),
-            #                Spring(springy=False,
-            #                       width=50, visible_when='not removable'),
-            show_labels=False,
-
-        )
+                  editor=EnumEditor(name='comparisons')),
+            show_labels=False)
 
         bottom = HGroup(
-            NItem('add',
-            ),
+            NItem('add', ),
             NItem('remove',
                   visible_when='removable'),
-            NItem('criterion',
-            ),
+            NItem('criterion', ),
             NItem('criterion', width=-30,
                   editor=CheckListEditor(name='criteria')),
-            show_labels=False
-        )
+            NItem('rcriterion', visible_when='comparator=="between"'),
+            NItem('rcriterion', width=-30,
+                  visible_when='comparator=="between"',
+                  editor=CheckListEditor(name='criteria')),
+            show_labels=False)
 
         v = View(VGroup(top, bottom,
-                        show_border=True
-        ))
+                        show_border=True))
         return v
 
 
