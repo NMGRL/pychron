@@ -30,6 +30,7 @@ from sqlalchemy.orm.exc import NoResultFound
 #============= local library imports  ==========================
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.query import compile_query
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 #spec_
@@ -1289,11 +1290,13 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = sess.query(meas_AnalysisTable.step)
                 q = q.filter(meas_AnalysisTable.labnumber == ln)
                 q = q.filter(meas_AnalysisTable.aliquot == aliquot)
-                q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
+                # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
+                q = q.order_by(meas_AnalysisTable.increment.desc())
                 result = self._query_one(q)
+                print compile_query(q)
                 if result:
                     step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    return ALPHAS.index(step) if step is not None else -1
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
