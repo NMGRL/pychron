@@ -205,6 +205,7 @@ class AutomatedRunPersister(Loggable):
                                     endtime=endtime,
                                     aliquot=aliquot,
                                     step=self.run_spec.step,
+                                    increment=self.run_spec.increment,
                                     comment=self.run_spec.comment)
                 sess.flush()
                 experiment = db.get_experiment(self.experiment_identifier, key='id')

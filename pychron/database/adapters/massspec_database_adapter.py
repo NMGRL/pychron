@@ -127,40 +127,58 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return the analysis with the greatest aliquot with this labnumber
         """
         with self.session_ctx() as sess:
+            # if aliquot is not None:
+            #     sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+            #         'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" AND `AnalysesTable`.`Aliquot` = {} ' \
+            #         'ORDER BY CAST(`AnalysesTable`.`Increment` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber, aliquot)
+            # else:
+            #     sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+            #         'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+            #         'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+            #
+            # v=sess.execute(sql)
+
+            q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
+
+
             if aliquot is not None:
                 sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                    'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" AND `AnalysesTable`.`Aliquot` = {} ' \
-                    'ORDER BY CAST(`AnalysesTable`.`Increment` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber, aliquot)
-            else:
-                sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                    'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
-                    'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+                'FROM `AnalysesTable` ' \
+                'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+                'ORDER BY `AnalysesTable`.`AnalysisID` DESC'.format(labnumber, aliquot)
+                v=sess.execute(sql)
+                if v is not None:
+                    a, s = v.fetchone()
+                    return int(a), s
 
-            v=sess.execute(sql)
-            # q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
-            # q = q.filter(AnalysesTable.RID.like('"{}%"'.format(labnumber)))
-            #
-            # if aliquot is not None:
-            #     q = q.filter(AnalysesTable.Aliquot == str(aliquot))
-            #     q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
-            # else:
-            #     #!!!!!
-            #     #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
-            #     #sorts lexicographically instead of numerically
-            #     #so '100'<'001'
-            #     #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
-            #     #use option 2. this is a low use query and performance is not and issue
-            #     #switch to option 3. if performance increase is desired
-            #     #!!!!!
-            #     q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER(unsigned=True)).desc())
-            #
-            # q = q.limit(1)
-            # v = self._query_one(q)
-            print v
-            # print compile_query(q)
-            if v is not None:
-                a, s = v.fetchone()
-                return int(a), s
+                # q = q.filter(AnalysesTable.RID.like('"{}-{:02n}%"'.format(labnumber, aliquot)))
+                # q = q.filter(AnalysesTable.Aliquot == "'{:02n}'".format(aliquot))
+
+                #castting A,B,C... doesnt produce 0,1,2
+                # q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
+
+                #assume greatest step also greatest AnalysisID
+                # q = q.order_by(AnalysesTable.AnalysisID.desc())
+
+            else:
+                q = q.filter(AnalysesTable.RID.like('"{}%"'.format(labnumber)))
+                #!!!!!
+                #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+                #sorts lexicographically instead of numerically
+                #so '100'<'001'
+                #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+                #use option 2. this is a low use query and performance is not and issue
+                #switch to option 3. if performance increase is desired
+                #!!!!!
+                q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER(unsigned=True)).desc())
+                q = q.limit(1)
+                v = self._query_one(q)
+                # print v
+                # print compile_query(q)
+                if v is not None:
+                    a, s = v[0]
+                    # a, s = v.fetchone()
+                    return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
     #        key = 'RID'

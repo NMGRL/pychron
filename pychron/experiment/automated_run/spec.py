@@ -120,6 +120,7 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
     _step_heat = False
 
+
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()
 
@@ -355,5 +356,9 @@ class AutomatedRunSpec(Loggable):
     @property
     def identifier(self):
         return self.labnumber
+
+    @property
+    def increment(self):
+        return '' if self._step<0 else self._step
 
             #============= EOF =============================================

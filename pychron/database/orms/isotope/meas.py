@@ -52,6 +52,8 @@ class meas_AnalysisTable(Base, BaseMixin):
     status = Column(Integer, default=0)
     aliquot = Column(Integer)
     step = stringcolumn(10)
+    increment = Column(Integer)
+
     comment = Column(BLOB)
 
     tag = Column(String(40),
