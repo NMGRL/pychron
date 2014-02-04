@@ -72,7 +72,10 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     cleanup_text = Property
     # labnumber_text = Property
     aliquot_text = Property
-    extract_group_text = Property
+    aliquot_content=Property
+
+    def _get_aliquot_content(self):
+        return 'asdf'
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -107,6 +110,16 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             al=make_aliquot_step(it.aliquot, it.step)
 
         return al
+
+    def _validate_aliquot_text(self, v):
+        try:
+            return int(v)
+        except ValueError:
+            pass
+
+    def _set_aliquot_text(self,v):
+        if v is not None:
+            self.item.user_defined_aliquot=v
 
     def _get_ramp_duration_text(self, trait, item):
         return self._get_number('ramp_duration', fmt='{:n}')

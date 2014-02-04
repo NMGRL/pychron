@@ -16,8 +16,9 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Float, Enum, List, Int, \
-    File, Property, Button, on_trait_change, Any, Event
-from traitsui.api import View, UItem, HGroup
+    File, Property, Button, on_trait_change, Any, Event, cached_property
+from traits.trait_errors import TraitError
+from traitsui.api import View, UItem, HGroup, Item, spring
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK
 from traitsui.tabular_adapter import TabularAdapter
@@ -36,10 +37,19 @@ class IncrementalHeatAdapter(TabularAdapter):
                ('Value', 'value'),
                ('Units', 'units'),
                ('Duration (s)', 'duration'),
-               ('Cleanup (s)', 'cleanup'),
-    ]
+               ('Cleanup (s)', 'cleanup')]
 
+    step_id_width=Int(40)
     step_id_text = Property
+    units_text=Property
+    def _get_units_text(self):
+        return self.item.units
+
+    def _set_units_text(self, v):
+        try:
+            self.item.units=v
+        except TraitError:
+            pass
 
     def _get_step_id_text(self):
         return alphas(self.item.step_id - 1)
@@ -52,7 +62,11 @@ class IncrementalHeatStep(HasTraits):
     value = Float
     units = Enum('watts', 'temp', 'percent')
     #    is_ok = Property
+    step=Property(depends_on='step_id')
 
+    @cached_property
+    def _get_step(self):
+        return alphas(self.step_id - 1)
 
     def make_row(self):
         return self.value, self.units, self.duration, self.cleanup
@@ -78,7 +92,7 @@ class IncrementalHeatStep(HasTraits):
 
 
 class IncrementalHeatTemplate(Viewable):
-    steps = List()
+    steps = List
     name = Property(depends_on='path')
     path = File
 
@@ -90,6 +104,19 @@ class IncrementalHeatTemplate(Viewable):
     selected = Any
     copy_cache = List
     pasted = Event
+    refresh_needed=Event
+
+    units=Enum('','watts', 'temp', 'percent')
+    def _units_changed(self):
+        if self.units:
+            steps=self.selected
+            if not steps:
+                steps=self.steps
+
+            for si in steps:
+                si.units=self.units
+            self.refresh_needed=True
+
 
     def _pasted_fired(self):
         if self.selected:
@@ -134,8 +161,7 @@ class IncrementalHeatTemplate(Viewable):
                         params[a] = cast(row[idx])
 
                     step = IncrementalHeatStep(step_id=cnt,
-                                               **params
-                    )
+                                               **params)
                     self.steps.append(step)
                     cnt += 1
 
@@ -174,8 +200,7 @@ class IncrementalHeatTemplate(Viewable):
 
     def _save_as_button_fired(self):
         dlg = FileDialog(action='save as',
-                         default_directory=paths.incremental_heat_template_dir
-        )
+                         default_directory=paths.incremental_heat_template_dir)
         if dlg.open() == OK:
             path = dlg.path
             if not path.endswith('.txt'):
@@ -187,13 +212,25 @@ class IncrementalHeatTemplate(Viewable):
 
     def traits_view(self):
         editor = myTabularEditor(adapter=IncrementalHeatAdapter(),
+                                 refresh='refresh_needed',
                                  selected='selected',
                                  copy_cache='copy_cache',
                                  pasted='pasted',
-                                 multi_select=True
-        )
+                                 multi_select=True)
+
+        # cols=[ObjectColumn(name='step', label='Step', editable=False),
+        #       ObjectColumn(name='value',label='Value'),
+        #       ObjectColumn(name='units',label='Units'),
+        #       ObjectColumn(name='duration', label='Duration (S)'),
+        #       ObjectColumn(name='cleanup', label='Cleanup (S)')]
+        #
+        # editor=TableEditor(columns=cols, selected='selected',
+        #                    deletable=True,
+        #                    show_toolbar=True,
+        #                    selection_mode='rows', sortable=False)
+
         v = View(
-            HGroup(UItem('add_row')),
+            HGroup(UItem('add_row'), spring, Item('units')),
             UItem('steps',
                   style='custom',
                   editor=editor),

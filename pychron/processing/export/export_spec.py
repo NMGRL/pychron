@@ -19,7 +19,9 @@ from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
     TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
+
 from pychron.loggable import Loggable
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -91,16 +93,16 @@ class ExportSpec(Loggable):
                 except TraitError, e:
                     self.debug(e)
 
-        if hasattr(record, 'cdd_ic_factor'):
-            ic = record.cdd_ic_factor
-            if ic is None:
-                self.debug('Using default CDD IC factor 1.0')
-                ic = ufloat(1, 1.0e-20)
-
-            self.ic_factor_v = float(ic.nominal_value)
-            self.ic_factor_e = float(ic.std_dev)
-        else:
-            self.debug('{} has no ic_factor attribute'.format(record, ))
+        # if hasattr(record, 'cdd_ic_factor'):
+        #     ic = record.cdd_ic_factor
+        #     if ic is None:
+        #         self.debug('Using default CDD IC factor 1.0')
+        #         ic = ufloat(1, 1.0e-20)
+        #
+        #     self.ic_factor_v = float(ic.nominal_value)
+        #     self.ic_factor_e = float(ic.std_dev)
+        # else:
+        #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
         for a in ('chron_dosages',
                   'production_ratios',

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float
+from traits.api import HasTraits, Str, Date, Float, Property
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -35,6 +35,9 @@ class LabnumberRecordView(RecordView):
     material = Str
     project = Str
     labnumber = Str
+    identifier = Property
+    sample=Str
+
     lat=Float
     lon=Float
     elevation=Float
@@ -49,6 +52,7 @@ class LabnumberRecordView(RecordView):
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier
+
         pos = dbrecord.irradiation_position
         if pos:
             level = pos.level
@@ -76,6 +80,9 @@ class LabnumberRecordView(RecordView):
             if v is not None:
                 setattr(self, attr, v)
 
+    #mirror labnumber as identifier
+    def _get_identifier(self):
+        return self.labnumber
 
 class ProjectRecordView(RecordView):
     name = Str

@@ -230,7 +230,7 @@ class BaseTask(Task, Loggable):
             ctrl.raise_()
 
         self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
-        do_later(invoke_in_main_thread,_show)
+        invoke_in_main_thread(do_later,_show)
 
     def _menu_bar_factory(self, menus=None):
         if not menus:

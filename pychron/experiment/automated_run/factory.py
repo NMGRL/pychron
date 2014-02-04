@@ -15,13 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, Button, \
+from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, \
+    Button, \
     Event, Enum
 
 #============= standard library imports ========================
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -52,6 +54,7 @@ class UpdateSelectedCTX(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._factory.set_labnumber = True
         self._factory.set_position = True
+
 
 def EKlass(klass):
     return klass(enter_set=True, auto_set=False)
@@ -105,6 +108,7 @@ def generate_positions(pos):
 
 class AutomatedRunFactory(Loggable):
     db = Any
+    datahub=Instance(Datahub)
 
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
@@ -191,14 +195,14 @@ class AutomatedRunFactory(Loggable):
     # truncation
     #===========================================================================
     trunc_attr = String('age')
-    trunc_attrs= List(['age',
-                       'age_err',
-                       'kca',
-                       'kca_err',
-                       'kcl',
-                       'kcl_err',
-                       'rad40_percent',
-                       'Ar40','Ar39','Ar38','Ar37','Ar36'])
+    trunc_attrs = List(['age',
+                        'age_err',
+                        'kca',
+                        'kca_err',
+                        'kcl',
+                        'kcl_err',
+                        'rad40_percent',
+                        'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
@@ -206,7 +210,7 @@ class AutomatedRunFactory(Loggable):
     truncation_str = Property(depends_on='trunc_+')
     truncation_path = String
     truncations = List
-    clear_truncation=Button
+    clear_truncation = Button
 
     #===========================================================================
     # frequency
@@ -324,7 +328,7 @@ class AutomatedRunFactory(Loggable):
         arvs, freq = self._new_runs(positions=positions)
 
         if auto_increment_id:
-            v=increment_value(self.labnumber)
+            v = increment_value(self.labnumber)
             invoke_in_main_thread(self.trait_set, _labnumber=v)
 
         if auto_increment_position:
@@ -355,7 +359,7 @@ class AutomatedRunFactory(Loggable):
 
     def _new_runs_by_position(self, pos, template=False):
         arvs = []
-        positions=generate_positions(pos)
+        positions = generate_positions(pos)
 
         for i in positions:
             # if set_pos:
@@ -502,16 +506,15 @@ class AutomatedRunFactory(Loggable):
         template = self._new_template()
         self.debug('rendering template {}'.format(template.name))
 
-        al=self.db.get_greatest_aliquot(self.labnumber) or 0
+        al = self.datahub.get_greatest_aliquot(self.labnumber)
 
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
-                arv = self._new_run(#step=st.step_id,
-                                    position=position,
+                arv = self._new_run(position=position,
                                     excludes=['position'])
 
-                arv.trait_set(aliquot=al+1,**st.make_dict(self.duration,
-                                             self.cleanup))
+                arv.trait_set(user_defined_aliquot=al + 1,
+                              **st.make_dict(self.duration, self.cleanup))
                 arvs.append(arv)
 
         return arvs
@@ -581,7 +584,6 @@ class AutomatedRunFactory(Loggable):
 
         if self._flux != self.flux or \
                         self._flux_error != self.flux_error:
-
             v, e = self._flux, self._flux_error
             self.db.save_flux(self.labnumber, v, e)
 
@@ -892,13 +894,13 @@ class AutomatedRunFactory(Loggable):
 
     @on_trait_change('trunc_+, truncation_path')
     def _edit_truncation(self, obj, name, old, new):
-        print name,new
+        print name, new
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
 
             if name == 'truncation_path':
-                t=new
+                t = new
                 # t = add_extension(new, '.yaml') if new else None
             else:
                 t = self.truncation_str
@@ -1094,7 +1096,6 @@ post_equilibration_script:name
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-
             self._set_truncation('')
 
     def _aliquot_changed(self):
@@ -1108,6 +1109,7 @@ post_equilibration_script:name
 
             self.update_info_needed = True
             self.refresh_table_needed = True
+            self.changed = True
 
     def _save_flux_button_fired(self):
         self._save_flux()
@@ -1118,10 +1120,9 @@ post_equilibration_script:name
             script = getattr(self, si)
             setattr(script, name, new)
 
-            #===============================================================================
-            # defaults
-            #===============================================================================
-
+    #===============================================================================
+    # defaults
+    #================================================================================
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
                       application=self.application,
@@ -1163,6 +1164,12 @@ post_equilibration_script:name
 
     def _factory_view_default(self):
         return self.factory_view_klass(model=self)
+
+    def _datahub_default(self):
+        dh=Datahub()
+        dh.bind_preferences()
+        dh.secondary_connect()
+        return dh
 
 #============= EOF =============================================
 #

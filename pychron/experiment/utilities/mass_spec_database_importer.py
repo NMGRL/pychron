@@ -341,6 +341,7 @@ class MassSpecDatabaseImporter(Loggable):
                 det = PEAK_HOP_MAP[iso]
 
             dbdet = db.add_detector(det, Label=det)
+
             if det == 'CDD':
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
