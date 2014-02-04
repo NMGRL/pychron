@@ -42,7 +42,7 @@ class ExperimentQueue(BaseExperimentQueue):
 
     executed = Bool(False)
 
-    human_error_checker=Instance(HumanErrorChecker, ())
+    human_error_checker = Instance(HumanErrorChecker, ())
 
     def select_run_idx(self, idx):
         if self.automated_runs:
@@ -55,7 +55,7 @@ class ExperimentQueue(BaseExperimentQueue):
         for ei in reversed(ens):
             ei.state = 'not run'
             if not ei.is_step_heat():
-                ei.aliquot=0
+                ei.aliquot = 0
 
             ei.step = ''
             ans.insert(0, ei)
@@ -129,7 +129,7 @@ class ExperimentQueue(BaseExperimentQueue):
             return all([ai.executable for ai in self.automated_runs])
 
     def check_runs(self):
-        hec=self.human_error_checker
+        hec = self.human_error_checker
         err = hec.check_runs(self.automated_runs, test_all=True)
         if err:
             hec.report_errors(err)
@@ -146,11 +146,11 @@ class ExperimentQueue(BaseExperimentQueue):
     def _extract_device_changed(self):
         self.debug('extract device changed {}'.format(self.extract_device))
         if 'uv' in self.extract_device.lower():
-            k=UVHumanErrorChecker
+            k = UVHumanErrorChecker
         else:
-            k=HumanErrorChecker
+            k = HumanErrorChecker
 
-        self.human_error_checker=k()
+        self.human_error_checker = k()
 
 #============= EOF =============================================
 #        rgen = (r for r in newruns)
