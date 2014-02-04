@@ -510,12 +510,11 @@ class AutomatedRunFactory(Loggable):
 
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
-                arv = self._new_run(  #step=st.step_id,
-                                      position=position,
-                                      excludes=['position'])
+                arv = self._new_run(position=position,
+                                    excludes=['position'])
 
-                arv.trait_set(aliquot=al + 1, **st.make_dict(self.duration,
-                                                             self.cleanup))
+                arv.trait_set(user_defined_aliquot=al + 1,
+                              **st.make_dict(self.duration, self.cleanup))
                 arvs.append(arv)
 
         return arvs
@@ -1110,6 +1109,7 @@ post_equilibration_script:name
 
             self.update_info_needed = True
             self.refresh_table_needed = True
+            self.changed = True
 
     def _save_flux_button_fired(self):
         self._save_flux()
