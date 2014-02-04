@@ -16,8 +16,10 @@
 
 #=============enthought library imports========================
 import os
+
 from traits.api import Enum, Float, Event, Property, Int, Button, Bool, Str, Any, on_trait_change, String
 from traitsui.api import View, HGroup, Item, Group, VGroup, EnumEditor, RangeEditor, ButtonEditor, spring
+
 # from pyface.timer.api import Timer
 
 #=============standard library imports ========================
@@ -371,6 +373,17 @@ class WatlowEZZone(CoreDevice):
             v = getattr(self, func)()
             if v is not None:
                 setattr(self, attr, v)
+
+    #ResponseRecorder interface
+    def get_output(self, force=False):
+        if force:
+            self.get_temp_and_power()
+        return self.heat_power_value
+
+    def get_response(self, force=False):
+        if force:
+            self.get_temp_and_power()
+        return self.process_value
 
     def get_temp_and_power(self, verbose=False, **kw):
     #        if 'verbose' in kw and kw['verbose']:

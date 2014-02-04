@@ -99,6 +99,10 @@ class MikronGA140Pyrometer(CoreDevice):
         self._communicator.char_write = True
         return True
 
+    #REsponseRecorder Interface
+    def get_response(self):
+        return self.temperature
+
     def _build_command(self, cmd, value=None, per_mil=False, single_digit=False):
         """
 
@@ -141,7 +145,7 @@ class MikronGA140Pyrometer(CoreDevice):
         cmd = self._build_command('ms')
         temp = self._parse_response(self.ask(cmd, **kw))
 
-        self.temperature = temp if temp is not None else 0.0
+        self.temperature = temp or 0
 
         return self.temperature
 

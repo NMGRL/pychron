@@ -97,7 +97,7 @@ class AutomatedRunPersister(Loggable):
         self.rundate = d.date()
         self.info('Analysis started at {}'.format(self.runtime))
 
-    def post_extraction_save(self):
+    def post_extraction_save(self, rblob, oblob):
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
@@ -110,7 +110,9 @@ class AutomatedRunPersister(Loggable):
                     loadtable = db.add_load(self.load_name)
                     #             db.flush()
 
-                ext = self._save_extraction(db, loadtable=loadtable)
+                ext = self._save_extraction(db, loadtable=loadtable,
+                                            response_blob=rblob,
+                                            output_blob=oblob)
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:

@@ -82,6 +82,12 @@ class BaseLaserManager(Manager):
     def get_motor(self, name):
         pass
 
+    def get_response_blob(self):
+        return ''
+
+    def get_output_blob(self):
+        return ''
+
     def enable_device(self):
         return self.enable_laser()
 

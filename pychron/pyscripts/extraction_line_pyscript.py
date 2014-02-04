@@ -87,11 +87,20 @@ class ExtractionPyScript(ValvePyScript):
     info_color = EXTRACTION_COLOR
     snapshot_paths = List
 
+    def _extraction_action(self, *args, **kw):
+        kw['name'] = self.extract_device
+        kw['protocol'] = ILaserManager
+        return self._manager_action(*args, **kw)
+
+    def get_response_blob(self):
+        return self._extraction_action([('get_response_blob', (), {})])
+
+    def get_output_blob(self):
+        return self._extraction_action([('get_output_blob', (), {})])
+
     def output_achieved(self):
         request = self.extract
-        ach = self._manager_action([('get_achieved_output', (), {})],
-                                   name=self.extract_device,
-                                   protocol=ILaserManager)
+        ach = self._extraction_action([('get_achieved_output', (), {})])
         try:
             request = float(request)
         except (ValueError, TypeError):
@@ -185,23 +194,17 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def degas(self, lumens=0, duration=0):
-        self._manager_action([('do_machine_vision_degas', (lumens, duration), {})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('do_machine_vision_degas', (lumens, duration), {})])
 
     @verbose_skip
     @command_register
     def autofocus(self, set_zoom=True):
-        self._manager_action([('do_autofocus', (), {'set_zoom': set_zoom})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('do_autofocus', (), {'set_zoom': set_zoom})])
 
     @verbose_skip
     @command_register
     def snapshot(self, name=''):
-        ps = self._manager_action([('take_snapshot', (), {'name': name})],
-                                  name=self.extract_device,
-                                  protocol=ILaserManager)
+        ps = self._extraction_action([('take_snapshot', (), {'name': name})])
         if ps:
             ps = ps[0]
             self.snapshot_paths.append(ps[1])
@@ -213,16 +216,12 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def start_video_recording(self, name='video'):
-        self._manager_action([('start_video_recording', (), {'name': name})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('start_video_recording', (), {'name': name})])
 
     @verbose_skip
     @command_register
     def stop_video_recording(self):
-        self._manager_action([('stop_video_recording', (), {})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('stop_video_recording', (), {})])
 
     @verbose_skip
     @command_register
@@ -250,9 +249,7 @@ class ExtractionPyScript(ValvePyScript):
         if name and value is not '':
             l = 'YES' if value else 'NO'
             self.info('set motor lock to {}'.format(name, l))
-            self._manager_action([('set_motor_lock', (name, value), {})],
-                                 protocol=ILaserManager,
-                                 name=self.extract_device)
+            self._extraction_action([('set_motor_lock', (name, value), {})])
 
     @verbose_skip
     @command_register
@@ -260,9 +257,7 @@ class ExtractionPyScript(ValvePyScript):
         self.info('setting motor "{}" to {}'.format(name, value))
         if name is not '' and value is not '':
             if value is not None:
-                self._manager_action([('set_motor', (name, value), {})],
-                                     protocol=ILaserManager,
-                                     name=self.extract_device)
+                self._extraction_action([('set_motor', (name, value), {})])
 
     @verbose_skip
     @command_register
@@ -290,10 +285,8 @@ class ExtractionPyScript(ValvePyScript):
         if position_ok:
             self.info('{} move to position {}'.format(self.extract_device,
                                                       position))
-            success = self._manager_action([('move_to_position',
-                                             (position, autocenter), {})],
-                                           protocol=ILaserManager,
-                                           name=self.extract_device)
+            success = self._extraction_action([('move_to_position',
+                                                (position, autocenter), {})])
             if not success:
                 self.info('{} move to position failed'.format(self.extract_device))
             else:
@@ -311,9 +304,7 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         # set block=True to wait for pattern completion
-        self._manager_action([('execute_pattern', (pattern,), {'block': block})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('execute_pattern', (pattern,), {'block': block})])
 
         return time.time() - st
 
@@ -324,10 +315,8 @@ class ExtractionPyScript(ValvePyScript):
             tray = self.tray
 
         self.info('set tray to {}'.format(tray))
-        result = self._manager_action([('set_stage_map', (tray,), {})
-                                      ],
-                                      protocol=ILaserManager,
-                                      name=self.extract_device)
+        result = self._extraction_action([('set_stage_map', (tray,), {})
+        ])
         return result
 
     @verbose_skip
@@ -343,16 +332,12 @@ class ExtractionPyScript(ValvePyScript):
         self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
 
         self.info('extract sample to {} ({})'.format(power, units))
-        self._manager_action([('extract', (power,), {'units': units})],
-                             protocol=ILaserManager,
-                             name=self.extract_device)
+        self._extraction_action([('extract', (power,), {'units': units})])
 
     @verbose_skip
     @command_register
     def end_extract(self):
-        self._manager_action([('end_extract', (), {})],
-                             protocol=ILaserManager,
-                             name=self.extract_device)
+        self._extraction_action([('end_extract', (), {})])
 
     @verbose_skip
     @command_register
@@ -362,9 +347,7 @@ class ExtractionPyScript(ValvePyScript):
                 return
 
             self.info('ramp step {}. setpoint={}'.format(i, ramp_step))
-            if not self._manager_action([('set_laser_power', (ramp_step,), {})],
-                                        protocol=ILaserManager,
-                                        name=self.extract_device):
+            if not self._extraction_action([('set_laser_power', (ramp_step,), {})]):
                 return
 
             if self._cancel:
@@ -498,9 +481,7 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def prepare(self):
-        return self._manager_action([('prepare', (), {})],
-                                    protocol=ILaserManager,
-                                    name=self.extract_device)
+        return self._extraction_action([('prepare', (), {})])
 
     #===============================================================================
     # private
@@ -510,18 +491,14 @@ class ExtractionPyScript(ValvePyScript):
         if self.manager:
             self.manager.set_extract_state(False)
 
-        return self._manager_action([('disable_device', (), {})],
-                                    protocol=ILaserManager,
-                                    name=self.extract_device)
+        return self._extraction_action([('disable_device', (), {})])
 
     def _set_axis(self, name, value, velocity):
         kw = dict(block=True)
         if velocity:
             kw['velocity'] = value
 
-        success = self._manager_action([('set_{}'.format(name), (value,), kw)],
-                                       protocol=ILaserManager,
-                                       name=self.extract_device)
+        success = self._extraction_action([('set_{}'.format(name), (value,), kw)])
         if not success:
             self.info('{} move to position failed'.format(self.extract_device))
         else:
@@ -539,9 +516,8 @@ class ExtractionPyScript(ValvePyScript):
         self._stop_pattern()
 
     def _stop_pattern(self):
-        self._manager_action([('stop_pattern', (), {})],
-                             name=self.extract_device,
-                             protocol=ILaserManager)
+        self._extraction_action([('stop_pattern', (), {})])
+
 #============= EOF ====================================
 
 #    @verbose_skip

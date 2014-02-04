@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float
+
 #============= standard library imports ========================
 import os
 import re
@@ -828,7 +830,10 @@ class AutomatedRun(Loggable):
             for ri in r:
                 self.info(ri)
 
-            self.persister.post_extraction_save()
+            rblob = self.extraction_script.get_response_blob()
+            oblob = self.extraction_script.get_output_blob()
+
+            self.persister.post_extraction_save(rblob, oblob)
             self.info('======== Extraction Finished ========')
             self.info_color = None
             return True

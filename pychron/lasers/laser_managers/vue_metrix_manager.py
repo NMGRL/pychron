@@ -66,8 +66,8 @@ class VueMetrixManager(Manager):
 #            self.start_scan()
 
     def _control_default(self):
-        '''
-        '''
+        """
+        """
         b = VueDiodeControlModule(name='vue_metrix_controlmodule',
                                       configuration_dir_name='fusions_diode'
                                       )

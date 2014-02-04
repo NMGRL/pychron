@@ -26,6 +26,8 @@ from sqlalchemy.sql.expression import func
 
 
 
+
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -94,19 +96,18 @@ class meas_AnalysisTable(Base, BaseMixin):
     def timestamp(self):
         return mktime(self.analysis_timestamp.timetuple())
 
+
 class meas_ExperimentTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='experiment')
 
 
 class meas_ExtractionTable(Base, BaseMixin):
-#    position = Column(Integer)
     extract_value = Column(Float)
     extract_duration = Column(Float)
     cleanup_duration = Column(Float)
 
     extract_units = stringcolumn(5)
 
-    #    experiment_blob = Column(BLOB)
     weight = Column(Float)
     sensitivity_multiplier = Column(Float)
     is_degas = Column(Boolean)
@@ -120,6 +121,8 @@ class meas_ExtractionTable(Base, BaseMixin):
     mask_name = stringcolumn(100)
     attenuator = Column(Float)
     reprate = Column(Float)
+    response_blob = Column(BLOB)
+    output_blob = Column(BLOB)
 
     sensitivity_id = foreignkey('gen_SensitivityTable')
     extract_device_id = foreignkey('gen_ExtractionDeviceTable')

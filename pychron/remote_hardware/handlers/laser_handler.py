@@ -76,9 +76,9 @@ class LaserHandler(BaseRemoteHardwareHandler):
         manager.stop_video_recording()
 
     def ReadLaserPower(self, manager, *args):
-        '''
+        """
             return watts
-        '''
+        """
         result = manager.get_laser_watts()
         return result
 
@@ -87,11 +87,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return result
 
     def Snapshot(self, manager, name, *args):
-        '''
+        """
             name: base name for file. saved in default directory
-            
-            returns: abs path to saved file in the media server 
-        '''
+
+            returns: abs path to saved file in the media server
+        """
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
@@ -206,19 +206,17 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return self._set_axis(manager, 'z', data)
 
     def GetPosition(self, manager, *args):
-
-        smanager = manager.stage_manager
-
-        '''
+        """
             returns the cached value
-        '''
-        z = smanager.get_z()
-        '''
+
             mass spec excessively calls GetPosition which calling moving
             it appears this was wacking out the newport stage controller.
             moving will only do a hardware query if the stage is actually in motion or
             use keyword force_query=True
-        '''
+        """
+        smanager = manager.stage_manager
+
+        z = smanager.get_z()
         if smanager.temp_position is not None and not smanager.moving():
             x, y = smanager.temp_position
         else:
@@ -260,8 +258,8 @@ class LaserHandler(BaseRemoteHardwareHandler):
         return self._set_home_(manager, axis='z')
 
     def _set_home_(self, manager, **kw):
-        '''
-        '''
+        """
+        """
         err = manager.stage_manager.define_home(**kw)
         return self.error_response(err)
 
@@ -404,9 +402,19 @@ class LaserHandler(BaseRemoteHardwareHandler):
         result=manager.get_achieved_output()
         return str(result)
 
-#===============================================================================
-# Positioning
-#===============================================================================
+    def GetResponseBlob(self, manager, *aregs):
+        result = manager.get_response_blob()
+        return str(result)
+
+    def GetOutputBlob(self, manager, *aregs):
+        result = manager.get_output_blob()
+        return str(result)
+
+        #===============================================================================
+
+        # Positioning
+
+    #===============================================================================
     def GoToNamedPosition(self, manager, pos, *args):
         result = manager.goto_named_position(pos)
         return result

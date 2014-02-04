@@ -182,6 +182,12 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     # pyscript commands
     #===============================================================================
+    def get_response_blob(self):
+        return self._ask('GetResponseBlob')
+
+    def get_output_blob(self):
+        return self._ask('GetOutputBlob')
+
     def get_achieved_output(self):
         rv=0
         v=self._ask('GetAchievedOutput')
