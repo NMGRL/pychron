@@ -1293,7 +1293,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 result = self._query_one(q)
                 if result:
                     step = result[0]
-                    return ALPHAS.index(step) if step else -1
+                    return ALPHAS.index(step) if step is not None else -1
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))

@@ -75,7 +75,7 @@ class MassSpecDatabaseImporter(Loggable):
             print identifier, ret
             if ret:
                 _, s = ret
-                ret = ALPHAS.index(s) if s else -1
+                ret = ALPHAS.index(s) if s is not None else -1
         return ret
 
     def get_greatest_aliquot(self, identifier):
