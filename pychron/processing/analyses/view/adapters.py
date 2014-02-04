@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.trait_types import Int
+from traits.trait_types import Int, Str
 from traits.traits import Property
 
 #============= standard library imports ========================
@@ -118,6 +118,8 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
 
 class IntermediateTabularAdapter(BaseTabularAdapter):
     columns = [('Iso.', 'name'),
+               ('I','intercept'),
+               (SIGMA_1,'intercept_error'),
                ('I-Bs', 'bs_corrected'),
                (SIGMA_1, 'bs_corrected_error'),
                ('%', 'bs_corrected_percent_error'),
@@ -131,8 +133,11 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
 
                ('Int', 'intensity'),
                (SIGMA_1, 'intensity_error'),
-               ('%', 'intensity_percent_error'),
-    ]
+               ('%', 'intensity_percent_error')]
+
+    intercept_text= Property
+    intercept_error_text= Property
+
     bs_corrected_text = Property
     bs_corrected_error_text = Property
     bs_corrected_percent_error_text = Property
@@ -148,6 +153,34 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     intensity_text = Property
     intensity_error_text = Property
     intensity_percent_error_text = Property
+
+    bs_corrected_width = Int(60)
+    bs_corrected_error_width = Int(60)
+    bs_corrected_percent_error_width = Int(60)
+
+    bs_bk_corrected_width = Int(60)
+    bs_bk_corrected_error_width = Int(60)
+    bs_bk_corrected_percent_error_width = Int(60)
+
+    disc_corrected_width = Int(60)
+    disc_corrected_error_width = Int(60)
+    disc_corrected_percent_error_width = Int(60)
+
+    intensity_width = Int(60)
+    intensity_error_width = Int(60)
+    intensity_percent_error_width = Int(60)
+
+    name_width = Int(40)
+    intercept_width = Int(60)
+    intercept_error_width = Int(60)
+
+    def _get_intercept_text(self):
+        v=self.item.value
+        return floatfmt(v, n=7)
+
+    def _get_intercept_error_text(self):
+        v = self.item.error
+        return floatfmt(v, n=7)
 
     def _get_bs_corrected_text(self):
         v = self.item.get_baseline_corrected_value()
@@ -172,19 +205,6 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
 
     def _get_bs_bk_corrected_percent_error_text(self):
         v = self.item.get_corrected_value()
-        return calc_percent_error(v.nominal_value, v.std_dev)
-
-    #============================================================
-    def _get_intensity_text(self):
-        v = self.item.get_intensity()
-        return floatfmt(nominal_value(v), n=7)
-
-    def _get_intensity_error_text(self):
-        v = self.item.get_intensity()
-        return floatfmt(std_dev(v), n=7)
-
-    def _get_intensity_percent_error_text(self):
-        v = self.item.get_intensity()
         return calc_percent_error(v.nominal_value, v.std_dev)
 
     #============================================================
@@ -218,6 +238,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
                ('Disc', 'discrimination'),
                ('Error Comp.', 'age_error_component')]
 
+    value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
     error_text = Property
     base_value_text = Property
@@ -268,11 +289,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
         return '{}+/-{}'.format(floatfmt(v, n=4), floatfmt(e))
 
     def _get_value_text(self, *args, **kw):
-        v = self.item.get_corrected_value()
+        v = self.item.get_intensity()
         return floatfmt(v.nominal_value)
 
     def _get_error_text(self, *args, **kw):
-        v = self.item.get_corrected_value()
+        v = self.item.get_intensity()
         return floatfmt(v.std_dev)
 
     def _get_base_value_text(self, *args, **kw):
