@@ -22,6 +22,8 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -128,8 +130,12 @@ class Datahub(Loggable):
         return self._new_runid
 
     def get_greatest_aliquot(self, identifier, store='main'):
-        store = getattr(self, '{}store'.format(store))
-        return store.get_greatest_aliquot(identifier)
+        # store = getattr(self, '{}store'.format(store))
+        # return store.get_greatest_aliquot(identifier)
+        ps, ns, vs = self._get_greatest_aliquots(identifier)
+        # print 'b',ps, ns, vs, spec.identifier
+        mv = max(vs)
+        return mv
 
     def _get_greatest_aliquots(self, identifier):
         return zip(*[(store.precedence, store.db.name,
