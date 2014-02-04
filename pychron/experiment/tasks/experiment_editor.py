@@ -54,8 +54,7 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
-                                                            'move',
-                                                ],
+                                                            'move'],
                                                 editable=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
@@ -63,11 +62,8 @@ class ExperimentEditor(BaseTraitsEditor):
                                                 refresh='refresh_table_needed',
                                                 scroll_to_row='automated_runs_scroll_to_row',
                                                 copy_cache='linked_copy_cache',
-                                                multi_select=True,
-                         ),
-                         height=200
-
-        )
+                                                multi_select=True),
+                         height=200)
 
         executed_grp = UItem('executed_runs',
                              editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
