@@ -29,7 +29,6 @@ etsdevtools>=4.0.0
 etsproxy>=0.1.1
 foolscap>=0.6.2
 h5py>=2.0.0
-hdf5>=1.8.5.1
 httplib2>=0.7.5
 libjpeg>=7.0
 libpng>=1.2.40
