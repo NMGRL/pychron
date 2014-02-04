@@ -97,7 +97,6 @@ class RunParser(Loggable):
                      ('beam_diameter', 'beam_diam')]:
 
             v=self._get_attr_value(header, args, attr, cast=float)
-            print attr, v
             if v is not None:
                 params[v[0]]=v[1]
 

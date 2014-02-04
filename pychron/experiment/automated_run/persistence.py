@@ -23,6 +23,7 @@ import struct
 import time
 import math
 #============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -503,6 +504,8 @@ class AutomatedRunPersister(Loggable):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
+        ic=self.arar_age.get_ic_factor('CDD')
+
         exp = ExportSpec(runid=rid,
                          runscript_name=self.runscript_name,
                          runscript_text=self.runscript_blob,
@@ -513,8 +516,11 @@ class AutomatedRunPersister(Loggable):
                          isotopes=self.arar_age.isotopes,
                          # signal_intercepts=si,
                          # signal_intercepts=self._processed_signals_dict,
-                         is_peak_hop=self.save_as_peak_hop)
+                         is_peak_hop=self.save_as_peak_hop,
+                         ic_factor_v=float(nominal_value(ic)),
+                         ic_factor_e=float(std_dev(ic)))
         exp.load_record(self.run_spec)
+
         return exp
 
     def _assemble_extraction_parameters(self, edict):
