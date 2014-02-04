@@ -71,7 +71,7 @@ class MassSpecDatabaseImporter(Loggable):
         if self.db:
             identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier, aliquot)
-
+            print identifier, ret
             if ret:
                 _, s = ret
                 ret = ALPHAS.index(s) if s else -1
@@ -82,7 +82,6 @@ class MassSpecDatabaseImporter(Loggable):
         if self.db:
             identifier = self.get_identifier(identifier)
             ret = self.db.get_latest_analysis(identifier)
-            print identifier, ret
             if ret:
                 ret, _ = ret
         return ret

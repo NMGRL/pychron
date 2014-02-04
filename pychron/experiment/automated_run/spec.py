@@ -24,7 +24,7 @@ import weakref
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid
+    make_runid, ANALYSIS_MAPPING
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 from pychron.loggable import Loggable
 
@@ -121,7 +121,14 @@ class AutomatedRunSpec(Loggable):
     _step_heat = False
 
     def is_step_heat(self):
-        return bool(self.user_defined_aliquot)
+        return bool(self.user_defined_aliquot) and not self.is_special()
+
+    def is_special(self):
+        special = False
+        ln=self.labnumber
+        if '-' in ln:
+            special = ln.split('-')[0] in ANALYSIS_MAPPING
+        return special
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -236,7 +243,7 @@ class AutomatedRunSpec(Loggable):
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
             if attrname == 'labnumber':
-                if self.user_defined_aliquot:
+                if self.user_defined_aliquot and not self.is_special():
                     v = make_rid(self.labnumber, self.aliquot)
                 else:
                     v = self.labnumber
@@ -305,9 +312,10 @@ class AutomatedRunSpec(Loggable):
 
     #
     def _get_aliquot(self):
-        a = self.user_defined_aliquot
-        if not a:
-            a = self._aliquot
+        a=self._aliquot
+        if not self.is_special():
+            a = self.user_defined_aliquot
+
         return a
         #a = self.assigned_aliquot
         #if not a:

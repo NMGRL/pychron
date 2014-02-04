@@ -15,13 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from sqlalchemy import Integer
+from sqlalchemy.dialects.mysql import INTEGER
+
 from traits.api import Long, HasTraits, Date, Float, Str, Int
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
 
-from sqlalchemy.sql.expression import and_, func, not_
+from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
@@ -108,16 +111,16 @@ class IsotopeAdapter(DatabaseAdapter):
     selector_klass = IsotopeAnalysisSelector
 
     def set_analysis_sensitivity(self, analysis, v, e):
-        hist=proc_SensitivityHistoryTable()
-        hist.analysis_id=analysis.id
+        hist = proc_SensitivityHistoryTable()
+        hist.analysis_id = analysis.id
         self._add_item(hist)
 
-        sens=proc_SensitivityTable(value=float(v),
-                                   error=float(e))
-        hist.sensitivity=sens
+        sens = proc_SensitivityTable(value=float(v),
+                                     error=float(e))
+        hist.sensitivity = sens
         self._add_item(sens)
 
-        analysis.selected_histories.selected_sensitivity=hist
+        analysis.selected_histories.selected_sensitivity = hist
 
     def save_flux(self, identifier, v, e, inform=True):
 
@@ -154,8 +157,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
         ia = hi.interpreted_age
 
-        if ia.age_kind=='Plateau':
-            n=len(filter(lambda x: x.plateau_step, ia.sets))
+        if ia.age_kind == 'Plateau':
+            n = len(filter(lambda x: x.plateau_step, ia.sets))
         else:
             n = len(ia.sets)
 
@@ -218,6 +221,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 return int(q.count())
             except NoResultFound:
                 pass
+
     def get_project_figures(self, projects):
         if not hasattr(projects, '__iter__'):
             projects = (projects,)
@@ -392,7 +396,7 @@ class IsotopeAdapter(DatabaseAdapter):
         ed = extract_device
         ms = mass_spectrometer
         at = analysis_type
-        pr=project
+        pr = project
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(gen_LabTable)
@@ -407,8 +411,8 @@ class IsotopeAdapter(DatabaseAdapter):
             if at:
                 q = q.join(gen_AnalysisTypeTable)
             if pr:
-                q=q.join(gen_SampleTable)
-                q=q.join(gen_ProjectTable)
+                q = q.join(gen_SampleTable)
+                q = q.join(gen_ProjectTable)
 
             if ms:
                 q = q.filter(gen_MassSpectrometerTable.name == ms)
@@ -417,7 +421,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if at:
                 q = q.filter(gen_AnalysisTypeTable.name == at)
             if pr:
-                q=q.filter(gen_ProjectTable.name==pr)
+                q = q.filter(gen_ProjectTable.name == pr)
 
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
                               meas_AnalysisTable.analysis_timestamp <= ma))
@@ -569,8 +573,8 @@ class IsotopeAdapter(DatabaseAdapter):
             #nset.analysis
             #nset.analyses.append(analysis)
 
-        # if value:
-        #     value.sets.append(nset)
+            # if value:
+            #     value.sets.append(nset)
             #    if idname is None:
         #        idname = key
         #    setattr(nset, '{}_analysis_id'.format(idname), analysis.id)
@@ -739,7 +743,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_detector_intercalibration_set(self, analysis, **kw):
         return self._add_set('DetectorIntercalibration', 'detector_intercalibration',
-                              analysis, idname='ic', **kw)
+                             analysis, idname='ic', **kw)
 
     def add_experiment(self, name, **kw):
         exp = meas_ExperimentTable(name=name, **kw)
@@ -1266,9 +1270,9 @@ class IsotopeAdapter(DatabaseAdapter):
                 if not ln:
                     return
                 q = sess.query(meas_AnalysisTable.aliquot)
-                q =q.filter(meas_AnalysisTable.labnumber==ln)
+                q = q.filter(meas_AnalysisTable.labnumber == ln)
                 q = q.order_by(meas_AnalysisTable.aliquot.desc())
-                result=self._query_one(q)
+                result = self._query_one(q)
                 if result:
                     return int(result[0])
 
@@ -1285,10 +1289,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = sess.query(meas_AnalysisTable.step)
                 q = q.filter(meas_AnalysisTable.labnumber == ln)
                 q = q.filter(meas_AnalysisTable.aliquot == aliquot)
-                q = q.order_by(meas_AnalysisTable.step.desc())
+                q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
                 result = self._query_one(q)
                 if result:
-                    step=result[0]
+                    step = result[0]
                     return ALPHAS.index(step) if step else -1
 
     def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):

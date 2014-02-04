@@ -65,11 +65,13 @@ class Datahub(Loggable):
         """
         self._new_step = ''
         self._new_aliquot = 1
-
+        self.debug('check for conflicts')
         self.secondary_connect()
+        self.debug('connected to secondary')
 
         if spec.is_step_heat():
             k = 'Stepheat'
+            self.debug('get greatest steps')
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
             step = make_step(max(vs) + 1)
             # print ps, ns, vs, spec.identifier
@@ -78,9 +80,10 @@ class Datahub(Loggable):
             self._new_aliquot = spec.aliquot
         else:
             k = 'Fusion'
+            self.debug('get greatest aliquots')
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-            # print 'b',ps, ns, vs, spec.identifier
+            print 'b',ps, ns, vs, spec.identifier
             mv = max(vs)
             self._new_runid = make_aliquot_step(mv + 1, '')
             self._new_aliquot = mv + 1
