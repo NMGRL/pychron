@@ -51,19 +51,23 @@ class ExperimentQueue(BaseExperimentQueue):
     def reset(self):
         ans = self.automated_runs
         ens = self.executed_runs
-        self._no_update = True
+        self.no_update = True
+
+        finished = len(ans) == 0
+
         for ei in reversed(ens):
             ei.state = 'not run'
             if not ei.is_step_heat():
                 ei.aliquot = 0
+            elif finished:
+                ei.aliquot += 1
 
-            ei.step = ''
+            ei.clear_step()
             ans.insert(0, ei)
 
         self.executed_runs = []
         self.executed = False
-        self._no_update = False
-
+        self.no_update = False
 
     def set_run_inprogress(self, aid):
         run = self._find_run(aid)

@@ -326,6 +326,9 @@ class AutomatedRunSpec(Loggable):
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
 
+    def clear_step(self):
+        self._step = -1
+
     def _set_step(self, v):
         if isinstance(v, str):
             v = v.upper()
