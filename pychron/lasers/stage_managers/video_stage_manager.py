@@ -546,7 +546,7 @@ class VideoStageManager(StageManager):
         self.pxpermm = pxpermm
 
     def _get_record_label(self):
-        return 'Record' if not self.is_recording else 'Stop'
+        return 'Start Recording' if not self.is_recording else 'Stop'
 
     #===============================================================================
     # factories
