@@ -316,7 +316,7 @@ class AutomatedRunPersister(Loggable):
 
         # filter_outliers=dict(iterations=1,
         #                      std_dev=2, filter_outliers=True)
-        filter_outliers = self._default_outlier_filtering
+        filter_outliers = self.default_outlier_filtering
         if add_result:
             if m.fit:
                 # add fit
@@ -640,7 +640,7 @@ class AutomatedRunPersister(Loggable):
         ldb.build_database()
         return ldb
 
-    def _default_outlier_filtering(self):
+    def _get_default_outlier_filtering(self):
         return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
                     std_dev=self.fo_std_dev)
 
