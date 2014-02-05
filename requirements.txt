@@ -1,4 +1,4 @@
-numexpr==2.0
+numexpr>=2.0.0
 numpy==1.6.1
 scipy==0.10.0
 statsmodels>=0.5.0
