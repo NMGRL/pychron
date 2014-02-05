@@ -22,9 +22,7 @@
 import binascii
 import math
 # from sqlalchemy import INTEGER
-from sqlalchemy.dialects.mysql import INTEGER
-from sqlalchemy.sql.expression import func, distinct, cast
-from pychron.database.core.query import compile_query
+from sqlalchemy.sql.expression import func, distinct
 
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
@@ -138,7 +136,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             #
             # v=sess.execute(sql)
 
-            q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
+            # q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
 
 
             if aliquot is not None:
@@ -148,10 +146,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 'ORDER BY `AnalysesTable`.`AnalysisID` DESC'.format(labnumber, aliquot)
                 v=sess.execute(sql)
                 if v is not None:
-                    a, s = v.fetchone()
-                    return int(a), s
+                    r = v.fetchone()
+                    if r:
+                        a, s = r
+                        return int(a), s
 
-                # q = q.filter(AnalysesTable.RID.like('"{}-{:02n}%"'.format(labnumber, aliquot)))
+                        # q = q.filter(AnalysesTable.RID.like('"{}-{:02n}%"'.format(labnumber, aliquot)))
                 # q = q.filter(AnalysesTable.Aliquot == "'{:02n}'".format(aliquot))
 
                 #castting A,B,C... doesnt produce 0,1,2
@@ -176,13 +176,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                     'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
 
                 v=sess.execute(sql)
-                #q = q.limit(1)
-                #v = self._query_one(q)
-                # print v
-                print compile_query(q)
+
                 if v is not None:
-                    a, s = v.fetchone()
-                    return int(a), s
+                    r = v.fetchone()
+                    if r:
+                        a, s = r
+                        return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
     #        key = 'RID'
