@@ -22,6 +22,7 @@ from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached
 import apptools.sweet_pickle as pickle
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -212,7 +213,7 @@ class BrowserMixin(ColumnSorterMixin):
             #    self.selected_samples = sams[:1]
 
             p = self._get_sample_filter_parameter()
-            self.sample_filter_values = [getattr(si, p) for si in sams]
+            self.sample_filter_values = list(set([getattr(si, p) for si in sams]))
 
     def _set_recent_samples(self, recent_name):
         if not self.search_criteria.recent_hours:

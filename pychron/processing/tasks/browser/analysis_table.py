@@ -32,7 +32,7 @@ class AnalysisTable(HasTraits):
     analysis_filter = Str
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
-    analysis_filter_parameter = Str('record_id')
+    analysis_filter_parameter = Str
     analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')#List(['Record_id', 'Tag',
                                        # 'Age', 'Labnumber', 'Aliquot', 'Step'])
 
@@ -81,9 +81,11 @@ class AnalysisTable(HasTraits):
     #     p = self.page
     #     p -= 1
     #     self.page = max(1, p)
+    def _analysis_filter_parameter_default(self):
+        return 'record_id'
 
-    def _analysis_filter_comparator_default(self):
-        return 'startswith'
+    # def _analysis_filter_comparator_default(self):
+    #     return 'startswith'
 
     @cached_property
     def _get_analysis_filter_parameters(self):
@@ -104,16 +106,18 @@ class AnalysisTable(HasTraits):
         #     else:
         #         self.page = 1
         #     self.no_update = False
+        # self.analysis_filter_values = vs
+        self._analysis_filter_parameter_changed(True)
 
     def _analysis_filter_changed(self, new):
         if new:
             # self.analyses=[]
             name = self.analysis_filter_parameter
-            comp = self.analysis_filter_comparator
+            # comp = self.analysis_filter_comparator
             # if name == 'Step':
             #     new = new.upper()
 
-            self.analyses = filter(filter_func(new, name, comp), self.oanalyses)
+            self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
 

@@ -50,6 +50,6 @@ class SampleAdapter(BrowserAdapter):
     #     material_text = Property
     odd_bg_color = 'lightgray'
 
-    name_width = Int(150)
+    name_width = Int(125)
     labnumber_width = Int(75)
-    material_width = Int(100)
+    material_width = Int(75)
