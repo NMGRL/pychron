@@ -22,11 +22,6 @@ from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
 
-
-
-
-
-
 #=============standard library imports ========================
 from threading import Timer
 #=============local library imports  ==========================
@@ -54,6 +49,8 @@ class ResponseRecorder(HasTraits):
     response_data = List
     output_data = List
 
+    _alive = False
+
     def start(self):
         t = time.time()
         self.response_data = array([(t, 0)])
@@ -63,6 +60,7 @@ class ResponseRecorder(HasTraits):
         t.start()
 
     def run(self):
+        self._alive = True
         while self._alive:
             t = time.time()
             r = self.response_device.get_response(force=True)
@@ -72,6 +70,9 @@ class ResponseRecorder(HasTraits):
             self.output_data = vstack((self.output_data, (t, r)))
 
             time.sleep(self.period)
+
+    def stop(self):
+        self._alive = False
 
     def get_response_blob(self):
         if len(self.response_data):
@@ -171,12 +172,10 @@ class FusionsDiodeManager(FusionsLaserManager):
         #use_calibration=self.use_calibrated_temperature)
 
     def get_response_blob(self):
-        if len(self.response_data):
-            return ''.join([struct.pack('<ff') for x, y in self.response_data])
+        return self.response_recorder.get_response_blob() if self.response_recorder else ''
 
     def get_output_blob(self):
-        if len(self.output_data):
-            return ''.join([struct.pack('<ff') for x, y in self.output_data])
+        return self.response_recorder.get_output_blob() if self.response_recorder else ''
 
     #===============================================================================
     # private
