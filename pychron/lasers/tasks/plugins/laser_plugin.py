@@ -141,6 +141,7 @@ class FusionsPlugin(BaseLaserPlugin):
                             task_group='hardware',
                             factory=self._task_factory,
                             name=self.task_name,
+                            image='laser.png',
                             accelerator=self.accelerator),
                 TaskFactory(id='pychron.laser.calibration',
                             task_group='hardware',
