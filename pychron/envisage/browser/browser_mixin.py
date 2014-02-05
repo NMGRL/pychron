@@ -21,6 +21,7 @@ import re
 from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached_property
 import apptools.sweet_pickle as pickle
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -250,6 +251,7 @@ class BrowserMixin(ColumnSorterMixin):
     def _set_samples(self):
         db = self.manager.db
         sams = []
+
         with db.session_ctx():
             sp = self.selected_projects
             if not hasattr(sp, '__iter__'):
@@ -257,18 +259,25 @@ class BrowserMixin(ColumnSorterMixin):
 
             for pp in sp:
                 ss = db.get_samples(project=pp.name)
+                n = sum([1 if len(li.analyses) else 0 for si in ss for li in si.labnumbers])
+                if n > 50:
+                    prog = self.manager.open_progress(n=n)
 
                 test = lambda x: True
                 if self.filter_non_run_samples:
-                    def test(sa):
-                        return any([len(li.analyses) for li in sa.labnumbers])
+                    test = lambda x: len(x.analyses)
 
-                def make_samples(sa):
-                    return [LabnumberRecordView(ln) for ln in sa.labnumbers]
+                if prog:
+                    for s in ss:
+                        for li in s.labnumbers:
+                            if test(li):
+                                prog.change_message('Loading Labnumber {}'.format(li.identifier))
+                                sams.append(LabnumberRecordView(li))
+                    prog.close()
+                else:
+                    sams.extend([LabnumberRecordView(li) for s in ss
+                                 for li in s.labnumbers if test(li)])
 
-                ss = [si for s in ss if test(s)
-                      for si in make_samples(s)]
-                sams.extend(ss)
         return sams
         #self.samples = sams
         #self.osamples = sams

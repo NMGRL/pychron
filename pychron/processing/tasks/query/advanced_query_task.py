@@ -56,24 +56,28 @@ class AdvancedQueryTask(BaseManagerTask):
             if not issubclass(type(task), AnalysisEditTask):
                 continue
 
+            added = False
             if hasattr(task, 'references_pane'):
                 pane=task.references_pane
                 if pane:
                     if not ref_asked:
                         add_to_ref=self.confirmation_dialog('Add selected analyses to References?')
+                        ref_asked = True
 
                     if add_to_ref:
+                        added = True
                         if name=='replace_button':
                             pane.items=ans
                         else:
                             pane.items.extend(ans)
-            else:
+            if not added:
+                self._add_unknowns(task, name, ans)
 
-                if name=='replace_button':
-                    task.replace_unkonwn_analyses(ans)
-                else:
-                    task.append_unknown_analyses(ans)
-
+    def _add_unknowns(self, task, name, ans):
+        if name == 'replace_button':
+            task.replace_unkonwn_analyses(ans)
+        else:
+            task.append_unknown_analyses(ans)
 
     def _add_to_pane(self, pane, action, items):
         if action=='replace_button':

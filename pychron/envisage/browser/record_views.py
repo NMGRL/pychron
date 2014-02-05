@@ -48,6 +48,7 @@ class LabnumberRecordView(RecordView):
 
     irradiation=Str
     irradiation_level=Str
+    irradiation_and_level = Property
     irradiation_pos=Str
 
     def _create(self, dbrecord):
@@ -83,6 +84,10 @@ class LabnumberRecordView(RecordView):
     #mirror labnumber as identifier
     def _get_identifier(self):
         return self.labnumber
+
+    def _get_irradiation_and_level(self):
+        return '{}{}'.format(self.irradiation, self.irradiation_level)
+
 
 class ProjectRecordView(RecordView):
     name = Str
