@@ -890,6 +890,12 @@ class ExperimentExecutor(Loggable):
             if not self.confirmation_dialog(
                     'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
                 return
+        else:
+            exp = self.experiment_queue
+            # check the first aliquot before delaying
+            arv = exp.cleaned_automated_runs[0]
+            if not self._set_run_aliquot(self, arv):
+                return
 
         if not self._check_managers(inform=inform):
             return
