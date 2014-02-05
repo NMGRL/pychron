@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 import random
+
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError
+
 
 #============= standard library imports ========================
 import os
@@ -399,7 +401,10 @@ class Spectrometer(SpectrometerDevice):
 
     def _source_default(self):
         return Source(spectrometer=self)
-#============= EOF =============================================
+
+    def _integration_time_default(self):
+        return QTEGRA_INTEGRATION_TIMES[4]
+        #============= EOF =============================================
 
         #    def _peak_center_scan_step(self, di, graph, plotid, cond):
         # #       3print cond

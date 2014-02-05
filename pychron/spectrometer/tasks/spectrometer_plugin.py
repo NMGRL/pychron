@@ -30,6 +30,7 @@ from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -66,13 +67,12 @@ class SpectrometerPlugin(BaseTaskPlugin):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
                           factory=self._task_factory,
-                          name='Spectrometer'),
+                          name='Spectrometer',
+                          image='prism'),
               TaskFactory(id='pychron.mass_calibration',
                           factory=self._mass_cal_task_factory,
                           name='Mass Calibration',
-                          accelerator='Ctrl+Shift+M'
-                          #include_view_menu=False
-              )]
+                          accelerator='Ctrl+Shift+M')]
         return ts
 
     def _mass_cal_task_factory(self):

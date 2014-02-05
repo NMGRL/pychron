@@ -17,7 +17,6 @@
 #============= enthought library imports =======================
 from traits.api import Any
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter, Tabbed
-from pyface.tasks.action.schema import SMenu
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -45,40 +44,19 @@ class SpectrometerTask(BaseExtractionLineTask):
                 PaneItem('pychron.spectrometer.controls'),
                 Tabbed(PaneItem('pychron.spectrometer.intensities'),
                        PaneItem('pychron.spectrometer.readout')),
-                orientation='vertical'
-            )
-
-            #                          right=Splitter(
-            #                                         PaneItem('pychron.experiment.stats'),
-            #                                         PaneItem('pychron.experiment.console'),
-            #                                         orientation='vertical'
-            #                                         ),
-            #                          bottom=PaneItem('pychron.experiment.console'),
-            #                          top=PaneItem('pychron.experiment.controls')
-        )
-
+                orientation='vertical'))
 
     def create_central_pane(self):
-        g = ScanPane(
-            model=self.scan_manager,
-        )
+        g = ScanPane(model=self.scan_manager)
         return g
 
     def create_dock_panes(self):
-        panes = [ControlsPane(model=self.scan_manager),
-                 ReadoutPane(model=self.scan_manager),
-                 IntensitiesPane(model=self.scan_manager)
-        ]
+        panes = [
+            ControlsPane(model=self.scan_manager),
+            ReadoutPane(model=self.scan_manager),
+            IntensitiesPane(model=self.scan_manager)]
 
         panes = self._add_canvas_pane(panes)
-
-        #         app = self.window.application
-        #         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-        #         if man:
-        #             from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-        #             panes.append(CanvasDockPane(canvas=man.new_canvas()))
-
-        #             panes.append(CanvasDockPane(model=man))
         return panes
 
 
