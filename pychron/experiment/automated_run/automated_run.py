@@ -628,21 +628,45 @@ class AutomatedRun(Loggable):
             self.warning('failed to start monitor')
 
     def wait_for_overlap(self):
-        '''
-            by default overlap_evt is set 
+        """
+            by default overlap_evt is set
             after equilibration finished
-        '''
+        """
+        if not self._alive:
+            return
+
         self.info('waiting for overlap signal')
         evt = self.overlap_evt
-        evt.wait()
+        i = 1
+        st = time.time()
+        while self._alive:
+            evt.wait(timeout=1)
+            if i % 50 == 0:
+                et = time.time() - st
+                self.debug('waiting for overlap signal. elapsed time={:0.2f}'.format(et))
+                i = 0
+            i += 1
+
+        if not self._alive:
+            return
+
+        self.info('overlap signal set')
 
         overlap = self.spec.overlap
         self.info('starting overlap delay {}'.format(overlap))
         starttime = time.time()
+        i = 1
         while self._alive:
-            if time.time() - starttime > overlap:
+            et = time.time() - starttime
+            if et > overlap:
                 break
             time.sleep(1.0)
+            if i % 50 == 0:
+                self.debug('waiting overlap delay {}. elapsed time={:0.2f}'.format(overlap, et))
+                i = 0
+            i += 1
+
+        self.info('waiting for overlap finished')
 
     def get_previous_blanks(self):
         blanks = None

@@ -92,7 +92,7 @@ class RunParser(Loggable):
         for attr in ['duration',
                      'cleanup',
                      'ramp_duration',
-                     'weight',
+                     'weight', 'overlap',
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam')]:
 
@@ -104,8 +104,7 @@ class RunParser(Loggable):
 
         for attr in [
                      'autocenter',
-                     ('disable_between_positions','dis_btw_pos')
-                     ]:
+                     ('disable_between_positions', 'dis_btw_pos')]:
             v=self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:
                 params[v[0]]=v[1]

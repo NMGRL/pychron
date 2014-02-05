@@ -114,12 +114,12 @@ class DatabaseAdapter(Loggable):
     connection_parameters_changed = Bool
 
     url = Property(depends_on='connection_parameters_changed')
-    datasource_url =Property(depends_on='connection_parameters_changed')
+    datasource_url = Property(depends_on='connection_parameters_changed')
 
-    path=Str
+    path = Str
 
     def create_all(self, metadata):
-        if self.kind=='sqlite':
+        if self.kind == 'sqlite':
             with self.session_ctx() as sess:
                 metadata.create_all(sess.bind)
 
@@ -155,7 +155,7 @@ class DatabaseAdapter(Loggable):
             if not self.enabled:
                 self.warning_dialog(
                     'Database "{}" kind not set. Set in Preferences. current kind="{}"'.format(self.name,
-                                                                                               self.kind))                
+                                                                                               self.kind))
             else:
                 url = self.url
                 if url is not None:
@@ -163,13 +163,12 @@ class DatabaseAdapter(Loggable):
                     engine = create_engine(url, echo=False)
                     #                     Session.configure(bind=engine)
 
-                    self.session_factory = sessionmaker(bind=engine,autoflush=False)
+                    self.session_factory = sessionmaker(bind=engine, autoflush=False)
                     if test:
                         self.connected = self._test_db_connection()
                     else:
                         self.connected = True
 
-                    print self.connected
                     if self.connected:
                         self.info('connected to db')
                         self.initialize_database()
@@ -266,9 +265,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             try:
                 connected = False
                 if self.test_func is not None:
-                #                 self.sess = None
-                #                 self.get_session()
-                #                sess = self.session_factory()
+                    #                 self.sess = None
+                    #                 self.get_session()
+                    #                sess = self.session_factory()
                     self.info('testing database connection {}'.format(self.test_func))
                     getattr(self, self.test_func)(reraise=True)
                     connected = True
@@ -305,7 +304,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
     #         pass
 
     def _add_item(self, obj):
-    #         sess = self._session
+        #         sess = self._session
         sess = self.get_session()
         if sess:
             sess.add(obj)
@@ -361,7 +360,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 func = getattr(self, 'get_{}'.format(name))
                 item = func(value)
             else:
-                item=value
+                item = value
 
             if item:
                 sess.delete(item)
@@ -377,9 +376,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 sess = self.session_factory()
 
         with self.session_ctx(sess):
-        #         print 'get items', sess, self.session_factory
-        #         sess = self.get_session()
-        #    if sess is not None:
+            #         print 'get items', sess, self.session_factory
+            #         sess = self.get_session()
+            #    if sess is not None:
             q = sess.query(table)
 
             if joins:
@@ -426,30 +425,30 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             return
 
     def _query_all(self, q, reraise=False):
-        ret=self._query(q, 'all', reraise)
+        ret = self._query(q, 'all', reraise)
         if not ret:
-            ret=[]
+            ret = []
 
         return ret
 
-    def _query(self,q, func, reraise):
-        f=getattr(q,func)
+    def _query(self, q, func, reraise):
+        f = getattr(q, func)
         try:
             return f()
-        except SQLAlchemyError,e:
+        except SQLAlchemyError, e:
             if reraise:
                 raise
             print e
 
     def _query_one(self, q, reraise=False):
         q = q.limit(1)
-        return self._query(q,'one',reraise)
+        return self._query(q, 'one', reraise)
 
     def _retrieve_item(self, table, value, key='name', last=None,
                        joins=None, filters=None, options=None, verbose=True):
-    #         sess = self.get_session()
-    #         if sess is None:
-    #             return
+        #         sess = self.get_session()
+        #         if sess is None:
+        #             return
 
         if not isinstance(value, (str, int, unicode, long, float, list, tuple)):
             return value
@@ -503,8 +502,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
                 except MultipleResultsFound:
                     if verbose:
-                        self.debug('multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
-                                                                                          value))
+                        self.debug(
+                            'multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
+                                                                                              value))
                     try:
                         if hasattr(table, 'id'):
                             q = q.order_by(table.id.desc())
@@ -519,6 +519,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     if verbose:
                         self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
                     break
+
         # no longer true: __retrieve is recursively called if a StatementError is raised
         # use retry loop instead
         with self.session_ctx() as s:
@@ -539,7 +540,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                             filter_str=filter_str)
         if order:
             for o in order \
-                if isinstance(order, list) else [order]:
+                    if isinstance(order, list) else [order]:
                 q = q.order_by(o)
 
         if limit:
@@ -580,6 +581,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             s = self.selector_klass(db=self, **kw)
             #            s.load_recent()
             return s
+
 
 #    def _get(self, table, query_dict, func='one'):
 #        sess = self.get_session()

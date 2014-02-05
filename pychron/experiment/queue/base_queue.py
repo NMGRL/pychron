@@ -275,7 +275,7 @@ class BaseExperimentQueue(Loggable):
         seq = ['labnumber', 'sample', 'position',
                ('e_value', 'extract_value'),
                ('e_units', 'extract_units'),
-               'duration', 'cleanup',
+               'duration', 'cleanup', 'overlap',
                ('beam_diam', 'beam_diameter'),
                'pattern',
                ('extraction', 'extraction_script'),
@@ -286,7 +286,6 @@ class BaseExperimentQueue(Loggable):
                ('post_equilibration', 'post_equilibration_script'),
                ('dis_btw_pos','disable_between_positons'),
                'weight', 'comment',
-               'overlap',
                'autocenter']
 
         if self.extract_device == 'Fusions UV':

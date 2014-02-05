@@ -54,28 +54,22 @@ class FactoryView(HasTraits):
             HGroup(sspring(width=33),
                    Item('extract_value', label='Extract',
                         tooltip='Set the extract value in extract units',
-                        enabled_when='extractable'
-                   ),
+                        enabled_when='extractable'),
                    Item('extract_units',
                         show_label=False,
                         editor=EnumEditor(name='extract_units_names')),
-                   Item('ramp_duration', label='Ramp Dur. (s)'),
-            ),
+                   Item('ramp_duration', label='Ramp Dur. (s)'), ),
+            HGroup(Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),
             self._step_heat_group(),
             HGroup(
                 Item('duration', label='Duration (s)',
-                     tooltip='Set the number of seconds to run the extraction device.'
-
-                ),
+                     tooltip='Set the number of seconds to run the extraction device.'),
                 Item('cleanup', label='Cleanup (s)',
-                     tooltip='Set the number of seconds to getter the sample gas'
-                )
-            ),
+                     tooltip='Set the number of seconds to getter the sample gas')),
             Item('beam_diameter'),
             self._position_group(),
             label='Extract',
-            show_border=True
-        )
+            show_border=True)
         return extract_grp
 
     def _position_group(self):

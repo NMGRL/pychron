@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
+
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr
+    Enum, on_trait_change, CStr, CInt
+
 #============= standard library imports ========================
 import uuid
 import weakref
@@ -86,7 +88,7 @@ class AutomatedRunSpec(Loggable):
     ramp_duration = Float
     ramp_rate = Float
     disable_between_positions = Bool(False)
-    overlap = Bool(False)
+    overlap = CInt
     truncate_condition = Str
     syn_extraction=Str
 

@@ -51,7 +51,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     pattern_width = Int(80)
     beam_diameter_width = Int(65)
 
-    #    overlap_width = Int(50)
+    overlap_width = Int(50)
     #    autocenter_width = Int(70)
     #    extract_device_width = Int(125)
     extraction_script_width = Int(80)
@@ -72,10 +72,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     cleanup_text = Property
     # labnumber_text = Property
     aliquot_text = Property
-    aliquot_content=Property
-
-    def _get_aliquot_content(self):
-        return 'asdf'
+    overlap_text = Property
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -103,6 +100,9 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         #     ln = '{}-{:02n}'.format(it.labnumber, it.aliquot)
         # return ln
 
+    def _get_overlap_text(self):
+        return self._get_number('overlap', fmt='{:n}')
+
     def _get_aliquot_text(self, trait, item):
         al = ''
         it = self.item
@@ -110,16 +110,6 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             al=make_aliquot_step(it.aliquot, it.step)
 
         return al
-
-    def _validate_aliquot_text(self, v):
-        try:
-            return int(v)
-        except ValueError:
-            pass
-
-    def _set_aliquot_text(self,v):
-        if v is not None:
-            self.item.user_defined_aliquot=v
 
     def _get_ramp_duration_text(self, trait, item):
         return self._get_number('ramp_duration', fmt='{:n}')
@@ -167,6 +157,8 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('Ramp (s)', 'ramp_duration'),
             ('Duration (s)', 'duration'),
             ('Cleanup (s)', 'cleanup'),
+            ('Overlap (s)', 'overlap'),
+
             ('Beam (mm)', 'beam_diameter'),
             ('Pattern', 'pattern'),
             ('Extraction', 'extraction_script'),

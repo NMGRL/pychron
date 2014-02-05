@@ -171,6 +171,7 @@ class AutomatedRunFactory(Loggable):
 
     ramp_duration = EKlass(Float)
 
+    overlap = EKlass(Int)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
     beam_diameter = Property(EKlass(Str), depends_on='_beam_diameter')
@@ -918,7 +919,7 @@ class AutomatedRunFactory(Loggable):
 extract_units,
 pattern,
 position,
-weight, comment, skip, extract_group''')
+weight, comment, skip, overlap''')
     def _edit_handler(self, name, new):
         if name == 'pattern':
             if not self._use_pattern():
@@ -929,8 +930,7 @@ weight, comment, skip, extract_group''')
     @on_trait_change('''measurement_script:name, 
 extraction_script:name, 
 post_measurement_script:name,
-post_equilibration_script:name
-    ''')
+post_equilibration_script:name''')
     def _edit_script_handler(self, obj, name, new):
         if self.edit_mode and not self.suppress_update:
             if obj.label == 'Extraction':
