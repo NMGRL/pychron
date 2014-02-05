@@ -647,6 +647,9 @@ class ExperimentExecutor(Loggable):
         return arun
 
     def _set_run_aliquot(self, spec):
+        if spec.conflicts_checked:
+            return True
+
         dh = self.datahub
         ret = True
         conflict = dh.is_conflict(spec)
@@ -665,6 +668,7 @@ class ExperimentExecutor(Loggable):
         else:
             dh.update_spec(spec)
 
+        spec.conflicts_checked = True
         return ret
 
     def _delay(self, delay, message='between'):
@@ -894,7 +898,7 @@ class ExperimentExecutor(Loggable):
             exp = self.experiment_queue
             # check the first aliquot before delaying
             arv = exp.cleaned_automated_runs[0]
-            if not self._set_run_aliquot(self, arv):
+            if not self._set_run_aliquot(arv):
                 return
 
         if not self._check_managers(inform=inform):

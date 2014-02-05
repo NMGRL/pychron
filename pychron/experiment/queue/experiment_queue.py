@@ -67,7 +67,7 @@ class ExperimentQueue(BaseExperimentQueue):
             elif finished and ei.user_defined_aliquot:
                 ei.user_defined_aliquot += 1
 
-            ei.clear_step()
+            ei.reset()
             nans.append(ei)
             # nans.insert(0, ei)
 
