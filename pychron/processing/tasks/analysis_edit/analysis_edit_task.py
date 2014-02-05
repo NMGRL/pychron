@@ -34,6 +34,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -394,7 +395,8 @@ class AnalysisEditTask(BaseBrowserTask):
         elif name == 'refresh_editor_needed':
             self.active_editor.rebuild()
         else:
-            if not obj._no_update:
+            # required for drag and drop. prevents excessive updates.
+            if not obj.no_update:
                 if self.active_editor:
                     self.active_editor.set_items(self.unknowns_pane.items)
 

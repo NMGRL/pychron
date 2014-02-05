@@ -69,6 +69,10 @@ class TablePane(TraitsDockPane):
                                                   refresh='refresh_needed'))))
         return v
 
+    @property
+    def no_update(self):
+        return self._no_update
+
 
 class HistoryTablePane(TablePane, ColumnSorterMixin):
     previous_selection = Any

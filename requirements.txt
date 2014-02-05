@@ -1,11 +1,10 @@
+statsmodels>=0.5.0
+uncertainties
+xlrd
+xlwt
 GitPython>=0.3.2.RC1
 PyMySQL
 PyYAML
 Reportlab
 lxml
 paramiko
-tables>=2.4.0
-statsmodels>=0.5.0
-uncertainties
-xlrd
-xlwt
