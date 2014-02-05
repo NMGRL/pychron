@@ -44,7 +44,8 @@ from pychron.pychron_constants import NULL_STR
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, gen_AnalysisTypeTable
+from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, \
+    gen_AnalysisTypeTable
 
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -203,8 +204,8 @@ class ExperimentExecutor(Loggable):
     def cancel(self, *args, **kw):
         self._cancel(*args, **kw)
 
-    def set_extract_state(self, state, flash=0.75, color='green'):
-        self._set_extract_state(state, flash, color)
+    def set_extract_state(self, state, flash=0.75, color='green', period=1.5):
+        self._set_extract_state(state, flash, color, period=period)
 
     def info_heading(self, msg):
         self.info('')
@@ -284,8 +285,8 @@ class ExperimentExecutor(Loggable):
     #===============================================================================
     def _execute(self):
 
-    #         self._alive = True
-    #
+        #         self._alive = True
+        #
 
         # delay before starting
         exp = self.experiment_queue
@@ -326,7 +327,7 @@ class ExperimentExecutor(Loggable):
         total_cnt = 0
         with consumable(func=self._overlapped_run) as con:
             while 1:
-            #                 before = measure_type()
+                #                 before = measure_type()
                 if not self.isAlive():
                     break
 
@@ -389,8 +390,8 @@ class ExperimentExecutor(Loggable):
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
     def _join_run(self, spec, run):
-    #    def _join_run(self, spec, t, run):
-    #        t.join()
+        #    def _join_run(self, spec, t, run):
+        #        t.join()
         self.debug('join run')
         self._do_run(run)
 
@@ -512,7 +513,7 @@ class ExperimentExecutor(Loggable):
                     self.current_run = None
 
     def _end_runs(self):
-    #         self._last_ran = None
+        #         self._last_ran = None
         if self.stats:
             self.stats.stop_timer()
 
@@ -540,6 +541,7 @@ class ExperimentExecutor(Loggable):
     #===============================================================================
     def _start(self, run):
         ret = True
+        self.set_extract_state('Foo', color='purple')
 
         if not run.start():
             self._alive = False
@@ -668,7 +670,7 @@ class ExperimentExecutor(Loggable):
         return ret
 
     def _delay(self, delay, message='between'):
-    #        self.delaying_between_runs = True
+        #        self.delaying_between_runs = True
         msg = 'Delay {} runs {} sec'.format(message, delay)
         self.info(msg)
         self._wait(delay, msg)
@@ -688,14 +690,14 @@ class ExperimentExecutor(Loggable):
         wc.start()
         wg.pop(wc)
 
-    def _set_extract_state(self, state, flash, color='green'):
+    def _set_extract_state(self, state, flash, color, period):
         if state:
             label = state.upper()
-            wait=False
+            wait = False
             if flash:
                 if self._end_flag:
                     self._end_flag.set()
-                    wait=True
+                    wait = True
                     # time.sleep(0.25)
                     # self._end_flag.clear()
                 else:
@@ -707,16 +709,32 @@ class ExperimentExecutor(Loggable):
                         iperiod== iterations per second (inverse period == rate)
 
                     """
-                    freq = flash
-                    iperiod = 5
-                    threshold = freq ** 2 * iperiod  # mod * freq
+                    # freq = flash
+                    # iperiod = 5
+                    # threshold = freq ** 2 * iperiod  # mod * freq
 
                     #wait until previous loop finished.
                     if wait:
                         while self._end_flag.set():
                             time.sleep(0.01)
 
-                    self._extraction_state_iter(0, iperiod, threshold, label, color, self._end_flag)
+                    pattern = ((flash * period, True), ((1 - flash) * period, False))
+
+                    def pattern_gen(p):
+                        def f():
+                            i = 0
+                            while 1:
+                                try:
+                                    yield p[i]
+                                    i += 1
+                                except IndexError:
+                                    yield p[0]
+                                    i = 1
+
+                        return f()
+
+                    gen = pattern_gen(pattern)
+                    self._extraction_state_iter(gen, label, color, self._end_flag)
 
                 invoke_in_main_thread(loop)
             else:
@@ -729,19 +747,16 @@ class ExperimentExecutor(Loggable):
             else:
                 invoke_in_main_thread(self.trait_set, extraction_state_label='')
 
-    def _extraction_state_iter(self, i, iperiod, threshold, label, color, end_flag):
-    #         print '{} {} {} {}'.format(i, iperiod, i % iperiod, threshold)
-        if i % iperiod > threshold:
-            self.trait_set(extraction_state_label='')
-        else:
+    def _extraction_state_iter(self, gen, label, color, end_flag):
+        t, state = gen.next()
+        if state:
             self.trait_set(extraction_state_label=label,
                            extraction_state_color=color)
+        else:
+            self.trait_set(extraction_state_label='')
 
         if not end_flag.isSet():
-            if i > 1000:
-                i = 0
-            do_after(1000 / float(iperiod), self._extraction_state_iter, i + 1, iperiod,
-                     threshold, label, color, end_flag)
+            do_after(t * 1000, self._extraction_state_iter, gen, label, color, end_flag)
         else:
             self.trait_set(extraction_state_label='')
             end_flag.clear()
@@ -1107,7 +1122,7 @@ If "No" select from database
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':
-        #            em = self.extraction_line_manager
+            #            em = self.extraction_line_manager
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')
             runner = elm.find('runner')
@@ -1159,7 +1174,7 @@ If "No" select from database
 
         self.debug('Automated run monitor {}'.format(mon))
         if mon is not None:
-        #        mon.configuration_dir_name = paths.monitors_dir
+            #        mon.configuration_dir_name = paths.monitors_dir
             isok = mon.load()
             if isok:
                 return mon

@@ -353,7 +353,7 @@ class AutomatedRunPersister(Loggable):
 
         return meas
 
-    def _save_extraction(self,db, analysis=None, loadtable=None):
+    def _save_extraction(self, db, analysis=None, loadtable=None, output_blob=None, response_blob=None):
         self.info('saving extraction')
 
         spec = self.run_spec
@@ -365,6 +365,8 @@ class AutomatedRunPersister(Loggable):
                  extract_duration=spec.duration,
                  cleanup_duration=spec.cleanup,
                  weight=spec.weight,
+                 response_blob=response_blob or '',
+                 output_blob=output_blob or '',
                  sensitivity_multiplier=self.sensitivity_multiplier,
                  is_degas=spec.labnumber == 'dg')
 
