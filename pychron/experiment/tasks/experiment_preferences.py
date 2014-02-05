@@ -20,7 +20,10 @@ from traits.api import Str, Int, \
 from traitsui.api import View, Item, Group, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, BaseConsolePreferencesPane
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
+    BaseConsolePreferencesPane
+
+
 
 
 #============= standard library imports ========================
@@ -41,9 +44,13 @@ class ExperimentPreferences(BasePreferencesHelper):
     irradiation_prefix = Str
     monitor_name = Str
 
-    baseline_color=Color
-    sniff_color=Color
-    signal_color=Color
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
+
+    filter_outliers = Bool(False)
+    fo_iterations = Int(1)
+    fo_std_dev = Int(2)
 
 
 class ExperimentPreferencesPane(PreferencesPane):
@@ -51,12 +58,12 @@ class ExperimentPreferencesPane(PreferencesPane):
     category = 'Experiment'
 
     def traits_view(self):
-        notification_grp =VGroup(
-                Item('use_notifications'),
-                Item('notifications_port',
-                     enabled_when='use_notifications',
-                     label='Port'),
-                label='Notifications')
+        notification_grp = VGroup(
+            Item('use_notifications'),
+            Item('notifications_port',
+                 enabled_when='use_notifications',
+                 label='Port'),
+            label='Notifications')
 
         editor_grp = Group(
             Item('use_auto_save',
@@ -70,15 +77,20 @@ class ExperimentPreferencesPane(PreferencesPane):
                                      label='Irradiation Prefix'),
                                 Item('monitor_name'),
                                 label='Irradiations')
-        color_group=Group(Item('sniff_color',label='Sniff'),
-                          Item('baseline_color',label='Baseline'),
-                          Item('signal_color',label='Signal'),
-                        label='Colors')
-        return View(
-            color_group,
-            notification_grp,
-            editor_grp,
-            irradiation_grp)
+
+        color_group = Group(Item('sniff_color', label='Sniff'),
+                            Item('baseline_color', label='Baseline'),
+                            Item('signal_color', label='Signal'),
+                            label='Colors')
+
+        filter_grp = Group(Item('filter_outliers'),
+                           VGroup(Item('fo_iterations', label='N. Iterations'),
+                                  Item('fo_std_dev', label='N. standard deviations'),
+                                  enabled_when='filter_outliers',
+                                  show_border=True),
+                           label='Post Fit Filtering')
+
+        return View(color_group, notification_grp, editor_grp, irradiation_grp, filter_grp)
 
 
 class ConsolePreferences(BaseConsolePreferences):

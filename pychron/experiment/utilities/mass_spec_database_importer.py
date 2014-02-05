@@ -359,6 +359,8 @@ class MassSpecDatabaseImporter(Loggable):
         blob2 = [struct.pack('>f', float(v)) for v in vb]
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
+        #@todo: add filtered points blob
+
         # in mass spec the intercept is already baseline corrected
         # mass spec also doesnt propagate baseline errors
 

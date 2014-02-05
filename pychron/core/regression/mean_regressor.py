@@ -25,7 +25,7 @@ class MeanRegressor(BaseRegressor):
     _fit = 'average'
 
     def calculate(self):
-        cxs,cys=self.ys,self.ys
+        cxs, cys = self.clean_ys, self.clean_ys
         if not self._filtering:
             #prevent infinite recursion
             fx, fy = self.get_filtered_data(cxs, cys)

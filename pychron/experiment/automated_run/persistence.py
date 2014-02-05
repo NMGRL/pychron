@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, Bool, Int, Float, Str, \
-    Dict, List, Time, Date, Any
+    Dict, List, Time, Date, Any, Property
 #============= standard library imports ========================
 import os
 import struct
@@ -27,6 +27,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.peak_hop_collector import parse_hops
 from pychron.experiment.datahub import Datahub
@@ -49,6 +50,11 @@ class AutomatedRunPersister(Loggable):
     run_spec=Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
     monitor=Any
+
+    default_outlier_filtering = Property(depends_on='filter_outliers, fo_+')
+    filter_outliers = Bool(False)
+    fo_iterations = Int(1)
+    fo_std_dev = Int(2)
 
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
@@ -84,6 +90,16 @@ class AutomatedRunPersister(Loggable):
     cdd_ic_factor = Any
 
     _db_extraction_id=None
+
+    def __init__(self, *args, **kw):
+        super(AutomatedRunPersister, self).__init__(*args, **kw)
+        self.bind_preferences()
+
+    def bind_preferences(self):
+        prefid = 'pychron.experiment'
+        bind_preference(self, 'filter_outliers', '{}.filter_outliers'.format(prefid))
+        bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
+        bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
 
     def get_last_aliquot(self, identifier):
         return self.datahub.get_greatest_aliquot(identifier)
@@ -298,10 +314,15 @@ class AutomatedRunPersister(Loggable):
 
         add_result = kind in ('baseline', 'signal')
 
+        # filter_outliers=dict(iterations=1,
+        #                      std_dev=2, filter_outliers=True)
+        filter_outliers = self._default_outlier_filtering
         if add_result:
             if m.fit:
                 # add fit
                 db.add_fit(dbhist, dbiso, fit=m.fit)
+
+            m.set_filtering(filter_outliers)
 
             # add isotope result
             # print 'a',m.value, m.error, type(m.error), type(nan)
@@ -618,5 +639,10 @@ class AutomatedRunPersister(Loggable):
         ldb.connect()
         ldb.build_database()
         return ldb
+
+    def _default_outlier_filtering(self):
+        return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
+                    std_dev=self.fo_std_dev)
+
 #============= EOF =============================================
 

@@ -18,8 +18,11 @@
 from binascii import hexlify
 from itertools import izip
 import re
+
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List
+
+
 
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
@@ -120,6 +123,12 @@ class IsotopicMeasurement(BaseMeasurement):
             kw['unpack'] = True
 
         super(IsotopicMeasurement, self).__init__(*args, **kw)
+
+    def set_filtering(self, d):
+        if d.get('filter_outliers', False):
+            self.filter_outliers_dict = d
+            self.dirty = True
+            self.regressor.calculate()
 
     def set_fit_blocks(self, fit):
         if re.match(r'\([\w\d\s,]*\)', fit):
