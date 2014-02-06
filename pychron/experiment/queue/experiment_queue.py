@@ -49,21 +49,34 @@ class ExperimentQueue(BaseExperimentQueue):
             self.selected = self.automated_runs[idx:idx + 1]
 
     def reset(self):
-        ans = self.automated_runs
+        """
+            clear the step from the run. increment the aliquot if a step heat and experiment completed.
+        """
+
         ens = self.executed_runs
+
         self._no_update = True
-        for ei in reversed(ens):
+
+        finished = len(self.automated_runs) == 0
+        nans = []
+        # for ei in reversed(ens):
+        for ei in ens:
             ei.state = 'not run'
             if not ei.is_step_heat():
                 ei.aliquot = 0
+            elif finished and ei.user_defined_aliquot:
+                ei.user_defined_aliquot += 1
 
-            ei.step = ''
-            ans.insert(0, ei)
+            ei.reset()
+            nans.append(ei)
+            # nans.insert(0, ei)
+
+        nans.extend(self.automated_runs)
+        self.automated_runs = nans
 
         self.executed_runs = []
         self.executed = False
         self._no_update = False
-
 
     def set_run_inprogress(self, aid):
         run = self._find_run(aid)
@@ -102,7 +115,7 @@ class ExperimentQueue(BaseExperimentQueue):
 
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):
-        if new:
+        if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
             self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
             invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))

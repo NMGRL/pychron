@@ -22,6 +22,7 @@ from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
 
+
 # from traitsui.api import View, Item
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
@@ -30,6 +31,7 @@ from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
 from pyface.action.api import ActionItem, Group
 # from pyface.tasks.action.task_action import TaskAction
 from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAction
+from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction
@@ -288,6 +290,10 @@ class BaseTask(Task, Loggable):
                 add = True
                 if hasattr(factory, 'include_view_menu'):
                     add = factory.include_view_menu
+
+                if hasattr(factory, 'image'):
+                    action.image = icon(factory.image)
+
                 if add:
                     items.append(ActionItem(action=action))
 

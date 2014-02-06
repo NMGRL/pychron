@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property
+    Event, Property, cached_property, Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
@@ -32,12 +32,13 @@ class AnalysisTable(HasTraits):
     analysis_filter = Str
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
-    analysis_filter_parameter = Str('record_id')
+    analysis_filter_parameter = Str
     analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')#List(['Record_id', 'Tag',
                                        # 'Age', 'Labnumber', 'Aliquot', 'Step'])
 
     omit_invalid = Bool(True)
     configure_analysis_table = Button
+    table_configurer = Instance(TableConfigurer)
 
     # forward = Button
     # backward = Button
@@ -81,9 +82,15 @@ class AnalysisTable(HasTraits):
     #     p = self.page
     #     p -= 1
     #     self.page = max(1, p)
+    def _tabular_adapter_changed(self):
+        self.table_configurer.adapter = self.tabular_adapter
+        self.table_configurer.load()
 
-    def _analysis_filter_comparator_default(self):
-        return 'startswith'
+    def _analysis_filter_parameter_default(self):
+        return 'record_id'
+
+    # def _analysis_filter_comparator_default(self):
+    #     return 'startswith'
 
     @cached_property
     def _get_analysis_filter_parameters(self):
@@ -104,25 +111,31 @@ class AnalysisTable(HasTraits):
         #     else:
         #         self.page = 1
         #     self.no_update = False
+        # self.analysis_filter_values = vs
+        self._analysis_filter_parameter_changed(True)
 
     def _analysis_filter_changed(self, new):
         if new:
             # self.analyses=[]
             name = self.analysis_filter_parameter
-            comp = self.analysis_filter_comparator
+            # comp = self.analysis_filter_comparator
             # if name == 'Step':
             #     new = new.upper()
 
-            self.analyses = filter(filter_func(new, name, comp), self.oanalyses)
+            self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
 
-
     def _configure_analysis_table_fired(self):
+        # c = TableConfigurer(adapter=self.tabular_adapter,
+        #                     id='analysis.table',
+        #                     title='Configure Analysis Table')
+        self.table_configurer.edit_traits()
+        # c.edit_traits()
 
-        c = TableConfigurer(adapter=self.tabular_adapter,
-                            title='Configure Analysis Table')
-        c.edit_traits()
+    def _table_configurer_default(self):
+        return TableConfigurer(id='analysis.table',
+                               title='Configure Analysis Table')
 
     # def _get_npages(self):
     #     try:

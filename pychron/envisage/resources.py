@@ -21,12 +21,14 @@ from pyface.image_resource import ImageResource
 #============= local library imports  ==========================
 from pychron.paths import paths
 
+
 def icon(name):
-    return ImageResource(name=name,search_path=paths.icon_search_path)
+    return ImageResource(name=name, search_path=paths.icon_search_path)
+
 
 class Icon(ImageResource):
     def _search_path_default(self):
-        print paths.icon_search_path
         return paths.icon_search_path
+
 #============= EOF =============================================
 

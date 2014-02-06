@@ -121,6 +121,7 @@ class AutomatedRunSpec(Loggable):
 
     rundate = Property
     _step_heat = False
+    conflicts_checked = False
 
 
     def is_step_heat(self):
@@ -327,6 +328,13 @@ class AutomatedRunSpec(Loggable):
 
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
+
+    def reset(self):
+        self.clear_step()
+        self.conflicts_checked=False
+
+    def clear_step(self):
+        self._step = -1
 
     def _set_step(self, v):
         if isinstance(v, str):

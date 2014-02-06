@@ -91,12 +91,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             q = q.order_by(IrradiationChronologyTable.EndTime.asc())
             return q.all()
 
-        #    def get_run_ids(self, filter_str=None):
-        #        sess = self.get_session()
-        #        q = sess.query(distinct(IrradiationPositionTable.IrradPosition))
-        #        if filter_str is not None:
-        #            q = q.filter(IrradiationPositionTable.IrradPosition == filter_str)
-        #        return q.all()
+            #    def get_run_ids(self, filter_str=None):
+            #        sess = self.get_session()
+            #        q = sess.query(distinct(IrradiationPositionTable.IrradPosition))
+            #        if filter_str is not None:
+            #            q = q.filter(IrradiationPositionTable.IrradPosition == filter_str)
+            #        return q.all()
 
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
@@ -143,11 +143,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
 
             if aliquot is not None:
-                sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                'FROM `AnalysesTable` ' \
-                'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
-                'ORDER BY `AnalysesTable`.`AnalysisID` DESC'.format(labnumber, aliquot)
-                v=sess.execute(sql)
+                sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                      'FROM `AnalysesTable` ' \
+                      'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+                      'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+                v = sess.execute(sql)
                 if v is not None:
                     r = v.fetchone()
                     if r:
@@ -155,13 +155,13 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                         return int(a), s
 
                         # q = q.filter(AnalysesTable.RID.like('"{}-{:02n}%"'.format(labnumber, aliquot)))
-                # q = q.filter(AnalysesTable.Aliquot == "'{:02n}'".format(aliquot))
+                        # q = q.filter(AnalysesTable.Aliquot == "'{:02n}'".format(aliquot))
 
-                #castting A,B,C... doesnt produce 0,1,2
-                # q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
+                        #castting A,B,C... doesnt produce 0,1,2
+                        # q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
 
-                #assume greatest step also greatest AnalysisID
-                # q = q.order_by(AnalysesTable.AnalysisID.desc())
+                        #assume greatest step also greatest AnalysisID
+                        # q = q.order_by(AnalysesTable.AnalysisID.desc())
 
             else:
                 #!!!!!
@@ -173,12 +173,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #switch to option 3. if performance increase is desired
                 #!!!!!
                 #q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
-                sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                    'FROM `AnalysesTable` ' \
-                    'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
-                    'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+                sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                      'FROM `AnalysesTable` ' \
+                      'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+                      'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
 
-                v=sess.execute(sql)
+                v = sess.execute(sql)
 
                 if v is not None:
                     r = v.fetchone()
@@ -197,7 +197,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             else:
                 key = (key, 'Aliquot')
                 value = (value, aliquot)
-            #                value = ('{}-{}'.format(value, aliquot), aliquot)
+                #                value = ('{}-{}'.format(value, aliquot), aliquot)
 
         return self._retrieve_item(AnalysesTable, value,
                                    key=key, )
@@ -439,7 +439,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                             NumCnts=cnts)
         if iso is not None:
             iso.baseline = bs
-        #            return bs, True
+            #            return bs, True
 
         return bs
 

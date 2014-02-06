@@ -28,6 +28,9 @@ from pyface.constant import YES
 #===============================================================================
 # help
 #===============================================================================
+from pychron.envisage.resources import icon
+
+
 class WebAction(Action):
     def _open_url(self, url):
         webbrowser.open_new(url)
@@ -35,6 +38,7 @@ class WebAction(Action):
 
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
+    image = icon('bug.png')
 
     def perform(self, event):
         """

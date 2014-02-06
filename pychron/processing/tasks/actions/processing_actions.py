@@ -140,6 +140,7 @@ class IdeogramAction(FigureAction):
     name = 'Ideogram'
     accelerator = 'Ctrl+J'
     method = 'new_ideogram'
+    image = icon('histogram')
 
 
 class SpectrumAction(FigureAction):
@@ -206,6 +207,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 class OpenAdvancedQueryAction(Action):
     name = 'Find Analysis...'
+    image = icon('edit-find.png')
 
     def perform(self, event):
         app = event.task.window.application

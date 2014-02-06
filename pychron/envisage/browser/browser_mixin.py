@@ -18,8 +18,10 @@
 import os
 import re
 
-from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached_property
+from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached_property, DelegatesTo
 import apptools.sweet_pickle as pickle
+
+
 
 
 #============= standard library imports ========================
@@ -64,6 +66,7 @@ def filter_func(new, attr=None, comp=None):
 
     return func
 
+
 class SearchCriteria(HasTraits):
     recent_hours = Int
 
@@ -91,9 +94,10 @@ class BrowserMixin(ColumnSorterMixin):
     configure_sample_table = Button
     clear_selection_button = Button
 
-    filter_non_run_samples = Bool(True)
+    filter_non_run_samples = DelegatesTo('table_configurer')
 
     sample_tabular_adapter = Any
+    table_configurer = Instance(SampleTableConfigurer)
 
     #    recent_hours = Int#(48)
     search_criteria = Instance(SearchCriteria, ())
@@ -179,12 +183,12 @@ class BrowserMixin(ColumnSorterMixin):
             ps = db.get_projects(order=gen_ProjectTable.name.asc())
             ms = db.get_mass_spectrometers()
             recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
-            pss=[ProjectRecordView(p) for p in ps]
+            pss = [ProjectRecordView(p) for p in ps]
 
             #move references project to after Recent
-            p=next((p for p in pss if p.name.lower()=='references'),None)
+            p = next((p for p in pss if p.name.lower() == 'references'), None)
             if p is not None:
-                rp=pss.pop(pss.index(p))
+                rp = pss.pop(pss.index(p))
                 pss.insert(0, rp)
 
             ad = recents + pss
@@ -212,7 +216,7 @@ class BrowserMixin(ColumnSorterMixin):
             #    self.selected_samples = sams[:1]
 
             p = self._get_sample_filter_parameter()
-            self.sample_filter_values = [getattr(si, p) for si in sams]
+            self.sample_filter_values = list(set([getattr(si, p) for si in sams]))
 
     def _set_recent_samples(self, recent_name):
         if not self.search_criteria.recent_hours:
@@ -239,14 +243,17 @@ class BrowserMixin(ColumnSorterMixin):
 
         return sams
 
-    def _filter_non_run_samples_changed(self):
-        self._set_samples()
+    # def _filter_non_run_samples_changed(self):
+    #     print 'fffff'
+    #     self._set_samples()
 
     def _configure_sample_table_fired(self):
-        s = SampleTableConfigurer(adapter=self.sample_tabular_adapter,
-                                  title='Configure Sample Table',
-                                  parent=self)
-        s.edit_traits()
+        self.table_configurer.edit_traits()
+
+        # s = SampleTableConfigurer(adapter=self.sample_tabular_adapter,
+        #                           title='Configure Sample Table',
+        #                           parent=self)
+        # s.edit_traits()
 
     def _set_samples(self):
         db = self.manager.db
@@ -258,6 +265,9 @@ class BrowserMixin(ColumnSorterMixin):
                 sp = (sp,)
 
             for pp in sp:
+                if not pp:
+                    continue
+
                 ss = db.get_samples(project=pp.name)
                 n = sum([1 if len(li.analyses) else 0 for si in ss for li in si.labnumbers])
                 if n > 50:
@@ -308,6 +318,10 @@ class BrowserMixin(ColumnSorterMixin):
 
             self.sample_filter_values = vs
 
+    def _sample_tabular_adapter_changed(self):
+        self.table_configurer.adapter = self.sample_tabular_adapter
+        self.table_configurer.load()
+
     def _clear_selection_button_fired(self):
         self.selected_projects = []
         self.selected_samples = []
@@ -319,9 +333,9 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.manager.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
-            lps=[si.low_post for si in samples if si.low_post is not None]
+            lps = [si.low_post for si in samples if si.low_post is not None]
 
-            low_post=min(lps) if lps else None
+            low_post = min(lps) if lps else None
 
             # o = None
             # if page_width:
@@ -335,10 +349,10 @@ class BrowserMixin(ColumnSorterMixin):
                                                 # limit=limit,
                                                 # offset=o,
                                                 include_invalid=include_invalid)
-            prog=None
-            n=len(ans)
-            if n>25 or len(lns)>2:
-                prog=self.manager.open_progress(n)
+            prog = None
+            n = len(ans)
+            if n > 25 or len(lns) > 2:
+                prog = self.manager.open_progress(n)
 
             ans = [self._record_view_factory(a, progress=prog) for a in ans]
             if prog:
@@ -357,5 +371,8 @@ class BrowserMixin(ColumnSorterMixin):
             progress.change_message('Loading {}'.format(iso.record_id))
 
         return iso
+
+    def _table_configurer_default(self):
+        return SampleTableConfigurer(parent=self)
 
 #============= EOF =============================================

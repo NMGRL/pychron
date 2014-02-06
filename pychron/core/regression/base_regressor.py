@@ -79,12 +79,12 @@ class BaseRegressor(Loggable):
         rx, ry = xs, ys
         fod = self.filter_outliers_dict
         if fod.get('filter_outliers', False):
-            for _ in range(fod['iterations']):
+            for _ in range(fod.get('iterations', 1)):
                 self._filtering = True
                 self.calculate()
                 self._filtering = False
 
-                outliers = self.calculate_outliers(nsigma=fod['std_devs'])
+                outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 rx = delete(rx, outliers, 0)
                 ry = delete(ry, outliers, 0)

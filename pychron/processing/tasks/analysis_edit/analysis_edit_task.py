@@ -35,6 +35,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -59,7 +60,7 @@ class AnalysisEditTask(BaseBrowserTask):
                          # FindAssociatedAction(),
                           image_size=(16, 16))]
 
-    external_recall_window = True
+    external_recall_window = False
     _tag_table_view = None
 
     def append_unknown_analyses(self, ans):
@@ -374,7 +375,6 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:save_event')
     def _handle_save_event(self):
-        print 'asdfsadf'
         self.save_to_db()
 
     @on_trait_change('active_editor:component_changed')
