@@ -69,7 +69,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     #    can_edit_scripts = Bool(True)
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
-        self.setup_consumer(self._add_run)
+        self.setup_consumer(self._add_run, main=True)
 
     def destroy(self):
         self._should_consume = False

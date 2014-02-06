@@ -160,12 +160,12 @@ class Query(HasTraits):
         else:
 
             if c.count('-') == 2:
-                y = c.split('-')[0]
+                y = c.split('-')[-1]
                 y = 'y' if len(y) == 2 else 'Y'
 
                 fmt = '%m-%d-%{}'.format(y)
             elif c.count('-') == 1:
-                y = c.split('-')[0]
+                y = c.split('-')[-1]
                 y = 'y' if len(y) == 2 else 'Y'
 
                 fmt = '%m-%{}'.format(y)
