@@ -74,6 +74,7 @@ class AdvancedQueryPane(TraitsTaskPane):
                 Item(selector_name('limit'))),
             Item(selector_name('records'),
                  style='custom',
+                 width=600,
                  editor=myTabularEditor(adapter=ResultsAdapter(),
                                         selected=selector_name('selected'),
                                         scroll_to_row=selector_name('scroll_to_row'),

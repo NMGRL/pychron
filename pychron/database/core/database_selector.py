@@ -216,8 +216,11 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                     if not tab in joined:
                         joined.append(tab)
                         q = q.join(tab)
-
-                q = qi.assemble_filter(q, attr)
+                try:
+                    q = qi.assemble_filter(q, attr)
+                except ValueError:
+                    self.warning_dialog('Invalid query "{}", "{}"'.format(qi.parameter, attr))
+                    return
 
         return q
 
@@ -344,16 +347,19 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         if queries:
             q = self._assemble_query(q, queries, self.lookup)
 
-        tattr = getattr(self.query_table, timestamp)
-        q = q.order_by(tattr.desc())
-        if limit and limit > 0:
-            q = q.limit(limit)
+        if q:
+            tattr = getattr(self.query_table, timestamp)
+            q = q.order_by(tattr.desc())
+            if limit and limit > 0:
+                q = q.limit(limit)
 
-        q = q.from_self()
-        q = q.order_by(tattr.asc())
-        records = q.all()
+            q = q.from_self()
+            q = q.order_by(tattr.asc())
+            records = q.all()
 
-        return records, compile_query(q)
+            return records, compile_query(q)
+        else:
+            return [], 'invalid query'
 
     def _load_hook(self):
         pass
