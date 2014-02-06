@@ -38,9 +38,7 @@ class EmailPlugin(BaseTaskPlugin):
     def _tasks_default(self):
         t = [TaskFactory(id=self.id,
                          factory=self._task_factory,
-                         name='Email',
-                         #include_view_menu=False
-        ), ]
+                         name='Email', image='email-go'), ]
         return t
 
     def _task_factory(self):

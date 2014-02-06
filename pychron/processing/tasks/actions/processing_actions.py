@@ -83,6 +83,7 @@ class GraphGroupSelectedAction(GroupAction):
     name = 'Graph Group Selected'
     method = 'graph_group_selected'
 
+
 #     def perform(self, event):
 #         task = event.task
 #         if task.id == 'pychron.processing.figures':
@@ -162,9 +163,11 @@ class InverseIsochronAction(FigureAction):
 
 
 class FigureFromFile(FigureAction):
-    name='Ideogram from File'
-    method='new_ideogram_from_file'
+    name = 'Ideogram from File'
+    method = 'new_ideogram_from_file'
     accelerator = 'Ctrl+shift+j'
+
+
 #===============================================================================
 #
 #===============================================================================
@@ -217,6 +220,7 @@ class OpenAdvancedQueryAction(Action):
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
+    image = icon('edit-clear')
 
     def perform(self, event=None):
         from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT
@@ -231,7 +235,6 @@ class ExportAnalysesAction(Action):
     def perform(self, event):
         app = event.task.window.application
         app.open_task('pychron.export')
-
 
 
 #============= EOF =============================================

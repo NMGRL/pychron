@@ -23,6 +23,7 @@ from pyface.timer.do_later import do_later
 from traits.api import Any, on_trait_change, List, Unicode, DelegatesTo
 
 
+
 # from traitsui.api import View, Item
 from pyface.tasks.task import Task
 from pyface.tasks.action.schema import SMenu, SMenuBar, SGroup
@@ -292,7 +293,8 @@ class BaseTask(Task, Loggable):
                     add = factory.include_view_menu
 
                 if hasattr(factory, 'image'):
-                    action.image = icon(factory.image)
+                    if factory.image:
+                        action.image = icon(factory.image)
 
                 if add:
                     items.append(ActionItem(action=action))

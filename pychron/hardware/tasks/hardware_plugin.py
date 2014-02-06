@@ -81,6 +81,7 @@ class HardwarePlugin(BaseTaskPlugin):
         return [TaskFactory(id='tasks.hardware',
                             name='Hardware',
                             factory=self._factory,
+                            image='configure-2',
                             task_group='hardware')]
 
     def _factory(self):
@@ -153,8 +154,8 @@ class HardwarePlugin(BaseTaskPlugin):
 
     def stop(self):
 
-    #        rhm = self.application.get_service(RemoteHardwareManager)
-    #        rhm.stop()
+        #        rhm = self.application.get_service(RemoteHardwareManager)
+        #        rhm.stop()
 
         if self.managers:
             for m in self.managers:

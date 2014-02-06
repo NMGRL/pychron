@@ -19,10 +19,12 @@ from pyface.image_resource import ImageResource
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
 
 
 def icon(name):
+    name = add_extension(name, '.png')
     return ImageResource(name=name, search_path=paths.icon_search_path)
 
 

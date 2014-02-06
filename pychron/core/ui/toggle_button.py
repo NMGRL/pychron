@@ -31,7 +31,7 @@ class ToggleButton(Event):
                  image_off=None,
                  tooltip_on='',
                  tooltip_off='',
-                 width=32, height=32,
+                 width=60, height=20,
                  **metadata):
         self.editor = ToggleButtonEditor(
             label=label,
