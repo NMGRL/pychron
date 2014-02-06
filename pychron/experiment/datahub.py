@@ -25,6 +25,7 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -73,17 +74,18 @@ class Datahub(Loggable):
             k = 'Stepheat'
             self.debug('get greatest steps')
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
-            step = make_step(max(vs) + 1)
+            mv = max(vs) + 1
+            step = make_step(mv)
             # print ps, ns, vs, spec.identifier
             self._new_runid = make_aliquot_step(spec.aliquot, step)
-            self._new_step = step
+            self._new_step = mv
             self._new_aliquot = spec.aliquot
         else:
             k = 'Fusion'
             self.debug('get greatest aliquots')
             ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-            print 'b',ps, ns, vs, spec.identifier
+            print 'b', ps, ns, vs, spec.identifier
             mv = max(vs)
             self._new_runid = make_aliquot_step(mv + 1, '')
             self._new_aliquot = mv + 1
@@ -99,9 +101,9 @@ class Datahub(Loggable):
             self.warning('Datastore conflicts. {}'.format(err))
             return err
 
-    def update_spec(self, spec):
-        spec.aliquot = self._new_aliquot
-        spec.step = self._new_step
+    def update_spec(self, spec, aliquot_offset=0, step_offset=0):
+        spec.aliquot = self._new_aliquot + aliquot_offset
+        spec.step = self._new_step + step_offset
         self.debug('setting AutomatedRunSpec aliquot={}, step={}'.format(spec.aliquot,
                                                                          spec.step))
 

@@ -104,7 +104,10 @@ class ExperimentExecutor(Loggable):
 
     pyscript_runner = Instance(PyScriptRunner)
     monitor = Instance(AutomatedRunMonitor)
-    current_run = Instance(AutomatedRun)
+    # current_run = Instance(AutomatedRun)
+
+    measuring_run = Instance(AutomatedRun)
+    extracting_run = Instance(AutomatedRun)
 
     datahub = Instance(Datahub)
     #===========================================================================
@@ -344,7 +347,8 @@ class ExperimentExecutor(Loggable):
                     self.queue_modified = False
                     #                    force_delay = True
 
-                overlapping = self.current_run and self.current_run.isAlive()
+                # overlapping = self.current_run and self.current_run.isAlive()
+                overlapping = self.measuring_run and self.measuring_run.isAlive()
                 if not overlapping:
                     if force_delay or \
                             (self.isAlive() and cnt < nruns and not cnt == 0):
@@ -424,7 +428,7 @@ class ExperimentExecutor(Loggable):
         #is this the last run in the queue. queue is not empty until _start runs so n==1 means last run
         run.is_last = len(q.cleaned_automated_runs) == 1
 
-        self.current_run = run
+        self.extracting_run = run
         st = time.time()
         for step in ('_start',
                      '_extraction',
@@ -477,7 +481,9 @@ class ExperimentExecutor(Loggable):
         run.teardown()
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True):
-        arun = self.current_run
+        # arun = self.current_run
+        arun = self.measuring_run
+
         #        arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
@@ -515,8 +521,13 @@ class ExperimentExecutor(Loggable):
                         arun.aliquot = 0
 
                     arun.cancel_run(state=state)
-                    self.non_clear_update_needed = True
-                    self.current_run = None
+                    if self.extracting_run:
+                        self.extracting_run.cancel_run(state=state)
+
+                    # self.non_clear_update_needed = True
+                    self.measuring_run = None
+
+                    # self.current_run = None
 
     def _end_runs(self):
         #         self._last_ran = None
@@ -563,6 +574,7 @@ class ExperimentExecutor(Loggable):
         return ret
 
     def _extraction(self, ai):
+        self.extracting_run = ai
         ret = True
         if ai.start_extraction():
             self.extracting = True
@@ -572,12 +584,12 @@ class ExperimentExecutor(Loggable):
             ret = ai.isAlive()
 
         self.trait_set(extraction_state_label='', extracting=False)
-
+        self.extracting_run = None
         return ret
 
     def _measurement(self, ai):
         ret = True
-
+        self.measuring_run = ai
         if ai.start_measurement():
             # only set to measuring (e.g switch to iso evo pane) if
             # automated run has a measurement_script
@@ -588,6 +600,7 @@ class ExperimentExecutor(Loggable):
         else:
             ret = ai.isAlive()
 
+        self.measuring_run = None
         self.measuring = False
         return ret
 
@@ -620,8 +633,8 @@ class ExperimentExecutor(Loggable):
             return
 
         #reuse run if not overlap
-        run = self.current_run if not spec.overlap[0] else None
-
+        # run = self.current_run if not spec.overlap[0] else None
+        run = None
         arun = spec.make_run(run=run)
         '''
             save this runs uuid to a hidden file
@@ -658,26 +671,47 @@ class ExperimentExecutor(Loggable):
         return arun
 
     def _set_run_aliquot(self, spec):
+        #if a run in executed runs is in extraction or measurement state
+        # we are in overlap mode
+        dh = self.datahub
+
+        ens = self.experiment_queue.executed_runs
+        step_offset, aliquot_offset = 0, 0
         if spec.conflicts_checked:
             return True
 
-        dh = self.datahub
-        ret = True
-        conflict = dh.is_conflict(spec)
-        if conflict:
-            ret = False
-            self._canceled = True
-            self._err_message = 'Databases are in conflict. {}'.format(conflict)
-            if self.confirmation_dialog('Databases are in conflict. '
-                                        'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
-                                        timeout_ret=False,
-                                        timeout=30):
-                dh.update_spec(spec)
+        exs = [ai for ai in ens if ai.state in ('measurement', 'extraction')]
+        if exs:
+            if spec.is_step_heat():
+                eruns = [(ei.labnumber, ei.aliquot) for ei in exs]
+                step_offset = 1 if (spec.labnumber, spec.aliquot) in eruns else 0
+            else:
+                eruns = [ei.labnumber for ei in exs]
+                aliquot_offset = 1 if spec.labnumber in eruns else 0
+
+            if not dh.is_conflict(spec):
+                dh.update_spec(spec, aliquot_offset, step_offset)
                 ret = True
-                self._canceled = False
-                self._err_message = ''
+            else:
+                ret = False
+                self._canceled = True
         else:
-            dh.update_spec(spec)
+            ret = True
+            conflict = dh.is_conflict(spec)
+            if conflict:
+                ret = False
+                self._canceled = True
+                self._err_message = 'Databases are in conflict. {}'.format(conflict)
+                if self.confirmation_dialog('Databases are in conflict. '
+                                            'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
+                                            timeout_ret=False,
+                                            timeout=30):
+                    dh.update_spec(spec)
+                    ret = True
+                    self._canceled = False
+                    self._err_message = ''
+            else:
+                dh.update_spec(spec)
 
         spec.conflicts_checked = True
         return ret
@@ -1104,12 +1138,13 @@ If "No" select from database
     def _update_automated_runs(self):
         if self.isAlive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
-            self.current_run.is_last = is_last
+
+            self.extracting_run.is_last = is_last
 
     def _cancel_run_button_fired(self):
         self.debug('cancel run {}'.format(self.isAlive()))
         if self.isAlive():
-            crun = self.current_run
+            crun = self.measuring_run
             self.debug('cancel run {}'.format(crun))
             if crun:
                 t = Thread(target=self.cancel, kwargs={'style': 'run'})
@@ -1117,8 +1152,8 @@ If "No" select from database
                 #                 self._cancel_thread = t
 
     def _truncate_button_fired(self):
-        if self.current_run:
-            self.current_run.truncate_run(self.truncate_style)
+        if self.measuring_run:
+            self.measuring_run.truncate_run(self.truncate_style)
 
     #===============================================================================
     # property get/set

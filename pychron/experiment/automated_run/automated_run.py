@@ -312,7 +312,7 @@ class AutomatedRun(Loggable):
             self.plot_panel.is_baseline = True
 
         gn = 'baseline'
-
+        print self
         self.persister.build_tables(gn, self._active_detectors)
 
         self.multi_collector.is_baseline = True
@@ -944,6 +944,7 @@ class AutomatedRun(Loggable):
         self.info('======== {} ========'.format(msg))
         self.state = 'measurement'
 
+        print self
         self.persister.pre_measurement_save()
 
         self.measuring = True

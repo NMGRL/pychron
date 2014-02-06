@@ -284,10 +284,10 @@ class Experimentor(IsotopeDatabaseManager):
         self.experiment_factory.run_factory.edit_mode = True
         self._set_factory_runs(self.experiment_queue.selected)
 
-    @on_trait_change('executor:non_clear_update_needed')
-    def _refresh2(self):
-        self.debug('non clear update needed fired')
-        self.update_info()
+    # @on_trait_change('executor:non_clear_update_needed')
+    # def _refresh2(self):
+    #     self.debug('non clear update needed fired')
+    #     self.update_info()
 
     @on_trait_change('experiment_factory:run_factory:update_info_needed')
     def _refresh3(self):

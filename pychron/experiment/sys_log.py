@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 import os
 import tempfile
+
 from pyface.message_dialog import warning
 from traits.api import Str, Password
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -60,7 +62,7 @@ class SysLogger(Loggable):
         cr = ''
         ca = ''
 
-        crun = ex.current_run
+        crun = ex.measuring_run
         if crun:
             cr = crun.runid
             if ex.measuring:

@@ -445,7 +445,7 @@ class ExperimentEditorTask(EditorTask):
 
     #        self.manager.executor.executable = False
 
-    @on_trait_change('manager:executor:current_run:plot_panel')
+    @on_trait_change('manager:executor:measuring_run:plot_panel')
     def _update_plot_panel(self, new):
         if new is not None:
             self.isotope_evolution_pane.plot_panel = new

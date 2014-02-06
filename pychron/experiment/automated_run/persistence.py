@@ -136,6 +136,8 @@ class AutomatedRunPersister(Loggable):
 
     def pre_measurement_save(self):
         self.info('pre measurement save')
+        print self
+
         dm = self.data_manager
         # make a new frame for saving data
 
@@ -611,7 +613,7 @@ class AutomatedRunPersister(Loggable):
 
     def build_tables(self, gn, detectors):
         dm = self.data_manager
-
+        print self
         with dm.open_file(self._current_data_frame):
             dm.new_group(gn)
             for i, d in enumerate(detectors):
