@@ -95,7 +95,7 @@ class AutomatedRunSpec(Loggable):
     _min_ms_pumptime = Int
 
     truncate_condition = Str
-    syn_extraction=Str
+    syn_extraction = Str
 
     #===========================================================================
     # info
@@ -114,9 +114,9 @@ class AutomatedRunSpec(Loggable):
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
 
-    identifier_error=Bool(False)
+    identifier_error = Bool(False)
     _executable = Bool(True)
-    executable=Property(depends_on='identifier_error, _executable')
+    executable = Property(depends_on='identifier_error, _executable')
 
     frequency_added = False
 
@@ -134,7 +134,7 @@ class AutomatedRunSpec(Loggable):
 
     def is_special(self):
         special = False
-        ln=self.labnumber
+        ln = self.labnumber
         if '-' in ln:
             special = ln.split('-')[0] in ANALYSIS_MAPPING
         return special
@@ -319,13 +319,23 @@ class AutomatedRunSpec(Loggable):
     def _set_aliquot(self, v):
         self._aliquot = v
 
-    #
     def _get_aliquot(self):
-        a=self._aliquot
-        if not self.is_special():
-            a = self.user_defined_aliquot
+        if self.is_special():
+            return self._aliquot
+        else:
+            if self.user_defined_aliquot:
+                return self.user_defined_aliquot
+        return self._aliquot
 
-        return a
+        # return a
+        # # a=self._aliquot
+        # a = self.user_defined_aliquot
+        # if not self.is_special():
+        #     if not a:
+        #         a = self._aliquot
+        #         # a = self.user_defined_aliquot
+        #
+        # return a
         #a = self.assigned_aliquot
         #if not a:
         #    a = self._aliquot
@@ -336,7 +346,7 @@ class AutomatedRunSpec(Loggable):
 
     def reset(self):
         self.clear_step()
-        self.conflicts_checked=False
+        self.conflicts_checked = False
 
     def clear_step(self):
         self._step = -1
@@ -388,6 +398,6 @@ class AutomatedRunSpec(Loggable):
 
     @property
     def increment(self):
-        return '' if self._step<0 else self._step
+        return '' if self._step < 0 else self._step
 
-            #============= EOF =============================================
+        #============= EOF =============================================
