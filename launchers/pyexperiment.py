@@ -15,11 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+
+#set GUI toolkit to QT
 from traits.etsconfig.api import ETSConfig
 ETSConfig.toolkit = "qt4"
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
 
 from helpers import build_version
 build_version()
@@ -36,18 +37,13 @@ def main():
     # build directories
     build_directories(paths)
 
-#    from pychron.core.helpers.paths import hidden_dir
-#    path = os.path.join(hidden_dir, 'version_info')
-#    a = VersionInfoDisplay(local_path=path,
-#                           src_path=os.path.join(SRC_DIR,
-#                           'version_info.txt'))
-#    a.check()
+    # setup logging. set a basename for log files and logging level
     logging_setup('pychron', level='DEBUG')
 
+    #import app klass and pass to launch function
     from pychron.applications.pyexperiment import PyExperiment as app
     launch(app)
 
 if __name__ == '__main__':
-
     main()
 #============= EOF =============================================

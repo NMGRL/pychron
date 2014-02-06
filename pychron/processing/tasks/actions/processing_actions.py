@@ -140,6 +140,7 @@ class IdeogramAction(FigureAction):
     name = 'Ideogram'
     accelerator = 'Ctrl+J'
     method = 'new_ideogram'
+    image = icon('histogram')
 
 
 class SpectrumAction(FigureAction):
