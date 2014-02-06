@@ -25,11 +25,11 @@ class IsoEvoFitSelector(FilterFitSelector):
     default_error_type = 'SEM'
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
-        bfs = ['average' for fi in fits]
+        # bfs = ['average' for fi in fits]
 
-        super(IsoEvoFitSelector, self).load_fits(keys + bs, fits + bfs)
+        super(IsoEvoFitSelector, self).load_fits(keys + bs, fits)
 
-    # def traits_view(self):
+        # def traits_view(self):
     #     v = View(
     #         self
     #         self._get_fit_group())

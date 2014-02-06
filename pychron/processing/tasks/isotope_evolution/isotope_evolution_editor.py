@@ -121,7 +121,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             if not fi.use:
                 continue
 
-            fd = dict(use=fi.use_filter,
+            fd = dict(use=fi.filter_outliers,
                       n=fi.filter_iterations,
                       std_devs=fi.filter_std_devs)
 
@@ -276,7 +276,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     g.new_plot(**plot_kw)
                     fd = dict(iterations=fit.filter_iterations,
                               std_devs=fit.filter_std_devs,
-                              filter_outliers=fit.use_filter)
+                              filter_outliers=fit.filter_outliers)
                     trunc=fit.truncate
 
                     if isok.endswith('bs'):

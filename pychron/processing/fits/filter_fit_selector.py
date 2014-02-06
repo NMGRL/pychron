@@ -27,13 +27,13 @@ from pychron.processing.fits.fit_selector import FitSelector
 
 
 class FilterFit(Fit):
-    use_filter = Bool
+    filter_outliers = Bool
     filter_iterations = Int
     filter_std_devs = Int
     truncate= Str
 
-    def _use_filter_changed(self):
-        if self.use_filter:
+    def _filter_outliers_changed(self):
+        if self.filter_outliers:
             if not self.filter_iterations:
                 self.filter_iterations = 1
             if not self.filter_std_devs:
@@ -52,7 +52,7 @@ class FilterFitSelector(FitSelector):
                 ObjectColumn(name='error_type',
                              editor=EnumEditor(name='error_types'),
                              width=75),
-                CheckboxColumn(name='use_filter'),
+                CheckboxColumn(name='filter_outliers', label='Filter Outliers'),
                 ObjectColumn(name='filter_iterations', label='Filter Iter.'),
                 ObjectColumn(name='filter_std_devs', label='Filter SD'),
                 ObjectColumn(name='truncate', label='Trunc.'),
