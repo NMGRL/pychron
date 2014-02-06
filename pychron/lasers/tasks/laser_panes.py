@@ -108,7 +108,7 @@ class StageControlPane(TraitsDockPane):
                 HGroup(icon_button_editor(make_sm_name('snapshot_button'), 'camera',
                                           tooltip='Take a snapshot'),
                        icon_button_editor(make_sm_name('record'),
-                                          'camera-video',
+                                          'media-record',
                                           tooltip='Record video'),
                        CustomLabel(make_sm_name('record_label'), color='red')),
                 VGroup(SItem('auto_save_snapshot'),

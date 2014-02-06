@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Str
 from traitsui.api import View, Item, VGroup, HGroup, EnumEditor, spring, \
-    Label, Spring, ListEditor, Group, InstanceEditor, UItem, ButtonEditor, TableEditor
+    Label, Spring, ListEditor, Group, InstanceEditor, UItem, TableEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
@@ -109,8 +109,12 @@ class ControlsPane(TraitsDockPane):
             Item('graph_y_auto', label='Autoscale Y'),
             Item('graph_ymax', label='Max', format_str='%0.3f'),
             Item('graph_ymin', label='Min', format_str='%0.3f'),
-            HGroup(UItem('record_button', editor=ButtonEditor(label_value='record_label')),
-                   Item('add_marker_button',
+            # UItem('record_button', editor=ButtonEditor(label_value='record_label'))
+            HGroup(
+                UItem('record_button'),
+                # icon_button_editor('record_button','media-record',
+                #                       tooltip='Start/stop scan recording'),
+                Item('add_marker_button',
                         show_label=False,
                         enabled_when='_recording')),
             label='Graph')

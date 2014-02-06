@@ -21,6 +21,7 @@ from traitsui.api import Item, ButtonEditor, Spring, View, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension
 from pychron.displays.display import DisplayController
 from pychron.envisage.resources import icon
 
@@ -32,7 +33,9 @@ def spacer(width=-1, **kw):
 def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     if editor_kw is None:
         editor_kw = {}
-    name = '{}.png'.format(name)
+
+    name = add_extension(name, '.png')
+    # name = '{}.png'.format(name)
     kw['show_label'] = label is not None
     kw['label'] = label or ''
     image = icon(name)
