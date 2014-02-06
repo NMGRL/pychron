@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property
+    Event, Property, cached_property, Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.browser_mixin import filter_func
@@ -38,6 +38,7 @@ class AnalysisTable(HasTraits):
 
     omit_invalid = Bool(True)
     configure_analysis_table = Button
+    table_configurer = Instance(TableConfigurer)
 
     # forward = Button
     # backward = Button
@@ -81,6 +82,10 @@ class AnalysisTable(HasTraits):
     #     p = self.page
     #     p -= 1
     #     self.page = max(1, p)
+    def _tabular_adapter_changed(self):
+        self.table_configurer.adapter = self.tabular_adapter
+        self.table_configurer.load()
+
     def _analysis_filter_parameter_default(self):
         return 'record_id'
 
@@ -121,12 +126,16 @@ class AnalysisTable(HasTraits):
         else:
             self.analyses = self.oanalyses
 
-
     def _configure_analysis_table_fired(self):
+        # c = TableConfigurer(adapter=self.tabular_adapter,
+        #                     id='analysis.table',
+        #                     title='Configure Analysis Table')
+        self.table_configurer.edit_traits()
+        # c.edit_traits()
 
-        c = TableConfigurer(adapter=self.tabular_adapter,
-                            title='Configure Analysis Table')
-        c.edit_traits()
+    def _table_configurer_default(self):
+        return TableConfigurer(id='analysis.table',
+                               title='Configure Analysis Table')
 
     # def _get_npages(self):
     #     try:
