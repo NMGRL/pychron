@@ -24,6 +24,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -264,6 +265,7 @@ class BrowserMixin(ColumnSorterMixin):
             if not hasattr(sp, '__iter__'):
                 sp = (sp,)
 
+            prog = None
             for pp in sp:
                 if not pp:
                     continue
