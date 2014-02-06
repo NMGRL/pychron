@@ -743,7 +743,7 @@ class AutomatedRunFactory(Loggable):
                                                      self.selected_level)
                     if level:
                         lns = [str(pi.labnumber.identifier)
-                               for pi in level.positions]
+                               for pi in level.positions if pi.labnumber]
 
         return sorted(lns)
 

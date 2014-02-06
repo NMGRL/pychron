@@ -19,11 +19,15 @@ import os
 from ConfigParser import ConfigParser
 
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String
+    Any, String, Event
 
+from pychron.entry.user_entry import UserEntry
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
+
+
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -33,6 +37,10 @@ class ExperimentQueueFactory(Loggable):
     application = Any
 
     username = Str
+    usernames = Property(depends_on='users_dirty')
+    edit_user = Event
+    add_user = Event
+    users_dirty = Event
 
     mass_spectrometer = String('Spectrometer')
     mass_spectrometers = Property
@@ -50,15 +58,34 @@ class ExperimentQueueFactory(Loggable):
 
     ok_make = Property(depends_on='mass_spectrometer, username')
 
+    # def _add_user_fired(self):
+    #     a=UserEntry()
+    #     a.edit_user(self.username)
+    #     self.users_dirty=True
+
+    def _edit_user_fired(self):
+        a = UserEntry()
+        nuser = a.add_user(self.username)
+        if nuser:
+            self.users_dirty = True
+            self.username = nuser
+
     #===============================================================================
     # property get/set
     #===============================================================================
+    @cached_property
+    def _get_usernames(self):
+        db = self.db
+        with db.session_ctx():
+            us = [ui.name for ui in db.get_users()]
+            return [''] + us
 
     @cached_property
     def _get_load_names(self):
-        ts = self.db.get_loads()
-        names = [ti.name for ti in ts]
-        return names
+        with self.db.session_ctx():
+            ts = self.db.get_loads()
+            names = [ti.name for ti in ts]
+            return names
 
     def _get_ok_make(self):
         ms = self.mass_spectrometer.strip()
@@ -76,11 +103,11 @@ class ExperimentQueueFactory(Loggable):
 
     @cached_property
     def _get_extract_devices(self):
-        '''
+        """
             look in db first
             then look for a config file
-            then use hardcorded defaults 
-        '''
+            then use hardcorded defaults
+        """
         cp = os.path.join(paths.setup_dir, 'names')
         if self.db:
             eds = self.db.get_extraction_devices()
@@ -93,11 +120,11 @@ class ExperimentQueueFactory(Loggable):
 
     @cached_property
     def _get_mass_spectrometers(self):
-        '''
+        """
             look in db first
             then look for a config file
-            then use hardcorded defaults 
-        '''
+            then use hardcorded defaults
+        """
         cp = os.path.join(paths.setup_dir, 'names')
         if self.db:
             ms = self.db.get_mass_spectrometers()

@@ -525,6 +525,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         with self.session_ctx() as s:
             return __retrieve(s)
 
+
     # @deprecated
     def _get_items(self, table, gtables,
                    join_table=None, filter_str=None,

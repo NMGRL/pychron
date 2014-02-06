@@ -69,7 +69,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     #    can_edit_scripts = Bool(True)
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
-        self.setup_consumer(self._add_run)
+        self.setup_consumer(self._add_run, main=True)
 
     def destroy(self):
         self._should_consume = False
@@ -102,9 +102,6 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         with self.run_factory.update_selected_ctx():
             self.queue.select_run_idx(idx)
 
-            #add()
-            #invoke_in_main_thread(add)
-
     #===============================================================================
     # handlers
     #===============================================================================
@@ -117,7 +114,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             use consumermixin.add_consumable instead of frequency limiting
         """
-        self.add_consumable(1)
+        self.add_consumable(5)
 
     def _edit_mode_button_fired(self):
         self.run_factory.edit_mode = not self.run_factory.edit_mode

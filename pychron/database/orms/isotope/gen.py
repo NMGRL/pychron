@@ -146,6 +146,10 @@ class gen_UserTable(Base, NameMixin):
     password = stringcolumn(80)
     salt = stringcolumn(80)
 
+    email = stringcolumn(140)
+    affiliation = stringcolumn(140)
+    category = Column(Integer, default=0)
+
     #===========================================================================
     # permissions
     #===========================================================================
