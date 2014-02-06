@@ -466,9 +466,16 @@ class DBAnalysis(Analysis):
 
     def _get_isotope_fits(self):
         keys = self.isotope_keys
-        fs = [self.isotopes[ki].fit
+        fs = [(self.isotopes[ki].fit,
+               self.isotopes[ki].error_type,
+               self.isotopes[ki].filter_outliers_dict)
               for ki in keys]
-        return fs
+        bs = [(self.isotopes[ki].baseline.fit,
+               self.isotopes[ki].baseline.error_type,
+               self.isotopes[ki].baseline.filter_outliers_dict)
+              for ki in keys]
+
+        return fs + bs
 
     def _get_isotopes(self, meas_analysis, unpack):
         isotopes = dict()
@@ -479,19 +486,20 @@ class DBAnalysis(Analysis):
         return isotopes
 
     def _get_blanks(self, isodict, meas_analysis):
-        history = meas_analysis.selected_histories.selected_blanks
-        keys = isodict.keys()
-        if history:
-            for ba in history.blanks:
-                isok = ba.isotope
-                if isok in keys:
-                    blank = isodict[isok].blank
-                    blank.set_uvalue((ba.user_value,
-                                      ba.user_error))
-                    blank.fit = ba.fit or ''
-                    keys.remove(isok)
-                    if not keys:
-                        break
+        if meas_analysis.selected_histories:
+            history = meas_analysis.selected_histories.selected_blanks
+            keys = isodict.keys()
+            if history:
+                for ba in history.blanks:
+                    isok = ba.isotope
+                    if isok in keys:
+                        blank = isodict[isok].blank
+                        blank.set_uvalue((ba.user_value,
+                                          ba.user_error))
+                        blank.fit = ba.fit or ''
+                        keys.remove(isok)
+                        if not keys:
+                            break
 
     def _get_signals(self, isodict, meas_analysis, unpack):
         for iso in meas_analysis.isotopes:

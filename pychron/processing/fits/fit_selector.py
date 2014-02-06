@@ -109,10 +109,17 @@ class FitSelector(HasTraits):
         nfs = []
         for ki, fi in zip(keys, fits):
             pf = next((fa for fa in self.fits if fa.name == ki), None)
+            fit, et, fod = fi
             if pf is None:
-                pf = self.fit_klass(name=ki, fit=fi, error_type=self.default_error_type)
-            else:
-                pf.fit = fi
+                pf = self.fit_klass(name=ki)
+
+            pf.fit = fit
+            pf.filter_outliers = fod.get('filter_outliers')
+
+            pf.filter_iterations = fod.get('iterations', 0)
+            pf.filter_std_devs = fod.get('std_devs', 0)
+            pf.error_type = et
+
             nfs.append(pf)
 
         self.fits = nfs

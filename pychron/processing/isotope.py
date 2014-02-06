@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -240,7 +241,8 @@ class IsotopicMeasurement(BaseMeasurement):
         return ufloat(self.value, self.error, tag=self.name)
 
     def _get_fit_abbreviation(self):
-        return fit_abbreviation(self.fit)
+        return '{}{}'.format(fit_abbreviation(self.fit),
+                             '*' if self.filter_outliers_dict.get('filter_outliers') else '')
 
     #===============================================================================
     # arthmetic
