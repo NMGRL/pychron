@@ -122,6 +122,7 @@ class ExperimentExecutor(Loggable):
     #===========================================================================
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
+    min_ms_pumptime = Int(30)
 
     _alive = Bool(False)
     _canceled = False
@@ -186,7 +187,7 @@ class ExperimentExecutor(Loggable):
                         '{}.use_auto_save'.format(prefid))
         bind_preference(self, 'auto_save_delay',
                         '{}.auto_save_delay'.format(prefid))
-
+        bind_preference(self, 'min_ms_pumptime', '{}.min_ms_pumptime'.format(prefid))
         #colors
         color_bind_preference(self, 'signal_color',
                               '{}.signal_color'.format(prefid))
@@ -622,6 +623,7 @@ class ExperimentExecutor(Loggable):
         self._add_backup(arun.uuid)
 
         arun.integration_time = 1.04
+        arun.min_ms_pumptime = self.min_ms_pumptime
 
         arun.experiment_executor = weakref.ref(self)()
 

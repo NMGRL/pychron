@@ -18,7 +18,7 @@
 from datetime import datetime
 
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr, CInt
+    Enum, on_trait_change, CStr
 
 #============= standard library imports ========================
 import uuid
@@ -36,6 +36,8 @@ class AutomatedRunSpec(Loggable):
         this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
     """
+    shared_logger = True
+
     #     automated_run = Instance(AutomatedRun)
     #    state = Property(depends_on='_state')
     state = Enum('not run', 'extraction',
@@ -88,7 +90,10 @@ class AutomatedRunSpec(Loggable):
     ramp_duration = Float
     ramp_rate = Float
     disable_between_positions = Bool(False)
-    overlap = CInt
+    overlap = Property
+    _overlap = Int
+    _min_ms_pumptime = Int
+
     truncate_condition = Str
     syn_extraction=Str
 
@@ -361,6 +366,20 @@ class AutomatedRunSpec(Loggable):
 
     def _get_executable(self):
         return self._executable and not self.identifier_error
+
+    def _set_overlap(self, v):
+        try:
+            args = map(int, v.split(','))
+        except ValueError:
+            self.debug('Invalid overlap string "{}". Should be of the form "10,60" or "10" '.format(v))
+
+        if len(args) == 1:
+            self._overlap = args[0]
+        elif len(args) == 2:
+            self._overlap, self._min_ms_pumptime = args
+
+    def _get_overlap(self):
+        return (self._overlap, self._min_ms_pumptime)
 
     #mirror labnumber for now. deprecate labnumber and replace with identifier
     @property

@@ -82,6 +82,7 @@ class RunParser(Loggable):
             'position',
             'comment',
             'syn_extraction',
+            'overlap',
             ('truncate_condition','truncate'),
             ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
@@ -92,7 +93,7 @@ class RunParser(Loggable):
         for attr in ['duration',
                      'cleanup',
                      'ramp_duration',
-                     'weight', 'overlap',
+                     'weight',
                      ('extract_value', 'e_value'),
                      ('beam_diameter', 'beam_diam')]:
 

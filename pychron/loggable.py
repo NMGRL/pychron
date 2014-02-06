@@ -59,6 +59,10 @@ def confirmation_dialog(msg, return_retval=False,
 
         return retval == YES
 
+
+__gloggers__ = dict()
+
+
 class Loggable(HasTraits):
     """
     """
@@ -69,10 +73,17 @@ class Loggable(HasTraits):
     use_logger_display = True
     use_warning_display = True
     logcolor = 'black'
+    shared_logger = False
+
     # logger_display = None
     def __init__(self, *args, **kw):
         super(Loggable, self).__init__(*args, **kw)
-        self._add_logger()
+
+        t = str(type(self))
+        if self.shared_logger and t in __gloggers__:
+            self.logger = __gloggers__[t]
+        else:
+            self._add_logger()
 
     def _name_changed(self):
         self._add_logger()
@@ -81,9 +92,9 @@ class Loggable(HasTraits):
         self._add_logger()
 
     def _add_logger(self):
-        '''
+        """
 
-        '''
+        """
         if self.logger_name:
             name = self.logger_name
         elif self.name:
@@ -92,6 +103,7 @@ class Loggable(HasTraits):
             name = self.__class__.__name__
 
         self.logger = new_logger(name)
+
         c = color_name_gen.next()
         if c in ['gray', 'silver', 'greenyellow']:
             c = color_name_gen.next()

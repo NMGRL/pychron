@@ -26,6 +26,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -51,6 +52,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     filter_outliers = Bool(False)
     fo_iterations = Int(1)
     fo_std_dev = Int(2)
+
+    min_ms_pumptime = Int
 
 
 class ExperimentPreferencesPane(PreferencesPane):
@@ -89,8 +92,12 @@ class ExperimentPreferencesPane(PreferencesPane):
                                   enabled_when='filter_outliers',
                                   show_border=True),
                            label='Post Fit Filtering')
+        overlap_grp = Group(Item('min_ms_pumptime', label='Min. Mass Spectrometer Pumptime (s)'),
+                            label='Overlap')
 
-        return View(color_group, notification_grp, editor_grp, irradiation_grp, filter_grp)
+        return View(color_group, notification_grp,
+                    editor_grp, irradiation_grp,
+                    filter_grp, overlap_grp)
 
 
 class ConsolePreferences(BaseConsolePreferences):

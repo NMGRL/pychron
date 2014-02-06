@@ -649,7 +649,11 @@ class AutomatedRun(Loggable):
 
         self.info('overlap signal set')
 
-        overlap = self.spec.overlap
+        overlap, mp = self.spec.overlap
+        if not mp:
+            self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
+            mp = self.min_ms_pumptime
+
         self.info('starting overlap delay {}'.format(overlap))
         starttime = time.time()
         i = 1
@@ -664,15 +668,15 @@ class AutomatedRun(Loggable):
             i += 1
 
         #ensure mim mass spectrometer pump time
-        f = lambda: self.debug('waiting for min mass spec pumptime {}'.format(self.min_ms_pumptime,
+        f = lambda: self.debug('waiting for min mass spec pumptime {}'.format(mp,
                                                                               self.elapsed_ms_pumptime))
         i = 0
         while self._alive:
             pet = self.elapsed_ms_pumptime
-            if pet < self.min_ms_pumptime:
+            if pet < mp:
                 time.sleep(1.0)
             else:
-                self.debug('min pumptime elapsed {} {}'.format(self.min_ms_pumptime, self.elapsed_ms_pumptime))
+                self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
                 break
 
             if i % 25:
