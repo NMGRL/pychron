@@ -23,7 +23,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.table_column import ObjectColumn, TableColumn
-from pychron.envisage.tasks.pane_helpers import spacer
+from pychron.envisage.tasks.pane_helpers import spacer, icon_button_editor
 
 
 class ColorColumn(TableColumn):
@@ -114,9 +114,13 @@ class ControlsPane(TraitsDockPane):
                 UItem('record_button'),
                 # icon_button_editor('record_button','media-record',
                 #                       tooltip='Start/stop scan recording'),
-                Item('add_marker_button',
-                        show_label=False,
-                        enabled_when='_recording')),
+                icon_button_editor('add_marker_button',
+                                   'flag',
+                                   enabled_when='_recording'
+                )),
+            # Item('add_marker_button',
+            #         show_label=False,
+            #         enabled_when='_recording')),
             label='Graph')
 
         control_grp = Group(

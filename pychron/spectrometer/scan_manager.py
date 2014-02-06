@@ -90,7 +90,9 @@ class ScanManager(Manager):
     record_button = ToggleButton(image_on=icon('media-record'),
                                  image_off=icon('media-playback-stop'),
                                  tooltip_on='Start recording scan',
-                                 tooltip_off='Stop recording scan')
+                                 tooltip_off='Stop recording scan',
+                                 height=22,
+                                 width=45)
 
     add_marker_button = Button('Add Marker')
     record_label = Property(depends_on='_recording')

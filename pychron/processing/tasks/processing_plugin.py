@@ -172,10 +172,13 @@ Install to enable MS Excel export''')
         return exts
 
     def _meta_task_factory(self, i, f, n, task_group=None,
-                           accelerator='', include_view_menu=False):
+                           accelerator='', include_view_menu=False,
+                           image=None
+    ):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
+                           image=image,
                            include_view_menu=include_view_menu or accelerator)
 
     def _tasks_default(self):
@@ -210,14 +213,11 @@ Install to enable MS Excel export''')
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
-             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R'),
+             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
             ('pychron.processing.vcs',
              self._vcs_data_task_factory, 'VCS', '', ''),
             ('pychron.export',
-             self._export_task_factory, 'Export', '', ''),
-            # ('pychron.data_set',
-            # self._data_set_factory, 'DataSet', '','')
-        ]
+             self._export_task_factory, 'Export', '', '')]
 
         return [self._meta_task_factory(*args) for args in tasks]
 

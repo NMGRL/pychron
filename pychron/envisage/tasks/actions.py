@@ -57,6 +57,7 @@ class AboutAction(Action):
 
 class ResetLayoutAction(TaskAction):
     name = 'Reset Layout'
+    image = icon('view-restore')
 
     def perform(self, event):
         self.task.window.reset_layout()
@@ -64,6 +65,7 @@ class ResetLayoutAction(TaskAction):
 
 class PositionAction(Action):
     name = 'Window Positions'
+    image = icon('window-new')
 
     def perform(self, event):
         from pychron.envisage.tasks.layout_manager import LayoutManager
@@ -129,6 +131,7 @@ class RaiseUIAction(TaskAction):
 class GenericSaveAction(TaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
+    image = icon('document-save.png')
 
     def perform(self, event):
         task = self.task
@@ -139,6 +142,7 @@ class GenericSaveAction(TaskAction):
 class GenericSaveAsAction(TaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
+    image = icon('document-save-as.png')
 
     def perform(self, event):
         task = self.task

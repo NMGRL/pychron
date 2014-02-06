@@ -97,6 +97,7 @@ class ExperimentPlugin(BaseTaskPlugin):
         return [TaskFactory(id=self.id,
                             factory=self._task_factory,
                             name='Experiment',
+                            image='applications-science',
                             task_group='experiment')]
 
 

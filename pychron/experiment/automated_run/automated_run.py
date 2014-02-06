@@ -15,13 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-
 from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float
-
+    Event, Instance, Bool, HasTraits, Float, Int
 #============= standard library imports ========================
 import os
+from itertools import groupby
 import re
 import time
 import ast
@@ -138,6 +136,8 @@ class AutomatedRun(Loggable):
     _equilibration_done = False
     _integration_seconds = Float(1.0)
 
+    min_ms_pumptime = Int(60)
+    _ms_pumptime_start = Float
 
     #===============================================================================
     # pyscript interface
@@ -632,9 +632,6 @@ class AutomatedRun(Loggable):
             by default overlap_evt is set
             after equilibration finished
         """
-        if not self._alive:
-            return
-
         self.info('waiting for overlap signal')
         evt = self.overlap_evt
         i = 1
@@ -666,7 +663,28 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-        self.info('waiting for overlap finished')
+        #ensure mim mass spectrometer pump time
+        f = lambda: self.debug('waiting for min mass spec pumptime {}'.format(self.min_ms_pumptime,
+                                                                              self.elapsed_ms_pumptime))
+        i = 0
+        while self._alive:
+            pet = self.elapsed_ms_pumptime
+            if pet < self.min_ms_pumptime:
+                time.sleep(1.0)
+            else:
+                self.debug('min pumptime elapsed {} {}'.format(self.min_ms_pumptime, self.elapsed_ms_pumptime))
+                break
+
+            if i % 25:
+                f()
+
+            if i > 1000:
+                i = -1
+            i += 1
+
+    @property
+    def elapsed_ms_pumptime(self):
+        return time.time() - self._ms_pumptime_start
 
     def get_previous_blanks(self):
         blanks = None
@@ -938,6 +956,9 @@ class AutomatedRun(Loggable):
         script.manager = self.experiment_executor
 
         if script.execute():
+            self.debug('setting _ms_pumptime')
+            self._ms_pumptime_start = time.time()
+
             self.info('======== Post Measurement Finished ========')
             return True
         else:

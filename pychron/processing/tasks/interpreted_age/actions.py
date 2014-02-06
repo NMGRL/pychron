@@ -74,7 +74,7 @@ class OpenInterpretedAgeGroupAction(TaskAction):
 class MakeGroupFromFileAction(TaskAction):
     name = 'Group From File'
     method = 'make_group_from_file'
-    image = icon('document-open-2.png')
+    image = icon('document-open.png')
 
     def perform(self, event=None):
         app = self.task.window.application

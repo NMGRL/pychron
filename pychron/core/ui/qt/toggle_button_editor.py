@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from pyface.image_resource import ImageResource
-from traits.api import Int, Any, Instance, Bool, Str
+from traits.api import Int, Any, Instance, Bool, Str, Property
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -38,6 +38,7 @@ class _ToggleButtonEditor(Editor):
         control = self.control = QtGui.QToolButton()
         control.setAutoRaise(True)
         control.setIcon(self.icon_on)
+        control.setIconSize(QtCore.QSize(self.factory.width, self.factory.height))
 
         self.tooltip_on = self.factory.tooltip_on
         self.tooltip_off = self.factory.tooltip_off
@@ -51,6 +52,9 @@ class _ToggleButtonEditor(Editor):
         else:
             control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
 
+        QtCore.QObject.connect(control, QtCore.SIGNAL('clicked()'),
+                               self.update_object)
+
     def _toggle_button(self):
         self.toggle_state = not self.toggle_state
         if self.toggle_state:
@@ -59,6 +63,30 @@ class _ToggleButtonEditor(Editor):
         else:
             self.control.setIcon(self.icon_on)
             self.control.setToolTip(self.tooltip_on)
+
+    def prepare(self, parent):
+        """ Finishes setting up the editor. This differs from the base class
+            in that self.update_editor() is not called at the end, which
+            would fire an event.
+        """
+        name = self.extended_name
+        if name != 'None':
+            self.context_object.on_trait_change(self._update_editor, name,
+                                                dispatch='ui')
+        self.init(parent)
+        self._sync_values()
+
+    def update_object(self):
+        """ Handles the user clicking the button by setting the factory value
+            on the object.
+        """
+        self.value = self.factory.value
+
+    def update_editor(self):
+        """ Updates the editor when the object trait changes externally to the
+            editor.
+        """
+        pass
 
 
 from traitsui.qt4.basic_editor_factory import BasicEditorFactory
@@ -74,6 +102,27 @@ class ToggleButtonEditor(BasicEditorFactory):
     tooltip_on = Str
     tooltip_off = Str
     label = Str
+    value = Property
+
+
+    def __init__(self, **traits):
+        self._value = 0
+        super(ToggleButtonEditor, self).__init__(**traits)
+
+
+    def _get_value(self):
+        return self._value
+
+    def _set_value(self, value):
+        self._value = value
+        if isinstance(value, basestring):
+            try:
+                self._value = int(value)
+            except:
+                try:
+                    self._value = float(value)
+                except:
+                    pass
 
 
 #============= EOF =============================================
