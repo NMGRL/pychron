@@ -101,7 +101,15 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         # return ln
 
     def _get_overlap_text(self):
-        return self._get_number('overlap', fmt='{:n}')
+        o, m = self.item.overlap
+        if m:
+            return '{},{}'.format(o, m)
+        else:
+            return '{}'.format(o)
+
+            # return '{},{}'.format
+
+    #     return self._get_number('overlap', fmt='{:n}')
 
     def _get_aliquot_text(self, trait, item):
         al = ''

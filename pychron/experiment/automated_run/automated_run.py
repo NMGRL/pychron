@@ -104,7 +104,7 @@ class AutomatedRun(Loggable):
     eqtime = Float
 
     use_syn_extraction = Bool(False)
-
+    is_first = Bool(False)
     is_last = Bool(False)
     is_peak_hop = Bool(False)
 
@@ -137,7 +137,7 @@ class AutomatedRun(Loggable):
     _integration_seconds = Float(1.0)
 
     min_ms_pumptime = Int(60)
-    _ms_pumptime_start = Float
+    _ms_pumptime_start = None
 
     #===============================================================================
     # pyscript interface
@@ -149,7 +149,6 @@ class AutomatedRun(Loggable):
 
     def py_is_last_run(self):
         return self.is_last
-
 
     def py_define_detectors(self, isotope, det):
         self._define_detectors(isotope, det)
@@ -616,6 +615,8 @@ class AutomatedRun(Loggable):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
 
     def start(self):
+        self._ms_pumptime_start = None
+
         if self.monitor is None:
             return self._start()
 
@@ -627,47 +628,24 @@ class AutomatedRun(Loggable):
         else:
             self.warning('failed to start monitor')
 
-    def wait_for_overlap(self):
-        """
-            by default overlap_evt is set
-            after equilibration finished
-        """
-        self.info('waiting for overlap signal')
-        evt = self.overlap_evt
-        i = 1
-        st = time.time()
-        while self._alive:
-            evt.wait(timeout=1)
-            if i % 50 == 0:
-                et = time.time() - st
-                self.debug('waiting for overlap signal. elapsed time={:0.2f}'.format(et))
-                i = 0
-            i += 1
-
-        if not self._alive:
+    def _wait_for_min_ms_pumptime(self):
+        if self.is_first:
             return
-
-        self.info('overlap signal set')
 
         overlap, mp = self.spec.overlap
         if not mp:
             self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
             mp = self.min_ms_pumptime
 
-        self.info('starting overlap delay {}'.format(overlap))
-        starttime = time.time()
-        i = 1
+        #ensure mim mass spectrometer pump time
+        #wait until pumping started
+        self.debug('wait for mass spec pump out to start')
         while self._alive:
-            et = time.time() - starttime
-            if et > overlap:
+            if not self._ms_pumptime_start is None:
                 break
             time.sleep(1.0)
-            if i % 50 == 0:
-                self.debug('waiting overlap delay {}. elapsed time={:0.2f}'.format(overlap, et))
-                i = 0
-            i += 1
+        self.debug('mass spec pump out to started')
 
-        #ensure mim mass spectrometer pump time
         f = lambda: self.debug('waiting for min mass spec pumptime {}'.format(mp,
                                                                               self.elapsed_ms_pumptime))
         i = 0
@@ -684,6 +662,52 @@ class AutomatedRun(Loggable):
 
             if i > 1000:
                 i = -1
+            i += 1
+
+    def wait_for_overlap(self, is_first):
+        """
+            by default overlap_evt is set
+            after equilibration finished
+        """
+
+        self.is_first = is_first
+
+        self.info('waiting for overlap signal')
+        self._alive = True
+        self.overlap_evt = evt = TEvent()
+
+        evt.clear()
+        i = 1
+        st = time.time()
+        while self._alive and not evt.is_set():
+            time.sleep(1)
+            if i % 5 == 0:
+                et = time.time() - st
+                self.debug('waiting for overlap signal. elapsed time={:0.2f}'.format(et))
+                i = 0
+            i += 1
+
+        if not self._alive:
+            return
+
+        self.info('overlap signal set')
+
+        overlap, mp = self.spec.overlap
+        # if not mp:
+        #     self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
+        #     mp = self.min_ms_pumptime
+
+        self.info('starting overlap delay {}'.format(overlap))
+        starttime = time.time()
+        i = 1
+        while self._alive:
+            et = time.time() - starttime
+            if et > overlap:
+                break
+            time.sleep(1.0)
+            if i % 50 == 0:
+                self.debug('waiting overlap delay {}. elapsed time={:0.2f}'.format(overlap, et))
+                i = 0
             i += 1
 
     @property
@@ -727,8 +751,6 @@ class AutomatedRun(Loggable):
             self.experiment_executor._prev_baselines = pb
 
     def _start(self):
-    #         self.db.reset()
-
         if self._use_arar_age():
             if self.arar_age is None:
             #             # load arar_age object for age calculation
@@ -750,7 +772,7 @@ class AutomatedRun(Loggable):
         #             self.update = True
         self.truncated = False
 
-        self.overlap_evt = TEvent()
+        # self.overlap_evt = TEvent()
         self._alive = True
 
         if self.plot_panel:
@@ -882,6 +904,10 @@ class AutomatedRun(Loggable):
             self.persister.post_extraction_save(rblob, oblob)
             self.info('======== Extraction Finished ========')
             self.info_color = None
+
+            #if overlapping need to wait for previous runs min mass spec pump time
+            self._wait_for_min_ms_pumptime()
+
             return True
         else:
             if syn_extractor:

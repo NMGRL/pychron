@@ -326,6 +326,7 @@ class ExperimentExecutor(Loggable):
 
         cnt = 0
         total_cnt = 0
+        is_first_flag = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 #                 before = measure_type()
@@ -364,14 +365,18 @@ class ExperimentExecutor(Loggable):
 
                 if spec.analysis_type == 'unknown' and spec.overlap:
                     self.info('overlaping')
+
                     t = Thread(target=self._do_run, args=(run,))
                     t.start()
-                    run.wait_for_overlap()
+
+                    run.wait_for_overlap(is_first_flag)
+                    is_first_flag = False
 
                     self.debug('overlap finished. starting next run')
 
                     con.add_consumable((t, run))
                 else:
+                    is_first_flag = True
                     last_runid = run.runid
                     self._join_run(spec, run)
 
@@ -542,7 +547,6 @@ class ExperimentExecutor(Loggable):
     #===============================================================================
     def _start(self, run):
         ret = True
-        self.set_extract_state('Foo', color='purple')
 
         if not run.start():
             self._alive = False
@@ -615,7 +619,10 @@ class ExperimentExecutor(Loggable):
         if not self._set_run_aliquot(spec):
             return
 
-        arun = spec.make_run(run=self.current_run)
+        #reuse run if not overlap
+        run = self.current_run if not spec.overlap[0] else None
+
+        arun = spec.make_run(run=run)
         '''
             save this runs uuid to a hidden file
             used for analysis recovery
