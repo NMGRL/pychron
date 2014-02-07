@@ -25,7 +25,7 @@ import os
 #============= local library imports  ==========================
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
 from pychron.experiment.automated_run.factory_view import FactoryView
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
@@ -155,8 +155,9 @@ class AutomatedRunFactory(Loggable):
     comment = Str
     auto_fill_comment = Bool
 
-    position = Property(depends_on='_position')
-    _position = Str
+    position = Property(EKlass(String),
+                        depends_on='_position')
+    _position = String
 
     #===========================================================================
     # extract
@@ -174,8 +175,8 @@ class AutomatedRunFactory(Loggable):
     overlap = EKlass(Int)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
-    beam_diameter = Property(EKlass(Str), depends_on='_beam_diameter')
-    _beam_diameter = Any
+    beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
+    _beam_diameter = String
 
     pattern = String('Pattern')
     patterns = List
@@ -761,7 +762,7 @@ class AutomatedRunFactory(Loggable):
             return ''
 
         for r, _, _ in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                        TRANSECT_REGEX, POSITION_REGEX):
+                        TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
             if r.match(pos):
                 return pos
         else:
