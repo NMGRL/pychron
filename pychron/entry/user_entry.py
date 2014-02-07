@@ -31,10 +31,8 @@ def make_categories(c, av):
 
 def parse_categories(cint, av):
     v = map(int, make_bitarray(cint))[::-1]
-    # n=len(v)-1
-    # print n, v, cint, av
     cs = [av[i] for i, vi in enumerate(v) if vi]
-    print cs, cint, v
+
     return cs
 
 
@@ -69,6 +67,7 @@ class UserEntry(IsotopeDatabaseManager):
                 dbuser.affiliation = self.affiliation
             else:
                 self._add_user()
+
                 # db = self.db
                 # name = self.user
                 # with db.session_ctx():
@@ -85,29 +84,46 @@ class UserEntry(IsotopeDatabaseManager):
                 self._edit_user(dbuser)
             else:
                 self.user = user
+
                 self._add_user()
 
             return self.user
 
-    def _add_user(self):
+    def _add_user(self, ):
         self.info('adding user')
-        while 1:
-            info = self.edit_traits()
-            if info.result:
-                db = self.db
-                name = self.user
-                with db.session_ctx():
-                    if not db.get_user(name):
-                        c = make_categories(self.categories, self.available_categories)
+        db = self.db
+        name = self.user
+        if not self._add_user_db(db, name):
+            while 1:
+                info = self.edit_traits()
+                if info.result:
 
-                        db.add_user(name, email=self.email,
-                                    category=c,
-                                    affiliation=self.affiliation)
+                    name = self.user
+                    if self._add_user_db(db, name):
                         break
                     else:
                         self.warning_dialog('{} already exists'.format(name))
-            else:
-                break
+                        # with db.session_ctx():
+                        #     if not db.get_user(name):
+                        #         c = make_categories(self.categories, self.available_categories)
+                        #
+                        #         db.add_user(name, email=self.email,
+                        #                     category=c,
+                        #                     affiliation=self.affiliation)
+                        #         break
+                        #     else:
+                        #         self.warning_dialog('{} already exists'.format(name))
+                else:
+                    break
+
+    def _add_user_db(self, db, name):
+        if not db.get_user(name):
+            c = make_categories(self.categories, self.available_categories)
+
+            db.add_user(name, email=self.email,
+                        category=c,
+                        affiliation=self.affiliation)
+            return True
 
     # def traits_view(self):
     #     v = View(

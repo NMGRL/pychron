@@ -46,19 +46,15 @@ class ExperimentQueue(BaseExperimentQueue):
 
     human_error_checker = Instance(HumanErrorChecker, ())
 
+    def count_labnumber(self, ln):
+        ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
+        i = 0
+        for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+            i += 1
+        return i
 
-def count_labnumber(self, ln):
-    ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
-    i = 0
-    for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
-        i += 1
-    return i
-
-    # return sum((int(ai.labnumber==ln) for ai in self.automated_runs))
-
-
-def select_run_idx(self, idx):
-    if self.automated_runs:
+    def select_run_idx(self, idx):
+        if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
 
     def reset(self):
@@ -150,7 +146,7 @@ def select_run_idx(self, idx):
     def _load_actions(self):
         pass
 
-    def isExecutable(self):
+    def is_executable(self):
         if self.check_runs():
             # test scripts
             return all([ai.executable for ai in self.cleaned_automated_runs])
