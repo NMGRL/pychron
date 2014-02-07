@@ -364,12 +364,12 @@ class ExperimentExecutor(Loggable):
                     break
 
                 run = self._make_run(spec)
-                run.overlapping = spec.analysis_type == 'unknown' and spec.overlap
                 if run is None:
                     break
+
                 self.wait_group.active_control.page_name = run.runid
 
-                if run.overlapping:
+                if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap:
                     self.info('overlaping')
 
                     t = Thread(target=self._do_run, args=(run,))

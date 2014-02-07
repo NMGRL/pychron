@@ -51,7 +51,7 @@ class HumanErrorChecker(Loggable):
             err = self._check_run(ai, inform, test_scripts)
             if err is not None:
                 ai.state = 'invalid'
-                ret[ai.runid] = err
+                ret['{}. {}'.format(i + 1, ai.runid)] = err
                 if not test_all:
                     return ret
             else:
@@ -91,6 +91,9 @@ class HumanErrorChecker(Loggable):
                 if not run.extract_value:
                     return 'position but no extract value'
 
+            if run.overlap[0]:
+                if not run.post_measurement_script:
+                    return 'post measurement script required for overlap'
         #if ant in ('unknown', 'background') or ant.startswith('blank'):
         #self._mass_spec_required = True
 

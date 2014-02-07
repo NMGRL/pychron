@@ -29,7 +29,6 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class ExperimentQueue(BaseExperimentQueue):
-#     current_run = Any
     selected = Any
     executed_selected = Any
     dclicked = Any
@@ -139,11 +138,11 @@ class ExperimentQueue(BaseExperimentQueue):
     def isExecutable(self):
         if self.check_runs():
             # test scripts
-            return all([ai.executable for ai in self.automated_runs])
+            return all([ai.executable for ai in self.cleaned_automated_runs])
 
     def check_runs(self):
         hec = self.human_error_checker
-        err = hec.check_runs(self.automated_runs, test_all=True)
+        err = hec.check_runs(self.cleaned_automated_runs, test_all=True)
         if err:
             hec.report_errors(err)
             return

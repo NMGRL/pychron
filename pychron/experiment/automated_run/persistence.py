@@ -38,18 +38,17 @@ from pychron.paths import paths
 from pychron.processing.export.export_spec import ExportSpec
 from pychron.pychron_constants import NULL_STR
 
-DEBUG=False
-
+DEBUG = False
 
 
 class AutomatedRunPersister(Loggable):
     # db = Instance(IsotopeAdapter)
     local_lab_db = Instance(LocalLabAdapter)
     # massspec_importer = Instance(MassSpecDatabaseImporter)
-    datahub=Instance(Datahub)
-    run_spec=Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
+    datahub = Instance(Datahub)
+    run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
     data_manager = Instance(H5DataManager, ())
-    monitor=Any
+    monitor = Any
 
     default_outlier_filtering = Property(depends_on='filter_outliers, fo_+')
     filter_outliers = Bool(False)
@@ -59,37 +58,37 @@ class AutomatedRunPersister(Loggable):
     save_as_peak_hop = Bool(False)
     save_enabled = Bool(False)
     experiment_identifier = Int
-    sensitivity_multiplier= Float
-    experiment_queue_name=Str
-    experiment_queue_blob=Str
+    sensitivity_multiplier = Float
+    experiment_queue_name = Str
+    experiment_queue_blob = Str
 
     extraction_name = Str
     extraction_blob = Str
     measurement_name = Str
     measurement_blob = Str
-    positions=List
+    positions = List
 
     #for saving to mass spec
     runscript_name = Str
     runscript_blob = Str
 
-    spec_dict=Dict
-    defl_dict=Dict
-    active_detectors=List
+    spec_dict = Dict
+    defl_dict = Dict
+    active_detectors = List
 
-    previous_blanks=Dict
-    secondary_database_fail=False
-    use_secondary_database=True
+    previous_blanks = Dict
+    secondary_database_fail = False
+    use_secondary_database = True
 
-    runid=Str
-    uuid=Str
-    rundate=Date
-    runtime=Time
-    load_name=Str
+    runid = Str
+    uuid = Str
+    rundate = Date
+    runtime = Time
+    load_name = Str
 
     cdd_ic_factor = Any
 
-    _db_extraction_id=None
+    _db_extraction_id = None
 
     def __init__(self, *args, **kw):
         super(AutomatedRunPersister, self).__init__(*args, **kw)
@@ -136,7 +135,6 @@ class AutomatedRunPersister(Loggable):
 
     def pre_measurement_save(self):
         self.info('pre measurement save')
-        print self
 
         dm = self.data_manager
         # make a new frame for saving data
@@ -168,7 +166,7 @@ class AutomatedRunPersister(Loggable):
                              uuid=uuid,
                              step=step,
                              collection_path=cp,
-                             )
+            )
             #ldb.commit()
             #ldb.close()
             #del ldb
@@ -186,7 +184,7 @@ class AutomatedRunPersister(Loggable):
 
         #check for conflicts immediately before saving
         #automatically update if there is an issue
-        conflict=self.datahub.is_conflict(self.run_spec)
+        conflict = self.datahub.is_conflict(self.run_spec)
         if conflict:
             self.debug('post measurement datastore conflict found. Automatically updating the aliquot and step')
             self.datahub.update_spec(self.run_spec)
@@ -256,7 +254,7 @@ class AutomatedRunPersister(Loggable):
                 self._save_isotope_data(db, a)
 
                 # save ic factor
-                self._save_detector_intercalibration(db,a)
+                self._save_detector_intercalibration(db, a)
 
                 # save blanks
                 self._save_blank_info(db, a)
@@ -275,7 +273,7 @@ class AutomatedRunPersister(Loggable):
 
         if self.use_secondary_database:
             if not self.datahub.secondary_connect():
-            # if not self.massspec_importer or not self.massspec_importer.db.connected:
+                # if not self.massspec_importer or not self.massspec_importer.db.connected:
                 self.debug('Secondary database is not available')
             else:
                 self.debug('saving post measurement to secondary database')
@@ -285,12 +283,12 @@ class AutomatedRunPersister(Loggable):
                 self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
                 mem_log('post mass spec save')
 
-        #clear is_peak hop flag
-        # self.is_peak_hop = False
-        # self.plot_panel.is_peak_hop = False
-        # return True
+                #clear is_peak hop flag
+                # self.is_peak_hop = False
+                # self.plot_panel.is_peak_hop = False
+                # return True
 
-    def _save_isotope_data(self,db, analysis):
+    def _save_isotope_data(self, db, analysis):
         self.debug('saving isotopes')
 
         dbhist = db.add_fit_history(analysis,
@@ -307,7 +305,7 @@ class AutomatedRunPersister(Loggable):
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
-    def _save_signal_data(self,db,  dbhist, analysis, dbdet, iso, m, kind):
+    def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
 
         self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
 
@@ -348,7 +346,7 @@ class AutomatedRunPersister(Loggable):
             if sens:
                 extraction.sensitivity = sens[-1]
 
-    def _save_peak_center(self,db, analysis, cp):
+    def _save_peak_center(self, db, analysis, cp):
         self.info('saving peakcenter')
 
         dm = self.data_manager
@@ -363,7 +361,7 @@ class AutomatedRunPersister(Loggable):
                     points=points)
                 return pc
 
-    def _save_measurement(self, db,analysis):
+    def _save_measurement(self, db, analysis):
         self.info('saving measurement')
 
         meas = db.add_measurement(
@@ -433,7 +431,7 @@ class AutomatedRunPersister(Loggable):
                 det = db.add_detector(det)
                 db.add_deflection(meas, det, deflection)
 
-    def _save_detector_intercalibration(self,db, analysis):
+    def _save_detector_intercalibration(self, db, analysis):
         self.info('saving detector intercalibration')
         if self.arar_age:
             history = None
@@ -467,7 +465,7 @@ class AutomatedRunPersister(Loggable):
 
     def _save_history_info(self, db, analysis, name, values):
         if not values:
-            self.debug('no previous {} to save {}'.format(name,values))
+            self.debug('no previous {} to save {}'.format(name, values))
             return
         if self.run_spec.analysis_type.startswith('blank') or \
                 self.run_spec.analysis_type.startswith('background'):
@@ -507,7 +505,7 @@ class AutomatedRunPersister(Loggable):
 
     def _save_to_massspec(self, p):
         #dm = self.data_manager
-        ms=self.datahub.secondarystore
+        ms = self.datahub.secondarystore
         h = ms.db.host
         dn = ms.db.name
         self.info('saving to massspec database {}/{}'.format(h, dn))
@@ -517,7 +515,7 @@ class AutomatedRunPersister(Loggable):
         if ms.add_analysis(exp):
             self.info('analysis added to mass spec database')
         else:
-            self.secondary_database_fail='Could not save {} to Mass Spec database'.format(self.runid)
+            self.secondary_database_fail = 'Could not save {} to Mass Spec database'.format(self.runid)
 
     def _export_spec_factory(self):
         # dc = self.collector
@@ -532,7 +530,7 @@ class AutomatedRunPersister(Loggable):
         # sf = dict(zip(dkeys, fb))
         # p = self._current_data_frame
 
-        ic=self.arar_age.get_ic_factor('CDD')
+        ic = self.arar_age.get_ic_factor('CDD')
 
         exp = ExportSpec(runid=rid,
                          runscript_name=self.runscript_name,
@@ -563,7 +561,7 @@ class AutomatedRunPersister(Loggable):
     # data writing
     #===============================================================================
     def save_peak_center_to_file(self, pc):
-        dm=self.data_manager
+        dm = self.data_manager
         with dm.open_file(self._current_data_frame):
             tab = dm.new_table('/', 'peak_center')
             xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
@@ -613,7 +611,6 @@ class AutomatedRunPersister(Loggable):
 
     def build_tables(self, gn, detectors):
         dm = self.data_manager
-        print self
         with dm.open_file(self._current_data_frame):
             dm.new_group(gn)
             for i, d in enumerate(detectors):

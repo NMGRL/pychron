@@ -495,7 +495,7 @@ class AutomatedRun(Loggable):
     #===============================================================================
     # run termination
     #===============================================================================
-    def cancel_run(self, state='canceled'):
+    def cancel_run(self, state='canceled', do_post_equilibration=True):
         """
             terminate the measurement script immediately
 
@@ -518,7 +518,7 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.peak_center.cancel()
 
-        self.do_post_termination()
+        self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
 
@@ -1010,11 +1010,13 @@ class AutomatedRun(Loggable):
         else:
             self.info('======== Post Equilibration Finished unsuccessfully ========')
 
-    def do_post_termination(self):
+    def do_post_termination(self, do_post_equilibration=True):
         oex = self.experiment_executor.executable
         self.experiment_executor.executable = False
         self.info('========= Post Termination Started ========')
-        self.do_post_equilibration()
+        if do_post_equilibration:
+            self.do_post_equilibration()
+
         self.do_post_measurement()
 
         self.stop()

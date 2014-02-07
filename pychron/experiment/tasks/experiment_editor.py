@@ -129,10 +129,6 @@ class ExperimentEditor(BaseTraitsEditor):
     def queue_factory(self, **kw):
         return ExperimentQueue(**kw)
 
-    #                             db=self.db,
-    #                             application=self.application,
-    #                             **kw)
-
     def save(self, path, queues=None):
         if queues is None:
             queues = [self.queue]
@@ -146,14 +142,13 @@ class ExperimentEditor(BaseTraitsEditor):
 
     def _validate_experiment_queues(self, eqs):
         # check runs
-        #hec = HumanErrorChecker()
         for qi in eqs:
             hec=qi.human_error_checker
 
             qi.executable = True
             qi.initialized = True
 
-            err = hec.check_runs(qi.automated_runs, test_all=True,
+            err = hec.check_runs(qi.cleaned_automated_runs, test_all=True,
                                  test_scripts=True)
             if err:
                 qi.executable = False
