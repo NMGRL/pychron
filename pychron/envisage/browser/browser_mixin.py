@@ -25,6 +25,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -123,7 +124,7 @@ class BrowserMixin(ColumnSorterMixin):
     def _load_browser_selection(self, selection):
         def load(attr, values):
             def get(n):
-                return next((p for p in values if p.name == n), None)
+                return next((p for p in values if p.id == n), None)
 
             try:
                 sel = selection[attr]
@@ -146,7 +147,7 @@ class BrowserMixin(ColumnSorterMixin):
 
         ss = []
         if self.selected_samples:
-            ss = [p.name for p in self.selected_samples]
+            ss = [p.identifier for p in self.selected_samples]
 
         obj = dict(projects=ps,
                    samples=ss)

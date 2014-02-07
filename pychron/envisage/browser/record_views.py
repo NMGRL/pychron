@@ -88,6 +88,10 @@ class LabnumberRecordView(RecordView):
     def _get_irradiation_and_level(self):
         return '{}{}'.format(self.irradiation, self.irradiation_level)
 
+    @property
+    def id(self):
+        return self.identifier
+
 
 class ProjectRecordView(RecordView):
     name = Str
@@ -98,4 +102,8 @@ class ProjectRecordView(RecordView):
         else:
             self.name = dbrecord
 
-            #============= EOF =============================================
+    @property
+    def id(self):
+        return self.name
+
+        #============= EOF =============================================
