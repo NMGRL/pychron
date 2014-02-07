@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import Any, on_trait_change, Int, List, Bool, Instance
 from pyface.timer.do_later import do_later
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
@@ -44,8 +47,19 @@ class ExperimentQueue(BaseExperimentQueue):
 
     human_error_checker = Instance(HumanErrorChecker, ())
 
-    def select_run_idx(self, idx):
-        if self.automated_runs:
+
+def count_labnumber(self, ln):
+    ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
+    i = 0
+    for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+        i += 1
+    return i
+
+    # return sum((int(ai.labnumber==ln) for ai in self.automated_runs))
+
+
+def select_run_idx(self, idx):
+    if self.automated_runs:
             self.selected = self.automated_runs[idx:idx + 1]
 
     def reset(self):
@@ -118,6 +132,7 @@ class ExperimentQueue(BaseExperimentQueue):
         if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
             self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            self.refresh_info_needed = True
             invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
 
     @on_trait_change('automated_runs:state')

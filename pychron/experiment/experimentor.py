@@ -22,6 +22,7 @@ from traits.api import Instance, List, on_trait_change, Bool, Event
 from itertools import groupby
 #============= local library imports  ==========================
 # from pychron.database.isotope_database_manager import IsotopeDatabaseManager
+from pychron.core.helpers.iterfuncs import partition
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 
 from pychron.experiment.factory import ExperimentFactory
@@ -30,7 +31,7 @@ from pychron.experiment.stats import StatsGroup
 from pychron.experiment.experiment_executor import ExperimentExecutor
 # from pychron.experiment.executor import ExperimentExecutor
 #from pychron.experiment.utilities.file_listener import FileListener
-from pychron.experiment.utilities.identifier import convert_identifier
+from pychron.experiment.utilities.identifier import convert_identifier, is_special
 #from pychron.deprecate import deprecated
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
@@ -107,12 +108,12 @@ class Experimentor(IsotopeDatabaseManager):
         return [ai for ei in queues
                 for ai in ei.executed_runs + ei.automated_runs
                 if ai.executable]
-    
+
     def _get_all_automated_runs(self):
         return [ai for ei in self.experiment_queues
                 for ai in ei.automated_runs
-                    if ai.executable]
-        
+                if ai.executable]
+
     def _update(self, queues=None):
 
         self.debug('update runs')
@@ -139,6 +140,7 @@ class Experimentor(IsotopeDatabaseManager):
         # exclude = ('dg', 'pa')
         #        timethis(self._modify_aliquots_steps, args=(ans,), kwargs=dict(exclude=exclude))
         # self._modify_aliquots_steps(ans, exclude=exclude)
+        self._compress_aliquots()
         self._set_analysis_metatata()
 
         self.debug('info updated')
@@ -176,7 +178,7 @@ class Experimentor(IsotopeDatabaseManager):
             sample = dbln.sample
             if sample:
                 if sample.project:
-                    project=sample.project.name
+                    project = sample.project.name
 
                 if sample.material:
                     material = sample.material.name
@@ -189,6 +191,23 @@ class Experimentor(IsotopeDatabaseManager):
                                                 level.name, dbpos.position)
 
         return project, sample, material, irradiation
+
+    def _compress_aliquots(self):
+        aruns = self._get_all_automated_runs()
+
+        key = lambda x: x.labnumber
+        akey = lambda x: x.user_defined_aliquot
+        for ln, ans in groupby(aruns, key=key):
+            if is_special(ln):
+                continue
+
+            b, a = partition(ans, akey)
+            b = list(b)
+            if b:
+                minaliquot = min([bi.user_defined_aliquot for bi in b])
+                for i, (al, ans) in enumerate(groupby(b, key=akey)):
+                    for ai in ans:
+                        ai.user_defined_aliquot = minaliquot + i
 
     def _set_analysis_metatata(self):
         cache = dict()
@@ -204,15 +223,15 @@ class Experimentor(IsotopeDatabaseManager):
 
                 # is run in cache
                 if not ln in cache:
-                    info=self._get_analysis_info(ln)
+                    info = self._get_analysis_info(ln)
                     if not info:
-                        cache[ln]=dict(identifier_error=True)
+                        cache[ln] = dict(identifier_error=True)
                     else:
-                        project, sample, material, irrad =info
+                        project, sample, material, irrad = info
 
                         cache[ln] = dict(project=project, sample=sample,
-                                        material=material,
-                                        irradiation=irrad, identifier_error=False)
+                                         material=material,
+                                         irradiation=irrad, identifier_error=False)
 
                 ai.trait_set(**cache[ln])
 
@@ -315,8 +334,7 @@ class Experimentor(IsotopeDatabaseManager):
             qf = self.experiment_factory.queue_factory
             for a in ('username', 'mass_spectrometer', 'extract_device',
                       'load_name',
-                      'delay_before_analyses', 'delay_between_analyses'
-            ):
+                      'delay_before_analyses', 'delay_between_analyses'):
                 v = getattr(eq, a)
                 if v is not None:
                     if isinstance(v, str):
@@ -325,6 +343,10 @@ class Experimentor(IsotopeDatabaseManager):
                             setattr(qf, a, v)
                     else:
                         setattr(qf, a, v)
+
+    @on_trait_change('experiment_queue:refresh_info_needed')
+    def _handle_refresh(self):
+        self.update_info()
 
     @on_trait_change('experiment_queue:selected')
     def _selected_changed(self, new):
@@ -344,7 +366,6 @@ class Experimentor(IsotopeDatabaseManager):
         ef = self.experiment_factory
         rf = ef.run_factory
         rf.special_labnumber = 'Special Labnumber'
-
 
         rf.suppress_update = True
         rf.set_selected_runs(new)
@@ -406,6 +427,7 @@ class Experimentor(IsotopeDatabaseManager):
         #            e.queue_factory.extract_device = 'Fusions Diode'
 
         return e
+
 #============= EOF =============================================
 #     def start_file_listener(self, path):
 #         fl = FileListener(

@@ -167,9 +167,10 @@ def strip_runid(r):
 
 def make_step(s):
     if isinstance(s, (float, int, long)):
-        s=ALPHAS[int(s)]
+        s = ALPHAS[int(s)]
 
     return s
+
 
 def make_aliquot_step(a, s):
     if not isinstance(a, str):
@@ -187,12 +188,12 @@ def make_identifier(ln, ed, ms):
 
 
 def make_standard_identifier(ln, modifier, ms, aliquot=None):
-    '''
+    """
         ln: str or int
         a: int
-        modifier: str or int. if int zero pad 
-        ms: int or str 
-    '''
+        modifier: str or int. if int zero pad
+        ms: int or str
+    """
     if isinstance(ms, int):
         ms = '{:02n}'.format(ms)
     try:
@@ -207,12 +208,12 @@ def make_standard_identifier(ln, modifier, ms, aliquot=None):
 
 
 def make_special_identifier(ln, ed, ms, aliquot=None):
-    '''
+    """
         ln: str or int
         a: int aliquot
         ms: int mass spectrometer id
         ed: int extract device id
-    '''
+    """
     if isinstance(ed, int):
         ed = '{:02n}'.format(ed)
     if isinstance(ms, int):
@@ -228,10 +229,10 @@ def make_special_identifier(ln, ed, ms, aliquot=None):
 
 
 def make_rid(ln, a, step=''):
-    '''
+    """
         if ln can be converted to integer return runid
         else return ln-a
-    '''
+    """
     try:
         _ = int(ln)
         return make_runid(ln, a, step)
@@ -239,6 +240,13 @@ def make_rid(ln, a, step=''):
         if not isinstance(a, str):
             a = '{:02n}'.format(a)
         return '{}-{}'.format(ln, a)
+
+
+def is_special(ln):
+    special = False
+    if '-' in ln:
+        special = ln.split('-')[0] in ANALYSIS_MAPPING
+    return special
 
 #        return make_special_identifier(ln, ed, ms, aliquot=a)
 #===============================================================================
@@ -249,11 +257,11 @@ SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
 }
 # @deprecated
 def convert_labnumber(ln):
-    '''
+    """
         ln is a str  but only special labnumbers cannot be converted to int
         convert number to name
-        
-    '''
+
+    """
     try:
         ln = int(ln)
 
@@ -263,6 +271,7 @@ def convert_labnumber(ln):
         pass
 
     return ln
+
 
 # @deprecated
 def convert_shortname(ln):

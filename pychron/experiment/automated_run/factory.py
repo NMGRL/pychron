@@ -155,8 +155,7 @@ class AutomatedRunFactory(Loggable):
     comment = Str
     auto_fill_comment = Bool
 
-    position = Property(EKlass(String),
-                        depends_on='_position')
+    position = Property(depends_on='_position')
     _position = String
 
     #===========================================================================
@@ -319,14 +318,14 @@ class AutomatedRunFactory(Loggable):
             s = getattr(self, '{}_script'.format(s))
             s.extract_device = new
 
-    def new_runs(self, positions=None, auto_increment_position=False,
+    def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
                  auto_increment_id=False):
         """
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
 
-        arvs, freq = self._new_runs(positions=positions)
+        arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
@@ -343,7 +342,7 @@ class AutomatedRunFactory(Loggable):
     # private
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
-    def _new_runs(self, positions):
+    def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
 
@@ -352,21 +351,21 @@ class AutomatedRunFactory(Loggable):
                 positions = self.position
 
             template = self._use_template() and not freq
-            arvs = self._new_runs_by_position(positions, template)
+            arvs = self._new_runs_by_position(exp_queue, positions, template)
         else:
             arvs = [self._new_run()]
 
         return arvs, freq
 
-    def _new_runs_by_position(self, pos, template=False):
+    def _new_runs_by_position(self, exp_queue, pos, template=False):
         arvs = []
         positions = generate_positions(pos)
 
-        for i in positions:
+        for i, p in enumerate(positions):
             # if set_pos:
-            p = str(i)
+            p = str(p)
             if template:
-                arvs.extend(self._render_template(p))
+                arvs.extend(self._render_template(exp_queue, p, i))
             else:
                 arvs.append(self._new_run(position=str(p),
                                           excludes=['position']))
@@ -502,19 +501,20 @@ class AutomatedRunFactory(Loggable):
 
         return template
 
-    def _render_template(self, position):
+    def _render_template(self, exp_queue, position, offset):
         arvs = []
         template = self._new_template()
         self.debug('rendering template {}'.format(template.name))
 
         al = self.datahub.get_greatest_aliquot(self.labnumber)
+        c = exp_queue.count_labnumber(self.labnumber)
 
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
                 arv = self._new_run(position=position,
                                     excludes=['position'])
 
-                arv.trait_set(user_defined_aliquot=al + 1,
+                arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
                               **st.make_dict(self.duration, self.cleanup))
                 arvs.append(arv)
 

@@ -84,12 +84,14 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
 
         load_name = self.queue_factory.load_name
-        new_runs, freq = self.run_factory.new_runs(positions=positions,
+
+        q = self.queue
+        new_runs, freq = self.run_factory.new_runs(q, positions=positions,
                                                    auto_increment_position=self.auto_increment_position,
                                                    auto_increment_id=self.auto_increment_id)
         #         if self.run_factory.check_run_addition(new_runs, load_name):
         #if self.run_factory.check_run_addition(new_runs, load_name):
-        q = self.queue
+        # q = self.queue
         if q.selected:
             idx = q.automated_runs.index(q.selected[-1])
         else:
