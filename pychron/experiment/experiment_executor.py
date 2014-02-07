@@ -391,11 +391,19 @@ class ExperimentExecutor(Loggable):
                 if self.end_at_run_completion:
                     break
 
-            #wait for overlapped runs to finish
-            while self.extracting_run or self.measuring_run:
-                time.sleep(1)
-                if not self._alive:
-                    break
+            if self.end_at_run_completion:
+                #if overlapping run is a special labnumber cancel it and finish experiment
+                if not self.extracting_run.spec.is_special():
+                    self._wait_for(lambda x: self.extracting_run)
+                else:
+                    self.extracting_run.cancel_run()
+
+                #wait for the measurement run to finish
+                self._wait_for(lambda x: self.measuring_run)
+
+            else:
+                #wait for overlapped runs to finish.
+                self._wait_for(lambda x: self.extracting_run or self.measuring_run)
 
         if self._err_message:
             self.warning('automated runs did not complete successfully')
@@ -406,6 +414,16 @@ class ExperimentExecutor(Loggable):
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
+
+    def _wait_for(self, pred, period=1):
+        st = time.time()
+        while 1:
+            et = time.time() - st
+            if not self._alive:
+                break
+            if not pred(et):
+                break
+            time.sleep(period)
 
     def _join_run(self, spec, run):
         #    def _join_run(self, spec, t, run):
