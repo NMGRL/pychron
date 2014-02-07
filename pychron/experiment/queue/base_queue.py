@@ -57,6 +57,7 @@ class BaseExperimentQueue(Loggable):
 
     update_needed = Event
     refresh_table_needed = Event
+    refresh_info_needed = Event
     changed = Event
     name = Property(depends_on='path')
     path = String

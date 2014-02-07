@@ -26,7 +26,7 @@ import weakref
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid, ANALYSIS_MAPPING
+    make_runid, is_special
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 from pychron.loggable import Loggable
 
@@ -133,11 +133,7 @@ class AutomatedRunSpec(Loggable):
         return bool(self.user_defined_aliquot) and not self.is_special()
 
     def is_special(self):
-        special = False
-        ln = self.labnumber
-        if '-' in ln:
-            special = ln.split('-')[0] in ANALYSIS_MAPPING
-        return special
+        return is_special(self.labnumber)
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -298,7 +294,7 @@ class AutomatedRunSpec(Loggable):
     post_equilibration_script, extraction_script,extract_+, position, duration, cleanup''')
     def _script_changed(self, name, new):
         if new == 'None':
-        #            self.trait_set(trait_change_notify=False, **{name: ''})
+            #            self.trait_set(trait_change_notify=False, **{name: ''})
             self.trait_set(**{name: ''})
         else:
             self._changed = True
