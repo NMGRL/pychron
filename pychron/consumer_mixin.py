@@ -72,6 +72,7 @@ class ConsumerMixin(object):
         bt = self._buftime
         if bt:
             bt = bt / 1000.
+
             def get_func():
                 q = self._consumer_queue
                 v = None
@@ -115,8 +116,10 @@ class ConsumerMixin(object):
                             func(a)
             except Exception, e:
                 import traceback
+
                 traceback.print_exc()
                 #pass
+
 
 #             if not self._should_consume:
 #                 break
@@ -126,9 +129,11 @@ class consumable(object):
     _func = None
     _consumer = None
     _main = False
+
     def __init__(self, func=None, main=False):
         self._func = func
         self._main = main
+
     def __enter__(self):
         self._consumer = c = ConsumerMixin()
         c.setup_consumer(func=self._func, main=self._main)

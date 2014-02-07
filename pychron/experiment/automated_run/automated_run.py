@@ -99,7 +99,6 @@ class AutomatedRun(Loggable):
     uuid = Str
     extract_device = Str
     analysis_type = Property
-    # user_defined_aliquot = Bool(False)
     fits = List
     eqtime = Float
 
@@ -137,7 +136,6 @@ class AutomatedRun(Loggable):
     _integration_seconds = Float(1.0)
 
     min_ms_pumptime = Int(60)
-    _ms_pumptime_start = None
 
     #===============================================================================
     # pyscript interface
@@ -312,7 +310,8 @@ class AutomatedRun(Loggable):
             self.plot_panel.is_baseline = True
 
         gn = 'baseline'
-        print self
+        # print self
+        self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
         self.persister.build_tables(gn, self._active_detectors)
 
         self.multi_collector.is_baseline = True
@@ -615,7 +614,6 @@ class AutomatedRun(Loggable):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
 
     def start(self):
-        self._ms_pumptime_start = None
 
         if self.monitor is None:
             return self._start()
@@ -628,8 +626,23 @@ class AutomatedRun(Loggable):
         else:
             self.warning('failed to start monitor')
 
+    def _wait_for(self, predicate, msg):
+        st = time.time()
+        i = 0
+        while self._alive:
+            time.sleep(1.0)
+            et = time.time() - st
+            if predicate(et):
+                break
+
+            if i % 5 == 0:
+                self.debug(msg(et))
+                i = 0
+            i += 1
+
     def _wait_for_min_ms_pumptime(self):
         if self.is_first:
+            self.debug('this is the first run. not waiting for min ms pumptime')
             return
 
         overlap, mp = self.spec.overlap
@@ -640,29 +653,15 @@ class AutomatedRun(Loggable):
         #ensure mim mass spectrometer pump time
         #wait until pumping started
         self.debug('wait for mass spec pump out to start')
-        while self._alive:
-            if not self._ms_pumptime_start is None:
-                break
-            time.sleep(1.0)
+        self._wait_for(lambda x: not self.experiment_executor.ms_pumptime_start is None,
+                       msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
         self.debug('mass spec pump out to started')
 
-        f = lambda: self.debug('waiting for min mass spec pumptime {}'.format(mp,
-                                                                              self.elapsed_ms_pumptime))
-        i = 0
-        while self._alive:
-            pet = self.elapsed_ms_pumptime
-            if pet < mp:
-                time.sleep(1.0)
-            else:
-                self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
-                break
-
-            if i % 25:
-                f()
-
-            if i > 1000:
-                i = -1
-            i += 1
+        #wait for min pump time
+        pred = lambda x: self.elapsed_ms_pumptime > mp
+        msg = lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x)
+        self._wait_for(pred, msg)
+        self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
 
     def wait_for_overlap(self, is_first):
         """
@@ -671,11 +670,9 @@ class AutomatedRun(Loggable):
         """
 
         self.is_first = is_first
-
         self.info('waiting for overlap signal')
         self._alive = True
         self.overlap_evt = evt = TEvent()
-
         evt.clear()
         i = 1
         st = time.time()
@@ -693,9 +690,6 @@ class AutomatedRun(Loggable):
         self.info('overlap signal set')
 
         overlap, mp = self.spec.overlap
-        # if not mp:
-        #     self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
-        #     mp = self.min_ms_pumptime
 
         self.info('starting overlap delay {}'.format(overlap))
         starttime = time.time()
@@ -712,7 +706,7 @@ class AutomatedRun(Loggable):
 
     @property
     def elapsed_ms_pumptime(self):
-        return time.time() - self._ms_pumptime_start
+        return time.time() - self.experiment_executor.ms_pumptime_start
 
     def get_previous_blanks(self):
         blanks = None
@@ -769,10 +763,8 @@ class AutomatedRun(Loggable):
         self.info('Start automated run {}'.format(self.runid))
 
         self.measuring = False
-        #             self.update = True
         self.truncated = False
 
-        # self.overlap_evt = TEvent()
         self._alive = True
 
         if self.plot_panel:
@@ -790,6 +782,7 @@ class AutomatedRun(Loggable):
         # setup the scripts
         if self.measurement_script:
             self.measurement_script.reset(weakref.ref(self)())
+            # self.measurement_script.reset(weakref.ref(self)())
             #            self.debug('XXXXXXXXXXXXXXXXXXXXXXXXX Setting measurement script is_last {}'.format(self.is_last))
         #            self.measurement_script.setup_context(is_last=self.is_last)
 
@@ -944,7 +937,6 @@ class AutomatedRun(Loggable):
         self.info('======== {} ========'.format(msg))
         self.state = 'measurement'
 
-        print self
         self.persister.pre_measurement_save()
 
         self.measuring = True
@@ -988,7 +980,7 @@ class AutomatedRun(Loggable):
 
         if script.execute():
             self.debug('setting _ms_pumptime')
-            self._ms_pumptime_start = time.time()
+            self.experiment_executor.ms_pumptime_start = time.time()
 
             self.info('======== Post Measurement Finished ========')
             return True
@@ -1289,6 +1281,7 @@ anaylsis_type={}
                 # open inlet
                 elm.open_valve(inlet, mode='script')
 
+        #set the passed in event
         evt.set()
 
         # delay for eq time
@@ -1302,7 +1295,9 @@ anaylsis_type={}
             if do_post_equilibration:
                 self.do_post_equilibration()
 
-            self.overlap_evt.set()
+            if self.overlap_evt:
+                self.debug('setting overlap event. next run ok to start extraction')
+                self.overlap_evt.set()
 
     def _update_labels(self):
         if self.plot_panel:
@@ -1514,9 +1509,9 @@ anaylsis_type={}
                                                     msg=self.persister.secondary_database_fail)
             else:
                 return True
-                #===============================================================================
-                # scripts
 
+    #===============================================================================
+    # scripts
     #===============================================================================
     def _load_script(self, name):
         script = None
@@ -1525,10 +1520,11 @@ anaylsis_type={}
         if sname and sname != NULL_STR:
             sname = self._make_script_name(sname)
             #            print sname, self.scripts
+            # print sname, sname in SCRIPTS, self.overlapping, self.isAlive()
             if sname in SCRIPTS:
                 script = SCRIPTS[sname]
-                if script.check_for_modifications():
-                    self.debug('script {} modified reloading'.format(sname))
+                if script.check_for_modifications() or self.isAlive():
+                    self.debug('script {} modified/overlapping. reloading'.format(sname))
                     script = self._bootstrap_script(sname, name)
             else:
                 script = self._bootstrap_script(sname, name)

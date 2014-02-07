@@ -52,6 +52,7 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).gosub(*args, **kw)
 
     def reset(self, arun):
+        self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
 
         self._baseline_series = None
@@ -254,8 +255,7 @@ class MeasurementPyScript(ValvePyScript):
                                        inlet=inlet,
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
-                                       delay=delay
-        )
+                                       delay=delay)
         if not evt:
             self.cancel()
         else:
@@ -393,8 +393,7 @@ class MeasurementPyScript(ValvePyScript):
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,
-                                 resume=resume
-        )
+                                 resume=resume)
 
     @verbose_skip
     @command_register
@@ -408,17 +407,17 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_time_zero(self, offset=0):
-        '''
-            set the time_zero value. 
+        """
+            set the time_zero value.
             add offset to time_zero
-            e.g 
-                
+            e.g
+
                 T_o= ion pump closes
                 offset seconds after T_o. define time_zero
-                
+
                 T_eq= inlet closes
-            
-        '''
+
+        """
         self._time_zero = time.time() + offset
         self._time_zero_offset = offset
 
@@ -469,9 +468,9 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_cdd_operating_voltage(self, v=''):
-        '''
+        """
             if v is None use value from file
-        '''
+        """
         if self.automated_run is None:
             return
 

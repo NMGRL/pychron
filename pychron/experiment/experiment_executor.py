@@ -330,6 +330,7 @@ class ExperimentExecutor(Loggable):
         cnt = 0
         total_cnt = 0
         is_first_flag = True
+
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 #                 before = measure_type()
@@ -345,8 +346,8 @@ class ExperimentExecutor(Loggable):
                     rgen, nruns = exp.new_runs_generator()
                     cnt = 0
                     self.queue_modified = False
-                    #                    force_delay = True
 
+                self.ms_pumptime_start = None
                 # overlapping = self.current_run and self.current_run.isAlive()
                 overlapping = self.measuring_run and self.measuring_run.isAlive()
                 if not overlapping:
@@ -361,13 +362,14 @@ class ExperimentExecutor(Loggable):
                 except StopIteration:
                     self.debug('stop iteration')
                     break
+
                 run = self._make_run(spec)
+                run.overlapping = spec.analysis_type == 'unknown' and spec.overlap
                 if run is None:
                     break
-
                 self.wait_group.active_control.page_name = run.runid
 
-                if spec.analysis_type == 'unknown' and spec.overlap:
+                if run.overlapping:
                     self.info('overlaping')
 
                     t = Thread(target=self._do_run, args=(run,))
@@ -387,6 +389,12 @@ class ExperimentExecutor(Loggable):
                 cnt += 1
                 total_cnt += 1
                 if self.end_at_run_completion:
+                    break
+
+            #wait for overlapped runs to finish
+            while self.extracting_run or self.measuring_run:
+                time.sleep(1)
+                if not self._alive:
                     break
 
         if self._err_message:
@@ -470,6 +478,7 @@ class ExperimentExecutor(Loggable):
         t, run = v
         #         while t.is_alive():
         #             time.sleep(1)
+        self.debug('OVERLAPPING. waiting for run to finish')
         t.join()
 
         self.debug('{} finished'.format(run.runid))
@@ -636,6 +645,7 @@ class ExperimentExecutor(Loggable):
         # run = self.current_run if not spec.overlap[0] else None
         run = None
         arun = spec.make_run(run=run)
+        arun.logger_name = 'AutomatedRun {}'.format(arun.runid)
         '''
             save this runs uuid to a hidden file
             used for analysis recovery
