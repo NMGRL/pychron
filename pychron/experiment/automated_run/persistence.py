@@ -220,7 +220,7 @@ class AutomatedRunPersister(Loggable):
                                     uuid=self.uuid,
                                     endtime=endtime,
                                     aliquot=aliquot,
-                                    step=self.run_spec.step,
+                                    # step=self.run_spec.step,
                                     increment=self.run_spec.increment,
                                     comment=self.run_spec.comment)
                 sess.flush()
