@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from sqlalchemy import Integer
-from sqlalchemy.dialects.mysql import INTEGER
 
 from traits.api import Long, HasTraits, Date, Float, Str, Int
 from traitsui.api import View, Item, HGroup
@@ -24,13 +22,12 @@ from traitsui.api import View, Item, HGroup
 from cStringIO import StringIO
 import hashlib
 
-from sqlalchemy.sql.expression import and_, func, not_, cast
+from sqlalchemy.sql.expression import and_, func, not_
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.query import compile_query
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 #spec_
@@ -1293,7 +1290,6 @@ class IsotopeAdapter(DatabaseAdapter):
                 # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
                 q = q.order_by(meas_AnalysisTable.increment.desc())
                 result = self._query_one(q)
-                print compile_query(q)
                 if result:
                     step = result[0]
                     return ALPHAS.index(step) if step is not None else -1
