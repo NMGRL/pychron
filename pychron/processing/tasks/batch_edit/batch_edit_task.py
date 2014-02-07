@@ -30,6 +30,7 @@ from pychron.processing.tasks.batch_edit.panes import BatchEditPane
 from pychron.paths import paths
 
 
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -121,7 +122,7 @@ class BatchEditTask(AnalysisEditTask):
             for value in self.batch_editor.values:
                 if value.use:
                     if value.name.startswith('Disc.'):
-                        det = ' '.join(value.name.split(' ')[:-1])
+                        det = ' '.join(value.name.split(' ')[1:])
                         self._add_discrimination(ui, det, value.nominal_value,
                                                  value.std_dev)
                     else:
