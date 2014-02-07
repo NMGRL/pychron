@@ -311,7 +311,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             try:
                 sess.flush()
             except SQLAlchemyError, e:
-                self.debug('add_item exception {} {}'.format(obj, e))
+                import traceback
+                # traceback.print_exc()
+                self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
                 sess.rollback()
 
 

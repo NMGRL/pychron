@@ -1290,7 +1290,6 @@ class IsotopeAdapter(DatabaseAdapter):
                 # q = q.order_by(cast(meas_AnalysisTable.step, INTEGER(unsigned=True)).desc())
                 q = q.order_by(meas_AnalysisTable.increment.desc())
                 result = self._query_one(q)
-                # print compile_query(q)
                 if result:
                     step = result[0]
                     return ALPHAS.index(step) if step is not None else -1

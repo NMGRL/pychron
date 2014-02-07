@@ -24,13 +24,10 @@ from sqlalchemy import Column, Integer, String, \
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
-
-
-
-
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
+from pychron.pychron_constants import ALPHAS
 
 from util import Base
 
@@ -39,7 +36,10 @@ class meas_SignalTable(Base, BaseMixin):
     data = Column(BLOB)
     isotope_id = foreignkey('meas_IsotopeTable')
 
+
 #    detector_id = foreignkey('gen_DetectorTable')
+def step_default(context):
+    return ALPHAS[context.current_parameters['increment']]
 
 
 class meas_AnalysisTable(Base, BaseMixin):
@@ -56,7 +56,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     endtime = Column(Time)
     status = Column(Integer, default=0)
     aliquot = Column(Integer)
-    step = stringcolumn(10)
+    step = stringcolumn(10, default=step_default)
     increment = Column(Integer)
 
     comment = Column(BLOB)
@@ -149,7 +149,6 @@ class meas_PositionTable(Base, BaseMixin):
 
 
 class meas_SpectrometerParametersTable(Base, BaseMixin):
-#    measurement_id = foreignkey('meas_MeasurementTable')
     extraction_lens = Column('extraction_lens', Float)
     ysymmetry = Column(Float)
     zsymmetry = Column(Float)
