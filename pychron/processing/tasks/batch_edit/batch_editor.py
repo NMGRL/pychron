@@ -72,15 +72,21 @@ class BatchEditor(Loggable):
                     for iso in ui.isotopes.itervalues()])
 
         keys = sort_isotopes(list(keys))
-        values = []
+        ics = []
         for ki in keys:
             # vi.name includes "IC "
             value = next((vi for vi in self.values if vi.name[3:] == ki), None)
             if value is None:
                 value = UValue(name='IC {}'.format(ki))
-            values.append(value)
+            ics.append(value)
+        discs = []
+        for ki in keys:
+            value = next((vi for vi in self.values if vi.name[6:] == ki), None)
+            if value is None:
+                value = UValue(name='Disc. {}'.format(ki))
+            discs.append(value)
 
-        self.values = [UValue(name='disc')] + values
+        self.values = discs + ics
 
     #===============================================================================
     # property get/set
