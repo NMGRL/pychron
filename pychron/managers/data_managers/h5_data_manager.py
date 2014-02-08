@@ -65,22 +65,29 @@ class FileCTX(object):
         return self._file
 
     def __exit__(self, *args, **kw):
-    #         self._file.flush()
-        self._parent.close_file()
-        self._file.close()
+        if not self._parent._file_stack or len(self._parent._file_stack) < 2:
+            self._parent.close_file()
+            self._file.close()
+            self._parent._file_stack.pop()
+        else:
+            self._parent._file_stack.pop()
 
         del self._file
         del self._parent
 
 
 class H5DataManager(DataManager):
-    '''
-    '''
+    """
+    """
     #    _extension = 'h5'
     _extension = 'hdf5'
     repository = Any
     workspace_root = None
     compression_level = 5
+
+    def __init__(self, *args, **kw):
+        super(H5DataManager, self).__init__(*args, **kw)
+        self._file_stack = []
 
     def set_group_attribute(self, group, key, value):
         f = self._frame
@@ -101,9 +108,9 @@ class H5DataManager(DataManager):
     #        table.flush()
 
     def record(self, values, table):
-        '''
+        """
 
-        '''
+        """
         _df, ptable = self._get_parent(table)
         nr = ptable.row
         for key in values:
@@ -136,9 +143,9 @@ class H5DataManager(DataManager):
 
 
     def new_frame(self, *args, **kw):
-        '''
+        """
 
-        '''
+        """
         p = self._new_frame_path(*args, **kw)
         try:
             self._frame = openFile(p, mode='w',
@@ -154,9 +161,9 @@ class H5DataManager(DataManager):
 
 
     def new_group(self, group_name, parent=None, description=''):
-        '''
+        """
             if group already exists return it otherwise create a new group
-        '''
+        """
         if parent is None:
             parent = self._frame.root
 
@@ -168,9 +175,9 @@ class H5DataManager(DataManager):
         return grp
 
     def new_table(self, group, table_name, table_style='TimeSeries'):
-        '''
+        """
             if table already exists return it otherwise create a new table
-        '''
+        """
         tab = self.get_table(table_name, group)
         if tab is None:
             tab = self._frame.createTable(group, table_name,
@@ -186,6 +193,7 @@ class H5DataManager(DataManager):
         if frame is None:
             frame = self._frame
 
+        # self.debug('get table name={} group={} frame={}'.format(name, group, str(frame)[:80]))
         return get_table(name, group, frame)
 
     def get_group(self, name, grp=None):
@@ -247,6 +255,7 @@ class H5DataManager(DataManager):
             print 'exception closing file', e
 
     def open_file(self, path, mode='r+'):
+        self._file_stack.append(1)
         return FileCTX(
             #                         self,
             weakref.ref(self)(),

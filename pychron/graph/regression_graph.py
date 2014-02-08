@@ -106,21 +106,24 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def set_fit(self, fi, plotid=0, series=0):
         plot = self.plots[plotid]
-        for idx in range(series, -1, -1):
-            key = 'data{}'.format(idx)
-            if plot.plots.has_key(key):
-                scatter = plot.plots[key][0]
-                if scatter.fit != fi:
-                    lkey = 'line{}'.format(idx)
-                    if plot.plots.has_key(lkey):
-                        line = plot.plots[lkey][0]
-                        line.regressor = None
+        # for idx in range(series, -1, -1):
+        key = 'data{}'.format(series)
+        # print 'set fit', fi, plotid, key
+        if plot.plots.has_key(key):
+            scatter = plot.plots[key][0]
+            # print key
+            if scatter.fit != fi:
+                lkey = 'line{}'.format(series)
+                if plot.plots.has_key(lkey):
+                    line = plot.plots[lkey][0]
+                    line.regressor = None
 
-                    scatter.fit = fi
-                    scatter.index.metadata['selections'] = []
-                    scatter.index.metadata['filtered'] = None
-                    self.redraw()
-                break
+                scatter.fit = fi
+                # print 'set ', scatter, fi
+                scatter.index.metadata['selections'] = []
+                scatter.index.metadata['filtered'] = None
+                self.redraw()
+                # break
 
     def get_fit(self, plotid=0, series=0):
         try:

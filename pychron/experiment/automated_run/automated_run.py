@@ -206,7 +206,7 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0):
         if not self._alive:
             return
 
@@ -220,6 +220,8 @@ class AutomatedRun(Loggable):
         self._add_truncate_condition()
 
         self.multi_collector.is_baseline = False
+        self.multi_collector.fit_series_idx = fit_series
+
         if self.experiment_executor:
             sc=self.experiment_executor.signal_color
         else:
@@ -286,10 +288,14 @@ class AutomatedRun(Loggable):
         return result
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, settling_time=4):
+                     series=0, fit_series=0, settling_time=4):
 
         if not self._alive:
             return
+
+        gn = 'baseline'
+        self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
+        self.persister.build_tables(gn, self._active_detectors)
 
         ion = self.ion_optics_manager
 
@@ -311,16 +317,12 @@ class AutomatedRun(Loggable):
             self.plot_panel._ncounts = ncounts
             self.plot_panel.is_baseline = True
 
-        gn = 'baseline'
-        # print self
-        self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Baseline')
-        self.persister.build_tables(gn, self._active_detectors)
-
         self.multi_collector.is_baseline = True
+        self.multi_collector.fit_series_idx = fit_series
         check_conditions = True
 
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
-
+        self.plot_panel.is_peak_hop = False
         if self.experiment_executor:
             sc = self.experiment_executor.baseline_color
         else:
@@ -391,13 +393,14 @@ class AutomatedRun(Loggable):
         self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, starttime, starttime_offset,
-                    series=0, group='signal'):
+                    series=0, fit_series=0, group='signal'):
 
         if not self._alive:
             return
 
         is_baseline = False
         self.peak_hop_collector.is_baseline = is_baseline
+        self.peak_hop_collector.fit_series_idx = fit_series
 
         if self.plot_panel:
             self.plot_panel.trait_set(is_baseline=is_baseline,

@@ -237,7 +237,7 @@ class ExperimentExecutor(Loggable):
             self.extraction_state_label = ''
 
             self.experiment_queue.executed = True
-            t = Thread(name='execute_{}'.format(name),
+            t = Thread(name='execute_exp',
                        target=self._execute)
             t.start()
             return t

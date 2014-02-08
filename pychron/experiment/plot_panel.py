@@ -17,12 +17,14 @@
 #============= enthought library imports =======================
 from threading import Event
 import time
+
 from traits.api import Instance, Property, List, on_trait_change, Bool, \
     Str, CInt, Tuple, Color
 from traitsui.api import View, UItem, VGroup, HGroup, spring
-from pychron.graph.graph import Graph
 
+from pychron.graph.graph import Graph
 from pychron.graph.regression_graph import StackedRegressionGraph
+
 # from pychron.core.helpers.traitsui_shortcuts import instance_item
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.pychron_constants import PLUSMINUS
@@ -248,7 +250,10 @@ class PlotPanel(Loggable):
         self._ncounts = v
 
         xmi, xma = self.isotope_graph.get_x_limits()
-        self.isotope_graph.set_x_limits(max_=max(xma, xma + (v - o) * 1.05))
+        xm = max(xma, xma + (v - o) * 1.05)
+        self.isotope_graph.set_x_limits(max_=xm)
+        print xma, v, o
+        print 'setting x limits {} '.format(xm)
 
     def _get_ncycles(self):
         return self._ncycles

@@ -46,6 +46,7 @@ class MeasurementPyScript(ValvePyScript):
 
     _detectors = None
     abbreviated_count_ratio = None
+    _fit_series_count = 0
 
     def gosub(self, *args, **kw):
         kw['automated_run'] = self.automated_run
@@ -57,6 +58,7 @@ class MeasurementPyScript(ValvePyScript):
 
         self._baseline_series = None
         self._series_count = 0
+        self._fit_series_count = 0
         self._time_zero = None
         self._regress_id = 0
         self._detectors = None
@@ -100,7 +102,8 @@ class MeasurementPyScript(ValvePyScript):
         self.ncounts = ncounts
         if not self._automated_run_call('py_sniff', ncounts,
                                         self._time_zero, self._time_zero_offset,
-                                        series=self._series_count):
+                                        series=self._series_count,
+        ):
             self.cancel()
         self._series_count += 1
 
@@ -120,11 +123,13 @@ class MeasurementPyScript(ValvePyScript):
                                         ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,
+                                        fit_series=self._fit_series_count,
                                         series=self._series_count):
             self.cancel()
 
         #        self._regress_id = self._series_count
         self._series_count += 2
+        self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -149,17 +154,18 @@ class MeasurementPyScript(ValvePyScript):
         else:
             series = self._series_count
 
-        print 'baseline', series, self._baseline_series, self._series_count
         if not self._automated_run_call('py_baselines', ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,
                                         mass,
                                         detector,
+                                        fit_series=self._fit_series_count,
                                         settling_time=settling_time,
                                         series=series):
             self.cancel()
         self._baseline_series = series
         self._series_count += 2
+        self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -210,9 +216,11 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         self._series_count,
+                                        fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 2
+        self._series_count += 1
+        self._fit_series_count += 1
         #self._series_count += 4
 
     #    @count_verbose_skip

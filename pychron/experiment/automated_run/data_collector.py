@@ -241,7 +241,7 @@ class DataCollector(Loggable):
                             ypadding='0.1')
 
             if fit:
-                graph.set_fit(fit, plotid=pid, series=self.series_idx)
+                graph.set_fit(fit, plotid=pid, series=self.fit_series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:

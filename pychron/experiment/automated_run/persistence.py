@@ -165,8 +165,7 @@ class AutomatedRunPersister(Loggable):
                              aliquot=aliquot,
                              uuid=uuid,
                              step=step,
-                             collection_path=cp,
-            )
+                             collection_path=cp)
             #ldb.commit()
             #ldb.close()
             #del ldb
@@ -590,8 +589,14 @@ class AutomatedRunPersister(Loggable):
                 k = det.name
                 try:
                     if k in keys:
+                        if grpname == 'baseline':
+                            grp = '/{}'.format(grpname)
+                        else:
+                            grp = '/{}/{}'.format(grpname, det.isotope)
                         #self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
-                        t = dm.get_table(k, '/{}/{}'.format(grpname, det.isotope))
+                        # self.debug('get table {}/{}'.format(grp,k))
+                        t = dm.get_table(k, grp)
+
                         nrow = t.row
                         #                        self.debug('x={}'.format(x))
                         nrow['time'] = x
@@ -610,6 +615,7 @@ class AutomatedRunPersister(Loggable):
         tab.flush()
 
     def build_tables(self, gn, detectors):
+        self.debug('build tables- {} {}'.format(gn, detectors))
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
             dm.new_group(gn)
@@ -617,11 +623,16 @@ class AutomatedRunPersister(Loggable):
                 iso = d.isotope
                 name = d.name
                 # self._save_isotopes.append((iso, name, gn))
-
-                isogrp = dm.new_group(iso, parent='/{}'.format(gn))
-                dm.new_table(isogrp, name)
+                if gn == 'baseline':
+                    dm.new_table('/{}'.format(gn), name)
+                    self.debug('add group {} table {}'.format(gn, name))
+                else:
+                    isogrp = dm.new_group(iso, parent='/{}'.format(gn))
+                    dm.new_table(isogrp, name)
+                    self.debug('add group {} table {}'.format(isogrp, name))
 
     def build_peak_hop_tables(self, gn, hops):
+
         dm = self.data_manager
 
         with dm.open_file(self._current_data_frame):
@@ -633,7 +644,7 @@ class AutomatedRunPersister(Loggable):
                 # self._save_isotopes.append((iso, det, gn))
                 isogrp = dm.new_group(iso, parent='/{}'.format(gn))
                 _t = dm.new_table(isogrp, det)
-                self.debug('add group {} table {}'.format(iso, det))
+                self.debug('add group {} table {}'.format(isogrp, det))
 
     def _local_lab_db_factory(self):
         if self.local_lab_db:

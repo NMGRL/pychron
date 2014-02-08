@@ -81,18 +81,27 @@ class PeakHopCollector(DataCollector):
         self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
         if is_baseline:
             self.parent.is_peak_hop = False
-            self.parent.plot_panel.is_peak_hop = False
+            #remember original settings. return to these values after baseline finished
             ocounts = self.measurement_script.ncounts
             self.parent.measurement_script._series_count += 2
+            self.parent.measurement_script._fit_series_count += 1
             ocycles = self.plot_panel.ncycles
+            pocounts = self.plot_panel.ncounts
+
             self.debug('START BASELINE MEASUREMENT {} {}'.format(isotope, detector))
             self.parent.measurement_script.baselines(count, mass=isotope, detector=detector)
             self.debug('BASELINE MEASUREMENT COMPLETE')
+
             self.parent.measurement_script._series_count -= 2
+            self.parent.measurement_script._fit_series_count -= 1
+
+            self.plot_panel._ncounts = pocounts
             self.measurement_script.ncounts = ocounts
             self.plot_panel.ncycles = ocycles
             self.parent.plot_panel.is_peak_hop = True
             self.parent.is_peak_hop = True
+
+
         else:
             # self.debug('c={} pc={} nc={}'.format(cycle, self.plot_panel.ncycles, self.ncycles))
             if self.plot_panel.ncycles != self.ncycles:
