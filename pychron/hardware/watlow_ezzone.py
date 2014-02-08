@@ -1084,6 +1084,10 @@ class WatlowEZZone(CoreDevice):
         """
             load pid_bins from file
         """
+        if not self.configuration_dir_path:
+            self.debug('no configuration_dir_path. this device was not initialized. check initialization.xml')
+            return
+
         p = os.path.join(self.configuration_dir_path, 'pid.csv')
         if not os.path.isfile(p):
             self.warning('No pid.csv file in configuration dir. {}'.format(self.configuration_dir_path))

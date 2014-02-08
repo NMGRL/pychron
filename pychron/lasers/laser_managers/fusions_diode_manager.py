@@ -22,6 +22,7 @@ from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
 
 
+
 #=============standard library imports ========================
 from threading import Timer
 #=============local library imports  ==========================
@@ -39,15 +40,15 @@ from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonito
 
 from fusions_laser_manager import FusionsLaserManager
 
-from traits.api import HasTraits, List
+from traits.api import HasTraits, Array
 from threading import Thread
 from numpy import array, vstack
 
 
 class ResponseRecorder(HasTraits):
     period = 2
-    response_data = List
-    output_data = List
+    response_data = Array
+    output_data = Array
 
     _alive = False
 
@@ -73,6 +74,7 @@ class ResponseRecorder(HasTraits):
 
     def stop(self):
         self._alive = False
+
 
     def get_response_blob(self):
         if len(self.response_data):
@@ -197,7 +199,7 @@ class FusionsDiodeManager(FusionsLaserManager):
             if self.fiber_light.auto_onoff and self.fiber_light.state:
                 self.fiber_light.power_off()
 
-            self._response_recorder.start()
+            self.response_recorder.start()
             if self.pyrometer:
                 self.pyrometer.start_scan()
             return self.control_module_manager.enable()
@@ -210,7 +212,7 @@ class FusionsDiodeManager(FusionsLaserManager):
             else:
                 self.fiber_light.power_on()
 
-        self._response_recorder.stop()
+        self.response_recorder.stop()
         self.temperature_controller.disable()
         self.control_module_manager.disable()
 
