@@ -49,7 +49,7 @@ class ExperimentQueue(BaseExperimentQueue):
     def count_labnumber(self, ln):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
         i = 0
-        for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+        for _ in groupby(ans, key=lambda x: x.user_defined_aliquot):
             i += 1
         return i
 
