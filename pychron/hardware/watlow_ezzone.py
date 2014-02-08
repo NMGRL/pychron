@@ -464,6 +464,7 @@ class WatlowEZZone(CoreDevice):
     def load_additional_args(self, config):
         """
         """
+        self.set_attribute(config, 'use_pid_bin', 'Output', 'use_pid_bin', cast='boolean', default=False)
         self.set_attribute(config, 'min_output_scale', 'Output', 'scale_low', cast='float')
         self.set_attribute(config, 'max_output_scale', 'Output', 'scale_high', cast='float')
 
@@ -583,8 +584,9 @@ class WatlowEZZone(CoreDevice):
         if mode=='open':
             self.output_scale_low=self.min_output_scale
             self.output_scale_high=self.max_output_scale
+            self._set_max_output(100)
 
-        self.info('setting control mode = %s' % mode)
+        self.info('setting control mode = {}'.format(mode))
         self._control_mode = mode
         value = 10 if mode == 'closed' else 54
         self.write(1880, value, **kw)
@@ -1052,17 +1054,7 @@ class WatlowEZZone(CoreDevice):
     def _set_max_output(self, v):
         v=(self.max_output_scale-self.min_output_scale)*v/100.+self.output_scale_low
         self.output_scale_high=v
-        # self.set_output_scale_high(v)
         self._load_max_output()
-
-        # self._max_output = v
-        # if self.reciprocal_power:
-        #     v=100-v
-        #
-        # self.set_high_power_scale(v)
-        # p=self.read_high_power_scale()
-        # if p is not None:
-        #     self._max_output=p
 
     def _validate_max_output(self, v):
         return self._validate_number(v)

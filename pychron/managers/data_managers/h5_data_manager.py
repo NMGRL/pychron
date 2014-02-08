@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 from traits.api import Any
 #============= standard library imports ========================
@@ -97,16 +95,6 @@ class H5DataManager(DataManager):
 
         setattr(group._v_attrs, key, value)
 
-    #        print group._v_attrs[]
-    #        group.flush()
-    #    def set_table_attribute(self, key, value, table):
-    #        '''
-    #
-    #        '''
-    #        _df, table = self._get_parent(table)
-    #        setattr(table.attrs, key, value)
-    #        table.flush()
-
     def record(self, values, table):
         """
 
@@ -121,8 +109,6 @@ class H5DataManager(DataManager):
 
     def get_current_path(self):
         if self._frame is not None:
-        #            for d in dir(self._frame):
-        #                print d
             return self._frame.filename
 
     def lock_path(self, p):
@@ -141,24 +127,17 @@ class H5DataManager(DataManager):
         p = self._new_frame_path(*args, **kw)
         return self.open_file(p, 'w')
 
-
     def new_frame(self, *args, **kw):
         """
 
         """
         p = self._new_frame_path(*args, **kw)
         try:
-            self._frame = openFile(p, mode='w',
-                                   #                                    filters=Filters(complevel=self.compression_level)
-            )
-            #             self._frame = openFile(p, mode='w',
-            #                                    filters=Filters(complevel=self.compression_level))
+            self._frame = openFile(p, mode='w')
+
             return self._frame
         except ValueError:
             pass
-
-            #        self.lock_path(p)
-
 
     def new_group(self, group_name, parent=None, description=''):
         """
@@ -218,8 +197,7 @@ class H5DataManager(DataManager):
     def isfile(self, path):
         return os.path.isfile(path)
 
-    def open_data(self, path, mode='r', caller=None):
-    #        print 'open data', caller
+    def open_data(self, path, mode='r'):
         if self.repository:
             out = os.path.join(self.workspace_root, path)
             path = os.path.join(self.repository.root, path)
@@ -235,7 +213,6 @@ class H5DataManager(DataManager):
         except Exception:
             self._frame = None
             import traceback
-
             traceback.print_exc()
             return True
 
@@ -249,17 +226,13 @@ class H5DataManager(DataManager):
             self._frame.flush()
             self._frame.close()
             self._frame = None
-        #             del self._frame
 
         except Exception, e:
             print 'exception closing file', e
 
     def open_file(self, path, mode='r+'):
         self._file_stack.append(1)
-        return FileCTX(
-            #                         self,
-            weakref.ref(self)(),
-            path, mode, self.compression_level)
+        return FileCTX(weakref.ref(self)(), path, mode, self.compression_level)
 
     def open_table(self, path, table, group='/', mode='r'):
         return TableCTX(path, table, group, self.compression_level, mode)
@@ -267,106 +240,8 @@ class H5DataManager(DataManager):
     def kill(self):
         self.close_file()
 
-        #        for table in f.walkNodes('/', 'Table'):
-
-#    def add_table(self, table, table_style='Timestamp', parent='root'):
-#        '''
-#        '''
-#        df, pgrp = self._get_parent(parent)
-#
-#        alpha = [chr(i) for i in range(65, 91)]
-#        s = array([[''.join((b, a)) for a in alpha] for b in alpha]).ravel()
-#
-#        add = True
-#        cnt = 0
-#        base_table = table
-#        while add:
-#            try:
-#                df.createTable(pgrp, table, table_description_factory(table_style))
-#            except NodeError:
-#
-#                table = '%s%s' % (base_table, s[cnt])
-#                cnt += 1
-#                add = True
-#            finally:
-#                add = False
-#        return table
-#
-#    def add_group(self, group, parent='root'):
-#        '''
-#
-#
-#        '''
-#
-#        df, pgrp = self._get_parent(parent)
-#        df.createGroup(pgrp, group)
-#
-#        self._frame = df
-#
-#    def _get_parent(self, parent, df=None):
-#        '''
-#
-#
-#        '''
-#        if not df:
-#            df = self._frame
-#
-#        p = parent.split('.')
-#        pgrp = None
-#        prev_obj = None
-#        for i, pi in enumerate(p):
-#            if i == 0:
-#                obj = df
-#            else:
-#                obj = prev_obj
-#
-#            pgrp = getattr(obj, pi)
-#            prev_obj = pgrp
-#
-#        return df, pgrp
-#
-#    def _get_tables(self, df=None, path=None):
-#        '''
-#        '''
-#        names = []
-#        tabs = {}
-#        #tabs=[]
-#        if path is not None:
-#            df = openFile(path, mode='r')
-#
-#        for group in df.walkGroups('/'):
-#
-# #            grpname = self._get_group_name(group)
-#            for table in df.listNodes(group, classname='Table'):
-#                #name = '%s.%s' % (grpname, table.name)
-#                #tabs.append((grpname, table.name))
-#                tabs[table.name] = table
-#                names.append(table.name)
-#
-#        return names, tabs
-#
-#    def _get_groups(self, df):
-#        '''
-#
-#        '''
-#        grps = df.root._v_groups.keys()
-#        self.selected_group = grps[0]
-#        return grps
-#
-#    def _get_group_name(self, group):
-#        '''
-#        '''
-#        s = group.__str__()
-#        p, _c, _d = s.split(' ')
-#        return p.split('/')[-1:][0]
 if __name__ == '__main__':
     d = H5DataManager()
     print d
+
 #============= EOF ====================================
-#    def add_note(self, note = None):
-#        df = self.data_frames[len(self.data_frames) - 1]
-#        self._available_tables = self._get_tables(df)
-#        info = self.edit_traits(view = 'note_view')
-#        if info.result:
-#            table = self._get_tables(df)[self.selected_table]
-#            setattr(table.attrs, 'note', self.note)
