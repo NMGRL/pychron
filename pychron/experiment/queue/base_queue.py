@@ -151,7 +151,7 @@ class BaseExperimentQueue(Loggable):
                 try:
                     vi = float(vi)
                     return abs(vi) > 1e-15
-                except ValueError:
+                except (ValueError, TypeError):
                     return True
             else:
                 return False

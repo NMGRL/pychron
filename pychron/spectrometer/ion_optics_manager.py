@@ -103,6 +103,12 @@ class IonOpticsManager(Manager):
         return molweights[isotope_key]
 
     def position(self, pos, detector, use_dac=False, update_isotopes=True):
+        """
+            pos can be str or float
+            "Ar40", "39.962", 39.962
+
+            to set in DAC space set use_dac=True
+        """
         if pos == NULL_STR:
             return
 
@@ -117,13 +123,16 @@ class IonOpticsManager(Manager):
         else:
             self.debug('POSITION {} {}'.format(pos, detector))
             if isinstance(pos, str):
-                if update_isotopes:
-                    # if the pos is an isotope then update the detectors
-                    spec.update_isotopes(pos, detector)
-
-                # pos is isotope
-                pos = self.get_mass(pos)
+                try:
+                    pos = float(pos)
+                except ValueError:
+                    # pos is isotope
+                    if update_isotopes:
+                        # if the pos is an isotope then update the detectors
+                        spec.update_isotopes(pos, detector)
+                    pos = self.get_mass(pos)
                 mag._mass = pos
+
             else:
                 #get nearst isotope
                 self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))

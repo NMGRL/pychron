@@ -368,14 +368,18 @@ class ExperimentExecutor(Loggable):
                     break
 
                 self.wait_group.active_control.page_name = run.runid
+                run.is_first = is_first_flag
 
-                if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap:
+                if not run.is_last and run.spec.analysis_type == 'unknown' and spec.overlap[0]:
+                    self.debug('waiting for extracting_run to finish')
+                    self._wait_for(lambda x: self.extracting_run)
+
                     self.info('overlaping')
 
                     t = Thread(target=self._do_run, args=(run,))
                     t.start()
 
-                    run.wait_for_overlap(is_first_flag)
+                    run.wait_for_overlap()
                     is_first_flag = False
 
                     self.debug('overlap finished. starting next run')

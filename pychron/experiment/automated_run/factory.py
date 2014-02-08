@@ -171,7 +171,7 @@ class AutomatedRunFactory(Loggable):
 
     ramp_duration = EKlass(Float)
 
-    overlap = EKlass(Int)
+    overlap = EKlass(String)
     duration = EKlass(Float)
     cleanup = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')

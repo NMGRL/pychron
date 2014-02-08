@@ -29,8 +29,8 @@ from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
-from pychron.experiment.automated_run.peak_hop_collector import parse_hops
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.automated_run.hop_util import parse_hops
 
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
@@ -627,7 +627,9 @@ class AutomatedRunPersister(Loggable):
         with dm.open_file(self._current_data_frame):
             dm.new_group(gn)
 
-            for iso, det in parse_hops(hops, ret='iso,det'):
+            for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
+                if is_baseline:
+                    continue
                 # self._save_isotopes.append((iso, det, gn))
                 isogrp = dm.new_group(iso, parent='/{}'.format(gn))
                 _t = dm.new_table(isogrp, det)

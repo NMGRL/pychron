@@ -105,9 +105,11 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         if m:
             return '{},{}'.format(o, m)
         else:
-            return '{}'.format(o)
+            if int(o):
+                return '{}'.format(o)
+        return ''
 
-            # return '{},{}'.format
+        # return '{},{}'.format
 
     #     return self._get_number('overlap', fmt='{:n}')
 

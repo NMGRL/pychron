@@ -149,6 +149,7 @@ class MeasurementPyScript(ValvePyScript):
         else:
             series = self._series_count
 
+        print 'baseline', series, self._baseline_series, self._series_count
         if not self._automated_run_call('py_baselines', ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,

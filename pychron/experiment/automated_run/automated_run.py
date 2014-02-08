@@ -31,9 +31,10 @@ from numpy import Inf
 import weakref
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
-from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector, parse_hops
+from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
+from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -136,6 +137,7 @@ class AutomatedRun(Loggable):
     _integration_seconds = Float(1.0)
 
     min_ms_pumptime = Int(60)
+    overlap_evt = None
 
     #===============================================================================
     # pyscript interface
@@ -334,7 +336,10 @@ class AutomatedRun(Loggable):
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
                        self.arar_age.isotopes.values()])
             self.set_previous_baselines(bs)
+            self.plot_panel.is_baseline = False
+
         self.multi_collector.is_baseline = False
+
         return result
 
     def py_define_hops(self, hopstr):
@@ -349,16 +354,20 @@ class AutomatedRun(Loggable):
         self.plot_panel.is_peak_hop = True
 
         key = lambda x: x[0]
-        hops = parse_hops(hopstr, ret='iso,det')
+        hops = parse_hops(hopstr, ret='iso,det,is_baseline')
         hops = sorted(hops, key=key)
         a = self.arar_age
         g = self.plot_panel.isotope_graph
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
+            #if is_baseline contiune
+            if dets[0][2]:
+                continue
+
             add_detector = len(dets) > 1
 
             plot = g.get_plot_by_ytitle(iso)
-            for _, di in dets:
+            for _, di, _ in dets:
                 name = iso
                 if iso in a.isotopes:
                     ii = a.isotopes[iso]
@@ -641,11 +650,15 @@ class AutomatedRun(Loggable):
             i += 1
 
     def _wait_for_min_ms_pumptime(self):
+        overlap, mp = self.spec.overlap
+        if not overlap:
+            self.debug('no overlap. not waiting for min ms pumptime')
+            return
+
         if self.is_first:
             self.debug('this is the first run. not waiting for min ms pumptime')
             return
 
-        overlap, mp = self.spec.overlap
         if not mp:
             self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
             mp = self.min_ms_pumptime
@@ -663,13 +676,11 @@ class AutomatedRun(Loggable):
         self._wait_for(pred, msg)
         self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
 
-    def wait_for_overlap(self, is_first):
+    def wait_for_overlap(self):
         """
             by default overlap_evt is set
             after equilibration finished
         """
-
-        self.is_first = is_first
         self.info('waiting for overlap signal')
         self._alive = True
         self.overlap_evt = evt = TEvent()

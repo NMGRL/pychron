@@ -257,6 +257,12 @@ class AutomatedRunSpec(Loggable):
                 v = getattr(self, attrname)
                 v = self._remove_mass_spectrometer_name(v)
                 v = self._remove_file_extension(v)
+            elif attrname == 'overlap':
+                o, m = self.overlap
+                if m:
+                    v = '{},{}'.format(*self.overlap)
+                else:
+                    v = o
             else:
                 try:
                     v = getattr(self, attrname)
