@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import os
 
-from traits.api import HasTraits, List, Any, Bool
+from traits.api import HasTraits, List, Any, Bool, Int
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler
 import apptools.sweet_pickle as pickle
@@ -113,18 +113,36 @@ class TableConfigurer(HasTraits):
     def _get_columns_grp(self):
         return
 
+
+class AnalysisTableConfigurer(TableConfigurer):
+    id = 'analysis.table'
+    limit = Int
+
+    def _get_dump(self):
+        obj = super(AnalysisTableConfigurer, self)._get_dump()
+        obj['limit'] = self.limit
+
+        return obj
+
+    def _load_hook(self, obj):
+        self.limit = obj.get('limit', 500)
+
     def traits_view(self):
-        v = View(UItem('columns',
-                       style='custom',
-                       editor=CheckListEditor(name='available_columns', cols=3)),
-                 buttons=['OK', 'Revert'],
-                 kind='livemodal',
-                 handler=TableConfigurerHandler,
+        v = View(VGroup(
+            VGroup(UItem('columns',
+                         style='custom',
+                         editor=CheckListEditor(name='available_columns', cols=3)),
+                   label='Columns', show_border=True),
+            Item('limit',
+                 tooltip='Limit number of displayed analyses',
+                 label='Limit')),
+                 buttons=['OK', 'Cancel', 'Revert'],
+                 kind='modal',
                  title=self.title,
+                 handler=TableConfigurerHandler,
                  resizable=True,
                  width=300)
         return v
-
 
 class SampleTableConfigurer(TableConfigurer):
     title = 'Configure Sample Table'

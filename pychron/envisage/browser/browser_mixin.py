@@ -26,6 +26,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -330,7 +331,7 @@ class BrowserMixin(ColumnSorterMixin):
         self.selected_samples = []
 
     def _get_sample_analyses(self, samples,
-                             # limit=500,
+                             limit=500,
                              # page=None, page_width=None,
                              include_invalid=False):
         db = self.manager.db
@@ -349,7 +350,7 @@ class BrowserMixin(ColumnSorterMixin):
 
             ans, tc = db.get_labnumber_analyses(lns,
                                                 low_post=low_post,
-                                                # limit=limit,
+                                                limit=limit,
                                                 # offset=o,
                                                 include_invalid=include_invalid)
             prog = None
@@ -376,6 +377,6 @@ class BrowserMixin(ColumnSorterMixin):
         return iso
 
     def _table_configurer_default(self):
-        return SampleTableConfigurer(parent=self)
+        return SampleTableConfigurer()
 
 #============= EOF =============================================

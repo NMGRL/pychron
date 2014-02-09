@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.timer.do_later import do_later
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
-    Event, Property, cached_property, Instance
+    Event, Property, cached_property, Instance, DelegatesTo
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.browser.browser_mixin import filter_func
-from pychron.envisage.browser.table_configurer import TableConfigurer
+from pychron.envisage.browser.table_configurer import AnalysisTableConfigurer
 
 
 class AnalysisTable(HasTraits):
@@ -38,7 +40,7 @@ class AnalysisTable(HasTraits):
 
     omit_invalid = Bool(True)
     configure_analysis_table = Button
-    table_configurer = Instance(TableConfigurer)
+    table_configurer = Instance(AnalysisTableConfigurer)
 
     # forward = Button
     # backward = Button
@@ -50,6 +52,7 @@ class AnalysisTable(HasTraits):
     # n_all_analyses = Int
     # npages = Property(depends_on='n_all_analyses,page_width')
 
+    limit = DelegatesTo('table_configurer')
     no_update = False
     scroll_to_row=Event
     refresh_needed=Event
@@ -102,7 +105,7 @@ class AnalysisTable(HasTraits):
         if tc is None:
             tc=len(ans)
 
-        self.n_all_analyses = tc
+        # self.n_all_analyses = tc
         # if reset_page:
         #     self.no_update = True
         #     if page<0:
@@ -113,6 +116,9 @@ class AnalysisTable(HasTraits):
         #     self.no_update = False
         # self.analysis_filter_values = vs
         self._analysis_filter_parameter_changed(True)
+
+        self.selected = ans[-1:]
+        invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
 
     def _analysis_filter_changed(self, new):
         if new:
@@ -134,8 +140,8 @@ class AnalysisTable(HasTraits):
         # c.edit_traits()
 
     def _table_configurer_default(self):
-        return TableConfigurer(id='analysis.table',
-                               title='Configure Analysis Table')
+        return AnalysisTableConfigurer(id='analysis.table',
+                                       title='Configure Analysis Table')
 
     # def _get_npages(self):
     #     try:

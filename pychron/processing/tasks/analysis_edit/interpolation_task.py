@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 from datetime import timedelta
+
 from pyface.tasks.action.schema import SToolBar
 from traits.api import on_trait_change
 from traits.api import Any
+
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
@@ -26,6 +28,7 @@ from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, Bi
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
@@ -167,7 +170,7 @@ class InterpolationTask(AnalysisEditTask):
                                              mass_spectrometer=ms,
                                              extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
-            self.danalysis_table.set_analyses(ans)
+            # self.danalysis_table.set_analyses(ans)
             return ans
 
     def _do_easy_func(self):

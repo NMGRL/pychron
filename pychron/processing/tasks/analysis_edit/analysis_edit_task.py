@@ -36,6 +36,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -409,7 +410,7 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
 
-    @on_trait_change('[analysis_table, danalysis_table]:dclicked')
+    @on_trait_change('analysis_table:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):
         sel = obj.selected
         self._recall_item(sel)
