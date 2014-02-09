@@ -160,7 +160,6 @@ class PyScript(Loggable):
     syntax_checked = Bool
 
     manager = Any
-    #     parent = Any
     parent_script = Any
 
     root = Str
@@ -175,7 +174,6 @@ class PyScript(Loggable):
     _text = Str
 
     _interval_stack = None
-    #     _interval_flag = None
 
     _cancel = Bool(False)
     _completed = False
@@ -233,33 +231,9 @@ class PyScript(Loggable):
         if new_thread:
             t = Thread(target=_ex_)
             t.start()
-            #             self._t = t
             return t
         else:
             return _ex_()
-
-            #     def execute(self, new_thread=False, bootstrap=True, finished_callback=None):
-            #
-            #         def _ex_():
-            #             if bootstrap:
-            #                 self.bootstrap()
-            #
-            #             ok = True
-            #             if not self.syntax_checked:
-            #                 self.test()
-            #
-            #             if ok:
-            #                 self._execute()
-            #                 if finished_callback:
-            #                     finished_callback()
-            #
-            #             return self._completed
-            #
-            #         if new_thread:
-            #             t = Thread(target=_ex_)
-            #             t.start()
-            #         else:
-            #             return _ex_()
 
     def test(self, argv=None):
         if not self.syntax_checked:
@@ -351,7 +325,6 @@ class PyScript(Loggable):
             return False
 
         return True
-        # return not self._syntax_error
 
     def check_for_modifications(self):
         old = self.toblob()
@@ -396,18 +369,7 @@ class PyScript(Loggable):
     def get_variables(self):
         return []
 
-    #    def get_core_commands(self):
-    #        cmds = [
-    # #                ('info', '_m_info')
-    #                ]
-    #
-    #        return cmds
-    #    def get_script_commands(self):
-    #        return []
-
     def get_commands(self):
-    #        return self.get_core_commands() + \
-    #        return self.get_script_commands() + \
         return self.get_command_register() + \
                command_register.commands.items()
 
@@ -427,9 +389,6 @@ class PyScript(Loggable):
             if not self._gosub_script._cancel:
                 self._gosub_script.cancel()
 
-                #         if self.parent:
-                #             self.parent._executing = False
-
         if self.parent_script:
             if not self.parent_script._cancel:
                 self.parent_script.cancel()
@@ -440,9 +399,6 @@ class PyScript(Loggable):
         self._cancel_hook()
 
     def bootstrap(self, load=True, **kw):
-    #         self._interval_flag = Event()
-    #         self._interval_stack = Queue()
-
         self._interval_stack = LifoQueue()
 
         if self.root and self.name and load:
@@ -451,10 +407,9 @@ class PyScript(Loggable):
 
             return True
 
-            #==============================================================================
-            # commands
-            #==============================================================================
-
+    #==============================================================================
+    # commands
+    #==============================================================================
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
         if not name.endswith('.py'):
@@ -491,15 +446,12 @@ class PyScript(Loggable):
             raise KlassError(klassname)
 
         s = klass(root=root,
-                  #                          path=p,
                   name=name,
                   manager=self.manager,
                   parent_script=weakref.ref(self)(),
-
                   syntax_checked=self.syntax_checked,
                   _ctx=self._ctx,
-                  **kw
-        )
+                  **kw)
 
         if self.testing_syntax:
             s.bootstrap()
@@ -578,6 +530,9 @@ class PyScript(Loggable):
 
         self._interval_stack.put((t, f, name))
 
+    @command_register
+    def delay(self, duration=0, message=None):
+        self.sleep(duration, message)
 
     @command_register
     def sleep(self, duration=0, message=None):
@@ -587,18 +542,11 @@ class PyScript(Loggable):
             if self.parent_script is not None:
                 self.parent_script._estimated_duration += self._estimated_duration
 
-        #         if self._graph_calc:
-        #             va = self._xs[-1] + duration
-        #             self._xs.append(va)
-        #             self._ys.append(self._ys[-1])
-        #             return
-
         if self.testing_syntax or self._cancel:
             return
 
         self.info('SLEEP {}'.format(duration))
         if globalv.experiment_debug:
-        #             duration = 0.5
             self.debug('using debug sleep {}'.format(duration))
 
         self._sleep(duration, message=message)
@@ -620,7 +568,6 @@ class PyScript(Loggable):
             self.debug('m_info {}'.format(e))
 
     def finished(self):
-    #         self._ctx = None
         self._finished()
 
     #===============================================================================
@@ -636,10 +583,10 @@ class PyScript(Loggable):
                 self.cancel()
             else:
                 self.cancel_flag = False
-                #===============================================================================
-                # private
-                #===============================================================================
 
+    #===============================================================================
+    # private
+    #===============================================================================
     def _execute(self, trace=False, argv=None):
 
         self._cancel = False
@@ -659,12 +606,6 @@ class PyScript(Loggable):
         else:
             self.info('{} completed successfully'.format(self.name))
             self._completed = True
-            #             if self.parent:
-            #                 self.parent._executing = False
-            #                 try:
-            #                     del self.parent.scripts[self.hash_key]
-            #                 except KeyError:
-            #                     pass
 
     def _manager_action(self, func, name=None, protocol=None, *args, **kw):
         man = self.manager
@@ -758,10 +699,8 @@ class PyScript(Loggable):
 
         self.debug('block finished. duration {}'.format(time.time() - st))
 
-        #===============================================================================
-
-        # properties
-
+    #===============================================================================
+    # properties
     #===============================================================================
     @property
     def filename(self):
