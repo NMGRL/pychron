@@ -606,9 +606,6 @@ class ExperimentExecutor(Loggable):
 
         exp = self.experiment_queue
 
-        if spec.end_after:
-            self.end_at_run_completion = True
-
         if not self._set_run_aliquot(spec):
             return
 
@@ -617,6 +614,10 @@ class ExperimentExecutor(Loggable):
             save this runs uuid to a hidden file
             used for analysis recovery
         '''
+        if spec.end_after:
+            self.end_at_run_completion = True
+            arun.is_last = True
+
         self._add_backup(arun.uuid)
 
         arun.integration_time = 1.04
@@ -1076,6 +1077,12 @@ If "No" select from database
     #===============================================================================
     # handlers
     #===============================================================================
+    def _end_at_run_completion_changed(self):
+        if self.end_at_run_completion:
+            self.current_run.is_last = True
+        else:
+            self._update_automated_runs()
+
     @on_trait_change('experiment_queue:automated_runs[]')
     def _update_automated_runs(self):
         if self.isAlive():

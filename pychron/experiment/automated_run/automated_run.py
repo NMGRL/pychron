@@ -150,7 +150,6 @@ class AutomatedRun(Loggable):
     def py_is_last_run(self):
         return self.is_last
 
-
     def py_define_detectors(self, isotope, det):
         self._define_detectors(isotope, det)
 
@@ -182,7 +181,7 @@ class AutomatedRun(Loggable):
                 # print iso.fit_block
             else:
                 self.warning('Invalid fit "{}". '
-                             'check the measurement script "{}"'.format(k,self.measurement_script.name))
+                             'check the measurement script "{}"'.format(k, self.measurement_script.name))
 
 
     def py_set_baseline_fits(self, fits):
@@ -222,11 +221,11 @@ class AutomatedRun(Loggable):
 
         self.multi_collector.is_baseline = False
         if self.experiment_executor:
-            sc=self.experiment_executor.signal_color
+            sc = self.experiment_executor.signal_color
         else:
-            sc='red'
+            sc = 'red'
 
-        check_conditions= obj==self.measurement_script
+        check_conditions = obj == self.measurement_script
 
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
@@ -330,7 +329,7 @@ class AutomatedRun(Loggable):
                                ncounts, starttime,
                                starttime_offset,
                                series,
-                               check_conditions,sc)
+                               check_conditions, sc)
 
         if self.plot_panel:
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
@@ -555,18 +554,18 @@ class AutomatedRun(Loggable):
             #===============================================================================
 
     def teardown(self):
-    #         gc.collect()
-    #         return
+        #         gc.collect()
+        #         return
 
-    #         if self.plot_panel:
-    #             self.plot_panel.automated_run = None
-    #         self.plot_panel = None
-    #             self.plot_panel.arar_age = None
-    #             self.plot_panel.info_func = None
+        #         if self.plot_panel:
+        #             self.plot_panel.automated_run = None
+        #         self.plot_panel = None
+        #             self.plot_panel.arar_age = None
+        #             self.plot_panel.info_func = None
 
-    #         if self.monitor:
-    #             self.monitor.automated_run = None
-    #
+        #         if self.monitor:
+        #             self.monitor.automated_run = None
+        #
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -704,11 +703,11 @@ class AutomatedRun(Loggable):
             self.experiment_executor._prev_baselines = pb
 
     def _start(self):
-    #         self.db.reset()
+        #         self.db.reset()
 
         if self._use_arar_age():
             if self.arar_age is None:
-            #             # load arar_age object for age calculation
+                #             # load arar_age object for age calculation
                 self.arar_age = ArArAge()
 
             es = self.extraction_script
@@ -827,20 +826,21 @@ class AutomatedRun(Loggable):
         self.extraction_script.manager = self.experiment_executor
         self.extraction_script.run_identifier = self.runid
 
-        syn_extractor=None
+        syn_extractor = None
         if self.extraction_script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction:
-                p=os.path.join(paths.scripts_dir, 'syn_extraction',self.spec.syn_extraction)
-                p=add_extension(p,'.yaml')
+                p = os.path.join(paths.scripts_dir, 'syn_extraction', self.spec.syn_extraction)
+                p = add_extension(p, '.yaml')
 
                 if os.path.isfile(p):
-                    dur=self.extraction_script.calculate_estimated_duration(force=True)
-                    syn_extractor=SynExtractionCollector(arun=weakref.ref(self)(),
-                                                         path=p,
-                                                         extraction_duration=dur)
+                    dur = self.extraction_script.calculate_estimated_duration(force=True)
+                    syn_extractor = SynExtractionCollector(arun=weakref.ref(self)(),
+                                                           path=p,
+                                                           extraction_duration=dur)
                     syn_extractor.start()
                 else:
-                    self.warning('Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
+                    self.warning(
+                        'Cannot start syn extraction collection. Configuration file does not exist. {}'.format(p))
         else:
             self.warning('Invalid script syntax for "{}"'.format(self.extraction_script.name))
             return
@@ -876,7 +876,7 @@ class AutomatedRun(Loggable):
             return
 
         if script is None:
-            script=self.measurement_script
+            script = self.measurement_script
 
         if script is None:
             self.warning('no measurement script')
@@ -919,7 +919,7 @@ class AutomatedRun(Loggable):
 
     def do_post_measurement(self, script=None):
         if script is None:
-            script=self.post_measurement_script
+            script = self.post_measurement_script
 
         if not script:
             return True
@@ -1083,7 +1083,7 @@ anaylsis_type={}
         if create:
             p.create(self._active_detectors)
         else:
-        #             p.clear_displays()
+            #             p.clear_displays()
             p.isotope_graph.clear_plots()
 
         p.show_isotope_graph()
@@ -1095,7 +1095,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank') \
-                and not self.spec.analysis_type.startswith('background')):
+                    and not self.spec.analysis_type.startswith('background')):
 
             cb = True
             #blanks=None
@@ -1163,7 +1163,6 @@ anaylsis_type={}
                 self.py_add_truncation(attr, c, int(start), freq, acr)
 
 
-
     def _make_iterable(self, pos):
         if '(' in pos and ')' in pos and ',' in pos:
             # interpret as (x,y)
@@ -1185,7 +1184,7 @@ anaylsis_type={}
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
     def _use_arar_age(self):
-    #        return True
+        #        return True
         ln = self.spec.labnumber
         return ln not in ('dg', 'pa')
 
@@ -1332,7 +1331,7 @@ anaylsis_type={}
                  series, check_conditions, color, script=None):
 
         if script is None:
-            script=self.measurement_script
+            script = self.measurement_script
 
         mem_log('pre measure')
         if not self.spectrometer_manager:
@@ -1378,7 +1377,7 @@ anaylsis_type={}
 
         # dm = self.persister.data_manager
         with self.persister.writer_ctx():
-        # with dm.open_file(self.current_data_frame):
+            # with dm.open_file(self.current_data_frame):
             m.measure()
 
         mem_log('post measure')
@@ -1678,16 +1677,16 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
-            #============= EOF =============================================
+                #============= EOF =============================================
 
-            # def _time_save(self, func, name, *args, **kw):
-            #     st = time.time()
-            #     r = func(*args, **kw)
-            #     self.debug('save {} time= {:0.3f}'.format(name, time.time() - st))
-            #     return r
+                # def _time_save(self, func, name, *args, **kw):
+                #     st = time.time()
+                #     r = func(*args, **kw)
+                #     self.debug('save {} time= {:0.3f}'.format(name, time.time() - st))
+                #     return r
 
-            # def _is_peak_hop_changed(self, new):
-            #     if self.plot_panel:
+                # def _is_peak_hop_changed(self, new):
+                #     if self.plot_panel:
 
 #         self.debug('Setting is_peak_hop {}'.format(new))
 #         self.plot_panel.is_peak_hop = new
