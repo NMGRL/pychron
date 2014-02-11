@@ -283,8 +283,9 @@ class BaseExperimentQueue(Loggable):
                ('measurement', 'measurement_script'),
                ('truncate','truncate_condition'),
                'syn_extraction',
-               ('post_measurement', 'post_measurement_script'),
-               ('post_equilibration', 'post_equilibration_script'),
+               ('post_meas', 'post_measurement_script'),
+               ('post_eq', 'post_equilibration_script'),
+               ('s_opt', 'script_options'),
                ('dis_btw_pos','disable_between_positons'),
                'weight', 'comment',
                'autocenter']

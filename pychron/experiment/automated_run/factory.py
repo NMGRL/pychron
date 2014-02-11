@@ -32,7 +32,7 @@ from pychron.experiment.utilities.identifier import convert_special_name, ANALYS
     make_special_identifier, make_standard_identifier
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
-from pychron.experiment.script.script import Script
+from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
@@ -114,6 +114,7 @@ class AutomatedRunFactory(Loggable):
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+    script_options = Instance(ScriptOptions, ())
     load_defaults_button = Button('Defaults')
 
     human_error_checker = Instance(HumanErrorChecker, ())
@@ -479,8 +480,8 @@ class AutomatedRunFactory(Loggable):
 
             setattr(self, name, Script(name=s,
                                        label=si,
-                                       application=self.application,
                                        mass_spectrometer=self.mass_spectrometer))
+        self.script_options.name = run.script_options
 
     def _new_pattern(self):
         pm = PatternMakerView()
@@ -652,6 +653,9 @@ class AutomatedRunFactory(Loggable):
                 keys = SCRIPT_KEYS
                 if labnumber == 'dg':
                     keys = ['extraction']
+
+                #set options
+                self.script_options.name = default_scripts.get('options', '')
 
                 for skey in keys:
                     new_script_name = default_scripts.get(skey) or ''
@@ -890,6 +894,14 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # handlers
     #===============================================================================
+    @on_trait_change('[measurement_script, post_measurement_script, post_equilibration_script, extraction]:edit_event')
+    def _handle_edit_script(self, new):
+        app = self.application
+        task = app.open_task('pychron.pyscript')
+        path, kind = new
+        task.kind = kind
+        task.open(path=new)
+
     def _load_defaults_button_fired(self):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
@@ -941,8 +953,17 @@ post_equilibration_script:name''')
                 for si in self._selected_runs:
                     name = '{}_script'.format(obj.label)
                     setattr(si, name, new)
-            self.changed = True
-            self.refresh_table_needed = True
+                self.changed = True
+                self.refresh_table_needed = True
+
+    @on_trait_change('script_options:name')
+    def _edit_script_options_handler(self, new):
+        if self.edit_mode and not self.suppress_update:
+            if self._selected_runs:
+                for si in self._selected_runs:
+                    si.script_options = new
+                self.changed = True
+                self.refresh_table_needed = True
 
     def _skip_changed(self):
         self.update_info_needed = True
@@ -1126,7 +1147,6 @@ post_equilibration_script:name''')
     #================================================================================
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
-                      application=self.application,
                       mass_spectrometer=self.mass_spectrometer,
                       kind=kind)
 

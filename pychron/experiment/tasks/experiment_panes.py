@@ -145,10 +145,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                 button_bar,
                 CustomLabel(make_rf_name('info_label')),
                 edit_grp,
-                lower_button_bar
-            ),
-            width=225
-        )
+                lower_button_bar),
+            width=225)
         return v
 
     def _get_info_group(self):
@@ -163,74 +161,52 @@ class ExperimentFactoryPane(TraitsDockPane):
                 RFItem('selected_level',
                        show_label=False,
                        #                                 label='Level',
-                       editor=EnumEditor(name=make_rf_name('levels'))),
-
-                #                          RFItem('project', editor=EnumEditor(name=make_rf_name('projects')),
-                #                                 ),
-
-            ),
+                       editor=EnumEditor(name=make_rf_name('levels')))),
 
             HGroup(RFItem('special_labnumber',
                           show_label=False,
-                          editor=EnumEditor(values=SPECIAL_NAMES),
-            ),
+                          editor=EnumEditor(values=SPECIAL_NAMES)),
                    RFItem('frequency', width=50),
-                   spring
-            ),
+                   spring),
             HGroup(RFItem('labnumber',
                           tooltip='Enter a Labnumber',
-                          width=100,
-            ),
+                          width=100),
                    RFItem('_labnumber', show_label=False,
                           #                              editor=EnumEditor(name=make_rf_name('labnumbers')),
                           editor=CheckListEditor(name=make_rf_name('labnumbers')),
-                          width=-20,
-                   ),
-                   spring,
-            ),
+                          width=-20),
+                   spring),
             HGroup(RFItem('flux'),
                    Label(u'\u00b1'),
                    RFItem('flux_error', show_label=False),
                    icon_button_editor(make_rf_name('save_flux_button'),
                                       'database_save',
-                                      tooltip='Save flux to database'
-                   ),
-                   enabled_when=make_rf_name('labnumber')
-                   #                           spring,
-            ),
+                                      tooltip='Save flux to database'),
+                   enabled_when=make_rf_name('labnumber')),
             HGroup(
                 RFItem('aliquot',
-                       width=50
-                ),
+                       width=50),
                 RFItem('irradiation',
                        tooltip='Irradiation info retreived from Database',
                        style='readonly',
-                       width=90,
-                ),
+                       width=90, ),
                 RFItem('sample',
                        tooltip='Sample info retreived from Database',
                        style='readonly',
                        width=100,
-                       show_label=False
-                ),
-                spring
-            ),
+                       show_label=False),
+                spring),
             HGroup(
                 RFItem('weight',
                        label='Weight (mg)',
-                       tooltip='(Optional) Enter the weight of the sample in mg. Will be saved in Database with analysis',
-                ),
+                       tooltip='(Optional) Enter the weight of the sample in mg. Will be saved in Database with analysis', ),
                 RFItem('comment',
-                       tooltip='(Optional) Enter a comment for this sample. Will be saved in Database with analysis'
-                ),
+                       tooltip='(Optional) Enter a comment for this sample. Will be saved in Database with analysis'),
                 RFItem('auto_fill_comment',
                        show_label=False,
-                       tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9'
-                )
-            ),
+                       tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
             show_border=True,
-            label='Sample Info'
-        )
+            label='Sample Info')
         return grp
 
     def _get_truncate_group(self):
@@ -247,18 +223,14 @@ class ExperimentFactoryPane(TraitsDockPane):
                                    'delete',
                                    enabled_when=make_rf_name('edit_mode')),
                 show_border=True,
-                label='Simple'
-            ),
+                label='Simple'),
             HGroup(
                 RFItem('truncation_path',
                        editor=EnumEditor(name=make_rf_name('truncations')),
-                       label='Path'
-                ),
+                       label='Path'),
                 show_border=True,
-                label='File'
-            ),
-            label='Actions'
-        )
+                label='File'),
+            label='Actions')
         return grp
 
     def _get_script_group(self):
@@ -267,13 +239,13 @@ class ExperimentFactoryPane(TraitsDockPane):
             RFItem('measurement_script', style='custom', show_label=False),
             RFItem('post_equilibration_script', style='custom', show_label=False),
             RFItem('post_measurement_script', style='custom', show_label=False),
+            RFItem('script_options', style='custom', show_label=False),
             HGroup(spring, RFItem('load_defaults_button',
                                   tooltip='load the default scripts for this analysis type',
                                   show_label=False,
                                   enabled_when=make_rf_name('labnumber'))),
             show_border=True,
-            label='Scripts'
-        )
+            label='Scripts')
         return script_grp
 
     def _get_extract_group(self):

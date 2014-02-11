@@ -82,8 +82,7 @@ class FactoryView(HasTraits):
                  editor=EnumEditor(name='patterns')),
             Item('edit_pattern',
                  show_label=False,
-                 editor=ButtonEditor(label_value='edit_pattern_label')
-            ))
+                 editor=ButtonEditor(label_value='edit_pattern_label')))
         return grp
 
     def _step_heat_group(self):
@@ -91,8 +90,7 @@ class FactoryView(HasTraits):
             Item('template',
                  label='Step Heat Template',
                  editor=EnumEditor(name='templates'),
-                 show_label=False,
-            ),
+                 show_label=False, ),
             Item('edit_template',
                  show_label=False,
                  editor=ButtonEditor(label_value='edit_template_label')))

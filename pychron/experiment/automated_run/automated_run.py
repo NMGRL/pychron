@@ -794,16 +794,21 @@ class AutomatedRun(Loggable):
         self.refresh_scripts()
 
         # setup the scripts
+        ip = self.spec.script_options or ''
+        if ip:
+            ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
+
         if self.measurement_script:
             self.measurement_script.reset(weakref.ref(self)())
-            # self.measurement_script.reset(weakref.ref(self)())
-            #            self.debug('XXXXXXXXXXXXXXXXXXXXXXXXX Setting measurement script is_last {}'.format(self.is_last))
-        #            self.measurement_script.setup_context(is_last=self.is_last)
+
+            #set the interpolation path
+            self.measurement_script.interpolation_path = ip
 
         for si in ('extraction', 'post_measurement', 'post_equilibration'):
             script = getattr(self, '{}_script'.format(si))
             if script:
                 self._setup_context(script)
+                script.interpolation_path = ip
 
         #load extraction metadata
         self.eqtime = self._get_extraction_parameter('eqtime', 15)

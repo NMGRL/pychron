@@ -15,21 +15,51 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Any, Property, Button, cached_property, \
-    String
+from traits.api import Str, Property, Button, cached_property, \
+    String, HasTraits, Event, List
 from traitsui.api import View, HGroup, Label, spring, EnumEditor, UItem
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.experiment.script.options_editor import OptionsEditor
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 from pychron.loggable import Loggable
-import ast
-import yaml
+
+
+class ScriptOptions(HasTraits):
+    names = List
+    name = Str
+    edit = Button
+
+    def _names_default(self):
+        return list_directory(self.options_path(), remove_extension=True)
+
+    def traits_view(self):
+        return View(HGroup(
+            Label('Options'),
+            spring,
+            UItem('name',
+                  width=-200,
+                  editor=EnumEditor(name='names')),
+            UItem('edit',
+                  enabled_when='name and name!="---" and name is not "None"')))
+
+    def _edit_fired(self):
+        o = OptionsEditor(path=self.options_path(self.name))
+        o.edit_traits()
+
+    def options_path(self, p=None):
+        r = os.path.join(paths.scripts_dir, 'options')
+        if p is not None:
+            r = os.path.join(r, add_extension(p, '.yaml'))
+        return r
 
 
 class Script(Loggable):
-    application = Any
+    # application = Any
+    edit_event = Event
     label = Str
     mass_spectrometer = String
 
@@ -37,33 +67,30 @@ class Script(Loggable):
     names = Property(depends_on='mass_spectrometer')
     edit = Button
     kind = 'ExtractionLine'
+    shared_logger = True
 
-    def get_parameter(self, key, default=None):
-        p = os.path.join(self._get_root(), '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                text = fp.read()
-                m = ast.parse(text)
-                docstr = ast.get_docstring(m)
-                if docstr is not None:
-                    params = yaml.load(docstr)
-                    try:
-                        return params[key]
-                    except KeyError:
-                        pass
-                    except TypeError:
-                        self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(self.name, key))
-
-        return default
+    # def get_parameter(self, key, default=None):
+    #     p = os.path.join(self._get_root(), '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
+    #     if os.path.isfile(p):
+    #         with open(p, 'r') as fp:
+    #             text = fp.read()
+    #             m = ast.parse(text)
+    #             docstr = ast.get_docstring(m)
+    #             if docstr is not None:
+    #                 params = yaml.load(docstr)
+    #                 try:
+    #                     return params[key]
+    #                 except KeyError:
+    #                     pass
+    #                 except TypeError:
+    #                     self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(self.name, key))
+    #
+    #     return default
 
     def _edit_fired(self):
         p = os.path.join(paths.scripts_dir, self.label.lower(), '{}_{}.py'.format(self.mass_spectrometer,
                                                                                   self.name))
-        app = self.application
-        task = app.open_task('pychron.pyscript')
-
-        task.kind = self.kind
-        task.open(path=p)
+        self.edit_event = (p, self.kind)
 
     def traits_view(self):
         return View(HGroup(
@@ -73,10 +100,7 @@ class Script(Loggable):
                   width=-200,
                   editor=EnumEditor(name='names')),
             UItem('edit',
-                  enabled_when='name and name!="---" and name is not "None"',
-            ),
-        )
-        )
+                  enabled_when='name and name!="---" and name is not "None"')))
 
     def _clean_script_name(self, name):
         name = self._remove_mass_spectrometer_name(name)

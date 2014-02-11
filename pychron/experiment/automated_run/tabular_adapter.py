@@ -177,6 +177,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('SynExtraction', 'syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
+            ('Options', 'script_options'),
             ('Comment', 'comment')
         ]
 

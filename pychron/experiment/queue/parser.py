@@ -54,6 +54,7 @@ class RunParser(Loggable):
         script_info = dict()
         # load scripts
         for attr in ['measurement', 'extraction',
+                     ('script_options', 's_opt'),
                      ('post_measurement','post_meas'),
                      ('post_equilibration','post_eq'),]:
             v=self._get_attr_value(header, args, attr)

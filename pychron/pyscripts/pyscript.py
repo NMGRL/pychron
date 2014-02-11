@@ -24,6 +24,7 @@ import inspect
 from threading import Event, Thread, Lock
 import traceback
 #============= local library imports  ==========================
+import yaml
 
 from pychron.loggable import Loggable
 
@@ -187,6 +188,7 @@ class PyScript(Loggable):
     _graph_calc = False
 
     trace_line = Int
+    interpolation_path = Str
 
     def __init__(self, *args, **kw):
         super(PyScript, self).__init__(*args, **kw)
@@ -272,13 +274,13 @@ class PyScript(Loggable):
 
         return self._tracer
 
-    def execute_snippet(self, trace=False, argv=None):
+    def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
-
-        if trace:
-            snippet = self.filename
-        else:
-            snippet = self.text
+        if snippet is None:
+            if trace:
+                snippet = self.filename
+            else:
+                snippet = self.text
 
         if trace:
             sys.settrace(self.traceit)
@@ -304,13 +306,15 @@ class PyScript(Loggable):
                 try:
                     exec code_or_err in safe_dict
                     func=safe_dict['main']
-                    if argv is None:
-                        argv=tuple()
-                    func(*argv)
-
                 except KeyError, e:
+                    print e, safe_dict.keys()
                     self.debug('{} {}'.format(e, traceback.format_exc()))
                     return MainError()
+
+                try:
+                    if argv is None:
+                        argv = tuple()
+                    func(*argv)
                 except Exception, e:
                     return traceback.format_exc()
             else:
@@ -321,7 +325,7 @@ class PyScript(Loggable):
             self.test()
         except PyscriptError, e:
             if warn:
-                self.warning_dialog(e)
+                self.warning_dialog(traceback.format_exc())
             return False
 
         return True
@@ -359,7 +363,7 @@ class PyScript(Loggable):
 
             ctx[name] = func
 
-        for v in self.get_variables():
+        for v in self.get_variables() + self.load_interpolation_context():
             ctx[v] = getattr(self, v)
 
         if self._ctx:
@@ -406,6 +410,47 @@ class PyScript(Loggable):
                 self.text = f.read()
 
             return True
+
+    #===============================================================================
+    # interpolation
+    #===============================================================================
+    def __getattr__(self, item):
+        v = self.interpolate(item)
+        if v is None:
+            raise AttributeError
+
+        return v
+
+    def load_interpolation_context(self):
+        ctx = self._get_interpolation_context()
+        return ctx.keys()
+
+    def interpolate(self, attr):
+        ctx = self._get_interpolation_context()
+        return ctx.get(attr, None)
+
+    _interpolation_context = None
+
+    def _get_interpolation_context(self):
+        if self._interpolation_context is None:
+            self._interpolation_context = self._load_interpolation_file()
+        return self._interpolation_context
+
+    def _load_interpolation_file(self):
+        d = {}
+        if self.interpolation_path:
+            if os.path.isfile(self.interpolation_path):
+                try:
+                    with open(self.interpolation_path, 'r') as fp:
+                        d = yaml.load(fp)
+                except yaml.YAMLError, e:
+                    self.debug(e)
+            else:
+                self.debug('not a file. {}'.format(self.interpolation_path))
+        else:
+            self.debug('no interpolation path defined')
+
+        return d
 
     #==============================================================================
     # commands
@@ -587,13 +632,13 @@ class PyScript(Loggable):
     #===============================================================================
     # private
     #===============================================================================
-    def _execute(self, trace=False, argv=None):
+    def _execute(self, **kw):
 
         self._cancel = False
         self._completed = False
         self._truncate = False
 
-        error = self.execute_snippet(trace, argv)
+        error = self.execute_snippet(**kw)
         if error:
             self.warning(str(error))
             return error

@@ -76,6 +76,7 @@ class AutomatedRunSpec(Loggable):
     post_measurement_script = Str
     post_equilibration_script = Str
     extraction_script = Str
+    script_options = Str
 
     #===========================================================================
     # extraction
@@ -226,7 +227,8 @@ class AutomatedRunSpec(Loggable):
 
     def load(self, script_info, params):
         for k, v in script_info.iteritems():
-            setattr(self, '{}_script'.format(k), v)
+            k = k if k == 'script_options' else '{}_script'.format(k)
+            setattr(self, k, v)
 
         for k, v in params.iteritems():
             if hasattr(self, k):
@@ -297,7 +299,7 @@ class AutomatedRunSpec(Loggable):
     #         self.aliquot = new
 
     @on_trait_change('''measurment_script, post_measurment_script,
-    post_equilibration_script, extraction_script,extract_+, position, duration, cleanup''')
+    post_equilibration_script, extraction_script, script_options''')
     def _script_changed(self, name, new):
         if new == 'None':
             #            self.trait_set(trait_change_notify=False, **{name: ''})

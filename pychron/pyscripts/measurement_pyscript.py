@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-
 import time
 import os
 from ConfigParser import ConfigParser
@@ -307,12 +306,12 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def position_magnet(self, pos, detector='AX', dac=False):
-        '''
+        """
             position_magnet(4.54312, dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
-            
-        '''
+
+        """
         self._automated_run_call('py_position_magnet', pos, detector, dac=dac)
 
     @verbose_skip
