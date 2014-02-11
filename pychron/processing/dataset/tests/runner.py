@@ -1,9 +1,14 @@
 import string
 import unittest
+
 from blanks import BlankTest
 from pychron.processing.dataset.tests.baselines import BaselineCorrectedTest
 from pychron.processing.dataset.tests.isochron import IsochronTest
 from pychron.processing.dataset.tests.signal import SignalsTest
+
+
+class PlaceHolderTestCase(unittest.TestCase):
+    pass
 
 
 def tgen(tag, klass, i):

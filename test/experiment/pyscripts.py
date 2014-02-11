@@ -31,7 +31,7 @@ class InterpolationTestCase(unittest.TestCase):
         self.assertIsNone(v)
 
     def test_execute_snippet(self):
-        snippet = '''def main(): a= float_value+2'''
+        snippet = '''def main(): a= float_valued+2'''
         v = self.script.execute_snippet(snippet)
         self.assertIs(v, None)
 

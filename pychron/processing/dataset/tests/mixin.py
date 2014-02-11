@@ -1,6 +1,8 @@
 import math
 import os
+
 from pychron.core.ui import set_toolkit
+
 set_toolkit('qt4')
 
 from pychron.processing.autoupdate_parser import AutoupdateParser
@@ -9,7 +11,7 @@ from test.database import isotope_manager_factory
 isotope_man=isotope_manager_factory(name='pychron_dataset')
 isotope_man.db.connect(test=True)
 
-pp=os.path.join(os.path.dirname(os.path.dirname(__file__)),'data','massspec_dataset_nofilter2')
+pp = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'massspec_dataset_nofilter')
 # pp = '../data/massspec_dataset_nofilter'
 parser = AutoupdateParser()
 parser.parse(pp)
