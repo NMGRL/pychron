@@ -190,6 +190,7 @@ class StackedGraph(Graph):
         s, _p = super(StackedGraph, self).new_series(*args, **kw)
         #print 'new series', bind_id
         #series_id = self.series[plotid][-1]
+
         if self.bind_index:
             if isinstance(s, ScatterPlot):
                 s.bind_id = bind_id
@@ -237,7 +238,6 @@ class StackedGraph(Graph):
 
 
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
-        #print bind_selection, scatter
         if bind_selection:
             u = lambda obj, name, old, new: self._update_metadata(bind_id,
                                                                   obj, name, old, new)

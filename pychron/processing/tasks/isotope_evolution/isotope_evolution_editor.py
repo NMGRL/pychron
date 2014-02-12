@@ -45,7 +45,6 @@ class IsotopeEvolutionEditor(GraphEditor):
     update_on_analyses = False
     calculate_age = True
 
-
     def _set_name(self):
         if not self.name:
             super(IsotopeEvolutionEditor, self)._set_name()
@@ -205,13 +204,12 @@ class IsotopeEvolutionEditor(GraphEditor):
                              fit=False)
         xs, ys = iso.xs, iso.ys
         g.new_series(xs, ys,
-                     fit=fit.fit,
+                     fit=(fit.fit, fit.error_type),
                      filter_outliers_dict=fd,
                      truncate=trunc,
                      add_tools=add_tools,
                      plotid=i)
         return xs
-
 
     def _rebuild_graph(self):
         self.__rebuild_graph()
@@ -227,7 +225,6 @@ class IsotopeEvolutionEditor(GraphEditor):
         #
         # if prog:
         #     prog.close()
-
 
     def __rebuild_graph(self):
         fits = list(self._graph_generator())

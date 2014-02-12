@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from threading import Lock
+
 from pychron.core.ui import set_toolkit
+
 set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
@@ -66,6 +69,10 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     use_inspector_tool = True
     use_point_inspector = True
     convert_index_func = Callable
+
+    def __init__(self, *args, **kw):
+        super(RegressionGraph, self).__init__(*args, **kw)
+        self._regression_lock = Lock()
 
     #===============================================================================
     # context menu handlers
@@ -158,40 +165,43 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
             fired when the index metadata changes e.i user selection
         """
-        sel = obj.metadata.get('selections', None)
-        if sel:
-            obj.was_selected = True
-            self._update_graph()
-        elif hasattr(obj, 'was_selected'):
-            if obj.was_selected:
-                self._update_graph()
-            obj.was_selected = False
+        print name
+        self._update_graph()
+        # sel = obj.metadata.get('selections', None)
+        # if sel:
+        #     obj.was_selected = True
+        #     self._update_graph()
+        # elif hasattr(obj, 'was_selected'):
+        #     if obj.was_selected:
+        #         self._update_graph()
+        #     obj.was_selected = False
 
     def _update_graph(self, *args, **kw):
-        if self.suppress_regression:
-            return
+        # with self._regression_lock:
+        # if self.suppress_regression:
+        #     return
 
         #self.regressors = []
         regs = []
-        for plot in self.plots:
+        for i, plot in enumerate(self.plots):
             ps = plot.plots
             ks = ps.keys()
-
             try:
                 scatters, idxes = zip(*[(ps[k][0], k[4:]) for k in ks if k.startswith('data')])
-                # idx = idxes[0]
-                # fls = [ps[kk][0] for kk in ks if kk == 'fit{}'.format(idx)]
 
                 fls=[ps['fit{}'.format(idx)][0] for idx in idxes]
                 for si, fl in zip(scatters, fls):
-                    r = self._plot_regression(plot, si, fl)
-                    regs.append((plot, r))
+                    if not si.no_regression:
+                        r = self._plot_regression(plot, si, fl)
+                        regs.append((plot, r))
+
             except ValueError,e:
                 try:
                     si=ps[ks[0]][0]
                     regs.append((plot,si.value.get_data()[-1]))
                 except IndexError:
                     break
+
         self.regressors = regs
         self.regression_results = regs
 
@@ -240,7 +250,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 else:
                     low,high=plow, phigh
 
-
                 fx = linspace(low, high, 100)
                 fy = r.predict(fx)
                 line.regressor = r
@@ -249,7 +258,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 line.value.set_data(fy)
 
                 if hasattr(line, 'error_envelope'):
-                    ci = r.calculate_ci(fx, fy)
+                    ci = r.calculate_error_envelope(fx, fy)
+                    # ci = r.calculate_ci(fx, fy)
                     #                 print ci
                     if ci is not None:
                         ly, uy = ci
@@ -263,14 +273,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _set_regressor(self, scatter, r):
+
         selection = scatter.index.metadata['selections']
+        print selection, r.outlier_excluded,
         # selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
-        selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
+        # selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
+        # selection = set(selection) - set(r.outlier_excluded+r.truncate_excluded)
+        selection = set(selection) ^ set(r.outlier_excluded + r.truncate_excluded)
         x = scatter.index.get_data()
         y = scatter.value.get_data()
 
-        sel=list(selection)
-
+        sel = list(selection)
+        # print sel
         if hasattr(scatter, 'yerror'):
             yserr = scatter.yerror.get_data()
             r.trait_set(yserr=yserr)
@@ -282,7 +296,12 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
-        scatter.index.metadata['selections'] = r.get_excluded()
+        d = scatter.index.metadata.copy()
+        d['selections'] = x = r.get_excluded()
+        # print 'setx',x
+        scatter.index.trait_setq(metadata=d)
+        # scatter.invalidate_and_redraw()
+        # scatter.index.metadata['selections'] = r.get_excluded()
         scatter.no_regression = False
 
     def _poly_regress(self, scatter, r, fit):
@@ -327,7 +346,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 r = MeanRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_set(fit=fit, trait_change_notify=False)
+        r.trait_setq(fit=fit)
         r.calculate()
 
         self._set_excluded(scatter, r)
@@ -347,8 +366,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             r = fit()
 
         self._set_regressor(scatter,r)
-        r.trait_set(trait_change_notify=False,
-                    **kw)
+        # r.trait_set(trait_change_notify=False,
+        #             **kw)
+        r.trait_setq(**kw)
         r.calculate()
 
         self._set_excluded(scatter, r)
@@ -369,6 +389,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self.set_series_label('data{}'.format(si), plotid=plotid)
         if filter_outliers_dict is None:
             filter_outliers_dict = dict(filter_outliers=False)
+        else:
+            filter_outliers_dict = filter_outliers_dict.copy()
 
         scatter.fit = fit
         scatter.filter = None
@@ -424,7 +446,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if use_error_envelope:
             self._add_error_envelope_overlay(line)
 
-        r = None
         if x is not None and y is not None:
             if not self.suppress_regression:
                 self._regress(plot, scatter, line)
@@ -434,7 +455,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         except:
             pass
 
-        self._bind_index(scatter, **kw)
+        # self._bind_index(scatter, **kw)
 
         if add_tools:
             self.add_tools(plot, scatter, line,
@@ -461,7 +482,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
         # broadcaster = BroadcasterTool()
         # scatter.tools.append(broadcaster)
-
         if add_inspector:
             point_inspector = PointInspector(scatter,
                                              convert_index=convert_index or self.convert_index_func)
@@ -469,16 +489,18 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                        tool=point_inspector)
 
             scatter.overlays.append(pinspector_overlay)
+            scatter.tools.append(point_inspector)
             # broadcaster.tools.append(point_inspector)
 
         rect_tool = RectSelectionTool(scatter)
         rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
         scatter.overlays.append(rect_overlay)
+        scatter.tools.append(rect_tool)
         # broadcaster.tools.append(rect_tool)
 
-    def _bind_index(self, *args, **kw):
-        pass
+        # def _bind_index(self, *args, **kw):
+        #     pass
 
 
 class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
@@ -494,10 +516,10 @@ class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
 
 
 if __name__ == '__main__':
-    rg = StackedRegressionGraph()
+    rg = StackedRegressionGraph(bind_index=False)
     rg.new_plot()
     rg.new_plot()
-    rg.new_plot()
+    # rg.new_plot()
     n=50
     x = linspace(0, 10, n)
     from numpy.random import RandomState
@@ -520,22 +542,26 @@ if __name__ == '__main__':
     # y += d
 
     fod={'filter_outliers':True, 'iterations':1, 'std_devs':2}
-    fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
     rg.new_series(x, y,
                   #yerror=random.rand(n)*5,
                   fit='linear_SD',
                   # truncate='x<1',
                   filter_outliers_dict=fod)
-    rg.new_series(x, y,
-                  #yerror=random.rand(n)*5,
-                  fit='linear_SD',
-                  # truncate='x<1',
-                  filter_outliers_dict=fod, plotid=1)
+    # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
+    # rg.new_series(x, y,
+    #               #yerror=random.rand(n)*5,
+    #               fit='linear_SD',
+    #               # truncate='x<1',
+    #               filter_outliers_dict=fod, plotid=1)
+    # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
     rg.new_series(x, y2,
                   #yerror=random.rand(n)*5,
                   fit='average_SD',
                   # truncate='x<1',
-                  filter_outliers_dict=fod, plotid=2)
+                  filter_outliers_dict=fod, plotid=1)
+    rg.set_y_limits(0, 20, plotid=0)
+    rg.set_y_limits(0, 20, plotid=1)
+    # rg.set_y_limits(0,20, plotid=2)
     rg.configure_traits()
 #============= EOF =============================================
 # @classmethod

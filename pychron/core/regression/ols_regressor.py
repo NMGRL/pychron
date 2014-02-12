@@ -45,7 +45,7 @@ class OLSRegressor(BaseRegressor):
         if self._degree:
             self.calculate()
 
-    def calculate(self):
+    def calculate(self, filtering=False):
         cxs = self.pre_clean_xs
         cys = self.pre_clean_ys
 
@@ -53,7 +53,7 @@ class OLSRegressor(BaseRegressor):
             # self.debug('A integrity check failed')
             return
 
-        if not self._filtering:
+        if not filtering:
             #prevent infinite recursion
             fx, fy = self.get_filtered_data(cxs, cys)
         else:

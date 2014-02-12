@@ -57,7 +57,7 @@ class BaseRegressor(Loggable):
 
     filter_xs = Array
     filter_ys = Array
-    _filtering = Bool(False)
+    # _filtering = Bool(False)
 
     error_calc_type = 'SD'
 
@@ -70,10 +70,10 @@ class BaseRegressor(Loggable):
     clean_xs = Property(depends_on='dirty, xs, ys')
     clean_ys = Property(depends_on='dirty, xs, ys')
     clean_xserr = Property(depends_on='dirty, xs, ys')
-    clean_yserr = Property(depends_on='dirty, xs, ys')
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
     #     self.calculate()
+    clean_yserr = Property(depends_on='dirty, xs, ys')
 
     # def _ys_changed(self):
     #     self.calculate()
@@ -81,74 +81,30 @@ class BaseRegressor(Loggable):
     def get_filtered_data(self, xs, ys):
         rx, ry = xs, ys
         fod = self.filter_outliers_dict
-        self.outlier_excluded = []
         if fod.get('filter_outliers', False):
+            self.outlier_excluded = []
             for _ in range(fod.get('iterations', 1)):
-                self._filtering = True
-                self.calculate()
-                self._filtering = False
+                # self._filtering = True
+                self.calculate(filtering=True)
+                # self._filtering = False
 
                 outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
-                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
-                rx = delete(rx, outliers, 0)
-                ry = delete(ry, outliers, 0)
+                self.outlier_excluded += list(outliers)
+                # print 'gfd',outliers,self.user_excluded
+                # self.outlier_excluded = list(set(self.outlier_excluded + list(outliers))-set(self.user_excluded))
+                # print 'ff', self.outlier_excluded, self.user_excluded
+                # self.user_excluded=list(set(self.user_excluded)-set(outliers))
+                # print 'ue', self.user_excluded
                 self._delete_filtered_hook(outliers)
-            self.dirty = True
+                self.dirty = True
+
+            rx = delete(rx, outliers, 0)
+            ry = delete(ry, outliers, 0)
+
         return rx, ry
 
-    def _delete_filtered_hook(self, outliers):
-        pass
-
-    # def get_clean_xs(self):
-    #     return self._clean_array(self.xs)
-    #
-    # def get_clean_ys(self):
-    #     return self._clean_array(self.ys)
-    @cached_property
-    def _get_pre_clean_xs(self):
-        return self._pre_clean_array(self.xs)
-
-    @cached_property
-    def _get_pre_clean_ys(self):
-        return self._pre_clean_array(self.ys)
-
-    @cached_property
-    def _get_clean_xs(self):
-        return self._clean_array(self.xs)
-
-    @cached_property
-    def _get_clean_ys(self):
-        return self._clean_array(self.ys)
-
-    @cached_property
-    def _get_clean_xserr(self):
-        return self._clean_array(self.xserr)
-
-    @cached_property
-    def _get_clean_yserr(self):
-        return self._clean_array(self.yserr)
-
-    def _pre_clean_array(self, v):
-        exc = self.user_excluded + self.truncate_excluded
-        return delete(v, exc, 0)
-
-    def _clean_array(self, v):
-        exc = self.user_excluded + self.truncate_excluded + self.outlier_excluded
-        return delete(v, exc, 0)
-
-    def _check_integrity(self, x, y):
-        nx, ny = len(x), len(y)
-        if not nx or not ny:
-            return
-        if nx != ny:
-            return
-
-        if nx == 1 or ny == 1:
-            return
-
-        return True
-
     def get_excluded(self):
+        # return list(set(self.user_excluded) ^ set(self.outlier_excluded) ^ set(self.truncate_excluded))
         return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):
@@ -161,7 +117,7 @@ class BaseRegressor(Loggable):
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
 
-    def calculate(self):
+    def calculate(self, *args, **kw):
         pass
 
     def percent_error(self, s, e):
@@ -215,25 +171,29 @@ class BaseRegressor(Loggable):
         s = (ss_res / (n - q)) ** 0.5
         return s
 
-    def _get_coefficients(self):
-        return self._calculate_coefficients()
-
-    def _get_coefficient_errors(self):
-        return self._calculate_coefficient_errors()
-
-    def _calculate_coefficients(self):
-        raise NotImplementedError
-
-    def _calculate_coefficient_errors(self):
-        raise NotImplementedError
-
     def calculate_residuals(self):
-        return self.predict(self.clean_xs) - self.clean_ys
+        return self.predict(self.xs) - self.ys
 
-    def calculate_ci(self, rx, rmodel=None):
+    def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:
             rmodel = self.predict(rx)
+        if self.error_calc_type == 'CI':
+            func = self.calculate_ci
+        elif self.error_calc_type == 'SD':
+            func = self.calculate_sd_error_envelope
+        else:
+            func = self.calculate_sem_error_envelope
+        return func(rx, rmodel)
 
+    def calculate_sd_error_envelope(self, rx, rmodel):
+        es = self.predict_error(rx, error_calc='SD')
+        return rmodel - es, rmodel + es
+
+    def calculate_sem_error_envelope(self, rx, rmodel):
+        es = self.predict_error(rx, error_calc='SEM')
+        return rmodel - es, rmodel + es
+
+    def calculate_ci(self, rx, rmodel):
         cors = self.calculate_ci_error(rx, rmodel)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
@@ -245,38 +205,6 @@ class BaseRegressor(Loggable):
 
         cors = self._calculate_ci(rx, rmodel)
         return cors
-
-    def _calculate_ci(self, rx, rmodel):
-        if isinstance(rx, (float, int)):
-            rx = [rx]
-
-        X = self.clean_xs
-        Y = self.clean_ys
-        cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
-        return cors
-
-    def _calculate_confidence_interval(self,
-                                       x,
-                                       observations,
-                                       rx,
-                                       model,
-                                       confidence=95):
-
-        alpha = 1.0 - confidence / 100.0
-
-        n = len(observations)
-        if n > 2:
-            xm = x.mean()
-
-            ti = tinv(alpha, n - 2)
-
-            syx = self.get_syx()
-            ssx = self.get_ssx(xm)
-
-            d = n ** -1 + (rx - xm) ** 2 / ssx
-            cors = ti * syx * d ** 0.5
-
-            return cors
 
     def get_syx(self):
         n = self.clean_xs.shape[0]
@@ -294,13 +222,6 @@ class BaseRegressor(Loggable):
             xm = x.mean()
 
         return ((x - xm) ** 2).sum()
-
-    def _get_fit(self):
-        return self._fit
-
-    def _set_fit(self, v):
-        self._fit = v
-        self.dirty = True
 
     def tostring(self, sig_figs=5, error_sig_figs=5):
 
@@ -347,6 +268,85 @@ class BaseRegressor(Loggable):
         s = '{}    y={}+{}'.format(fit, eq, constant)
         return s
 
+    def _calculate_ci(self, rx, rmodel):
+        if isinstance(rx, (float, int)):
+            rx = [rx]
+
+        X = self.clean_xs
+        Y = self.clean_ys
+        cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
+        return cors
+
+    def _calculate_confidence_interval(self,
+                                       x,
+                                       observations,
+                                       rx,
+                                       model,
+                                       confidence=95):
+
+        alpha = 1.0 - confidence / 100.0
+
+        n = len(observations)
+        if n > 2:
+            xm = x.mean()
+
+            ti = tinv(alpha, n - 2)
+
+            syx = self.get_syx()
+            ssx = self.get_ssx(xm)
+
+            d = n ** -1 + (rx - xm) ** 2 / ssx
+            cors = ti * syx * d ** 0.5
+
+            return cors
+
+    def _delete_filtered_hook(self, outliers):
+        pass
+
+    @cached_property
+    def _get_pre_clean_xs(self):
+        return self._pre_clean_array(self.xs)
+
+    @cached_property
+    def _get_pre_clean_ys(self):
+        return self._pre_clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xs(self):
+        return self._clean_array(self.xs)
+
+    @cached_property
+    def _get_clean_ys(self):
+        return self._clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xserr(self):
+        return self._clean_array(self.xserr)
+
+    @cached_property
+    def _get_clean_yserr(self):
+        return self._clean_array(self.yserr)
+
+    def _pre_clean_array(self, v):
+        exc = set(self.user_excluded) ^ set(self.truncate_excluded)
+        return delete(v, list(exc), 0)
+
+    def _clean_array(self, v):
+        exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
+        return delete(v, list(exc), 0)
+
+    def _check_integrity(self, x, y):
+        nx, ny = len(x), len(y)
+        if not nx or not ny:
+            return
+        if nx != ny:
+            return
+
+        if nx == 1 or ny == 1:
+            return
+
+        return True
+
     def _get_mswd(self):
         self.valid_mswd = False
         # ys=self._clean_array(self.ys)
@@ -361,5 +361,24 @@ class BaseRegressor(Loggable):
 
     def _get_n(self):
         return len(self.clean_xs)
+
+    def _get_coefficients(self):
+        return self._calculate_coefficients()
+
+    def _get_coefficient_errors(self):
+        return self._calculate_coefficient_errors()
+
+    def _calculate_coefficients(self):
+        raise NotImplementedError
+
+    def _calculate_coefficient_errors(self):
+        raise NotImplementedError
+
+    def _get_fit(self):
+        return self._fit
+
+    def _set_fit(self, v):
+        self._fit = v
+        self.dirty = True
 
 #============= EOF =============================================

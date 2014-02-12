@@ -41,7 +41,7 @@ class RectSelectionTool(BaseTool):
     """
     """
 
-    filter_near_edge = True
+    filter_near_edge = False
 
     threshold = 5
     hover_metadata_name = Str('hover')
@@ -87,6 +87,9 @@ class RectSelectionTool(BaseTool):
                 continue
             if token in md[self.selection_metadata_name]:
                 already = True
+
+        print token, already
+
         return already
 
     def normal_left_dclick(self, event):
@@ -134,7 +137,7 @@ class RectSelectionTool(BaseTool):
                 new = md[self.selection_metadata_name][:]
                 new.remove(token)
                 md[self.selection_metadata_name] = new
-                getattr(plot, name).metadata_changed = True
+                # getattr(plot, name).metadata_changed = True
 
     def _select_token(self, token, append=True):
         plot = self.component
@@ -150,7 +153,6 @@ class RectSelectionTool(BaseTool):
                     if token not in md[self.selection_metadata_name]:
                         new_list = md[self.selection_metadata_name] + [token]
                         md[self.selection_metadata_name] = new_list
-                        getattr(plot, name).metadata_changed = True
 
     def select_left_up(self, event):
         self._update_selection()

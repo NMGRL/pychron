@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Callable
 #============= standard library imports ========================
-from numpy import where, abs
+from numpy import where
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
@@ -57,19 +57,22 @@ class PointInspector(InfoInspector):
 
             inds = self.get_selected_index()
             lines=[]
-            if inds is not None and hasattr(self.component, 'yerror'):
+            if inds is not None:
+                he = hasattr(self.component, 'yerror')
                 for i in inds:
-                    ye = self.component.yerror.get_data()[i]
-                    pe = self.percent_error(y, ye)
+                    if he:
+                        ye = self.component.yerror.get_data()[i]
+                        pe = self.percent_error(y, ye)
 
-                    # fmt = '{:0.3e}' if abs(ye) < 10e-6 else '{:0.6f}'
-                    # ye = fmt.format(ye)
+                        # fmt = '{:0.3e}' if abs(ye) < 10e-6 else '{:0.6f}'
+                        # ye = fmt.format(ye)
 
-                    # fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
-                    # y = fmt.format(y)
-                    ye=floatfmt(ye, n=6, s=3)
-                    y=floatfmt(y, n=6, s=3)
-                    y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
+                        # fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
+                        # y = fmt.format(y)
+                        ye = floatfmt(ye, n=6, s=3)
+                        y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
+                    else:
+                        y = floatfmt(y, n=6, s=3)
 
                     lines.extend([u'x= {}'.format(x), u'y= {}'.format(y)])
                     if hasattr(self.component, 'display_index'):

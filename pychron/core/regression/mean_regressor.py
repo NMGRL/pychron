@@ -24,17 +24,14 @@ class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
 
-    def calculate(self):
-        cxs, cys = self.clean_ys, self.clean_ys
-        if not self._filtering:
+    def calculate(self, filtering=False):
+        cxs, cys = self.pre_clean_ys, self.pre_clean_ys
+        if not filtering:
             #prevent infinite recursion
-            fx, fy = self.get_filtered_data(cxs, cys)
-        else:
-            fx, fy = cxs, cys
+            self.get_filtered_data(cxs, cys)
 
     def calculate_outliers(self, nsigma=2):
-        # res = self.calculate_residuals()
-        res=abs(self.clean_ys-self.mean)
+        res = abs(self.ys - self.mean)
         s=self.std
         return where(res > (s * nsigma))[0]
 
@@ -108,8 +105,7 @@ sem={}
         std = self.std
         sem = self.sem
         s = fmt.format(m, std, self.percent_error(m, std),
-                       sem, self.percent_error(m, sem)
-                       )
+                       sem, self.percent_error(m, sem))
         return s
 
     def make_equation(self):
@@ -129,6 +125,7 @@ sem={}
 
     def calculate_standard_error_fit(self):
         return self.std
+
 
 class WeightedMeanRegressor(MeanRegressor):
 
