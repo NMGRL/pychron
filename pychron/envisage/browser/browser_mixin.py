@@ -27,13 +27,14 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
-from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView
+from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.envisage.browser.table_configurer import SampleTableConfigurer
 from pychron.paths import paths
 
@@ -80,6 +81,8 @@ class BrowserMixin(ColumnSorterMixin):
 
     samples = List  # Property(depends_on='selected_project')
     osamples = List
+
+    analysis_groups = List
 
     project_filter = Str
     sample_filter = Str
@@ -200,26 +203,36 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _selected_projects_changed(self, new):
         if new:
-            db = self.manager.db
-            with db.session_ctx():
-                if hasattr(new, '__iter__'):
-                    name = new[0].name
-                else:
-                    name = new.name
+            names = [ni.name for ni in new]
+            self._load_associated_samples(names)
+            self._load_associated_groups(names)
 
+    def _load_associated_groups(self, names):
+        db = self.manager.db
+
+        with db.session_ctx():
+            gs = db.get_analysis_groups(projects=names)
+            grps = [AnalysisGroupRecordView(gi) for gi in gs]
+
+        self.analysis_groups = grps
+
+    def _load_associated_samples(self, names):
+        db = self.manager.db
+        sams = []
+        with db.session_ctx():
+            for name in names:
+                #load associated samples
                 if name.startswith('RECENT'):
-                    sams = self._set_recent_samples(name)
+                    sams.extend(self._set_recent_samples(name))
                 else:
-                    sams = self._set_samples()
+                    sams.extend(self._set_samples())
 
-            self.samples = sams
-            self.osamples = sams
+        self.samples = sams
+        self.osamples = sams
 
-            #if sams:
-            #    self.selected_samples = sams[:1]
+        p = self._get_sample_filter_parameter()
+        self.sample_filter_values = list(set([getattr(si, p) for si in sams]))
 
-            p = self._get_sample_filter_parameter()
-            self.sample_filter_values = list(set([getattr(si, p) for si in sams]))
 
     def _set_recent_samples(self, recent_name):
         if not self.search_criteria.recent_hours:

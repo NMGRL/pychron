@@ -20,10 +20,9 @@ from traitsui.api import EnumEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
+
 from pychron.processing.fits.fit import Fit
-from pychron.processing.fits.fit_selector import FitSelector
+from pychron.processing.fits.fit_selector import FitSelector, ObjectColumn, CheckboxColumn
 
 
 class FilterFit(Fit):
@@ -52,9 +51,9 @@ class FilterFitSelector(FitSelector):
                 ObjectColumn(name='error_type',
                              editor=EnumEditor(name='error_types'),
                              width=75),
-                CheckboxColumn(name='filter_outliers', label='Filter Outliers'),
-                ObjectColumn(name='filter_iterations', label='Filter Iter.'),
-                ObjectColumn(name='filter_std_devs', label='Filter SD'),
+                CheckboxColumn(name='filter_outliers', label='F. Outliers'),
+                ObjectColumn(name='filter_iterations', label='F. Iter.'),
+                ObjectColumn(name='filter_std_devs', label='F. SD'),
                 ObjectColumn(name='truncate', label='Trunc.'),
                 CheckboxColumn(name='use', label='Save')]
 

@@ -3,6 +3,7 @@ import os
 
 from pychron.core.ui import set_toolkit
 
+
 set_toolkit('qt4')
 
 from pychron.processing.autoupdate_parser import AutoupdateParser
@@ -54,7 +55,7 @@ class IntensityMixin(object):
             acnt = len(a)
 
         cnt = min(acnt, cnt)
-        self.assertAlmostEqual(v, ev, cnt)
+        self.assertAlmostEqual(v, ev, 12)
 
     #util
     def get_expected_value(self, k):
@@ -74,20 +75,20 @@ class IntensityMixin(object):
 
         return ev,cnt
 
-    def _almost_equal(self, v, k):
-        ev, cnt = self.get_expected_value(k)
-
-        sv = str(v)
-        acnt = 10000
-        if 'e' in sv:
-            acnt = int(round(abs(math.log10(v))))
-        elif '.' in sv:
-            a = sv.split('.')[-1]
-            acnt = len(a)
-
-        cnt = min(acnt, cnt)
-
-        # dev=abs(v-ev)/v*1000
-        # self.assertLess(dev, 1)
-        self.assertAlmostEqual(v, ev, cnt-1)
+        # def _almost_equal(self, v, k):
+        #     ev, cnt = self.get_expected_value(k)
+        #
+        #     sv = str(v)
+        #     acnt = 10000
+        #     if 'e' in sv:
+        #         acnt = int(round(abs(math.log10(v))))
+        #     elif '.' in sv:
+        #         a = sv.split('.')[-1]
+        #         acnt = len(a)
+        #
+        #     cnt = min(acnt, cnt)
+        #
+        #     # dev=abs(v-ev)/v*1000
+        #     # self.assertLess(dev, 1)
+        #     self.assertAlmostEqual(v, ev, cnt-1)
 

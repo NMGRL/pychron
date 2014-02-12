@@ -18,7 +18,7 @@
 #============= standard library imports ========================
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer, String, \
-    BLOB, Float, Boolean, DateTime
+    BLOB, Float, Boolean, DateTime, TIMESTAMP
 from sqlalchemy.orm import relationship
 #============= local library imports  ==========================
 
@@ -43,6 +43,16 @@ class HistoryMixin(BaseMixin, History):
     pass
 
 
+class proc_AnalysisGroupTable(Base, NameMixin):
+    create_date = Column(TIMESTAMP)
+    last_modified = Column(TIMESTAMP)
+
+
+class proc_AnalysisGroupSetTable(Base, BaseMixin):
+    group_id = foreignkey('proc_AnalysisGroupTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+
+
 class proc_SensitivityHistoryTable(Base, HistoryMixin):
     sensitivity = relationship('proc_SensitivityTable', backref='history',
                                uselist=False)
@@ -50,12 +60,11 @@ class proc_SensitivityHistoryTable(Base, HistoryMixin):
                             backref='selected_sensitivity',
                             uselist=False)
 
-class proc_SensitivityTable(Base, BaseMixin):
 
+class proc_SensitivityTable(Base, BaseMixin):
     value = Column(Float(32))
     error = Column(Float(32))
     history_id = foreignkey('proc_SensitivityHistoryTable')
-
 
 
 class proc_TagTable(Base):
@@ -157,6 +166,7 @@ class proc_BlanksSetTable(Base, BaseMixin):
     blank_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
 
+
 class proc_BlanksHistoryTable(Base, HistoryMixin):
     blanks = relationship('proc_BlanksTable', backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
@@ -176,10 +186,12 @@ class proc_BlanksTable(Base, BaseMixin):
 
     set_id = Column(Integer)
 
+
 class proc_BackgroundsSetTable(Base, BaseMixin):
     backgrounds_id = foreignkey('proc_BackgroundsTable')
     background_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
+
 
 class proc_BackgroundsHistoryTable(Base, HistoryMixin):
     backgrounds = relationship('proc_BackgroundsTable',
@@ -226,6 +238,7 @@ class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
     ic_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
 
+
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
     detector_params = relationship('proc_DetectorParamTable',
                                    backref='history')
@@ -243,6 +256,7 @@ class proc_DetectorParamTable(Base, BaseMixin):
 
     #@todo: add refmass to detector param table
     refmass = 35.9675
+
 
 #     selected = relationship('proc_SelectedHistoriesTable',
 #                             backref='selected_detector_param',
@@ -295,7 +309,7 @@ class proc_FitTable(Base, BaseMixin):
     isotope_id = foreignkey('meas_IsotopeTable')
 
     fit = stringcolumn()
-    error_type=stringcolumn(default='SD')
+    error_type = stringcolumn(default='SD')
     filter_outliers = Column(Boolean)
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)
@@ -327,6 +341,7 @@ class proc_IsotopeResultsTable(Base, BaseMixin):
 
 class proc_NotesTable(Base, HistoryMixin):
     note = Column(BLOB)
+
 
 # class proc_WorkspaceHistoryTable(Base, HistoryMixin):
 #    workspace_id = foreignkey('WorkspaceTable')

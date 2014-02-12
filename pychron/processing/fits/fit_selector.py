@@ -23,14 +23,26 @@ from traits.trait_types import List, Event, Bool, Button
 
 
 from traitsui.editors import EnumEditor
-from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.extras.checkbox_column import CheckboxColumn as _CheckboxColumn
 from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem, spring, Item
-from traitsui.table_column import ObjectColumn
+from traitsui.table_column import ObjectColumn as _ObjectColumn
 from traitsui.view import View
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.fit import Fit
 from pychron.core.ui.table_editor import myTableEditor
+
+
+class ColumnMixin(object):
+    pass
+
+
+class ObjectColumn(_ObjectColumn):
+    text_font = 'modern 10'
+
+
+class CheckboxColumn(_CheckboxColumn):
+    text_font = 'modern 10'
 
 
 class FitSelector(HasTraits):
@@ -87,7 +99,9 @@ class FitSelector(HasTraits):
         cols = self._get_columns()
         editor = myTableEditor(columns=cols,
                                sortable=False,
-                               on_command_key=self._update_command_key)
+                               on_command_key=self._update_command_key,
+                               cell_bg_color='red',
+                               cell_font='modern 10')
         grp = UItem('fits',
                     style='custom',
                     editor=editor)

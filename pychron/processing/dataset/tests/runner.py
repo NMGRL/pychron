@@ -18,7 +18,8 @@ def tgen(tag, klass, i):
         {'analysis_id':i})
     globals()[name] = bt
 
-for i in range(10):
+
+for i in range(1):
     if i==8:
         #skip I
         continue

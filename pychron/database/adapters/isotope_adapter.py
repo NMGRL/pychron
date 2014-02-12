@@ -67,7 +67,9 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_IsotopeResultsTable, proc_FitHistoryTable, \
     proc_FitTable, proc_DetectorParamTable, proc_NotesTable, proc_FigureTable, proc_FigureAnalysisTable, \
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
-    proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, proc_SensitivityHistoryTable, proc_SensitivityTable
+    proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
+    proc_SensitivityHistoryTable, proc_SensitivityTable, \
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable
 
 from pychron.pychron_constants import ALPHAS
 
@@ -193,6 +195,19 @@ class IsotopeAdapter(DatabaseAdapter):
                 return q.all()
             except NoResultFound:
                 pass
+
+    def get_analysis_groups(self, projects=None):
+        with self.session_ctx() as sess:
+            if projects:
+                q = sess.query(proc_AnalysisGroupTable)
+                q = q.join(proc_AnalysisGroupSetTable)
+                q = q.join(meas_AnalysisTable)
+                q = q.join(gen_LabTable)
+                q = q.join(gen_SampleTable)
+                q = q.join(gen_ProjectTable)
+
+                q = q.filter(gen_ProjectTable.name.in_(projects))
+                return self._query_all(q)
 
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:

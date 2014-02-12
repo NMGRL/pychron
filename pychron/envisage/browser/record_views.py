@@ -105,4 +105,14 @@ class ProjectRecordView(RecordView):
     def id(self):
         return self.name
 
-        #============= EOF =============================================
+
+class AnalysisGroupRecordView(RecordView):
+    name = Str
+    create_date = Date
+    last_modified = Date
+
+    def _create(self, dbrecord):
+        for attr in ('name', 'create_date', 'last_modified'):
+            setattr(self, attr, getattr(dbrecord, attr))
+
+#============= EOF =============================================

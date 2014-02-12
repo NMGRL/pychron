@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Int, Str, Instance
 from traitsui.api import View, Item, UItem, VGroup, HGroup, Label, spring, \
-    VSplit, TabularEditor, EnumEditor, Heading, HSplit
+    VSplit, TabularEditor, EnumEditor, Heading, HSplit, Group
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
@@ -30,6 +30,17 @@ from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.core.ui.tabular_editor import myTabularEditor
 
 
+class AnalysisGroupAdapter(BrowserAdapter):
+    all_columns = [('Name', 'name'),
+                   ('Created', 'create_date'),
+                   ('Modified', 'last_modified'),
+    ]
+
+    columns = [('Name', 'name'),
+               ('Create Date', 'create_date'),
+               ('Modified', 'last_modified')]
+
+
 class AnalysisAdapter(BrowserAdapter):
     all_columns = [('Run ID', 'record_id'),
                    ('Tag', 'tag'),
@@ -39,12 +50,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Flux', 'flux_fit_status')]
 
     columns = [('Run ID', 'record_id'),
-               ('Tag', 'tag'),
-               #('Iso Fits', 'iso_fit_status'),
-               #('Blank', 'blank_fit_status'),
-               #('IC', 'ic_fit_status'),
-               #('Flux', 'flux_fit_status')
-    ]
+               ('Tag', 'tag')]
 
     record_id_width = Int(100)
     tag_width = Int(65)
@@ -70,9 +76,22 @@ class Tables(HasTraits):
         return {'object': self.model}
 
     def traits_view(self):
-        sample_table = VGroup(Heading('Samples'),
-                              UItem('samples',
-                                    editor=TabularEditor(
+        group_table = UItem('analysis_groups',
+                            label='Groups',
+                            editor=TabularEditor(
+                                adapter=self.pane.analysis_group_tabular_adapter,
+                                editable=False,
+                                selected='selected_analysis_groups',
+                                multi_select=True,
+                                # dclicked='dclicked_sample',
+                                # column_clicked='column_clicked',
+                                #update='update_sample_table',
+                                #refresh='update_sample_table',
+                                stretch_last_section=False))
+
+        sample_table = UItem('samples',
+                             label='Samples',
+                             editor=TabularEditor(
                                         adapter=self.pane.sample_tabular_adapter,
                                         editable=False,
                                         selected='selected_samples',
@@ -81,7 +100,7 @@ class Tables(HasTraits):
                                         column_clicked='column_clicked',
                                         #update='update_sample_table',
                                         #refresh='update_sample_table',
-                                        stretch_last_section=False)))
+                                        stretch_last_section=False))
 
         def make_name(name):
             return 'object.analysis_table.{}'.format(name)
@@ -101,7 +120,8 @@ class Tables(HasTraits):
                                 HGroup(spring, Item(make_name('omit_invalid'))),
                                 defined_when=self.pane.analyses_defined)
 
-        v = View(HSplit(sample_table, analysis_table))
+        v = View(HSplit(Group(sample_table, group_table,
+                              layout='tabbed'), analysis_table))
         return v
 
 
@@ -153,6 +173,7 @@ class BrowserPane(TraitsDockPane):
 
     sample_tabular_adapter = Instance(SampleAdapter, ())
     analysis_tabular_adapter = Instance(AnalysisAdapter, ())
+    analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     tableview = Instance(Tables)
     tabletools = Instance(TableTools)
@@ -160,8 +181,7 @@ class BrowserPane(TraitsDockPane):
     def _get_browser_group(self):
         project_grp = VGroup(
             HGroup(Label('Filter'),
-                   UItem('project_filter',
-                   ),
+                   UItem('project_filter'),
                    icon_button_editor('clear_selection_button',
                                       'cross',
                                       tooltip='Clear selected')),
@@ -181,142 +201,42 @@ class BrowserPane(TraitsDockPane):
                            style='custom'))
         return grp
 
-    # def _get_browser_group(self):
-    #     project_grp = VGroup(
-    #         HGroup(Label('Filter'),
-    #                UItem('project_filter',
-    #                      width=75),
-    #                icon_button_editor('clear_selection_button',
-    #                                   'cross',
-    #                                   tooltip='Clear selected')),
-    #         UItem('projects',
-    #               editor=TabularEditor(editable=False,
-    #                                    selected='selected_projects',
-    #                                    adapter=ProjectAdapter(),
-    #                                    multi_select=True),
-    #               width=75))
+    # def _get_analysis_group(self, base='analysis'):
+    #     def make_name(name):
+    #         return 'object.{}_table.{}'.format(base, name)
     #
-    #     sample_grp = VGroup(
+    #     analysis_grp = VGroup(
     #         HGroup(
     #             #Label('Filter'),
-    #             UItem('sample_filter_parameter',
-    #                   editor=EnumEditor(name='sample_filter_parameters')),
-    #             UItem('sample_filter',
+    #             UItem(make_name('analysis_filter_parameter'),
+    #                   editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
+    #             UItem(make_name('analysis_filter_comparator')),
+    #             UItem(make_name('analysis_filter'),
     #                   width=75),
-    #             UItem('sample_filter',
-    #                   editor=EnumEditor(name='sample_filter_values'),
+    #             UItem(make_name('analysis_filter'),
+    #                   editor=EnumEditor(name=make_name('analysis_filter_values')),
     #                   width=-25),
-    #             # UItem('filter_non_run_samples',
-    #             #       tooltip='Omit non-analyzed samples'),
-    #             icon_button_editor('configure_sample_table',
-    #                                'cog',
-    #                                tooltip='Configure Sample Table')),
-    #         UItem('samples',
-    #               editor=TabularEditor(
-    #                   adapter=self.sample_tabular_adapter,
-    #                   editable=False,
-    #                   selected='selected_samples',
-    #                   multi_select=True,
-    #                   dclicked='dclicked_sample',
-    #                   column_clicked='column_clicked',
-    #                   #update='update_sample_table',
-    #                   #refresh='update_sample_table',
+    #             icon_button_editor(make_name('configure_analysis_table'), 'cog',
+    #                                tooltip='Configure/Advanced query')),
+    #         UItem(make_name('analyses'),
+    #               editor=myTabularEditor(
+    #                   adapter=self.analysis_tabular_adapter,
+    #                   #                                                       editable=False,
+    #                   operations=['move'],
+    #                   refresh=make_name('refresh_needed'),
+    #                   selected=make_name('selected'),
+    #                   dclicked=make_name('dclicked'),
+    #                   multi_select=self.multi_select,
+    #                   drag_external=True,
+    #                   scroll_to_row=make_name('scroll_to_row'),
     #                   stretch_last_section=False),
-    #               width=75))
-    #
-    #     grp = VSplit(
-    #         HSplit(project_grp,
-    #         sample_grp),
-    #         self._get_analysis_group(),
-    #         # label='Project/Sample'
-    #     )
-    #
-    #     return grp
-
-    # def _get_date_group(self):
-    #     f_grp = HGroup(
-    #         UItem('analysis_type',
-    #               editor=EnumEditor(name='analysis_types')),
-    #         UItem('mass_spectrometer',
-    #               editor=EnumEditor(name='mass_spectrometers')),
-    #         UItem('extraction_device',
-    #               editor=EnumEditor(name='extraction_devices')))
-    #
-    #     grp = VGroup(
-    #         f_grp,
-    #         Heading('Start'),
-    #         UItem('start_date',
-    #               editor=DateEditor(allow_future=False),
-    #               style='custom'),
-    #         UItem('start_time', ),
-    #         Item('_'),
-    #         Heading('End'),
-    #         UItem('end_date',
-    #               editor=DateEditor(allow_future=False),
-    #               style='custom'),
-    #         UItem('end_time', ))
-    #
-    #     return VSplit(grp,
-    #                   self._get_analysis_group(base='danalysis'),
-    #                   label='Date')
-
-    def _get_analysis_group(self, base='analysis'):
-        def make_name(name):
-            return 'object.{}_table.{}'.format(base, name)
-
-        analysis_grp = VGroup(
-            HGroup(
-                #Label('Filter'),
-                UItem(make_name('analysis_filter_parameter'),
-                      editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-                UItem(make_name('analysis_filter_comparator')),
-                UItem(make_name('analysis_filter'),
-                      width=75),
-                UItem(make_name('analysis_filter'),
-                      editor=EnumEditor(name=make_name('analysis_filter_values')),
-                      width=-25),
-                icon_button_editor(make_name('configure_analysis_table'), 'cog',
-                                   tooltip='Configure/Advanced query')),
-            UItem(make_name('analyses'),
-                  editor=myTabularEditor(
-                      adapter=self.analysis_tabular_adapter,
-                      #                                                       editable=False,
-                      operations=['move'],
-                      refresh=make_name('refresh_needed'),
-                      selected=make_name('selected'),
-                      dclicked=make_name('dclicked'),
-                      multi_select=self.multi_select,
-                      drag_external=True,
-                      scroll_to_row=make_name('scroll_to_row'),
-                      stretch_last_section=False),
-                  #                                  editor=ListStrEditor(editable=False,
-                  #                                           selected='selected_analysis'
-                  #                                           )
-                  width=300),
-            HGroup(
-                # Item(make_name('page_width'),
-                #      label='N',
-                #      tooltip='Page Width. Number of analyses to display per page'),
-                #
-                spring,
-                #
-                # icon_button_editor(make_name('backward'),
-                #                    'control_rewind',
-                #                    #enabled_when=make_name('backward_enabled'),
-                #                    tooltip='Backward one page'),
-                # icon_button_editor(make_name('forward'),
-                #                    'control_fastforward',
-                #                    #enabled_when=make_name('forward_enabled'),
-                #                    tooltip='Forwad 1 page'),
-                # UItem(make_name('page'),
-                #       tooltip='Current page'),
-                # UItem(make_name('npages'),
-                #       format_str='%02i', style='readonly'),
-                Item(make_name('omit_invalid'))
-            ),
-            defined_when=self.analyses_defined,
-        )
-        return analysis_grp
+    #               #                                  editor=ListStrEditor(editable=False,
+    #               #                                           selected='selected_analysis'
+    #               #                                           )
+    #               width=300),
+    #         HGroup(spring, Item(make_name('omit_invalid'))),
+    #         defined_when=self.analyses_defined)
+    #     return analysis_grp
 
     def traits_view(self):
         # main_grp= Group(
@@ -345,3 +265,81 @@ class BrowserPane(TraitsDockPane):
 
 
 #============= EOF =============================================
+        # def _get_browser_group(self):
+        #     project_grp = VGroup(
+        #         HGroup(Label('Filter'),
+        #                UItem('project_filter',
+        #                      width=75),
+        #                icon_button_editor('clear_selection_button',
+        #                                   'cross',
+        #                                   tooltip='Clear selected')),
+        #         UItem('projects',
+        #               editor=TabularEditor(editable=False,
+        #                                    selected='selected_projects',
+        #                                    adapter=ProjectAdapter(),
+        #                                    multi_select=True),
+        #               width=75))
+        #
+        #     sample_grp = VGroup(
+        #         HGroup(
+        #             #Label('Filter'),
+        #             UItem('sample_filter_parameter',
+        #                   editor=EnumEditor(name='sample_filter_parameters')),
+        #             UItem('sample_filter',
+        #                   width=75),
+        #             UItem('sample_filter',
+        #                   editor=EnumEditor(name='sample_filter_values'),
+        #                   width=-25),
+        #             # UItem('filter_non_run_samples',
+        #             #       tooltip='Omit non-analyzed samples'),
+        #             icon_button_editor('configure_sample_table',
+        #                                'cog',
+        #                                tooltip='Configure Sample Table')),
+        #         UItem('samples',
+        #               editor=TabularEditor(
+        #                   adapter=self.sample_tabular_adapter,
+        #                   editable=False,
+        #                   selected='selected_samples',
+        #                   multi_select=True,
+        #                   dclicked='dclicked_sample',
+        #                   column_clicked='column_clicked',
+        #                   #update='update_sample_table',
+        #                   #refresh='update_sample_table',
+        #                   stretch_last_section=False),
+        #               width=75))
+        #
+        #     grp = VSplit(
+        #         HSplit(project_grp,
+        #         sample_grp),
+        #         self._get_analysis_group(),
+        #         # label='Project/Sample'
+        #     )
+        #
+        #     return grp
+
+        # def _get_date_group(self):
+        #     f_grp = HGroup(
+        #         UItem('analysis_type',
+        #               editor=EnumEditor(name='analysis_types')),
+        #         UItem('mass_spectrometer',
+        #               editor=EnumEditor(name='mass_spectrometers')),
+        #         UItem('extraction_device',
+        #               editor=EnumEditor(name='extraction_devices')))
+        #
+        #     grp = VGroup(
+        #         f_grp,
+        #         Heading('Start'),
+        #         UItem('start_date',
+        #               editor=DateEditor(allow_future=False),
+        #               style='custom'),
+        #         UItem('start_time', ),
+        #         Item('_'),
+        #         Heading('End'),
+        #         UItem('end_date',
+        #               editor=DateEditor(allow_future=False),
+        #               style='custom'),
+        #         UItem('end_time', ))
+        #
+        #     return VSplit(grp,
+        #                   self._get_analysis_group(base='danalysis'),
+        #                   label='Date')
