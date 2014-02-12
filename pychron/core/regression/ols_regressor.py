@@ -18,7 +18,7 @@
 from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
 from numpy import polyval, asarray, column_stack, ones, \
-    matrix, sqrt, abs
+    matrix, sqrt
 from pychron.core.stats import calculate_mswd2, validate_mswd
 
 try:
@@ -46,8 +46,8 @@ class OLSRegressor(BaseRegressor):
             self.calculate()
 
     def calculate(self):
-        cxs = self.clean_xs
-        cys = self.clean_ys
+        cxs = self.pre_clean_xs
+        cys = self.pre_clean_ys
 
         if not self._check_integrity(cxs,cys):
             # self.debug('A integrity check failed')

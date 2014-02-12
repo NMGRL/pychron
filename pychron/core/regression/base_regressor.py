@@ -59,15 +59,18 @@ class BaseRegressor(Loggable):
     filter_ys = Array
     _filtering = Bool(False)
 
-    error_calc_type='SD'
+    error_calc_type = 'SD'
 
-    mswd=Property(depends_on='dirty, xs, ys')
-    valid_mswd=Bool
+    mswd = Property(depends_on='dirty, xs, ys')
+    valid_mswd = Bool
 
-    clean_xs=Property(depends_on='dirty, xs, ys')
-    clean_ys=Property(depends_on='dirty, xs, ys')
-    clean_xserr=Property(depends_on='dirty, xs, ys')
-    clean_yserr=Property(depends_on='dirty, xs, ys')
+    pre_clean_xs = Property(depends_on='dirty, xs, ys')
+    pre_clean_ys = Property(depends_on='dirty, xs, ys')
+
+    clean_xs = Property(depends_on='dirty, xs, ys')
+    clean_ys = Property(depends_on='dirty, xs, ys')
+    clean_xserr = Property(depends_on='dirty, xs, ys')
+    clean_yserr = Property(depends_on='dirty, xs, ys')
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
     #     self.calculate()
@@ -78,6 +81,7 @@ class BaseRegressor(Loggable):
     def get_filtered_data(self, xs, ys):
         rx, ry = xs, ys
         fod = self.filter_outliers_dict
+        self.outlier_excluded = []
         if fod.get('filter_outliers', False):
             for _ in range(fod.get('iterations', 1)):
                 self._filtering = True
@@ -89,7 +93,7 @@ class BaseRegressor(Loggable):
                 rx = delete(rx, outliers, 0)
                 ry = delete(ry, outliers, 0)
                 self._delete_filtered_hook(outliers)
-
+            self.dirty = True
         return rx, ry
 
     def _delete_filtered_hook(self, outliers):
@@ -100,6 +104,13 @@ class BaseRegressor(Loggable):
     #
     # def get_clean_ys(self):
     #     return self._clean_array(self.ys)
+    @cached_property
+    def _get_pre_clean_xs(self):
+        return self._pre_clean_array(self.xs)
+
+    @cached_property
+    def _get_pre_clean_ys(self):
+        return self._pre_clean_array(self.ys)
 
     @cached_property
     def _get_clean_xs(self):
@@ -117,8 +128,12 @@ class BaseRegressor(Loggable):
     def _get_clean_yserr(self):
         return self._clean_array(self.yserr)
 
+    def _pre_clean_array(self, v):
+        exc = self.user_excluded + self.truncate_excluded
+        return delete(v, exc, 0)
+
     def _clean_array(self, v):
-        exc = list(set(self.user_excluded + self.truncate_excluded))
+        exc = self.user_excluded + self.truncate_excluded + self.outlier_excluded
         return delete(v, exc, 0)
 
     def _check_integrity(self, x, y):
@@ -196,7 +211,7 @@ class BaseRegressor(Loggable):
         ss_res = (res ** 2).sum()
 
         n = res.shape[0]
-        q=len(self.coefficients)
+        q = len(self.coefficients)
         s = (ss_res / (n - q)) ** 0.5
         return s
 
@@ -219,7 +234,7 @@ class BaseRegressor(Loggable):
         if rmodel is None:
             rmodel = self.predict(rx)
 
-        cors=self.calculate_ci_error(rx, rmodel)
+        cors = self.calculate_ci_error(rx, rmodel)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
                 return rmodel - cors, rmodel + cors
@@ -264,17 +279,17 @@ class BaseRegressor(Loggable):
             return cors
 
     def get_syx(self):
-        n = self.xs.shape[0]
-        obs = self.ys
+        n = self.clean_xs.shape[0]
+        obs = self.clean_ys
 
-        model = self.predict(self.xs)
+        model = self.predict(self.clean_xs)
         if model is not None:
             return (1. / (n - 2) * ((obs - model) ** 2).sum()) ** 0.5
         else:
             return 0
 
     def get_ssx(self, xm=None):
-        x = self.xs
+        x = self.clean_xs
         if xm is None:
             xm = x.mean()
 
@@ -333,19 +348,18 @@ class BaseRegressor(Loggable):
         return s
 
     def _get_mswd(self):
-        self.valid_mswd=False
+        self.valid_mswd = False
         # ys=self._clean_array(self.ys)
         # yserr=self._clean_array(self.yserr)
-        ys=self.clean_ys
-        yserr=self.clean_yserr
+        ys = self.clean_ys
+        yserr = self.clean_yserr
 
-        if self._check_integrity(ys,yserr):
-
-            mswd=calculate_mswd(ys, yserr)
-            self.valid_mswd=validate_mswd(mswd,len(ys))
+        if self._check_integrity(ys, yserr):
+            mswd = calculate_mswd(ys, yserr)
+            self.valid_mswd = validate_mswd(mswd, len(ys))
             return mswd
 
     def _get_n(self):
-        return len(self._clean_array(self.xs))
+        return len(self.clean_xs)
 
 #============= EOF =============================================
