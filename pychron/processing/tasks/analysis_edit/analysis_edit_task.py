@@ -35,6 +35,7 @@ from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -43,7 +44,7 @@ from pychron.processing.analyses.analysis import Analysis
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-from traits.api import HasTraits, Str, Property, Int
+from traits.api import HasTraits, Str, Property
 from traitsui.api import View, Item, UItem, HGroup, TabularEditor
 
 
@@ -51,7 +52,7 @@ class AnalysisGroupEntry(HasTraits):
     name = Str
     items = List
     analyses = Property
-    analysis_type = Int
+    analysis_type = Str
 
     def _get_analyses(self):
         return ((self.items, self.analysis_type),)
@@ -129,9 +130,10 @@ class AnalysisEditTask(BaseBrowserTask):
     def _set_analysis_group(self, db, group, ans):
         # db=self.manager.db
         for ais, at in ans:
+            at = db.get_analysis_type(at)
             for ai in ais:
                 ai = db.get_analysis_uuid(ai.uuid)
-                db.add_analysis_group_set(group, ai, analysis_type=at)
+                db.add_analysis_group_set(group, ai, analysis_type=at.id)
 
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
@@ -577,8 +579,12 @@ class AnalysisEditTask(BaseBrowserTask):
         if not items:
             items = self.analysis_table.selected
 
+        if not items:
+            if self.unknowns_pane:
+                items = self.unknowns_pane.items
+
         if items:
-            return ((items, 7),)  #unknown analysis type
+            return ((items, 'unknown'),)  #unknown analysis type
 
     def _get_analyses_to_tag(self):
         items = None

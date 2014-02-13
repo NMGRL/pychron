@@ -38,7 +38,9 @@ class BlanksEditor(InterpolationEditor):
 
     def load_fits(self, ref_ans):
         keys = ref_ans.isotope_keys
-        fits = [ref_ans.isotopes[ki].blank.fit or 'average_sem' for ki in keys]
+        fits = [(ref_ans.isotopes[ki].blank.fit,
+                 ref_ans.isotopes[ki].blank.error_type,
+                 ref_ans.isotopes[ki].blank.filter_outliers_dict) for ki in keys]
         self.tool.load_fits(keys, fits)
 
     def do_fit(self, ans):
