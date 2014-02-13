@@ -28,6 +28,19 @@ from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #from pychron.core.ui.thread import Thread
 
+def fits_equal(dbfit, fit, fod):
+    """
+        return True if fits are the same
+    """
+    same = False
+    if dbfit.fit == fit:
+        a = fod['filter_outliers'] == dbfit.filter_outliers
+        b = fod['iterations'] == dbfit.filter_outlier_iterations
+        c = fod['std_devs'] == dbfit.filter_outlier_std_devs
+        return a and b and c
+
+    return same
+
 
 class IsotopeEvolutionEditor(GraphEditor):
     component = Any
@@ -114,70 +127,141 @@ class IsotopeEvolutionEditor(GraphEditor):
                 self.warning('no isotope {} for analysis {}'.format(fname, unk.record_id))
 
     def _save_fit(self, unk, meas_analysis):
+
+        tool_fits = [fi for fi in self.tool.fits if fi.save]
+        if not tool_fits:
+            return
+
+        # fit_hist = None
+
+        def in_tool_fits(f):
+            name = f.isotope.molecular_weight.name
+            if f.isotope.kind == 'baseline':
+                name = '{}bs'.format(name)
+            return next((t for t in tool_fits if t.name == name), None)
+
+        sel_hist = meas_analysis.selected_histories
+        sel_fithist = sel_hist.selected_fits
+        dbfits = sel_fithist.fits
+        print dbfits
         fit_hist = None
+        if dbfits:
+            for dbfi in dbfits:
+                tf = in_tool_fits(dbfi)
+                if tf:
+                    #use tool fit
+                    fd = dict(filter_outliers=fi.filter_outliers,
+                              iterations=fi.filter_iterations,
+                              std_devs=fi.filter_std_devs)
 
-        for fi in self.tool.fits:
-            if not fi.save:
-                continue
+                    tool_fits.remove(tf)
+                    fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
+                                                 tf.name, tf.fit, tf.error_type, fd)
+                    if not fit_hist:
+                        db = self.processor.db
+                        sess = db.get_session()
+                        sess.rollback()
+                        break
+                else:
+                    fd = dict(filter_outliers=dbfi.filter_outliers,
+                              iterations=dbfi.filter_outlier_iterations,
+                              std_devs=dbfi.filter_outlier_std_devs)
 
+                    name = dbfi.isotope.molecular_weight.name
+                    if dbfi.isotope.kind == 'baseline':
+                        name = '{}bs'.format(name)
+
+                    fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
+                                                 name,
+                                                 dbfi.fit, dbfi.error_type, fd)
+
+        for fi in tool_fits:
             fd = dict(filter_outliers=fi.filter_outliers,
                       iterations=fi.filter_iterations,
                       std_devs=fi.filter_std_devs)
 
             fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                          fi.name, fi.fit, fi.error_type, fd)
+            if not fit_hist:
+                db = self.processor.db
+                sess = db.get_session()
+                sess.rollback()
+                break
+
+                #
+                # fitted=[]
+                # for fi in self.tool.fits:
+                #     if not fi.save:
+                #         continue
+                #
+                #     fd = dict(filter_outliers=fi.filter_outliers,
+                #               iterations=fi.filter_iterations,
+                #               std_devs=fi.filter_std_devs)
+                #
+                #     fit_hist, isoname, kind, added= self._save_db_fit(unk, meas_analysis, fit_hist,
+                #                                  fi.name, fi.fit, fi.error_type, fd)
+                #     if added:
+                #         fitted.append((isoname, kind))
+                #
+                # added=False
+                # for dbfi in dbfits:
+                #     if not next(((f,k) for f,k in fitted
+                #                  if dbfi.isotope.molecular_weight.name==f and dbfi.isotope.kind==k), None):
+                #         fd = dict(filter_outliers=dbfi.filter_outliers,
+                #                   iterations=dbfi.filter_iterations,
+                #                   std_devs=dbfi.filter_std_devs)
+                #
+                #         fit_hist=self._save_db_fit(unk, meas_analysis, fit_hist,
+                #                           dbfi.isotope.name , dbfi.fit, dbfi.error_type, fd)
+                #         print 'adding old fit for'.format(dbfi.isotope.name)
+                #         added=True
+                #
+                # if not added:
+                #     sess = self.processor.db.get_session()
+                #     sess.delete(fit_hist)
 
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict):
         db = self.processor.db
-        # print name
+        print 'save fit', name
         if name.endswith('bs'):
             name = name[:-2]
-            dbfit = unk.get_db_fit(meas_analysis, name, 'baseline')
+            # dbfit = unk.get_db_fit(meas_analysis, name, 'baseline')
             kind = 'baseline'
             iso = unk.isotopes[name].baseline
         else:
-            dbfit = unk.get_db_fit(meas_analysis, name, 'signal')
+            # dbfit = unk.get_db_fit(meas_analysis, name, 'signal')
             kind = 'signal'
             iso = unk.isotopes[name]
 
         if filter_dict:
             iso.filter_outliers_dict = filter_dict.copy()
-            # iso.filter_outliers = filter_dict['use']
-            # iso.filter_outlier_iterations = filter_dict['n']
-            # iso.filter_outlier_std_devs = filter_dict['std_devs']
 
-        if dbfit != fit:
-            v = iso.uvalue
-            f, e = convert_fit(fit)
+        v = iso.uvalue
+        f, e = convert_fit(fit)
+        iso.fit = f
+        iso.error_type = et or e
 
-            iso.fit = f
-            iso.error_type = et or e
-            # iso.fit = convert_fit(fit)
+        if fit_hist is None:
+            fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
 
-            if fit_hist is None:
-                fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
+        dbiso = next((iso for iso in meas_analysis.isotopes
+                      if iso.molecular_weight.name == name and
+                         iso.kind == kind), None)
 
-            dbiso = next((iso for iso in meas_analysis.isotopes
-                          if iso.molecular_weight.name == name and
-                             iso.kind == kind), None)
+        if fit_hist is None:
+            self.warning('Failed added fit history for {}'.format(unk.record_id))
+            return
 
-            if fit_hist is None:
-                self.warning('Failed added fit history for {}'.format(unk.record_id))
-                return
-
-            fod = iso.filter_outliers_dict
-            db.add_fit(fit_hist, dbiso, fit=fit,
-                       error_type=iso.error_type,
-                       filter_outliers=fod['filter_outliers'],
-                       filter_outlier_iterations=fod['iterations'],
-                       filter_outlier_std_devs=fod['std_devs'])
-            #update isotoperesults
-            v, e = float(v.nominal_value), float(v.std_dev)
-            db.add_isotope_result(dbiso, fit_hist,
-                                  signal_=v, signal_err=e)
-
-            # self.debug('adding {} fit {} - {}'.format(kind, name, fit))
-
+        fod = iso.filter_outliers_dict
+        db.add_fit(fit_hist, dbiso, fit=fit,
+                   error_type=iso.error_type,
+                   filter_outliers=fod['filter_outliers'],
+                   filter_outlier_iterations=fod['iterations'],
+                   filter_outlier_std_devs=fod['std_devs'])
+        #update isotoperesults
+        v, e = float(v.nominal_value), float(v.std_dev)
+        db.add_isotope_result(dbiso, fit_hist,
+                              signal_=v, signal_err=e)
         return fit_hist
 
     def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):

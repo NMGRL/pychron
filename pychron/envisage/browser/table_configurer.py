@@ -24,6 +24,7 @@ from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, Gr
 import apptools.sweet_pickle as pickle
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -163,17 +164,21 @@ class AnalysisTableConfigurer(TableConfigurer):
     #         map(int, v.split('-'))
 
     def _get_high_post(self):
+        hp = None
         if self.use_named_date_range:
             if self.named_date_range in ( 'this month', 'today', 'this week'):
                 hp = datetime.today()
             elif self.named_date_range == 'yesterday':
                 hp = datetime.today - timedelta(days=1)
-            elif self.use_high_post:
-                hp = self._high_post
+        elif self.use_high_post:
+            hp = self._high_post
+            if not hp:
+                hp = datetime.today()
 
-            return hp
+        return hp
 
     def _get_low_post(self):
+        lp = None
 
         if self.use_named_date_range:
             d = datetime.today()
@@ -182,10 +187,13 @@ class AnalysisTableConfigurer(TableConfigurer):
             elif self.named_date_range == 'this week':
                 days = datetime.today().weekday()
                 lp = d - timedelta(days=days)
-            elif self.use_low_post:
-                lp = self._low_post
 
-            return lp
+        elif self.use_low_post:
+            lp = self._low_post
+            if not lp:
+                lp = datetime.today()
+
+        return lp
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()

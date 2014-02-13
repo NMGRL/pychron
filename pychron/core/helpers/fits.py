@@ -25,7 +25,7 @@ def natural_name_fit(f):
     if isinstance(f, (str, unicode)):
         return f
     elif isinstance(f, int):
-        return FITS[min(0, f - 1)]
+        return FITS[max(0, f - 1)]
 
 
 def convert_fit(f):
