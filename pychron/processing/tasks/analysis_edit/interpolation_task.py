@@ -33,6 +33,7 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
+from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 
 
 class InterpolationAnalysisGroupEntry(HasTraits):
@@ -89,7 +90,8 @@ class InterpolationTask(AnalysisEditTask):
     references_pane_klass = ReferencesPane
     default_reference_analysis_type = 'air'
 
-    tool_bars = [SToolBar(DatabaseSaveAction(),
+    tool_bars = [SToolBar(AddIsoEvoAction(), ),
+                 SToolBar(DatabaseSaveAction(),
                           BinAnalysesAction())]
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
 
