@@ -168,45 +168,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             win.open()
 
-    # @on_trait_change('mass_spectrometer, analysis_type, extraction_device')
-    # def _query(self):
-    #     if self._ok_query():
-    #
-    #         db = self.manager.db
-    #         with db.session_ctx() as sess:
-    #             q = sess.query(meas_AnalysisTable)
-    #             q = q.join(gen_LabTable)
-    #             q = q.join(meas_MeasurementTable)
-    #             q = q.join(gen_MassSpectrometerTable)
-    #             q = q.join(gen_AnalysisTypeTable)
-    #
-    #             if self._ok_ed():
-    #                 q = q.join(meas_ExtractionTable)
-    #                 q = q.join(gen_ExtractionDeviceTable)
-    #
-    #             name = self.mass_spectrometer
-    #             q = q.filter(gen_MassSpectrometerTable.name == name)
-    #             if self._ok_ed():
-    #                 q = q.filter(gen_ExtractionDeviceTable.name == self.extraction_device)
-    #
-    #             q = q.filter(gen_AnalysisTypeTable.name == self.analysis_type)
-    #             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-    #             q = q.limit(200)
-    #
-    #             ans = q.all()
-    #
-    #             aa = [self._record_view_factory(ai) for ai in ans]
-    #
-    #             # self.danalysis_table.analyses = aa
-    #             # self.danalysis_table.oanalyses = aa
-    #     else:
-    #         if self.mass_spectrometer == 'None':
-    #             self.mass_spectrometer = DEFAULT_SPEC
-    #         if self.extraction_device == 'None':
-    #             self.extraction_device = DEFAULT_ED
-    #         if self.analysis_type == 'None':
-    #             self.analysis_type = DEFAULT_AT
-
     @on_trait_change('analysis_table:selected')
     def _selected_analysis_changed(self, new):
         self._set_selected_analysis(new)
@@ -226,10 +187,15 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _selected_samples_changed(self, new):
         if new:
             # self._set_page(-1, reset_page=True)
+            at = self.analysis_table
+            lp, hp, lim = at.low_post, at.high_post, at.limit
             ans = self._get_sample_analyses(self.selected_samples,
-                                            limit=self.analysis_table.limit,
-                                            include_invalid=not self.analysis_table.omit_invalid)
-
+                                            low_post=lp,
+                                            high_post=hp,
+                                            limit=lim,
+                                            include_invalid=not at.omit_invalid)
+            self.debug('selected samples changed. loading analyses. '
+                       'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)
             # ans=self.analysis_table.analyses
             # if ans:
@@ -237,26 +203,25 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             #     self.analysis_table.selected = ans[-1:]
 
 
-    # @on_trait_change('analysis_table:page')
-    # def _page_changed(self, new):
-    #     self._set_page(new)
-
-    # def _set_page(self, page, reset_page=False):
-    #     if not self.analysis_table.no_update:
-    #         include_invalid = not self.analysis_table.omit_invalid
-    #         page_width = self.analysis_table.page_width
-    #
-    #         ans, tc = self._get_sample_analyses(self.selected_samples,
-    #                                             include_invalid=include_invalid,
-    #                                             page_width=page_width,
-    #                                             page=page)
-    #
-    #         self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
-
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)
         return at
+        #============= EOF =============================================
+        # @on_trait_change('analysis_table:page')
+        # def _page_changed(self, new):
+        #     self._set_page(new)
 
+        # def _set_page(self, page, reset_page=False):
+        #     if not self.analysis_table.no_update:
+        #         include_invalid = not self.analysis_table.omit_invalid
+        #         page_width = self.analysis_table.page_width
+        #
+        #         ans, tc = self._get_sample_analyses(self.selected_samples,
+        #                                             include_invalid=include_invalid,
+        #                                             page_width=page_width,
+        #                                             page=page)
+        #
+        #         self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
         # def _danalysis_table_default(self):
         #     at = AnalysisTable(db=self.manager.db)
         #     return at
@@ -304,4 +269,41 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 # handlers
 #===============================================================================
 
-#============= EOF =============================================
+        # @on_trait_change('mass_spectrometer, analysis_type, extraction_device')
+        # def _query(self):
+        #     if self._ok_query():
+        #
+        #         db = self.manager.db
+        #         with db.session_ctx() as sess:
+        #             q = sess.query(meas_AnalysisTable)
+        #             q = q.join(gen_LabTable)
+        #             q = q.join(meas_MeasurementTable)
+        #             q = q.join(gen_MassSpectrometerTable)
+        #             q = q.join(gen_AnalysisTypeTable)
+        #
+        #             if self._ok_ed():
+        #                 q = q.join(meas_ExtractionTable)
+        #                 q = q.join(gen_ExtractionDeviceTable)
+        #
+        #             name = self.mass_spectrometer
+        #             q = q.filter(gen_MassSpectrometerTable.name == name)
+        #             if self._ok_ed():
+        #                 q = q.filter(gen_ExtractionDeviceTable.name == self.extraction_device)
+        #
+        #             q = q.filter(gen_AnalysisTypeTable.name == self.analysis_type)
+        #             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+        #             q = q.limit(200)
+        #
+        #             ans = q.all()
+        #
+        #             aa = [self._record_view_factory(ai) for ai in ans]
+        #
+        #             # self.danalysis_table.analyses = aa
+        #             # self.danalysis_table.oanalyses = aa
+        #     else:
+        #         if self.mass_spectrometer == 'None':
+        #             self.mass_spectrometer = DEFAULT_SPEC
+        #         if self.extraction_device == 'None':
+        #             self.extraction_device = DEFAULT_ED
+        #         if self.analysis_type == 'None':
+        #             self.analysis_type = DEFAULT_AT

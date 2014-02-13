@@ -42,6 +42,7 @@ class AnalysisTable(HasTraits):
     configure_analysis_table = Button
     table_configurer = Instance(AnalysisTableConfigurer)
 
+
     # forward = Button
     # backward = Button
     # page_width = Int(1000)
@@ -53,6 +54,8 @@ class AnalysisTable(HasTraits):
     # npages = Property(depends_on='n_all_analyses,page_width')
 
     limit = DelegatesTo('table_configurer')
+    low_post = DelegatesTo('table_configurer')
+    high_post = DelegatesTo('table_configurer')
     no_update = False
     scroll_to_row=Event
     refresh_needed=Event
@@ -85,6 +88,8 @@ class AnalysisTable(HasTraits):
     #     p = self.page
     #     p -= 1
     #     self.page = max(1, p)
+
+
     def _tabular_adapter_changed(self):
         self.table_configurer.adapter = self.tabular_adapter
         self.table_configurer.load()

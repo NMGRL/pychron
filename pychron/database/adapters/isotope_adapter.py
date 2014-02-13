@@ -340,7 +340,12 @@ class IsotopeAdapter(DatabaseAdapter):
 
     #def count_sample_analyses(self, *args, **kw):
     #    return self._get_sample_analyses('count', *args, **kw)
-    def get_labnumber_analyses(self, lns, low_post=None, **kw):
+    def get_labnumber_analyses(self, lns, low_post=None, high_post=None, **kw):
+        """
+            get analyses that have labnunmbers in lns.
+            low_post and high_post used to filter a date range.
+            posts are inclusive
+        """
         if not hasattr(lns, '__iter__'):
             lns = (lns, )
 
@@ -350,6 +355,8 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(gen_LabTable.identifier.in_(lns))
             if low_post:
                 q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
+            if high_post:
+                q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
 
             return self._get_paginated_analyses(q, **kw)
 

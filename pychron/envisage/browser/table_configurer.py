@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import datetime, timedelta
 import os
 
-from traits.api import HasTraits, List, Any, Bool, Int
+from traits.api import HasTraits, List, Any, Bool, Int, Property, Enum, Date
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler
+from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, Group, HGroup, Heading
 import apptools.sweet_pickle as pickle
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -114,9 +116,76 @@ class TableConfigurer(HasTraits):
         return
 
 
+def str_to_time(lp):
+    lp = lp.replace('/', '-')
+    if lp.count('-') == 2:
+        y = lp.split('-')[-1]
+        y = 'y' if len(y) == 2 else 'Y'
+
+        fmt = '%m-%d-%{}'.format(y)
+    elif lp.count('-') == 1:
+        y = lp.split('-')[-1]
+        y = 'y' if len(y) == 2 else 'Y'
+
+        fmt = '%m-%{}'.format(y)
+    else:
+        fmt = '%Y' if len(lp) == 4 else '%y'
+
+    return datetime.strptime(lp, fmt)
+
+
 class AnalysisTableConfigurer(TableConfigurer):
     id = 'analysis.table'
     limit = Int
+    named_date_range = Enum('this month', 'this week', 'yesterday')
+    low_post = Property(Date, depends_on='_low_post')
+    high_post = Property(Date, depends_on='_high_post')
+    use_low_post = Bool
+    use_high_post = Bool
+    use_named_date_range = Bool
+    _low_post = Date
+    _high_post = Date
+
+    def _set_low_post(self, v):
+        self._low_post = v
+
+    # def _validate_low_post(self, v):
+    #     v = v.replace('/', '-')
+    #     if v.count('-') < 3:
+    #         map(int, v.split('-'))
+
+    def _set_high_post(self, v):
+        self._high_post = v
+
+    # def _validate_high_post(self,v):
+    #     v=v.replace('/','-')
+    #     if v.count('-')<3:
+    #         map(int, v.split('-'))
+
+    def _get_high_post(self):
+        if self.use_named_date_range:
+            if self.named_date_range in ( 'this month', 'today', 'this week'):
+                hp = datetime.today()
+            elif self.named_date_range == 'yesterday':
+                hp = datetime.today - timedelta(days=1)
+            elif self.use_high_post:
+                hp = self._high_post
+
+            return hp
+
+    def _get_low_post(self):
+
+        if self.use_named_date_range:
+            d = datetime.today()
+            if self.named_date_range == 'this month':
+                lp = d - timedelta(days=d.day, seconds=d.second, hours=d.hour, minutes=d.minute)
+            elif self.named_date_range == 'this week':
+                days = datetime.today().weekday()
+                lp = d - timedelta(days=days)
+            elif self.use_low_post:
+                lp = self._low_post
+
+            return lp
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
@@ -128,14 +197,22 @@ class AnalysisTableConfigurer(TableConfigurer):
         self.limit = obj.get('limit', 500)
 
     def traits_view(self):
-        v = View(VGroup(
-            VGroup(UItem('columns',
-                         style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)),
-                   label='Columns', show_border=True),
-            Item('limit',
-                 tooltip='Limit number of displayed analyses',
-                 label='Limit')),
+        v = View(VGroup(VGroup(UItem('columns',
+                                     style='custom',
+                                     editor=CheckListEditor(name='available_columns', cols=3)),
+                               label='Columns', show_border=True),
+                        Group(
+                            VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
+                                   UItem('low_post', style='custom', enabled_when='use_low_post')),
+                            VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
+                                   UItem('high_post', style='custom', enabled_when='use_high_post')),
+                            VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
+                                   UItem('named_date_range', enabled_when='use_named_date_range'))),
+                        Item('limit',
+                             tooltip='Limit number of displayed analyses',
+                             label='Limit'),
+                        show_border=True,
+                        label='Limiting'),
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='modal',
                  title=self.title,
@@ -143,6 +220,7 @@ class AnalysisTableConfigurer(TableConfigurer):
                  resizable=True,
                  width=300)
         return v
+
 
 class SampleTableConfigurer(TableConfigurer):
     title = 'Configure Sample Table'
@@ -166,8 +244,8 @@ class SampleTableConfigurer(TableConfigurer):
                          editor=CheckListEditor(name='available_columns', cols=3)),
                    label='Columns', show_border=True),
             Item('filter_non_run_samples',
-                 tooltip='Omit samples that have not been analyzed to date',
-                 label='Exclude Non-Run')),
+                 tooltip='Omit samples that have not been analyzed to date'),
+            label='Exclude Non-Run'),
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='modal',
                  title=self.title,
@@ -175,7 +253,6 @@ class SampleTableConfigurer(TableConfigurer):
                  resizable=True,
                  width=300)
         return v
-
 
 
 #    column_mapper={'Sample':'name',

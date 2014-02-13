@@ -28,6 +28,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -345,14 +346,17 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _get_sample_analyses(self, samples,
                              limit=500,
+                             low_post=None,
+                             high_post=None,
                              # page=None, page_width=None,
                              include_invalid=False):
         db = self.manager.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
-            lps = [si.low_post for si in samples if si.low_post is not None]
+            if low_post is None:
+                lps = [si.low_post for si in samples if si.low_post is not None]
 
-            low_post = min(lps) if lps else None
+                low_post = min(lps) if lps else None
 
             # o = None
             # if page_width:
@@ -363,6 +367,7 @@ class BrowserMixin(ColumnSorterMixin):
 
             ans, tc = db.get_labnumber_analyses(lns,
                                                 low_post=low_post,
+                                                high_post=high_post,
                                                 limit=limit,
                                                 # offset=o,
                                                 include_invalid=include_invalid)
