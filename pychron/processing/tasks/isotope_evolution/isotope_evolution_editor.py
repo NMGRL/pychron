@@ -117,7 +117,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         fit_hist = None
 
         for fi in self.tool.fits:
-            if not fi.use:
+            if not fi.save:
                 continue
 
             fd = dict(filter_outliers=fi.filter_outliers,
