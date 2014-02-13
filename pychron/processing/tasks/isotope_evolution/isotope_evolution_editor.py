@@ -120,8 +120,8 @@ class IsotopeEvolutionEditor(GraphEditor):
             if not fi.use:
                 continue
 
-            fd = dict(use=fi.filter_outliers,
-                      n=fi.filter_iterations,
+            fd = dict(filter_outliers=fi.filter_outliers,
+                      iterations=fi.filter_iterations,
                       std_devs=fi.filter_std_devs)
 
             fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
@@ -141,9 +141,10 @@ class IsotopeEvolutionEditor(GraphEditor):
             iso = unk.isotopes[name]
 
         if filter_dict:
-            iso.filter_outliers = filter_dict['use']
-            iso.filter_outlier_iterations = filter_dict['n']
-            iso.filter_outlier_std_devs = filter_dict['std_devs']
+            iso.filter_outliers_dict = filter_dict.copy()
+            # iso.filter_outliers = filter_dict['use']
+            # iso.filter_outlier_iterations = filter_dict['n']
+            # iso.filter_outlier_std_devs = filter_dict['std_devs']
 
         if dbfit != fit:
             v = iso.uvalue

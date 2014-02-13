@@ -18,6 +18,14 @@
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+FITS = ['linear', 'parabolic', 'cubic']
+
+
+def natural_name_fit(f):
+    if isinstance(f, (str, unicode)):
+        return f
+    elif isinstance(f, int):
+        return FITS[min(0, f - 1)]
 
 
 def convert_fit(f):
@@ -27,7 +35,7 @@ def convert_fit(f):
 
     if isinstance(f, (str, unicode)):
         f = f.lower()
-        fits = ['linear', 'parabolic', 'cubic']
+
         if '_' in f:
 
             try:
@@ -36,8 +44,8 @@ def convert_fit(f):
             except ValueError:
                 return None, None
 
-        if f in fits:
-            f = fits.index(f) + 1
+        if f in FITS:
+            f = FITS.index(f) + 1
         elif f.startswith('average'):
             f = 'average'
             if not err:

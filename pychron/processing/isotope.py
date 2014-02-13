@@ -25,9 +25,11 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
+from pychron.core.helpers.fits import natural_name_fit
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 import struct
@@ -105,7 +107,8 @@ class IsotopicMeasurement(BaseMeasurement):
     _value = Float
     _error = Float
 
-    fit = String
+    fit = Property(depends_on='_fit')
+    _fit = String
     fit_abbreviation = Property(depends_on='fit')
     fit_blocks=List
     error_type=String('SEM')
@@ -243,6 +246,13 @@ class IsotopicMeasurement(BaseMeasurement):
     def _get_fit_abbreviation(self):
         return '{}{}'.format(fit_abbreviation(self.fit),
                              '*' if self.filter_outliers_dict.get('filter_outliers') else '')
+
+    def _get_fit(self):
+        return self._fit
+
+    def _set_fit(self, f):
+        f = natural_name_fit(f)
+        self._fit = f
 
     #===============================================================================
     # arthmetic
