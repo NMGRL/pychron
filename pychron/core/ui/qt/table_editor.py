@@ -28,7 +28,6 @@ class myTableView(TableView):
 
         editor = self._editor
         font = editor.factory.cell_font
-        print font
         if font is not None:
             fnt = QFont(font)
             size = QFontMetrics(fnt)
@@ -51,6 +50,7 @@ class myTableView(TableView):
     def keyReleaseEvent(self, *args, **kwargs):
         self._editor.factory.command_key = False
         return TableView.keyReleaseEvent(self, *args, **kwargs)
+
 
 class myTableEditor(TableEditor):
     table_view_factory = myTableView

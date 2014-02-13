@@ -30,9 +30,8 @@ class RecallEditor(BaseTraitsEditor):
     name = Property(depends_on='analysis_view.analysis_id')
 
     def set_items(self, items):
-        print 'asdf', items
-        self.model=items[0]
-        self.analysis_view=self.model.analysis_view
+        self.model = items[0]
+        self.analysis_view = self.model.analysis_view
 
     def traits_view(self):
         v = View(UItem('analysis_view',

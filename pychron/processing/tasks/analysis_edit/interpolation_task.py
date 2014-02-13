@@ -48,7 +48,6 @@ class InterpolationAnalysisGroupEntry(HasTraits):
         return (self.items, self.analysis_type), (self.ritems, self.ranalysis_type)
 
     def set_items(self, ans):
-        print ans
         (items, at), (ritems, rat) = ans
         self.ranalysis_type = rat
         self.analysis_type = at
@@ -61,11 +60,11 @@ class InterpolationAnalysisGroupEntry(HasTraits):
         v = View(
             VGroup(
                 HGroup(Item('name', label='Analysis Group Name')),
-            VGroup(
-                UItem('items', editor=TabularEditor(adapter=AnalysisAdapter(),
-                                                    operations=['delete'])),
-                UItem('ritems', editor=TabularEditor(adapter=AnalysisAdapter(),
-                                                     operations=['delete'])))),
+                VGroup(
+                    UItem('items', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                        operations=['delete'])),
+                    UItem('ritems', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                         operations=['delete'])))),
             resizable=True,
             buttons=['OK', 'Cancel'],
             kind='livemodal',

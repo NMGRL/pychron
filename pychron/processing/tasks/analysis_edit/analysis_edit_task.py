@@ -39,6 +39,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -125,7 +126,7 @@ class AnalysisEditTask(BaseBrowserTask):
             return
 
         a = self.analysis_group_edit_klass()
-        print ans
+        # print ans
         a.set_items(ans)
 
         info = a.edit_traits()

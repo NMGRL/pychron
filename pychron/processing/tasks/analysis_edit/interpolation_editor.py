@@ -27,6 +27,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -522,7 +523,7 @@ class InterpolationEditor(GraphEditor):
             scatter = plotobj.plots[key][0]
             p_uys, p_ues = self._set_interpolated_values(iso, reg, ans)
 
-            print key, len(p_uys), len(p_ues), len(ans), scatter.index.get_size()
+            # print key, len(p_uys), len(p_ues), len(ans), scatter.index.get_size()
             # scatter.value.set_data(p_uys)
             # scatter.yerror.set_data(p_ues)
 

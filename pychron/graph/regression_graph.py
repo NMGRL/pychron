@@ -275,7 +275,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     def _set_regressor(self, scatter, r):
 
         selection = scatter.index.metadata['selections']
-        print selection, r.outlier_excluded,
+
         # selection = list(set(r.outlier_excluded + r.truncate_excluded).difference(selection))
         # selection=set(selection).difference(set(r.outlier_excluded+r.truncate_excluded))
         # selection = set(selection) - set(r.outlier_excluded+r.truncate_excluded)

@@ -34,7 +34,7 @@ class ItemAdapter(TabularAdapter):
     columns = [('Run ID', 'record_id'),
                ('Sample', 'sample'),
                ('Tag', 'tag')]
-    font='arial 10'
+    font = 'arial 10'
 
 
 class Tag(HasTraits):
@@ -101,7 +101,6 @@ class TagTable(HasTraits):
     def delete_tag(self, tag):
         if isinstance(tag, str):
             tag = next((ta for ta in self.tags if ta.name == tag), None)
-            print tag
 
         if tag:
             self.tags.remove(tag)
@@ -117,7 +116,7 @@ class TagTable(HasTraits):
                 if dbtag is None:
                     dbtag = self._add_tag(ti)
 
-                for a in ('ideo', 'spec', 'iso','series'):
+                for a in ('ideo', 'spec', 'iso', 'series'):
                     a = 'omit_{}'.format(a)
                     setattr(dbtag, a, getattr(ti, a))
 
@@ -140,7 +139,7 @@ class TagTableView(Loggable):
 
     selected = Any
     items = List
-    use_filter=Bool(True)
+    use_filter = Bool(True)
 
     def save(self):
         self.table.save()
@@ -202,7 +201,8 @@ class TagTableView(Loggable):
                  HGroup(
                      icon_button_editor('add_tag_button', 'add', tooltip='Add a tag'),
                      icon_button_editor('delete_tag_button', 'delete', tooltip='Delete selected tags'),
-                     icon_button_editor('save_button', 'database_save', tooltip='Save changes from the "Tag" table to the database')),
+                     icon_button_editor('save_button', 'database_save',
+                                        tooltip='Save changes from the "Tag" table to the database')),
                  UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
                                                      multi_select=True,
                                                      operations=['delete'])),

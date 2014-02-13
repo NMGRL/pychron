@@ -58,7 +58,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save(self, fits, filters, progress):
         proc = self.processor
-        n=len(self.analyses)
+        n = len(self.analyses)
         if progress is None:
             progress = proc.open_progress(n=n)
         else:
@@ -74,8 +74,8 @@ class IsotopeEvolutionEditor(GraphEditor):
             else:
                 self._save_fit(unk, meas_analysis)
 
-            #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
-            #proc.save_arar(unk, meas_analysis)
+                #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
+                #proc.save_arar(unk, meas_analysis)
         progress.soft_close()
 
     def save_fits(self, fits, filters, progress=None):
@@ -100,7 +100,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     if len(iso.xs):
                         fit = eval(fit, {'x': iso.xs[-1]})
                     else:
-                        fit='linear'
+                        fit = 'linear'
 
                 elif 'if d' in fit:
                     if len(iso.xs):
@@ -117,7 +117,6 @@ class IsotopeEvolutionEditor(GraphEditor):
         fit_hist = None
 
         for fi in self.tool.fits:
-            print fi, fi.save
             if not fi.save:
                 continue
 
@@ -149,10 +148,10 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         if dbfit != fit:
             v = iso.uvalue
-            f,e=convert_fit(fit)
+            f, e = convert_fit(fit)
 
-            iso.fit=f
-            iso.error_type=et or e
+            iso.fit = f
+            iso.error_type = et or e
             # iso.fit = convert_fit(fit)
 
             if fit_hist is None:
@@ -234,7 +233,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         if not fits:
             return
 
-        self.graphs=[]
+        self.graphs = []
         unk = self.analyses
         n = len(unk)
         r, c = 1, 1
@@ -244,14 +243,14 @@ class IsotopeEvolutionEditor(GraphEditor):
                 if c >= 7:
                     r += 1
 
-        cg=self._container_factory((r, c))
+        cg = self._container_factory((r, c))
         self.component = cg
 
         add_tools = not self.tool.auto_update or n == 1
 
         for j, unk in enumerate(self.analyses):
-            set_ytitle = j%c == 0
-            padding=[40,10,40,40]
+            set_ytitle = j % c == 0
+            padding = [40, 10, 40, 40]
 
             set_xtitle = True if r == 1 else j >= (n / r)
 
@@ -277,7 +276,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                     fd = dict(iterations=fit.filter_iterations,
                               std_devs=fit.filter_std_devs,
                               filter_outliers=fit.filter_outliers)
-                    trunc=fit.truncate
+                    trunc = fit.truncate
 
                     if isok.endswith('bs'):
                         xs = self._plot_baselines(add_tools, fd, fit, trunc, g, i, isok, unk)
@@ -287,11 +286,12 @@ class IsotopeEvolutionEditor(GraphEditor):
                     if len(xs):
                         ma = max(max(xs), ma)
                     else:
-                        if not self.confirmation_dialog('No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
+                        if not self.confirmation_dialog(
+                                'No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
                             break
                     i += 1
 
-            if set_x_flag and ma>-Inf:
+            if set_x_flag and ma > -Inf:
                 g.set_x_limits(0, ma * 1.1)
                 g.refresh()
 
@@ -302,15 +302,15 @@ class IsotopeEvolutionEditor(GraphEditor):
             self.graphs.append(g)
 
     def traits_view(self):
-        v=View(UItem('component', style='custom', editor=InstanceEditor()))
+        v = View(UItem('component', style='custom', editor=InstanceEditor()))
         return v
 
     def _component_default(self):
-        g=self._container_factory((1, 1))
+        g = self._container_factory((1, 1))
         return g
 
     def _container_factory(self, shape):
-        g=Graph(container_dict=dict(kind='g', shape=shape, spacing=(1,1)))
+        g = Graph(container_dict=dict(kind='g', shape=shape, spacing=(1, 1)))
         return g
 
     #============= deprecated =============================================
