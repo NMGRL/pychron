@@ -36,6 +36,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -93,6 +94,26 @@ class AnalysisEditTask(BaseBrowserTask):
     _tag_table_view = None
 
     analysis_group_edit_klass = AnalysisGroupEntry
+
+    def add_iso_evo(self, name=None, rec=None):
+        if rec is None:
+            if self.active_editor is not None:
+                rec = self.active_editor.model
+                name = self.active_editor.name
+
+        if rec is None:
+            return
+
+        from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+
+        name = 'IsoEvo {}'.format(name)
+        editor = self.get_editor(name)
+        if editor:
+            self.activate_editor(editor)
+        else:
+            ieditor = IsotopeEvolutionEditor(name=name, processor=self.manager)
+            ieditor.set_items([rec])
+            self.editor_area.add_editor(ieditor)
 
     def set_analysis_group(self):
         ans = self._get_analyses_to_group()

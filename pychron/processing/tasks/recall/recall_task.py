@@ -25,6 +25,7 @@ from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEd
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -104,24 +105,24 @@ class RecallTask(AnalysisEditTask):
 
         return panes
 
-    def add_iso_evo(self, name=None, rec=None):
-        if rec is None:
-            if self.active_editor is not None:
-                rec = self.active_editor.model
-                name = self.active_editor.name
-
-        if rec is None:
-            return
-
-        from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
-        name='IsoEvo {}'.format(name)
-        editor=self.get_editor(name)
-        if editor:
-            self.activate_editor(editor)
-        else:
-            ieditor = IsotopeEvolutionEditor(name=name,processor=self.manager)
-            ieditor.set_items([rec])
-            self.editor_area.add_editor(ieditor)
+    # def add_iso_evo(self, name=None, rec=None):
+    #     if rec is None:
+    #         if self.active_editor is not None:
+    #             rec = self.active_editor.model
+    #             name = self.active_editor.name
+    #
+    #     if rec is None:
+    #         return
+    #
+    #     from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+    #     name='IsoEvo {}'.format(name)
+    #     editor=self.get_editor(name)
+    #     if editor:
+    #         self.activate_editor(editor)
+    #     else:
+    #         ieditor = IsotopeEvolutionEditor(name=name,processor=self.manager)
+    #         ieditor.set_items([rec])
+    #         self.editor_area.add_editor(ieditor)
 
     def add_diff(self):
         left = None

@@ -39,6 +39,7 @@ from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
+from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 #@todo: add layout editing.
@@ -51,6 +52,7 @@ class FigureTask(AnalysisEditTask):
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
+        SToolBar(AddIsoEvoAction(), ),
         SToolBar(
             SavePDFFigureAction(),
             SaveFigureAction(),
@@ -375,9 +377,6 @@ class FigureTask(AnalysisEditTask):
         name = '{}-table'.format(name)
         editor = klass(name=name)
         return self._add_editor(editor, ans)
-
-    def _create_control_pane(self):
-        pass
 
     def _load_project_figures(self, new):
         if new:
