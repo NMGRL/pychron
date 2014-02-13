@@ -103,8 +103,8 @@ class DBAnalysis(Analysis):
                             fi.isotope.molecular_weight.name == name
                         ), None)
 
-        except AttributeError:
-            pass
+        except AttributeError, e:
+            print e
 
     def set_tag(self, tag):
         if isinstance(tag, str):
@@ -532,6 +532,7 @@ class DBAnalysis(Analysis):
                 self.temp_status = 1
             else:
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
+                print fit
 
                 if fit is None:
                     fit = Fit(fit='linear',

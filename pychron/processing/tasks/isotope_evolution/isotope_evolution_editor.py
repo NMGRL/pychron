@@ -117,6 +117,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         fit_hist = None
 
         for fi in self.tool.fits:
+            print fi, fi.save
             if not fi.save:
                 continue
 
@@ -132,11 +133,11 @@ class IsotopeEvolutionEditor(GraphEditor):
         # print name
         if name.endswith('bs'):
             name = name[:-2]
-            dbfit = unk.get_db_fit(name, meas_analysis, 'baseline')
+            dbfit = unk.get_db_fit(meas_analysis, name, 'baseline')
             kind = 'baseline'
             iso = unk.isotopes[name].baseline
         else:
-            dbfit = unk.get_db_fit(name, meas_analysis, 'signal')
+            dbfit = unk.get_db_fit(meas_analysis, name, 'signal')
             kind = 'signal'
             iso = unk.isotopes[name]
 
@@ -165,11 +166,12 @@ class IsotopeEvolutionEditor(GraphEditor):
                 self.warning('Failed added fit history for {}'.format(unk.record_id))
                 return
 
+            fod = iso.filter_outliers_dict
             db.add_fit(fit_hist, dbiso, fit=fit,
                        error_type=iso.error_type,
-                       filter_outliers=iso.filter_outliers,
-                       filter_outlier_iterations=iso.filter_outlier_iterations,
-                       filter_outlier_std_devs=iso.filter_outlier_std_devs)
+                       filter_outliers=fod['filter_outliers'],
+                       filter_outlier_iterations=fod['iterations'],
+                       filter_outlier_std_devs=fod['std_devs'])
             #update isotoperesults
             v, e = float(v.nominal_value), float(v.std_dev)
             db.add_isotope_result(dbiso, fit_hist,
