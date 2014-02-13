@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from itertools import groupby
 from datetime import timedelta
+import binascii
 
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
@@ -29,12 +30,9 @@ from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsP
     TablePane
 from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
-
-
-
-
 
 
 # from pyface.tasks.task_window_layout import TaskWindowLayout
@@ -44,6 +42,35 @@ from pychron.processing.analyses.analysis import Analysis
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
+from traits.api import HasTraits, Str, Property, Int
+from traitsui.api import View, Item, UItem, HGroup, TabularEditor
+
+
+class AnalysisGroupEntry(HasTraits):
+    name = Str
+    items = List
+    analyses = Property
+    analysis_type = Int
+
+    def _get_analyses(self):
+        return ((self.items, self.analysis_type),)
+
+    def set_items(self, ans):
+        items, at = ans[0]
+        self.items = items
+        self.analysis_type = at
+
+    def traits_view(self):
+        v = View(
+            HGroup(Item('name', label='Analysis Group Name')),
+            UItem('items', editor=TabularEditor(adapter=AnalysisAdapter())),
+            resizable=True,
+            buttons=['OK', 'Cancel'],
+            kind='livemodal',
+            title='Analysis Group Entry')
+        return v
+
 
 class AnalysisEditTask(BaseBrowserTask):
     id = 'pychron.processing'
@@ -58,11 +85,53 @@ class AnalysisEditTask(BaseBrowserTask):
     ic_factor_editor_count = 0
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
-                         # FindAssociatedAction(),
+                          # FindAssociatedAction(),
                           image_size=(16, 16))]
 
     external_recall_window = False
     _tag_table_view = None
+
+    analysis_group_edit_klass = AnalysisGroupEntry
+
+    def set_analysis_group(self):
+        ans = self._get_analyses_to_group()
+
+        if not ans:
+            self.information_dialog('No analyses selected to group')
+            return
+
+        a = self.analysis_group_edit_klass()
+        a.set_items(ans)
+
+        info = a.edit_traits()
+        if info.result:
+            name = a.name
+
+            db = self.manager.db
+
+            uuids = [ai.uuid for ais, k in ans
+                     for ai in ais]
+
+            with db.session_ctx():
+                aa = db.get_analyses(pred=lambda m, l: (m.uuid.in_(uuids), ))
+                set_id = binascii.crc32(''.join([ai.uuid for ai in aa]))
+
+                dbg = db.get_analysis_group(set_id, key='id')
+                if dbg is not None:
+                    msg = 'Analysis Group of these analyses already exists. Name={}'.format(dbg.name)
+                    self.information_dialog(msg)
+                    return
+
+                group = db.add_analysis_group(name, id=set_id)
+                self._set_analysis_group(db, group, a.analyses)
+                self.db_save_info()
+
+    def _set_analysis_group(self, db, group, ans):
+        # db=self.manager.db
+        for ais, at in ans:
+            for ai in ais:
+                ai = db.get_analysis_uuid(ai.uuid)
+                db.add_analysis_group_set(group, ai, analysis_type=at)
 
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
@@ -165,7 +234,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 self.editor_area.activate_editor(ed)
 
     def new_ic_factor(self):
-        from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import IntercalibrationFactorEditor
+        from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \
+            IntercalibrationFactorEditor
 
         editor = IntercalibrationFactorEditor(name='ICFactor {:03n}'.format(self.ic_factor_editor_count),
                                               processor=self.manager)
@@ -200,22 +270,7 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc.render_component(comp, valign='center')
                 gc.save()
 
-    def _get_analyses_to_tag(self):
-        items = None
-
-        if self.unknowns_pane:
-            items = [i for i in self.unknowns_pane.items
-                     if i.is_temp_omitted()]
-            self.debug('Temp omitted analyses {}'.format(len(items)))
-            if not items:
-                items = self.unknowns_pane.selected
-
-        if not items:
-            items = self.analysis_table.selected
-
-        return items
-
-    def set_tag(self, tag=None, items=None, use_filter = True):
+    def set_tag(self, tag=None, items=None, use_filter=True):
         """
             set tag for either
             analyses selected in unknowns pane
@@ -224,13 +279,13 @@ class AnalysisEditTask(BaseBrowserTask):
 
         """
         if items is None:
-            items=self._get_analyses_to_tag()
+            items = self._get_analyses_to_tag()
 
         if not items:
             self.warning_dialog('No analyses selected to Tag')
         else:
             db = self.manager.db
-            name=None
+            name = None
             if tag is None:
                 a = self._get_tagname(items)
                 if a:
@@ -238,7 +293,7 @@ class AnalysisEditTask(BaseBrowserTask):
                     if tag:
                         name = tag.name
             else:
-                name=tag.name
+                name = tag.name
 
             if name and items:
                 with db.session_ctx():
@@ -256,9 +311,6 @@ class AnalysisEditTask(BaseBrowserTask):
                 if self.unknowns_pane:
                     self.unknowns_pane.refresh_needed = True
                 self._set_tag_hook()
-
-    def _set_tag_hook(self):
-        pass
 
     def prepare_destroy(self):
         if self.unknowns_pane:
@@ -297,13 +349,13 @@ class AnalysisEditTask(BaseBrowserTask):
     def _get_tagname(self, items):
         from pychron.processing.tasks.analysis_edit.tags import TagTableView
 
-        tv=self._tag_table_view
+        tv = self._tag_table_view
         if not tv:
-            tv=TagTableView()
+            tv = TagTableView()
 
         db = self.manager.db
         with db.session_ctx():
-            tv.items=items
+            tv.items = items
             # tv = TagTableView(items=items)
             tv.table.db = db
             tv.table.load()
@@ -311,7 +363,7 @@ class AnalysisEditTask(BaseBrowserTask):
         info = tv.edit_traits()
         if info.result:
             tag = tv.selected
-            self._tag_table_view=tv
+            self._tag_table_view = tv
             return tag, tv.items, tv.use_filter
 
     def _open_ideogram_editor(self, ans, name, task=None):
@@ -383,9 +435,9 @@ class AnalysisEditTask(BaseBrowserTask):
         if self.plot_editor_pane:
             self.plot_editor_pane.component = self.active_editor.component
             if hasattr(self.active_editor, 'plotter_options_manager'):
-                opt=self.active_editor.plotter_options_manager.plotter_options
-                index_attr=opt.index_attr
-                self.plot_editor_pane.index_attr=index_attr
+                opt = self.active_editor.plotter_options_manager.plotter_options
+                index_attr = opt.index_attr
+                self.plot_editor_pane.index_attr = index_attr
 
     @on_trait_change('unknowns_pane:[items, update_needed, dclicked, refresh_editor_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
@@ -516,6 +568,35 @@ class AnalysisEditTask(BaseBrowserTask):
         prog.close()
         if ok:
             self.db_save_info()
+
+    def _get_analyses_to_group(self):
+        items = None
+        if self.unknowns_pane:
+            items = self.unknowns_pane.selected
+
+        if not items:
+            items = self.analysis_table.selected
+
+        if items:
+            return ((items, 7),)  #unknown analysis type
+
+    def _get_analyses_to_tag(self):
+        items = None
+
+        if self.unknowns_pane:
+            items = [i for i in self.unknowns_pane.items
+                     if i.is_temp_omitted()]
+            self.debug('Temp omitted analyses {}'.format(len(items)))
+            if not items:
+                items = self.unknowns_pane.selected
+
+        if not items:
+            items = self.analysis_table.selected
+
+        return items
+
+    def _set_tag_hook(self):
+        pass
 
 #===============================================================================
 #

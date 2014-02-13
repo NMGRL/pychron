@@ -18,8 +18,8 @@
 from datetime import timedelta
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change
-from traits.api import Any
+from traits.api import on_trait_change, Any, HasTraits, Str, List, Property, Int
+from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
 
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.analyses.analysis import Analysis
@@ -32,19 +32,54 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
+from pychron.processing.tasks.browser.panes import AnalysisAdapter
+
+
+class InterpolationAnalysisGroupEntry(HasTraits):
+    name = Str
+    items = List
+    ritems = List
+    analysis_type = Int
+    ranalysis_type = Int
+    analyses = Property
+
+    def _get_analyses(self):
+        return (self.items, self.analysis_type), (self.ritems, self.ranalysis_type)
+
+    def set_items(self, ans):
+        (items, at), (ritems, rat) = ans
+        self.ranalysis_type = rat
+        self.analysis_type = at
+
+        self.items = items
+        self.riterms = ritems
+
+    def traits_view(self):
+        v = View(
+            HGroup(Item('name', label='Analysis Group Name')),
+            VGroup(
+                UItem('items', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                    operations=['delete'])),
+                UItem('ritems', editor=TabularEditor(adapter=AnalysisAdapter(),
+                                                     operations=['delete']))),
+            resizable=True,
+            buttons=['OK', 'Cancel'],
+            kind='livemodal',
+            title='Analysis Group Entry')
+        return v
 
 
 class no_auto_ctx(object):
     def __init__(self, obj):
-        self.obj=obj
+        self.obj = obj
 
     def __enter__(self):
-        self.obj.auto_find=False
-        self.obj.update_on_analyses=False
+        self.obj.auto_find = False
+        self.obj.update_on_analyses = False
 
     def __exit__(self, *args):
-        self.obj.auto_find=True
-        self.obj.update_on_analyses=True
+        self.obj.auto_find = True
+        self.obj.update_on_analyses = True
 
 
 class InterpolationTask(AnalysisEditTask):
@@ -54,12 +89,27 @@ class InterpolationTask(AnalysisEditTask):
     default_reference_analysis_type = 'air'
 
     tool_bars = [SToolBar(DatabaseSaveAction(),
-                          BinAnalysesAction()
-                          )]
+                          BinAnalysesAction())]
+    analysis_group_edit_klass = InterpolationAnalysisGroupEntry
+
+    def _get_analyses_to_group(self):
+        sitems = super(InterpolationTask, self)._get_analyses_to_group()
+        if self.references_pane_pane:
+            items = self.references_pane_pane.selected
+
+        if not items:
+            items = self.analysis_table.selected
+        if sitems:
+            return sitems, (items, self.analysis_type)
+        elif items:
+            return (items, self.analysis_type)
+
+    def _set_analysis_group_hook(self, *args, **kw):
+        pass
 
     def _set_tag_hook(self):
         if self.references_pane:
-            self.references_pane.refresh_needed=True
+            self.references_pane.refresh_needed = True
 
     def _get_analyses_to_tag(self):
         ritems = None
@@ -70,12 +120,12 @@ class InterpolationTask(AnalysisEditTask):
             if not ritems:
                 ritems = self.references_pane.selected
 
-        items=super(InterpolationTask, self)._get_analyses_to_tag()
+        items = super(InterpolationTask, self)._get_analyses_to_tag()
         if ritems:
             if items:
                 items.extend(ritems)
             else:
-                items=ritems
+                items = ritems
 
         return items
 

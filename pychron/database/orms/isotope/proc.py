@@ -44,13 +44,16 @@ class HistoryMixin(BaseMixin, History):
 
 
 class proc_AnalysisGroupTable(Base, NameMixin):
-    create_date = Column(TIMESTAMP)
+    create_date = Column(TIMESTAMP, default=func.now())
     last_modified = Column(TIMESTAMP)
+    analyses = relationship('proc_AnalysisGroupSetTable',
+                            backref='group')
 
 
 class proc_AnalysisGroupSetTable(Base, BaseMixin):
     group_id = foreignkey('proc_AnalysisGroupTable')
     analysis_id = foreignkey('meas_AnalysisTable')
+    analysis_type = Column(Integer)
 
 
 class proc_SensitivityHistoryTable(Base, HistoryMixin):

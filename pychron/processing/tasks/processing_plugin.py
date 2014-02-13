@@ -27,18 +27,21 @@ from pychron.core.helpers.filetools import to_bool
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
-from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction
+from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, \
+    EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction
 from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction, \
-    GraphGroupSelectedAction, FigureFromFile
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
+    ExportAnalysesAction, \
+    GraphGroupSelectedAction, FigureFromFile, SetAnalysisGroupAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
-from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
+from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
+    DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -84,7 +87,7 @@ Install to enable MS Excel export''')
                 InverseIsochronAction(),
                 SeriesAction(),
                 FigureFromFile()
-                )
+            )
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
@@ -96,7 +99,7 @@ Install to enable MS Excel export''')
             return Group(GroupSelectedAction(),
                          GroupbyAliquotAction(),
                          GroupbyLabnumberAction(),
-                         ClearGroupAction(),)
+                         ClearGroupAction(), )
 
         def graph_grouping_group():
             return Group(GraphGroupSelectedAction())
@@ -115,6 +118,9 @@ Install to enable MS Excel export''')
                          DeleteInterpretedAgeGroupAction(),
                          MakeGroupFromFileAction())
 
+        def analysis_group():
+            return Group(SetAnalysisGroupAction())
+
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
@@ -130,7 +136,8 @@ Install to enable MS Excel export''')
                            ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
                            ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
-                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
+                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                           ('set_analysis_group', SetAnalysisGroupAction, 'MenuBar/data.menu')]
 
         exts = [self._make_task_extension(default_actions)]
 
@@ -253,7 +260,8 @@ Install to enable MS Excel export''')
         return IsotopeEvolutionTask(manager=self._processor_factory())
 
     def _ic_factor_task_factory(self):
-        from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import IntercalibrationFactorTask
+        from pychron.processing.tasks.detector_calibration.intercalibration_factor_task import \
+            IntercalibrationFactorTask
 
         return IntercalibrationFactorTask(manager=self._processor_factory())
 

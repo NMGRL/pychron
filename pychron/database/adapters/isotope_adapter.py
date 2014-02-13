@@ -183,7 +183,6 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(proc_InterpretedAgeGroupHistoryTable,
                                    gid, key='id')
 
-
     def get_interpreted_age_groups(self, project):
         with self.session_ctx() as sess:
             q = sess.query(proc_InterpretedAgeGroupHistoryTable)
@@ -195,6 +194,24 @@ class IsotopeAdapter(DatabaseAdapter):
                 return q.all()
             except NoResultFound:
                 pass
+
+    def add_analysis_group(self, name, **kw):
+        obj = proc_AnalysisGroupTable(name=name, **kw)
+        self._add_item(obj)
+        return obj
+
+    def add_analysis_group_set(self, group, analysis, **kw):
+        obj = proc_AnalysisGroupSetTable(analysis_id=analysis.id, **kw)
+        self._add_item(obj)
+
+        if isinstance(group, (int, long)):
+            obj.group_id = group
+        else:
+            group.analyses.append(obj)
+        return obj
+
+    def get_analysis_group(self, v, key='id', **kw):
+        return self._retrieve_item(proc_AnalysisGroupTable, v, key, **kw)
 
     def get_analysis_groups(self, projects=None):
         with self.session_ctx() as sess:

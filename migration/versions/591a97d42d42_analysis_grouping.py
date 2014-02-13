@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 def upgrade():
     op.create_table('proc_AnalysisGroupTable',
-                    sa.Column('id', sa.Integer, primary_key=True),
+                    sa.Column('id', sa.BigInteger, primary_key=True),
                     sa.Column('name', sa.String(80)),
                     sa.Column('last_modified', sa.TIMESTAMP,
                               server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')),
@@ -25,10 +25,11 @@ def upgrade():
 
     op.create_table('proc_AnalysisGroupSetTable',
                     sa.Column('id', sa.Integer, primary_key=True),
-                    sa.Column('group_id', sa.Integer),
-                    sa.Column('analysis_id', sa.Integer))
+                    sa.Column('group_id', sa.BigInteger),
+                    sa.Column('analysis_id', sa.Integer),
+                    sa.Column('analysis_type', sa.Integer), )
 
 
 def downgrade():
     op.drop_table('proc_AnalysisGroupTable')
-    op.drop_table('proc_AnalysisSetTable')
+    op.drop_table('proc_AnalysisGroupSetTable')
