@@ -33,8 +33,7 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 class AnalysisGroupAdapter(BrowserAdapter):
     all_columns = [('Name', 'name'),
                    ('Created', 'create_date'),
-                   ('Modified', 'last_modified'),
-    ]
+                   ('Modified', 'last_modified')]
 
     columns = [('Name', 'name'),
                ('Create Date', 'create_date'),
@@ -57,10 +56,10 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-    def get_bg_color( self, object, trait, row, column = 0):
+    def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if self.item.is_plateau_step:
-            color='lightgreen'
+            color = 'lightgreen'
 
         return color
 
@@ -83,7 +82,7 @@ class Tables(HasTraits):
                                 editable=False,
                                 selected='selected_analysis_groups',
                                 multi_select=True,
-                                # dclicked='dclicked_sample',
+                                dclicked='dclicked_analysis_group',
                                 # column_clicked='column_clicked',
                                 #update='update_sample_table',
                                 #refresh='update_sample_table',
@@ -92,15 +91,15 @@ class Tables(HasTraits):
         sample_table = UItem('samples',
                              label='Samples',
                              editor=TabularEditor(
-                                        adapter=self.pane.sample_tabular_adapter,
-                                        editable=False,
-                                        selected='selected_samples',
-                                        multi_select=True,
-                                        dclicked='dclicked_sample',
-                                        column_clicked='column_clicked',
-                                        #update='update_sample_table',
-                                        #refresh='update_sample_table',
-                                        stretch_last_section=False))
+                                 adapter=self.pane.sample_tabular_adapter,
+                                 editable=False,
+                                 selected='selected_samples',
+                                 multi_select=True,
+                                 dclicked='dclicked_sample',
+                                 column_clicked='column_clicked',
+                                 #update='update_sample_table',
+                                 #refresh='update_sample_table',
+                                 stretch_last_section=False))
 
         def make_name(name):
             return 'object.analysis_table.{}'.format(name)
@@ -244,7 +243,7 @@ class BrowserPane(TraitsDockPane):
         #     self._get_date_group(),
         #     layout='tabbed')
 
-        main_grp= self._get_browser_group()
+        main_grp = self._get_browser_group()
 
         v = View(
             VGroup(
@@ -264,7 +263,7 @@ class BrowserPane(TraitsDockPane):
         return TableTools(model=self.model, pane=self)
 
 
-#============= EOF =============================================
+        #============= EOF =============================================
         # def _get_browser_group(self):
         #     project_grp = VGroup(
         #         HGroup(Label('Filter'),

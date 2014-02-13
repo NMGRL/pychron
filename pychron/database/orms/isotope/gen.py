@@ -44,6 +44,7 @@ class gen_LoadHolderTable(Base):
 
 class gen_AnalysisTypeTable(Base, NameMixin):
     measurements = relationship('meas_MeasurementTable', backref='analysis_type')
+    groups = relationship('proc_AnalysisGroupSetTable', backref='analysis_type')
 
 
 class gen_DetectorTable(Base, NameMixin):

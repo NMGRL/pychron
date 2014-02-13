@@ -24,6 +24,7 @@ from sqlalchemy import Column, Integer, String, \
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -92,6 +93,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     arar_histories = relationship('proc_ArArHistoryTable', backref='analysis')
     #     figure_analyses = relationship('proc_FigureAnalysisTable', backref='analysis')
     notes = relationship('proc_NotesTable', backref='analysis')
+    group_sets = relationship('proc_AnalysisGroupSetTable', backref='analysis')
     monitors = relationship('meas_MonitorTable', backref='analysis')
 
     @property

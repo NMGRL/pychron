@@ -23,6 +23,7 @@ from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Instance, on_trait_change, List
 
+from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -33,6 +34,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
+
 
 
 
@@ -123,6 +125,7 @@ class AnalysisEditTask(BaseBrowserTask):
             return
 
         a = self.analysis_group_edit_klass()
+        print ans
         a.set_items(ans)
 
         info = a.edit_traits()
@@ -148,13 +151,15 @@ class AnalysisEditTask(BaseBrowserTask):
                 self._set_analysis_group(db, group, a.analyses)
                 self.db_save_info()
 
+                self._load_associated_groups(self.selected_projects)
+
     def _set_analysis_group(self, db, group, ans):
         # db=self.manager.db
         for ais, at in ans:
             at = db.get_analysis_type(at)
             for ai in ais:
                 ai = db.get_analysis_uuid(ai.uuid)
-                db.add_analysis_group_set(group, ai, analysis_type=at.id)
+                db.add_analysis_group_set(group, ai, analysis_type=at)
 
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
@@ -426,9 +431,24 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
+    def _dclicked_analysis_group_hook(self, unks, b):
+        pass
+
     #===============================================================================
     # handlers
     #===============================================================================
+    def _dclicked_analysis_group_changed(self):
+        if self.active_editor:
+            if self.selected_analysis_groups:
+                g = self.selected_analysis_groups[0]
+                db = self.manager.db
+
+                with db.session_ctx():
+                    dbg = db.get_analysis_group(g.id, key='id')
+                    unks, b = partition(dbg.analyses, lambda x: x.analysis_type.name == 'unknown')
+                    self.active_editor.set_items([ai.analysis for ai in unks])
+                    self._dclicked_analysis_group_hook(unks, b)
+
     def _dclicked_sample_changed(self):
         if self.unknowns_pane:
             self.debug('Dumping UnknownsPane selection')
@@ -598,11 +618,10 @@ class AnalysisEditTask(BaseBrowserTask):
             items = self.unknowns_pane.selected
 
         if not items:
-            items = self.analysis_table.selected
-
-        if not items:
             if self.unknowns_pane:
                 items = self.unknowns_pane.items
+        if not items:
+            items = self.analysis_table.selected
 
         if items:
             return ((items, 'unknown'),)  #unknown analysis type

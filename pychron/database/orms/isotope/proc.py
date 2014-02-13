@@ -53,7 +53,7 @@ class proc_AnalysisGroupTable(Base, NameMixin):
 class proc_AnalysisGroupSetTable(Base, BaseMixin):
     group_id = foreignkey('proc_AnalysisGroupTable')
     analysis_id = foreignkey('meas_AnalysisTable')
-    analysis_type = foreignkey('gen_AnalysisTypeTable')
+    analysis_type_id = foreignkey('gen_AnalysisTypeTable')
 
 
 class proc_SensitivityHistoryTable(Base, HistoryMixin):

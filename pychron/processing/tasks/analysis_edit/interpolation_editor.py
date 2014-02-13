@@ -26,6 +26,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelec
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -97,6 +98,7 @@ class InterpolationEditor(GraphEditor):
     sorted_references = Property(depends_on='references[]')
     binned_analyses=List
     bounds=List
+    calculate_reference_age = Bool(False)
 
     _normalization_factor=3600.
     def _get_min_max(self):
@@ -172,6 +174,19 @@ class InterpolationEditor(GraphEditor):
     def _update_analyses_hook(self):
         if self.auto_find:
             self._find_references()
+
+    def set_references(self, refs, is_append=False, **kw):
+        ans = self.processor.make_analyses(refs,
+                                           calculate_age=self.calculate_reference_age,
+                                           unpack=self.unpack_peaktime,
+                                           **kw)
+
+        if is_append:
+            pans = self.references
+            pans.extend(ans)
+            ans = pans
+
+        self.references = ans
 
     def _find_references(self, progress=None):
 

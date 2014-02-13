@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float, Property
+from traits.api import HasTraits, Str, Date, Float, Property, Long
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -110,8 +110,10 @@ class AnalysisGroupRecordView(RecordView):
     name = Str
     create_date = Date
     last_modified = Date
+    id = Long
 
     def _create(self, dbrecord):
+        self.id = dbrecord.id
         for attr in ('name', 'create_date', 'last_modified'):
             setattr(self, attr, getattr(dbrecord, attr))
 

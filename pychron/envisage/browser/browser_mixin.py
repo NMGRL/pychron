@@ -23,12 +23,6 @@ import apptools.sweet_pickle as pickle
 
 
 
-
-
-
-
-
-
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -90,7 +84,10 @@ class BrowserMixin(ColumnSorterMixin):
 
     selected_projects = Any
     selected_samples = Any
+    selected_analysis_groups = Any
+
     dclicked_sample = Any
+    dclicked_analysis_group = Any
 
     auto_select_analysis = Bool(False)
 
@@ -209,6 +206,9 @@ class BrowserMixin(ColumnSorterMixin):
             self._load_associated_groups(names)
 
     def _load_associated_groups(self, names):
+        if not isinstance(names[0], str):
+            names = [ni.name for ni in names]
+
         db = self.manager.db
 
         with db.session_ctx():

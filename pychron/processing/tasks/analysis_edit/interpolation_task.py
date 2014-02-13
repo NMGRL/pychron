@@ -48,12 +48,14 @@ class InterpolationAnalysisGroupEntry(HasTraits):
         return (self.items, self.analysis_type), (self.ritems, self.ranalysis_type)
 
     def set_items(self, ans):
+        print ans
         (items, at), (ritems, rat) = ans
         self.ranalysis_type = rat
         self.analysis_type = at
 
         self.items = items
-        self.ritems = ritems
+        if ritems:
+            self.ritems = ritems
 
     def traits_view(self):
         v = View(
@@ -95,6 +97,9 @@ class InterpolationTask(AnalysisEditTask):
                           BinAnalysesAction())]
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
 
+    def _dclicked_analysis_group_hook(self, unks, b):
+        self.active_editor.set_references([bi.analysis for bi in b])
+
     def _get_analyses_to_group(self):
         sitems = super(InterpolationTask, self)._get_analyses_to_group()
         if self.references_pane:
@@ -103,8 +108,12 @@ class InterpolationTask(AnalysisEditTask):
         if not items:
             if self.references_pane:
                 items = self.references_pane.items
+
         if not items:
             items = self.analysis_table.selected
+            if sitems:
+                if items == sitems[0][0]:
+                    items = []
 
         if sitems:
             return sitems[0], (items, self.default_reference_analysis_type)

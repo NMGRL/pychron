@@ -25,9 +25,9 @@ def upgrade():
 
     op.create_table('proc_AnalysisGroupSetTable',
                     sa.Column('id', sa.Integer, primary_key=True),
-                    sa.Column('group_id', sa.BigInteger),
-                    sa.Column('analysis_id', sa.Integer),
-                    sa.Column('analysis_type', sa.Integer), )
+                    sa.Column('group_id', sa.BigInteger, sa.ForeignKey('proc_AnalysisGroupTable.id')),
+                    sa.Column('analysis_id', sa.Integer, sa.ForeignKey('meas_AnalysisTable.id')),
+                    sa.Column('analysis_type_id', sa.Integer, sa.ForeignKey('gen_AnalysisTypeTable.id')), )
 
 
 def downgrade():

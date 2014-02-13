@@ -224,6 +224,9 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_ProjectTable)
 
                 q = q.filter(gen_ProjectTable.name.in_(projects))
+                q = q.order_by(proc_AnalysisGroupTable.create_date)
+                q = q.order_by(proc_AnalysisGroupTable.last_modified)
+
                 return self._query_all(q)
 
     def get_interpreted_age_histories(self, values, key='identifier'):
