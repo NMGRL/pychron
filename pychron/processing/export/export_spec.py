@@ -22,6 +22,7 @@ from uncertainties import ufloat
 
 from pychron.loggable import Loggable
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -74,7 +75,8 @@ class ExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
-                 ('duration_at_request', 'duration'), ('first_stage_delay', 'cleanup'),
+                 ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
+                 ('second_stage_delay', 'cleanup'),
                  ('comment', 'comment'),
                  ('irradiation','irradiation'),
                  ('irradiation_position','irradiation_pos'),
