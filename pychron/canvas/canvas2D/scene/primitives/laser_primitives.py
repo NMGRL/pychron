@@ -32,6 +32,7 @@ class LaserPoint(PointIndicator):
     calibrated_x = Float
     calibrated_y = Float
 
+
 class DrillPoint(LaserPoint):
     velocity = Float
     zend = Float

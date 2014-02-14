@@ -376,11 +376,22 @@ class LaserTrayCanvas(MapCanvas):
                     pass
                     #                if 'x' in p.axes and 'y' in p.axes:
 
+    def get_offset_stage_position(self):
+        sx, sy = self.get_stage_screen_position()
+        print sx, sy
+        sx += self.crosshairs_offsetx
+        sy += self.crosshairs_offsety
+
+        return self.map_data((sx, sy))
+
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]
 
     def get_stage_position(self):
         return self._stage_position
+
+        #return (self._stage_position[0]-self.crosshairs_offsetx,
+        #self._stage_position[1] - self.crosshairs_offsety)
 
     def set_stage_position(self, x, y):
         """
@@ -561,6 +572,7 @@ class LaserTrayCanvas(MapCanvas):
     def _get_stage_position(self):
         """
         """
+
         return self.map_screen([self._stage_position])[0]
 
     def _get_desired_position(self):

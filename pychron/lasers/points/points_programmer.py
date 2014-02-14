@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import  Button, Event, Property, \
+from traits.api import Button, Event, Property, \
     Any, Bool, Enum, Instance, cached_property, String
 from traitsui.api import View, Item, ButtonEditor, HGroup, VGroup
 #============= standard library imports ========================
@@ -32,14 +32,12 @@ from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
 maker_dict = dict(polygon=PolygonMaker, point=PointMaker, line=LineMaker, transect=TransectMaker)
 
 
-
 class PointsProgrammer(Manager):
-
     maker = Property(Instance(BaseMaker), depends_on='mode')
 
-#===============================================================================
-#
-#===============================================================================
+    #===============================================================================
+    #
+    #===============================================================================
 
     stage_manager = Any
     canvas = Any
@@ -51,9 +49,9 @@ class PointsProgrammer(Manager):
     program_points_label = Property(depends_on='is_programming')
     show_hide_label = Property(depends_on='is_visible')
 
-#    use_simple_render = Bool(False)
-#    spot_color = Color('yellow')
-#    spot_size = Int
+    #    use_simple_render = Bool(False)
+    #    spot_color = Color('yellow')
+    #    spot_size = Int
     load_points = Button
     save_points = Button
 
@@ -66,9 +64,10 @@ class PointsProgrammer(Manager):
 
     position_entry = String(enter_set=True, auto_set=False)
 
-#    show_scene_viewer = Button('Scene Viewer')
+    #    show_scene_viewer = Button('Scene Viewer')
 
     _path = None
+
     def accept_point(self):
         if self.is_programming:
             self.maker._accept_point_fired()
@@ -117,9 +116,10 @@ class PointsProgrammer(Manager):
             except ValueError, e:
                 print e
 
-#===============================================================================
-# handlers
-#===============================================================================
+                #===============================================================================
+                # handlers
+                #===============================================================================
+
     def _position_entry_changed(self):
         self._set_entry(self.position_entry)
 
@@ -151,9 +151,9 @@ class PointsProgrammer(Manager):
     def _save_points_fired(self):
         self._dump()
 
-#===============================================================================
-# persistence
-#===============================================================================
+    #===============================================================================
+    # persistence
+    #===============================================================================
     def _load(self, p=None):
         if p is None:
             p = self.open_file_dialog(default_directory=paths.user_points_dir)
@@ -182,15 +182,16 @@ class PointsProgrammer(Manager):
 
             self.stage_manager.set_stage_map(head)
 
-#===============================================================================
-# property get/set
-#===============================================================================
+            #===============================================================================
+            # property get/set
+            #===============================================================================
+
     @cached_property
     def _get_maker(self):
         if self.mode in maker_dict:
             maker = maker_dict[self.mode](canvas=self.canvas,
                                           stage_manager=self.stage_manager,
-                                          )
+            )
             return maker
 
     def _load_lines(self, lines, ptargs):
@@ -202,27 +203,35 @@ class PointsProgrammer(Manager):
             for si in li:
                 mi = si['mask'] if si.has_key('mask') else 0
                 ai = si['attenuator'] if si.has_key('attenuator') else 0
+                if si.has_key('offset_x'):
+                    ptargs['offset_x'] = si['offset_x']
+                    ptargs['offset_y'] = si['offset_y']
+
                 canvas.new_line_point(xy=si['xy'],
                                       z=si['z'],
                                       mask=mi, attenuator=ai,
                                       point_color=point_color,
-                                       line_color=point_color,
-                                       velocity=si['velocity'],
-                                           **ptargs)
+                                      line_color=point_color,
+                                      velocity=si['velocity'],
+                                      **ptargs)
 
     def _load_points(self, points, ptargs):
         canvas = self.canvas
         point_color = self.maker.point_color
-#         ptargs['spot_color'] = convert_color(self.maker.spot_color, output='rgbF')
+        #         ptargs['spot_color'] = convert_color(self.maker.spot_color, output='rgbF')
         ptargs['spot_color'] = self.maker.spot_color
         for pi in points:
             mi = pi['mask'] if pi.has_key('mask') else 0
             ai = pi['attenuator'] if pi.has_key('attenuator') else 0
+            if pi.has_key('offset_x'):
+                ptargs['offset_x'] = pi['offset_x']
+                ptargs['offset_y'] = pi['offset_y']
+
             canvas.new_point(xy=pi['xy'],
                              z=pi['z'],
                              mask=mi, attenuator=ai,
                              default_color=point_color,
-                                    **ptargs)
+                             **ptargs)
 
     def _load_polygons(self, polygons, ptargs):
         point_color = self.maker.point_color
@@ -235,6 +244,10 @@ class PointsProgrammer(Manager):
             mi = po['mask'] if po.has_key('mask') else 0
             ai = po['attenuator'] if po.has_key('attenuator') else 0
             for pi in po['points']:
+                if pi.has_key('offset_x'):
+                    ptargs['offset_x'] = pi['offset_x']
+                    ptargs['offset_y'] = pi['offset_y']
+
                 canvas.new_polygon_point(xy=pi['xy'],
                                          z=pi['z'],
                                          velocity=v,
@@ -259,13 +272,17 @@ class PointsProgrammer(Manager):
 
                 if pi.has_key('attenuator'):
                     ptargs['attenuator'] = pi['attenuator']
+                if pi.has_key('offset_x'):
+                    ptargs['offset_x'] = pi['offset_x']
+                    ptargs['offset_y'] = pi['offset_y']
 
                 canvas.new_transect_point(xy=pi['xy'],
-                                              z=pi['z'],
-                                              step=step,
-                                              point_color=point_color,
-                                              **ptargs
-                                              )
+                                          z=pi['z'],
+                                          step=step,
+                                          point_color=point_color,
+                                          **ptargs
+                )
+
     def _get_program_points_label(self):
         return 'End Program' if self.is_programming else 'Program Positions'
 
@@ -280,30 +297,16 @@ class PointsProgrammer(Manager):
 
     def traits_view(self):
         v = View(VGroup(
-#                       Item('show_scene_viewer', show_label=False),
-                       Item('position_entry', label='Position'),  # @todo: move to stage manager
-                       Item('mode')
-                       ),
-                HGroup(Item('show_hide', show_label=False,
-                         editor=ButtonEditor(label_value='show_hide_label')
-                         ),
-                    Item('program_points', show_label=False,
-                         editor=ButtonEditor(label_value='program_points_label')
-                         ),
-                       ),
-                Item('maker', style='custom',
-                     enabled_when='is_programming',
-                     show_label=False),
-                HGroup(Item('load_points', show_label=False),
-                       Item('save_points', show_label=False)),
-#                                 HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-#                                 Item('finish', show_label=False, enabled_when='mode=="line" and object.is_programming'),
-#                                 enabled_when='object.is_programming'
-#                                 ),
-        #                     label='Points'
-#                             )
-#                      )
-               )
+            Item('mode')),
+                 HGroup(Item('show_hide', show_label=False,
+                             editor=ButtonEditor(label_value='show_hide_label')),
+                        Item('program_points', show_label=False,
+                             editor=ButtonEditor(label_value='program_points_label'))),
+                 Item('maker', style='custom',
+                      enabled_when='is_programming',
+                      show_label=False),
+                 HGroup(Item('load_points', show_label=False),
+                        Item('save_points', show_label=False)))
         return v
 
 #============= EOF =============================================

@@ -68,6 +68,9 @@ class Primitive(HasTraits):
 
     x = Float
     y = Float
+    offset_x = Float
+    offset_y = Float
+
     state = False
     selected = False
 
@@ -164,6 +167,9 @@ class Primitive(HasTraits):
             x, y = self.canvas.map_screen([(self.x, self.y)])[0]
             #        offset = self.canvas.offset
             offset = 1
+            x += self.offset_x
+            y += self.offset_y
+
         return x + offset, y + offset
 
     def get_wh(self):
@@ -735,8 +741,13 @@ class Indicator(QPrimitive):
     spot_size = Int(8)
     spot_color = Color('yellow')
 
+
     def __init__(self, x, y, *args, **kw):
         super(Indicator, self).__init__(x, y, *args, **kw)
+        #print self.x, self.offset_x
+        #self.x=x=self.x+self.offset_x
+        #self.y=y=self.y+self.offset_y
+
         w = self.hline_length
         self.hline = Line(Point(x - w, y, **kw),
                           Point(x + w, y, **kw), **kw)

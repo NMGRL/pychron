@@ -15,9 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Any, Button, Enum, Float, Int, Color, \
+from traits.api import Any, Button, Enum, Float, Int, Color, \
     Bool
-from traitsui.api import View, Item, TableEditor, VGroup, HGroup
+from traitsui.api import View, Item, VGroup, HGroup
 from pychron.loggable import Loggable
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -47,8 +47,10 @@ class BaseMaker(Loggable):
                         z=float(pi.z),
                         mask=pi.mask, attenuator=pi.attenuator,
                         xy=[float(pi.x), float(pi.y)],
-                        calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)]
-                        ) for pi in self.canvas.get_points()]
+                        calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
+                        offset_x=float(pi.offset_x),
+                        offset_y=float(pi.offset_y),
+        ) for pi in self.canvas.get_points()]
 
         lines = []
         for li in self.canvas.get_lines():
@@ -125,16 +127,20 @@ class BaseMaker(Loggable):
 
         if attenuator:
             attenuator_value = attenuator.data_position
+            #x, y = self.canvas.get_offset_stage_position()
         x, y = self.canvas.get_stage_position()
         cx, cy = sm.get_uncalibrated_xy((x, y))
-        ptargs = dict(radius=radius,
+        ptargs = dict(xy=(x, y),
+                      radius=radius,
                       z=sm.get_z(),
                       calibrated_x=cx,
                       calibrated_y=cy,
                       spot_color=self.spot_color,
                       spot_size=self.spot_size,
                       use_simple_render=self.use_simple_render,
-#                      mask=mask_value,
+                      offset_x=self.canvas.crosshairs_offsetx,
+                      offset_y=self.canvas.crosshairs_offsety,
+                      #                      mask=mask_value,
 #                      attenuator=attenuator_value,
                       vline_length=0.1, hline_length=0.1)
         if mask_value is not None:
@@ -328,7 +334,9 @@ class TransectMaker(FinishableMaker):
                         z=float(pi.z),
                         mask=pi.mask,
                         attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)])
+                        xy=[float(pi.x), float(pi.y)],
+                        offset_x=float(pi.offset_x),
+                        offset_y=float(pi.offset_y), )
                 pts.append(d)
 
             spts = []
@@ -337,7 +345,9 @@ class TransectMaker(FinishableMaker):
                         z=float(pi.z),
                         mask=pi.mask,
                         attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)])
+                        xy=[float(pi.x), float(pi.y)],
+                        offset_x=float(pi.offset_x),
+                        offset_y=float(pi.offset_y), )
                 spts.append(d)
 
             trans.append(dict(points=pts,
