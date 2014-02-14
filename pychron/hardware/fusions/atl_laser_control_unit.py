@@ -161,18 +161,21 @@ class ATLLaserControlUnit(CoreDevice):
         return l, h
 
     def set_nburst(self, n, save=True):
-        lh = self._make_integer_pair(n)
-        if lh:
-            with self._lock:
-                cmd = self._build_command(22, lh)
-                self._send_command(cmd, lock=False)
 
-                cmd = self._build_command(1004, lh)
-                self._send_command(cmd, lock=False)
+        #only write to controller if n is different then the current valuez
+        if self.burst_shot != n:
+            lh = self._make_integer_pair(n)
+            if lh:
+                with self._lock:
+                    cmd = self._build_command(22, lh)
+                    self._send_command(cmd, lock=False)
 
-                self._burst_shot = int(n)
-                if save:
-                    self._save_eeprom()
+                    cmd = self._build_command(1004, lh)
+                    self._send_command(cmd, lock=False)
+
+                    self._burst_shot = int(n)
+                    if save:
+                        self._save_eeprom()
 
     def _save_eeprom(self, lock=False):
         cmd = self._build_command(37, 1)
