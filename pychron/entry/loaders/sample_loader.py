@@ -31,8 +31,9 @@ class SampleLoader(Loggable):
     def do_import(self, manager, p):
         xp = XLSParser()
         xp.load(p, header_idx=2)
-        overwrite_meta = False
+        overwrite_meta = True
         overwrite_alt_name = True
+        add_samples = True
         db = manager.db
         progress = manager.open_progress(xp.nrows)
 
@@ -61,18 +62,21 @@ class SampleLoader(Loggable):
                 # if not dbsample:
                 #     self.info('adding sample {} project={} material={}'.format(sample, project, material))
                 #     dbsample=db.add_sample(sample, project, material)
-                if not dbsample:
-                    alt_name = args['alt_name']
-                    if alt_name:
-                        head, tail = alt_name.split('-')
-                        try:
-                            itail = int(tail)
-                            padded_alt_name = '{}-{:03n}'.format(head, itail)
-                            non_padded_alt_name = '{}-{:01n}'.format(head, itail)
-                        except ValueError:
-                            padded_alt_name, non_padded_alt_name = '', ''
+                alt_name = args['alt_name']
+                alt_names = None
+                if alt_name:
+                    head, tail = alt_name.split('-')
+                    try:
+                        itail = int(tail)
+                        padded_alt_name = '{}-{:03n}'.format(head, itail)
+                        non_padded_alt_name = '{}-{:01n}'.format(head, itail)
+                    except ValueError:
+                        padded_alt_name, non_padded_alt_name = '', ''
 
-                        alt_names = (alt_name, padded_alt_name, non_padded_alt_name)
+                    alt_names = (alt_name, padded_alt_name, non_padded_alt_name)
+
+                if not dbsample:
+                    if alt_names:
                         for a in alt_names:
                             dbsample = db.get_sample(a, project, material, verbose=False)
                             if dbsample:
@@ -83,6 +87,20 @@ class SampleLoader(Loggable):
                                     dbsample.name = sample
                                     dbsample.alt_name = padded_alt_name
                                 break
+
+                if not dbsample:
+                    if alt_names:
+                        for a in alt_names:
+                            dbsample = db.get_sample(a, project, material, verbose=False)
+                            if dbsample:
+                                break
+
+                if not dbsample:
+                    if add_samples:
+                        if args['lat'] and args['long']:
+                            dbsample = db.add_sample(sample, project, material)
+                            if alt_name:
+                                dbsample.alt_name = padded_alt_name
 
                 if not dbsample:
                     continue

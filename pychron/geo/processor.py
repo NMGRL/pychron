@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traitsui.api import View, Item
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -25,5 +23,6 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 class GeoProcessor(IsotopeDatabaseManager):
     pass
+
 #============= EOF =============================================
 

@@ -45,7 +45,8 @@ def logging_setup(name, **kw):
 #     warnings.simplefilter('default')
 
     # make sure we have a log directory
-    bdir = os.path.join(paths.root, 'logs')
+    # bdir = os.path.join(paths.root, 'logs')
+    bdir = paths.log_dir
     if not os.path.isdir(bdir):
         os.mkdir(bdir)
 

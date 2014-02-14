@@ -80,6 +80,7 @@ class Paths():
     test_dir = None
     custom_queries_dir = None
     template_dir = None
+    log_dir = None
     #===========================================================================
     # scripts
     #===========================================================================
@@ -163,6 +164,7 @@ class Paths():
         join = path.join
 
         self.root = root = join(HOME, home)
+        self.log_dir = join(root, 'logs')
         #        self.resources = join('..', '..', '..', 'resources',)
 
         self.resources = join(path.dirname(path.dirname(__file__)), 'resources')
