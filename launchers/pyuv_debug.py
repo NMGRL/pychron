@@ -23,7 +23,7 @@ ETSConfig.toolkit = "qt4"
 import os
 #============= local library imports  ==========================
 
-version_id = '_uv-2.1.0'
+version_id = ''
 from helpers import build_version
 
 '''
@@ -32,7 +32,7 @@ from helpers import build_version
     Use false (default) if your are launching from a standalone bundle.
 '''
 DEBUG = True
-build_version(version_id, debug=DEBUG)
+build_version(version_id, setup_ver='_uv', debug=DEBUG)
 
 
 def main():

@@ -55,6 +55,7 @@ class ATLLaserControlUnit(CoreDevice):
     _was_fired = False
 
     energies=Array
+    stablization_mode = None
 
     #    _timer = None
     #    _enabled = Bool(False)
@@ -132,7 +133,33 @@ class ATLLaserControlUnit(CoreDevice):
 
         #reading reprate not working correctly. check for a new ATL API
         self._reprate = self.get_reprate()
+
+        v = 55
+        self.set_stabilization('energy', v)
         return r
+
+    def set_stabilization(self, mode, v):
+        """
+        0   0  0  0  0  0  0  0  0  0  0
+        b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0
+        --------  gastype
+                  ------- stab mode 000 HV, 001 Energy
+                           -- burst mode
+                              -------- trigger mode
+                                       -- disable on low energy
+        """
+        MODES = {'energy': '001', 'hv': '000',
+                 'energy_w_pge': '011'}
+        mode = MODES.get(mode, '000')
+
+        with self._lock:
+            p = '000 {} 1 000 0'.format(mode).replace(' ', '')
+            cmd = self._build_command(1000, int(p, 2))
+            self._send_command(cmd, lock=False)
+
+            #v=make_bitarray(v, width=16)
+            cmd = self._build_command(1003, v)
+            self._send_command(cmd, lock=False)
 
     def get_mean_energy(self):
         return self.energies.mean()
@@ -161,9 +188,8 @@ class ATLLaserControlUnit(CoreDevice):
         return l, h
 
     def set_nburst(self, n, save=True):
-
-        #only write to controller if n is different then the current valuez
-        if self.burst_shot != n:
+        if int(n) != int(self._burst_shot):
+            self.debug('setting nburst n={} current_value={}'.format(n, self._burst_shot))
             lh = self._make_integer_pair(n)
             if lh:
                 with self._lock:
@@ -219,20 +245,24 @@ class ATLLaserControlUnit(CoreDevice):
             return int(ps[16 - (bit + 1)])
 
     def get_process_status(self):
-        ps = '0000000000000000'
+        #ps = '0000000000000000'
         r = self._send_query(1000, 1)
+        self.debug('get process status {}'.format(r))
         if r is not None:
             r = int(r, 16)
             ps = make_bitarray(r, width=16)
-        return ps
+            return ps
 
     def set_burst_mode(self, mode, ps=None):
-        if ps is None:
-            ps = self.get_process_status()
+        if not self.is_burst_mode(ps):
+            if ps is None:
+                ps = self.get_process_status()
 
-        nps = ps[:16 - 4] + str(int(mode)) + ps[-4:]
-        cmd = self._build_command(1000, int(nps, 2))
-        self._send_command(cmd)
+            nps = ps[:16 - 4] + str(int(mode)) + ps[-4:]
+            print mode, nps
+
+            cmd = self._build_command(1000, int(nps, 2))
+            self._send_command(cmd)
 
     def laser_on(self):
         #        self.start_update_timer()

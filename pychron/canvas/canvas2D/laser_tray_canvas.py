@@ -438,8 +438,8 @@ class LaserTrayCanvas(MapCanvas):
         #            super(LaserTrayCanvas, self).normal_left_down(event)
         #
         #        else:
-        x = event.x + self.crosshairs_offsetx
-        y = event.y + self.crosshairs_offsety
+        x = event.x - self.crosshairs_offsetx
+        y = event.y - self.crosshairs_offsety
 
         pos = self.valid_position(x, y)
         if pos:
