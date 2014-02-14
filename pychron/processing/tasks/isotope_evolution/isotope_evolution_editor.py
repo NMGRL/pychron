@@ -234,7 +234,7 @@ class IsotopeEvolutionEditor(GraphEditor):
             iso = unk.isotopes[name]
 
         if filter_dict:
-            iso.filter_outliers_dict = filter_dict.copy()
+            iso.set_filtering(filter_dict)
 
         v = iso.uvalue
         f, e = convert_fit(fit)

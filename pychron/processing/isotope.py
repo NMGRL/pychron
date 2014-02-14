@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -37,7 +38,7 @@ import struct
 #logger = new_logger('isotopes')
 
 
-def fit_abbreviation(fit):
+def fit_abbreviation(fit, ):
     f = ''
     if fit:
         f = fit[0].upper()
@@ -129,10 +130,10 @@ class IsotopicMeasurement(BaseMeasurement):
         super(IsotopicMeasurement, self).__init__(*args, **kw)
 
     def set_filtering(self, d):
-        if d.get('filter_outliers', False):
-            self.filter_outliers_dict = d
-            self.dirty = True
-            self.regressor.calculate()
+        # if d.get('filter_outliers', False):
+        self.filter_outliers_dict = d.copy()
+        self.dirty = True
+        self.regressor.calculate()
 
     def set_fit_blocks(self, fit):
         if re.match(r'\([\w\d\s,]*\)', fit):
@@ -321,7 +322,7 @@ class BaseIsotope(IsotopicMeasurement):
         return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
 
     def _get_baseline_fit_abbreviation(self):
-        return fit_abbreviation(self.baseline.fit)
+        return self.baseline.fit_abbreviation
 
 
 class Blank(BaseIsotope):

@@ -532,7 +532,6 @@ class DBAnalysis(Analysis):
                 self.temp_status = 1
             else:
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
-                print fit
                 if fit is None:
                     fit = Fit(fit='linear',
                               error_type='SEM',
