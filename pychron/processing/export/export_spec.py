@@ -23,6 +23,7 @@ from uncertainties import ufloat
 from pychron.loggable import Loggable
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -131,6 +132,9 @@ class ExportSpec(Loggable):
         #             yield iso, det
         #
         # return _iter()
+
+    def get_baseline_position(self, iso):
+        return 39.5
 
     def get_blank_uvalue(self, iso):
         try:

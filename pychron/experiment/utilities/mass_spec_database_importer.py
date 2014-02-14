@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
+
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 from traitsui.api import View, Item
+
 
 
 #============= standard library imports ========================
@@ -400,6 +402,7 @@ class MassSpecDatabaseImporter(Loggable):
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
         det = dbdet.Label
         tb, vb = spec.get_baseline_data(iso, odet)
+        pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)
 
         db = self.db
@@ -416,7 +419,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         bfit = spec.get_baseline_fit(iso)
 
-        infoblob = self._make_infoblob(bs.nominal_value, sem)
+        infoblob = self._make_infoblob(bs.nominal_value, sem, ncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
@@ -441,9 +444,10 @@ class MassSpecDatabaseImporter(Loggable):
             blob += struct.pack('>ff', float(vi), float(ti))
         return blob
 
-    def _make_infoblob(self, baseline, baseline_err):
-        rpts = 0
-        pos_segments = []
+    def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
+        rpts = n
+        pos_segments = [baseline_position]
+
         bs_segments = [1.0000000200408773e+20]
         bs_seg_params = [[baseline, 0, 0, 0]]
         bs_seg_errs = [baseline_err]
