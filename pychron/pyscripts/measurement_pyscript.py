@@ -20,6 +20,7 @@ import time
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import fileiter
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry
 from pychron.paths import paths
@@ -174,7 +175,8 @@ class MeasurementPyScript(ValvePyScript):
 
         if os.path.isfile(p):
             with open(p, 'r') as fp:
-                hops = [eval(line) for line in fp if not line.strip().startswith('#')]
+                # hops = [eval(line) for line in fp if not line.strip().startswith('#')]
+                hops = [eval(li) for li in fileiter(fp)]
                 return hops
 
         else:

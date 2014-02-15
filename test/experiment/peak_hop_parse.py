@@ -1,3 +1,4 @@
+from pychron.core.helpers.filetools import fileiter
 from pychron.experiment.automated_run.hop_util import parse_hops, generate_hops
 
 __author__ = 'ross'
@@ -6,13 +7,20 @@ import unittest
 
 HOPS = [('Ar40:H1, Ar36:CDD', 2, 1),
         ('bs:39.5:H1', 45, 2),
-        ('Ar39:CDD', 2, 1),
-]
+        ('Ar39:CDD', 2, 1)]
 
 
 class PeakHopCase(unittest.TestCase):
     def setUp(self):
-        self.gen = parse_hops(HOPS)
+        p = '../data/hop.txt'
+        with open(p, 'r') as fp:
+            # lines=filetolist(fp)
+            # lines = fileiter(fp)
+            hops = [eval(li) for li in fileiter(fp)]
+            # hops = [eval(line) for line in fp if line.strip() and not line.strip().startswith('#')]
+            self.gen = parse_hops(hops)
+
+            # self.gen = parse_hops(HOPS)
 
     def test_parse_hop1(self):
         hop = self.gen.next()

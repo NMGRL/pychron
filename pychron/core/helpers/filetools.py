@@ -198,7 +198,7 @@ def filetolist(f, commentchar='#'):
         cc = li[:1]
         return not (cc == commentchar or isNewLine(cc))
 
-    r = [line for line in f if test(line)]
+    r = (line for line in f if test(line))
     r = [line.split(commentchar)[0].strip() for line in r]
     # r = []
     #
@@ -210,3 +210,17 @@ def filetolist(f, commentchar='#'):
     #         line = line.split('#')[0]
     #         r.append(line.strip())
     return r
+
+
+def fileiter(fp, commentchar='#'):
+    def isNewLine(c):
+        return c in ('\r', '\n')
+
+    def test(li):
+        cc = li[:1]
+        return not (cc == commentchar or isNewLine(cc))
+
+    for line in fp:
+        if test(line):
+            yield line
+
