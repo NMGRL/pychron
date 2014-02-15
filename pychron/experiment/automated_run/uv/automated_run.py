@@ -39,28 +39,28 @@ class UVAutomatedRun(AutomatedRun):
                              attenuator=self.spec.attenuator)
 
 
-    def _save_extraction(self, *args, **kw):
-        ext = super(UVAutomatedRun, self)._save_extraction(*args, **kw)
-        if self.spec.image:
-            dbim = self.db.get_image(self.image)
-            if dbim is None:
-                # use media server so only save path of file
-                # secondary option- open image and save to db
-                dbim = self.db.add_image(self.image,
-                                         #                                  image=self.image.tostring()
-                )
-
-            ext.image = dbim
-
-        # save snapshot recorded by pyscript
-        if self.extraction_script:
-            sps = self.extraction_script.snapshot_paths
-            if sps:
-                for sp in sps:
-                    dbsnap = self.db.add_snapshot(sp)
-                    ext.snapshots.append(dbsnap)
-
-        return ext
+    # def _save_extraction(self, *args, **kw):
+    #     ext = super(UVAutomatedRun, self)._save_extraction(*args, **kw)
+    #     if self.spec.image:
+    #         dbim = self.db.get_image(self.image)
+    #         if dbim is None:
+    #             # use media server so only save path of file
+    #             # secondary option- open image and save to db
+    #             dbim = self.db.add_image(self.image,
+    #                                      #                                  image=self.image.tostring()
+    #             )
+    #
+    #         ext.image = dbim
+    #
+    #     # save snapshot recorded by pyscript
+    #     if self.extraction_script:
+    #         sps = self.extraction_script.snapshot_paths
+    #         if sps:
+    #             for sp in sps:
+    #                 dbsnap = self.db.add_snapshot(sp)
+    #                 ext.snapshots.append(dbsnap)
+    #
+    #     return ext
 
     #    @cached_property
     #    def _get_masks(self):

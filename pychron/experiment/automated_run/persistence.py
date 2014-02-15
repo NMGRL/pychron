@@ -66,7 +66,8 @@ class AutomatedRunPersister(Loggable):
     extraction_blob = Str
     measurement_name = Str
     measurement_blob = Str
-    positions = List
+    positions = List  # list of position names
+    extraction_positions = List  #list of x,y or x,y,z tuples
 
     #for saving to mass spec
     runscript_name = Str
@@ -404,17 +405,25 @@ class AutomatedRunPersister(Loggable):
                                    self.extraction_blob)
             ext.script_id = script.id
 
-        for pi in self.positions:
-            if isinstance(pi, tuple):
-                if len(pi) > 1:
+        for i, pp in enumerate(self.positions):
+            if isinstance(pp, tuple):
+                if len(pp) > 1:
 
-                    if len(pi) == 3:
-                        dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1], z=pi[2])
+                    if len(pp) == 3:
+                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1], z=pp[2])
                     else:
-                        dbpos = db.add_analysis_position(ext, x=pi[0], y=pi[1])
+                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1])
 
             else:
-                dbpos = db.add_analysis_position(ext, pi)
+                dbpos = db.add_analysis_position(ext, pp)
+                try:
+                    ep = self.extraction_positions[i]
+                    dbpos.x = ep[0]
+                    dbpos.y = ep[1]
+                    if len(ep) == 3:
+                        dbpos.z = ep[2]
+                except IndexError:
+                    self.debug('no extraction position for {}'.format(pp))
 
             if loadtable and dbpos:
                 dbpos.load_identifier = loadtable.name

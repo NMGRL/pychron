@@ -360,31 +360,21 @@ class StageManager(Manager):
         pos = (self.stage_controller._x_position, self.stage_controller._y_position)
         if self.stage_controller.xy_swapped():
             pos = pos[1], pos[0]
+
+        pos = self.canvas.map_offset_position(pos)
         return self.get_calibrated_position(pos)
 
     def get_calibrated_position(self, pos, key=None):
         smap = self._stage_map
 
         # use a affine transform object to map
-
-        # #        #load the calibration from file every time
-        #        self.tray_calibration_manager.load_calibration()
-
         canvas = self.canvas
         ca = canvas.calibration_item
-        #         print 'caca', ca
         if ca:
             rot = ca.rotation
             cpos = ca.center
             scale = ca.scale
-            #            print 'caca', rot, cpos, ca.scale
-            #            scale = 1 / ca.scale
-            #            rot = 0
-            #            from pychron.canvas.canvas2D.scene.primitives.primitives import CalibrationItem
-            #            if key in ca.tweak_dict and isinstance(ca, CalibrationItem):
-            #                t = ca.tweak_dict[key]
-            #                a.translate(*ca.tweak_dict[key])
-            #             print type(rot), type(cpos), type(scale)
+
             self.debug('Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos, scale))
             pos = smap.map_to_calibration(pos, cpos, rot,
                                           scale=scale,

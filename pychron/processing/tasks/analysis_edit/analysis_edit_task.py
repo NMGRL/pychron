@@ -41,6 +41,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -232,22 +233,31 @@ class AnalysisEditTask(BaseBrowserTask):
                                              use_cache=use_cache, progress=progress)
                 return uuids
 
+    def _get_editor_by_uuid(self, uuid):
+        return next((editor for editor in self.editor_area.editors
+                     if isinstance(editor, RecallEditor) and
+                        editor.model and editor.model.uuid == uuid), None)
+
     def recall(self, records):
         """
             if analysis is already open activate the editor
             otherwise open a new editor
         """
+        self.debug('recalling records {}'.format(records))
 
         if not hasattr(records, '__iter__'):
-            records = (records,)
+            records = [records, ]
 
-        for editor in self.editor_area.editors:
-            if isinstance(editor, RecallEditor):
-                if editor.model:
-                    for r in records:
-                        if editor.model.uuid == r.uuid:
-                            self.activate_editor(editor)
-                            records.remove(r)
+        editor = None
+        #check if record already is open
+        for r in records:
+            editor = self._get_editor_by_uuid(r.uuid)
+            if editor:
+                records.remove(r)
+
+        #activate editor if open
+        if editor:
+            self.activate_editor(editor)
 
         if records:
             ans = self.manager.make_analyses(records,
@@ -510,8 +520,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('analysis_table:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):
-        sel = obj.selected
-        self._recall_item(sel)
+        if new:
+            self._recall_item(new.item)
 
     def _recall_item(self, item):
         if not self.external_recall_window:

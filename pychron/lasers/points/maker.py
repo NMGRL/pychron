@@ -18,7 +18,9 @@
 from traits.api import Any, Button, Enum, Float, Int, Color, \
     Bool
 from traitsui.api import View, Item, VGroup, HGroup
+
 from pychron.loggable import Loggable
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -130,9 +132,10 @@ class BaseMaker(Loggable):
             #x, y = self.canvas.get_offset_stage_position()
         x, y = self.canvas.get_stage_position()
         cx, cy = sm.get_uncalibrated_xy((x, y))
+        z = sm.get_z()
         ptargs = dict(xy=(x, y),
                       radius=radius,
-                      z=sm.get_z(),
+                      z=z,
                       calibrated_x=cx,
                       calibrated_y=cy,
                       spot_color=self.spot_color,
@@ -148,7 +151,7 @@ class BaseMaker(Loggable):
         if attenuator_value is not None:
             ptargs['attenuator'] = attenuator_value
 
-        if not self.canvas.point_exists():
+        if not self.canvas.point_exists((x, y, z)):
             self._accept_point(ptargs)
             self.canvas.request_redraw()
 

@@ -843,12 +843,17 @@ class AutomatedRun(Loggable):
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
 
+        ext_pos = []
+        if self.extraction_script:
+            ext_pos = self.extraction_script.get_extraction_positions()
+
         self.persister.trait_set(uuid=self.uuid,
                                  runid=self.runid,
                                  save_as_peak_hop=False,
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
                                  positions=self.get_position_list(),
+                                 extraction_positions=ext_pos,
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,
                                  experiment_queue_blob=eqb,

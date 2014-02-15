@@ -208,14 +208,11 @@ class LaserTrayCanvas(MapCanvas):
         self._new_transect = True
         self._new_polygon = True
 
-    def point_exists(self, xy=None, tol=1e-5):
-        if xy is None:
-            xy = self._stage_position
-        x, y = xy
-        '''
-            reimplement with scene
-        '''
-        return False
+    def point_exists(self, x, y, z, tol=1e-5):
+        pt = next((pts for pts in self.get_points()
+                   if abs(pts.x - x) < tol and abs(pts.y - y) < tol and abs(pts.z - z) < tol), None)
+
+        return True if pt else False
 
     def set_transect_step(self, step):
         transect = self.transects[-1]
@@ -257,8 +254,7 @@ class LaserTrayCanvas(MapCanvas):
 
         if self._new_transect:
             self._new_transect = False
-            #            kw['identifier'] = str(len(self.lines) + 1)
-            #            kw['canvas'] = self
+
             transect = Transect(xy[0], xy[1],
                                 identifier=str(len(self.transects) + 1),
                                 canvas=self,
@@ -307,7 +303,7 @@ class LaserTrayCanvas(MapCanvas):
             xy = self._stage_position
 
         p = LaserPoint(*xy,
-                       identifier=str(self._point_count),  # str(len(self.points) + 1),
+                       identifier=str(self._point_count),
                        **kw)
         self._point_count += 1
         self.scene.add_item(p)
@@ -345,7 +341,9 @@ class LaserTrayCanvas(MapCanvas):
             return self.get_drill_point(v)
         else:
             # v= p2 e.g. identifier is only 2
-            v = v[1:]
+            if v[0] == 'p':
+                v = v[1:]
+
             return self.scene.get_item(v, klass=LaserPoint)
 
     def get_transect_point(self, v):
@@ -370,19 +368,25 @@ class LaserTrayCanvas(MapCanvas):
                 try:
                     if between(p.xaxes_min, x, p.xaxes_max) and \
                             between(p.yaxes_min, y, p.yaxes_max):
-                        #                    if p.xaxes_min < x <= p.xaxes_max and p.yaxes_min < y <= p.yaxes_max:
                         return x, y
                 except AttributeError:
                     pass
-                    #                if 'x' in p.axes and 'y' in p.axes:
 
-    def get_offset_stage_position(self):
-        sx, sy = self.get_stage_screen_position()
-        print sx, sy
+
+    def map_offset_position(self, pos):
+        """
+            input a x,y tuple in data space
+            return the position modified by crosshairs offset
+        """
+        sx, sy = pos
         sx += self.crosshairs_offsetx
         sy += self.crosshairs_offsety
 
         return self.map_data((sx, sy))
+
+    def get_offset_stage_position(self):
+        pos = self.get_stage_screen_position()
+        return self.map_offset_position(pos)
 
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]

@@ -87,10 +87,20 @@ class ExtractionPyScript(ValvePyScript):
     info_color = EXTRACTION_COLOR
     snapshot_paths = List
 
-    def _extraction_action(self, *args, **kw):
-        kw['name'] = self.extract_device
-        kw['protocol'] = ILaserManager
-        return self._manager_action(*args, **kw)
+    _extraction_positions = List
+
+    def get_extraction_positions(self, clear=True):
+        """
+            return a list of x,y,z tuples
+            each tuple represents where the extraction occurred
+            if clear is True (default)
+            _extraction_positions set to empty list
+        """
+        ret = self._extraction_positions
+        if clear:
+            self._extraction_positions = []
+
+        return ret
 
     def get_response_blob(self):
         return self._extraction_action([('get_response_blob', (), {})])
@@ -134,54 +144,6 @@ class ExtractionPyScript(ValvePyScript):
                            cleanup=0,
                            beam_diameter=None,
                            run_identifier='default_runid')
-
-    #===============================================================================
-    # properties
-    #===============================================================================
-    @property
-    def duration(self):
-        return self.get_context()['duration']
-
-    @property
-    def cleanup(self):
-        return self.get_context()['cleanup']
-
-    @property
-    def pattern(self):
-        return self.get_context()['pattern']
-
-    @property
-    def analysis_type(self):
-        return self.get_context()['analysis_type']
-
-    @property
-    def extract_device(self):
-        return self.get_context()['extract_device']
-
-    @property
-    def tray(self):
-        return self.get_context()['tray']
-
-    @property
-    def position(self):
-        """
-            if position is 0 return None
-        """
-        pos = self.get_context()['position']
-        if pos:
-            return pos
-
-    @property
-    def extract_value(self):
-        return self.get_context()['extract_value']
-
-    @property
-    def extract_units(self):
-        return self.get_context()['extract_units']
-
-    @property
-    def beam_diameter(self):
-        return self.get_context()['beam_diameter']
 
     #===============================================================================
     # commands
@@ -298,7 +260,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def execute_pattern(self, pattern='', block=False):
+    def execute_pattern(self, pattern='', block=True):
         if pattern == '':
             pattern = self.pattern
 
@@ -315,8 +277,7 @@ class ExtractionPyScript(ValvePyScript):
             tray = self.tray
 
         self.info('set tray to {}'.format(tray))
-        result = self._extraction_action([('set_stage_map', (tray,), {})
-        ])
+        result = self._extraction_action([('set_stage_map', (tray,), {})])
         return result
 
     @verbose_skip
@@ -329,6 +290,12 @@ class ExtractionPyScript(ValvePyScript):
 
         ed = self.extract_device
         ed = ed.replace('_', ' ')
+
+        #get current position and add as an extraction position
+        pos = self._extraction_action([('get_position', (), {})])
+        self._extraction_positions.append(pos)
+
+        #set an experiment message
         self.manager.set_extract_state('{} ON! {}({})'.format(ed, power, units), color='red')
 
         self.info('extract sample to {} ({})'.format(power, units))
@@ -477,15 +444,67 @@ class ExtractionPyScript(ValvePyScript):
     def disable(self):
         return self._disable()
 
-
     @verbose_skip
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
 
     #===============================================================================
+    # properties
+    #===============================================================================
+    @property
+    def duration(self):
+        return self.get_context()['duration']
+
+    @property
+    def cleanup(self):
+        return self.get_context()['cleanup']
+
+    @property
+    def pattern(self):
+        return self.get_context()['pattern']
+
+    @property
+    def analysis_type(self):
+        return self.get_context()['analysis_type']
+
+    @property
+    def extract_device(self):
+        return self.get_context()['extract_device']
+
+    @property
+    def tray(self):
+        return self.get_context()['tray']
+
+    @property
+    def position(self):
+        """
+            if position is 0 return None
+        """
+        pos = self.get_context()['position']
+        if pos:
+            return pos
+
+    @property
+    def extract_value(self):
+        return self.get_context()['extract_value']
+
+    @property
+    def extract_units(self):
+        return self.get_context()['extract_units']
+
+    @property
+    def beam_diameter(self):
+        return self.get_context()['beam_diameter']
+
+    #===============================================================================
     # private
     #===============================================================================
+    def _extraction_action(self, *args, **kw):
+        kw['name'] = self.extract_device
+        kw['protocol'] = ILaserManager
+        return self._manager_action(*args, **kw)
+
     def _disable(self):
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% disable')
         if self.manager:
