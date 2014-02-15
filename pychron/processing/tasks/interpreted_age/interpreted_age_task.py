@@ -25,8 +25,9 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 import yaml
 
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction,\
-    OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, DeleteInterpretedAgeGroupAction, \
+from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, \
+    OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
+    DeleteInterpretedAgeGroupAction, \
     PlotIdeogramAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
@@ -42,13 +43,13 @@ class InterpretedAgeTask(BaseBrowserTask):
                           MakeGroupFromFileAction(),
                           DeleteInterpretedAgeGroupAction()),
                  SToolBar(PlotIdeogramAction())
-                 ]
+    ]
 
     def plot_ideogram(self):
 
         if self.active_editor:
-            iages=self.active_editor.interpreted_ages
-            task=self.window.application.get_task('pychron.processing.figures')
+            iages = self.active_editor.interpreted_ages
+            task = self.window.application.get_task('pychron.processing.figures')
             task.new_ideogram()
             task.active_editor.plot_interpreted_ages(iages)
 
@@ -58,28 +59,30 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def delete_group(self):
 
-        dlg=DeleteGroupDialog(projects=self.projects, db=self.manager.db)
+        dlg = DeleteGroupDialog(projects=self.projects, db=self.manager.db)
         info = dlg.edit_traits(kind='livemodal')
         if info.result:
             ids = dlg.get_selected_ids()
             if ids:
                 if self.confirmation_dialog('Are you sure to want to delete the selected groups?'):
-                    editor=InterpretedAgeEditor(processor=self.manager)
+                    editor = InterpretedAgeEditor(processor=self.manager)
                     editor.delete_groups(ids)
 
     def make_group_from_file(self):
         if self.has_active_editor():
-            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_lt8_no_int.yaml'
-            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_gt8_no_int.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_lt8_no_int.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_gt8_no_int.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_all.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_all2.yaml'
             if not os.path.isfile(p):
-                p=self.open_file_dialog()
+                p = self.open_file_dialog()
             if p:
                 with open(p, 'r') as fp:
-                    d=yaml.load(fp)
+                    d = yaml.load(fp)
 
-                project=d['project']
-                name=d['name']
-                ids=d['interpreted_age_ids']
+                project = d['project']
+                name = d['name']
+                ids = d['interpreted_age_ids']
                 self.active_editor.save_group(name, project, ids=ids)
 
                 self.db_save_info()
@@ -93,13 +96,13 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def open_interpreted_age_group(self):
         if self.has_active_editor():
-            ogd=OpenGroupDialog(projects=self.projects, db=self.manager.db)
+            ogd = OpenGroupDialog(projects=self.projects, db=self.manager.db)
             if self.selected_projects:
                 ogd.selected_project = self.selected_projects[-1]
 
             info = ogd.edit_traits(kind='livemodal')
             if info.result:
-                ids=ogd.get_selected_ids()
+                ids = ogd.get_selected_ids()
                 if ids:
                     self.open_interpreted_age_groups(ids)
 
@@ -138,8 +141,8 @@ class InterpretedAgeTask(BaseBrowserTask):
             # p=self.save_file_dialog()
             # p = '/Users/ross/Sandbox/interpreted_age.pdf'
 
-            n=self.active_editor.name
-            p='/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+            n = self.active_editor.name
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
             if p:
                 self.active_editor.save_pdf_tables(p)
 
