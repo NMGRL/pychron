@@ -22,7 +22,6 @@
 import binascii
 import math
 # from sqlalchemy import INTEGER
-from sqlalchemy.sql.expression import func, distinct
 
 from sqlalchemy.sql.expression import func, distinct
 from uncertainties import std_dev, nominal_value
@@ -47,7 +46,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     kind = 'mysql'
 
     def get_irradiation_positions(self, name, level):
-    #         sess = self.get_session()
+        #         sess = self.get_session()
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
@@ -61,7 +60,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return q.one().production
 
     def get_production_ratio_by_irradname(self, name):
-    #         sess = self.get_session()
+        #         sess = self.get_session()
         with self.session_ctx() as sess:
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
@@ -70,8 +69,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 return irrad[-1].production
 
     def get_levels_by_irradname(self, name, levels=None):
-    #         sess = self.get_session()
-    #         sess = self.get_session()
+        #         sess = self.get_session()
+        #         sess = self.get_session()
         with self.session_ctx() as sess:
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
@@ -85,7 +84,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_chronology_by_irradname(self, name):
         with self.session_ctx() as sess:
-        #         sess = self.get_session()
+            #         sess = self.get_session()
             q = sess.query(IrradiationChronologyTable)
             q = q.filter(IrradiationChronologyTable.IrradBaseID == name)
             q = q.order_by(IrradiationChronologyTable.EndTime.asc())
@@ -100,7 +99,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
-        #         sess = self.get_session()
+            #         sess = self.get_session()
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
             return q.all()
 
@@ -187,11 +186,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                         return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
-    #        key = 'RID'
+        #        key = 'RID'
         key = 'IrradPosition'
         if aliquot:
             if step:
-            #                value = ('{}-{}{}'.format(value, aliquot, step), aliquot, step)
+                #                value = ('{}-{}{}'.format(value, aliquot, step), aliquot, step)
                 key = (key, 'Aliquot', 'Increment')
                 value = (value, aliquot, step)
             else:
@@ -265,78 +264,78 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     def get_runscript(self, value):
         return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
 
-    #===============================================================================
-    # adders
-    #===============================================================================
-        return self._retrieve_item(RunScriptTable, value, key='RunScriptID',)
+        #===============================================================================
+        # adders
+        #===============================================================================
+        return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
 
     def get_irradiation_level(self, irrad, name):
         with self.session_ctx() as sess:
-            q=sess.query(IrradiationLevelTable)
-            q=q.filter(IrradiationLevelTable.Level==name)
-            q=q.filter(IrradiationLevelTable.IrradBaseID==irrad)
+            q = sess.query(IrradiationLevelTable)
+            q = q.filter(IrradiationLevelTable.Level == name)
+            q = q.filter(IrradiationLevelTable.IrradBaseID == irrad)
             return self._query_one(q)
-#===============================================================================
-# adders
-#===============================================================================
+        #===============================================================================
+        # adders
+        #===============================================================================
 
     def add_irradiation_level(self, irrad, name, holder, production, **kw):
         if not self.get_irradiation_level(irrad, name):
-            i=IrradiationLevelTable(IrradBaseID=irrad,
-                                    Level=name,
-                                    SampleHolder=holder,
-                                    ProductionRatiosID=production,
-                                    **kw)
+            i = IrradiationLevelTable(IrradBaseID=irrad,
+                                      Level=name,
+                                      SampleHolder=holder,
+                                      ProductionRatiosID=production,
+                                      **kw)
             self._add_item(i)
 
     def add_irradiation_position(self, identifier, irrad_level, hole, material='', sample=6, j=1e-4, jerr=1e-7):
         with self.session_ctx() as sess:
-            q=sess.query(IrradiationPositionTable)
-            q=q.filter(IrradiationPositionTable.IrradPosition==identifier)
+            q = sess.query(IrradiationPositionTable)
+            q = q.filter(IrradiationPositionTable.IrradPosition == identifier)
             if not self._query_one(q):
-                i=IrradiationPositionTable(IrradPosition=identifier,
-                                           IrradiationLevel=irrad_level,
-                                           HoleNumber=hole,
-                                           Material=material,
-                                           SampleID=sample,
-                                           J=j,JEr=jerr
-                                           )
+                i = IrradiationPositionTable(IrradPosition=identifier,
+                                             IrradiationLevel=irrad_level,
+                                             HoleNumber=hole,
+                                             Material=material,
+                                             SampleID=sample,
+                                             J=j, JEr=jerr
+                )
                 self._add_item(i)
 
     def add_irradiation_production(self, name, pr, ifc):
-        kw={}
-        for k,v in ifc.iteritems():
-            if k=='cl3638':
-                k='P36Cl38Cl'
+        kw = {}
+        for k, v in ifc.iteritems():
+            if k == 'cl3638':
+                k = 'P36Cl38Cl'
             else:
-                k=k.capitalize()
+                k = k.capitalize()
 
-            kw[k]=float(nominal_value(v))
-            kw['{}Er'.format(k)]=float(std_dev(v))
+            kw[k] = float(nominal_value(v))
+            kw['{}Er'.format(k)] = float(std_dev(v))
 
-        kw['ClOverKMultiplier']=pr['Cl_K']
-        kw['ClOverKMultiplierEr']=0
-        kw['CaOverKMultiplier']=pr['Ca_K']
-        kw['CaOverKMultiplierEr']=0
-        v=binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
+        kw['ClOverKMultiplier'] = pr['Cl_K']
+        kw['ClOverKMultiplierEr'] = 0
+        kw['CaOverKMultiplier'] = pr['Ca_K']
+        kw['CaOverKMultiplierEr'] = 0
+        v = binascii.crc32(''.join([str(v) for v in kw.itervalues()]))
         with self.session_ctx() as sess:
-            q=sess.query(IrradiationProductionTable)
-            q=q.filter(IrradiationProductionTable.ProductionRatiosID==v)
+            q = sess.query(IrradiationProductionTable)
+            q = q.filter(IrradiationProductionTable.ProductionRatiosID == v)
             if not self._query_one(q):
-                i=IrradiationProductionTable(Label=name,
-                                             ProductionRatiosID=v,
-                                             **kw)
+                i = IrradiationProductionTable(Label=name,
+                                               ProductionRatiosID=v,
+                                               **kw)
                 self._add_item(i)
         return v
 
     def add_irradiation_chronology_segment(self, irrad, s, e):
         with self.session_ctx() as sess:
-            q=sess.query(IrradiationChronologyTable)
-            q=q.filter(IrradiationChronologyTable.IrradBaseID==irrad)
-            q=q.filter(IrradiationChronologyTable.StartTime==s)
-            q=q.filter(IrradiationChronologyTable.EndTime==e)
+            q = sess.query(IrradiationChronologyTable)
+            q = q.filter(IrradiationChronologyTable.IrradBaseID == irrad)
+            q = q.filter(IrradiationChronologyTable.StartTime == s)
+            q = q.filter(IrradiationChronologyTable.EndTime == e)
             if not self._query_one(q):
-                i=IrradiationChronologyTable(IrradBaseID=irrad, StartTime=s, EndTime=e)
+                i = IrradiationChronologyTable(IrradBaseID=irrad, StartTime=s, EndTime=e)
                 self._add_item(i)
 
     def add_sample_loading(self, ms, tray):
@@ -398,7 +397,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         # query the IrradiationPositionTable
         irradpos = self.get_irradiation_position(irradpos, )
-        params = dict(RID=rid, # make_runid(rid, aliquot, step),
+        params = dict(RID=rid,  # make_runid(rid, aliquot, step),
                       #                    '{}-{}{}'.format(rid, aliquot, step),
                       Aliquot=aliquot,
                       RunDateTime=func.current_timestamp(),
@@ -457,16 +456,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         self._add_item(bs, )
         return bs
 
-    #        return bs, True
-
-    #    @add
     def add_peaktimeblob(self, blob1, blob2, iso, **kw):
         iso = self.get_isotope(iso, )
         pk = PeakTimeTable(PeakTimeBlob=blob1,
-                           PeakNeverBslnCorBlob=blob2
-        )
+                           PeakNeverBslnCorBlob=blob2)
         if iso is not None:
-        #            iso.peak_time_series= pk
             iso.peak_time_series.append(pk)
 
         return pk
@@ -476,8 +470,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         d = DetectorTable(
             DetectorTypeID=dtype.DetectorTypeID,
             **kw)
-        #        if dtype is not None:
-        #            dtype.detectors.append(d)
 
         self._add_item(d, )
         return d
@@ -604,12 +596,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         item = AnalysesChangeableItemsTable()
         analysis = self.get_analysis(rid, )
         if analysis is not None:
-        # get the lastest preferencesetid
-        #            sess = self.get_session()
-        #            q = sess.query(PreferencesTable)
-        #            q = q.order_by(PreferencesTable.PreferencesSetID.desc())
-        #            q = q.limit(1)
-        #            pref = q.one()
+            # get the lastest preferencesetid
+            #            sess = self.get_session()
+            #            q = sess.query(PreferencesTable)
+            #            q = q.order_by(PreferencesTable.PreferencesSetID.desc())
+            #            q = q.limit(1)
+            #            pref = q.one()
 
             pref = self.get_preferences_set(None, )
             if pref is not None:

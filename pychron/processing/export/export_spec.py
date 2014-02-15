@@ -24,6 +24,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -182,6 +183,7 @@ class ExportSpec(Loggable):
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
         m,s=0,0
+        n_filtered_pts = 0
         if iso in self.isotopes:
             iso=self.isotopes[iso]
             xs,ys=iso.baseline.xs, iso.baseline.ys
@@ -191,9 +193,11 @@ class ExportSpec(Loggable):
 
                 outliers=where(res > (s * nsigma))[0]
                 ys=delete(ys, outliers)
+                n_filtered_pts += len(outliers)
+
             m, s = mean(ys), std(ys)
 
-        return ufloat(m, s)
+        return ufloat(m, s), n_filtered_pts
 
     def get_baseline_uvalue(self, iso):
         try:
