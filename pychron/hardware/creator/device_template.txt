@@ -1,0 +1,41 @@
+"""
+    class created with pychron's DeviceCreator
+"""
+
+class ${name}(${kind}):
+    """
+    """
+% for a in functions:
+    %if a['args']:
+    def ${a['name']}(self, ${a['args']}):
+    %else:
+    def ${a['name']}(self):
+    %endif
+        % if a['doc_str']:
+        """
+            ${a['doc_str']}
+        """
+        % else:
+        %if a['raise']:
+        raise NotImplementedError
+        % else:
+        pass
+        % endif
+        % endif
+
+% endfor
+
+#==============================================================================
+# Configloadable
+#==============================================================================
+    def load(self, *args, **kw):
+        raise NotImplementedError
+
+    def initialize(self, *args, **kw):
+        raise NotImplementedError
+
+    def load_additional_args(self, *args, **kw):
+        raise NotImplementedError
+
+
+#=======EOF====================================================================

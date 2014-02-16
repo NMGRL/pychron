@@ -108,7 +108,7 @@ class Paths():
     heating_schedule_dir = None
     map_dir = None
     user_points_dir = None
-    irradiation_tray_maps_dir=None
+    irradiation_tray_maps_dir = None
     #==============================================================================
     # data
     #==============================================================================
@@ -127,7 +127,7 @@ class Paths():
     default_cache = None
     loading_dir = None
     power_map_dir = None
-    vcs_dir=None
+    vcs_dir = None
     # initialization_dir = None
     # device_creator_dir = None
 
@@ -270,7 +270,7 @@ class Paths():
         self.default_cache = join(self.data_dir, 'cache')
         self.loading_dir = join(self.data_dir, 'loads')
         self.power_map_dir = join(self.data_dir, 'power_maps')
-        self.vcs_dir=join(self.data_dir, 'vcs')
+        self.vcs_dir = join(self.data_dir, 'vcs')
         #==============================================================================
         # lovera exectuables
         #==============================================================================
@@ -281,13 +281,12 @@ class Paths():
         # files
         #=======================================================================
         self.backup_recovery_file = join(self.hidden_dir, 'backup_recovery')
-        self.last_experiment=join(self.hidden_dir, 'last_experiment')
+        self.last_experiment = join(self.hidden_dir, 'last_experiment')
         self.set_search_paths()
 
 
-
 paths = Paths()
-paths.build('_beta')
+paths.build('_dev')
 
 
 # def rec_make(pi):
@@ -308,9 +307,9 @@ def r_mkdir(p):
 
 
 def build_directories(paths):
-#    global paths
-# verify paths
-#    import copy
+    #    global paths
+    # verify paths
+    #    import copy
     for l in dir(paths):
         if l.endswith('_dir'):
             r_mkdir(getattr(paths, l))

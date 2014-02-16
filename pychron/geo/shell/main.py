@@ -64,8 +64,8 @@ def make_sample_points(geo):
         v = db.get_project(pr)
         samples = v.samples
         yr1, yr2 = partition(samples, lambda x: x.name.startswith('MB06'))
-        for name, sams in (('MB06_all_samples2', yr1),
-                           ('MB07_all_samples2', yr2)):
+        for name, sams in (('MB06_all_samples', yr1),):
+            #('MB07_all_samples', yr2)):
             pts = []
             for s in sams:
                 if not s.lat:
@@ -82,8 +82,8 @@ def make_sample_points(geo):
     # print s.name, s.lat, s.long
 
 
-def make_sample_shape_file():
-    geo = get_processor()
+def make_sample_shape_file(dbname):
+    geo = get_processor(dbname)
     attrs = ['sample', 'material', 'labnumber']
     atypes = ['C', 'C', 'C']
     attrs = zip(attrs, atypes)
@@ -136,9 +136,9 @@ def make_interpreted_age_points(geo):
     return pts, zip(attrs, atypes)
 
 
-def make_interpreted_age_shape_file():
+def make_interpreted_age_shape_file(dbname):
     name = 'interpreted_ages'
-    geo = get_processor('pychrondata_minnabluff')
+    geo = get_processor(dbname)
     if geo.connect():
         pts, attrs = make_interpreted_age_points(geo)
 
@@ -159,8 +159,8 @@ def make_interpreted_age_shape_file():
 
 
 def main():
-    make_sample_shape_file()
-    # make_interpreted_age_shape_file()
+    make_sample_shape_file('pychrondata_minnabluff')
+    # make_interpreted_age_shape_file('pychrondata_minnabluff')
 
 
 if __name__ == '__main__':
