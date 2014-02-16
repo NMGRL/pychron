@@ -15,14 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Dict
+from traits.api import Dict
 #============= standard library imports ========================
 import weakref
 import os
 from numpy.core.numeric import Inf
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene import Scene
-from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
 from pychron.core.helpers.filetools import to_bool
@@ -31,8 +30,6 @@ from pychron.paths import paths
 
 
 class ExtractionLineScene(Scene):
-    canvas = Instance(BaseDataCanvas)
-
     valves = Dict
 
     def get_is_in(self, px, py, exclude=None):
@@ -89,8 +86,7 @@ class ExtractionLineScene(Scene):
                                 display_name=display_name,
                                 default_color=c,
                                 type_tag=type_tag,
-                                fill=fill,
-        )
+                                fill=fill)
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
@@ -226,10 +222,10 @@ class ExtractionLineScene(Scene):
             )
             self.add_item(im, 0)
 
-    def load(self, pathname, configpath):
+    def load(self, pathname, configpath, canvas):
         self.reset_layers()
 
-        origin, color_dict = self._load_config(configpath)
+        origin, color_dict = self._load_config(configpath, canvas)
         ox, oy = origin
 
         cp = self._get_canvas_parser(pathname)
@@ -261,19 +257,8 @@ class ExtractionLineScene(Scene):
         self.valves = ndict
         self._load_rects(cp, origin, color_dict)
 
-
-        #         for g in cp.get_elements('gauge'):
-        #             if 'gauge' in color_dict:
-        #                 c = color_dict['gauge']
-        #             else:
-        #                 c = (255, 255, 0)
-        #             self._new_rectangle(g, c, origin=origin)
-
-
-
-        #         xv, yv = self._get_canvas_view_range()
-        xv = self.canvas.view_x_range
-        yv = self.canvas.view_y_range
+        xv = canvas.view_x_range
+        yv = canvas.view_y_range
         x, y = xv[0], yv[0]
         w = xv[1] - xv[0]
         h = yv[1] - yv[0]
@@ -321,9 +306,7 @@ class ExtractionLineScene(Scene):
     def _load_rects(self, cp, origin, color_dict):
         for key in ('stage', 'laser', 'spectrometer',
                     'turbo', 'getter', 'tank',
-                    'ionpump', 'gauge',
-                    #                      'rect'
-        ):
+                    'ionpump', 'gauge'):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
@@ -352,8 +335,7 @@ class ExtractionLineScene(Scene):
                 self._new_label(vlabel, name, c,
                                 origin=(ox + rect.x, oy + rect.y),
                                 klass=ValueLabel,
-                                value=0
-                )
+                                value=0)
 
     def _load_legend(self, cp, origin, color_dict):
         ox, oy = origin
@@ -404,12 +386,11 @@ class ExtractionLineScene(Scene):
                                     fill=False,
                                     identifier='legend',
                                     border_width=5,
-                                    default_color=self._make_color((0, 0, 0))
-            )
+                                    default_color=self._make_color((0, 0, 0)))
 
             self.add_item(rect, layer='legend')
 
-    def _load_config(self, p):
+    def _load_config(self, p, canvas):
         color_dict = dict()
 
         if os.path.isfile(p):
@@ -419,8 +400,8 @@ class ExtractionLineScene(Scene):
             if tree:
                 xv, yv = self._get_canvas_view_range(cp)
 
-                self.canvas.view_x_range = xv
-                self.canvas.view_y_range = yv
+                canvas.view_x_range = xv
+                canvas.view_y_range = yv
                 # get label font
                 font = tree.find('font')
                 if font is not None:
@@ -434,7 +415,7 @@ class ExtractionLineScene(Scene):
                     t = map(float, t.split(',')) if ',' in t else t
 
                     if k == 'bgcolor':
-                        self.canvas.bgcolor = t
+                        canvas.bgcolor = t
                     else:
                         color_dict[k] = t
 

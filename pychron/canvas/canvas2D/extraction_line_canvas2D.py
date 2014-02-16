@@ -39,8 +39,8 @@ class ExtractionLineAction(Action):
 
 
 class ExtractionLineCanvas2D(SceneCanvas):
-    '''
-    '''
+    """
+    """
     #     valves = Dict
     active_item = Any
 
@@ -67,17 +67,12 @@ class ExtractionLineCanvas2D(SceneCanvas):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
         tool = ExtractionLineInfoTool(scene=self.scene,
-                                      manager=self.manager
-        )
+                                      manager=self.manager)
         overlay = ExtractionLineInfoOverlay(tool=tool,
                                             component=self)
         self.tool = tool
         self.tools.append(tool)
         self.overlays.append(overlay)
-
-    @on_trait_change('display_volume, volume_key')
-    def _update_tool(self, name, new):
-        self.tool.trait_set(**{name: new})
 
     def toggle_item_identify(self, name):
         v = self._get_valve_by_name(name)
@@ -87,21 +82,12 @@ class ExtractionLineCanvas2D(SceneCanvas):
             except AttributeError:
                 pass
 
-                #        self.request_redraw()
-
     def update_valve_state(self, name, nstate, refresh=True, mode=None):
-        '''
-        '''
-        #        print name, nstate
+        """
+        """
         valve = self._get_valve_by_name(name)
-        #        print valve
         if valve is not None:
             valve.state = nstate
-            #
-            #        if refresh:
-            #            self.request_redraw()
-
-            #        return
 
     def update_valve_owned_state(self, name, owned):
         valve = self._get_valve_by_name(name)
@@ -114,21 +100,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
             valve.soft_lock = lockstate
             self.request_redraw()
 
-            #        if refresh:
-            #            self.request_redraw()
-
-    def _get_valve_by_name(self, name):
-        '''
-        
-        '''
-        return next((i for i in self.scene.valves.itervalues()
-                     if isinstance(i, BaseValve) and i.name == name), None)
-
-    def _get_object_by_name(self, name):
-        return self.scene.get_item(name)
-
-    #        return next((i for i in self.valves.itervalues() if i.name == name), None)
-
     def load_canvas_file(self, cname):
 
         p = os.path.join(paths.canvas2D_dir, 'canvas.xml')
@@ -139,11 +110,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _over_item(self, event):
         x, y = event.x, event.y
-        #items=self.scene.iteritems()
         return self.scene.get_is_in(x, y, exclude=[BorderLine, ])
-        #return next((item for item in items
-        #             if hasattr(item, 'is_in') and \
-        #                item.is_in(x, y)), None)
 
     def normal_left_down(self, event):
         pass
@@ -151,116 +118,37 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def normal_mouse_move(self, event):
 
         item = self._over_item(event)
-        #redraw=False
         if item is not None:
             self.event_state = 'select'
             event.window.set_pointer(self.select_pointer)
             if item != self.active_item:
                 self.active_item = item
             if isinstance(item, BaseValve):
-                #print self.active_item, item
                 if self.manager:
                     self.manager.set_selected_explanation_item(item)
         else:
-            #redraw=False
             self.active_item = None
             self.event_state = 'normal'
             event.window.set_pointer(self.normal_pointer)
             if self.manager:
                 self.manager.set_selected_explanation_item(None)
 
-                #if redraw:
-                #    self.request_redraw()
-                #event.handled = True
-                # self.invalidate_and_redraw()
-
     def select_mouse_move(self, event):
-        '''
-         :
-        '''
+        """
+        """
         self.normal_mouse_move(event)
-
-    def OnLock(self):
-        item = self._active_item
-        if item:
-            item.soft_lock = lock = not item.soft_lock
-            self.manager.set_software_lock(item.name, lock)
-            self.request_redraw()
-
-    def OnSample(self):
-        pass
-
-    def OnCycle(self):
-        pass
-
-    #    def OnProperties(self, event):
-    #        pass
-    #    def OnSample(self, event):
-    #        self.manager.sample(self.active_item.name, mode='normal')
-    #
-    #    def OnCycle(self, event):
-    #        self.manager.cycle(self.active_item.name, mode='normal')
-
-    #
-    def OnProperties(self, event):
-        self.manager.show_valve_properties(self.active_item.name)
-
-    def _action_factory(self, name, func, klass=None, **kw):
-        """
-        """
-        if klass is None:
-            klass = Action
-
-        a = klass(name=name,
-                  on_perform=getattr(self, func), **kw)
-
-        return a
-
-    def _show_menu(self, event, obj):
-        actions = []
-        if self.manager.mode != 'client':
-            if isinstance(self.active_item, BaseValve):
-                t = 'Lock'
-                if obj.soft_lock:
-                    t = 'Unlock'
-
-                action = self._action_factory(t, 'OnLock')
-                actions.append(action)
-                #else:
-                #    if self.active_item.name
-                #
-                #    actions.append(self._action_factory('Isolate', 'OnIsolate',
-                #                                    klass=ExtractionLineAction,
-                #                                    chamber=self.active_item.name))
-
-
-        #        actions = [self._action_factory(name, func) for name, func in []]
-        if actions:
-            menu_manager = MenuManager(*actions)
-
-            self._active_item = self.active_item
-            menu = menu_manager.create_menu(event.window.control, None)
-            menu.show()
 
     def select_right_down(self, event):
         item = self.active_item
 
         if item is not None:
-        #isinstance(item, BaseValve):
             self._show_menu(event, item)
-
-        #        item = self.valves[self.active_item]
-        #        item.soft_lock = lock = not item.soft_lock
-        #        self.manager.set_software_lock(item.name, lock)
         event.handled = True
-
-    #        self.invalidate_and_redraw()
 
     def select_left_down(self, event):
         """
 
         """
-        #        item = self.valves[self.active_item]
         item = self.active_item
         if item is None:
             return
@@ -289,28 +177,75 @@ class ExtractionLineCanvas2D(SceneCanvas):
         state = not state
 
         change = False
-        ok = False
         if self.manager is not None:
             if state:
-            #                if self.manager.open_valve(item.name, mode = 'manual'):
                 ok, change = self.manager.open_valve(item.name, mode='normal')
-            #                 if self.manager.open_valve(item.name, mode='normal'):
-            #                     ok = True
             else:
-            #                if self.manager.close_valve(item.name, mode = 'manual'):
                 ok, change = self.manager.close_valve(item.name, mode='normal')
-                #                 if self.manager.close_valve(item.name, mode='normal'):
-                #                     ok = True
         else:
             ok = True
 
-        #        ok = True
         if ok and not item.soft_lock:
             item.state = state
 
         if change:
             self.request_redraw()
-            #             self.invalidate_and_redraw()
+
+    def OnLock(self):
+        item = self._active_item
+        if item:
+            item.soft_lock = lock = not item.soft_lock
+            self.manager.set_software_lock(item.name, lock)
+            self.request_redraw()
+
+    def OnSample(self):
+        pass
+
+    def OnCycle(self):
+        pass
+
+    def OnProperties(self, event):
+        self.manager.show_valve_properties(self.active_item.name)
+
+    def _get_valve_by_name(self, name):
+        return next((i for i in self.scene.valves.itervalues()
+                     if isinstance(i, BaseValve) and i.name == name), None)
+
+    def _get_object_by_name(self, name):
+        return self.scene.get_item(name)
+
+    def _action_factory(self, name, func, klass=None, **kw):
+        """
+        """
+        if klass is None:
+            klass = Action
+
+        a = klass(name=name,
+                  on_perform=getattr(self, func), **kw)
+
+        return a
+
+    def _show_menu(self, event, obj):
+        actions = []
+        if self.manager.mode != 'client':
+            if isinstance(self.active_item, BaseValve):
+                t = 'Lock'
+                if obj.soft_lock:
+                    t = 'Unlock'
+
+                action = self._action_factory(t, 'OnLock')
+                actions.append(action)
+
+        if actions:
+            menu_manager = MenuManager(*actions)
+
+            self._active_item = self.active_item
+            menu = menu_manager.create_menu(event.window.control, None)
+            menu.show()
+
+    @on_trait_change('display_volume, volume_key')
+    def _update_tool(self, name, new):
+        self.tool.trait_set(**{name: new})
 
     def _scene_default(self):
         s = ExtractionLineScene(canvas=weakref.ref(self)())
