@@ -20,7 +20,7 @@ from traits.api import Interface
 #============= local library imports  ==========================
 import traits.has_traits
 
-traits.has_traits.CHECK_INTERFACES = 2
+traits.has_traits.CHECK_INTERFACES = 0
 
 
 class IDatastore(Interface):
@@ -35,4 +35,5 @@ class IDatastore(Interface):
 
     def is_connected(self):
         pass
+
 #============= EOF =============================================
