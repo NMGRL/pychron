@@ -19,7 +19,6 @@ from datetime import datetime
 
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
-from traitsui.api import View, Item
 
 
 #============= standard library imports ========================
@@ -31,9 +30,6 @@ from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.loggable import Loggable
 from pychron.database.adapters.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.core.regression.ols_regressor import PolynomialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor
-from uncertainties import ufloat
 from pychron.experiment.utilities.info_blob import encode_infoblob
 import time
 from pychron.pychron_constants import ALPHAS
@@ -93,8 +89,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     def connect(self, *args, **kw):
         return self.db.connect(*args, **kw)
-
-    #========================================================================================
 
     def add_sample_loading(self, ms, tray):
         if self.sample_loading_id is None:
@@ -167,6 +161,25 @@ class MassSpecDatabaseImporter(Loggable):
             else:
                 identifier = '4359'
         return identifier
+
+    def add_irradiation(self, irrad, level, pid):
+        with self.db.session_ctx():
+            sid = 0
+            self.db.add_irradiation_level(irrad, level, sid, pid)
+
+    def add_irradiation_position(self, identifier, levelname, hole, **kw):
+        with self.db.session_ctx():
+            return self.db.add_irradiation_position(identifier, levelname, hole, **kw)
+
+    def add_irradiation_production(self, name, prdict, ifdict):
+        with self.db.session_ctx():
+            return self.db.add_irradiation_production(name, prdict, ifdict)
+
+    def add_irradiation_chronology(self, irrad, doses):
+
+        with self.db.session_ctx():
+            for pwr, st, et in doses:
+                self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
@@ -351,12 +364,12 @@ class MassSpecDatabaseImporter(Loggable):
         tb, vb = spec.get_signal_data(iso, odet)
 
         # baseline = spec.get_baseline_uvalue(iso)
-        baseline = spec.get_filtered_baseline_uvalue(iso)
+        baseline, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
-        blob2 = [struct.pack('>f', float(v)) for v in vb]
+        blob2 = ''.join([struct.pack('>f', float(v)) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         #@todo: add filtered points blob
@@ -384,6 +397,7 @@ class MassSpecDatabaseImporter(Loggable):
         self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
         det = dbdet.Label
         tb, vb = spec.get_baseline_data(iso, odet)
+        pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)
 
         db = self.db
@@ -394,13 +408,14 @@ class MassSpecDatabaseImporter(Loggable):
         # if spec.is_peak_hop:
         #     det = spec.peak_hop_detector
 
-        bs = spec.get_baseline_uvalue(iso)
+        # bs = spec.get_baseline_uvalue(iso)
+        bs, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        sem = bs.std_dev / (ncnts) ** 0.5 if ncnts else 0
+        sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
 
-        infoblob = self._make_infoblob(bs.nominal_value, sem)
+        infoblob = self._make_infoblob(bs.nominal_value, sem, fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
@@ -425,9 +440,10 @@ class MassSpecDatabaseImporter(Loggable):
             blob += struct.pack('>ff', float(vi), float(ti))
         return blob
 
-    def _make_infoblob(self, baseline, baseline_err):
-        rpts = 0
-        pos_segments = []
+    def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
+        rpts = n
+        pos_segments = [baseline_position]
+
         bs_segments = [1.0000000200408773e+20]
         bs_seg_params = [[baseline, 0, 0, 0]]
         bs_seg_errs = [baseline_err]
@@ -442,124 +458,124 @@ class MassSpecDatabaseImporter(Loggable):
     #===========================================================================
     # debugging
     #===========================================================================
-    def _test_fired(self):
-        import numpy as np
-
-        self.db.connect()
-        xbase = np.linspace(430, 580, 150)
-        #        ybase = np.zeros(150)
-        #        cddybase = np.zeros(150)
-        ybase = np.random.random(150)
-        cddybase = np.random.random(150) * 0.001
-
-        base = [zip(xbase, ybase),
-                zip(xbase, ybase),
-                zip(xbase, ybase),
-                zip(xbase, ybase),
-                zip(xbase, cddybase),
-        ]
-
-        xsig = np.linspace(20, 420, 410)
-        #        y40 = np.ones(410) * 680
-        #        y39 = np.ones(410) * 107
-        #        y38 = np.zeros(410) * 1.36
-        #        y37 = np.zeros(410) * 0.5
-        #        y36 = np.ones(410) * 0.001
-
-        y40 = 680 - 0.1 * xsig
-        y39 = 107 - 0.1 * xsig
-        y38 = np.zeros(410) * 1.36
-        y37 = np.zeros(410) * 0.5
-        y36 = 1 + 0.1 * xsig
-
-        sig = [zip(xsig, y40),
-               zip(xsig, y39),
-               zip(xsig, y38),
-               zip(xsig, y37),
-               zip(xsig, y36),
-
-        ]
-
-        regbs = MeanRegressor(xs=xbase, ys=ybase)
-        cddregbs = MeanRegressor(xs=xbase, ys=cddybase)
-        reg = PolynomialRegressor(xs=xsig, ys=y40, fit='linear')
-
-        reg1 = PolynomialRegressor(xs=xsig, ys=y39, fit='linear')
-        reg2 = PolynomialRegressor(xs=xsig, ys=y38, fit='linear')
-        reg3 = PolynomialRegressor(xs=xsig, ys=y37, fit='linear')
-        reg4 = PolynomialRegressor(xs=xsig, ys=y36, fit='linear')
-
-        keys = [
-            ('H1', 'Ar40'),
-            ('AX', 'Ar39'),
-            ('L1', 'Ar38'),
-            ('L2', 'Ar37'),
-            ('CDD', 'Ar36'),
-        ]
-
-        regresults = (dict(
-            Ar40=ufloat(reg.predict(0), reg.predict_error(0)),
-            Ar39=ufloat(reg1.predict(0), reg1.predict_error(0)),
-            Ar38=ufloat(reg2.predict(0), reg2.predict_error(0)),
-            Ar37=ufloat(reg3.predict(0), reg3.predict_error(0)),
-            Ar36=ufloat(reg4.predict(0), reg4.predict_error(0)),
-
-        ),
-                      dict(
-                          Ar40=ufloat(regbs.predict(0), regbs.predict_error(0)),
-                          Ar39=ufloat(regbs.predict(0), regbs.predict_error(0)),
-                          Ar38=ufloat(regbs.predict(0), regbs.predict_error(0)),
-                          Ar37=ufloat(regbs.predict(0), regbs.predict_error(0)),
-                          Ar36=ufloat(cddregbs.predict(0), cddregbs.predict_error(0))
-                      ))
-        blanks = [ufloat(0, 0.1),
-                  ufloat(0.1, 0.001),
-                  ufloat(0.01, 0.001),
-                  ufloat(0.01, 0.001),
-                  ufloat(0.00001, 0.0001),
-        ]
-        fits = (
-            dict(zip(['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'],
-                     ['Linear', 'Linear', 'Linear', 'Linear', 'Linear'])),
-            dict(zip(['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'],
-                     ['Average Y', 'Average Y', 'Average Y', 'Average Y', 'Average Y'])))
-        mass_spectrometer = 'obama'
-        extract_device = 'Laser Furnace'
-        extract_value = 10
-        position = 1
-        duration = 10
-        first_stage_delay = 0
-        second_stage_delay = 30
-        tray = '100-hole'
-        runscript_name = 'Foo'
-        runscript_text = 'this is a test script'
-
-        self.add_analysis('4318', '500', '', '4318',
-                          base, sig, blanks,
-                          keys,
-                          regresults,
-                          fits,
-
-                          mass_spectrometer,
-                          extract_device,
-                          tray,
-                          position,
-                          extract_value, # power requested
-                          extract_value, # power achieved
-
-                          duration, # total extraction
-                          duration, # time at extract_value
-
-                          first_stage_delay,
-                          second_stage_delay,
-
-                          runscript_name,
-                          runscript_text,
-        )
-
-    def traits_view(self):
-        v = View(Item('test', show_label=False))
-        return v
+        # def _test_fired(self):
+        #     import numpy as np
+        #
+        #     self.db.connect()
+        #     xbase = np.linspace(430, 580, 150)
+        #     #        ybase = np.zeros(150)
+        #     #        cddybase = np.zeros(150)
+        #     ybase = np.random.random(150)
+        #     cddybase = np.random.random(150) * 0.001
+        #
+        #     base = [zip(xbase, ybase),
+        #             zip(xbase, ybase),
+        #             zip(xbase, ybase),
+        #             zip(xbase, ybase),
+        #             zip(xbase, cddybase),
+        #     ]
+        #
+        #     xsig = np.linspace(20, 420, 410)
+        #     #        y40 = np.ones(410) * 680
+        #     #        y39 = np.ones(410) * 107
+        #     #        y38 = np.zeros(410) * 1.36
+        #     #        y37 = np.zeros(410) * 0.5
+        #     #        y36 = np.ones(410) * 0.001
+        #
+        #     y40 = 680 - 0.1 * xsig
+        #     y39 = 107 - 0.1 * xsig
+        #     y38 = np.zeros(410) * 1.36
+        #     y37 = np.zeros(410) * 0.5
+        #     y36 = 1 + 0.1 * xsig
+        #
+        #     sig = [zip(xsig, y40),
+        #            zip(xsig, y39),
+        #            zip(xsig, y38),
+        #            zip(xsig, y37),
+        #            zip(xsig, y36),
+        #
+        #     ]
+        #
+        #     regbs = MeanRegressor(xs=xbase, ys=ybase)
+        #     cddregbs = MeanRegressor(xs=xbase, ys=cddybase)
+        #     reg = PolynomialRegressor(xs=xsig, ys=y40, fit='linear')
+        #
+        #     reg1 = PolynomialRegressor(xs=xsig, ys=y39, fit='linear')
+        #     reg2 = PolynomialRegressor(xs=xsig, ys=y38, fit='linear')
+        #     reg3 = PolynomialRegressor(xs=xsig, ys=y37, fit='linear')
+        #     reg4 = PolynomialRegressor(xs=xsig, ys=y36, fit='linear')
+        #
+        #     keys = [
+        #         ('H1', 'Ar40'),
+        #         ('AX', 'Ar39'),
+        #         ('L1', 'Ar38'),
+        #         ('L2', 'Ar37'),
+        #         ('CDD', 'Ar36'),
+        #     ]
+        #
+        #     regresults = (dict(
+        #         Ar40=ufloat(reg.predict(0), reg.predict_error(0)),
+        #         Ar39=ufloat(reg1.predict(0), reg1.predict_error(0)),
+        #         Ar38=ufloat(reg2.predict(0), reg2.predict_error(0)),
+        #         Ar37=ufloat(reg3.predict(0), reg3.predict_error(0)),
+        #         Ar36=ufloat(reg4.predict(0), reg4.predict_error(0)),
+        #
+        #     ),
+        #                   dict(
+        #                       Ar40=ufloat(regbs.predict(0), regbs.predict_error(0)),
+        #                       Ar39=ufloat(regbs.predict(0), regbs.predict_error(0)),
+        #                       Ar38=ufloat(regbs.predict(0), regbs.predict_error(0)),
+        #                       Ar37=ufloat(regbs.predict(0), regbs.predict_error(0)),
+        #                       Ar36=ufloat(cddregbs.predict(0), cddregbs.predict_error(0))
+        #                   ))
+        #     blanks = [ufloat(0, 0.1),
+        #               ufloat(0.1, 0.001),
+        #               ufloat(0.01, 0.001),
+        #               ufloat(0.01, 0.001),
+        #               ufloat(0.00001, 0.0001),
+        #     ]
+        #     fits = (
+        #         dict(zip(['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'],
+        #                  ['Linear', 'Linear', 'Linear', 'Linear', 'Linear'])),
+        #         dict(zip(['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'],
+        #                  ['Average Y', 'Average Y', 'Average Y', 'Average Y', 'Average Y'])))
+        #     mass_spectrometer = 'obama'
+        #     extract_device = 'Laser Furnace'
+        #     extract_value = 10
+        #     position = 1
+        #     duration = 10
+        #     first_stage_delay = 0
+        #     second_stage_delay = 30
+        #     tray = '100-hole'
+        #     runscript_name = 'Foo'
+        #     runscript_text = 'this is a test script'
+        #
+        #     self.add_analysis('4318', '500', '', '4318',
+        #                       base, sig, blanks,
+        #                       keys,
+        #                       regresults,
+        #                       fits,
+        #
+        #                       mass_spectrometer,
+        #                       extract_device,
+        #                       tray,
+        #                       position,
+        #                       extract_value, # power requested
+        #                       extract_value, # power achieved
+        #
+        #                       duration, # total extraction
+        #                       duration, # time at extract_value
+        #
+        #                       first_stage_delay,
+        #                       second_stage_delay,
+        #
+        #                       runscript_name,
+        #                       runscript_text,
+        #     )
+        #
+        # def traits_view(self):
+        #     v = View(Item('test', show_label=False))
+        #     return v
 
 
 if __name__ == '__main__':

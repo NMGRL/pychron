@@ -17,10 +17,14 @@
 #============= enthought library imports =======================
 from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
-    TraitError, Property, Any, Either, Dict, Bool
+    TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
 
 from pychron.loggable import Loggable
+
+
+
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -59,6 +63,12 @@ class ExportSpec(Loggable):
     ic_factor_v = Float
     ic_factor_e = Float
 
+    pr_dict = Dict
+    chron_dosages = List
+    interference_corrections = Dict
+    production_name = Str
+    j = Any
+
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
@@ -68,8 +78,13 @@ class ExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
-                 ('duration_at_request', 'duration'), ('first_stage_delay', 'cleanup'),
-                 ('comment', 'comment'), ]
+                 ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
+                 ('second_stage_delay', 'cleanup'),
+                 ('comment', 'comment'),
+                 ('irradiation', 'irradiation'),
+                 ('irradiation_position', 'irradiation_pos'),
+                 ('level', 'irradiation_level'),
+        ]
 
         if hasattr(record, 'spec'):
             spec = record.spec
@@ -94,6 +109,13 @@ class ExportSpec(Loggable):
         # else:
         #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
+        for a in ('chron_dosages',
+                  'production_ratios',
+                  'interference_corrections',
+                  'production_name', 'j'):
+            if hasattr(record, a):
+                setattr(self, a, getattr(record, a))
+
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)
 
@@ -112,6 +134,9 @@ class ExportSpec(Loggable):
         #             yield iso, det
         #
         # return _iter()
+
+    def get_baseline_position(self, iso):
+        return 39.5
 
     def get_blank_uvalue(self, iso):
         try:
@@ -159,6 +184,7 @@ class ExportSpec(Loggable):
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
         m,s=0,0
+        n_filtered_pts = 0
         if iso in self.isotopes:
             iso=self.isotopes[iso]
             xs,ys=iso.baseline.xs, iso.baseline.ys
@@ -168,9 +194,11 @@ class ExportSpec(Loggable):
 
                 outliers=where(res > (s * nsigma))[0]
                 ys=delete(ys, outliers)
+                n_filtered_pts += len(outliers)
+
             m, s = mean(ys), std(ys)
 
-        return ufloat(m, s)
+        return ufloat(m, s), len(ys)
 
     def get_baseline_uvalue(self, iso):
         try:
