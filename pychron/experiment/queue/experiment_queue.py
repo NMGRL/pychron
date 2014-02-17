@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from itertools import groupby
 
-from traits.api import Any, on_trait_change, Int, List, Bool, Instance
+from traits.api import Any, on_trait_change, Int, List, Bool, Instance, Property
 from pyface.timer.do_later import do_later
 
 #============= standard library imports ========================
@@ -45,6 +45,7 @@ class ExperimentQueue(BaseExperimentQueue):
     executed = Bool(False)
 
     human_error_checker = Instance(HumanErrorChecker, ())
+    execution_ratio = Property
 
     def count_labnumber(self, ln):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
@@ -174,6 +175,11 @@ class ExperimentQueue(BaseExperimentQueue):
             k = HumanErrorChecker
 
         self.human_error_checker = k()
+
+    def _get_execution_ratio(self):
+        ex = len(self.executed_runs)
+        tc = len(self.cleaned_automated_runs) + ex
+        return '{}/{}'.format(ex, tc)
 
 #============= EOF =============================================
 #        rgen = (r for r in newruns)

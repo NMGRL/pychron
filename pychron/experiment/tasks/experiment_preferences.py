@@ -20,19 +20,14 @@ from traits.api import Str, Int, \
 from traitsui.api import View, Item, Group, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
+
+#============= standard library imports ========================
+#============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 
 
-
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
-
-
 class ExperimentPreferences(BasePreferencesHelper):
-    name = 'Experiment'
     preferences_path = 'pychron.experiment'
     id = 'pychron.experiment.preferences_page'
 
@@ -56,6 +51,30 @@ class ExperimentPreferences(BasePreferencesHelper):
     min_ms_pumptime = Int
 
 
+class UserNotifierPreferences(BasePreferencesHelper):
+    preferences_path = 'pychron.experiment'
+    server_username = Str
+    server_password = Password
+    server_host = Str
+    server_port = Int
+
+
+class ConsolePreferences(BaseConsolePreferences):
+    preferences_path = 'pychron.experiment'
+
+
+class SysLoggerPreferences(BasePreferencesHelper):
+    use_syslogger = Bool
+    preferences_path = 'pychron.syslogger'
+    username = Str
+    password = Password
+
+    host = Str
+
+
+#======================================================================================================
+# panes
+#======================================================================================================
 class ExperimentPreferencesPane(PreferencesPane):
     model_factory = ExperimentPreferences
     category = 'Experiment'
@@ -100,22 +119,24 @@ class ExperimentPreferencesPane(PreferencesPane):
                     filter_grp, overlap_grp)
 
 
-class ConsolePreferences(BaseConsolePreferences):
-    preferences_path = 'pychron.experiment'
+class UserNotifierPreferencesPane(PreferencesPane):
+    model_factory = UserNotifierPreferences
+    category = 'Experiment'
+
+    def traits_view(self):
+        auth_grp = VGroup(Item('server_username', label='User'),
+                          Item('server_password', label='Password'),
+                          Item('server_host', label='Host'),
+                          Item('server_port', label='Port'),
+                          label='User Notifier')
+
+        v = View(auth_grp)
+        return v
 
 
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'Experiment'
-
-
-class SysLoggerPreferences(BasePreferencesHelper):
-    use_syslogger = Bool
-    preferences_path = 'pychron.syslogger'
-    username = Str
-    password = Password
-
-    host = Str
 
 
 class SysLoggerPreferencesPane(PreferencesPane):
@@ -129,7 +150,8 @@ class SysLoggerPreferencesPane(PreferencesPane):
                           enabled_when='use_syslogger')
 
         v = View(VGroup(Item('use_syslogger', label='Use SysLogger'),
-                        auth_grp))
+                        auth_grp,
+                        label='SysLogger'))
         return v
 
 #============= EOF =============================================

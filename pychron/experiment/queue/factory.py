@@ -19,12 +19,14 @@ import os
 from ConfigParser import ConfigParser
 
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event
+    Any, String, Event, Bool
 
 from pychron.entry.user_entry import UserEntry
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
+
+
 
 
 
@@ -36,7 +38,12 @@ class ExperimentQueueFactory(Loggable):
     db = Any
     application = Any
 
-    username = Str
+    username = String
+    email = Property(depends_on='username, use_email_notifier, _email')
+    _email = Str
+
+    use_email_notifier = Bool(True)
+
     usernames = Property(depends_on='users_dirty')
     edit_user = Event
     add_user = Event
@@ -62,6 +69,18 @@ class ExperimentQueueFactory(Loggable):
     #     a=UserEntry()
     #     a.edit_user(self.username)
     #     self.users_dirty=True
+    def _get_email(self):
+        email = ''
+        if self.use_email_notifier:
+            if self._email:
+                email = self._email
+            else:
+                if self.username in self._emails:
+                    email = self._emails[self.username]
+        return email
+
+    def _set_email(self, v):
+        self._email = v
 
     def _edit_user_fired(self):
         a = UserEntry()
@@ -77,7 +96,10 @@ class ExperimentQueueFactory(Loggable):
     def _get_usernames(self):
         db = self.db
         with db.session_ctx():
-            us = [ui.name for ui in db.get_users()]
+            dbus = db.get_users()
+            us = [ui.name for ui in dbus]
+            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+
             return [''] + us
 
     @cached_property

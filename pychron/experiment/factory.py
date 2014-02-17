@@ -134,7 +134,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name]''')
+extract_device, delay_+, tray, username, load_name, email]''')
     def _update_queue(self, name, new):
         if name == 'mass_spectrometer':
             self._mass_spectrometer = new
@@ -144,6 +144,8 @@ extract_device, delay_+, tray, username, load_name]''')
             self._set_extract_device(new)
         elif name == 'username':
             self._username = new
+            # elif name=='email':
+            #     self.email=new
             #            self.queue.username = new
 
         if self.queue:
@@ -166,8 +168,8 @@ extract_device, delay_+, tray, username, load_name]''')
 
         if self.queue:
             self.queue.set_extract_device(ed)
-            self.queue.username=self._username
-            self.queue.mass_spectrometer=self._mass_spectrometer
+            self.queue.username = self._username
+            self.queue.mass_spectrometer = self._mass_spectrometer
 
     def _get_patterns(self, ed):
         ps = []

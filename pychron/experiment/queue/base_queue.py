@@ -49,6 +49,8 @@ class BaseExperimentQueue(Loggable):
     mass_spectrometer = String
     extract_device = String
     username = String
+    email = String
+
     tray = Str
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
@@ -163,7 +165,6 @@ class BaseExperimentQueue(Loggable):
 
         return stream
 
-
     def _load_meta(self, meta):
         # load sample map
         self._load_map(meta)
@@ -179,6 +180,7 @@ class BaseExperimentQueue(Loggable):
         self._set_meta_param('delay_between_analyses', meta, default_int)
         self._set_meta_param('delay_before_analyses', meta, default_int)
         self._set_meta_param('username', meta, default)
+        self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
 
     def _load_runs(self, txt):
@@ -221,6 +223,7 @@ class BaseExperimentQueue(Loggable):
                 params['extract_device'] = self.extract_device
                 params['tray'] = self.tray
                 params['username'] = self.username
+                params['email'] = self.email
                 params['skip'] = skip
 
                 klass = AutomatedRunSpec
@@ -306,6 +309,7 @@ class BaseExperimentQueue(Loggable):
 
         s = '''
 username: {}
+email: {}
 date: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
@@ -315,6 +319,7 @@ tray: {}
 load: {}
 '''.format(
             self.username,
+            self.email,
             datetime.datetime.today(),
             ms,
             self.delay_before_analyses,

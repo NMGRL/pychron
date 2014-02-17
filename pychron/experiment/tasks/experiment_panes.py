@@ -91,15 +91,15 @@ class ExperimentFactoryPane(TraitsDockPane):
 
         queue_grp = VGroup(
             HGroup(QFItem('username'),
+                   # Spring(width=-10, springy=False),
                    QFItem('username',
                           editor=EnumEditor(name=make_qf_name('usernames')),
                           width=-25, show_label=False),
                    icon_button_editor(make_qf_name('edit_user'), 'database_edit'),
-                   # icon_button_editor(make_qf_name('add_user'),
-                   #                    'database_add',
-                   #                    enabled_when=make_qf_name('username')),
-                   spring),
-
+                   Spring(width=-5, springy=False),
+                   QFItem('use_email_notifier', show_label=False),
+                   Item(make_qf_name('email'), enabled_when=make_qf_name('use_email_notifier')),
+            ),
             HGroup(
                 QFItem('mass_spectrometer',
                        show_label=False,

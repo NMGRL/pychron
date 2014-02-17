@@ -33,6 +33,7 @@ import os
 # from pychron.loggable import Loggable
 from pychron.displays.display import DisplayController
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
@@ -61,6 +62,8 @@ from pychron.wait.wait_group import WaitGroup
 class ExperimentExecutor(Loggable):
     experiment_queues = List
     experiment_queue = Any
+    user_notifier = Instance(UserNotifier, ())
+
     #===========================================================================
     # control
     #===========================================================================
@@ -133,11 +136,12 @@ class ExperimentExecutor(Loggable):
     _end_flag = None
     _prev_blanks = Dict
     _prev_baselines = Dict
-    _err_message = None
+    _err_message = String
 
     baseline_color = Color
     sniff_color = Color
     signal_color = Color
+
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -191,6 +195,7 @@ class ExperimentExecutor(Loggable):
         bind_preference(self, 'auto_save_delay',
                         '{}.auto_save_delay'.format(prefid))
         bind_preference(self, 'min_ms_pumptime', '{}.min_ms_pumptime'.format(prefid))
+
         #colors
         color_bind_preference(self, 'signal_color',
                               '{}.signal_color'.format(prefid))
@@ -198,6 +203,12 @@ class ExperimentExecutor(Loggable):
                               '{}.sniff_color'.format(prefid))
         color_bind_preference(self, 'baseline_color',
                               '{}.baseline_color'.format(prefid))
+
+        #user_notifier
+        bind_preference(self.user_notifier.emailer, 'server_username', '{}.server_username'.format(prefid))
+        bind_preference(self.user_notifier.emailer, 'server_password', '{}.server_password'.format(prefid))
+        bind_preference(self.user_notifier.emailer, 'server_host', '{}.server_host'.format(prefid))
+        bind_preference(self.user_notifier.emailer, 'server_port', '{}.server_port'.format(prefid))
 
     def isAlive(self):
         return self._alive
@@ -213,9 +224,9 @@ class ExperimentExecutor(Loggable):
 
     def info_heading(self, msg):
         self.info('')
-        self.info('=' * 80)
+        self.info('=' * 40)
         self.info(msg)
-        self.info('=' * 80)
+        self.info('=' * 40)
         self.info('')
 
     def execute(self):
@@ -418,6 +429,7 @@ class ExperimentExecutor(Loggable):
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
         self.info_heading('experiment queue {} finished'.format(exp.name))
+        self.user_notifier.notify(exp, last_runid, self._err_message)
 
     def _wait_for(self, pred, period=1):
         st = time.time()

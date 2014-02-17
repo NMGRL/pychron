@@ -26,7 +26,9 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.experiment.signal_calculator import SignalCalculator
 from pychron.experiment.image_browser import ImageBrowser
 from pychron.experiment.tasks.experiment_task import ExperimentEditorTask
-from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, SysLoggerPreferencesPane
+from pychron.experiment.tasks.experiment_preferences import ExperimentPreferencesPane, ConsolePreferencesPane, \
+    SysLoggerPreferencesPane, \
+    UserNotifierPreferencesPane
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
@@ -107,6 +109,7 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _preferences_panes_default(self):
         return [ExperimentPreferencesPane,
                 ConsolePreferencesPane,
-                SysLoggerPreferencesPane]
+                SysLoggerPreferencesPane,
+                UserNotifierPreferencesPane]
 
         #============= EOF =============================================
