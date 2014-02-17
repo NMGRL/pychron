@@ -106,7 +106,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
         p2 = os.path.join(paths.canvas2D_dir, cname)
 
         if os.path.isfile(p):
-            self.scene.load(p, p2)
+            self.scene.load(p, p2, self)
 
     def _over_item(self, event):
         x, y = event.x, event.y
@@ -206,6 +206,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def OnProperties(self, event):
         self.manager.show_valve_properties(self.active_item.name)
+
+    def iter_valves(self):
+        return (i for i in self.scene.valves.itervalues() if isinstance(i, BaseValve))
 
     def _get_valve_by_name(self, name):
         return next((i for i in self.scene.valves.itervalues()

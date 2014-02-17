@@ -19,12 +19,9 @@ from traits.api import HasTraits, Any
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
 #============= standard library imports ========================
-import os
 #============= local library imports  ==========================
 # from canvas.canvas3D.extraction_line_canvas3D import ExtractionLineCanvas3D
 # from pychron.canvas.canvas3D.canvas3D_editor import Canvas3DEditor
-
-from pychron.paths import paths
 
 
 class ExtractionLineCanvas(HasTraits):
@@ -81,8 +78,7 @@ class ExtractionLineCanvas(HasTraits):
         from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 
         e = ExtractionLineCanvas2D(
-            manager=self.manager,
-        )
+            manager=self.manager)
         return e
 
     def _canvas2D_default(self):

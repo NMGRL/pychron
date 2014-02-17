@@ -557,9 +557,7 @@ class ExtractionLineManager(Manager):
 
     def new_canvas(self, name='canvas_config'):
         c = ExtractionLineCanvas(manager=self,
-                                 config_name='{}.xml'.format(name),
-                                 #                                  path_name='{}.xml'.format(name)
-        )
+                                 config_name='{}.xml'.format(name))
         self._canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
@@ -567,8 +565,8 @@ class ExtractionLineManager(Manager):
         return c
 
     def _canvas_default(self):
-        '''
-        '''
+        """
+        """
         return self.new_canvas()
 
     def _network_default(self):
