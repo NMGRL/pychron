@@ -38,8 +38,8 @@ class meas_SignalTable(Base, BaseMixin):
 
 
 #    detector_id = foreignkey('gen_DetectorTable')
-def step_default(context):
-    return ALPHAS[context.current_parameters['increment']]
+# def step_default(context):
+#     return ALPHAS[context.current_parameters['increment']]
 
 
 class meas_AnalysisTable(Base, BaseMixin):
@@ -55,7 +55,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     endtime = Column(Time)
     status = Column(Integer, default=0)
     aliquot = Column(Integer)
-    step = stringcolumn(10, default=step_default)
+    step = stringcolumn(10)
     increment = Column(Integer)
 
     comment = Column(BLOB)
