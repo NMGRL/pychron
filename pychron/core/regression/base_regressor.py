@@ -70,41 +70,23 @@ class BaseRegressor(Loggable):
     clean_xs = Property(depends_on='dirty, xs, ys')
     clean_ys = Property(depends_on='dirty, xs, ys')
     clean_xserr = Property(depends_on='dirty, xs, ys')
-    # def _xs_changed(self):
-    #        if len(self.xs) and len(self.ys):
-    #     self.calculate()
+    clean_yserr = Property(depends_on='dirty, xs, ys')
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
-    # def _ys_changed(self):
-    #     self.calculate()
-
-    def get_filtered_data(self, xs, ys):
-        rx, ry = xs, ys
+    def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
         if fod.get('filter_outliers', False):
             self.outlier_excluded = []
             for _ in range(fod.get('iterations', 1)):
-                # self._filtering = True
                 self.calculate(filtering=True)
-                # self._filtering = False
 
                 outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
-                self.outlier_excluded += list(outliers)
-                # print 'gfd',outliers,self.user_excluded
-                # self.outlier_excluded = list(set(self.outlier_excluded + list(outliers))-set(self.user_excluded))
-                # print 'ff', self.outlier_excluded, self.user_excluded
-                # self.user_excluded=list(set(self.user_excluded)-set(outliers))
-                # print 'ue', self.user_excluded
-                self._delete_filtered_hook(outliers)
-                self.dirty = True
+                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
 
-            rx = delete(rx, outliers, 0)
-            ry = delete(ry, outliers, 0)
-
-        return rx, ry
+        self.dirty = True
+        return self.clean_xs, self.clean_ys
 
     def get_excluded(self):
-        # return list(set(self.user_excluded) ^ set(self.outlier_excluded) ^ set(self.truncate_excluded))
         return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded))
 
     def set_truncate(self, trunc):

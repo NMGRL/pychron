@@ -60,7 +60,7 @@ class RectSelectionTool(BaseTool):
         index = plot.map_index((event.x, event.y), threshold=self.threshold)
 
         if index is not None:
-        #            plot.index.metadata['mouse_xy'] = mxy
+            #            plot.index.metadata['mouse_xy'] = mxy
 
             plot.index.metadata[self.hover_metadata_name] = [index]
             if hasattr(plot, "value"):
@@ -88,13 +88,11 @@ class RectSelectionTool(BaseTool):
             if token in md[self.selection_metadata_name]:
                 already = True
 
-        print token, already
-
         return already
 
     def normal_left_dclick(self, event):
         if self._end_pos is None:
-        #            print id(self), self.component, 'meta []'
+            #            print id(self), self.component, 'meta []'
             self.component.index.metadata[self.selection_metadata_name] = []
         elif abs(self._end_pos[0] - self._start_pos[0]) < 2 and \
                         abs(self._end_pos[1] - self._start_pos[1]) < 2:
@@ -184,8 +182,8 @@ class RectSelectionTool(BaseTool):
                       (dx >= xi >= dx2) and dy <= yi <= dy2]
 
         selection = index.metadata[self.selection_metadata_name]
-        nind=list(set(ind) ^ set(selection))
-        index.metadata[self.selection_metadata_name]=nind
+        nind = list(set(ind) ^ set(selection))
+        index.metadata[self.selection_metadata_name] = nind
         # index.metadata_changed = True
 
     def _end_select(self, event):

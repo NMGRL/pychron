@@ -165,7 +165,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         """
             fired when the index metadata changes e.i user selection
         """
-        print name
         self._update_graph()
         # sel = obj.metadata.get('selections', None)
         # if sel:
@@ -541,7 +540,7 @@ if __name__ == '__main__':
 
     # y += d
 
-    fod={'filter_outliers':True, 'iterations':1, 'std_devs':2}
+    fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
     rg.new_series(x, y,
                   #yerror=random.rand(n)*5,
                   fit='linear_SD',

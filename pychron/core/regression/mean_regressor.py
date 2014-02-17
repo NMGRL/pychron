@@ -25,10 +25,10 @@ class MeanRegressor(BaseRegressor):
     _fit = 'average'
 
     def calculate(self, filtering=False):
-        cxs, cys = self.pre_clean_ys, self.pre_clean_ys
+        # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
         if not filtering:
             #prevent infinite recursion
-            self.get_filtered_data(cxs, cys)
+            self.calculate_filtered_data()
 
     def calculate_outliers(self, nsigma=2):
         res = abs(self.ys - self.mean)

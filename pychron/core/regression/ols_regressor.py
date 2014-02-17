@@ -55,7 +55,7 @@ class OLSRegressor(BaseRegressor):
 
         if not filtering:
             #prevent infinite recursion
-            fx, fy = self.get_filtered_data(cxs, cys)
+            fx, fy = self.calculate_filtered_data()
         else:
             fx, fy = cxs, cys
 
