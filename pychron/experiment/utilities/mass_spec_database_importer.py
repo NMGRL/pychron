@@ -342,7 +342,8 @@ class MassSpecDatabaseImporter(Loggable):
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
 
-        return db.add_isotope(analysis, dbdet, iso), dbdet
+        n = spec.get_ncounts(iso)
+        return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
     def _add_signal(self, spec, dbiso, dbdet, odet, runtype):
         #===================================================================

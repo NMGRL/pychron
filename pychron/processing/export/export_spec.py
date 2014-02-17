@@ -26,6 +26,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -134,6 +135,13 @@ class ExportSpec(Loggable):
         #             yield iso, det
         #
         # return _iter()
+
+    def get_ncounts(self, iso):
+        try:
+            n = self.isotopes[iso].n
+        except KeyError:
+            n = 1
+        return n
 
     def get_baseline_position(self, iso):
         return 39.5

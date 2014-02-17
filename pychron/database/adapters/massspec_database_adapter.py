@@ -421,9 +421,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         if detector is not None:  # and len(dettype.detectors):
             detector = self.get_detector(detector, )
 
-        iso = IsotopeTable(Label=label,
-                           NumCnts=1
-        )
+        iso = IsotopeTable(Label=label, **kw)
         if analysis is not None:
             analysis.isotopes.append(iso)
 
