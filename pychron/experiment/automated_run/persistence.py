@@ -195,7 +195,7 @@ class AutomatedRunPersister(Loggable):
         aliquot = self.run_spec.aliquot
 
         # save to local sqlite database for backup and reference
-        self._local_db_save()
+        # self._local_db_save()
 
         # save to a database
         db = self.datahub.mainstore.db
@@ -222,7 +222,7 @@ class AutomatedRunPersister(Loggable):
                                     uuid=self.uuid,
                                     endtime=endtime,
                                     aliquot=aliquot,
-                                    # step=self.run_spec.step,
+                                    step=self.run_spec.step,
                                     increment=self.run_spec.increment,
                                     comment=self.run_spec.comment)
                 sess.flush()

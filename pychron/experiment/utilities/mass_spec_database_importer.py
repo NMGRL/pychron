@@ -21,7 +21,6 @@ from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 
 
-
 #============= standard library imports ========================
 import struct
 from numpy import array
@@ -165,7 +164,7 @@ class MassSpecDatabaseImporter(Loggable):
 
     def add_irradiation(self, irrad, level, pid):
         with self.db.session_ctx():
-            sid=0
+            sid = 0
             self.db.add_irradiation_level(irrad, level, sid, pid)
 
     def add_irradiation_position(self, identifier, levelname, hole, **kw):
@@ -179,8 +178,8 @@ class MassSpecDatabaseImporter(Loggable):
     def add_irradiation_chronology(self, irrad, doses):
 
         with self.db.session_ctx():
-            for pwr,st,et in doses:
-                self.db.add_irradiation_chronology_segment(irrad, st,et)
+            for pwr, st, et in doses:
+                self.db.add_irradiation_chronology_segment(irrad, st, et)
 
     def add_analysis(self, spec, commit=True):
         with self.db.session_ctx(commit=False) as sess:
@@ -343,7 +342,8 @@ class MassSpecDatabaseImporter(Loggable):
                 dbdet.ICFactor = spec.ic_factor_v
                 dbdet.ICFactorEr = spec.ic_factor_e
 
-        return db.add_isotope(analysis, dbdet, iso), dbdet
+        n = spec.get_ncounts(iso)
+        return db.add_isotope(analysis, dbdet, iso, NumCnts=n), dbdet
 
     def _add_signal(self, spec, dbiso, dbdet, odet, runtype):
         #===================================================================
@@ -416,7 +416,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         bfit = spec.get_baseline_fit(iso)
 
-        infoblob = self._make_infoblob(bs.nominal_value, sem, ncnts, pos)
+        infoblob = self._make_infoblob(bs.nominal_value, sem, fncnts, pos)
         db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
                                                         bfit,
                                                         infoblob)
@@ -456,9 +456,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         return db
 
-        # #===========================================================================
-        # # debugging
-        # #===========================================================================
+    #===========================================================================
+    # debugging
+    #===========================================================================
         # def _test_fired(self):
         #     import numpy as np
         #
@@ -579,15 +579,15 @@ class MassSpecDatabaseImporter(Loggable):
         #     return v
 
 
-        # if __name__ == '__main__':
-        #     from pychron.core.helpers.logger_setup import logging_setup
-        #
-        #     logging_setup('db_import')
-        #     d = MassSpecDatabaseImporter()
-        #
-        #     d.configure_traits()
+if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
 
-        #============= EOF ====================================
+    logging_setup('db_import')
+    d = MassSpecDatabaseImporter()
+
+    d.configure_traits()
+
+    #============= EOF ====================================
     #        from pychron.core.codetools.simple_timeit import timethis
     #        for ((det, isok), si, bi, ublank, signal, baseline, sfit, bfit) in spec.iter():
     #            self.debug('msi {} {} {} {} {} {}'.format(det, isok, signal.nominal_value,

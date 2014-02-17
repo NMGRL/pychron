@@ -20,21 +20,26 @@ from traits.api import Interface
 #============= local library imports  ==========================
 import traits.has_traits
 
-traits.has_traits.CHECK_INTERFACES = 2
+traits.has_traits.CHECK_INTERFACES = 0
 
 
 class IColumnParser(Interface):
     def load(self, p, header_idx=0):
         pass
+
     def has_key(self, key):
         pass
+
     def itervalues(self, keys=None):
         pass
+
     def iternrows(self):
         pass
+
     def get_value(self, ri, ci):
         pass
-    def _get_index(self,ks):
+
+    def _get_index(self, ks):
         pass
 
 #============= EOF =============================================

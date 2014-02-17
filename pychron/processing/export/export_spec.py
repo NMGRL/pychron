@@ -23,8 +23,6 @@ from uncertainties import ufloat
 from pychron.loggable import Loggable
 
 
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -62,11 +60,11 @@ class ExportSpec(Loggable):
     ic_factor_v = Float
     ic_factor_e = Float
 
-    pr_dict=Dict
-    chron_dosages=List
+    pr_dict = Dict
+    chron_dosages = List
     interference_corrections = Dict
-    production_name=Str
-    j=Any
+    production_name = Str
+    j = Any
 
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
@@ -80,10 +78,10 @@ class ExportSpec(Loggable):
                  ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
                  ('second_stage_delay', 'cleanup'),
                  ('comment', 'comment'),
-                 ('irradiation','irradiation'),
-                 ('irradiation_position','irradiation_pos'),
-                 ('level','irradiation_level'),
-                 ]
+                 ('irradiation', 'irradiation'),
+                 ('irradiation_position', 'irradiation_pos'),
+                 ('level', 'irradiation_level'),
+        ]
 
         if hasattr(record, 'spec'):
             spec = record.spec
@@ -111,7 +109,7 @@ class ExportSpec(Loggable):
         for a in ('chron_dosages',
                   'production_ratios',
                   'interference_corrections',
-                   'production_name','j'):
+                  'production_name', 'j'):
             if hasattr(record, a):
                 setattr(self, a, getattr(record, a))
 
@@ -133,6 +131,13 @@ class ExportSpec(Loggable):
         #             yield iso, det
         #
         # return _iter()
+
+    def get_ncounts(self, iso):
+        try:
+            n = self.isotopes[iso].n
+        except KeyError:
+            n = 1
+        return n
 
     def get_baseline_position(self, iso):
         return 39.5
@@ -197,7 +202,7 @@ class ExportSpec(Loggable):
 
             m, s = mean(ys), std(ys)
 
-        return ufloat(m, s), n_filtered_pts
+        return ufloat(m, s), len(ys)
 
     def get_baseline_uvalue(self, iso):
         try:
