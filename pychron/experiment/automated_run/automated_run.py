@@ -794,7 +794,7 @@ class AutomatedRun(Loggable):
         self.refresh_scripts()
 
         # setup the scripts
-        ip = self.spec.script_options or ''
+        ip = self.spec.script_options
         if ip:
             ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
 

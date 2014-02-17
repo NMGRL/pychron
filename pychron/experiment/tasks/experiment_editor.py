@@ -135,10 +135,11 @@ class ExperimentEditor(BaseTraitsEditor):
 
         if self._validate_experiment_queues(queues):
             path = self._dump_experiment_queues(path, queues)
-            self.path = path
-            self.dirty = False
+            if path:
+                self.path = path
+                self.dirty = False
 
-            return True
+                return True
 
     def _validate_experiment_queues(self, eqs):
         # check runs

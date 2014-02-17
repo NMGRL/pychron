@@ -220,6 +220,8 @@ class Experimentor(IsotopeDatabaseManager):
                     continue
 
                 ln = ai.labnumber
+                if ln == 'dg':
+                    continue
 
                 # is run in cache
                 if not ln in cache:

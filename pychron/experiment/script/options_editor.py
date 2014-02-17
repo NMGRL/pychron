@@ -71,7 +71,8 @@ class OptionsEditor(HasTraits):
                         UItem('bool_options',
                               editor=TableEditor(columns=bcols))),
                  resizable=True,
-                 title='Script Options')
+                 title='Script Options',
+                 buttons=['OK', 'Cancel'])
         return v
 
 

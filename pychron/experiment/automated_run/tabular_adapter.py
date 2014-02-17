@@ -93,13 +93,6 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
         return color
 
-    # def _get_labnumber_text(self, trait, item):
-        # it = self.item
-        # ln = it.labnumber
-        # if it.user_defined_aliquot:
-        #     ln = '{}-{:02n}'.format(it.labnumber, it.aliquot)
-        # return ln
-
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:
@@ -117,7 +110,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         al = ''
         it = self.item
         if it.aliquot != 0:
-            al=make_aliquot_step(it.aliquot, it.step)
+            al = make_aliquot_step(it.aliquot, it.step)
 
         return al
 
@@ -202,7 +195,7 @@ class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
-            ('SynExtraction','syn_extraction'),
+            ('SynExtraction', 'syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')
