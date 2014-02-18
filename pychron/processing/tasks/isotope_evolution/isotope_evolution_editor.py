@@ -148,11 +148,12 @@ class IsotopeEvolutionEditor(GraphEditor):
         if dbfits:
             for dbfi in dbfits:
                 tf = in_tool_fits(dbfi)
+                print tf, dbfi.isotope.molecular_weight.name
                 if tf:
                     #use tool fit
-                    fd = dict(filter_outliers=fi.filter_outliers,
-                              iterations=fi.filter_iterations,
-                              std_devs=fi.filter_std_devs)
+                    fd = dict(filter_outliers=tf.filter_outliers,
+                              iterations=tf.filter_iterations,
+                              std_devs=tf.filter_std_devs)
 
                     tool_fits.remove(tf)
                     fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
