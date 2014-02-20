@@ -138,22 +138,18 @@ class FitSelector(HasTraits):
 
         self.fits = nfs
 
-    #         self.fits = [
-    #                      self.fit_klass(name=ki, fit=fi)
-    #                      for ki, fi in zip(ks, fs)
-    #                     ]
 
-    def load_baseline_fits(self, keys):
-        fits = self.fits
-        if not fits:
-            fits = []
-
-        fs = [
-            self.fit_klass(name='{}bs'.format(ki), fit='average')
-            for ki in keys]
-
-        fits.extend(fs)
-        self.fits = fits
+    # def load_baseline_fits(self, keys):
+    #     fits = self.fits
+    #     if not fits:
+    #         fits = []
+    #
+    #     fs = [
+    #         self.fit_klass(name='{}bs'.format(ki), fit='average')
+    #         for ki in keys]
+    #
+    #     fits.extend(fs)
+    #     self.fits = fits
 
     # def add_peak_center_fit(self):
     #     fits = self.fits

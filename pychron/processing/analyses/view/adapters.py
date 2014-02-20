@@ -108,7 +108,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
 
     def _get_error_text(self):
         v = self.item.error
-        return floatfmt(v)
+        return floatfmt(v, 8)
 
     def _get_percent_error_text(self):
         e = self.item.error

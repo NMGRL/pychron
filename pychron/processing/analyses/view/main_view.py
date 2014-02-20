@@ -222,12 +222,13 @@ class MainView(HasTraits):
     def _load_unknown_computed(self, an, new_list):
 
         attrs = (('Age', 'uage'),
+                 # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
                  ('F', 'uF'),
-                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'),)
+                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'))
 
         if new_list:
             def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
@@ -253,11 +254,6 @@ class MainView(HasTraits):
             cv = [comp_factory(*args)
                   for args in attrs]
 
-            #insert error w/o j
-            #cv.insert(1, ComputedValue(name='w/o J',
-            #                           tag='wo_j',
-            #                           value='',
-            #                           error=floatfmt(an.age_error_wo_j)))
             self.computed_values = cv
         else:
             for ci in self.computed_values:

@@ -19,10 +19,13 @@
 from ConfigParser import ConfigParser
 from copy import copy
 import os
+
 from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either
+
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -392,30 +395,33 @@ class ArArAge(Loggable):
 
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
-
         self.uage = age
 
         self.age = float(age.nominal_value)
         self.age_err = float(age.std_dev)
 
+        if self.j is not None:
+            j = copy(self.j)
+        else:
+            j = ufloat(1e-4, 1e-7)
+
         j.std_dev = 0
+        age = age_equation(j, f, include_decay_error=include_decay_error,
+                           arar_constants=self.arar_constants)
+
         self.age_err_wo_j = float(age.std_dev)
 
         if self.j is not None:
             j = copy(self.j)
         else:
             j = ufloat(1e-4, 1e-7)
+
         age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
 
         self.age_err_wo_irrad = float(age.std_dev)
         j.std_dev = 0
         self.age_err_wo_j_irrad = float(age.std_dev)
-
-        #print 'asddsadf'
-        #print self.age_err
-        #print self.age_err_wo_j
-        #print self.age_err_wo_j_irrad
 
         for iso in self.isotopes.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
