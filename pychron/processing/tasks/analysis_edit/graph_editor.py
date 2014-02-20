@@ -44,14 +44,13 @@ class GraphEditor(BaseUnknownsEditor):
 
     component_changed = Event
     path = File
-    analysis_cache = List
     basename = ''
     pickle_path = '_'
     unpack_peaktime = False
     calculate_age = True
 
-    auto_plot = Property
-    update_on_analyses = True
+    # auto_plot = Property
+    # update_on_analyses = True
     recall_event = Event
     tag_event = Event
     invalid_event = Event
@@ -166,8 +165,8 @@ class GraphEditor(BaseUnknownsEditor):
 
             self._set_name()
             self._update_analyses_hook()
-            if self.auto_plot:
-                self.rebuild_graph()
+            # if self.auto_plot:
+            self.rebuild_graph()
         else:
             self.debug('analyses changed {}'.format(ans))
             self._null_component()
@@ -318,8 +317,8 @@ class GraphEditor(BaseUnknownsEditor):
             for ai in analyses:
                 ai.group_id = gid - mgid
 
-    def _get_auto_plot(self):
-        return len(self.analyses) == 1 or self.update_on_analyses
+    # def _get_auto_plot(self):
+    #     return len(self.analyses) == 1 or self.update_on_analyses
 
     def _tool_default(self):
         t=self.tool_klass()

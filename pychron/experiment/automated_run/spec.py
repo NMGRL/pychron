@@ -402,6 +402,6 @@ class AutomatedRunSpec(Loggable):
 
     @property
     def increment(self):
-        return '' if self._step < 0 else self._step
+        return None if self._step < 0 else self._step
 
         #============= EOF =============================================

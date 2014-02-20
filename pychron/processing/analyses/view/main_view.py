@@ -186,7 +186,7 @@ class MainView(HasTraits):
         niso, diso = self._get_isotope(n), self._get_isotope(d)
         if niso and diso:
             try:
-                return niso.ic_corrected_value() / diso.ic_corrected_value(), diso.ic_factor / niso.ic_factor
+                return niso.get_ic_corrected_value() / diso.get_ic_corrected_value(), diso.ic_factor / niso.ic_factor
             except (ZeroDivisionError, TypeError):
                 pass
         return ufloat(0, 1e-20), 1
@@ -222,13 +222,13 @@ class MainView(HasTraits):
     def _load_unknown_computed(self, an, new_list):
 
         attrs = (('Age', 'uage'),
-                 ('w/o J', 'wo_j', '', 'uage','age_err_wo_j'),
+                 ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),
                  ('K/Ca', 'kca'),
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
-                 ('F','uF'),
-                 ('w/o Irrad', 'wo_irrad', '', 'uF','F_err_wo_irrad'),)
-        
+                 ('F', 'uF'),
+                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'),)
+
         if new_list:
             def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
                 if value is None:
@@ -236,8 +236,8 @@ class MainView(HasTraits):
 
                 display_value = True
                 if value_tag:
-                    value=getattr(an, value_tag)
-                    display_value=False
+                    value = getattr(an, value_tag)
+                    display_value = False
 
                 if error_tag:
                     e = getattr(an, error_tag)
@@ -246,7 +246,7 @@ class MainView(HasTraits):
 
                 return ComputedValue(name=n,
                                      tag=a,
-                                     value = nominal_value(value) or 0,
+                                     value=nominal_value(value) or 0,
                                      display_value=display_value,
                                      error=e or 0)
 
@@ -264,8 +264,8 @@ class MainView(HasTraits):
                 attr = ci.tag
                 if attr == 'wo_j':
                     ci.error = an.age_err_wo_j
-                elif attr=='wo_irrad':
-                    ci.error=an.F_err_wo_irrad
+                elif attr == 'wo_irrad':
+                    ci.error = an.F_err_wo_irrad
                 else:
                     v = getattr(an, attr)
                     ci.value = nominal_value(v)

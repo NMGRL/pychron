@@ -168,14 +168,13 @@ def strip_runid(r):
 def make_step(s):
     if isinstance(s, (float, int, long)):
         s = ALPHAS[int(s)]
-
     return s
 
 
 def make_aliquot_step(a, s):
     if not isinstance(a, str):
         a = '{:02n}'.format(int(a))
-
+    s = make_step(s)
     return '{}{}'.format(a, s)
 
 

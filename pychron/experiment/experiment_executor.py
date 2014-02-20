@@ -725,6 +725,7 @@ class ExperimentExecutor(Loggable):
         if spec.conflicts_checked:
             return True
 
+        spec.conflicts_checked = True
         exs = [ai for ai in ens if ai.state in ('measurement', 'extraction')]
         if exs:
             if spec.is_step_heat():
@@ -755,10 +756,12 @@ class ExperimentExecutor(Loggable):
                     ret = True
                     self._canceled = False
                     self._err_message = ''
+                    spec.conflicts_checked = False
+                    self.message(self._err_message)
+                    self.info('No response from user. Canceling run')
             else:
                 dh.update_spec(spec)
 
-        spec.conflicts_checked = True
         return ret
 
     def _delay(self, delay, message='between'):

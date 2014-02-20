@@ -28,6 +28,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -89,7 +90,6 @@ class BinGroup(HasTraits):
 class InterpolationEditor(GraphEditor):
     tool_klass = InterpolationFitSelector
     references = List
-    #     _references = List
 
     auto_find = Bool(True)
     show_current = Bool(True)
@@ -246,8 +246,6 @@ class InterpolationEditor(GraphEditor):
 
     def _get_reference_values(self, *args, **kw):
         pass
-
-
 
     def _get_isotope(self, ui, k, kind=None):
         if k in ui.isotopes:

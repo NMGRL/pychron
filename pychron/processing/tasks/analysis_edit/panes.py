@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
-    Str, on_trait_change
+    Str, on_trait_change, Bool
 from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.processing.search.previous_selection import PreviousSelection
@@ -295,6 +295,41 @@ class ReferencesPane(HistoryTablePane):
     _add_tooltip = '''(r) Append references'''
     _replace_tooltip = ''' (Shift+r) Replace references'''
     _clear_tooltip = '''Clear references'''
+    auto_sort = Bool(True)
+
+    def _auto_sort_changed(self):
+        if self.auto_sort:
+            self.items = self.sort_items(self.items)
+
+    def sort_items(self, it):
+        return sorted(it, key=lambda x: x.timestamp)
+
+    def traits_view(self):
+        v = View(VGroup(
+            HGroup(icon_button_editor('append_button', 'add',
+                                      tooltip=self._add_tooltip),
+                   icon_button_editor('replace_button', 'arrow_refresh',
+                                      tooltip=self._replace_tooltip),
+                   icon_button_editor('clear_button', 'delete',
+                                      tooltip=self._clear_tooltip),
+                   icon_button_editor('configure_filter_button', 'filter',
+                                      tooltip='Configure/Apply a filter',
+                                      enabled_when='items')),
+            HGroup(UItem('previous_selection',
+                         editor=EnumEditor(name='previous_selections')),
+                   icon_button_editor('configure_button', 'cog',
+                                      tooltip=self.configure_history_tooltip)),
+            HGroup(spring, CustomLabel('cs_label'), spring, Item('auto_sort')),
+            UItem('items', editor=myTabularEditor(adapter=self.adapter_klass(),
+                                                  operations=['move', 'delete'],
+                                                  editable=True,
+                                                  drag_external=True,
+                                                  selected='selected',
+                                                  dclicked='dclicked',
+                                                  refresh='refresh_needed',
+                                                  multi_select=True,
+                                                  column_clicked='column_clicked'))))
+        return v
 
 
 class ControlsPane(TraitsDockPane):

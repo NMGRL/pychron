@@ -45,14 +45,14 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             cname = 'detector_intercalibration'
             self.info('Attempting to save corrections to database')
 
-            n=len(self.analyses)
-            if n>1:
+            n = len(self.analyses)
+            if n > 1:
                 if progress is None:
-                    progress=self.processor.open_progress(n)
+                    progress = self.processor.open_progress(n)
                 else:
                     progress.increase_max(n)
 
-            set_id=self.processor.add_predictor_set(self._clean_references())
+            set_id = self.processor.add_predictor_set(self._clean_references())
 
             for unk in self.analyses:
                 if progress:
@@ -66,12 +66,12 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                         # self.debug('saving {} {}'.format(unk.record_id, si.name))
                         self.processor.apply_correction(history, unk, si, set_id, cname)
 
-                # unk.sync_detector_info(meas_analysis)
+                        # unk.sync_detector_info(meas_analysis)
 
-            if self.auto_plot:
-                self.rebuild_graph()
+            # if self.auto_plot:
+            self.rebuild_graph()
 
-            fits=','.join(('{} {}'.format(fi.name,fi.fit) for fi in self.tool.fits))
+            fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits))
             self.processor.update_vcs_analyses(self.analyses,
                                                'Update detector intercalibration fits={}'.format(fits))
             if progress:
@@ -92,7 +92,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                     ntypes.append(ai)
 
             tool = DetectorCalibrationTool()
-            tool.analysis_types = ['']+ntypes
+            tool.analysis_types = [''] + ntypes
 
             dets = [det.name for det in self.processor.db.get_detectors()]
             tool.detectors = sort_detectors(dets)
@@ -109,21 +109,21 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
         self.tool.detectors = dets
 
-    def _set_interpolated_values(self, iso, ans,p_uys, p_ues):
+    def _set_interpolated_values(self, iso, ans, p_uys, p_ues):
         _, d = iso.split('/')
         for ui, v, e in zip(ans, p_uys, p_ues):
             ui.set_temporary_ic_factor(d, v, e)
 
     def _get_reference_values(self, dets, ans=None):
         if ans is None:
-            ans=self.references
+            ans = self.references
 
         if not self.tool.standard_ratio:
             self.debug('no standard ratio set')
             return None, None
 
         n, d = dets.split('/')
-        self.debug('get reference values {}, {}'.format(n,d))
+        self.debug('get reference values {}, {}'.format(n, d))
         nys = [ri.get_isotope(detector=n) for ri in ans]
         dys = [ri.get_isotope(detector=d) for ri in ans]
         nys = array([ni.get_corrected_value() for ni in nys if ni is not None])
@@ -140,7 +140,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
 
     def _get_current_values(self, dets, ans=None):
         if ans is None:
-            ans=self.analyses
+            ans = self.analyses
 
         #return None, None
         n, d = dets.split('/')

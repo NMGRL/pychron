@@ -192,7 +192,11 @@ class InterpolationTask(AnalysisEditTask):
     @on_trait_change('active_editor:references')
     def _update_references(self):
         if self.references_pane:
-            self.references_pane.items = self.active_editor.references
+            items = self.active_editor.references
+            if self.references_pane.auto_sort:
+                items = self.references_pane.sort_items(items)
+
+            self.references_pane.items = items
 
     #def _handle_key_pressed(self, c):
     #    s = self.data_selector.selector.selected

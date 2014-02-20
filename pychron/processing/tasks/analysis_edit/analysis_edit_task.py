@@ -42,6 +42,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -86,8 +87,6 @@ class AnalysisEditTask(BaseBrowserTask):
     plot_editor_pane = Instance(PlotEditorPane)
     unknowns_adapter = UnknownsAdapter
     unknowns_pane_klass = UnknownsPane
-
-    _analysis_cache = List
 
     ic_factor_editor_count = 0
 

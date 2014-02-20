@@ -271,7 +271,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         f = db.add_flux(irs.j, irs.j_err)
                         f.history = hist
                         for ai in dbln.analyses:
-                            self.remove_from_cache(ai.uuid)
+                            self.remove_from_cache(ai)
 
                     if dbln.selected_flux_history:
                         tol = 1e-10

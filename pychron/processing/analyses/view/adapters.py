@@ -175,14 +175,6 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     intercept_width = Int(60)
     intercept_error_width = Int(60)
 
-    def _get_intercept_text(self):
-        v=self.item.value
-        return floatfmt(v, n=7)
-
-    def _get_intercept_error_text(self):
-        v = self.item.error
-        return floatfmt(v, n=7)
-
     name_width = Int(40)
     bs_corrected_width = Int(65)
     bs_corrected_error_width = Int(65)
@@ -199,6 +191,14 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
     intensity_width = Int(65)
     intensity_error_width = Int(65)
     intensity_percent_error_width = Int(65)
+
+    def _get_intercept_text(self):
+        v = self.item.value
+        return floatfmt(v, n=7)
+
+    def _get_intercept_error_text(self):
+        v = self.item.error
+        return floatfmt(v, n=7)
 
     def _get_bs_corrected_text(self):
         v = self.item.get_baseline_corrected_value()
@@ -302,6 +302,9 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     blank_percent_error_width = pwidth
     baseline_percent_error_width = pwidth
 
+    ic_factor_width = Int(50)
+    discrimination_width = Int(50)
+
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
         if ic is None:
@@ -322,23 +325,23 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.nominal_value)
+        return floatfmt(v.nominal_value, n=6)
 
     def _get_error_text(self, *args, **kw):
         v = self.item.get_intensity()
-        return floatfmt(v.std_dev)
+        return floatfmt(v.std_dev, n=6)
 
     def _get_base_value_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.value)
+        return floatfmt(self.item.baseline.value, n=6)
 
     def _get_base_error_text(self, *args, **kw):
-        return floatfmt(self.item.baseline.error)
+        return floatfmt(self.item.baseline.error, n=6)
 
     def _get_blank_value_text(self, *args, **kw):
-        return floatfmt(self.item.blank.value)
+        return floatfmt(self.item.blank.value, n=6)
 
     def _get_blank_error_text(self, *args, **kw):
-        return floatfmt(self.item.blank.error)
+        return floatfmt(self.item.blank.error, n=6)
 
     def _get_baseline_percent_error_text(self, *args):
         b = self.item.baseline

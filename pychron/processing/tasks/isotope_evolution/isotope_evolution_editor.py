@@ -89,6 +89,9 @@ class IsotopeEvolutionEditor(GraphEditor):
 
                 #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
                 #proc.save_arar(unk, meas_analysis)
+
+            self.remove_from_cache(unk)
+
         progress.soft_close()
 
     def save_fits(self, fits, filters, progress=None):
