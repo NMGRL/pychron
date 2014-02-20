@@ -316,15 +316,16 @@ class AutomatedRunPersister(Loggable):
 
         add_result = kind in ('baseline', 'signal')
 
-        # filter_outliers=dict(iterations=1,
-        #                      std_dev=2, filter_outliers=True)
-        filter_outliers = self.default_outlier_filtering
+        fod = self.default_outlier_filtering
         if add_result:
+            m.set_filtering(fod)
             if m.fit:
                 # add fit
-                db.add_fit(dbhist, dbiso, fit=m.fit)
-
-            m.set_filtering(filter_outliers)
+                db.add_fit(dbhist, dbiso,
+                           fit=m.fit,
+                           filter_outliers=fod.get('filter_outliers', False),
+                           filter_outlier_iterations=fod.get('iterations', 1),
+                           filter_outlier_std_devs=fod.get('std_devs', 2))
 
             # add isotope result
             # print 'a',m.value, m.error, type(m.error), type(nan)
