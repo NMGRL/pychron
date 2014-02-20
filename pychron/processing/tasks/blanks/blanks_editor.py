@@ -58,12 +58,12 @@ class BlanksEditor(InterpolationEditor):
             n = len(self.analyses)
             if n > 1:
                 if progress is None:
-                    progress=self.processor.open_progress(n)
+                    progress = self.processor.open_progress(n)
                 else:
                     progress.increase_max(n)
 
-            set_id=self.processor.add_predictor_set(self._clean_references())
-            
+            set_id = self.processor.add_predictor_set(self._clean_references())
+
             for unk in self.analyses:
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
@@ -81,10 +81,10 @@ class BlanksEditor(InterpolationEditor):
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
                         self.processor.apply_correction(history, unk, si, set_id, cname)
-                # unk.sync(meas_analysis)
+                        # unk.sync(meas_analysis)
 
-            if self.auto_plot:
-                self.rebuild_graph()
+            # if self.auto_plot:
+            self.rebuild_graph()
 
             fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
             self.processor.update_vcs_analyses(self.analyses,
@@ -98,27 +98,27 @@ class BlanksEditor(InterpolationEditor):
             if v is not None and e is not None:
                 ui.set_temporary_blank(iso, v, e)
 
-
     def _get_current_values(self, iso, ans=None):
         if ans is None:
-            ans=self.analyses
+            ans = self.analyses
 
         return zip(*[self._get_isotope(ui, iso, 'blank')
                      for ui in ans])
 
-    def _get_baseline_corrected(self, analysis, k):
+    def _get_ic_corrected(self, analysis, k):
         if k in analysis.isotopes:
             iso = analysis.isotopes[k]
-            v = iso.get_baseline_corrected_value()
+            # v = iso.get_baseline_corrected_value()
+            v = iso.get_intensity()
             return v.nominal_value, v.std_dev
         else:
             return 0, 0
 
     def _get_reference_values(self, iso, ans=None):
         if ans is None:
-            ans=self.references
+            ans = self.references
 
-        return zip(*[self._get_baseline_corrected(ui, iso)
+        return zip(*[self._get_ic_corrected(ui, iso)
                      for ui in ans])
 
         #     def _rebuild_graph(self):

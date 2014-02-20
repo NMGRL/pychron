@@ -27,6 +27,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -356,7 +357,12 @@ class Isotope(BaseIsotope):
         """
             return the discrimination and ic_factor corrected value
         """
-        return self.get_disc_corrected_value() * (self.ic_factor or 1.0)
+        v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
+        #blank is already ic/disc corrected
+        if self.correct_for_blank:
+            v = v - self.blank.uvalue
+
+        return v
 
     def get_disc_corrected_value(self):
         disc = self.discrimination
@@ -365,14 +371,14 @@ class Isotope(BaseIsotope):
 
         return self.get_corrected_value() * disc
 
-    def ic_corrected_value(self):
+    def get_ic_corrected_value(self):
         return self.get_corrected_value() * (self.ic_factor or 1.0)
 
     def get_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
-        if self.correct_for_blank:
-            v = v - self.blank.uvalue
+        # if self.correct_for_blank:
+        #     v = v - self.blank.uvalue
 
         return v - self.background.uvalue
 
