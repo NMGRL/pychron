@@ -28,6 +28,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -359,9 +360,8 @@ class Isotope(BaseIsotope):
         """
         v = self.get_disc_corrected_value() * (self.ic_factor or 1.0)
         #blank is already ic/disc corrected
-        if self.correct_for_blank:
-            v = v - self.blank.uvalue
-
+        # if self.correct_for_blank:
+        #     v = v - self.blank.uvalue
         return v
 
     def get_disc_corrected_value(self):
@@ -377,8 +377,8 @@ class Isotope(BaseIsotope):
     def get_corrected_value(self):
         v = self.get_baseline_corrected_value()
 
-        # if self.correct_for_blank:
-        #     v = v - self.blank.uvalue
+        if self.correct_for_blank:
+            v = v - self.blank.uvalue
 
         return v - self.background.uvalue
 
