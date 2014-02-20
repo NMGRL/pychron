@@ -434,6 +434,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
         return ret
 
     def _query(self, q, func, reraise):
+        # print compile_query(q)
         f = getattr(q, func)
         try:
             return f()

@@ -19,9 +19,10 @@ from collections import namedtuple
 import os
 import struct
 
-from traits.api import on_trait_change
+from traits.api import on_trait_change, List, HasTraits
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -29,11 +30,12 @@ from uncertainties import ufloat
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
+from pychron.envisage.browser.record_views import AnalysisRecordView
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.flux.flux_editor import FluxEditor
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
-from pychron.processing.tasks.flux.panes import IrradiationPane
+from pychron.processing.tasks.flux.panes import IrradiationPane, AnalysesPane
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask
 from pychron.processing.tasks.analysis_edit.panes import TablePane
 from pychron.processing.argon_calculations import calculate_flux
@@ -70,6 +72,11 @@ class ReferencesPane(TablePane):
     id = 'pychron.processing.references'
 
 
+class GroupMarker(HasTraits):
+    record_id = '------------'
+    tag = '----'
+
+
 class FluxTask(InterpolationTask):
     name = 'Flux'
     id = 'pychron.processing.flux'
@@ -78,6 +85,8 @@ class FluxTask(InterpolationTask):
     references_adapter = ReferencesAdapter
     references_pane_klass = ReferencesPane
     unknowns_pane_klass = UnknownsPane
+
+    analyses = List
 
     def find_associated_analyses(self):
         pass
@@ -90,7 +99,8 @@ class FluxTask(InterpolationTask):
                     PaneItem('pychron.processing.irradiation'),
                     Tabbed(
                         PaneItem('pychron.processing.unknowns'),
-                        PaneItem('pychron.processing.references')),
+                        PaneItem('pychron.processing.references'),
+                        PaneItem('pychron.processing.analyses')),
                     PaneItem('pychron.processing.controls'))
             ),
         )
@@ -98,7 +108,9 @@ class FluxTask(InterpolationTask):
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
         return panes + [
-            IrradiationPane(model=self.manager)]
+            IrradiationPane(model=self.manager),
+            AnalysesPane(model=self)
+        ]
 
     def new_flux(self):
         editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
@@ -223,9 +235,10 @@ class FluxTask(InterpolationTask):
         db = proc.db
         with db.session_ctx():
             refs = self.references_pane.items
-            ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier) for ri in refs])
-            #print ans
-            #print tcs
+
+            ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
+                             for ri in refs])
+
             prog = proc.open_progress(n=sum(tcs), close_at_end=False)
 
             geom = self._get_geometry()
@@ -234,6 +247,11 @@ class FluxTask(InterpolationTask):
 
             for ais in ans:
                 if ais:
+                    #remove omitted.
+                    # ais = filter(lambda x: not x.tag_item.omit_ideo, ais)
+
+                    self.analyses.extend([AnalysisRecordView(ai) for ai in ais])
+                    self.analyses.append(GroupMarker)
                     ref = ais[0]
                     # pid = ref.labnumber.irradiation_position.position
                     ident = ref.labnumber.identifier
@@ -248,6 +266,7 @@ class FluxTask(InterpolationTask):
                     editor.set_position_j(ident, j.nominal_value, j.std_dev, dev)
                     # editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
 
+            self.analyses.pop()
             prog.close()
 
     def _get_geometry(self, irrad=None, level=None, holder=None):
@@ -310,7 +329,6 @@ class FluxTask(InterpolationTask):
         # projects = doc['projects']
         # identifiers = doc.get('identifiers')
         levels = doc.get('levels')
-        print levels
         # editor = FluxEditor(processor=self)
         # prog=self.manager.open_progress(n=len(levels))
 

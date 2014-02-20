@@ -117,4 +117,10 @@ class AnalysisGroupRecordView(RecordView):
         for attr in ('name', 'create_date', 'last_modified'):
             setattr(self, attr, getattr(dbrecord, attr))
 
+
+class AnalysisRecordView(RecordView):
+    def _create(self, dbrecord):
+        for attr in ('record_id', 'tag'):
+            setattr(self, attr, getattr(dbrecord, attr))
+
 #============= EOF =============================================

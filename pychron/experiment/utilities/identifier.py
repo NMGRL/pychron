@@ -168,7 +168,7 @@ def strip_runid(r):
 def make_step(s):
     if isinstance(s, (float, int, long)):
         s = ALPHAS[int(s)]
-    return s
+    return s or ''
 
 
 def make_aliquot_step(a, s):

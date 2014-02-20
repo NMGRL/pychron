@@ -101,13 +101,13 @@ class FluxEditor(GraphEditor):
     _save_unknowns = True
 
     def set_save_all(self, v):
-        self._save_all=True
-        self._save_unknowns=True
+        self._save_all = True
+        self._save_unknowns = True
         self._save_all_button_fired()
-        self.positions_dirty=True
+        self.positions_dirty = True
 
     def set_save_unknowns(self, v):
-        self._save_unknowns=v
+        self._save_unknowns = v
         self._save_unknowns_button_fired()
 
     def save(self):
@@ -166,8 +166,7 @@ class FluxEditor(GraphEditor):
                 je = reg.predict_error([[(p.x, p.y)]])[0]
                 oj = p.j
                 p.j = j
-                p.jerr =je
-                print je
+                p.jerr = je
 
                 p.dev = (oj - j) / j * 100
         self.positions_dirty = True
