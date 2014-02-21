@@ -61,6 +61,16 @@ class EasyFiguresAction(Action):
         e.make()
 
 
+class EasyCompareAction(Action):
+    name = 'Compare Iso/Spec'
+
+    def perform(self, event):
+        from pychron.processing.easy.compare import CompareIsochronSpec
+
+        e = CompareIsochronSpec()
+        e.make()
+
+
 class EasyTablesAction(Action):
     name = 'Easy Tables'
 

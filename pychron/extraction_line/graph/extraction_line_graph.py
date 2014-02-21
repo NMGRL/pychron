@@ -26,7 +26,7 @@ from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
-from pychron.extraction_line.graph.traverse import bft, bfs
+from pychron.extraction_line.graph.traverse import bft
 
 
 def get_volume(elem, tag='volume', default=0):
@@ -80,8 +80,7 @@ class ExtractionLineGraph(HasTraits):
                          ('laser', LaserNode),
                          ('tank', TankNode),
                          ('pipette', PipetteNode),
-                         ('gauge', GaugeNode),
-        ):
+                         ('gauge', GaugeNode)):
             for si in cp.get_elements(t):
                 n = si.text.strip()
                 if t in ('valve', 'rough_valve'):
@@ -218,7 +217,7 @@ class ExtractionLineGraph(HasTraits):
         """
         m_state, term = False, ''
         for ni in bft(self, node):
-#             print '-----', n.name, ni.name
+            #             print '-----', n.name, ni.name
             if isinstance(ni, PumpNode):
                 return 'pump', ni.name
 
@@ -296,8 +295,8 @@ class ExtractionLineGraph(HasTraits):
         if key in self.nodes:
             return self.nodes[key]
 
-    def _get_node(self, name):
-        return bfs(self, self.root, name)
+            # def _get_node(self, name):
+            #     return bfs(self, self.root, name)
 
 
 if __name__ == '__main__':

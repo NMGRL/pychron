@@ -46,7 +46,7 @@ class OffsetPlotLabel(PlotLabel):
 
 class AtmInterceptOverlay(AbstractOverlay):
     line_width=Float(1.5)
-    font=KivaFont("arial 10")
+    font = KivaFont("modern 10")
     line_style=LineStyle('dash')
     label=Str
     value=Float
@@ -176,7 +176,7 @@ class InverseIsochron(Isochron):
         # l.index.set_data(rxs)
         # l.value.set_data(rys)
         xs=l.index.get_data()
-        lci, uci=reg.calculate_ci(xs)
+        lci, uci = reg.calculate_error_envelope(xs)
         ee=ErrorEnvelopeOverlay(component=l,
                                 upper=uci, lower=lci)
         l.underlays.append(ee)
@@ -327,7 +327,7 @@ class InverseIsochron(Isochron):
             fit.index.set_data(rxs)
             fit.value.set_data(rys)
 
-            lci,uci=reg.calculate_ci(rxs)
+            lci, uci = reg.calculate_error_envelope(rxs)
             fit.error_envelope.lower=lci
             fit.error_envelope.upper=uci
 

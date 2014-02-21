@@ -22,7 +22,7 @@ from functools import partial
 #============= local library imports  ==========================
 
 def format_percent_error(v, e, n=2):
-    p=calc_percent_error(v,e)
+    p = calc_percent_error(v, e)
     if p is not None:
         sigpee = '{{:0.{}f}}'.format(n).format(p)
     else:
@@ -30,7 +30,7 @@ def format_percent_error(v, e, n=2):
     return sigpee
 
 
-def calc_percent_error(v,e, scale=100):
+def calc_percent_error(v, e, scale=100):
     try:
         return abs(e / v * scale)
     except ZeroDivisionError:
@@ -42,7 +42,7 @@ def errorfmt(v, e):
     return '{} ({}%)'.format(floatfmt(e), pe)
 
 
-def floatfmt(f, n=4, s=2, max_width=None, default='NaN'):
+def floatfmt(f, n=4, s=4, max_width=None, default='NaN'):
     """
         f: value to format
         n: number of sig figs

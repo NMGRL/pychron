@@ -28,6 +28,13 @@ class SpectrumEditor(FigureEditor):
     plotter_options_manager = Instance(SpectrumOptionsManager, ())
     basename = 'spec'
 
+    def _set_preferred_age_kind(self, ias):
+        for ia in ias:
+            if ia.plateau_age:
+                ia.preferred_age_kind = 'Plateau'
+            else:
+                ia.preferred_age_kind = 'Integrated'
+
     def get_component(self, ans, plotter_options):
         if plotter_options is None:
             pom = SpectrumOptionsManager()

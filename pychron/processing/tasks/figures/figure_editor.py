@@ -27,6 +27,7 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVParser
@@ -143,6 +144,15 @@ class FigureEditor(GraphEditor):
                 ai=db.get_analysis_uuid(ai.uuid)
 
                 db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
+
+    def save_interpreted_ages(self):
+        ias = self.get_interpreted_ages()
+        self._set_preferred_age_kind(ias)
+
+        self.add_interpreted_ages(ias)
+
+    def _set_preferred_age_kind(self, ias):
+        pass
 
     def get_interpreted_ages(self):
         key = lambda x: x.group_id

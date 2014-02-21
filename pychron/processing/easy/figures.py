@@ -27,6 +27,7 @@ from pychron.experiment.utilities.identifier import make_runid
 from pychron.paths import r_mkdir
 from pychron.processing.easy.base_easy import BaseEasy
 from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.processing.tasks.figures.editors.isochron_editor import InverseIsochronEditor
 from pychron.processing.tasks.figures.editors.spectrum_editor import SpectrumEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
@@ -34,9 +35,11 @@ from pychron.processing.utils.grouping import group_analyses_by_key
 class EasyFigures(BaseEasy):
     fusion_editor_klass = IdeogramEditor
     step_heat_editor_klass = SpectrumEditor
+    isochron_editor_klass = InverseIsochronEditor
 
     _fusion_editor = None
     _step_heat_editor = None
+    _isochron_editor = None
 
     _tag = 'Figure'
 
@@ -48,6 +51,7 @@ class EasyFigures(BaseEasy):
         doc = ep.doc('figures')
 
         self._save_db_figure=doc['save_db_figure']
+        self._save_pdf_figure = doc['save_pdf_figure']
         self._save_interpreted=doc['save_interpreted']
 
         projects = doc['projects']
@@ -144,19 +148,25 @@ class EasyFigures(BaseEasy):
         ans = sorted(ans, key=pred)
         stepheat, fusion = map(list, partition(ans, pred))
 
-        apred = lambda x: x.aliquot
-        stepheat = sorted(stepheat, key=apred)
         project='Minna Bluff'
 
         li = li.identifier
         if stepheat:
-            key=lambda x: x.aliquot
-            stepheat=sorted(stepheat, key=key)
-            for aliquot, ais in groupby(stepheat, key=key):
-                name=make_runid(li, aliquot, '')
-                self._make_editor(ais, 'step_heat', options, prog, False,
-                                  (ln_root, name, name, project, (li,)))
-        if fusion:
+            key = lambda x: x.aliquot
+            stepheat = sorted(stepheat, key=key)
+
+            if options.has_key('step_heat'):
+                for aliquot, ais in groupby(stepheat, key=key):
+                    name = make_runid(li, aliquot, '')
+                    self._make_editor(ais, 'step_heat', options, prog, False,
+                                      (ln_root, name, name, project, (li,)))
+            if options.has_key('isochron'):
+                for aliquot, ais in groupby(stepheat, key=key):
+                    name = make_runid(li, aliquot, '')
+                    self._make_editor(ais, 'isochron', options, prog, False,
+                                      (ln_root, '{}_isochron'.format(name), name, project, (li,)))
+
+        if fusion and options.has_key('fusion'):
             self._make_editor(fusion, 'fusion', options, prog, False,
                               (ln_root, li, li, project, (li,)))
 
@@ -183,18 +193,15 @@ class EasyFigures(BaseEasy):
         setattr(self, '_{}_editor'.format(editor_name), editor)
 
     #save
+    def _save_isochron(self, editor, *args):
+        self._save(editor, *args)
+        if self._save_interpreted:
+            editor.save_interpreted_ages()
+
     def _save_step_heat(self,editor, *args):
         self._save(editor, *args)
-
         if self._save_interpreted:
-            ias = editor.get_interpreted_ages()
-            for ia in ias:
-                if ia.plateau_age:
-                    ia.preferred_age_kind = 'Plateau'
-                else:
-                    ia.preferred_age_kind = 'Integrated'
-
-            editor.add_interpreted_ages(ias)
+            editor.save_interpreted_ages()
 
     def _save_fusion_grouped(self, *args):
         self._save(*args)
@@ -202,26 +209,16 @@ class EasyFigures(BaseEasy):
     def _save_fusion(self,editor, *args):
         # self._save_labnumber(editor, *args)
         if self._save_interpreted:
-            ias = editor.get_interpreted_ages()
-            # for ia in ias:
-            #     ia.preferred_age_kind='Weighted Mean'
-                # if ia.plateau_age:
-                #     ia.preferred_age_kind = 'Plateau'
-                # else:
-                #     ia.preferred_age_kind = 'Integrated'
-
-            editor.add_interpreted_ages(ias)
+            editor.save_interpreted_ages()
 
     def _save_labnumber(self, editor, root, pathname, name, project, lns):
-        # pathname=tag.format(ln.identifier)
-        # name=ln.identifier
-        # project=ln.sample.project.name
-        # lns=[ln.identifier]
         self._save(editor, root, pathname, name, project, lns)
 
     def _save(self, editor, root, pathname, name, project, lns):
-        p, _ = unique_path(root, pathname, extension='.pdf')
-        editor.save_file(p)
+        if self._save_pdf_figure:
+            p, _ = unique_path(root, pathname, extension='.pdf')
+            editor.save_file(p)
+
         if self._save_db_figure:
             editor.save_figure('EasyFigure {}'.format(name),
                                project, lns)

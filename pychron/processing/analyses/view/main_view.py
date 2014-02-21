@@ -46,6 +46,7 @@ class MainView(HasTraits):
         if analysis:
             self._load(analysis)
 
+
     def load(self, an):
         self._load(an)
 
@@ -67,7 +68,7 @@ class MainView(HasTraits):
         j = self._get_j(an)
         jf = 'NaN'
         if j is not None:
-            jj = floatfmt(j.nominal_value, n=3, s=3)
+            jj = floatfmt(j.nominal_value, n=5, s=5)
             jf = u'{} \u00b1{:0.2e}'.format(jj, j.std_dev)
 
         a39 = ar.ar39decayfactor
@@ -301,16 +302,14 @@ class MainView(HasTraits):
                 UItem('measurement_values',
                       editor=meditor),
                 UItem('extraction_values',
-                      editor=eeditor),
-            ),
+                      editor=eeditor)),
             UItem('isotopes',
                   editor=teditor),
             UItem('isotopes',
                   editor=ieditor),
             UItem('computed_values',
-                  editor=ceditor
-            )
-        )
+                  editor=ceditor))
         return v
+
 
 #============= EOF =============================================

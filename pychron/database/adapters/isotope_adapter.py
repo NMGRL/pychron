@@ -235,6 +235,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             attr = getattr(proc_InterpretedAgeHistoryTable, key)
             q = q.filter(attr.in_(values))
+            q = q.order_by(proc_InterpretedAgeHistoryTable.create_date.desc())
 
             try:
                 return q.all()

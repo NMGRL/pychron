@@ -214,6 +214,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     def make_analyses(self, ans,
                       progress=None,
+                      use_progress=True,
                       exclude=None,
                       use_cache=True,
                       unpack=False,
@@ -277,7 +278,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                             if progress is not None:
                                 if progress.max < (n + progress.get_value()):
                                     progress.increase_max(n+2)
-                            else:
+                            elif use_progress:
                                 progress = self._open_progress(n+2)
 
                         new_ans=[]
