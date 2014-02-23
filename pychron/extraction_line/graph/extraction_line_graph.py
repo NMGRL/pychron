@@ -51,7 +51,10 @@ def split_graph(n):
         e1, e2 = n.edges
         return e1.get_node(n), e2.get_node(n)
     else:
-        return n.edges[0].get_node(n),
+        if n.edges:
+            return n.edges[0].get_node(n),
+        else:
+            return []
 
 
 class ExtractionLineGraph(HasTraits):
@@ -148,16 +151,17 @@ class ExtractionLineGraph(HasTraits):
                 self._clear_visited()
 
     def _set_state(self, scene, n):
-        if n.state == 'closed' and not n.visited:
-            n.visited = True
-            for ni in split_graph(n):
-                self._set_state(scene, ni)
-        else:
-            state, term = self._find_max_state(n)
-            self._clear_fvisited()
-            self.fill(scene, n, state, term)
+        if n:
+            if n.state == 'closed' and not n.visited:
+                n.visited = True
+                for ni in split_graph(n):
+                    self._set_state(scene, ni)
+            else:
+                state, term = self._find_max_state(n)
+                self._clear_fvisited()
+                self.fill(scene, n, state, term)
 
-        self._clear_fvisited()
+            self._clear_fvisited()
 
     def calculate_volumes(self, node):
         if isinstance(node, str):

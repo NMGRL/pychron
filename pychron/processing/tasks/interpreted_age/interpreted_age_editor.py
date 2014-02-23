@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -48,12 +50,12 @@ class InterpretedAgeAdapter(TabularAdapter):
                ('MSWD', 'mswd')]
 
     font = 'arial 10'
-    sample_width=Int(100)
-    identifier_width=Int(100)
-    age_kind_width=Int(100)
-    age_width=Int(75)
-    age_err_width=Int(75)
-    nanalyses_width=Int(75)
+    sample_width = Int(100)
+    identifier_width = Int(100)
+    age_kind_width = Int(100)
+    age_width = Int(75)
+    age_err_width = Int(75)
+    nanalyses_width = Int(75)
 
 
 class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
@@ -70,10 +72,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     replace_button = Button
     interpreted_ages = List
 
-    pdf_table_options=Instance(PDFTableOptions, ())
-    saved_group_id=Int
+    pdf_table_options = Instance(PDFTableOptions, ())
+    saved_group_id = Int
     name = 'Untitled'
-    refresh=Event
+    refresh = Event
 
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
@@ -84,14 +86,14 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
 
         # ans=[]
-        db=self.processor.db
+        db = self.processor.db
 
         with db.session_ctx():
-            ias=self.interpreted_ages[:10]
+            ias = self.interpreted_ages[:10]
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
-                   if si.analysis.tag!='invalid']
+                   if si.analysis.tag != 'invalid']
             prog = self.processor.open_progress(len(ans), close_at_end=False)
             # hid = db.get_interpreted_age_history(ia.id)
             # dbia = hid.interpreted_age
@@ -110,23 +112,23 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                 return klass(sample=ans[0].sample, analyses=ans)
 
             #partition fusion vs stepheat
-            fusion, step_heat=partition(ias, lambda x: x.age_kind=='Weighted Mean')
+            fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
             # for ia in step_heat:
             #     groups.append(klass(sample=ans[0].sample,
             #                         analyses=ans))
-            shgroups=[gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
-            fgroups=[gfactory(AnalysisGroup, ia) for ia in fusion]
+            shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
+            fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
             prog.close()
 
-        head, ext=os.path.splitext(p)
+        head, ext = os.path.splitext(p)
         if shgroups:
             w = StepHeatPDFTableWriter()
-            p='{}.step_heat_data{}'.format(head, ext)
+            p = '{}.step_heat_data{}'.format(head, ext)
             w.build(p, shgroups, title=self.get_title())
         if fgroups:
-            w=FusionPDFTableWriter()
-            p='{}.fusion_data{}'.format(head, ext)
-            w.build(p,fgroups, title=self.get_title())
+            w = FusionPDFTableWriter()
+            p = '{}.fusion_data{}'.format(head, ext)
+            w.build(p, fgroups, title=self.get_title())
 
 
 
@@ -137,19 +139,19 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         items = self.interpreted_ages
         title = self.get_title()
 
-        opt=self.pdf_table_options
+        opt = self.pdf_table_options
         # w.use_alternating_background=opt.use_alternating_background
-        w.options=opt
+        w.options = opt
         w.build(p, items, title)
 
         # self._save_recipe_file(p)
 
     def get_title(self):
-        opt=self.pdf_table_options
+        opt = self.pdf_table_options
         if opt.auto_title:
-            title=self._generate_title()
+            title = self._generate_title()
         else:
-            title=opt.title
+            title = opt.title
         return title
 
     def set_identifiers(self, lns):
@@ -166,16 +168,16 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
                 self.history_names = [hi.name for hi in self.histories]
                 if self.history_names:
-                    self.selected_history_name = self.history_names[-1]
+                    self.selected_history_name = self.history_names[0]
 
     def set_samples(self, samples):
         self.set_identifiers([si.labnumber for si in samples])
 
     def update_group(self):
-        gid=self.saved_group_id
+        gid = self.saved_group_id
         db = self.processor.db
         with db.session_ctx() as sess:
-            hist=db.get_interpreted_age_group_history(gid)
+            hist = db.get_interpreted_age_group_history(gid)
 
             for gs in hist.interpreted_ages:
                 sess.delete(gs)
@@ -190,37 +192,37 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             ids = (ia.id for ia in self.interpreted_ages)
 
-        db=self.processor.db
+        db = self.processor.db
         with db.session_ctx():
-            hist=db.add_interpreted_age_group_history(name, project=project)
+            hist = db.add_interpreted_age_group_history(name, project=project)
             for i in ids:
                 db.add_interpreted_age_group_set(hist, i)
 
     def open_group(self, gid):
-        db=self.processor.db
-        ias=[]
+        db = self.processor.db
+        ias = []
         with db.session_ctx():
-            hist=db.get_interpreted_age_group_history(gid)
-            prog=self.processor.open_progress(len(hist.interpreted_ages))
+            hist = db.get_interpreted_age_group_history(gid)
+            prog = self.processor.open_progress(len(hist.interpreted_ages))
             # self.interpreted_ages=[]
             for gs in hist.interpreted_ages:
                 # print gs.id, gs.history, gs.history.id if gs.history else ''
-                ia=db.interpreted_age_factory(gs.history)
+                ia = db.interpreted_age_factory(gs.history)
                 # self.interpreted_ages.append(ia)
                 prog.change_message('Interpreted age {}'.format(ia.identifier))
                 ias.append(ia)
 
             prog.close()
 
-            self.interpreted_ages=ias
+            self.interpreted_ages = ias
 
             # self.set_identifiers([ia.identifier for ia in ias])
-            self.name=hist.name
-            self.saved_group_id=int(hist.id)
+            self.name = hist.name
+            self.saved_group_id = int(hist.id)
 
     def delete_groups(self, gids):
         if not hasattr('gids', '__iter__'):
-            gids=(gids,)
+            gids = (gids,)
 
         db = self.processor.db
         with db.session_ctx():
@@ -240,7 +242,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
     @on_trait_change('interpreted_ages[]')
     def _interpreted_ages_changed(self):
-        self.pdf_table_options.title=self._generate_title()
+        self.pdf_table_options.title = self._generate_title()
 
     def _selected_history_name_changed(self):
         if self.selected_history_name:
@@ -280,11 +282,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         interpreted_grp = UItem('interpreted_ages',
                                 editor=TabularEditor(adapter=InterpretedAgeAdapter(),
-                                                     operations=['move','delete'],
+                                                     operations=['move', 'delete'],
                                                      column_clicked='column_clicked',
                                                      refresh='refresh'
-                                                     ))
-        options_grp=UItem('pdf_table_options', style='custom')
+                                ))
+        options_grp = UItem('pdf_table_options', style='custom')
 
         v = View(VGroup(histories_grp,
                         selected_grp,
@@ -293,8 +295,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                         interpreted_grp))
         return v
 
-#============= EOF =============================================
-# def _save_recipe_file(self, p):
+    #============= EOF =============================================
+    # def _save_recipe_file(self, p):
     #     head, ext=os.path.splitext(p)
     #     p='{}.{}'.format(head, 'yaml')
     #
@@ -320,4 +322,4 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     #     self.interpreted_ages=ias
     #
     #     self.pdf_table_options.load_yaml(d['options'])
-        # self.pdf_table_options.trait_set(**d['options'])
+    # self.pdf_table_options.trait_set(**d['options'])

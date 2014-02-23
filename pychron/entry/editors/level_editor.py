@@ -17,12 +17,14 @@
 #============= enthought library imports =======================
 import os
 import struct
+
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -77,7 +79,7 @@ class TrayAdapter(TabularAdapter):
 
 
 class EditView(ModelView):
-    title = 'Edit Irradiation'
+    title = 'Edit Level'
 
     def traits_view(self):
         pr_group = VGroup(HGroup(icon_button_editor('add_production_button', 'database_add',

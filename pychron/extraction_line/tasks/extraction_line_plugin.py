@@ -23,10 +23,8 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
-from pychron.extraction_line.tasks.extraction_line_actions import LoadCanvasAction, \
-    RefreshCanvasAction
-from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferences, \
-    ExtractionLinePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_actions import RefreshCanvasAction
+from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane
 
 
 class ExtractionLinePlugin(BaseTaskPlugin):
@@ -36,8 +34,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='refresh_canvas',
                                                       factory=RefreshCanvasAction,
-                                                      path='MenuBar/Tools'
-        )]),
+                                                      path='MenuBar/tools.menu')]),
 
                 #TaskExtension(id='pychron.extaction_line',
                 #              actions=[SchemaAddition(factory=IsolateChamberAction,

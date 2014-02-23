@@ -23,6 +23,7 @@ import os
 from pyproj import Proj, transform
 
 #============= local library imports  ==========================
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.geo.primitives import AgePoint
@@ -32,20 +33,20 @@ from pychron.geo.tasks.panes import BrowserPane, GeoPane
 from pychron.paths import paths
 
 
-
-
 class GeoTask(BaseManagerTask, BrowserMixin):
     tool_bars = [SToolBar(ExportShapefileAction())]
 
-    append_button=Button
-    replace_button=Button
-    points=List
-    selected_point=Any
-    dclicked_point=Event
-    active_point=Any
+    append_button = Button
+    replace_button = Button
+    points = List
+    selected_point = Any
+    dclicked_point = Event
+    active_point = Any
 
     def activated(self):
         self.load_projects()
+        bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
+
         self.load_browser_selection()
 
     def prepare_destroy(self):
@@ -55,14 +56,17 @@ class GeoTask(BaseManagerTask, BrowserMixin):
         return GeoPane(model=self)
 
     def create_dock_panes(self):
-        panes=[BrowserPane(model=self)]
+        panes = [BrowserPane(model=self)]
         return panes
 
+    def export_strat_canvas(self):
+        self.manager.make_strat_canvas_file()
+
     def export_shapefile(self):
-        writer=ShapeFileWriter()
-        p=os.path.join(paths.disseration, 'data','minnabluff','gis','test_points.shp')
+        writer = ShapeFileWriter()
+        p = os.path.join(paths.disseration, 'data', 'minnabluff', 'gis', 'test_points.shp')
         if writer.write_points(p, points=self.points,
-                            attrs=('sample', 'material', 'age', 'age_error')):
+                               attrs=('sample', 'material', 'age', 'age_error')):
 
             if self.confirmation_dialog('Shape file saved to {}\n\n Do you want to open in QGIS ?'.format(p)):
                 self.view_file(p, application='QGIS')
@@ -70,36 +74,36 @@ class GeoTask(BaseManagerTask, BrowserMixin):
             self.warning_dialog('Failed saving shape file')
 
     def _append_button_fired(self):
-        points=self._make_points(self.selected_samples)
+        points = self._make_points(self.selected_samples)
         self.points.extend(points)
 
     def _replace_button_fired(self):
         points = self._make_points(self.selected_samples)
-        self.points= points
+        self.points = points
 
     def _dclicked_point_fired(self):
         if self.selected_point:
-            self.active_point=self.selected_point
+            self.active_point = self.selected_point
 
     def _make_points(self, samples):
         p1 = Proj(proj='latlong', datum='WGS84')
         p2 = Proj(init='epsg:3031')
         db = self.manager.db
         with db.session_ctx():
-            pts=[self._make_point(db, si, p1, p2) for si in samples]
+            pts = [self._make_point(db, si, p1, p2) for si in samples]
         return pts
 
     def _make_point(self, db, sample, p1, p2):
-        easting,northing=transform(p1, p2, sample.lon, sample.lat)
+        easting, northing = transform(p1, p2, sample.lon, sample.lat)
         histories = db.get_interpreted_age_histories((sample.labnumber,))
-        ias= [db.interpreted_age_factory(db, hi) for hi in histories]
+        ias = [db.interpreted_age_factory(db, hi) for hi in histories]
 
-        ap=AgePoint(sample=sample.name,
-                        x=easting,y=northing,
-                        elevation=sample.elevation,
-                        interpreted_ages=ias)
+        ap = AgePoint(sample=sample.name,
+                      x=easting, y=northing,
+                      elevation=sample.elevation,
+                      interpreted_ages=ias)
         if ias:
-            ap.interpreted_age=ias[-1]
+            ap.interpreted_age = ias[-1]
 
         return ap
 
@@ -108,4 +112,5 @@ class GeoTask(BaseManagerTask, BrowserMixin):
 
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.geo.browser'))
+
 #============= EOF =============================================

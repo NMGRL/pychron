@@ -27,8 +27,6 @@ import math
 from numpy import array
 #============= local library imports  ==========================
 from pychron.core.geometry.convex_hull import convex_hull
-# from pyface.image_resource import ImageResource
-# from pychron.paths import paths
 from kiva.agg.agg import GraphicsContextArray
 import Image as PImage
 
@@ -162,8 +160,8 @@ class Primitive(HasTraits):
         x, y = self.x, self.y
         offset = 0
         if self.space == 'data':
-        #            if self.canvas is None:
-        #                print self
+            #            if self.canvas is None:
+            #                print self
             x, y = self.canvas.map_screen([(self.x, self.y)])[0]
             #        offset = self.canvas.offset
             offset = 1
@@ -253,7 +251,7 @@ class Primitive(HasTraits):
 class QPrimitive(Primitive):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
-        #            c = c.red(), c.green(), c.blue()
+            #            c = c.red(), c.green(), c.blue()
             c = c.toTuple()
 
         c = map(lambda x: x / 255., c)
@@ -332,7 +330,7 @@ class Rectangle(QPrimitive):
     #            gc.draw_path()
 
     def _render_border(self, gc, x, y, w, h):
-    #        gc.set_stroke_color((0, 0, 0))
+        #        gc.set_stroke_color((0, 0, 0))
         gc.rect(x - self.line_width, y - self.line_width,
                 w + self.line_width, h + self.line_width
         )
@@ -447,7 +445,7 @@ class Line(QPrimitive):
             self.end_point.set_canvas(canvas)
 
     def _render_(self, gc):
-    #        gc.begin_path()
+        #        gc.begin_path()
         gc.set_line_width(self.width)
         if self.start_point and self.end_point:
             x, y = self.start_point.get_xy()
@@ -592,11 +590,11 @@ class LoadIndicator(Circle):
         self.weight_label = lb
 
     def add_text(self, t, ox=0, oy=0, **kw):
-    #         x, y = self.get_xy()
+        #         x, y = self.get_xy()
         lb = Label(0, 0,
                    text=t,
                    hjustify='center',
-                   oy=oy,
+                   offset_y=oy,
                    font='modern 9',
                    use_border=False,
                    **kw)
@@ -627,6 +625,7 @@ class LoadIndicator(Circle):
         for pm in self.primitives:
             pm.x, pm.y = self.x, self.y
             pm.render(gc)
+
 
 #         if self._text:
 #             for ti, _, oy in self._text:
@@ -667,6 +666,7 @@ class CalibrationObject(HasTraits):
         self.cx = x
         self.cy = y
 
+
 #    def set_canvas(self, canvas):
 #        self.canvas = canvas
 
@@ -678,9 +678,13 @@ class Label(QPrimitive):
     text = String
     use_border = True
     bgcolor = Color('white')
-    ox = Float
-    oy = Float
+    # ox = Float
+    # oy = Float
     hjustify = 'left'
+    vjustify = 'bottom'
+    soffset_x = Float
+    soffset_y = Float
+    label_offsety = Float
 
     def _text_changed(self):
         self.request_redraw()
@@ -694,32 +698,39 @@ class Label(QPrimitive):
         x, y = ox + loffset, oy + loffset
         lines = self._get_text().split('\n')
 
-        gc.set_stroke_color((0, 0, 0))
-        if self.use_border:
-            gc.set_fill_color(self._convert_color(self.bgcolor))
-            gc.set_line_width(2)
+        gc.set_stroke_color(self._convert_color(self.default_color))
 
-            offset = 5
-            mw = -1
-            sh = 10
-            for li in lines:
-                w, h, _, _ = gc.get_full_text_extent(li)
-                mw = max(mw, w + 2 * offset + loffset)
-                sh += h
-            gc.rect(ox - offset + self.ox,
-                    oy - offset + self.oy, mw, sh + loffset)
-            gc.draw_path()
-
-        gc.set_fill_color((0, 0, 0))
-
-        gc.set_font(self.gfont)
-        for i, li in enumerate(lines[::-1]):
+        offset = 5
+        mw = -1
+        sh = 0
+        for li in lines:
             w, h, _, _ = gc.get_full_text_extent(li)
-            x += self.ox
-            if self.hjustify == 'center':
-                x -= w / 2.
-            gc.set_text_position(x, y + self.oy + i * h)
-            gc.show_text(li)
+            mw = max(mw, w + 2 * offset + loffset)
+            sh += h
+
+        with gc:
+            if self.vjustify == 'center':
+                gc.translate_ctm(0, -sh / 2.0)
+            gc.translate_ctm(0, self.label_offsety)
+
+            gc.set_stroke_color((0, 0, 0))
+            if self.use_border:
+                gc.set_fill_color(self._convert_color(self.bgcolor))
+                gc.set_line_width(2)
+                gc.rect(ox - offset + self.soffset_x,
+                        oy - offset + self.soffset_y, mw, 10 + sh + loffset)
+                gc.draw_path()
+
+            gc.set_fill_color((0, 0, 0))
+
+            gc.set_font(self.gfont)
+            for i, li in enumerate(lines[::-1]):
+                w, h, _, _ = gc.get_full_text_extent(li)
+                x += self.soffset_x
+                if self.hjustify == 'center':
+                    x -= w / 2.
+                gc.set_text_position(x, y + self.soffset_y + i * h)
+                gc.show_text(li)
 
     def _get_group(self):
         g = Item('text', style='custom')
@@ -778,6 +789,7 @@ class Indicator(QPrimitive):
         else:
             self.hline.render(*args, **kw)
             self.vline.render(*args, **kw)
+
 
 #    def set_canvas(self, canvas):
 #        super(Indicator, self).set_canvas(canvas)
@@ -904,6 +916,7 @@ class PolyLine(QPrimitive):
         for pi in self.primitives:
             pi.render(gc)
 
+
 #        self.start_point.render(gc)
 #        for pt in self.points:
 #            pt.render(gc)
@@ -983,7 +996,7 @@ class Polygon(QPrimitive):
 
     def add_point(self, pt, **kw):
         if isinstance(pt, (tuple, list)):
-        #            kw['canvas'] = self.canvas
+            #            kw['canvas'] = self.canvas
             pt = Point(*pt, **kw)
 
         self.points.append(pt)

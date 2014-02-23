@@ -146,7 +146,6 @@ class BaseDataCanvas(DataView):
         #        if not self.show_axes:
         #            self.value_axis.visible = False
         #            self.index_axis.visible = False
-
         self.value_axis.visible = self.show_axes
         self.index_axis.visible = self.show_axes
         self.x_grid.visible = self.show_grids

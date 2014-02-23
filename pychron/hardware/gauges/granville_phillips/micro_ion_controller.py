@@ -13,27 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-
-
-
 #=============enthought library imports=======================
 from traits.api import List, Str, HasTraits, Float, Int
 from traitsui.api import View, HGroup, Item, ListEditor, InstanceEditor, Group
 #=============standard library imports ========================
 from numpy import random, char
+import time
 
 #=============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
-# from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
-import time
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 
-# from numpy import linspace
-# def gen():
-#    for xi in linspace(5e-10, 5e-8, 25):
-#        yield xi
-#
-# pgen = gen()
 
 class Gauge(HasTraits):
     name = Str
@@ -76,10 +66,7 @@ class MicroIonController(CoreDevice):
                                        style='custom',
                                        editor=InstanceEditor())),
                 show_border=True,
-                label=self.display_name
-            ),
-            #                 height= -100
-        )
+                label=self.display_name))
         return v
 
     def load_additional_args(self, config, *args, **kw):
@@ -125,10 +112,6 @@ class MicroIonController(CoreDevice):
 
         return True
 
-    #@on_trait_change('gauges:pressure')
-    #def _pres(self, new):
-    #    print 'ffff',new
-
     def _pressure_change(self, obj, name, old, new):
         self.trait_set(**{'{}_pressure'.format(obj.name): new})
 
@@ -168,7 +151,6 @@ class MicroIonController(CoreDevice):
         self._set_gauge_pressure('IG', ig)
 
         return ig, a, b
-        # return self.get_convectron_a_pressure()
 
     def set_degas(self, state):
         key = 'DG'
@@ -255,12 +237,9 @@ class MicroIonController(CoreDevice):
 
             if name == 'IG':
                 loc, scale = 1e-9, 5e-10
-            #                return pgen.next()
             else:
                 loc, scale = 1e-2, 5e-3
             return abs(normal(loc, scale))
-
-        #            r = self.get_random_value(0, 10000) / 10000.0
 
         return r
 

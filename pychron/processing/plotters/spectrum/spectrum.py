@@ -29,7 +29,6 @@ from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
 
 
 class Spectrum(BaseArArFigure):
-
     xs = Array
     _omit_key = 'omit_spec'
 
@@ -52,7 +51,7 @@ class Spectrum(BaseArArFigure):
 
         try:
             self.graph.set_x_title('Cumulative %39ArK')
-            self.graph.set_x_limits(0,100)
+            self.graph.set_x_limits(0, 100)
         except IndexError:
             pass
 
@@ -64,11 +63,11 @@ class Spectrum(BaseArArFigure):
 
     def mean_x(self, *args):
         return 50
+
     #===============================================================================
     # plotters
     #===============================================================================
     def _plot_aux(self, title, vk, ys, po, plot, pid, es=None, **kw):
-        # self._add_aux_plot(ys, title, vk, pid, po)
         graph = self.graph
         graph.set_y_title(title,
                           plotid=pid)
@@ -88,31 +87,31 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title('Age ({})'.format(au))
 
         spec = self._add_plot(xs, ys, es, pid, po)
-        spec.line_style=self.options.center_line_style
+        spec.line_style = self.options.center_line_style
 
-        ag=self.analysis_group
+        ag = self.analysis_group
         if ag.plateau_age:
-            plateau_age=ag.plateau_age
-            plateau_mswd, valid_mswd, nsteps=ag.get_plateau_mswd_tuple()
-            platbounds=ag.plateau_steps
+            plateau_age = ag.plateau_age
+            plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
+            platbounds = ag.plateau_steps
 
-            e=plateau_age.std_dev*self.options.nsigma
-            info_txt=self._build_label_text(plateau_age.nominal_value, e,
-                                            plateau_mswd, valid_mswd, nsteps, )
+            e = plateau_age.std_dev * self.options.nsigma
+            info_txt = self._build_label_text(plateau_age.nominal_value, e,
+                                              plateau_mswd, valid_mswd, nsteps, )
 
-            overlay=self._add_plateau_overlay(spec, platbounds, plateau_age,
-                                              ys[::2], es[::2],
-                                              info_txt)
+            overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
+                                                ys[::2], es[::2],
+                                                info_txt)
 
             overlay.id = 'plateau'
             if overlay.id in po.overlay_positions:
                 y = po.overlay_positions[overlay.id]
-                overlay.y=y
+                overlay.y = y
 
         # tga = self._calculate_total_gas_age(self.sorted_analyses)
         # print tga
-        tga=ag.integrated_age
-        mswd =ag.get_mswd_tuple()
+        tga = ag.integrated_age
+        mswd = ag.get_mswd_tuple()
         text = self._build_integrated_age_label(tga, *mswd)
         # text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
 
@@ -125,19 +124,16 @@ class Spectrum(BaseArArFigure):
         maages = max(yu)
 
         if op.display_integrated_info:
-            fs=op.integrated_font_size
+            fs = op.integrated_font_size
             if not fs:
-                fs=10
+                fs = 10
 
             self._add_integrated_label(plot,
-                                           text,
-                                           font='modern {}'.format(fs),
-                                           relative_position=self.group_id)
-            # label=self._add_data_label(spec, text,
-            #                           (25, miages),
-            #                           font='modern {}'.format(fs),
-            #                           label_position='bottom right',
-            #                           append=False)
+                                       text,
+                                       font='modern {}'.format(fs),
+                                       relative_position=self.group_id,
+                                       color=spec.color)
+
             # label.id='integrated'
             # if label.id in po.overlay_positions:
             #     label.label_position=po.overlay_positions[label.id]
@@ -152,13 +148,6 @@ class Spectrum(BaseArArFigure):
             if self.options.show_info:
                 ts = ['+/-{}s'.format(self.options.nsigma)]
 
-                # if self.options.show_mean_info:
-                #     m = self.options.mean_calculation_kind
-                #     s = self.options.nsigma
-                #     ts.append('Mean: {} +/-{}s'.format(m, s))
-                # if self.options.show_error_type_info:
-                #     ts.append('Error Type:{}'.format(self.options.error_calc_method))
-
                 if ts:
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
@@ -166,12 +155,12 @@ class Spectrum(BaseArArFigure):
                                        component=plot)
                     plot.overlays.append(pl)
 
-    def _add_integrated_label(self, plot, text, font='modern 10', relative_position=0):
+    def _add_integrated_label(self, plot, text, font='modern 10', relative_position=0, **kw):
 
-        o=IntegratedPlotLabel(component=plot,text=text,
-                              hjustify='center',vjustify='bottom',
-                             font=font,
-                             relative_position=relative_position)
+        o = IntegratedPlotLabel(component=plot, text=text,
+                                hjustify='center', vjustify='bottom',
+                                font=font,
+                                relative_position=relative_position, **kw)
 
         plot.overlays.append(o)
 
@@ -194,9 +183,9 @@ class Spectrum(BaseArArFigure):
         ds.errors = es
 
         ns = self.options.step_nsigma
-        a=self.options.envelope_alpha
-        if a>1.0:
-            a*=0.01
+        a = self.options.envelope_alpha
+        if a > 1.0:
+            a *= 0.01
 
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
@@ -205,12 +194,12 @@ class Spectrum(BaseArArFigure):
         ds.overlays.append(sp)
 
         if po.show_labels:
-            lo= SpectrumLabelOverlay(component=ds,
-                                     nsigma=ns,
-                                     spectrum=self,
-                                     font_size=self.options.step_label_font_size,
-                                     display_extract_value=self.options.display_extract_value,
-                                     display_step=self.options.display_step)
+            lo = SpectrumLabelOverlay(component=ds,
+                                      nsigma=ns,
+                                      spectrum=self,
+                                      font_size=self.options.step_label_font_size,
+                                      display_extract_value=self.options.display_extract_value,
+                                      display_step=self.options.display_step)
 
             ds.overlays.append(lo)
 
@@ -223,7 +212,7 @@ class Spectrum(BaseArArFigure):
     #===============================================================================
     # overlays
     #===============================================================================
-    def _add_plateau_overlay(self, lp, bounds, plateau_age, ages,age_errors, info_txt):
+    def _add_plateau_overlay(self, lp, bounds, plateau_age, ages, age_errors, info_txt):
         ov = PlateauOverlay(component=lp, plateau_bounds=bounds,
                             cumulative39s=hstack(([0], self.xs)),
                             info_txt=info_txt,
@@ -237,7 +226,7 @@ class Spectrum(BaseArArFigure):
                             label_font_size=self.options.plateau_font_size,
 
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
-                            y=plateau_age.nominal_value*1.25)
+                            y=plateau_age.nominal_value * 1.25)
 
         lp.overlays.append(ov)
 
@@ -296,7 +285,7 @@ class Spectrum(BaseArArFigure):
                 ai, ei = aa
             else:
                 if aa is None:
-                    ai,ei=0,0
+                    ai, ei = 0, 0
                 else:
                     ai, ei = aa.nominal_value, aa.std_dev
 
@@ -338,60 +327,58 @@ class Spectrum(BaseArArFigure):
 
         txt = self._build_label_text(age, error, *args)
         return 'Integrated Age= {}'.format(txt)
+        #============= EOF =============================================
+        # def _get_plateau(self, analyses, exclude=None):
+        # if exclude is None:
+        #     exclude = []
+        #
+        # ages, errors = self._get_age_errors(self.sorted_analyses)
+        # k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
+        #
+        # # provide 1s errors
+        # platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
+        # n = 0
+        # if platbounds is not None and len(platbounds):
+        #     n = platbounds[1] - platbounds[0] + 1
+        #
+        # if n > 1:
+        #     ans = []
+        #
+        #     for j, ai in enumerate(analyses):
+        #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
+        #             ans.append(ai)
+        #             #            ans=[ai for (j,ai) in analyses if]
+        #             #            ans = analyses[platbounds[0]:platbounds[1]]
+        #
+        #     ages, errors = self._get_age_errors(ans)
+        #     mswd, valid, n = self._get_mswd(ages, errors)
+        #     plateau_age = self._calculate_total_gas_age(ans)
+        #     return plateau_age, platbounds, mswd, valid, n
+        # else:
+        #     return 0, array([0, 0]), 0, 0, 0
 
-
-#============= EOF =============================================
-    # def _get_plateau(self, analyses, exclude=None):
-    # if exclude is None:
-    #     exclude = []
-    #
-    # ages, errors = self._get_age_errors(self.sorted_analyses)
-    # k39s = [a.computed['k39'].nominal_value for a in self.sorted_analyses]
-    #
-    # # provide 1s errors
-    # platbounds = find_plateaus(ages, errors, k39s, overlap_sigma=2, exclude=exclude)
-    # n = 0
-    # if platbounds is not None and len(platbounds):
-    #     n = platbounds[1] - platbounds[0] + 1
-    #
-    # if n > 1:
-    #     ans = []
-    #
-    #     for j, ai in enumerate(analyses):
-    #         if j not in exclude and platbounds[0] <= j <= platbounds[1]:
-    #             ans.append(ai)
-    #             #            ans=[ai for (j,ai) in analyses if]
-    #             #            ans = analyses[platbounds[0]:platbounds[1]]
-    #
-    #     ages, errors = self._get_age_errors(ans)
-    #     mswd, valid, n = self._get_mswd(ages, errors)
-    #     plateau_age = self._calculate_total_gas_age(ans)
-    #     return plateau_age, platbounds, mswd, valid, n
-    # else:
-    #     return 0, array([0, 0]), 0, 0, 0
-
-# def _calculate_total_gas_age(self, analyses):
-#     """
-#         sum the corrected rad40 and k39 values
-#
-#         not necessarily the same as isotopic recombination
-#
-#     """
-#     rad40, k39 = zip(*[(a.get_computed_value('rad40'),
-#                         a.get_computed_value('k39')) for a in analyses])
-#
-#     rad40 = sum(rad40)
-#     k39 = sum(k39)
-#
-#     j = a.j
-#     return age_equation(rad40 / k39, j, a.arar_constants)
-#
-#     # rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
-#     # rad40 = sum(rad40)
-#     # k39 = sum(k39)
-#     #
-#     # j = a.j
-#     # return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
+        # def _calculate_total_gas_age(self, analyses):
+        #     """
+        #         sum the corrected rad40 and k39 values
+        #
+        #         not necessarily the same as isotopic recombination
+        #
+        #     """
+        #     rad40, k39 = zip(*[(a.get_computed_value('rad40'),
+        #                         a.get_computed_value('k39')) for a in analyses])
+        #
+        #     rad40 = sum(rad40)
+        #     k39 = sum(k39)
+        #
+        #     j = a.j
+        #     return age_equation(rad40 / k39, j, a.arar_constants)
+        #
+        #     # rad40, k39 = zip(*[(a.computed['rad40'], a.computed['k39']) for a in analyses])
+        #     # rad40 = sum(rad40)
+        #     # k39 = sum(k39)
+        #     #
+        #     # j = a.j
+        #     # return age_equation(rad40 / k39, j, arar_constants=a.arar_constants)
         # def _add_aux_plot(self, ys, title, vk, pid, po, **kw):
         # graph = self.graph
         # graph.set_y_title(title,

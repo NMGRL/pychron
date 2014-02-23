@@ -15,20 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
-
 from chaco.base_plot_container import BasePlotContainer
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
 from enable.component_editor import ComponentEditor as EnableComponentEditor
-
-
-
-
-
 #============= standard library imports ========================
+from itertools import groupby
+import os
 #============= local library imports  ==========================
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
@@ -49,11 +43,11 @@ class FigureEditor(GraphEditor):
     annotation_tool = Any
     figure_model = Any
 
-    tag=Event
-    save_db_figure=Event
-    invalid=Event
+    tag = Event
+    save_db_figure = Event
+    invalid = Event
 
-    saved_figure_id=Int
+    saved_figure_id = Int
 
     def clear_aux_plot_limits(self):
         po = self.plotter_options_manager.plotter_options
@@ -63,27 +57,27 @@ class FigureEditor(GraphEditor):
     def set_items_from_file(self, p):
         if os.path.isfile(p):
             def construct(d):
-                f=FileAnalysis(age=float(d['age']),
-                               age_err=float(d['age_err']),
-                               record_id=d['runid'])
+                f = FileAnalysis(age=float(d['age']),
+                                 age_err=float(d['age_err']),
+                                 record_id=d['runid'])
                 return f
 
-            par=CSVParser()
+            par = CSVParser()
             par.load(p)
-            ans=[construct(args)
-                    for args in par.itervalues()]
+            ans = [construct(args)
+                   for args in par.itervalues()]
 
-        po=self.plotter_options_manager.plotter_options
+        po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number','analysis number stacked'):
-                ap.use=False
+            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
+                ap.use = False
 
         self.analyses = ans
         self._update_analyses()
         self.dump_tool()
 
     def save_figure(self, name, project, labnumbers):
-        db=self.processor.db
+        db = self.processor.db
         with db.session_ctx():
 
             figure = db.add_figure(project=project, name=name)
@@ -128,20 +122,20 @@ class FigureEditor(GraphEditor):
                     self.add_interpreted_age(ln, g)
 
     def add_interpreted_age(self, ln, ia):
-        db=self.processor.db
+        db = self.processor.db
         with db.session_ctx():
-            hist=db.add_interpreted_age_history(ln)
-            db_ia=db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
-                                      age_err=ia.preferred_age_error or 0,
-                                      age_kind=ia.preferred_age_kind,
-                                      wtd_kca=float(ia.weighted_kca.nominal_value),
-                                      wtd_kca_err=float(ia.weighted_kca.std_dev),
-                                      mswd=float(ia.preferred_mswd))
+            hist = db.add_interpreted_age_history(ln)
+            db_ia = db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
+                                           age_err=ia.preferred_age_error or 0,
+                                           age_kind=ia.preferred_age_kind,
+                                           wtd_kca=float(ia.weighted_kca.nominal_value),
+                                           wtd_kca_err=float(ia.weighted_kca.std_dev),
+                                           mswd=float(ia.preferred_mswd))
 
             for ai in ia.analyses:
-                plateau_step=ia.get_is_plateau_step(ai)
+                plateau_step = ia.get_is_plateau_step(ai)
 
-                ai=db.get_analysis_uuid(ai.uuid)
+                ai = db.get_analysis_uuid(ai.uuid)
 
                 db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
 
@@ -190,14 +184,14 @@ class FigureEditor(GraphEditor):
 
         self._set_group(idxs, gid, 'graph_id', **kw)
 
-    def _set_group(self, idxs, gid, attr, rebuild=True):
+    def _set_group(self, idxs, gid, attr, refresh=True):
         ans = self.analyses
         for i in idxs:
             a = ans[i]
             setattr(a, attr, gid)
 
-        if rebuild:
-            self.rebuild()
+            # if refresh:
+            #     self.rebuild()
 
     def rebuild(self):
         # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
@@ -258,12 +252,12 @@ class FigureEditor(GraphEditor):
             e.set_items(ans)
             # if isinstance(e, FigureEditor):
             #     pass
-                # e.unknowns = ans
-                # else:
-                #     e.items = ans
+            # e.unknowns = ans
+            # else:
+            #     e.items = ans
 
     def update_figure(self):
-        sid=self.saved_figure_id
+        sid = self.saved_figure_id
 
         db = self.processor.db
         with db.session_ctx() as sess:

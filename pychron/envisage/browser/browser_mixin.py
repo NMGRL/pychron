@@ -23,6 +23,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -108,7 +109,10 @@ class BrowserMixin(ColumnSorterMixin):
 
     @cached_property
     def _get_sample_filter_parameters(self):
-        return dict([(ci[1], ci[0]) for ci in self.sample_tabular_adapter.columns])
+        if self.sample_tabular_adapter:
+            return dict([(ci[1], ci[0]) for ci in self.sample_tabular_adapter.columns])
+        else:
+            return {}
 
     def load_browser_selection(self):
         #self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
@@ -236,6 +240,7 @@ class BrowserMixin(ColumnSorterMixin):
 
 
     def _set_recent_samples(self, recent_name):
+
         if not self.search_criteria.recent_hours:
             self.warning_dialog('Set "Recent Hours" in Preferences.\n'
                                 '"Recent Hours" is located in the "Processing" category')

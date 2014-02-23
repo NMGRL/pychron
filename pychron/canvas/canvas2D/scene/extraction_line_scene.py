@@ -142,8 +142,10 @@ class ExtractionLineScene(Scene):
                   width=10)
 
         ref = weakref.ref(l)
-        sanchor.connections.append(('start', ref()))
-        eanchor.connections.append(('end', ref()))
+        if sanchor:
+            sanchor.connections.append(('start', ref()))
+        if eanchor:
+            eanchor.connections.append(('end', ref()))
 
         self.add_item(l, layer=0)
 
@@ -190,8 +192,7 @@ class ExtractionLineScene(Scene):
                   use_border=to_bool(label.get('use_border', 'T')),
                   name=name,
                   text=label.text.strip(),
-                  **kw
-        )
+                  **kw)
         font = label.find('font')
         if font is not None:
             l.font = font.text.strip()
@@ -235,8 +236,8 @@ class ExtractionLineScene(Scene):
             key = v.text.strip()
             x, y = self._get_floats(v, 'translation')
             v = Valve(x + ox, y + oy, name=key,
-                      border_width=3
-            )
+                      border_width=3)
+
             v.translate = x + ox, y + oy
             # sync the states
             if key in self.valves:

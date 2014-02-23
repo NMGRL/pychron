@@ -42,8 +42,7 @@ class InterpretedAgeTask(BaseBrowserTask):
                           OpenInterpretedAgeGroupAction(),
                           MakeGroupFromFileAction(),
                           DeleteInterpretedAgeGroupAction()),
-                 SToolBar(PlotIdeogramAction())
-    ]
+                 SToolBar(PlotIdeogramAction())]
 
     def plot_ideogram(self):
 

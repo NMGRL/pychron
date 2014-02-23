@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+
 #=============enthought library imports=======================
 from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
