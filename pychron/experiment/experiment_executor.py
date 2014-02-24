@@ -756,9 +756,11 @@ class ExperimentExecutor(Loggable):
                     ret = True
                     self._canceled = False
                     self._err_message = ''
+                else:
                     spec.conflicts_checked = False
                     self.message(self._err_message)
                     self.info('No response from user. Canceling run')
+
             else:
                 dh.update_spec(spec)
 
@@ -935,7 +937,7 @@ class ExperimentExecutor(Loggable):
         self._wait_for_save()
         self.debug('pre run finished')
 
-    def _check_memory(self, threshold=50):
+    def _check_memory(self, threshold=10):
         """
             if avaliable memory is less than threshold  (MB)
             stop the experiment
@@ -990,13 +992,6 @@ class ExperimentExecutor(Loggable):
                     self.cancel(confirm=False)
 
     def _pre_execute_check(self, inform=True):
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
-
-        if self._check_memory():
-            return
-
         if not self.datahub.secondary_connect():
             if not self.confirmation_dialog(
                     'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
@@ -1007,6 +1002,13 @@ class ExperimentExecutor(Loggable):
             arv = exp.cleaned_automated_runs[0]
             if not self._set_run_aliquot(arv):
                 return
+
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
+
+        if self._check_memory():
+            return
 
         if not self._check_managers(inform=inform):
             return

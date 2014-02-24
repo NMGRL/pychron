@@ -102,8 +102,7 @@ class MeasurementPyScript(ValvePyScript):
         self.ncounts = ncounts
         if not self._automated_run_call('py_sniff', ncounts,
                                         self._time_zero, self._time_zero_offset,
-                                        series=self._series_count,
-        ):
+                                        series=self._series_count):
             self.cancel()
         self._series_count += 1
 

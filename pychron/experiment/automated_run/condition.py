@@ -16,10 +16,13 @@
 
 #============= enthought library imports =======================
 import re
+
 from traits.api import Str, Either, Int, Callable, Bool
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from uncertainties import nominal_value
 from pychron.loggable import Loggable
 
 
@@ -65,7 +68,7 @@ class AutomatedRunCondition(Loggable):
             return self._check(obj)
 
     def _check(self, obj):
-        v = obj.get_value(self.attr)
+        v = nominal_value(obj.get_value(self.attr))
         cmd = self.comp
         self.debug('testing {} key={} attr={} value={}'.format(cmd, self._key, self.attr, v))
         if eval(cmd, {self._key: v}):

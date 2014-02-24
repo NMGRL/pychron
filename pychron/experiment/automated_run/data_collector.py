@@ -47,6 +47,7 @@ class DataCollector(Loggable):
     for_peak_hop = Bool(False)
     fits = List
     series_idx = Int
+    fit_series_idx = Int
     #total_counts = CInt
 
     canceled = False
@@ -234,6 +235,8 @@ class DataCollector(Loggable):
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
         if pid is not None:
+            # print self.series_idx, self.fit_series_idx
+            # print graph.plots[pid].plots
             graph.add_datum((x, signal),
                             series=self.series_idx,
                             plotid=pid,

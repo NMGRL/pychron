@@ -223,7 +223,7 @@ class PyScript(Loggable):
             self.test()
 
         def _ex_():
-            self._execute(trace, argv)
+            self._execute(trace=trace, argv=argv)
             if finished_callback:
                 finished_callback()
 

@@ -26,6 +26,7 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -64,7 +65,7 @@ class Datahub(Loggable):
         """
             return str listing the differences if databases are in conflict
         """
-        self._new_step = ''
+        self._new_step = -1
         self._new_aliquot = 1
         self.debug('check for conflicts')
         self.secondary_connect()

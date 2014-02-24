@@ -26,6 +26,7 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -121,14 +122,19 @@ class ArArAge(Loggable):
             return True
 
     def get_value(self, attr):
-        if attr in self.computed:
-            return self.computed[attr]
+        r = ufloat(0, 0, tag=attr)
+        if attr.endswith('bs'):
+            iso = attr[:-2]
+            if iso in self.isotopes:
+                r = self.isotopes[iso].baseline.value
+        elif attr in self.computed:
+            r = self.computed[attr]
         elif attr in self.isotopes:
-            return self.isotopes[attr]
+            r = self.isotopes[attr].get_intensity()
         elif hasattr(self, attr):
-            return getattr(self, attr)
-        else:
-            return ufloat(0, 0, tag=attr)
+            r = getattr(self, attr)
+
+        return r
 
     def get_interference_corrected_value(self, iso):
         if iso in self.isotopes:

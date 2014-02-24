@@ -438,7 +438,8 @@ class ExtractionLineManager(Manager):
             self.debug('checking ownership. requestor={}'.format(requestor))
             if name in self.valve_manager.valves:
                 v = self.valve_manager.valves[name]
-            return not (v.owner and v.owner != requestor)
+                return not (v.owner and v.owner != requestor)
+
         return True
 
     def _set_pipette_counts(self, name, value):

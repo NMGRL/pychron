@@ -1448,7 +1448,7 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel._ncounts = ncounts
             self.plot_panel.total_counts += ncounts
-            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color)
+            invoke_in_main_thread(self._setup_isotope_graph, starttime_offset, color, grpname)
 
         # dm = self.persister.data_manager
         with self.persister.writer_ctx():
@@ -1458,7 +1458,7 @@ anaylsis_type={}
         mem_log('post measure')
         return True
 
-    def _setup_isotope_graph(self, starttime_offset, color):
+    def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """
             execute in main thread is necessary.
             set the graph limits and construct the necessary series
@@ -1493,7 +1493,7 @@ anaylsis_type={}
                                      color=color,
                                      type='scatter',
                                      marker_size=1.25,
-                                     fit=iso.get_fit(0),
+                                     fit=None if grpname == 'sniff' else iso.get_fit(0),
                                      plotid=idx,
                                      add_inspector=False,
                                      add_tools=False)
