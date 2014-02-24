@@ -15,7 +15,10 @@
 #===============================================================================
 import yaml
 
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.ui import set_qt
+from pychron.paths import paths
+
 
 set_qt()
 
@@ -23,7 +26,7 @@ set_qt()
 #============= enthought library imports =======================
 import os
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property
+from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
 from traitsui.editors import ListEditor
 
@@ -42,11 +45,18 @@ class ActionItem(HasTraits):
 
     label = Property(depends_on='attr,comp, value+, start, frequency')
 
-    def assemble(self):
-        c = self._get_label()
+    def __init__(self, saved_state=None, *args, **kw):
+        super(ActionItem, self).__init__(*args, **kw)
 
+        if saved_state:
+            saved_state.pop('comp')
+            self.trait_set(**saved_state)
+
+    def assemble(self):
         return dict(attr=self.attr,
                     comp=self.label,
+                    value=self.value,
+                    value1=self.value,
                     abbreviated_count_ratio=1.0,
                     frequency=self.frequency,
                     start=self.start)
@@ -76,6 +86,7 @@ class ActionModel(HasTraits):
     add_button = Button
     remove_button = Button
     selected = Any
+    path = Str
 
     def _add_button_fired(self):
         if self.selected:
@@ -93,14 +104,33 @@ class ActionModel(HasTraits):
                 idx = self.actions.index(self.selected)
             self.actions.pop(idx)
 
+    def load_yaml(self, yd):
+        self.actions = [ActionItem(saved_state=yi) for yi in yd]
+
     def dump_yaml(self):
-        return [d.assemble() for d in self.actions]
+        yd = [d.assemble() for d in self.actions]
+        return yd
 
     def _actions_default(self):
-        return [ActionItem(), ActionItem()]
+        return [ActionItem()]
 
 
 class ActionEditor(Controller):
+    # def init( self, info):
+    #     self.load()
+    # @on_trait_change('model:path')
+    # def _handle_path(self):
+    #     if self.model.path:
+    #
+    #         self.info.title=os.path.basename(self.model.path)
+    title = Str
+
+    def init(self, info):
+        # print 'fdas', self.title
+        # if self.model.path:  #
+        if self.title:
+            info.ui.title = self.title
+
     def closed(self, info, is_ok):
         if is_ok:
             self.dump()
@@ -110,25 +140,38 @@ class ActionEditor(Controller):
         if p:
             self._dump(p)
 
-    def load(self):
-        p = self._get_path()
+    def load(self, p):
         if p:
+            self.title = os.path.basename(p)
             self._load(p)
 
     def _load(self, p):
-        pass
+        if not self.model:
+            self.model = ActionModel()
+
+        self.model.path = p
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+            self.model.load_yaml(yd)
 
     def _dump(self, p):
         d = self.model.dump_yaml()
         with open(p, 'w') as fp:
             yaml.dump(d, fp, default_flow_style=False)
+            self.model.path = p
 
     def _get_path(self):
-        p = '/Users/ross/Sandbox/actions.yaml'
+        p = self.model.path
+        if not p:
+            p = '/Users/ross/Sandbox/actions.yafml'
+
         if not os.path.isfile(p):
-            dlg = FileDialog(action='save as', default_directory='/Users/ross/Programming')
+            p = None
+            dlg = FileDialog(action='save as', default_directory=paths.truncation_dir)
             if dlg.open():
-                p = dlg.path
+                p = dlg.path.strip()
+                if p:
+                    p = add_extension(p, '.yaml')
 
         return p
 
@@ -136,8 +179,7 @@ class ActionEditor(Controller):
         v = View(
 
             HGroup(icon_button_editor('add_button', 'add'),
-                   icon_button_editor('remove_button', 'delete')
-            ),
+                   icon_button_editor('remove_button', 'delete')),
             UItem('actions',
                   style='custom',
                   editor=ListEditor(

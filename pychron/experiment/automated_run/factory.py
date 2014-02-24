@@ -23,6 +23,7 @@ from traits.api import String, Str, Property, Any, Float, Instance, Int, List, c
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
@@ -36,7 +37,7 @@ from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory
+from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -213,6 +214,8 @@ class AutomatedRunFactory(Loggable):
     truncation_path = String
     truncations = List
     clear_truncation = Button
+    edit_truncation_button = Button
+    new_truncation_button = Button
 
     #===========================================================================
     # frequency
@@ -906,9 +909,37 @@ class AutomatedRunFactory(Loggable):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
 
+    def _new_truncation_button_fired(self):
+
+        p = os.path.join(paths.truncation_dir,
+                         add_extension(self.truncation_path, '.yaml'))
+
+        e = ActionEditor()
+        if os.path.isfile(p):
+            e.load(p)
+            e.model.path = ''
+        else:
+            e.model = ActionModel()
+
+        info = e.edit_traits(kind='livemodal')
+        if info.result:
+            self.load_truncations()
+            p = e.model.path
+            d = os.path.splitext(os.path.basename(p))[0]
+
+            self.truncation_path = d
+
+    def _edit_truncation_button_fired(self):
+        p = os.path.join(paths.truncation_dir,
+                         add_extension(self.truncation_path, '.yaml'))
+
+        if os.path.isfile(p):
+            e = ActionEditor()
+            e.load(p)
+            e.edit_traits(kind='livemodal')
+
     @on_trait_change('trunc_+, truncation_path')
-    def _edit_truncation(self, obj, name, old, new):
-        print name, new
+    def _handle_truncation(self, obj, name, old, new):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:

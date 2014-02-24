@@ -228,6 +228,12 @@ class ExperimentFactoryPane(TraitsDockPane):
                 RFItem('truncation_path',
                        editor=EnumEditor(name=make_rf_name('truncations')),
                        label='Path'),
+
+                icon_button_editor(make_rf_name('edit_truncation_button'), 'table_edit',
+                                   enabled_when=make_rf_name('truncation_path'),
+                                   tooltip='Edit the selected action file'),
+                icon_button_editor(make_rf_name('new_truncation_button'), 'table_add',
+                                   tooltip='Add a new action file. Duplicated currently selected file if applicable'),
                 show_border=True,
                 label='File'),
             label='Actions')
