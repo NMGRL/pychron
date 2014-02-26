@@ -7,7 +7,7 @@ virtualenv:
 before_install:
  - sudo apt-get install python-numpy python-scipy
 
-install:
+#install:
    # - pip install git+http://github.com/enthought/traits.git#egg=traits
    # - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
    # - pip install git+http://github.com/enthought/enable.git#egg=enable
