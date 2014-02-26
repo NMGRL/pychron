@@ -31,6 +31,9 @@ except ImportError:
 
         warning(None, 'statsmodels is required but was not found')
 
+import logging
+
+logger = logging.getLogger('Regressor')
 
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
@@ -49,8 +52,8 @@ class OLSRegressor(BaseRegressor):
         cxs = self.pre_clean_xs
         cys = self.pre_clean_ys
 
-        if not self._check_integrity(cxs,cys):
-            # self.debug('A integrity check failed')
+        if not self._check_integrity(cxs, cys):
+            logger.debug('A integrity check failed')
             return
 
         if not filtering:
@@ -62,7 +65,8 @@ class OLSRegressor(BaseRegressor):
         X = self._get_X(fx)
         if X is not None:
             if not self._check_integrity(X, fy):
-                self.debug('B integrity check failed')
+                logger.debug('B integrity check failed')
+                # self.debug('B integrity check failed')
                 return
 
             try:
@@ -70,6 +74,7 @@ class OLSRegressor(BaseRegressor):
                 self._result = ols.fit()
             except Exception, e:
                 import traceback
+
                 traceback.print_exc()
 
     def _engine_factory(self, fy, X):
@@ -94,7 +99,7 @@ class OLSRegressor(BaseRegressor):
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
-            error_calc=self.error_calc_type
+            error_calc = self.error_calc_type
 
         return_single = False
         if isinstance(x, (float, int)):
@@ -103,8 +108,8 @@ class OLSRegressor(BaseRegressor):
 
         x = asarray(x)
 
-        if error_calc=='CI':
-            e=self.calculate_ci_error(x[0])
+        if error_calc == 'CI':
+            e = self.calculate_ci_error(x[0])
         else:
             e = self.predict_error_matrix(x, error_calc)
 
@@ -146,21 +151,21 @@ class OLSRegressor(BaseRegressor):
         sef = self.calculate_standard_error_fit()
 
         def calc_hat(xi):
-            Xk=self._get_X(xi).T
+            Xk = self._get_X(xi).T
             covarM = matrix(self.var_covar)
             varY_hat = (Xk.T * covarM * Xk)
 
             return varY_hat[0, 0]
 
         def calc_sd(xi):
-            varY_hat=calc_hat(xi)
+            varY_hat = calc_hat(xi)
             return sqrt(sef ** 2 + sef ** 2 * varY_hat)
 
         def calc_sem(xi):
             varY_hat = calc_hat(xi)
             return sef * sqrt(varY_hat)
 
-        func=calc_sem if error_calc=='SEM' else calc_sd
+        func = calc_sem if error_calc == 'SEM' else calc_sd
         return [func(xi) for xi in x]
 
     def predict_error_al(self, x, error_calc='sem'):
@@ -270,11 +275,11 @@ class OLSRegressor(BaseRegressor):
 
     @cached_property
     def _get_mswd(self):
-        self.valid_mswd=False
-        if self._degree==1:
+        self.valid_mswd = False
+        if self._degree == 1:
             # a = self.intercept
             # b = self.slope
-            coeffs=self._calculate_coefficients()
+            coeffs = self._calculate_coefficients()
             if not len(coeffs):
                 self.calculate()
                 coeffs = self._calculate_coefficients()
@@ -295,12 +300,12 @@ class OLSRegressor(BaseRegressor):
                 # y=self._clean_array(y)
                 # sx=self._clean_array(sx)
                 # sy=self._clean_array(sy)
-                x,y,sx,sy=self.clean_xs,self.clean_ys, self.clean_xserr, self.clean_yserr
-                if self._check_integrity(x,y) and \
-                    self._check_integrity(x,sx) and \
-                        self._check_integrity(x,sy):
-                    m=calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
-                    self.valid_mswd=validate_mswd(m, len(ys), k=2)
+                x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
+                if self._check_integrity(x, y) and \
+                        self._check_integrity(x, sx) and \
+                        self._check_integrity(x, sy):
+                    m = calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+                    self.valid_mswd = validate_mswd(m, len(ys), k=2)
                     return m
                 else:
                     return 'NaN'
@@ -308,7 +313,6 @@ class OLSRegressor(BaseRegressor):
                 return 'NaN'
         else:
             return super(OLSRegressor, self)._get_mswd()
-
 
 
 class PolynomialRegressor(OLSRegressor):
@@ -335,32 +339,32 @@ class MultipleLinearRegressor(OLSRegressor):
             xs = column_stack((xs, ones(r)))
             return xs
 
-    # def predict_error_matrix(self, x, error_calc=None):
-    #     """
-    #         predict the error in y using matrix math
-    #         draper and smith chapter 2.4 page 56
-    #
-    #         Xk'=(1, x, x**2...x)
-    #     """
-    #     if error_calc is None:
-    #         error_calc=self.error_calc_type
-    #
-    #     def calc_error(xi, sef):
-    #         Xk = self._get_X(xi).T
-    #         # Xk=column_stack((xs/, ones(r)))
-    #         covarM = matrix(self.var_covar)
-    #         varY_hat = (Xk.T * covarM * Xk)
-    #         # print varY_hat
-    #         # varY_hat = sum(diag(varY_hat))
-    #         if error_calc == 'SEM':
-    #             se = sef * sqrt(varY_hat)
-    #         else:
-    #             se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
-    #
-    #         return se
-    #
-    #     sef = self.calculate_standard_error_fit()
-    #     return [calc_error(xi, sef) for xi in asarray(x)]
+            # def predict_error_matrix(self, x, error_calc=None):
+            #     """
+            #         predict the error in y using matrix math
+            #         draper and smith chapter 2.4 page 56
+            #
+            #         Xk'=(1, x, x**2...x)
+            #     """
+            #     if error_calc is None:
+            #         error_calc=self.error_calc_type
+            #
+            #     def calc_error(xi, sef):
+            #         Xk = self._get_X(xi).T
+            #         # Xk=column_stack((xs/, ones(r)))
+            #         covarM = matrix(self.var_covar)
+            #         varY_hat = (Xk.T * covarM * Xk)
+            #         # print varY_hat
+            #         # varY_hat = sum(diag(varY_hat))
+            #         if error_calc == 'SEM':
+            #             se = sef * sqrt(varY_hat)
+            #         else:
+            #             se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
+            #
+            #         return se
+            #
+            #     sef = self.calculate_standard_error_fit()
+            #     return [calc_error(xi, sef) for xi in asarray(x)]
 
 
 if __name__ == '__main__':

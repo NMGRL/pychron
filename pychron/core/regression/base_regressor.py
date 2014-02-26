@@ -15,22 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import re
 
 from traits.api import Array, List, Event, Property, Any, \
-    Dict, Str, Bool, cached_property
-
+    Dict, Str, Bool, cached_property, HasTraits
 #============= standard library imports ========================
+import re
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
-from pychron.core.stats.core import calculate_mswd, validate_mswd
-from pychron.loggable import Loggable
 from tinv import tinv
+from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
 
 
-class BaseRegressor(Loggable):
+class BaseRegressor(HasTraits):
     xs = Array
     ys = Array
     xserr = Array
