@@ -5,13 +5,13 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
- - sudo apt-get install python-numpy python-scipy python-pandas
+ - sudo apt-get install python-numpy python-scipy python-pandas python-patsy
 
 install:
    # - pip install git+http://github.com/enthought/traits.git#egg=traits
    # - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
    # - pip install git+http://github.com/enthought/enable.git#egg=enable
-    - pip install -r requirements.txt --use-mirrors
+    - pip install -r requirements.txt
 
 # command to run tests, e.g. python setup.py test
 script:  python setup.py test
