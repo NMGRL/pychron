@@ -1,0 +1,43 @@
+*	Version 7.75	Marker denoting start of set-up parameters
+CO2	Heating device name (see Calibration file)
+145-hole	Sample holder file
+{delay_before:}	Timed delay before beginning multiple-runs
+{delay_btw:}	Timed delay between runs
+0	Number of unknowns between blanks
+0	Number of unknowns between air-pipette analyses (0=no air pipettes)
+0	Number of unknowns between detector gain intercalibrations (0=none)
+False	Start with blank?
+False	End with blank?
+0	Time at full heating intensity
+0	Rise time to full heating intensity
+0	Maximum Ar40 background intensity
+0	Maximum number of successive background runs above maximum intensity threshold
+0	Maximum Ar40 hot blank intensity
+0	Maximum unknown signal intensity (any isotope)
+0	Minimum Ar40 intensity, background or unknown
+False	Overlap runs (True/False)
+0	Delay following equilibration before starting overlap extraction
+False	Overlap onto blanks (True/False)
+0	Minimum time for pumping of extraction line between overlap samples
+0	Delay at first stage of sample cleanup
+0	Delay at second stage of sample cleanup
+True	Analyze second extraction-line stage only?
+True	Two-stage cleanup?
+False	Video-capture laser heating?
+0	Curtail run after x cycles if conditions are met
+False	Curtail if 37Ar/39Ar > condition?
+0	Curtail conditional value for 37Ar/39Ar
+False	Curtail if %40Ar* < condition?
+00	Curtail conditional value for %40Ar*
+False	Curtail if 39Ar signal < condition?
+0	Curtail conditional value for 39Ar signal
+False	Curtail if Age (Ma) > condition?
+0	Curtail conditional value for Age maximum
+False	Curtail if Age (Ma) < condition?
+0	Curtail conditional value for Age minimum
+Unknown	Spectrometer set-up file for unknown (and blanks)
+Air	Spectrometer set-up file for air pipette runs
+none	Jog specification file name
+(Unused)
+Note that a line with just a 'B' or an 'A' will force a blank or an air to be done at that point.
+Run ID	Sample	Comment	Run script	1st stage (s)	2nd stage (s)	Power	Beam Dia.	Time at temp. (s)	Degas	Jog	Laser off/on	Scan	X-Y pos.	Holes / Scan

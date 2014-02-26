@@ -58,17 +58,27 @@ def strat_ok(s1, s2):
 
 class GeoProcessor(IsotopeDatabaseManager):
     def make_strat_canvas_file(self):
-        identifiers = ['57737',
+        identifiers = ['57735',
+                       '57742',
+                       '57734',
+                       '57737',
                        '57736',
                        '57744',
                        '57743',
                        '57725',
                        '58627']
+        identifiers = ['57731',
+                       '58612',
+                       '58620']
+        identifiers = ['58616',
+                       '57719',
+                       '58767']
         db = self.db
 
         root = os.path.join(paths.dissertation,
                             'data', 'minnabluff', 'strat_sequences')
-        p, _ = unique_path(root, 'seq1', extension='.yaml')
+        seqname = 'seq4'
+        p, _ = unique_path(root, seqname, extension='.yaml')
 
         with db.session_ctx():
             items = []
@@ -108,7 +118,7 @@ class GeoProcessor(IsotopeDatabaseManager):
         s = StratCanvas()
         s.load_scene(yd)
 
-        p, _ = unique_path(root, 'seq1', extension='.pdf')
+        p, _ = unique_path(root, seqname, extension='.pdf')
         g = PdfPlotGraphicsContext(
             filename=p)
 

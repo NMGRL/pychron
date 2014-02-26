@@ -61,6 +61,9 @@ class MassSpecDatabaseImporter(Loggable):
     _current_spec = None
     _analysis = None
 
+    def make_multipe_runs_sequence(self, exptxt):
+        pass
+
     #IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
 
@@ -246,7 +249,7 @@ class MassSpecDatabaseImporter(Loggable):
                 sample_id = db_irradpos.SampleID
             else:
                 self.warning(
-                        'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
+                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
                 return
                 # add runscript
         rs = db.add_runscript(spec.runscript_name,
@@ -456,9 +459,9 @@ class MassSpecDatabaseImporter(Loggable):
 
         return db
 
-    #===========================================================================
-    # debugging
-    #===========================================================================
+        #===========================================================================
+        # debugging
+        #===========================================================================
         # def _test_fired(self):
         #     import numpy as np
         #
