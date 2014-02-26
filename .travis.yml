@@ -8,10 +8,10 @@ before_install:
  - sudo apt-get install python-numpy python-scipy
 
 install:
-    - pip install git+http://github.com/enthought/traits.git#egg=traits
-    - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
-    - pip install git+http://github.com/enthought/enable.git#egg=enable
-    - pip install -r requirements.txt --use-mirrors
+   # - pip install git+http://github.com/enthought/traits.git#egg=traits
+   # - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
+   # - pip install git+http://github.com/enthought/enable.git#egg=enable
+    #- pip install -r requirements.txt --use-mirrors
 
 # command to run tests, e.g. python setup.py test
 script:  python setup.py test
