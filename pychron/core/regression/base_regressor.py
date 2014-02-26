@@ -73,6 +73,7 @@ class BaseRegressor(HasTraits):
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
+
         if fod.get('filter_outliers', False):
             self.outlier_excluded = []
             for _ in range(fod.get('iterations', 1)):
@@ -152,7 +153,7 @@ class BaseRegressor(HasTraits):
         return s
 
     def calculate_residuals(self):
-        return self.predict(self.xs) - self.ys
+        return self.predict(self.clean_xs) - self.clean_ys
 
     def calculate_error_envelope(self, rx, rmodel=None):
         if rmodel is None:

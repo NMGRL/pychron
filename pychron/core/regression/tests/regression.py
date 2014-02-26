@@ -24,6 +24,7 @@ from unittest import TestCase
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
+from pychron.core.regression.tests.standard_data import filter_data
 from test.processing.standard_data import mean_data, ols_data
 
 
@@ -82,6 +83,33 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
     def testPredictErrorSEM(self):
         e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
+
+
+class FilterOLSRegressionTest(RegressionTestCase, TestCase):
+    @staticmethod
+    def regressor_factory():
+        return OLSRegressor()
+
+    def setUp(self):
+        xs, ys, sol = filter_data()
+        self.reg.trait_set(xs=xs, ys=ys, fit='linear',
+                           filter_outliers_dict={'filter_outliers': True, 'iterations': 1, 'std_devs': 2})
+        self.solution = sol
+        self.reg.calculate()
+
+    def testSlope(self):
+        cs = self.reg.coefficients
+        self.assertAlmostEqual(cs[-1], self.solution['slope'], 4)
+
+    def testYIntercept(self):
+        cs = self.reg.coefficients
+        self.assertAlmostEqual(cs[0], self.solution['y_intercept'], 4)
+
+    def testPredictErrorSEM(self):
+        e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
+        # e=self.reg.coefficient_errors[0]
+        self.assertAlmostEqual(e, self.solution['pred_error'], 3)
+
 
 # class WeightedMeanRegressionTest(TestCase):
 #     def setUp(self):

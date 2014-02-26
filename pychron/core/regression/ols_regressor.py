@@ -17,7 +17,7 @@
 
 from traits.api import Int, Property, cached_property
 #============= standard library imports ========================
-from numpy import polyval, asarray, column_stack, ones, \
+from numpy import asarray, column_stack, ones, \
     matrix, sqrt
 from pychron.core.stats import calculate_mswd2, validate_mswd
 
@@ -199,17 +199,17 @@ class OLSRegressor(BaseRegressor):
 
         return [predict_yi_err(xi) for xi in x]
 
-    def calculate_y(self, x):
-        coeffs = self.coefficients
-        return polyval(coeffs, x)
+        # def calculate_y(self, x):
+        #     coeffs = self.coefficients
+        #     return polyval(coeffs, x)
+        #
+        # def calculate_yerr(self, x):
+        #     if abs(x) < 1e-14:
+        #         return self.coefficient_errors[0]
+        #     return
 
-    def calculate_yerr(self, x):
-        if abs(x) < 1e-14:
-            return self.coefficient_errors[0]
-        return
-
-    def calculate_x(self, y):
-        return 0
+        # def calculate_x(self, y):
+        # return 0
 
     def _calculate_coefficients(self):
         """
