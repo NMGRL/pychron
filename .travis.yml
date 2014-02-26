@@ -4,15 +4,15 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 virtualenv:
   system_site_packages: true
-before_install:
- - sudo apt-get install python-numpy python-scipy python-pandas
- - pip install patsy
+#before_install:
+# - sudo apt-get install python-numpy python-scipy python-pandas
+# - pip install patsy
 
-install:
+#install:
    # - pip install git+http://github.com/enthought/traits.git#egg=traits
    # - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
    # - pip install git+http://github.com/enthought/enable.git#egg=enable
-    - pip install -r requirements.txt
+#    - pip install -r requirements.txt
 
 # command to run tests, e.g. python setup.py test
 script:  python setup.py test
