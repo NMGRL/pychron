@@ -1,3 +1,4 @@
+patsy
 statsmodels>=0.5.0
 #uncertainties
 #xlrd==0.7.1
