@@ -661,7 +661,7 @@ class ExperimentExecutor(Loggable):
             if self.confirmation_dialog('Databases are in conflict. '
                                         'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
                                         timeout_ret=False,
-                                        timeout=30):
+                                        timeout=1296000):
                 dh.update_spec(spec)
                 ret = True
                 self._canceled = False
