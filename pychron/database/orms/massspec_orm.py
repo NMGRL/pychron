@@ -63,6 +63,8 @@ class AnalysesTable(Base):
 
     IrradPosition = Column(Integer, ForeignKey('IrradiationPositionTable.IrradPosition'))
     Aliquot = Column(String(10))
+    Aliquot_pychron = Column(Integer)
+
     Increment = Column(String(20))
     SpecParametersID = Column(Integer, default=0)
     RunScriptID = Column(Integer, ForeignKey('RunScriptTable.RunScriptID'))

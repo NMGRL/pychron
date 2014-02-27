@@ -140,7 +140,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
 
             if aliquot is not None:
-                sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                #       'FROM `AnalysesTable` ' \
+                #       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+                #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
                       'FROM `AnalysesTable` ' \
                       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
                       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
@@ -170,10 +174,16 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #switch to option 3. if performance increase is desired
                 #!!!!!
                 #q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
-                sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+
+                #need to add Aliquot_pychron to AnalysesTable. Mass spec modifying Aliquot after original save
+                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                #       'FROM `AnalysesTable` ' \
+                #       'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+                #       'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
                       'FROM `AnalysesTable` ' \
                       'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
-                      'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+                      'ORDER BY `AnalysesTable`.`Aliquot_pychron` DESC LIMIT 1'.format(labnumber)
 
                 v = sess.execute(sql)
 
@@ -181,6 +191,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                     r = v.fetchone()
                     if r:
                         a, s = r
+                        # if '-' in a:
+                        #     a=a.split('-')[-1]
+
                         return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
@@ -301,13 +314,11 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     #    @add
     def add_analysis(self, rid, aliquot, step, irradpos, runtype,
-                     sess=None,
+                     # sess=None,
                      #                     refdetlabel,
                      #                     overwrite=True,
                      **kw):
-        '''
-            this function does not check for existence of the record_id
-        '''
+
 
         #        if analysis is None:
         #            rid, aliquot = rid.split('-')
@@ -327,6 +338,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         params = dict(RID=rid, # make_runid(rid, aliquot, step),
                       #                    '{}-{}{}'.format(rid, aliquot, step),
                       Aliquot=aliquot,
+                      Aliquot_pychron=int(aliquot),
                       RunDateTime=func.current_timestamp(),
                       LoginSessionID=1,
                       SpecRunType=runtype,
