@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import subprocess
 
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later
@@ -40,7 +38,7 @@ from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
 from pyface.confirmation_dialog import ConfirmationDialog
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, view_file
 from pychron.loggable import Loggable
 
 #============= standard library imports ========================
@@ -147,6 +145,7 @@ class myTaskWindowLaunchAction(TaskWindowLaunchAction):
                 #def _checked_changed(self):
                 #    print self.checked, self.task_id
 
+
 #             window = self.task.window
 #             print win, window
 #             print self.task_id, self.task.id
@@ -233,7 +232,7 @@ class BaseTask(Task, Loggable):
             ctrl.raise_()
 
         self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
-        invoke_in_main_thread(do_later,_show)
+        invoke_in_main_thread(do_later, _show)
 
     def _menu_bar_factory(self, menus=None):
         if not menus:
@@ -418,16 +417,16 @@ class BaseManagerTask(BaseTask):
         self.view_file(p, application)
 
     def view_file(self, p, application='Preview'):
-
-        app_path = '/Applications/{}.app'.format(application)
-        if not os.path.exists(app_path):
-            app_path = '/Applications/Preview.app'
-
-        try:
-            subprocess.call(['open', '-a', app_path, p])
-        except OSError:
-            self.debug('failed opening {} using {}'.format(p, app_path))
-            subprocess.call(['open', p])
+        view_file(p, application=application, logger=self)
+        # app_path = '/Applications/{}.app'.format(application)
+        # if not os.path.exists(app_path):
+        #     app_path = '/Applications/Preview.app'
+        #
+        # try:
+        #     subprocess.call(['open', '-a', app_path, p])
+        # except OSError:
+        #     self.debug('failed opening {} using {}'.format(p, app_path))
+        #     subprocess.call(['open', p])
 
     def open_file_dialog(self, action='open', **kw):
         if 'default_directory' not in kw:
@@ -490,8 +489,9 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _window_opened(self):
         man = self._get_el_manager()
         if man:
-        #            do_later(man.activate)
+            #            do_later(man.activate)
             man.activate()
+
 
 #            man.canvas.refresh()
 

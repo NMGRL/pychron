@@ -17,7 +17,10 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
+
+from pychron.entry.irradiation_table_writer import IrradiationTableWriter
 from pychron.envisage.resources import icon
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -115,5 +118,13 @@ class ImportSampleMetadataAction(TaskAction):
     name = 'Import Sample Metadata...'
     method = 'import_sample_metadata'
 
+
+class GenerateIrradiationTableAction(Action):
+    name = 'Generate Irradiation Table'
+    accelerator = 'Ctrl+0'
+
+    def perform(self, event):
+        a = IrradiationTableWriter()
+        a.make()
 
 #============= EOF =============================================

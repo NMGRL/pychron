@@ -24,10 +24,18 @@ from pyface.tasks.action.task_action import TaskAction
 from pychron.envisage.resources import icon
 
 
+class PlotFigureAction(TaskAction):
+    name = 'Figure'
+    method = 'plot_figure'
+    tooltip = 'Plot figure associated with interpreted age'
+    image = icon('chart_curve_go')
+
+
 class PlotIdeogramAction(TaskAction):
     name = 'Ideogram'
     method = 'plot_ideogram'
     image = icon('file_pdf')
+    tooltip = 'Plot ideogram of interpreted ages'
 
 
 class SavePDFTablesAction(TaskAction):

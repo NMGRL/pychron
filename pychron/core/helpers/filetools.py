@@ -16,6 +16,20 @@
 
 #========== standard library imports ==========
 import os
+import subprocess
+
+
+def view_file(p, application='Preview', logger=None):
+    app_path = '/Applications/{}.app'.format(application)
+    if not os.path.exists(app_path):
+        app_path = '/Applications/Preview.app'
+
+    try:
+        subprocess.call(['open', '-a', app_path, p])
+    except OSError:
+        if logger:
+            logger.debug('failed opening {} using {}'.format(p, app_path))
+        subprocess.call(['open', p])
 
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):

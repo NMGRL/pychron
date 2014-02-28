@@ -20,7 +20,7 @@ from traits.api import Event, Button, String, \
 # from traitsui.api import View, Item
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
-from pyface.timer.do_later import do_after
+from pyface.timer.do_later import do_after, do_later
 
 #============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock
@@ -760,6 +760,8 @@ class ExperimentExecutor(Loggable):
                     spec.conflicts_checked = False
                     self.message(self._err_message)
                     self.info('No response from user. Canceling run')
+                    do_later(self.information_dialog,
+                             'Databases are in conflict. No response from user. Canceling experiment')
 
             else:
                 dh.update_spec(spec)

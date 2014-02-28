@@ -23,7 +23,10 @@ from pyface.action.group import Group
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
-from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, GenerateTrayAction
+from pychron.entry.tasks.actions import SaveLabbookPDFAction, MakeIrradiationTemplateAction, LabnumberEntryAction, \
+    SensitivityEntryAction, AddMolecularWeightAction, ImportSampleMetadataAction, AddFluxMonitorAction, \
+    GenerateTrayAction, \
+    GenerateIrradiationTableAction
 from pychron.entry.editors.molecular_weight_editor import MolecularWeightEditor
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
@@ -53,11 +56,14 @@ class EntryPlugin(BaseTaskPlugin):
                                              path='MenuBar/tools.menu')]),
             TaskExtension(
                 actions=[
+                    SchemaAddition(id='generate_irradiation_table',
+                                   factory=GenerateIrradiationTableAction,
+                                   path='MenuBar/tools.menu'
+                    ),
                     SchemaAddition(id='labnumber_entry',
                                    factory=LabnumberEntryAction,
                                    path='MenuBar/Edit',
                                    absolute_position='first',),
-
                     SchemaAddition(id='sensitivity_entry',
                                    factory=SensitivityEntryAction,
                                    path='MenuBar/Edit',

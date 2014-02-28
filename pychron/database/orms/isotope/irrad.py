@@ -23,7 +23,7 @@ from sqlalchemy import Column, Integer, BLOB, Float
 from sqlalchemy.orm import relationship
 
 #============= local library imports  ==========================
-from pychron.database.orms.isotope.util import foreignkey
+from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
 from util import Base
 
@@ -80,15 +80,32 @@ class irrad_ProductionTable(Base, NameMixin):
     levels = relationship('irrad_LevelTable', backref='production')
 
 
+class irrad_ReactorTable(Base, NameMixin):
+    note = Column(BLOB)
+    address = stringcolumn(180)
+    reactor_type = stringcolumn(80)
+    irradiations = relationship('irrad_IrradiationTable', backref='reactor')
+
+
 class irrad_IrradiationTable(Base, NameMixin):
     levels = relationship('irrad_LevelTable', backref='irradiation')
     # irradiation_production_id = foreignkey('irrad_ProductionTable')
     irradiation_chronology_id = foreignkey('irrad_ChronologyTable')
+    reactor_id = foreignkey('irrad_ReactorTable')
 
 
 class irrad_ChronologyTable(Base, BaseMixin):
     chronology = Column(BLOB)
     irradiation = relationship('irrad_IrradiationTable', backref='chronology')
+
+    @property
+    def duration(self):
+        """
+            return total irradiation duration in hours
+        """
+        doses = self.get_doses()
+        total_seconds = sum([(di[2] - di[1]).total_seconds() for di in doses])
+        return total_seconds / 3600.
 
     def get_doses(self, tofloat=True):
         doses = self.chronology.split('$')

@@ -45,12 +45,12 @@ class InterpretedAgeTask(BaseBrowserTask):
                  SToolBar(PlotIdeogramAction())]
 
     def plot_ideogram(self):
-
         if self.active_editor:
             iages = self.active_editor.interpreted_ages
-            task = self.window.application.get_task('pychron.processing.figures')
-            task.new_ideogram()
-            task.active_editor.plot_interpreted_ages(iages)
+            if iages:
+                task = self.window.application.get_task('pychron.processing.figures')
+                task.new_ideogram()
+                task.active_editor.plot_interpreted_ages(iages)
 
     def external_delete_group(self):
         self.load_projects()
