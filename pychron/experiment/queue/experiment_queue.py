@@ -118,16 +118,20 @@ class ExperimentQueue(BaseExperimentQueue):
                      if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
 
     def executed_paste_function(self, obj):
-        return
+        ci = self.paste_function(obj)
+        return ci
 
     def paste_function(self, obj):
 
         ci = obj.clone_traits()
         ci.state = 'not run'
-        if obj.user_defined_aliquot:
-            ci.aliquot = obj.aliquot
-        else:
-            ci.aliquot = 0
+        ci.aliquot = 0
+        ci.step = -1
+        ci.conflicts_checked = False
+
+        if ci.is_step_heat():
+            ci.user_defined_aliquot = ci.aliquot
+
         return ci
 
     @on_trait_change('automated_runs[]')
