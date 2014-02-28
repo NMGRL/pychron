@@ -279,6 +279,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
                         if flux:
                             if abs(flux.j - irs.j) > tol or abs(flux.j_err - irs.j_err) > tol:
                                 add_flux()
+                        else:
+                            add_flux()
                     else:
                         add_flux()
                 else:

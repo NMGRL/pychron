@@ -716,16 +716,16 @@ class ExperimentExecutor(Loggable):
         return arun
 
     def _set_run_aliquot(self, spec):
+        if spec.conflicts_checked:
+            return True
+
         #if a run in executed runs is in extraction or measurement state
         # we are in overlap mode
         dh = self.datahub
 
         ens = self.experiment_queue.executed_runs
         step_offset, aliquot_offset = 0, 0
-        if spec.conflicts_checked:
-            return True
 
-        spec.conflicts_checked = True
         exs = [ai for ai in ens if ai.state in ('measurement', 'extraction')]
         if exs:
             if spec.is_step_heat():
@@ -735,37 +735,42 @@ class ExperimentExecutor(Loggable):
                 eruns = [ei.labnumber for ei in exs]
                 aliquot_offset = 1 if spec.labnumber in eruns else 0
 
-            if not dh.is_conflict(spec):
-                dh.update_spec(spec, aliquot_offset, step_offset)
-                ret = True
-            else:
-                ret = False
-                self._canceled = True
-        else:
-            ret = True
             conflict = dh.is_conflict(spec)
             if conflict:
-                ret = False
-                self._canceled = True
-                self._err_message = 'Databases are in conflict. {}'.format(conflict)
-                if self.confirmation_dialog('Databases are in conflict. '
-                                            'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
-                                            timeout_ret=False,
-                                            timeout=30):
-                    dh.update_spec(spec)
-                    ret = True
-                    self._canceled = False
-                    self._err_message = ''
-                else:
-                    spec.conflicts_checked = False
-                    self.message(self._err_message)
-                    self.info('No response from user. Canceling run')
-                    do_later(self.information_dialog,
-                             'Databases are in conflict. No response from user. Canceling experiment')
-
+                ret = self._in_conflict(spec, aliquot_offset, step_offset)
+            else:
+                dh.update_spec(spec, aliquot_offset, step_offset)
+                ret = True
+        else:
+            conflict = dh.is_conflict(spec)
+            if conflict:
+                ret = self._in_conflict(spec, conflict)
             else:
                 dh.update_spec(spec)
+                ret = True
 
+        return ret
+
+    def _in_conflict(self, spec, conflict, aoffset=0, soffset=0):
+        dh = self.datahub
+        self._canceled = True
+        self._err_message = 'Databases are in conflict. {}'.format(conflict)
+
+        ret = self.confirmation_dialog('Databases are in conflict. '
+                                       'Do you want to modify the Run Identifier to {}'.format(dh.new_runid),
+                                       timeout_ret=0,
+                                       timeout=30)
+        if ret or ret == 0:
+            dh.update_spec(spec, aoffset, soffset)
+            ret = True
+            self._canceled = False
+            self._err_message = ''
+        else:
+            spec.conflicts_checked = False
+            self.message(self._err_message)
+            self.info('No response from user. Canceling run')
+            do_later(self.information_dialog,
+                     'Databases are in conflict. No response from user. Canceling experiment')
         return ret
 
     def _delay(self, delay, message='between'):

@@ -63,6 +63,8 @@ class AnalysesTable(Base):
 
     IrradPosition = Column(Integer, ForeignKey('IrradiationPositionTable.IrradPosition'))
     Aliquot = Column(String(10))
+    Aliquot_pychron = Column(Integer)
+
     Increment = Column(String(20))
     SpecParametersID = Column(Integer, default=0)
     RunScriptID = Column(Integer, ForeignKey('RunScriptTable.RunScriptID'))
@@ -156,6 +158,7 @@ class BaselinesTable(Base):
     NumCnts = Column(Integer)
     PeakTimeBlob = Column(BLOB, nullable=True)
     isotope = relationship('IsotopeTable', backref='baseline', uselist=False)
+
 
 #    changeable_item = relationship('baselineschangeableitemstable', uselist=False)
 
@@ -334,6 +337,7 @@ class FittypeTable(Base):
     results = relationship('IsotopeResultsTable', backref='fit',
                            #                          uselist=False
     )
+
 
 #    baseline_results = relationship('baselineschangeableitemstable', backref='fit',
 # #                          uselist=False
