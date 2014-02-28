@@ -983,6 +983,9 @@ class IsotopeAdapter(DatabaseAdapter):
             if not level:
                 holder = self.get_irradiation_holder(holder)
                 #             irn = irradiation.name if irradiation else None
+                if holder is None:
+                    holder = self.get_irradiation_holder('tube')
+
                 hn = holder.name if holder else None
                 self.info('adding level {}, holder={} to {}'.format(name, hn, irn))
 
