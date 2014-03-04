@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -114,7 +115,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     regressor = Property(depends_on='xs, ys, fit, dirty, error_type')
     dirty = Event
-    included_baseline_error = Bool
+    include_baseline_error = Bool
 
     def __init__(self, dbresult=None, *args, **kw):
 
@@ -179,7 +180,7 @@ class IsotopicMeasurement(BaseMeasurement):
                                              std_devs=int(fit.filter_outlier_std_devs or 0))
             self.error_type=fit.error_type or 'SEM'
             self.trait_set(fit=fit.fit, trait_change_notify=notify)
-            self.included_baseline_error = fit.include_baseline_error or False
+            self.include_baseline_error = fit.include_baseline_error or False
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -317,7 +318,7 @@ class BaseIsotope(IsotopicMeasurement):
 
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
-        if not self.included_baseline_error:
+        if not self.include_baseline_error:
             b = b.nominal_value
 
         nv = self.uvalue - b

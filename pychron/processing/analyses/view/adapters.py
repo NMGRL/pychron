@@ -256,9 +256,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     columns = [('Iso.', 'name'),
                ('Det.', 'detector'),
                ('Fit', 'fit_abbreviation'),
+
                ('Int.', 'value'),
                (SIGMA_1, 'error'),
                ('%', 'value_percent_error'),
+               ('I. BsEr', 'include_baseline_error'),
                ('Fit', 'baseline_fit_abbreviation'),
                ('Base.', 'base_value'),
                (SIGMA_1, 'base_error'),
@@ -279,6 +281,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     blank_error_text = Property
     ic_factor_text = Property
     discrimination_text = Property
+    include_baseline_error_text = Property
 
     value_percent_error_text = Property
     blank_percent_error_text = Property
@@ -287,6 +290,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     name_width = Int(40)
     fit_abbreviation_width = Int(25)
+    include_baseline_error_width = Int(40)
     baseline_fit_abbreviation_width = Int(25)
     detector_width = Int(40)
 
@@ -357,3 +361,6 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
 
     def _get_age_error_component_text(self):
         return floatfmt(self.item.age_error_component, n=1)
+
+    def _get_include_baseline_error_text(self):
+        return 'Yes' if self.item.include_baseline_error else 'No'
