@@ -21,12 +21,15 @@
 #============= standard library imports ========================
 from unittest import TestCase
 #============= local library imports  ==========================
-# from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
 # from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
 # from pychron.core.regression.tests.standard_data import mean_data
 
 class RegressionTestCase(TestCase):
+    def setUp(self):
+        self.reg = MeanRegressor()
+
     def test_something(self):
         self.assertEqual(True, False)
 
