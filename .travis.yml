@@ -15,7 +15,7 @@ install:
    # - pip install git+http://github.com/enthought/traits.git#egg=traits
    # - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
    # - pip install git+http://github.com/enthought/enable.git#egg=enable
-#  - pip install -r requirements.txt
+  - pip install -r requirements.txt
 
 # command to run tests, e.g. python setup.py test
 script:  python setup.py test
