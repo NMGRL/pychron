@@ -20,10 +20,10 @@ from pychron.core.ui.text_table import TextTableAdapter, BoldCell, TextCell, Tex
     TextTable, SimpleTextTableAdapter, HeaderRow
 from pychron.core.helpers.formatting import errorfmt, floatfmt, pfloatfmt, \
     format_percent_error
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.pychron_constants import PLUSMINUS, SIGMA, PLUSMINUS_SIGMA, PLUSMINUS_PERCENT
 #============= standard library imports ========================
 #============= local library imports  ==========================
-PLUSMINUS_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
+
 
 
 class RawAdapter(SimpleTextTableAdapter):
@@ -32,16 +32,16 @@ class RawAdapter(SimpleTextTableAdapter):
         ('Detector', 'detector', str),
         ('Raw (fA)', 'raw_value'),
         (PLUSMINUS_SIGMA, 'raw_error'),
-        (u'{}%  '.format(PLUSMINUS), 'raw_error_percent', str),
+        (PLUSMINUS_PERCENT, 'raw_error_percent', str),
         ('Fit', 'fit', str),
 
         ('Baseline (fA)', 'baseline_value'),
         (PLUSMINUS_SIGMA, 'baseline_error'),
-        (u'{}%  '.format(PLUSMINUS), 'baseline_error_percent', str),
+        (PLUSMINUS_PERCENT, 'baseline_error_percent', str),
 
         ('Blank (fA)', 'blank_value'),
         (PLUSMINUS_SIGMA, 'blank_error'),
-        (u'{}%  '.format(PLUSMINUS), 'blank_error_percent', str),
+        (PLUSMINUS_PERCENT, 'blank_error_percent', str),
     ]
 
 

@@ -23,7 +23,7 @@ from functools import partial
 
 def format_percent_error(v, e, n=2):
     p = calc_percent_error(v, e)
-    if p is not None:
+    if not p == 'NaN':
         sigpee = '{{:0.{}f}}'.format(n).format(p)
     else:
         sigpee = 'NaN'
@@ -34,7 +34,7 @@ def calc_percent_error(v, e, scale=100):
     try:
         return abs(e / v * scale)
     except ZeroDivisionError:
-        return
+        return 'NaN'
 
 
 def errorfmt(v, e):

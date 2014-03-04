@@ -80,7 +80,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
 
-        # self.save_analysis_data_table(p)
+        self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
 
@@ -89,7 +89,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         db = self.processor.db
 
         with db.session_ctx():
-            ias = self.interpreted_ages[:10]
+            ias = self.interpreted_ages
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets

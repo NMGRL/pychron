@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Int
-from traitsui.api import View, UItem, TabularEditor
+from traitsui.api import View, UItem, TabularEditor, VGroup, Heading, VSplit
 from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
@@ -49,10 +49,12 @@ class HistoryView(HasTraits):
         self.fit_changes=an.fit_changes
 
     def traits_view(self):
-        v = View(UItem('blank_changes', editor=TabularEditor(adapter=BlankAdapter(),
-                                                               editable=False)),
-                 UItem('fit_changes', editor=TabularEditor(adapter=FitAdapter(),
-                                                              editable=False)))
+        v = View(VSplit(VGroup(Heading('Blanks'),
+                               UItem('blank_changes', editor=TabularEditor(adapter=BlankAdapter(),
+                                                                           editable=False))),
+                        VGroup(Heading('Fits'),
+                               UItem('fit_changes', editor=TabularEditor(adapter=FitAdapter(),
+                                                                         editable=False)))))
         return v
 
 #============= EOF =============================================

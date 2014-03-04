@@ -33,6 +33,9 @@ except UnicodeEncodeError, e:
     except Exception:
         SIGMA = 's'
 
+PLUSMINUS_SIGMA = u'{}1{}'.format(PLUSMINUS, SIGMA)
+PLUSMINUS_PERCENT = u'{}%  '.format(PLUSMINUS)
+
 NULL_STR = '---'
 LINE_STR = '---------'
 SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibration']
