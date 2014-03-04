@@ -316,7 +316,7 @@ class proc_FitTable(Base, BaseMixin):
     filter_outliers = Column(Boolean)
     filter_outlier_iterations = Column(Integer, default=1)
     filter_outlier_std_devs = Column(Integer, default=1)
-
+    include_baseline_error = Column(Boolean)
 
     def make_summary(self):
         f = self.fit[:1].upper()

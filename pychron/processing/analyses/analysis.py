@@ -30,7 +30,9 @@ from pychron.processing.arar_age import ArArAge
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_runid
 from pychron.processing.isotope import Isotope
 
-Fit = namedtuple('Fit', 'fit filter_outliers filter_outlier_iterations filter_outlier_std_devs error_type')
+Fit = namedtuple('Fit', 'fit '
+                        'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
+                        'error_type include_baseline_error')
 
 logger = new_logger('Analysis')
 

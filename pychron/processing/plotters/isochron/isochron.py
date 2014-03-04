@@ -320,7 +320,7 @@ class InverseIsochron(Isochron):
             fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
 
             mi, ma = self.graph.get_x_limits()
-            rxs = linspace(mi, ma)
+            rxs = linspace(0, ma)
 
             rys = reg.predict(rxs)
 

@@ -91,6 +91,16 @@ class EasySensitivityAction(Action):
         e = EasySensitivity()
         e.make()
 
+
+class EasyFaradayICAction(Action):
+    name = 'Easy Faraday IC'
+
+    def perform(self, event):
+        from pychron.processing.easy.faraday_ic import EasyFaradayIC
+
+        e = EasyFaradayIC()
+        e.make()
+
 #============= EOF ====================================
 
 

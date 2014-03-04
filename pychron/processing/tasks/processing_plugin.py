@@ -28,7 +28,8 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.processing.processor import Processor
 from pychron.processing.tasks.actions.import_actions import EasyImportAction
 from pychron.processing.tasks.actions.easy_actions import EasyFitAction, EasyBlanksAction, EasyDiscriminationAction, \
-    EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction, EasyCompareAction
+    EasyFiguresAction, EasyTablesAction, EasyICAction, EasyFluxAction, EasySensitivityAction, EasyCompareAction, \
+    EasyFaradayICAction
 from pychron.processing.tasks.actions.processing_actions import IdeogramAction, \
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
@@ -155,6 +156,7 @@ Install to enable MS Excel export''')
                              EasyCompareAction(),
                              EasyTablesAction(),
                              EasySensitivityAction(),
+                             EasyFaradayICAction(),
                              id='easy.group')
 
             grp = self._make_task_extension([('easy_group', easy_group, 'MenuBar/tools.menu')])

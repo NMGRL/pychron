@@ -160,7 +160,8 @@ class IsotopeEvolutionEditor(GraphEditor):
 
                     tool_fits.remove(tf)
                     fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
-                                                 tf.name, tf.fit, tf.error_type, fd)
+                                                 tf.name, tf.fit, tf.error_type, fd,
+                                                 tf.include_baseline_error)
                     if not fit_hist:
                         db = self.processor.db
                         sess = db.get_session()
@@ -185,46 +186,16 @@ class IsotopeEvolutionEditor(GraphEditor):
                       std_devs=fi.filter_std_devs)
 
             fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
-                                         fi.name, fi.fit, fi.error_type, fd)
+                                         fi.name, fi.fit, fi.error_type, fd,
+                                         fi.include_baseline_error)
             if not fit_hist:
                 db = self.processor.db
                 sess = db.get_session()
                 sess.rollback()
                 break
 
-                #
-                # fitted=[]
-                # for fi in self.tool.fits:
-                #     if not fi.save:
-                #         continue
-                #
-                #     fd = dict(filter_outliers=fi.filter_outliers,
-                #               iterations=fi.filter_iterations,
-                #               std_devs=fi.filter_std_devs)
-                #
-                #     fit_hist, isoname, kind, added= self._save_db_fit(unk, meas_analysis, fit_hist,
-                #                                  fi.name, fi.fit, fi.error_type, fd)
-                #     if added:
-                #         fitted.append((isoname, kind))
-                #
-                # added=False
-                # for dbfi in dbfits:
-                #     if not next(((f,k) for f,k in fitted
-                #                  if dbfi.isotope.molecular_weight.name==f and dbfi.isotope.kind==k), None):
-                #         fd = dict(filter_outliers=dbfi.filter_outliers,
-                #                   iterations=dbfi.filter_iterations,
-                #                   std_devs=dbfi.filter_std_devs)
-                #
-                #         fit_hist=self._save_db_fit(unk, meas_analysis, fit_hist,
-                #                           dbfi.isotope.name , dbfi.fit, dbfi.error_type, fd)
-                #         print 'adding old fit for'.format(dbfi.isotope.name)
-                #         added=True
-                #
-                # if not added:
-                #     sess = self.processor.db.get_session()
-                #     sess.delete(fit_hist)
-
-    def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict):
+    def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict,
+                     include_baseline_error):
         db = self.processor.db
         print 'save fit', name
         if name.endswith('bs'):
@@ -244,6 +215,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         f, e = convert_fit(fit)
         iso.fit = f
         iso.error_type = et or e
+        iso.include_baseline_error = include_baseline_error
 
         if fit_hist is None:
             fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
@@ -261,7 +233,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                    error_type=iso.error_type,
                    filter_outliers=fod['filter_outliers'],
                    filter_outlier_iterations=fod['iterations'],
-                   filter_outlier_std_devs=fod['std_devs'])
+                   filter_outlier_std_devs=fod['std_devs'],
+                   include_baseline_error=include_baseline_error)
         #update isotoperesults
         v, e = float(v.nominal_value), float(v.std_dev)
         db.add_isotope_result(dbiso, fit_hist,
@@ -435,3 +408,34 @@ class IsotopeEvolutionEditor(GraphEditor):
         self.component.invalidate_and_redraw()
 
         #============= EOF =============================================
+        #
+        # fitted=[]
+        # for fi in self.tool.fits:
+        #     if not fi.save:
+        #         continue
+        #
+        #     fd = dict(filter_outliers=fi.filter_outliers,
+        #               iterations=fi.filter_iterations,
+        #               std_devs=fi.filter_std_devs)
+        #
+        #     fit_hist, isoname, kind, added= self._save_db_fit(unk, meas_analysis, fit_hist,
+        #                                  fi.name, fi.fit, fi.error_type, fd)
+        #     if added:
+        #         fitted.append((isoname, kind))
+        #
+        # added=False
+        # for dbfi in dbfits:
+        #     if not next(((f,k) for f,k in fitted
+        #                  if dbfi.isotope.molecular_weight.name==f and dbfi.isotope.kind==k), None):
+        #         fd = dict(filter_outliers=dbfi.filter_outliers,
+        #                   iterations=dbfi.filter_iterations,
+        #                   std_devs=dbfi.filter_std_devs)
+        #
+        #         fit_hist=self._save_db_fit(unk, meas_analysis, fit_hist,
+        #                           dbfi.isotope.name , dbfi.fit, dbfi.error_type, fd)
+        #         print 'adding old fit for'.format(dbfi.isotope.name)
+        #         added=True
+        #
+        # if not added:
+        #     sess = self.processor.db.get_session()
+        #     sess.delete(fit_hist)

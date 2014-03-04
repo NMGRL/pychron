@@ -29,7 +29,8 @@ class FilterFit(Fit):
     filter_outliers = Bool
     filter_iterations = Int
     filter_std_devs = Int
-    truncate= Str
+    truncate = Str
+    include_baseline_error = Bool
 
     def _filter_outliers_changed(self):
         if self.filter_outliers:
@@ -55,6 +56,7 @@ class FilterFitSelector(FitSelector):
                 ObjectColumn(name='filter_iterations', label='F. Iter.'),
                 ObjectColumn(name='filter_std_devs', label='F. SD'),
                 ObjectColumn(name='truncate', label='Trunc.'),
+                ObjectColumn(name='include_baseline_error', label='Inc. BsErr'),
                 CheckboxColumn(name='use', label='Save')]
 
         return cols

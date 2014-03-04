@@ -455,7 +455,8 @@ class DBAnalysis(Analysis):
                               error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=0,
-                              filter_outlier_std_devs=0)
+                              filter_outlier_std_devs=0,
+                              include_baseline_error=False)
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
@@ -537,7 +538,8 @@ class DBAnalysis(Analysis):
                               error_type='SEM',
                               filter_outliers=False,
                               filter_outlier_iterations=1,
-                              filter_outlier_std_devs=2)
+                              filter_outlier_std_devs=2,
+                              include_baseline_error=False)
                 r.set_fit(fit, notify=False)
                 isodict[name] = r
 
