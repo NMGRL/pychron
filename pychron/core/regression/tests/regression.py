@@ -24,46 +24,46 @@ from unittest import TestCase
 from pychron.core.regression.mean_regressor import MeanRegressor  #, WeightedMeanRegressor
 # from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-# from pychron.core.regression.tests.standard_data import mean_data
+from pychron.core.regression.tests.standard_data import mean_data
 
-class RegressionTestCase(TestCase):
-    def setUp(self):
-        self.reg = MeanRegressor()
-
-    def test_something(self):
-        self.assertEqual(True, False)
-
-# class RegressionTestCase(object):
-#     @classmethod
-#     def setUpClass(cls):
-#         cls.reg = cls.regressor_factory()
-#
-#     @staticmethod
-#     def regressor_factory():
-#         pass
-#
-#     def testN(self):
-#         self.assertEqual(self.reg.n, self.solution['n'])
-#
-#
-# class MeanRegressionTest(RegressionTestCase, TestCase):
-#     reg_klass = MeanRegressor
-#
+# class RegressionTestCase(TestCase):
 #     def setUp(self):
-#         n = 1e5
-#         xs, ys, sol = mean_data(n=n)
-#         self.reg.trait_set(xs=xs, ys=ys)
-#         self.solution = sol
+#         self.reg = MeanRegressor()
 #
-#     def testMean(self):
-#         self.assertAlmostEqual(self.reg.mean, self.solution['mean'], 2)
-#
-#     def testStd(self):
-#         self.assertAlmostEqual(self.reg.std, self.solution['std'], 2)
-#
-#     @staticmethod
-#     def regressor_factory():
-#         return MeanRegressor()
+#     def test_something(self):
+#         self.assertEqual(True, False)
+
+class RegressionTestCase(object):
+    @classmethod
+    def setUpClass(cls):
+        cls.reg = cls.regressor_factory()
+
+    @staticmethod
+    def regressor_factory():
+        pass
+
+    def testN(self):
+        self.assertEqual(self.reg.n, self.solution['n'])
+
+
+class MeanRegressionTest(RegressionTestCase, TestCase):
+    reg_klass = MeanRegressor
+
+    def setUp(self):
+        n = 1e5
+        xs, ys, sol = mean_data(n=n)
+        self.reg.trait_set(xs=xs, ys=ys)
+        self.solution = sol
+
+    def testMean(self):
+        self.assertAlmostEqual(self.reg.mean, self.solution['mean'], 2)
+
+    def testStd(self):
+        self.assertAlmostEqual(self.reg.std, self.solution['std'], 2)
+
+    @staticmethod
+    def regressor_factory():
+        return MeanRegressor()
 
 #
 # class OLSRegressionTest(RegressionTestCase, TestCase):
