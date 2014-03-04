@@ -1,4 +1,4 @@
-from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
+# from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
 
 __author__ = 'ross'
 import unittest
@@ -7,9 +7,9 @@ import unittest
 def suite():
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
-    suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
-    suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
+    # suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
+    # suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
+    # suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
     return suite
 
 
