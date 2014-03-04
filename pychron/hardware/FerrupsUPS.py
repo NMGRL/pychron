@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 #============= standard library imports ========================
 from datetime import datetime
@@ -83,22 +81,30 @@ class FerrupsUPS(CoreDevice):
             return
 
         if vin < self.min_voltage_in:
-            if self.application:
-                tm = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                tm.post('Power Outage {} Vin= {}'.format(datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')), vin)
             self._power_out = True
-        elif self._power_out:
             if self.application:
-                tm = self.application.get_service('pychron.social.twitter_manager.TwitterManager')
-                tm.post('Power Returned {} Vin= {}'.format(datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S')), vin)
+                tm = self.application.get_service('pychron.social.emailer.Emailer')
+                if tm:
+                    tm.broadcast('Power Outage {} Vin= {}'.format(datetime.strftime(datetime.today(),
+                                                                                    '%Y-%m-%d %H:%M:%S')), vin)
+                else:
+                    self.warning('No emailer available. Power out')
+        elif self._power_out:
             self._power_out = False
+            if self.application:
+                tm = self.application.get_service('pychron.social.emailer.Emailer')
+                if tm:
+                    tm.broadcast('Power Returned {} Vin= {}'.format(datetime.strftime(datetime.today(),
+                                                                                      '%Y-%m-%d %H:%M:%S')), vin)
+                else:
+                    self.warning('No emailer available. Power returned')
 
         return vin
 
     def get_voltage_in(self):
-        '''
-            
-        '''
+        """
+
+        """
         _query, resp = self.get_parameter(1, verbose=False)
 
         if self.simulation:

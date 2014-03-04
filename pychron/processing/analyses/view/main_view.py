@@ -68,7 +68,7 @@ class MainView(HasTraits):
         j = self._get_j(an)
         jf = 'NaN'
         if j is not None:
-            jj = floatfmt(j.nominal_value, n=5, s=5)
+            jj = floatfmt(j.nominal_value, n=7, s=5)
             jf = u'{} \u00b1{:0.2e}'.format(jj, j.std_dev)
 
         a39 = ar.ar39decayfactor

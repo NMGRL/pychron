@@ -19,9 +19,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
 import smtplib
+
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, List, Enum, Bool
 from traitsui.api import View
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -54,7 +56,6 @@ class Emailer(Loggable):
         bind_preference('server_username', 'server_username', 'pychron.email')
         bind_preference('server_password', 'server_password', 'pychron.email')
 
-
     def connect(self):
         if self._server is None:
             try:
@@ -73,22 +74,27 @@ class Emailer(Loggable):
     def broadcast(self, text, level=0, subject=None):
 
         recipients = self.get_emails(level)
+        self.debug('broadcasting to recipients {}. level={}'.format(recipients, level))
         if recipients:
-            msg = self._message_factory(text, level, subject)
+            r = ','.join(recipients)
+
+            msg = self._message_factory(text, r, subject)
             server = self.connect()
             if server:
-                self.info('Broadcasting message to {}'.format(','.join(recipients)))
+                self.info('Broadcasting message to {}'.format(r))
                 server.sendmail(self.sender, recipients, msg.as_string())
                 server.close()
+            else:
+                self.debug('SMTP server not available')
 
     def get_emails(self, level):
         return [u.email for u in self.users
                 if u.email_enabled and u.level <= level]
 
-    def _message_factory(self, text, level, subject='!Pychron Alert!'):
+    def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        msg['To'] = ', '.join(self.get_emails(level))
+        msg['To'] = recipients
         msg['Subject'] = subject
 
         msg.attach(MIMEText(text))
@@ -100,6 +106,7 @@ class Emailer(Loggable):
         config.read(path)
         users = []
         for user in config.sections():
+            self.info('loading user {}'.format(user))
             kw = dict(name=user)
             for opt, func in [('email', None), ('level', 'int'), ('email_enabled', 'boolean')]:
                 if func is None:

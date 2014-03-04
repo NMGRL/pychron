@@ -27,6 +27,7 @@ from numpy import array
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
+
 #============= local library imports  ==========================
 
 
@@ -200,8 +201,8 @@ def interference_corrections(a40, a39, a38, a37, a36,
         arar_constants = ArArConstants()
 
     pr = production_ratios
-
     k37 = ufloat(0, 1e-20)
+
     if arar_constants.k3739_mode.lower() == 'normal':
         # iteratively calculate 37, 39
         for _ in range(5):

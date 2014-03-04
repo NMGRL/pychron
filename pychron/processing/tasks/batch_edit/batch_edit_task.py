@@ -31,6 +31,7 @@ from pychron.paths import paths
 
 
 
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -46,6 +47,7 @@ class BatchEditTask(AnalysisEditTask):
     central_pane = Instance(TraitsTaskPane)
     central_pane_klass = BatchEditPane
     batch_editor = Instance(BatchEditor, ())
+    external_recall_window = True
 
     # unknowns = List
 

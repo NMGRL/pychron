@@ -70,7 +70,7 @@ class BatchEditor(Loggable):
 
         keys = set([iso.detector for ui in unks
                     for iso in ui.isotopes.itervalues()])
-
+        print keys
         keys = sort_isotopes(list(keys))
         ics = []
         for ki in keys:
