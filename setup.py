@@ -2,7 +2,9 @@ from setuptools import setup
 
 setup(name='pychron',
       version='2.0.4',
+      setup_requires=['nose>=1.0'],
       packages=['pychron.core.regression',
+                'pychron.core.stats',
+                'pychron.pychron_constants',
                 'pychron.core.regression.tests'],
-      test_suite='pychron.core.regression.tests.suite'
-)
+      test_suite='pychron.core.regression.tests.suite')

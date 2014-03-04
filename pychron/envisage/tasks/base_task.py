@@ -314,7 +314,7 @@ class BaseTask(Task, Loggable):
         edit_menu = SMenu(
             GenericFindAction(),
             id='Edit',
-            name='Edit')
+            name='&Edit')
         return edit_menu
 
     def _file_menu(self):
