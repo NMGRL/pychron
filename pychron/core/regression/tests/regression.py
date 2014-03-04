@@ -21,10 +21,10 @@
 #============= standard library imports ========================
 from unittest import TestCase
 #============= local library imports  ==========================
-from pychron.core.regression.mean_regressor import MeanRegressor
+from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import filter_data
+from pychron.core.regression.tests.standard_data import filter_data, weighted_mean_data
 from test.processing.standard_data import mean_data, ols_data
 
 
@@ -109,6 +109,24 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
         e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
         # e=self.reg.coefficient_errors[0]
         self.assertAlmostEqual(e, self.solution['pred_error'], 3)
+
+
+class WeightedMeanRegressionTest(RegressionTestCase, TestCase):
+    @staticmethod
+    def regressor_factory():
+        return WeightedMeanRegressor()
+
+    def setUp(self):
+        xs, ys, yes, sol = weighted_mean_data()
+        self.reg.trait_set(xs=xs, ys=ys,
+                           yserr=yes,
+        )
+        self.solution = sol
+        self.reg.calculate()
+
+    def testMean(self):
+        v = self.reg.mean
+        self.assertEqual(v, self.solution['mean'])
 
 
 # class WeightedMeanRegressionTest(TestCase):

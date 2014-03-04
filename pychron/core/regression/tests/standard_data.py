@@ -25,7 +25,6 @@ def pearson(expected=False):
 
 
 def mean_data(scalar=5, std=1.5, n=1000):
-
     rs = random.RandomState(123456)
 
     xs = np.linspace(0, 100, n)
@@ -89,3 +88,19 @@ def filter_data():
                 'pred_error': 0.309}
 
     return xs, ys, solution
+
+
+def weighted_mean_data():
+    """http://en.wikipedia.org/wiki/Weighted_mean#Example"""
+    xs = [1, 1]
+    ys = [80, 90]
+
+    yserr = [1 / 20. ** 0.5,
+             1 / 30. ** 0.5]
+
+    # xs=[1,2,3,4,5,6]
+    # ys=[1,1,1,1,1,2]
+    # yserr=[0.1,1,1,1,1]
+
+    solution = {'mean': 85.999999999999986, 'n': len(ys)}
+    return xs, ys, yserr, solution
