@@ -24,8 +24,7 @@ from unittest import TestCase
 from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
 from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import filter_data, weighted_mean_data
-from test.processing.standard_data import mean_data, ols_data
+from pychron.core.regression.tests.standard_data import filter_data, weighted_mean_data, mean_data, ols_data
 
 
 class RegressionTestCase(object):
