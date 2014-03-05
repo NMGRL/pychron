@@ -284,8 +284,10 @@ class WatlowEZZone(CoreDevice):
             self.initialization_hook()
 
             self._load_max_output()
-
             self.setup_consumer()
+
+            self.control_mode='open'
+            self.disable()
 
             return True
         else:
