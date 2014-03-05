@@ -17,13 +17,17 @@
 #============= enthought library imports =======================
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
-from traits.api import Array, Int, Float,Str, Color
+from traits.api import Array, Int, Float,Str, Color, Any, on_trait_change, Event
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
 from numpy import where, array
 from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
 #============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
+from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
+from pychron.pychron_constants import ALPHAS
+
 
 class BasePlateauOverlay(AbstractOverlay):
     cumulative39s = Array
@@ -37,8 +41,13 @@ class BasePlateauOverlay(AbstractOverlay):
             tt = 0
         return tt
 
+
 class SpectrumTool(BaseTool, BasePlateauOverlay):
     nsigma = Int(2)
+    metadata_changed =Event
+    current_position = None
+    current_screen = None
+
     def hittest(self, screen_pt, threshold=20):
         comp = self.component
 
@@ -51,6 +60,19 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
             if yl < screen_pt[1] < yu:
                 return ndx
+
+    # def normal_mouse_move(self, event):
+    #     xy=event.x, event.y
+    #     pos=self.hittest(xy)
+    #     if pos is not None:
+    #     # if isinstance(pos, tuple):
+    #         self.current_position = pos
+    #         self.current_screen = xy
+    #         # event.handled = True
+    #     else:
+    #         self.current_position = None
+    #         self.current_screen = None
+    #     self.metadata_changed = True
 
     def normal_left_down(self, event):
         if event.handled:
@@ -65,16 +87,59 @@ class SpectrumTool(BaseTool, BasePlateauOverlay):
 
         event.handled = True
 
+    def assemble_lines(self):
+        idx=self.current_position
+        comp=self.component
+
+        e=comp.errors[idx]
+        ys = comp.value.get_data()[::2]
+        v=ys[idx]
+
+        low_c=0 if idx==0 else self.cumulative39s[idx-1]
+
+        return ['Step={}'.format(ALPHAS[idx]),
+                '{}={} +/- {} (1s)'.format(comp.container.y_axis.title, floatfmt(v),
+                                      floatfmt(e)
+                                      ),
+                'Cumulative. Ar39={}-{}'.format(floatfmt(low_c),
+                                                floatfmt(self.cumulative39s[idx]))]
+
     def normal_mouse_move(self, event):
         pt = event.x, event.y
         if self.hittest(pt) is not None and not event.handled:
             event.window.set_pointer('cross')
             hover = self._get_section(pt)
             self.component.index.metadata['hover'] = [hover]
-
+            self.current_position = hover
+            self.current_screen=pt
         else:
             event.window.set_pointer('arrow')
             self.component.index.metadata['hover'] = None
+
+            self.current_position =None
+            self.current_screen = None
+
+        self.metadata_changed = True
+
+
+class SpectrumInspectorOverlay(InfoOverlay):
+    pass
+    # @on_trait_change('tool:metadata_changed')
+    # def _update_(self, new):
+    #     print 'asdf', new
+    # tool =Any
+    # @on_trait_change('tool:current_section')
+    # def handle(self, new):
+    #     if new>=0:
+    #         self.visible=True
+    #     else:
+    #         self.visible=False
+    #
+    # def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+    #     print 'pasdasfd'
+        # with gc:
+
+
 
 class SpectrumErrorOverlay(AbstractOverlay):
     nsigma = Int(1)

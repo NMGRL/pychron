@@ -62,7 +62,7 @@ class InfoOverlay(AbstractOverlay):
 
     @on_trait_change('tool:metadata_changed')
     def _update_(self, new):
-        if self.tool.current_position:
+        if self.tool.current_position is not None:
             self.visible = True
         else:
             self.visible = False
@@ -71,7 +71,6 @@ class InfoOverlay(AbstractOverlay):
 
     def overlay(self, plot, gc, *args, **kw):
         with gc:
-        #            if self.visible:
             lines = self.tool.assemble_lines()
             if lines:
                 lines = [li for li in lines if li and li.strip()]

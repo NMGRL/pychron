@@ -25,7 +25,7 @@ from pychron.processing.plotters.flow_label import FlowPlotLabel
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.processing.plotters.spectrum.label_overlay import SpectrumLabelOverlay, IntegratedPlotLabel
 from pychron.processing.plotters.spectrum.tools import SpectrumTool, \
-    SpectrumErrorOverlay, PlateauTool, PlateauOverlay
+    SpectrumErrorOverlay, PlateauTool, PlateauOverlay, SpectrumInspectorOverlay
 
 
 class Spectrum(BaseArArFigure):
@@ -88,6 +88,10 @@ class Spectrum(BaseArArFigure):
 
         spec = self._add_plot(xs, ys, es, pid, po)
         spec.line_style = self.options.center_line_style
+
+        #add inspector
+        # sp=SpectrumInspector(component=spec)
+        # spec.tools.append(sp)
 
         ag = self.analysis_group
         if ag.plateau_age:
@@ -176,8 +180,10 @@ class Spectrum(BaseArArFigure):
         #         ds.index.on_trait_change(self._update_graph, 'metadata_changed')
 
         #        sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
-        sp = SpectrumTool(ds, cumulative39s=self.xs)
+        sp = SpectrumTool(component=ds, cumulative39s=self.xs)
+        ov=SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
+        ds.overlays.append(ov)
 
         # provide 1s errors use nsigma to control display
         ds.errors = es
@@ -191,7 +197,7 @@ class Spectrum(BaseArArFigure):
                                   spectrum=self,
                                   alpha=max(min(1.0, a), 0.0),
                                   nsigma=ns)
-        ds.overlays.append(sp)
+        ds.underlays.append(sp)
 
         if po.show_labels:
             lo = SpectrumLabelOverlay(component=ds,
@@ -201,7 +207,7 @@ class Spectrum(BaseArArFigure):
                                       display_extract_value=self.options.display_extract_value,
                                       display_step=self.options.display_step)
 
-            ds.overlays.append(lo)
+            ds.underlays.append(lo)
 
         if value_scale == 'log':
             p.value_axis.tick_generator = SparseLogTicks()
@@ -228,7 +234,7 @@ class Spectrum(BaseArArFigure):
                             # label_offset=plateau_age.std_dev*self.options.step_nsigma,
                             y=plateau_age.nominal_value * 1.25)
 
-        lp.overlays.append(ov)
+        lp.underlays.append(ov)
 
         tool = PlateauTool(component=ov)
         lp.tools.insert(0, tool)
