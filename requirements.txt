@@ -1,4 +1,4 @@
-statsmodels==0.4.3
+statsmodels==0.5.0
 #uncertainties
 #xlrd==0.7.1
 #xlwt==0.7.2
