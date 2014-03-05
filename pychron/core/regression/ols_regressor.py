@@ -21,15 +21,16 @@ from numpy import asarray, column_stack, ones, \
     matrix, sqrt
 from pychron.core.stats import calculate_mswd2, validate_mswd
 
-try:
-    from statsmodels.api import OLS
-except ImportError:
-    try:
-        from scikits.statsmodels.api import OLS
-    except ImportError:
-        from pyface.message_dialog import warning
-
-        warning(None, 'statsmodels is required but was not found')
+from statsmodels.api import OLS
+# try:
+#
+# except ImportError:
+#     try:
+#         from scikits.statsmodels.api import OLS
+#     except ImportError:
+#         from pyface.message_dialog import warning
+#
+#         warning(None, 'statsmodels is required but was not found')
 
 import logging
 
