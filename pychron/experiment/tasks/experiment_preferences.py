@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color
+    Bool, Password, Color, Property
 from traitsui.api import View, Item, Group, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
@@ -25,6 +25,14 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
+
+
+class PositiveInteger(Int):
+    def validate(self, object, name, value):
+        if value >= 0:
+            return value
+
+        self.error(object, name, value)
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -49,6 +57,18 @@ class ExperimentPreferences(BasePreferencesHelper):
     fo_std_dev = Int(2)
 
     min_ms_pumptime = Int
+
+    use_memory_check = Bool
+    memory_threshold = Property(PositiveInteger,
+                                depends_on='_memory_threshold')
+    _memory_threshold = Int
+
+    def _get_memory_threshold(self):
+        return self._memory_threshold
+
+    def _set_memory_threshold(self, v):
+        if v is not None:
+            self._memory_threshold = v
 
 
 class UserNotifierPreferences(BasePreferencesHelper):
@@ -113,10 +133,16 @@ class ExperimentPreferencesPane(PreferencesPane):
                            label='Post Fit Filtering')
         overlap_grp = Group(Item('min_ms_pumptime', label='Min. Mass Spectrometer Pumptime (s)'),
                             label='Overlap')
+        memory_grp = Group(Item('use_memory_check', label='Check Memory',
+                                tooltip='Ensure enough memory is available during experiment execution'),
+                           Item('memory_threshold', label='Threshold',
+                                enabled_when='use_memory_check',
+                                tooltip='Do not continue experiment if available memory less than "Threshold"'),
+                           label='Memory')
 
         return View(color_group, notification_grp,
                     editor_grp, irradiation_grp,
-                    filter_grp, overlap_grp)
+                    filter_grp, overlap_grp, memory_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

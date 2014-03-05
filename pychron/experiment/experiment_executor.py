@@ -130,6 +130,9 @@ class ExperimentExecutor(Loggable):
     use_auto_save = Bool(True)
     min_ms_pumptime = Int(30)
 
+    use_memory_check = Bool(True)
+    memory_threshold = Int
+
     _alive = Bool(False)
     _canceled = False
     _state_thread = None
@@ -209,6 +212,10 @@ class ExperimentExecutor(Loggable):
         bind_preference(self.user_notifier.emailer, 'server_password', '{}.server_password'.format(prefid))
         bind_preference(self.user_notifier.emailer, 'server_host', '{}.server_host'.format(prefid))
         bind_preference(self.user_notifier.emailer, 'server_port', '{}.server_port'.format(prefid))
+
+        #memory
+        bind_preference(self, 'use_memory_check', '{}.use_memory_check'.format(prefid))
+        bind_preference(self, 'memory_threshold', '{}.memory_threshold'.format(prefid))
 
     def isAlive(self):
         return self._alive
@@ -944,7 +951,7 @@ class ExperimentExecutor(Loggable):
         self._wait_for_save()
         self.debug('pre run finished')
 
-    def _check_memory(self, threshold=10):
+    def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
             stop the experiment
@@ -953,13 +960,17 @@ class ExperimentExecutor(Loggable):
             return True if out of memory
             otherwise None
         """
-        # return amem in MB
-        amem = mem_available()
-        self.debug('Available memory {}. mem-threshold= {}'.format(amem, threshold))
-        if amem < threshold:
-            msg = 'Memory limit exceeded. Only {} MB available. Stopping Experiment'.format(amem)
-            invoke_in_main_thread(self.warning_dialog, msg)
-            return True
+        if self.use_memory_check:
+            if threshold is None:
+                threshold = self.memory_threshold
+
+            # return amem in MB
+            amem = mem_available()
+            self.debug('Available memory {}. mem-threshold= {}'.format(amem, threshold))
+            if amem < threshold:
+                msg = 'Memory limit exceeded. Only {} MB available. Stopping Experiment'.format(amem)
+                invoke_in_main_thread(self.warning_dialog, msg)
+                return True
 
     def _wait_for_save(self):
         """
