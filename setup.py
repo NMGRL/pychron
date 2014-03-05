@@ -1,4 +1,9 @@
+#required to fix atexit bug with travis ci
 import multiprocessing
+
+#prevent pycharm from remove multiprocessing during import optimization
+multiprocessing
+
 from setuptools import setup
 
 setup(name='pychron',

@@ -4,6 +4,7 @@
 zobs/
 docs/_build
 sandbox/
+htmlcov
 *.hidden
 *.project
 *.pydevproject

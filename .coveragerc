@@ -1,0 +1,5 @@
+[run]
+omit=/Users/ross/Library/Enthought/Canopy_64bit/User/lib/python2.7/site-packages/*
+
+[report]
+omit=/Users/ross/Library/Enthought/Canopy_64bit/User/lib/python2.7/site-packages/*
