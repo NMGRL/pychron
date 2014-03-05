@@ -6,8 +6,8 @@ virtualenv:
   system_site_packages: true
 before_install:
  - sudo apt-get install python-numpy python-scipy
- - sudo apt-get --no-install-recommends install python-pandas=0.12.0
- - sudo apt-get --no-install-recommends install python-pandas-lib=0.12.0
+ - sudo apt-get --no-install-recommends install python-pandas>=0.7.1
+ - sudo apt-get --no-install-recommends install python-pandas-lib
 # - pip install patsy
 
 install:
