@@ -212,6 +212,8 @@ class _myTableView(_TableView, ConsumerMixin):
             md = PyMimeData.coerce(e.mimeData())
             if md is None:
                 return
+            elif not hasattr(md, '__iter__'):
+                return
 
             # We might be able to handle it (but it depends on what the final
             # target is).
@@ -228,8 +230,6 @@ class _myTableView(_TableView, ConsumerMixin):
     def dropEvent(self, e):
         if self.is_external():
             data = PyMimeData.coerce(e.mimeData()).instance()
-            if not hasattr(data, '__iter__'):
-                return
 
             df = self.drop_factory
             if not df:

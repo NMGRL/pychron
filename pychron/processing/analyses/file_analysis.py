@@ -25,8 +25,8 @@ from pychron.processing.analyses.analysis import Analysis
 
 class NonDBAnalysis(Analysis):
     record_id = Str
-
     uage = Property(depends_on='age, age_err')
+    uuid = Str
 
     @cached_property
     def _get_uage(self):

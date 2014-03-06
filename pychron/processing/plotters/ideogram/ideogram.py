@@ -165,11 +165,13 @@ class Ideogram(BaseArArFigure):
         scatter = self._add_aux_plot(ys,
                                      title, pid)
 
-        self._add_error_bars(scatter, self.xes, 'x', 1,
+        nsigma = self.options.error_bar_nsgima
+
+        self._add_error_bars(scatter, self.xes, 'x', nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)
         if es:
-            self._add_error_bars(scatter, es, 'y', 1,
+            self._add_error_bars(scatter, es, 'y', nsigma,
                                  end_caps=self.options.y_end_caps,
                                  visible=po.y_error)
 
@@ -200,12 +202,14 @@ class Ideogram(BaseArArFigure):
                     for k, rend in p.plots.iteritems():
                         if k.startswith(name):
                             startidx += rend[0].index.get_size()
-
-        ys = arange(startidx, startidx + n)
+        if self.options.analysis_number_sorting == 'Oldest @Top':
+            ys = arange(startidx, startidx + n)
+        else:
+            ys = arange(startidx + n - 1, startidx - 1, -1)
 
         scatter = self._add_aux_plot(ys, name, pid)
 
-        self._add_error_bars(scatter, self.xes, 'x', 1,
+        self._add_error_bars(scatter, self.xes, 'x', self.options.error_bar_nsigma,
                              end_caps=self.options.x_end_caps,
                              visible=po.x_error)
 
@@ -287,7 +291,8 @@ class Ideogram(BaseArArFigure):
                 if self.options.show_mean_info:
                     m = self.options.mean_calculation_kind
                     s = self.options.nsigma
-                    ts.append('Mean: {} +/-{}s'.format(m, s))
+                    es = self.options.error_bar_nsigma
+                    ts.append('Mean: {} +/-{}s Data: +/-{}s'.format(m, s, es))
                 if self.options.show_error_type_info:
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 

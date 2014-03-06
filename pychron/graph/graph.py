@@ -15,10 +15,11 @@
 #===============================================================================
 
 #=============enthought library imports=======================
+import os
+
 from traits.api import Instance, Any, Bool, \
     List, Str, Property, Dict, Callable
 from traitsui.api import View, Item
-
 from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
     VPlotContainer, HPlotContainer, GridPlotContainer, \
@@ -28,6 +29,7 @@ from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
 from chaco.axis import PlotAxis
 from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
+
 #=============standard library imports ========================
 # import numpy as np
 from numpy import array, hstack, Inf
@@ -249,7 +251,7 @@ class Graph(Viewable, ContextMenuMixin):
         pass
 
     def get_plotid_by_ytitle(self, *args, **kw):
-        plot= self.get_plot_by_ytitle(*args, **kw)
+        plot = self.get_plot_by_ytitle(*args, **kw)
         if plot is not None:
             return self.plots.index(plot)
 
@@ -391,7 +393,7 @@ class Graph(Viewable, ContextMenuMixin):
         #         print '====== {}'.format(self)
         #         print 'len plots {}'.format(len(self.plots))
         for pi in self.plots:
-        #             print 'len pi.renderers {}'.format(len(pi.plots.keys()))
+            #             print 'len pi.renderers {}'.format(len(pi.plots.keys()))
             for k, pp in pi.plots.items():
                 for renderer in pp:
                     try:
@@ -1015,7 +1017,7 @@ class Graph(Viewable, ContextMenuMixin):
         try:
             names = self.series[plotid][series]
         except IndexError:
-           print 'adding data', plotid, series, self.series[plotid]
+            print 'adding data', plotid, series, self.series[plotid]
 
         plot = self.plots[plotid]
 
@@ -1067,7 +1069,7 @@ class Graph(Viewable, ContextMenuMixin):
         self.plotcontainer.request_redraw()
 
     def add_range_selector(self, plotid=0, series=0):
-    #        plot = self.series[plotid][series]
+        #        plot = self.series[plotid][series]
         plot = self.plots[plotid].plots['plot{}'.format(series)][0]
 
         plot.active_tool = RangeSelection(plot, left_button_selects=True)
@@ -1401,7 +1403,7 @@ class Graph(Viewable, ContextMenuMixin):
         """
         """
         if path is None:
-            dlg = FileDialog(action='save as')
+            dlg = FileDialog(action='save as', default_directory=os.path.expanduser('~'))
             if dlg.open() == OK:
                 path = dlg.path
                 self.status_text = 'Image Saved: %s' % path

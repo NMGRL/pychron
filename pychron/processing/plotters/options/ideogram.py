@@ -15,11 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String
+from traits.api import Enum, Float, Bool, String, Button
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.processing.label_maker import LabelMaker
 from pychron.processing.plotters.options.age import AgeOptions
 
 
@@ -42,12 +44,25 @@ class IdeogramOptions(AgeOptions):
     asymptotic_width = Float
     x_end_caps = Bool(False)
     y_end_caps = Bool(False)
+    error_bar_nsigma = Enum(1, 2, 3)
+    analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
+    # analysis_label_format = String
+    # analysis_label_display = String
+    edit_label_format = Button
 
     # def _index_attr_default(self):
     #     return 'uage'
     def _index_attr_changed(self):
         for ap in self.aux_plots:
             ap.clear_ylimits()
+
+    def _edit_label_format_fired(self):
+        lm = LabelMaker(label=self.analysis_label_display)
+
+        info = lm.edit_traits()
+        if info.result:
+            self.analysis_label_format = lm.formatter
+            self.analysis_label_display = lm.label
 
     def _get_groups(self):
         xgrp = VGroup(HGroup(Item('index_attr',
@@ -93,16 +108,23 @@ class IdeogramOptions(AgeOptions):
                           Item('display_mean', label='Value'),
                           label='Mean'),
                    Item('label_box'),
+                   Item('analysis_number_sorting', label='Analysis# Sort'),
+                   HGroup(Item('analysis_label_display',
+                               width=100,
+                               style='readonly'),
+                          icon_button_editor('edit_label_format', 'cog',
+                                             tooltip='Open Label maker')),
                    HGroup(Item('show_info', label='Show'),
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           label='Info'),
                    label='Display')
 
-        egrp = Group(HGroup(Item('x_end_caps', label='X'),
-                            Item('y_end_caps', label='Y'),
+        egrp = VGroup(HGroup(Item('x_end_caps', label='X'),
+                             Item('y_end_caps', label='Y'),
                             label='End Caps', ),
-                     label='Error Bars')
+                      Item('error_bar_nsigma', label='NSigma'),
+                      label='Error Bars')
         return VGroup(self._get_title_group(),
                       xgrp,
                       g, g2, egrp,
@@ -119,7 +141,7 @@ class IdeogramOptions(AgeOptions):
             'use_centered_range', 'centered_range',
             'use_asymptotic_limits', 'asymptotic_width',
             'display_mean', 'display_mean_indicator',
-            'x_end_caps','y_end_caps','index_attr'
-        ]
+            'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
+            'analysis_number_sorting']
 
 #============= EOF =============================================

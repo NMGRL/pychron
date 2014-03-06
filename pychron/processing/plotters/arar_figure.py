@@ -257,12 +257,26 @@ class BaseArArFigure(HasTraits):
     #
     #===============================================================================
     def _add_point_labels(self, scatter):
-        labels = ['{:02n}{}'.format(si.aliquot, si.step) for si in self.sorted_analyses]
+        labels = []
+
+        f = self.options.analysis_label_format
+
+        if not f:
+            f = '{aliquot:02n}{step:}'
+
+        for si in self.sorted_analyses:
+            ctx = {'aliquot': si.aliquot,
+                   'step': si.step,
+                   'sample': si.sample}
+
+            x = f.format(**ctx)
+            labels.append(x)
+
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box
                                 )
-        scatter.overlays.append(ov)
+        scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
                         end_caps,
@@ -274,7 +288,7 @@ class BaseArArFigure(HasTraits):
                               use_end_caps=end_caps
                               )
 
-        scatter.underlays.append(ebo)
+        scatter.overlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
         return ebo
 

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Enum
+from traits.api import Bool, Enum, String
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -32,6 +32,8 @@ class AgeOptions(PlotterOptions):
     show_error_type_info=Bool(True)
     label_box = Bool(False)
     index_attr=None
+    analysis_label_format = String
+    analysis_label_display = String
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
@@ -39,7 +41,9 @@ class AgeOptions(PlotterOptions):
                   'include_irradiation_error',
                   'include_decay_error',
                   'nsigma','label_box',
-                  'show_info', 'show_mean_info','show_error_type_info']
+                  'show_info', 'show_mean_info', 'show_error_type_info',
+                  'analysis_label_display',
+                  'analysis_label_format']
         return attrs
 
 

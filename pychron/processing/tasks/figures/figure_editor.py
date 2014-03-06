@@ -56,16 +56,21 @@ class FigureEditor(GraphEditor):
 
     def set_items_from_file(self, p):
         if os.path.isfile(p):
-            def construct(d):
-                f = FileAnalysis(age=float(d['age']),
-                                 age_err=float(d['age_err']),
-                                 record_id=d['runid'])
-                return f
-
+            # def construct(d):
             par = CSVParser()
             par.load(p)
-            ans = [construct(args)
-                   for args in par.itervalues()]
+
+            ans = []
+            for d in par.itervalues():
+                if d['age'] is not None:
+                    f = FileAnalysis(age=float(d['age']),
+                                     age_err=float(d['age_err']),
+                                     record_id=d['runid'],
+                                     sample=d['sample'])
+                    ans.append(f)
+
+                    # ans = [construct(args)
+                    #        for args in par.itervalues()]
 
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:

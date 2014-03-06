@@ -27,7 +27,8 @@ from pychron.core.i_column_parser import IColumnParser
 
 @provides(IColumnParser)
 class BaseColumnParser(HasTraits):
-    _header_offset=1
+    _header_offset = 1
+
     def load(self, p, header_idx=0):
         self._header_offset = header_idx + 1
         self._load(p, header_idx)
@@ -77,16 +78,19 @@ class BaseColumnParser(HasTraits):
 class CSVParser(BaseColumnParser):
     def _load(self, p, header_idx):
         with open(p, 'r') as fp:
-            reader=csv.reader(fp)
-            self._lines=list(reader)
-            self._header=map(str.strip, self._lines[header_idx])
-            self._nrows=len(self._lines)
+            reader = csv.reader(fp)
+            self._lines = list(reader)
+            self._header = map(str.strip, self._lines[header_idx])
+            self._nrows = len(self._lines)
 
     def get_value(self, ri, ci):
         if not isinstance(ci, int):
             ci = self._get_index(ci)
 
-        return self._lines[ri][ci]
+        try:
+            return self._lines[ri][ci]
+        except IndexError:
+            pass
 
     @property
     def nrows(self):

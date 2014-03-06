@@ -15,12 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.paths import paths
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.tags import Tag
@@ -219,7 +223,10 @@ class FigureTask(AnalysisEditTask):
                                 add_table=add_table)
 
     def new_ideogram_from_file(self):
-        p = '/Users/ross/Sandbox/ideogram_from_file.txt'
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages'
+        if not os.path.isfile(p):
+            self.open_file_dialog(default_directory=paths.data_dir)
+
         self.new_ideogram(add_iso=False, add_table=False)
         self.active_editor.set_items_from_file(p)
 
