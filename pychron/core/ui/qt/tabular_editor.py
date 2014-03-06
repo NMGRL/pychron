@@ -228,6 +228,9 @@ class _myTableView(_TableView, ConsumerMixin):
     def dropEvent(self, e):
         if self.is_external():
             data = PyMimeData.coerce(e.mimeData()).instance()
+            if not hasattr(data, '__iter__'):
+                return
+
             df = self.drop_factory
             if not df:
                 df = lambda x: x
