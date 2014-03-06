@@ -28,7 +28,7 @@ from pychron.processing.plotters.options.option import FitPlotterOptions
 class SeriesOptions(BasePlotterOptions):
     def load_aux_plots(self, ref):
         def f(kii):
-            ff=next((x for x in self.aux_plots if x.name==kii))
+            ff = next((x for x in self.aux_plots if x.name == kii), None)
             if not ff:
                 ff = FitPlotterOptions(name=kii)
                 ff.trait_set(use=False, fit='')
