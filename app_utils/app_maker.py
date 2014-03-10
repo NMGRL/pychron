@@ -103,7 +103,7 @@ class Template(object):
         #=======================================================================
         ins.build_app(op)
         ins.make_egg()
-        ins.make_migrate_repos()
+        # ins.make_migrate_repos()
         ins.make_argv()
 
 
