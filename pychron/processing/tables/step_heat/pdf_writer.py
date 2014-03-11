@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 import re
+
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from traits.api import Int
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -43,7 +45,6 @@ def extract_text(txt):
 
 
 class StepHeatPDFTableWriter(IsotopePDFTableWriter):
-
     def _make_table(self, group,
                     double_first_line=True,
                     include_footnotes=False):
@@ -67,12 +68,12 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         data = []
         bdata = []
         #set extract units/label before making meta rows
-        if analyses[0].extract_device=='Furnace':
-            self.extract_label='Temp'
-            self.extract_units='C'
+        if analyses[0].extract_device == 'Furnace':
+            self.extract_label = 'Temp'
+            self.extract_units = 'C'
         else:
-            self.extract_label='Power'
-            self.extract_units='W'
+            self.extract_label = 'Power'
+            self.extract_units = 'W'
 
         # make meta
         meta = self._make_meta(analyses, style,
@@ -138,7 +139,6 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         else:
             return t,
 
-
     def _make_analysis_row(self, analysis, is_plateau_step):
         value = self._value
         error = self._error
@@ -149,7 +149,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('is_plateau_step', lambda x: '<b>P</b>' if x else ''),
             ('aliquot_step_str', '{}',),
             ('extract_value', '{}'),
-            ('moles_Ar40', value()),
+            ('moles_Ar40', value(scale=1e-18)),
 
             #==============================================================
             # signals
@@ -217,26 +217,25 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
                     s = vfmt(v)
 
-                    s = self._new_paragraph('<i>{}</i>'.format(s),
-                    )
+                    s = self._new_paragraph('<i>{}</i>'.format(s))
 
                     e = efmt(v)
                     e = self._new_paragraph('<i>{}</i>'.format(e))
 
-            blankrow.add_item(value=s,
-            )
-            blankrow.add_item(value=e,
-            )
+            blankrow.add_item(value=s)
+            blankrow.add_item(value=e)
 
         return row, blankrow
 
     def _set_row_heights(self, table, data):
+        print table, data
         a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
         for a, v in a_idxs:
             table._argH[a] = 0.19 * inch
 
         idx = self._get_idxs(data, Row)
         for i, v in idx:
+            print i, v.height
             if v.height:
                 table._argH[i] = v.height * inch
 
@@ -405,12 +404,12 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         rows.append(row)
 
         for n, d, s, key in (
-            (40, 39, 'K', 'k4039'),
-            (38, 39, 'K', 'k3839'),
-            (37, 39, 'K', 'k3739'),
-            (39, 37, 'Ca', 'ca3937'),
-            (38, 37, 'Ca', 'ca3837'),
-            (36, 37, 'Ca', 'ca3637')):
+                (40, 39, 'K', 'k4039'),
+                (38, 39, 'K', 'k3839'),
+                (37, 39, 'K', 'k3739'),
+                (39, 37, 'Ca', 'ca3937'),
+                (38, 37, 'Ca', 'ca3837'),
+                (36, 37, 'Ca', 'ca3637')):
             row = FooterRow(fontsize=df, height=0.15)
             row.add_item(value='({}Ar/{}Ar){}'.format(
                 Superscript(n),
@@ -429,10 +428,10 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         rows.append(row)
 
         for i, E, dl, key in (
-            (40, 'K', u'\u03BB\u03B5', 'lambda_b'),
-            (40, 'K', u'\u03BB\u03B2', 'lambda_e'),
-            (39, 'Ar', '', 'lambda_Ar39'),
-            (37, 'Ar', '', 'lambda_Ar37')):
+                (40, 'K', u'\u03BB\u03B5', 'lambda_b'),
+                (40, 'K', u'\u03BB\u03B2', 'lambda_e'),
+                (39, 'Ar', '', 'lambda_Ar39'),
+                (37, 'Ar', '', 'lambda_Ar37')):
             vv = getattr(arar_constants, key)
             v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
 

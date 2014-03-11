@@ -55,11 +55,12 @@ class Ideogram(BaseArArFigure):
         index_attr = 'uage'
         if opt.index_attr:
             index_attr = opt.index_attr
+            if not opt.include_j_error:
+                index_attr = 'uage_wo_j_err'
 
         graph = self.graph
 
         self._analysis_number_cnt = 0
-
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
@@ -165,7 +166,7 @@ class Ideogram(BaseArArFigure):
         scatter = self._add_aux_plot(ys,
                                      title, pid)
 
-        nsigma = self.options.error_bar_nsgima
+        nsigma = self.options.error_bar_nsigma
 
         self._add_error_bars(scatter, self.xes, 'x', nsigma,
                              end_caps=self.options.x_end_caps,

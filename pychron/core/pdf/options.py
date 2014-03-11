@@ -24,11 +24,11 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class BasePDFOptions(HasTraits):
-    orientation = Enum('lanscape', 'portrait')
-    left_margin = Float(0.25)
-    right_margin = Float(0.25)
+    orientation = Enum('landscape', 'portrait')
+    left_margin = Float(1.5)
+    right_margin = Float(1)
     top_margin = Float(1)
-    bottom_margin = Float(0.25)
+    bottom_margin = Float(1)
 
     def dump_yaml(self):
         d = dict(orientation=self.orientation,
@@ -46,13 +46,15 @@ class BasePDFOptions(HasTraits):
             except TraitError:
                 pass
 
+
 class PDFTableOptions(BasePDFOptions):
     title = Str
     auto_title = Bool
     use_alternating_background = Bool
     alternating_background = Color
     show_page_numbers = Bool
-
+    default_row_height = Float(0.22)
+    default_header_height = Float(0.22)
     options_button = Button
 
     def load_yaml(self, d):

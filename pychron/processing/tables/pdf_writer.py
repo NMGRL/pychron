@@ -27,6 +27,7 @@ from pychron.core.pdf.items import Superscript, Subscript, Row, NamedParameter
 class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
+    default_row_height = 0.1  #inches
 
     def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))
@@ -123,6 +124,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         #         sigma = self._plusminus_sigma()
         super_ar = lambda x: '{}Ar'.format(Superscript(x))
 
+        _1016moles = '(10{} mol)'.format(Superscript(-18))
         _102fa = '(10{} fA)'.format(Superscript(2))
         _103fa = '(10{} fA)'.format(Superscript(3))
         minus_102fa = '(10{} fA)'.format(Superscript(-2))
@@ -135,7 +137,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             ('', ''),
             ('N', ''),
             (self.extract_label, '({})'.format(self.extract_units)),
-            (super_ar(40), ''),
+            (super_ar(40), _1016moles),
             (super_ar(40), _103fa), (sigma, ''),
             (super_ar(39), _103fa), (sigma, ''),
             (super_ar(38), ''), (sigma, ''),
@@ -181,11 +183,10 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
         return [
             nrow,
-            urow
-        ]
+            urow]
 
     def _new_row(self, obj, attrs, default_fontsize=6):
-        row = Row()
+        row = Row(height=self.default_row_height)
         for args in attrs:
             if len(args) == 3:
                 attr, fmt, fontsize = args

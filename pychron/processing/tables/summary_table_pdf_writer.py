@@ -60,6 +60,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         style = self._new_style(header_line_idx=1)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
+        style.add('VALIGN', (0, 0), (-1, -1), 'BOTTOM')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
         self._new_line(style, 0, cmd='LINEABOVE')
 
@@ -97,18 +98,19 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
     def _make_header(self, style):
         PMS = u'\u00b1 1\u03c3'
 
-        pr = Row()
+        pr = Row(height=self.options.default_header_height)
         pr.add_blank_item(6)
         pr.add_item(value='Preferred Age', span=-1)
 #         style.add('ALIGN', (0, 3), (0, -1), 'CENTER')
         self._new_line(style, 0, weight=0.75, start=4, end=-1)
 
-        r = Row()
+        r = Row(height=self.options.default_header_height)
 
         r.add_item(value='Sample')
         r.add_item(value='L#')
         r.add_item(value='Irrad')
         r.add_item(value='Material')
+        r.add_item(value='Lithology')
 
         r.add_item(value='Type')
         r.add_item(value='N')
@@ -121,11 +123,12 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         return (pr, r,)
 
     def _make_interpreted_age_row(self, interpreted_age):
-        row = Row()
+        row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
         row.add_item(value=interpreted_age.identifier)
         row.add_item(value=interpreted_age.irradiation)
         row.add_item(value=self._short_material_name(interpreted_age.material))
+        row.add_item(value='Basanite')
         row.add_item(value=interpreted_age.age_kind)
         row.add_item(value=interpreted_age.nanalyses)
         row.add_item(value=floatfmt(interpreted_age.mswd, n=1))

@@ -20,11 +20,12 @@ from ConfigParser import ConfigParser
 from copy import copy
 import os
 
-from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either
+from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either, cached_property
 
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
+
 
 
 #============= standard library imports ========================
@@ -77,6 +78,7 @@ class ArArAge(Loggable):
     F_err_wo_irrad = Float
 
     uage = Either(Variable, AffineScalarFunc)
+    uage_wo_j_err = Either(Variable, AffineScalarFunc)
 
     age = Float
     age_err = Float
@@ -90,7 +92,8 @@ class ArArAge(Loggable):
     arar_constants = Instance(ArArConstants,())
     logger=logger
 
-    moles_Ar40 = Float
+    moles_Ar40 = Property
+    sensitivity = Float  #moles/pA
 
     _missing_isotope_warned = False
     _kca_warning = False
@@ -416,6 +419,7 @@ class ArArAge(Loggable):
                            arar_constants=self.arar_constants)
 
         self.age_err_wo_j = float(age.std_dev)
+        self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
 
         if self.j is not None:
             j = copy(self.j)
@@ -447,7 +451,10 @@ class ArArAge(Loggable):
         """
         return (self.timestamp - self.irradiation_time) / (60 * 60 * 24)
 
-    #===============================================================================
+    @cached_property
+    def _get_moles_Ar40(self):
+        return self.sensitivity * self.get_isotope('Ar40')
+        #===============================================================================
     #
     #===============================================================================
 

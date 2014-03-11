@@ -24,6 +24,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 import yaml
 
+from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
@@ -74,6 +75,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_all.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_all2.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all3.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all4.yaml'
             if not os.path.isfile(p):
                 p = self.open_file_dialog()
             if p:
@@ -143,6 +145,8 @@ class InterpretedAgeTask(BaseBrowserTask):
 
             n = self.active_editor.name
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages'
+            p, _ = unique_path(r, n, extension='.pdf')
             if p:
                 self.active_editor.save_pdf_tables(p)
 
