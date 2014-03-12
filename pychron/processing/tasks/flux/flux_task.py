@@ -24,6 +24,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -101,16 +102,13 @@ class FluxTask(InterpolationTask):
                         PaneItem('pychron.processing.unknowns'),
                         PaneItem('pychron.processing.references'),
                         PaneItem('pychron.processing.analyses')),
-                    PaneItem('pychron.processing.controls'))
-            ),
-        )
+                    PaneItem('pychron.processing.controls'))))
 
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
         return panes + [
             IrradiationPane(model=self.manager),
-            AnalysesPane(model=self)
-        ]
+            AnalysesPane(model=self)]
 
     def new_flux(self):
         editor = FluxEditor(name='Flux {:03n}'.format(self.flux_editor_count),
@@ -118,7 +116,6 @@ class FluxTask(InterpolationTask):
 
         self._open_editor(editor)
         self.flux_editor_count += 1
-
 
     @on_trait_change('manager:level')
     def _level_changed(self, new):

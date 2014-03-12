@@ -178,17 +178,28 @@ class BrowserPane(TraitsDockPane):
     tabletools = Instance(TableTools)
 
     def _get_browser_group(self):
+        irrad_grp = VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+                           UItem('level', editor=EnumEditor(name='levels')),
+                           VGroup(
+                               Item('include_monitors', label='Monitors'),
+                               Item('include_unknowns', label='Unknowns')),
+                           icon_button_editor('find_by_irradiation',
+                                              'edit-find',
+                                              enabled_when='include_monitors or include_unknowns'
+                           ))
+
         project_grp = VGroup(
             HGroup(Label('Filter'),
                    UItem('project_filter'),
                    icon_button_editor('clear_selection_button',
                                       'cross',
                                       tooltip='Clear selected')),
-            UItem('projects',
-                  editor=TabularEditor(editable=False,
+            HGroup(UItem('projects',
+                         editor=TabularEditor(editable=False,
                                        selected='selected_projects',
                                        adapter=ProjectAdapter(),
-                                       multi_select=True)))
+                                       multi_select=True)),
+                   irrad_grp))
 
         grp = VSplit(project_grp,
                      UItem('pane.tabletools', style='custom', height=0.1),

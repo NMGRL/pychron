@@ -16,13 +16,17 @@
 
 #============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
+import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button
+    on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
 from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
+import os
 #============= local library imports  ==========================
+from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.paths import paths
 from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -51,6 +55,15 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     tool_bars = [SToolBar(NewBrowserEditorAction(),
                           image_size=(16, 16))]
+
+    irradiations = DelegatesTo('manager')
+    irradiation = DelegatesTo('manager')
+    levels = DelegatesTo('manager')
+    level = DelegatesTo('manager')
+    find_by_irradiation = Button
+
+    include_monitors = Bool(True)
+    include_unknowns = Bool(False)
 
     auto_select_analysis = Bool(False)
 
@@ -83,9 +96,28 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #    self.samples = s
     #    self.osamples = s
     #    self.trait_set(selected_sample=sel)
+    def dump_browser_options(self):
+        d = {'include_monitors': self.include_monitors,
+             'include_unknowns': self.include_unknowns}
+        p = os.path.join(paths.hidden_dir, 'browser_options')
+        with open(p, 'w') as fp:
+            pickle.dump(d, fp)
+
+    def load_browser_options(self):
+        d = {}
+        p = os.path.join(paths.hidden_dir, 'browser_options')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                try:
+                    d = pickle.load(fp)
+                except Exception:
+                    pass
+        if d:
+            self.trait_set(**d)
 
     def prepare_destroy(self):
         self.dump_browser_selection()
+        self.dump_browser_options()
         # self.analysis_table.dump()
 
     def activated(self):
@@ -102,6 +134,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
+        self.load_browser_options()
         # self.analysis_table.load()
 
         # def _set_db(self):
@@ -156,6 +189,30 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
+
+    def _find_by_irradiation_fired(self):
+        man = self.manager
+        db = man.db
+        with db.session_ctx():
+            level = self.manager.get_level(self.level)
+            if level:
+
+                refs, unks = self.manager.group_level(level)
+                xs = []
+                if self.include_monitors:
+                    xs.append(refs)
+
+                if self.include_unknowns:
+                    xs.append(unks)
+
+                def sfactory(ri):
+                    dbrecord = db.get_labnumber(ri.identifier)
+                    if dbrecord and dbrecord.sample:
+                        return LabnumberRecordView(dbrecord)
+
+                samples = [sfactory(ri) for x in xs
+                           for ri in x]
+                self.samples = [si for si in samples if si]
 
     def _advanced_query_fired(self):
 
