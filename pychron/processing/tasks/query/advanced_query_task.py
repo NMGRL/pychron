@@ -43,6 +43,18 @@ class AdvancedQueryTask(BaseManagerTask):
         self.data_selector=ds
         return AdvancedQueryPane(model=ds)
 
+    @on_trait_change('data_selector:selector:dclicked')
+    def _handle_dclick(self, new):
+        app = self.window.application
+        task = None
+        for win in app.windows:
+            task = win.active_task
+            if issubclass(type(task), AnalysisEditTask):
+                break
+
+        if task:
+            task.recall(new.item)
+
     @on_trait_change('data_selector:[append_button, replace_button]')
     def _handle_selection(self, name, new):
         ans=self.data_selector.selector.selected

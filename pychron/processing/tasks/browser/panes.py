@@ -190,9 +190,6 @@ class BrowserPane(TraitsDockPane):
                                        adapter=ProjectAdapter(),
                                        multi_select=True)))
 
-        # grp = VSplit(project_grp,
-        #     VGroup(sample_tools, analysis_tools),
-        #     HSplit(sample_table, analysis_table))
         grp = VSplit(project_grp,
                      UItem('pane.tabletools', style='custom', height=0.1),
                      UItem('pane.tableview',
@@ -200,49 +197,7 @@ class BrowserPane(TraitsDockPane):
                            style='custom'))
         return grp
 
-    # def _get_analysis_group(self, base='analysis'):
-    #     def make_name(name):
-    #         return 'object.{}_table.{}'.format(base, name)
-    #
-    #     analysis_grp = VGroup(
-    #         HGroup(
-    #             #Label('Filter'),
-    #             UItem(make_name('analysis_filter_parameter'),
-    #                   editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-    #             UItem(make_name('analysis_filter_comparator')),
-    #             UItem(make_name('analysis_filter'),
-    #                   width=75),
-    #             UItem(make_name('analysis_filter'),
-    #                   editor=EnumEditor(name=make_name('analysis_filter_values')),
-    #                   width=-25),
-    #             icon_button_editor(make_name('configure_analysis_table'), 'cog',
-    #                                tooltip='Configure/Advanced query')),
-    #         UItem(make_name('analyses'),
-    #               editor=myTabularEditor(
-    #                   adapter=self.analysis_tabular_adapter,
-    #                   #                                                       editable=False,
-    #                   operations=['move'],
-    #                   refresh=make_name('refresh_needed'),
-    #                   selected=make_name('selected'),
-    #                   dclicked=make_name('dclicked'),
-    #                   multi_select=self.multi_select,
-    #                   drag_external=True,
-    #                   scroll_to_row=make_name('scroll_to_row'),
-    #                   stretch_last_section=False),
-    #               #                                  editor=ListStrEditor(editable=False,
-    #               #                                           selected='selected_analysis'
-    #               #                                           )
-    #               width=300),
-    #         HGroup(spring, Item(make_name('omit_invalid'))),
-    #         defined_when=self.analyses_defined)
-    #     return analysis_grp
-
     def traits_view(self):
-        # main_grp= Group(
-        #     self._get_browser_group(),
-        #     self._get_date_group(),
-        #     layout='tabbed')
-
         main_grp = self._get_browser_group()
 
         v = View(

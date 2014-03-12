@@ -68,11 +68,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     days_pad = Int(0)
     hours_pad = Int(18)
 
-    datasource_url=String
+    datasource_url = String
     #clear_selection_button = Button
 
     browser_pane = Any
-    advanced_query=Button
+    advanced_query = Button
 
     #def set_projects(self, ps, sel):
     #    self.oprojects = ps
@@ -83,7 +83,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     #    self.samples = s
     #    self.osamples = s
     #    self.trait_set(selected_sample=sel)
-
 
     def prepare_destroy(self):
         self.dump_browser_selection()
@@ -98,14 +97,14 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_analysis_types()
             self._load_extraction_devices()
 
-        self.datasource_url=db.datasource_url
+        self.datasource_url = db.datasource_url
         # self._set_db()
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
         # self.analysis_table.load()
 
-    # def _set_db(self):
+        # def _set_db(self):
         #self.analysis_table.db = self.manager.db
         # self.danalysis_table.db = self.manager.db
 
@@ -160,7 +159,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _advanced_query_fired(self):
 
-        app=self.window.application
+        app = self.window.application
         win, task, is_open = app.get_open_task('pychron.advanced_query')
         task.set_append_replace_enabled(True)
         if is_open:
@@ -181,7 +180,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _dclicked_sample_changed(self):
         if self.active_editor:
-            ans=self.analysis_table.analyses
+            ans = self.analysis_table.analyses
             self.active_editor.set_items(ans)
 
     def _selected_samples_changed(self, new):
@@ -226,48 +225,48 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         #     at = AnalysisTable(db=self.manager.db)
         #     return at
 
-#class BrowserTask(BaseBrowserTask):
-#    name = 'Analysis Browser'
-#
-#
-#    def activated(self):
-#        editor = RecallEditor()
-#        self._open_editor(editor)
-#        self.load_projects()
-#
-#    def new_editor(self):
-#        editor = RecallEditor()
-#        self._open_editor(editor)
-#
-#    def _default_layout_default(self):
-#        return TaskLayout(left=PaneItem('pychron.browser'))
-#
-#    def _set_selected_analysis(self, an):
-#        if an and isinstance(self.active_editor, RecallEditor):
-#        #             l, a, s = strip_runid(s)
-#        #             an = self.manager.db.get_unique_analysis(l, a, s)
-#            an = self.manager.make_analyses([an], calculate_age=True)[0]
-#            #             an.load_isotopes(refit=False)
-#            #self.active_editor.analysis_summary = an.analysis_summary
-#            self.active_editor.analysis_view = an.analysis_view
-#
-#    def create_dock_panes(self):
-#        return [self._create_browser_pane(multi_select=False)]
-#
-#    def _analysis_table_default(self):
-#        at = AnalysisTable(db=self.manager.db)
-#        return at
-#
-#    def _danalysis_table_default(self):
-#        at = AnalysisTable(db=self.manager.db)
-#        return at
-#
-#    def _dclicked_sample_changed(self):
-#        pass
+        #class BrowserTask(BaseBrowserTask):
+        #    name = 'Analysis Browser'
+        #
+        #
+        #    def activated(self):
+        #        editor = RecallEditor()
+        #        self._open_editor(editor)
+        #        self.load_projects()
+        #
+        #    def new_editor(self):
+        #        editor = RecallEditor()
+        #        self._open_editor(editor)
+        #
+        #    def _default_layout_default(self):
+        #        return TaskLayout(left=PaneItem('pychron.browser'))
+        #
+        #    def _set_selected_analysis(self, an):
+        #        if an and isinstance(self.active_editor, RecallEditor):
+        #        #             l, a, s = strip_runid(s)
+        #        #             an = self.manager.db.get_unique_analysis(l, a, s)
+        #            an = self.manager.make_analyses([an], calculate_age=True)[0]
+        #            #             an.load_isotopes(refit=False)
+        #            #self.active_editor.analysis_summary = an.analysis_summary
+        #            self.active_editor.analysis_view = an.analysis_view
+        #
+        #    def create_dock_panes(self):
+        #        return [self._create_browser_pane(multi_select=False)]
+        #
+        #    def _analysis_table_default(self):
+        #        at = AnalysisTable(db=self.manager.db)
+        #        return at
+        #
+        #    def _danalysis_table_default(self):
+        #        at = AnalysisTable(db=self.manager.db)
+        #        return at
+        #
+        #    def _dclicked_sample_changed(self):
+        #        pass
 
-#===============================================================================
-# handlers
-#===============================================================================
+        #===============================================================================
+        # handlers
+        #===============================================================================
 
         # @on_trait_change('mass_spectrometer, analysis_type, extraction_device')
         # def _query(self):
