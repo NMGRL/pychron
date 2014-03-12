@@ -109,9 +109,9 @@ class ClearGroupAction(GroupAction):
     method = 'clear_grouping'
 
 
-class SetAnalysisGroupAction(TaskAction):
+class MakeAnalysisGroupAction(TaskAction):
     name = 'Make Named Group'
-    method = 'set_analysis_group'
+    method = 'make_analysis_group'
 
 
 #===============================================================================

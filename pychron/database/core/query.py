@@ -17,10 +17,12 @@
 #============= enthought library imports =======================
 from datetime import datetime, timedelta
 
+from sqlalchemy import cast, Date
 from traits.api import HasTraits, String, Property, Str, List, Button, Any, \
     Bool, cached_property, Event
 from traitsui.api import View, Item, EnumEditor, HGroup, CheckListEditor, \
     VGroup
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -173,14 +175,14 @@ class Query(HasTraits):
                 fmt = '%Y' if len(c) == 4 else '%y'
 
             d = datetime.strptime(c, fmt)
-            # print attr, comp, c, d
 
             if comp == 'between':
                 d = (d, datetime.strptime(self.rcriterion, fmt))
             else:
                 d = (d, )
+
+            attr = cast(attr, Date)
             q = q.filter(getattr(attr, comp)(*d))
-            #        c = '{}'.format(c)
         return q
 
     #

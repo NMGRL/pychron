@@ -119,7 +119,7 @@ class InterpolationTask(AnalysisEditTask):
         elif items:
             return ((items, self.default_reference_analysis_type),)
 
-    def _set_analysis_group_hook(self, *args, **kw):
+    def _make_analysis_group_hook(self, *args, **kw):
         pass
 
     def _set_tag_hook(self):

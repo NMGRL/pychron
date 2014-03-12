@@ -44,6 +44,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -120,7 +121,7 @@ class AnalysisEditTask(BaseBrowserTask):
             ieditor.set_items([rec])
             self.editor_area.add_editor(ieditor)
 
-    def set_analysis_group(self):
+    def make_analysis_group(self):
         ans = self._get_analyses_to_group()
 
         if not ans:
@@ -151,12 +152,12 @@ class AnalysisEditTask(BaseBrowserTask):
                     return
 
                 group = db.add_analysis_group(name, id=set_id)
-                self._set_analysis_group(db, group, a.analyses)
+                self._make_analysis_group(db, group, a.analyses)
                 self.db_save_info()
 
                 self._load_associated_groups(self.selected_projects)
 
-    def _set_analysis_group(self, db, group, ans):
+    def _make_analysis_group(self, db, group, ans):
         # db=self.manager.db
         for ais, at in ans:
             at = db.get_analysis_type(at)
