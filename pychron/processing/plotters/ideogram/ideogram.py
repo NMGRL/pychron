@@ -113,7 +113,7 @@ class Ideogram(BaseArArFigure):
         t = index_attr
         if index_attr == 'uF':
             t = 'Ar40*/Ar39k'
-        elif index_attr == 'uage':
+        elif index_attr in ('uage', 'uage_wo_j_err'):
             ref = self.analyses[0]
             age_units = ref.arar_constants.age_units
             t = 'Age ({})'.format(age_units)
@@ -179,7 +179,13 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        self._add_scatter_inspector(scatter)
+        ia = 'uage'
+        if self.options.include_j_error:
+            ia = 'uage_wo_j_err'
+
+        f = lambda x: u'Age= {}'.format(x.value_string(ia))
+        self._add_scatter_inspector(scatter,
+                                    additional_info=f)
 
         return scatter, omits
 
@@ -217,22 +223,13 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        #         self._analysis_number_cnt += n
-        # self.graph.set_y_limits(min_=0,
-        #                         max_=max(ys) + 1,
-        #                         # pad='0.01',
-        #                         plotid=pid)
         if not po.has_ylimits():
             self._set_y_limits(0, max(ys) + 1, pid=pid)
 
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
-        # if ia == 'uF':
-        #     f = lambda x: u'{}= {}'.format(ia, x.f_string)
-        # elif ia =='uage':
-        #     f = lambda x: u'{}= {}'.format(ia, x.age_string)
-        # else:
-        f= lambda x: u'{}= {}'.format(ia, x.value_string(ia))
+
+        f = lambda x: u'Age= {}'.format(x.value_string(ia))
 
         self._add_scatter_inspector(scatter,
                                     value_format=lambda x: '{:d}'.format(int(x)),
@@ -242,6 +239,7 @@ class Ideogram(BaseArArFigure):
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
+
         bins, probs = self._calculate_probability_curve(self.xs, self.xes, calculate_limits=True)
 
         ogid = self.group_id
@@ -573,7 +571,7 @@ class Ideogram(BaseArArFigure):
         return x.age
 
     def _calculate_stats(self, ages, errors, xs, ys):
-        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
+        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple(self.options.include_j_error)
 
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0

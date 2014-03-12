@@ -75,18 +75,18 @@ class Analysis(ArArAge):
     invalid_event = Event
 
     def trigger_recall(self):
-        self.recall_event=self
+        self.recall_event = self
 
     def trigger_tag(self, analyses=None):
         if analyses is None:
-            analyses=[self,]
+            analyses = [self, ]
 
-        self.tag_event=analyses
+        self.tag_event = analyses
 
     def trigger_invalid(self, analyses=None):
         if analyses is None:
             analyses = [self, ]
-        self.invalid_event=analyses
+        self.invalid_event = analyses
 
     def is_temp_omitted(self, include_value_filtered=True):
         return self.temp_status or self.table_filter_omit or self.value_filter_omit if include_value_filtered else False
@@ -146,16 +146,16 @@ class Analysis(ArArAge):
 
     def value_string(self, t):
         if t == 'uF':
-            a,e=self.F, self.F_err
+            a, e = self.F, self.F_err
         elif t == 'uage':
-            a, e = self.age, self.age_err
+            a, e = self.uage.nominal_value, self.uage.std_dev
         else:
-            v=self.get_value(t)
+            v = self.get_value(t)
             if isinstance(v, Isotope):
-                v=v.get_intensity()
-            a,e=v.nominal_value, v.std_dev
+                v = v.get_intensity()
+            a, e = v.nominal_value, v.std_dev
         pe = format_percent_error(a, e)
-        return  u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
+        return u'{} +/-{} ({}%)'.format(floatfmt(a), floatfmt(e), pe)
 
     def _get_status_text(self):
         r = 'OK'
@@ -165,6 +165,7 @@ class Analysis(ArArAge):
             r = 'Omitted'
 
         return r
+
 
 if __name__ == '__main__':
     pass

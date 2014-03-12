@@ -47,21 +47,27 @@ class AnalysisGroup(HasTraits):
     #                    if ai.status == 0 and ai.temp_status == 0])
     #        return vs.mean()
 
-    def get_mswd_tuple(self):
-        mswd = self.mswd
+    def get_mswd_tuple(self, include_j_error=True):
+        if not include_j_error:
+            mswd = self._calculate_mswd('uage_wo_j_err')
+        else:
+            mswd = self.mswd
+
         valid_mswd = validate_mswd(mswd, self.nanalyses)
-        return self.mswd, valid_mswd, self.nanalyses
+        return mswd, valid_mswd, self.nanalyses
 
     @cached_property
     def _get_mswd(self):
+        return self._calculate_mswd('uage')
+
+    def _calculate_mswd(self, attr):
         m = ''
-        args = self._get_values('uage')
+        args = self._get_values(attr)
         if args:
             vs, es = args
             m = calculate_mswd(vs, es)
 
         return m
-
 
     @cached_property
     def _get_isochron_age(self):
