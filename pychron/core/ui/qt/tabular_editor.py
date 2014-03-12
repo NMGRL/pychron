@@ -202,17 +202,17 @@ class _myTableView(_TableView, ConsumerMixin):
         else:
             super(_myTableView, self).startDrag(actions)
 
-
     def dragEnterEvent(self, e):
         if self.is_external():
             # Assume the drag is invalid.
             e.ignore()
 
             # Check what is being dragged.
-            md = PyMimeData.coerce(e.mimeData())
+            ed = e.mimeData()
+            md = PyMimeData.coerce(ed)
             if md is None:
                 return
-            elif not hasattr(md, '__iter__'):
+            elif not hasattr(ed.instance(), '__iter__'):
                 return
 
             # We might be able to handle it (but it depends on what the final
