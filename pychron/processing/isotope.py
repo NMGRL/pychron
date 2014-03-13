@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -227,6 +228,7 @@ class IsotopicMeasurement(BaseMeasurement):
             reg = PolynomialRegressor(xs=self.xs,
                                       ys=self.ys,
                                       degree=self.fit,
+                                      tag=self.name,
                                       error_calc_type=self.error_type,
                                       filter_outliers_dict=self.filter_outliers_dict)
 

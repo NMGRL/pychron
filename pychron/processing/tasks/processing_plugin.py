@@ -42,7 +42,7 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
-    DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction
+    DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -138,7 +138,9 @@ Install to enable MS Excel export''')
                            ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
-                           ('make_analysis_group', MakeAnalysisGroupAction, 'MenuBar/data.menu')]
+                           ('make_analysis_group', MakeAnalysisGroupAction, 'MenuBar/data.menu'),
+                           ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu'),
+                           ('make_tas', MakeTASAction, 'MenuBar/data.menu')]
 
         exts = [self._make_task_extension(default_actions)]
 

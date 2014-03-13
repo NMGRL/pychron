@@ -34,6 +34,7 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 
 class InterpolationAnalysisGroupEntry(HasTraits):
@@ -177,17 +178,18 @@ class InterpolationTask(AnalysisEditTask):
 
         is_append = name == 'append_button'
         if self.active_editor:
-            refs = None
-            if is_append:
-                refs = self.active_editor.references
-
-            s = self._get_selected_analyses(refs)
-            if s:
+            if not isinstance(self.active_editor, RecallEditor):
+                refs = None
                 if is_append:
                     refs = self.active_editor.references
-                    refs.extend(s)
-                else:
-                    self.active_editor.references = s
+
+                s = self._get_selected_analyses(refs)
+                if s:
+                    if is_append:
+                        refs = self.active_editor.references
+                        refs.extend(s)
+                    else:
+                        self.active_editor.references = s
 
     @on_trait_change('active_editor:references')
     def _update_references(self):

@@ -15,12 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.timer.do_later import do_later
 from traits.api import HasTraits, List, Any, Str, Enum, Bool, Button, \
     Event, Property, cached_property, Instance, DelegatesTo
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.browser.browser_mixin import filter_func
 from pychron.envisage.browser.table_configurer import AnalysisTableConfigurer
 
@@ -35,8 +33,8 @@ class AnalysisTable(HasTraits):
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
     analysis_filter_parameter = Str
-    analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')#List(['Record_id', 'Tag',
-                                       # 'Age', 'Labnumber', 'Aliquot', 'Step'])
+    analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')  #List(['Record_id', 'Tag',
+    # 'Age', 'Labnumber', 'Aliquot', 'Step'])
 
     omit_invalid = Bool(True)
     configure_analysis_table = Button
@@ -57,9 +55,9 @@ class AnalysisTable(HasTraits):
     low_post = DelegatesTo('table_configurer')
     high_post = DelegatesTo('table_configurer')
     no_update = False
-    scroll_to_row=Event
-    refresh_needed=Event
-    tabular_adapter=Any
+    scroll_to_row = Event
+    refresh_needed = Event
+    tabular_adapter = Any
 
     # def load(self):
     #     p = os.path.join(paths.hidden_dir, 'analysis_table')
@@ -108,7 +106,7 @@ class AnalysisTable(HasTraits):
         self.analyses = ans
         self.oanalyses = ans
         if tc is None:
-            tc=len(ans)
+            tc = len(ans)
 
         # self.n_all_analyses = tc
         # if reset_page:
@@ -122,8 +120,8 @@ class AnalysisTable(HasTraits):
         # self.analysis_filter_values = vs
         self._analysis_filter_parameter_changed(True)
 
-        self.selected = ans[-1:]
-        invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
+        #self.selected = ans[-1:]
+        #invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
 
     def _analysis_filter_changed(self, new):
         if new:

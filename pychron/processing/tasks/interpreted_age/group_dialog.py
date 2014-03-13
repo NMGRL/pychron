@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Any, Str, Int, Date
 from traitsui.api import View, Item, TabularEditor, UItem, HGroup, VGroup
+from pyface.timer.do_later import do_later
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -32,6 +33,7 @@ class GroupDialog(HasTraits):
     name = Str
     projects = List
     selected_project = Any
+    scroll_to_row = Int
 
 
 class SaveGroupDialog(GroupDialog):
@@ -40,6 +42,7 @@ class SaveGroupDialog(GroupDialog):
                         UItem('projects',
                               editor=TabularEditor(adapter=ProjectAdapter(),
                                                    selected='selected_project',
+
                                                    editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,
                  title='Save Interpreted Age Group',
@@ -59,6 +62,9 @@ class SelectionGroupDialog(GroupDialog):
     selected_groups = List
     title=Str
 
+    def _scroll_to_row_changed(self):
+        print self.scroll_to_row
+
     def get_selected_ids(self):
         return [gi.id for gi in self.selected_groups]
 
@@ -77,6 +83,7 @@ class SelectionGroupDialog(GroupDialog):
             self.groups = gs
             if gs:
                 self.selected_groups=gs[-1:]
+                do_later(self.trait_set, scroll_to_row=len(gs) - 1)
 
     def traits_view(self):
         v = View(VGroup(
@@ -87,6 +94,7 @@ class SelectionGroupDialog(GroupDialog):
             UItem('groups',
                   editor=TabularEditor(adapter=GroupAdapter(),
                                        selected='selected_groups',
+                                       scroll_to_row='scroll_to_row',
                                        multi_select=True,
                                        editable=False))),
                  buttons=['OK', 'Cancel'], resizable=True,

@@ -79,6 +79,7 @@ class InterpretedAge(HasTraits):
     id = Long
 
     sample = Str
+    lithology = Str
     identifier = Str
     material = Str
     irradiation = Str
@@ -143,8 +144,10 @@ class IsotopeAdapter(DatabaseAdapter):
         sample = None
         irrad = None
         material = None
+        lithology = None
         if dbln:
             if dbln.sample:
+                lithology = dbln.sample.lithology
                 sample = dbln.sample.name
                 dbmat = dbln.sample.material
                 if dbmat:
@@ -174,6 +177,7 @@ class IsotopeAdapter(DatabaseAdapter):
                             sample=sample or '',
                             irradiation=irrad or '',
                             material=material or '',
+                            lithology=lithology or '',
                             nanalyses=n,
                             name='{} - {}'.format(hi.create_date, ia.age_kind))
 

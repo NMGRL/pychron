@@ -25,6 +25,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -139,20 +140,21 @@ class FluxTask(InterpolationTask):
         if self.references_pane.items:
             editor = self.active_editor
             editor.monitor_positions = {}
-            editor.positions_dirty=True
-            editor.suppress_update=True
-            db=self.manager.db
+            editor.positions_dirty = True
+            editor.suppress_update = True
+            db = self.manager.db
             with db.session_ctx():
                 geom = self._get_geometry()
                 editor.geometry = geom
+
                 def add_pos(i, use=False):
                     if i.identifier:
                         ref = db.get_labnumber(i.identifier)
                         pid = ref.irradiation_position.position
                         ident = ref.identifier
-                        sample=''
+                        sample = ''
                         if ref.sample:
-                            sample=ref.sample.name
+                            sample = ref.sample.name
 
                         cj = ref.selected_flux_history.flux.j
                         cjerr = ref.selected_flux_history.flux.j_err
@@ -166,7 +168,7 @@ class FluxTask(InterpolationTask):
                 for ii in self.references_pane.items:
                     add_pos(ii, use=True)
 
-                editor.positions_dirty=True
+                editor.positions_dirty = True
 
                 if editor.tool.data_source == 'database':
                     self._calculate_flux_db(editor)
@@ -209,17 +211,18 @@ class FluxTask(InterpolationTask):
             prog.close()
 
     def _calculate_flux_db(self, editor):
-        reg=WeightedMeanRegressor()
+        reg = WeightedMeanRegressor()
         monitor_age = editor.tool.monitor_age
 
         # helper funcs
         def calc_j(ai):
-            ar40=ai.get_interference_corrected_value('Ar40')
-            ar39=ai.get_interference_corrected_value('Ar39')
-
+            # ar40=ai.get_interference_corrected_value('Ar40')
+            # ar39=ai.get_interference_corrected_value('Ar39')
+            # F=ai.uF
             # ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
             # ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
-            return calculate_flux(ar40, ar39, monitor_age)
+            print ai.record_id, ai.uF
+            return calculate_flux(ai.uF, monitor_age)
 
         def mean_j(ans):
             js, errs = zip(*[calc_j(ai) for ai in ans])
@@ -252,13 +255,13 @@ class FluxTask(InterpolationTask):
                     ref = ais[0]
                     # pid = ref.labnumber.irradiation_position.position
                     ident = ref.labnumber.identifier
-                    cj=ref.labnumber.selected_flux_history.flux.j
+                    cj = ref.labnumber.selected_flux_history.flux.j
                     # x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     j = mean_j(aa)
-                    dev=100
+                    dev = 100
                     if cj:
-                        dev=(j.nominal_value-cj)/cj*100
+                        dev = (j.nominal_value - cj) / cj * 100
 
                     editor.set_position_j(ident, j.nominal_value, j.std_dev, dev)
                     # editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
@@ -293,12 +296,12 @@ class FluxTask(InterpolationTask):
                     self._recall_item(new.item)
         elif name == 'refresh_editor_needed':
             self.active_editor.rebuild()
-        # else:
-        #     if not obj._no_update:
-        #         if self.active_editor:
-        #             self.active_editor.set_items(self.unknowns_pane.items)
-        #         if self.plot_editor_pane:
-        #             self.plot_editor_pane.analyses = self.unknowns_pane.items
+            # else:
+            #     if not obj._no_update:
+            #         if self.active_editor:
+            #             self.active_editor.set_items(self.unknowns_pane.items)
+            #         if self.plot_editor_pane:
+            #             self.plot_editor_pane.analyses = self.unknowns_pane.items
 
     def _active_editor_changed(self):
         if self.active_editor:
@@ -309,17 +312,17 @@ class FluxTask(InterpolationTask):
 
                 self.controls_pane.tool = tool
 
-            # if self.unknowns_pane:
-            #     # if hasattr(self.unknowns_pane, 'previous_selections'):
-            #     #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
-            #     if hasattr(self.active_editor, 'analyses'):
-            #         #if self.active_editor.unknowns:
-            #         self.unknowns_pane.items = self.active_editor.analyses
+                # if self.unknowns_pane:
+                #     # if hasattr(self.unknowns_pane, 'previous_selections'):
+                #     #     self.unknowns_pane.previous_selection = self.unknowns_pane.previous_selections[0]
+                #     if hasattr(self.active_editor, 'analyses'):
+                #         #if self.active_editor.unknowns:
+                #         self.unknowns_pane.items = self.active_editor.analyses
 
 
     def do_easy_flux(self):
         path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
-        ep=EasyParser(path=path)
+        ep = EasyParser(path=path)
         # db = self.manager.db
         doc = ep.doc('flux')
 
@@ -330,23 +333,24 @@ class FluxTask(InterpolationTask):
         # prog=self.manager.open_progress(n=len(levels))
 
         if levels:
-            editor=self.active_editor
-            mon_age=doc.get('monitor_age', 28.201e6)
-            editor.tool.monitor_ge=mon_age
+            editor = self.active_editor
+            mon_age = doc.get('monitor_age', 28.201e6)
+            editor.tool.monitor_ge = mon_age
             for li_str in levels:
                 irrad, level = li_str.split(' ')
                 # print irrad, level
-                self.manager.irradiation=irrad
-                self.manager.level=level
+                self.manager.irradiation = irrad
+                self.manager.level = level
                 # print self.manager
 
-        #         #unknowns and refs now loaded
+                #         #unknowns and refs now loaded
                 self._calculate_flux()
-        #         self._calculate_flux_db(self.active_editor)
-        #
-        #         #update flux in db for all positions
+                #         self._calculate_flux_db(self.active_editor)
+                #
+                #         #update flux in db for all positions
                 editor.set_save_all(True)
                 editor.save()
         # prog.close()
         return True
+
 #============= EOF =============================================

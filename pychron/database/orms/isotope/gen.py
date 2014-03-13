@@ -129,6 +129,11 @@ class gen_SampleTable(Base, NameMixin):
     alt_name=stringcolumn(80)
     lithology=stringcolumn(80)
 
+    sio2 = Column(Float(32))
+    na2o = Column(Float(32))
+    k2o = Column(Float(32))
+
+
 class gen_SensitivityTable(Base, BaseMixin):
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')
     sensitivity = Column(Float(32))

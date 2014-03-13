@@ -28,6 +28,7 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
+
 #============= local library imports  ==========================
 
 
@@ -128,29 +129,36 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
         return wm, we, pidx
 
 
-def calculate_flux(rad40, k39, age, arar_constants=None):
+def calculate_flux(f, age, arar_constants=None):
     """
-        rad40: radiogenic 40Ar
-        k39: 39Ar from potassium
+        #rad40: radiogenic 40Ar
+        #k39: 39Ar from potassium
+        f: F value rad40Ar/39Ar
         age: age of monitor in years
 
         solve age equation for J
     """
-    if isinstance(rad40, (list, tuple)):
-        rad40 = ufloat(*rad40)
-    if isinstance(k39, (list, tuple)):
-        k39 = ufloat(*k39)
+    # if isinstance(rad40, (list, tuple)):
+    #     rad40 = ufloat(*rad40)
+    # if isinstance(k39, (list, tuple)):
+    #     k39 = ufloat(*k39)
+
+    if isinstance(f, (list, tuple)):
+        f = ufloat(*f)
+
     if isinstance(age, (list, tuple)):
         age = ufloat(*age)
         #    age = (1 / constants.lambdak) * umath.log(1 + JR)
     try:
-        r = rad40 / k39
+        # r = rad40 / k39
         if arar_constants is None:
             arar_constants = ArArConstants()
-        j = (umath.exp(age * arar_constants.lambda_k) - 1) / r
+
+        j = (umath.exp(age * arar_constants.lambda_k) - 1) / f
         return j.nominal_value, j.std_dev
     except ZeroDivisionError:
         return 1, 0
+
 
 #    return j
 def calculate_decay_time(dc, f):
@@ -327,8 +335,8 @@ def calculate_F(isotopes,
     #print 'Ar39', a39-k39, a39, k39
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38, #- k38 - ca38,
-                                  Ar37=a37, #- ca37 - k37,
+                                  Ar38=a38,  #- k38 - ca38,
+                                  Ar37=a37,  #- ca37 - k37,
                                   Ar36=atm36)
     ##clear errors in irrad
     for pp in pr.itervalues():
@@ -367,6 +375,7 @@ def overlap(a1, a2, e1, e2, overlap_sigma):
     e2 *= overlap_sigma
     if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
         return True
+
 
 #===============================================================================
 # non-recursive
@@ -442,10 +451,11 @@ def check_percent_released(signals, start, end):
 
 
 def check_mswd(ages, errors, start, end):
-#    a_s = ages[start:end + 1]
-#    e_s = errors[start:end + 1]
-#    print calculate_mswd(a_s, e_s)
+    #    a_s = ages[start:end + 1]
+    #    e_s = errors[start:end + 1]
+    #    print calculate_mswd(a_s, e_s)
     return True
+
 
 #===============================================================================
 # recursive

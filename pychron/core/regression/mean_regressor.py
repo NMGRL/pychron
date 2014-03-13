@@ -20,6 +20,7 @@ from numpy import average, ones, asarray, where
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
 
+
 class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
@@ -32,7 +33,7 @@ class MeanRegressor(BaseRegressor):
 
     def calculate_outliers(self, nsigma=2):
         res = abs(self.ys - self.mean)
-        s=self.std
+        s = self.std
         return where(res > (s * nsigma))[0]
 
     def _calculate_coefficients(self):
@@ -60,7 +61,7 @@ sem={}
     @property
     def mean(self):
         ys = self.clean_ys
-        if self._check_integrity(ys,ys):
+        if self._check_integrity(ys, ys):
             return ys.mean()
         else:
             return 0
@@ -90,7 +91,7 @@ sem={}
         return ones(asarray(xs).shape) * self.mean
 
     def calculate_ci(self, fx, fy):
-#         c = self.predict(fx)
+        #         c = self.predict(fx)
         #fit = self.fit.lower()
         #ec = 'sem' if fit.endswith('sem') else 'sd'
         e = self.predict_error(fx)
@@ -113,11 +114,11 @@ sem={}
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
-            error_calc=self.error_calc_type
+            error_calc = self.error_calc_type
             if not error_calc:
-                error_calc='SEM' if 'sem' in self.fit.lower() else 'SD'
+                error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
 
-        if error_calc=='SEM':
+        if error_calc == 'SEM':
             e = self.sem
         else:
             e = self.std
@@ -126,13 +127,21 @@ sem={}
     def calculate_standard_error_fit(self):
         return self.std
 
+    def _check_integrity(self, x, y):
+        nx, ny = len(x), len(y)
+        if not nx or not ny:
+            return
+        if nx != ny:
+            return
+
+        return True
+
 
 class WeightedMeanRegressor(MeanRegressor):
-
     @property
     def mean(self):
         ys = self.clean_ys
-        ws=self._get_weights()
+        ws = self._get_weights()
         if self._check_integrity(ys, ws):
             return average(ys, weights=ws)
         else:
@@ -145,8 +154,8 @@ class WeightedMeanRegressor(MeanRegressor):
     #         return var ** 0.5
 
     def _get_weights(self):
-        e=self.clean_yserr
-        if self._check_integrity(e,e):
+        e = self.clean_yserr
+        if self._check_integrity(e, e):
             return 1 / e ** 2
 
 

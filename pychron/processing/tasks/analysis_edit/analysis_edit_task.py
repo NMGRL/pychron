@@ -45,6 +45,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -558,15 +559,16 @@ class AnalysisEditTask(BaseBrowserTask):
         is_append = name == 'append_button'
 
         if self.active_editor:
-            unks = None
-            if is_append:
-                unks = self.active_editor.analyses
+            if not isinstance(self.active_editor, RecallEditor):
+                unks = None
+                if is_append:
+                    unks = self.active_editor.analyses
 
-            s = self._get_selected_analyses(unks)
-            if s:
-                self.active_editor.set_items(s, is_append)
+                s = self._get_selected_analyses(unks)
+                if s:
+                    self.active_editor.set_items(s, is_append)
 
-                self._add_unknowns_hook()
+                    self._add_unknowns_hook()
 
     def _add_unknowns_hook(self, *args, **kw):
         pass

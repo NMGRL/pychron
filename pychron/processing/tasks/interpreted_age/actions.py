@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
 
 #============= standard library imports ========================
@@ -79,11 +80,7 @@ class OpenInterpretedAgeGroupAction(TaskAction):
                 task.open_interpreted_age_groups(gids)
 
 
-class MakeGroupFromFileAction(TaskAction):
-    name = 'Group From File'
-    method = 'make_group_from_file'
-    image = icon('document-open.png')
-
+class TasklessInterpretedAgeAction(TaskAction):
     def perform(self, event=None):
         app = self.task.window.application
         method = self._get_attr(self.object, self.method)
@@ -94,6 +91,12 @@ class MakeGroupFromFileAction(TaskAction):
             method = self._get_attr(task, self.method)
             if method:
                 method()
+
+
+class MakeGroupFromFileAction(TasklessInterpretedAgeAction):
+    name = 'Group From File'
+    method = 'make_group_from_file'
+    image = icon('document-open.png')
 
 
 class DeleteInterpretedAgeGroupAction(TaskAction):
@@ -109,3 +112,25 @@ class DeleteInterpretedAgeGroupAction(TaskAction):
         else:
             task = app.get_task('pychron.processing.interpreted_age', activate=False)
             task.external_delete_group()
+
+
+class MakeTASAction(TasklessInterpretedAgeAction):
+    name = 'Make TAS file'
+    accelerator = 'Ctrl+3'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.processing.interpreted_age')
+        task.open_interpreted_age_groups([22])  #AllAges4
+        task.make_tas()
+
+
+class MakeDataTablesAction(Action):
+    name = 'Make Data Tables(test)'
+    accelerator = 'Ctrl+2'
+
+    def perform(self, event):
+        app = event.task.window.application
+        task = app.open_task('pychron.processing.interpreted_age')
+        task.open_interpreted_age_groups([22])  #AllAges4
+        task.save_pdf_tables()

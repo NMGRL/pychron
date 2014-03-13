@@ -178,7 +178,8 @@ class IsotopeEvolutionEditor(GraphEditor):
 
                     fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                                  name,
-                                                 dbfi.fit, dbfi.error_type, fd)
+                                                 dbfi.fit, dbfi.error_type, fd,
+                                                 dbfi.include_baseline_error)
 
         for fi in tool_fits:
             fd = dict(filter_outliers=fi.filter_outliers,
@@ -211,7 +212,6 @@ class IsotopeEvolutionEditor(GraphEditor):
         if filter_dict:
             iso.set_filtering(filter_dict)
 
-        v = iso.uvalue
         f, e = convert_fit(fit)
         iso.fit = f
         iso.error_type = et or e
@@ -220,9 +220,9 @@ class IsotopeEvolutionEditor(GraphEditor):
         if fit_hist is None:
             fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
 
-        dbiso = next((iso for iso in meas_analysis.isotopes
-                      if iso.molecular_weight.name == name and
-                         iso.kind == kind), None)
+        dbiso = next((i for i in meas_analysis.isotopes
+                      if i.molecular_weight.name == name and
+                         i.kind == kind), None)
 
         if fit_hist is None:
             self.warning('Failed added fit history for {}'.format(unk.record_id))
@@ -236,7 +236,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                    filter_outlier_std_devs=fod['std_devs'],
                    include_baseline_error=include_baseline_error)
         #update isotoperesults
-        v, e = float(v.nominal_value), float(v.std_dev)
+        # v, e = float(iso.value), float(iso.error)
+        v, e = float(iso.value), float(iso.error)
+        print v, e
         db.add_isotope_result(dbiso, fit_hist,
                               signal_=v, signal_err=e)
         return fit_hist

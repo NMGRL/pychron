@@ -26,14 +26,14 @@ from traitsui.api import View, EnumEditor, HGroup, spring, \
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import partition
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
-from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
-from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
@@ -80,10 +80,9 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     def save_pdf_tables(self, p):
         self.save_summary_table(p)
 
-        # self.save_analysis_data_table(p)
+        self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
-
 
         # ans=[]
         db = self.processor.db
@@ -113,11 +112,12 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             #partition fusion vs stepheat
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
+            fusion, step_heat = map(list, (fusion, step_heat))
             # for ia in step_heat:
             #     groups.append(klass(sample=ans[0].sample,
             #                         analyses=ans))
-            shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
-            fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
+            shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat[:3]]
+            # fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion[:3]]
             prog.close()
 
         head, ext = os.path.splitext(p)
@@ -125,13 +125,13 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             w = StepHeatPDFTableWriter()
             p = '{}.step_heat_data{}'.format(head, ext)
             w.build(p, shgroups, title=self.get_title())
-        if fgroups:
-            w = FusionPDFTableWriter()
-            p = '{}.fusion_data{}'.format(head, ext)
-            w.build(p, fgroups, title=self.get_title())
+            view_file(p)
 
-
-
+            # if fgroups:
+            #     w = FusionPDFTableWriter()
+            #     p = '{}.fusion_data{}'.format(head, ext)
+            #     w.build(p, fgroups, title=self.get_title())
+            #     view_file(p)
             # fusion=list(fusion)
 
     def save_summary_table(self, p):
@@ -295,31 +295,31 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                         interpreted_grp))
         return v
 
-    #============= EOF =============================================
-    # def _save_recipe_file(self, p):
-    #     head, ext=os.path.splitext(p)
-    #     p='{}.{}'.format(head, 'yaml')
-    #
-    #     #assemble recipe
-    #     d={'title':str(self.get_title()),
-    #        'options':self.pdf_table_options.dump_yaml(),
-    #        'ids':[int(ia.id) for ia in self.interpreted_ages]}
-    #
-    #     with open(p, 'w') as fp:
-    #         yaml.dump(d, fp)
-    #
-    # def _open_recipe_file(self, p):
-    #     with open(p, 'r') as fp:
-    #         d=yaml.load(fp)
-    #
-    #     db=self.processor.db
-    #     with db.session_ctx():
-    #         ias=[]
-    #         for hid in d['ids']:
-    #             hist=db.get_interpreted_age_history(hid)
-    #             ias.append(db.interpreted_age_factory(hist))
-    #
-    #     self.interpreted_ages=ias
-    #
-    #     self.pdf_table_options.load_yaml(d['options'])
-    # self.pdf_table_options.trait_set(**d['options'])
+        #============= EOF =============================================
+        # def _save_recipe_file(self, p):
+        #     head, ext=os.path.splitext(p)
+        #     p='{}.{}'.format(head, 'yaml')
+        #
+        #     #assemble recipe
+        #     d={'title':str(self.get_title()),
+        #        'options':self.pdf_table_options.dump_yaml(),
+        #        'ids':[int(ia.id) for ia in self.interpreted_ages]}
+        #
+        #     with open(p, 'w') as fp:
+        #         yaml.dump(d, fp)
+        #
+        # def _open_recipe_file(self, p):
+        #     with open(p, 'r') as fp:
+        #         d=yaml.load(fp)
+        #
+        #     db=self.processor.db
+        #     with db.session_ctx():
+        #         ias=[]
+        #         for hid in d['ids']:
+        #             hist=db.get_interpreted_age_history(hid)
+        #             ias.append(db.interpreted_age_factory(hist))
+        #
+        #     self.interpreted_ages=ias
+        #
+        #     self.pdf_table_options.load_yaml(d['options'])
+        # self.pdf_table_options.trait_set(**d['options'])

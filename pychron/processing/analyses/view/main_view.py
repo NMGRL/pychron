@@ -46,7 +46,6 @@ class MainView(HasTraits):
         if analysis:
             self._load(analysis)
 
-
     def load(self, an):
         self._load(an)
 

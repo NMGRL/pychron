@@ -80,8 +80,10 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                                include_footnotes=include_footnotes)
         data.extend(meta)
 
+        units = self._get_signal_units(analyses)
+
         # make header
-        headers = self._make_header(style)
+        headers = self._make_header(style, signal_units=units)
 
         data.extend(headers)
 
@@ -149,7 +151,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('is_plateau_step', lambda x: '<b>P</b>' if x else ''),
             ('aliquot_step_str', '{}',),
             ('extract_value', '{}'),
-            ('moles_Ar40', value(scale=1e-18)),
+            ('moles_Ar40', value(scale=1e-16, n=1)),
 
             #==============================================================
             # signals
@@ -171,10 +173,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('uage', value(n=2)),
             ('age_err_wo_j', error(n=4)),
             ('rad40_percent', value(n=1)),
-            ('F', value(n=5)),
+            # ('F', value(n=5)),
             ('kca', value(n=1)),
-            ('kca', error(n=1)),
-
+            ('kca', error(n=2, s=1)),
         )
         default_fontsize = 6
 
@@ -228,14 +229,13 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         return row, blankrow
 
     def _set_row_heights(self, table, data):
-        print table, data
+
         a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
         for a, v in a_idxs:
             table._argH[a] = 0.19 * inch
 
         idx = self._get_idxs(data, Row)
         for i, v in idx:
-            print i, v.height
             if v.height:
                 table._argH[i] = v.height * inch
 

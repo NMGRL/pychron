@@ -223,8 +223,14 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        if not po.has_ylimits():
-            self._set_y_limits(0, max(ys) + 1, pid=pid)
+        my = max(ys) + 1
+        # if not po.has_ylimits():
+        #     self._set_y_limits(0, my, pid=pid)
+        # else:
+        plot.value_range.tight_bounds = True
+        ly, uh = po.ylimits
+        if uh < my:
+            self._set_y_limits(0, my, pid=pid)
 
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
@@ -267,8 +273,8 @@ class Ideogram(BaseArArFigure):
 
         mi, ma = min(probs), max(probs)
 
-        if not po.has_ylimits():
-            self._set_y_limits(mi, ma, min_=0, pad='0.05')
+        # if not po.has_ylimits():
+        self._set_y_limits(mi, ma, min_=0, pad='0.025')
 
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')

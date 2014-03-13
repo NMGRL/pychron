@@ -32,6 +32,7 @@ from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction
     PlotIdeogramAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
+from pychron.processing.tasks.interpreted_age.tas_writer import TASWriter
 
 
 class InterpretedAgeTask(BaseBrowserTask):
@@ -68,6 +69,13 @@ class InterpretedAgeTask(BaseBrowserTask):
                     editor = InterpretedAgeEditor(processor=self.manager)
                     editor.delete_groups(ids)
 
+    def make_tas(self):
+        if self.has_active_editor():
+            tw = TASWriter()
+            db = self.manager.db
+            tw.write(db, self.active_editor.interpreted_ages)
+
+
     def make_group_from_file(self):
         if self.has_active_editor():
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_lt8_no_int.yaml'
@@ -76,6 +84,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages_all2.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all3.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all4.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all5.yaml'
             if not os.path.isfile(p):
                 p = self.open_file_dialog()
             if p:
@@ -144,8 +153,8 @@ class InterpretedAgeTask(BaseBrowserTask):
             # p = '/Users/ross/Sandbox/interpreted_age.pdf'
 
             n = self.active_editor.name
-            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
-            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages'
+            #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
             p, _ = unique_path(r, n, extension='.pdf')
             if p:
                 self.active_editor.save_pdf_tables(p)

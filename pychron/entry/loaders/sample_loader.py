@@ -28,7 +28,51 @@ class SampleLoader(Loggable):
         valid file formats: excel, csv
     """
 
+    def _import_tas(self, manager, p):
+        xp = XLSParser()
+        xp.load(p)
+        db = manager.db
+
+        with db.session_ctx():
+            progress = manager.open_progress(xp.nrows)
+            for args in xp.itervalues(keys=['sample', 'sio2', 'na2o', 'k2o']):
+                sample = args['sample']
+
+                progress.change_message('Setting sample {}'.format(sample))
+
+                dbsample = db.get_sample(sample, project='Minna Bluff', verbose=False)
+                if dbsample:
+                    dbsample.sio2 = args['sio2']
+                    dbsample.k2o = args['k2o']
+                    dbsample.na2o = args['na2o']
+                else:
+                    print 'no sample in db for {}'.format(sample)
+        progress.close()
+
+    def _import_lithologies(self, manager, p):
+        xp = XLSParser()
+        xp.load(p)
+        db = manager.db
+
+        with db.session_ctx():
+            progress = manager.open_progress(xp.nrows)
+            for args in xp.itervalues(keys=['sample', 'lithology']):
+                sample = args['sample']
+
+                progress.change_message('Setting sample {}'.format(sample))
+
+                dbsample = db.get_sample(sample, project='Minna Bluff', verbose=False)
+                if dbsample:
+                    dbsample.lithology = args['lithology']
+                else:
+                    print 'no sample in db for {}'.format(sample)
+        progress.close()
+
     def do_import(self, manager, p):
+        # self._import_lithologies(manager,p)
+        self._import_tas(manager, p)
+        return
+
         xp = XLSParser()
         xp.load(p, header_idx=2)
         overwrite_meta = True
@@ -36,6 +80,8 @@ class SampleLoader(Loggable):
         add_samples = True
         db = manager.db
         progress = manager.open_progress(xp.nrows)
+
+        self._import_lithologies(manager, db, xp)
 
         with db.session_ctx():
             ellps = xp.get_value(0, 1)

@@ -21,13 +21,21 @@ from traits.api import Str
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.core.pdf.items import Superscript, Subscript, Row, NamedParameter
+from pychron.core.pdf.items import Superscript, Row, NamedParameter
 
 
 class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
     default_row_height = 0.1  #inches
+
+    def _get_signal_units(self, analyses):
+        ref = analyses[0]
+        if ref.mass_spectrometer.lower() == 'map':
+            signal_units = 'nA'
+        else:
+            signal_units = 'fA'
+        return signal_units
 
     def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))
@@ -40,7 +48,8 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         for i, group in enumerate(groups):
 
             include_footnotes = i == n
-            fs = self._make_table(group, include_footnotes=include_footnotes)
+            fs = self._make_table(group,
+                                  include_footnotes=include_footnotes)
             for fi in fs:
                 flowables.append(fi)
                 flowables.append(self._vspacer(0.1))
@@ -60,11 +69,16 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     #    return foot,
     #    #row.add_item(value=foot, span=3)
     #
+    def _get_disc(self, ref):
+        disc = ref.discrimination
+        return u'{:0.3f} \u00b1{:0.4f}'.format(disc.nominal_value, disc.std_dev)
 
     def _get_ic_factor(self, ref):
-        ic = (1, 0)
+        # ic = (1, 0)
+        ic = ref.ic_factor
         if not isinstance(ic, tuple):
             ic = ic.nominal_value, ic.std_dev
+
         return u'{:0.3f} \u00b1{:0.4f}'.format(ic[0], ic[1])
 
     def _make_meta(self, analyses, style, include_footnotes=False):
@@ -76,6 +90,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         sample = ref.sample
         labnumber = ref.labnumber
         material = ref.material
+        ms = ref.mass_spectrometer
 
         igsn = ''
 
@@ -88,24 +103,36 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
         js = u'{:0.2E} \u00b1{:0.2E}'.format(j[0], j[1])
         line1.add_item(value=NamedParameter('J', js), span=4)
-
-        ics = self._get_ic_factor(ref)
-
-        if include_footnotes:
-            foot = self._make_footnote('IC',
-                                       'IC Factor',
-                                       'H1/CDD intercalibration',
-                                       '<b>IC</b>',
-                                       link_extra=u': {}'.format(ics))
+        if ms.lower() == 'map':
+            disc = self._get_disc(ref)
+            if include_footnotes:
+                disc = self._make_footnote('Disc.',
+                                           'Disc.',
+                                           '1 amu discrimination',
+                                           '<b>Disc.</b>',
+                                           link_extra=u': {}'.format(disc))
+            else:
+                disc = NamedParameter('Disc.', disc)
+            line1.add_item(value=disc, span=3)
         else:
             ics = self._get_ic_factor(ref)
-            foot = NamedParameter('IC', ics)
 
-        line1.add_item(value=foot, span=3)
+            if include_footnotes:
+                foot = self._make_footnote('IC',
+                                           'IC Factor',
+                                           'H1/CDD intercalibration',
+                                           '<b>IC</b>',
+                                           link_extra=u': {}'.format(ics))
+            else:
+                ics = self._get_ic_factor(ref)
+                foot = NamedParameter('IC', ics)
+
+            line1.add_item(value=foot, span=3)
 
         line2 = Row(fontsize=8)
-        line2.add_item(value=NamedParameter('Material', material), span=5)
+        line2.add_item(value=NamedParameter('Material', material), span=6)
         line2.add_item(value=NamedParameter('IGSN', igsn), span=2)
+        line2.add_item(value=NamedParameter('Spectrometer', ms), span=3)
 
         #         self._sample_summary_row1 = line1
         #         self._sample_summary_row2 = line2
@@ -119,15 +146,21 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
         return [line1, line2]
 
-    def _make_header(self, style):
+    def _make_header(self, style, signal_units='nA'):
         sigma = u'\u00b1 1\u03c3'
-        #         sigma = self._plusminus_sigma()
+
         super_ar = lambda x: '{}Ar'.format(Superscript(x))
 
-        _1016moles = '(10{} mol)'.format(Superscript(-18))
-        _102fa = '(10{} fA)'.format(Superscript(2))
-        _103fa = '(10{} fA)'.format(Superscript(3))
-        minus_102fa = '(10{} fA)'.format(Superscript(-2))
+        _1016moles = '(10{} mol)'.format(Superscript(-16))
+        if signal_units == 'nA':
+            unit_scale_40 = ''
+            unit_scale_39 = ''
+        else:
+            # = '(10{} {})'.format(Superscript(2), signal_units)
+            unit_scale_40 = '(10{} {})'.format(Superscript(3), signal_units)
+            unit_scale_39 = '(10{} {})'.format(Superscript(3), signal_units)
+
+        minus_102fa = '(10{} {})'.format(Superscript(-2), signal_units)
 
         #         blank = self._make_footnote('BLANK',
         #                                    'Blank Type', 'LR= Linear Regression, AVE= Average',
@@ -138,16 +171,16 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             ('N', ''),
             (self.extract_label, '({})'.format(self.extract_units)),
             (super_ar(40), _1016moles),
-            (super_ar(40), _103fa), (sigma, ''),
-            (super_ar(39), _103fa), (sigma, ''),
+            (super_ar(40), unit_scale_40), (sigma, ''),
+            (super_ar(39), unit_scale_39), (sigma, ''),
             (super_ar(38), ''), (sigma, ''),
             (super_ar(37), ''), (sigma, ''),
             (super_ar(36), ''), (sigma, minus_102fa),
             ('Age', '(Ma)'), (sigma, ''),
             ('%{}*'.format(super_ar(40)), ''),
-            ('{}*/{}{}'.format(super_ar(40),
-                               super_ar(39),
-                               Subscript('K')), ''),
+            # ('{}*/{}{}'.format(super_ar(40),
+            #                    super_ar(39),
+            #                    Subscript('K')), ''),
 
             ('K/Ca', ''),
             (sigma, ''),
@@ -161,12 +194,12 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
         name_row, unit_row = zip(*line)
 
-        default_fontsize = 8
+        default_fontsize = 7
         nrow = Row(fontsize=default_fontsize)
         for i, ni in enumerate(name_row):
             nrow.add_item(value=ni)
 
-        default_fontsize = 7
+        default_fontsize = 6
         urow = Row(fontsize=default_fontsize)
         for ni in unit_row:
             urow.add_item(value=ni)
@@ -181,9 +214,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         style.add('LINEBELOW', (0, unit_row_idx),
                   (-1, unit_row_idx), 1.5, colors.black)
 
-        return [
-            nrow,
-            urow]
+        return [nrow, urow]
 
     def _new_row(self, obj, attrs, default_fontsize=6):
         row = Row(height=self.default_row_height)
@@ -204,4 +235,4 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             row.add_item(value=v, fmt=fmt, fontsize=fontsize)
 
         return row
-    #============= EOF =============================================
+        #============= EOF =============================================

@@ -61,27 +61,34 @@ class NumberedCanvas(canvas.Canvas):
 class BasePDFWriter(Loggable):
     _footnotes = None
 
-    options=Instance(BasePDFOptions)
-    _options_klass=BasePDFOptions
+    options = Instance(BasePDFOptions)
+    _options_klass = BasePDFOptions
 
     def _options_default(self):
         return self._options_klass()
 
     def _new_base_doc_template(self, path):
         pagesize = letter
-        opt=self.options
+        opt = self.options
         if opt.orientation == 'landscape':
             pagesize = landscape(letter)
+            leftMargin = opt.bottom_margin * inch
+            rightMargin = opt.top_margin * inch
+            topMargin = opt.left_margin * inch
+            bottomMargin = opt.right_margin * inch
+        else:
+            leftMargin = opt.left_margin * inch
+            rightMargin = opt.right_margin * inch
+            topMargin = opt.top_margin * inch
+            bottomMargin = opt.bottom_margin * inch
 
+        print leftMargin, rightMargin, topMargin, bottomMargin
         doc = BaseDocTemplate(path,
-                              leftMargin=opt.left_margin * inch,
-                              rightMargin=opt.right_margin * inch,
-                              topMargin=opt.top_margin * inch,
-                              bottomMargin=opt.bottom_margin * inch,
-                              pagesize=pagesize
-                              #                                   _pageBreakQuick=0,
-                              #                                   showBoundary=1
-        )
+                              leftMargin=leftMargin,
+                              rightMargin=rightMargin,
+                              topMargin=topMargin,
+                              bottomMargin=bottomMargin,
+                              pagesize=pagesize)
         return doc
 
     def build(self, path, *args, **kw):
@@ -166,7 +173,6 @@ class BasePDFWriter(Loggable):
 
     def _value(self, **kw):
         return lambda x: self._fmt_attr(x, key='nominal_value', **kw)
-
 
 
 #============= EOF =============================================

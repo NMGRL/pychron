@@ -108,8 +108,8 @@ class DBAnalysis(Analysis):
 
     def set_tag(self, tag):
         if isinstance(tag, str):
-            self.tag=tag
-            omit= tag=='invalid'
+            self.tag = tag
+            omit = tag == 'invalid'
         else:
             name = tag.name
             self.tag = name
@@ -577,7 +577,8 @@ class DBAnalysis(Analysis):
         d = dict()
         if selected_hist:
             for dp in selected_hist.detector_params:
-                d[dp.detector.name] = (ufloat(dp.disc, dp.disc_error), dp.refmass)
+                self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
+                d[dp.detector.name] = (disc, dp.refmass)
                 #d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
                 #dp=selected_hist.detector_param
                 #return ufloat(dp.disc, dp.disc_error)

@@ -27,9 +27,9 @@ import os
 from pychron.paths import paths
 import yaml
 
+
 def DefaultInt(value=40):
     return Int(value)
-
 
 
 class SummaryPDFTableWriter(BasePDFTableWriter):
@@ -40,13 +40,13 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         title_para = self._new_paragraph(title)
         flowables = [title_para, self._vspacer(0.1)]
 
-#         t, t2 = self._make_table(samples)
+        #         t, t2 = self._make_table(samples)
         t = self._make_table(samples)
         flowables.append(t)
         flowables.append(self._vspacer(0.1))
-#         flowables.append(t2)
-#         n = self._make_notes()
-#         flowables.append(n)
+        #         flowables.append(t2)
+        #         n = self._make_notes()
+        #         flowables.append(n)
 
         return flowables, None
 
@@ -79,7 +79,6 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             if self.options.use_alternating_background:
                 idx = cnt + i
                 if i % 2 != 0:
-
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               self.options.get_alternating_background())
 
@@ -99,10 +98,10 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         PMS = u'\u00b1 1\u03c3'
 
         pr = Row(height=self.options.default_header_height)
-        pr.add_blank_item(6)
+        pr.add_blank_item(7)
         pr.add_item(value='Preferred Age', span=-1)
-#         style.add('ALIGN', (0, 3), (0, -1), 'CENTER')
-        self._new_line(style, 0, weight=0.75, start=4, end=-1)
+        #         style.add('ALIGN', (0, 3), (0, -1), 'CENTER')
+        self._new_line(style, 0, weight=0.75, start=5, end=-1)
 
         r = Row(height=self.options.default_header_height)
 
@@ -128,7 +127,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         row.add_item(value=interpreted_age.identifier)
         row.add_item(value=interpreted_age.irradiation)
         row.add_item(value=self._short_material_name(interpreted_age.material))
-        row.add_item(value='Basanite')
+        row.add_item(value=interpreted_age.lithology)
         row.add_item(value=interpreted_age.age_kind)
         row.add_item(value=interpreted_age.nanalyses)
         row.add_item(value=floatfmt(interpreted_age.mswd, n=1))
@@ -153,9 +152,10 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             if v.height:
                 table._argH[i] = v.height * inch
 
-#===============================================================================
-# summary
-#===============================================================================
+            #===============================================================================
+            # summary
+            #===============================================================================
+
     def _make_notes(self, data, style):
         p = os.path.join(paths.template_dir, self.notes_template)
 
@@ -185,8 +185,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
                 if hasattr(colors, bgcolor):
                     idx = len(data) - 1
                     style.add('BACKGROUND', (0, idx), (-1, idx),
-                          getattr(colors, bgcolor),
-                          )
+                              getattr(colors, bgcolor))
 
 #===============================================================================
 # footnotes

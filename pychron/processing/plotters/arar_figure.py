@@ -90,8 +90,9 @@ class BaseArArFigure(HasTraits):
 
             pp.value_range.tight_bounds = False
             # print po, po.ylimits, po.has_ylimits()
-            if po.has_ylimits():
-                pp.value_range.set_bounds(*po.ylimits)
+            # if po.has_ylimits():
+            #     print 'setting ylimits {}'.format(po.ylimits)
+            #     pp.value_range.set_bounds(*po.ylimits)
 
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
@@ -203,9 +204,13 @@ class BaseArArFigure(HasTraits):
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
                       pid=0, pad=None):
+
         mi, ma = self.graph.get_y_limits(plotid=pid)
+
+        # print pid, self.group_id, mi, ma, a, b
         mi = min(mi, a)
         ma = max(ma, b)
+
         if min_ is not None:
             mi = min_
         if max_ is not None:

@@ -44,6 +44,7 @@ class OLSRegressor(BaseRegressor):
     degree = Property(depends_on='_degree')
     _degree = Int
     constant = None
+    tag = ''
 
     def __degree_changed(self):
         if self._degree:
@@ -54,7 +55,7 @@ class OLSRegressor(BaseRegressor):
         cys = self.pre_clean_ys
 
         if not self._check_integrity(cxs, cys):
-            logger.debug('A integrity check failed')
+            logger.debug('A-{} integrity check failed'.format(self.tag))
             return
 
         if not filtering:
