@@ -85,7 +85,6 @@ class EasySensitivityAction(Action):
     name = 'Easy Sensitivity'
 
     def perform(self, event):
-
         from pychron.processing.easy.sensitivity import EasySensitivity
 
         e = EasySensitivity()
@@ -100,6 +99,17 @@ class EasyFaradayICAction(Action):
 
         e = EasyFaradayIC()
         e.make()
+
+
+class EasyAverageBlanksAction(Action):
+    name = 'Easy Average Blanks'
+
+    def perform(self, event):
+        from pychron.processing.easy.average_blanks import EasyAverageBlanks
+
+        e = EasyAverageBlanks()
+        e.make()
+
 
 #============= EOF ====================================
 

@@ -50,6 +50,7 @@ class EasyParser(Loggable):
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'ideo_unknowns.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'compare_iso_spec.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'isochron_unknowns.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_unknowns.yaml')
 
         if os.path.isfile(path):
             with open(path, 'r') as fp:
@@ -57,7 +58,7 @@ class EasyParser(Loggable):
                 self._docs = list(md)
                 self._ndocs = len(self._docs)
         else:
-            self.warning_dialog('Invalid EasyParser file. {}'.format(self._path))
+            self.warning_dialog('Invalid EasyParser file. {}'.format(path))
 
     def doc(self, idx):
 

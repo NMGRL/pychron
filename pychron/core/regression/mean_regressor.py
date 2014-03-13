@@ -87,8 +87,11 @@ sem={}
         else:
             return 0
 
-    def predict(self, xs, *args):
-        return ones(asarray(xs).shape) * self.mean
+    def predict(self, xs=None, *args):
+        if xs is not None:
+            return ones(asarray(xs).shape) * self.mean
+        else:
+            return self.mean
 
     def calculate_ci(self, fx, fy):
         #         c = self.predict(fx)
