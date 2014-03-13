@@ -25,6 +25,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -225,17 +226,13 @@ class IsotopicMeasurement(BaseMeasurement):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
-            reg = PolynomialRegressor(xs=self.xs,
+            reg = PolynomialRegressor(tag=self.name,
+                                      xs=self.xs,
                                       ys=self.ys,
-                                      degree=self.fit,
-                                      tag=self.name,
                                       error_calc_type=self.error_type,
                                       filter_outliers_dict=self.filter_outliers_dict)
 
-        # except Exception, e:
-        #     reg = PolynomialRegressor(xs=self.xs, ys=self.ys,
-        #                               degree=self.fit,
-        #                               filter_outliers_dict=self.filter_outliers_dict)
+            reg.set_degree(self.fit, refresh=False)
 
         reg.calculate()
 

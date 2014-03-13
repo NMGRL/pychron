@@ -27,6 +27,10 @@ from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
 
+import logging
+
+logger = logging.getLogger('BaseRegressor')
+
 
 class BaseRegressor(HasTraits):
     xs = Array
@@ -319,11 +323,14 @@ class BaseRegressor(HasTraits):
     def _check_integrity(self, x, y):
         nx, ny = len(x), len(y)
         if not nx or not ny:
+            logger.warning('not x={} y={}'.format(nx, ny))
             return
         if nx != ny:
+            logger.warning('x!=y x={} y={}'.format(nx, ny))
             return
 
         if nx == 1 or ny == 1:
+            logger.warning('==1 x={} y={}'.format(nx, ny))
             return
 
         return True

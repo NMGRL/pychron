@@ -44,7 +44,6 @@ class OLSRegressor(BaseRegressor):
     degree = Property(depends_on='_degree')
     _degree = Int
     constant = None
-    tag = ''
 
     def __degree_changed(self):
         if self._degree:
@@ -55,7 +54,9 @@ class OLSRegressor(BaseRegressor):
         cys = self.pre_clean_ys
 
         if not self._check_integrity(cxs, cys):
-            logger.debug('A-{} integrity check failed'.format(self.tag))
+            logger.debug('A integrity check failed')
+            # import traceback
+            # traceback.print_stack()
             return
 
         if not filtering:
@@ -228,7 +229,7 @@ class OLSRegressor(BaseRegressor):
     def _get_degree(self):
         return self._degree
 
-    def _set_degree(self, d):
+    def set_degree(self, d, refresh=True):
         if isinstance(d, str):
             d = d.lower()
             fits = ['linear', 'parabolic', 'cubic']
@@ -241,7 +242,11 @@ class OLSRegressor(BaseRegressor):
             d = 1
 
         self._degree = d
-        self.dirty = True
+        if refresh:
+            self.dirty = True
+
+    def _set_degree(self, d):
+        self.set_degree(d)
 
     @property
     def summary(self):
