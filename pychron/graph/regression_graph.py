@@ -192,6 +192,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 for si, fl in zip(scatters, fls):
                     if not si.no_regression:
                         r = self._plot_regression(plot, si, fl)
+
                         regs.append((plot, r))
 
             except ValueError,e:

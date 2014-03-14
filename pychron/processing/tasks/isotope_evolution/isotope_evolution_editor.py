@@ -146,12 +146,11 @@ class IsotopeEvolutionEditor(GraphEditor):
         sel_hist = meas_analysis.selected_histories
         sel_fithist = sel_hist.selected_fits
         dbfits = sel_fithist.fits
-        print dbfits
+
         fit_hist = None
         if dbfits:
             for dbfi in dbfits:
                 tf = in_tool_fits(dbfi)
-                print tf, dbfi.isotope.molecular_weight.name
                 if tf:
                     #use tool fit
                     fd = dict(filter_outliers=tf.filter_outliers,
@@ -198,7 +197,6 @@ class IsotopeEvolutionEditor(GraphEditor):
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict,
                      include_baseline_error):
         db = self.processor.db
-        print 'save fit', name
         if name.endswith('bs'):
             name = name[:-2]
             # dbfit = unk.get_db_fit(meas_analysis, name, 'baseline')
@@ -209,13 +207,12 @@ class IsotopeEvolutionEditor(GraphEditor):
             kind = 'signal'
             iso = unk.isotopes[name]
 
-        if filter_dict:
-            iso.set_filtering(filter_dict)
-
         f, e = convert_fit(fit)
         iso.fit = f
         iso.error_type = et or e
         iso.include_baseline_error = include_baseline_error
+        if filter_dict:
+            iso.set_filtering(filter_dict)
 
         if fit_hist is None:
             fit_hist = db.add_fit_history(meas_analysis, user=db.save_username)
@@ -236,9 +233,14 @@ class IsotopeEvolutionEditor(GraphEditor):
                    filter_outlier_std_devs=fod['std_devs'],
                    include_baseline_error=include_baseline_error)
         #update isotoperesults
-        # v, e = float(iso.value), float(iso.error)
+
         v, e = float(iso.value), float(iso.error)
-        print v, e
+        # if iso.name=='Ar40':
+        #     print v, e
+        # print '_xs', iso.xs
+        # print '_ys', iso.ys
+        # print len(iso.xs), len(iso.ys), iso.regressor.n, len(iso.regressor.get_excluded())
+
         db.add_isotope_result(dbiso, fit_hist,
                               signal_=v, signal_err=e)
         return fit_hist

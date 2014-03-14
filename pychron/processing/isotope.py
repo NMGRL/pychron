@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -115,7 +116,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='xs, ys, fit, dirty, error_type')
+    regressor = Property(depends_on='fit, dirty, error_type')
     dirty = Event
     include_baseline_error = Bool
 
@@ -133,7 +134,9 @@ class IsotopicMeasurement(BaseMeasurement):
         # if d.get('filter_outliers', False):
         self.filter_outliers_dict = d.copy()
         self.dirty = True
-        self.regressor.calculate()
+        # print self.filter_outliers_dict
+        # self.regressor.filter_outliers_dict=self.filter_outliers_dict
+        # self.regressor.calculate()
 
     def set_fit_blocks(self, fit):
         if re.match(r'\([\w\d\s,]*\)', fit):
@@ -207,6 +210,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _get_value(self):
         if len(self.xs) > 1:  # and self.ys is not None:
+            self.regressor.calculate()
             v = self.regressor.predict(0)
             return v
         else:
@@ -214,12 +218,13 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _get_error(self):
         if len(self.xs) > 1:
+            self.regressor.calculate()
             v = self.regressor.predict_error(0)
             return v
         else:
             return self._error
 
-    @cached_property
+    # @cached_property
     def _get_regressor(self):
         # print '{} getting regerssior'.format(self.name)
         # try:
@@ -229,10 +234,11 @@ class IsotopicMeasurement(BaseMeasurement):
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.xs,
                                       ys=self.ys,
-                                      error_calc_type=self.error_type,
-                                      filter_outliers_dict=self.filter_outliers_dict)
+
+                                      error_calc_type=self.error_type)
 
             reg.set_degree(self.fit, refresh=False)
+            reg.filter_outliers_dict = self.filter_outliers_dict
 
         reg.calculate()
 
