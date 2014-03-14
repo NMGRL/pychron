@@ -232,14 +232,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                    filter_outlier_iterations=fod['iterations'],
                    filter_outlier_std_devs=fod['std_devs'],
                    include_baseline_error=include_baseline_error)
-        #update isotoperesults
 
+        #update isotoperesults
         v, e = float(iso.value), float(iso.error)
-        # if iso.name=='Ar40':
-        #     print v, e
-        # print '_xs', iso.xs
-        # print '_ys', iso.ys
-        # print len(iso.xs), len(iso.ys), iso.regressor.n, len(iso.regressor.get_excluded())
 
         db.add_isotope_result(dbiso, fit_hist,
                               signal_=v, signal_err=e)

@@ -93,7 +93,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
 
                ]
     name_width = Int(80)
-    value_width = Int(80)
+    value_width = Int(120)
     units_width = Int(40)
     error_text=Property
     percent_error_text=Property
@@ -102,7 +102,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
     def _get_value_text(self):
         if self.item.display_value:
             v=self.item.value
-            return floatfmt(v)
+            return floatfmt(v, n=10, s=10)
         else:
             return ''
 

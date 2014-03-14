@@ -46,6 +46,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -253,6 +254,7 @@ class AnalysisEditTask(BaseBrowserTask):
         editor = None
         #check if record already is open
         for r in records:
+
             editor = self._get_editor_by_uuid(r.uuid)
             if editor:
                 records.remove(r)

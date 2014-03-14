@@ -29,6 +29,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -90,6 +91,9 @@ class ArArAge(Loggable):
 
     ar39decayfactor = Float
     ar37decayfactor = Float
+
+    Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
+    Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
 
     arar_constants = Instance(ArArConstants, ())
     logger = logger
@@ -386,6 +390,8 @@ class ArArAge(Loggable):
         isos = abundance_sensitivity_correction(isos, arc.abundance_sensitivity)
         isos[1] *= self.ar39decayfactor
         isos[3] *= self.ar37decayfactor
+        self.Ar39_decay_corrected = isos[1]
+        self.Ar37_decay_corrected = isos[3]
 
         # print isos[4]
         # print 'ifc',self.interference_corrections
@@ -461,8 +467,17 @@ class ArArAge(Loggable):
 
     @cached_property
     def _get_moles_Ar40(self):
-        return self.sensitivity * self.get_isotope('Ar40')
-        #===============================================================================
+        return self.sensitivity * self.get_isotope('Ar40').get_intensity()
+
+    def __getattr__(self, attr):
+        if '/' in attr:
+            #treat as ratio
+            n, d = attr.split('/')
+            try:
+                return self.get_value(n) / self.get_value(d)
+            except ZeroDivisionError:
+                return ufloat(0, 1e-20)
+                #===============================================================================
         #
         #===============================================================================
 

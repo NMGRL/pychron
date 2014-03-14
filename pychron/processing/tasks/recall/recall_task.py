@@ -26,9 +26,16 @@ from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+class DummyRecord():
+    uuid = ''
+    analysis_type = 'unknown'
+
+    def __init__(self, uuid):
+        self.uuid = uuid
 
 
 class RecallTask(AnalysisEditTask):
@@ -53,7 +60,10 @@ class RecallTask(AnalysisEditTask):
 
         self.append_unknown_analyses(ans)
 
-    # def activated(self, load=False):
+    def activated(self, load=False):
+        super(RecallTask, self).activated()
+        self.recall([DummyRecord('f4d301bd-a217-42a2-b4c9-c1696089acb2')])
+
     #     self.load_projects()
     #     # if load:
     #         # editor = RecallEditor()

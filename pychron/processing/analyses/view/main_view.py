@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Event
-from traitsui.api import View, UItem, HGroup
+from traitsui.api import View, UItem, HGroup, HSplit, VSplit
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -38,6 +38,7 @@ class MainView(HasTraits):
     refresh_needed = Event
 
     computed_values = List
+    corrected_values = List
     extraction_values = List
     measurement_values = List
 
@@ -55,6 +56,7 @@ class MainView(HasTraits):
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
+
 
     def _get_irradiation(self, an):
         return an.irradiation_label
@@ -147,6 +149,7 @@ class MainView(HasTraits):
 
         if self.analysis_type == 'unknown':
             self._load_unknown_computed(an, new_list)
+            self._load_corrected_values(an, new_list)
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
             self._load_air_computed(an, new_list)
         elif self.analysis_type == 'cocktail':
@@ -219,6 +222,47 @@ class MainView(HasTraits):
         else:
             self._update_ratios(an)
 
+    def _load_corrected_values(self, an, new_list):
+        attrs = (('40/39', 'Ar40/Ar39_decay_corrected'),
+                 ('40/37', 'Ar40/Ar37_decay_corrected'),
+                 ('40/36', 'Ar40/Ar36'),
+                 ('38/39', 'Ar38/Ar39_decay_corrected'),
+                 ('37/39', 'Ar37_decay_corrected/Ar39_decay_corrected'),
+                 ('36/39', 'Ar36/Ar39_decay_corrected'),
+        )
+
+        if new_list:
+            def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
+                if value is None:
+                    value = getattr(an, a)
+
+                display_value = True
+                if value_tag:
+                    value = getattr(an, value_tag)
+                    display_value = False
+
+                if error_tag:
+                    e = getattr(an, error_tag)
+                else:
+                    e = std_dev(value)
+
+                return ComputedValue(name=n,
+                                     tag=a,
+                                     value=nominal_value(value) or 0,
+                                     display_value=display_value,
+                                     error=e or 0)
+
+            cv = [comp_factory(*args)
+                  for args in attrs]
+
+            self.corrected_values = cv
+        else:
+            for ci in self.corrected_values:
+                attr = ci.tag
+                v = getattr(an, attr)
+                ci.value = nominal_value(v)
+                ci.error = std_dev(v)
+
     def _load_unknown_computed(self, an, new_list):
 
         attrs = (('Age', 'uage'),
@@ -228,7 +272,8 @@ class MainView(HasTraits):
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
                  ('F', 'uF'),
-                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'))
+                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad')
+        )
 
         if new_list:
             def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
@@ -297,17 +342,19 @@ class MainView(HasTraits):
         teditor, ieditor, ceditor, eeditor, meditor = self._get_editors()
 
         v = View(
-            HGroup(
-                UItem('measurement_values',
-                      editor=meditor),
-                UItem('extraction_values',
-                      editor=eeditor)),
-            UItem('isotopes',
-                  editor=teditor),
-            UItem('isotopes',
-                  editor=ieditor),
-            UItem('computed_values',
-                  editor=ceditor))
+            VSplit(
+                HGroup(
+                    UItem('measurement_values',
+                          editor=meditor),
+                    UItem('extraction_values',
+                          editor=eeditor)),
+                UItem('isotopes',
+                      editor=teditor),
+                UItem('isotopes',
+                      editor=ieditor),
+                HSplit(UItem('computed_values',
+                             editor=ceditor),
+                       UItem('corrected_values', editor=ceditor))))
         return v
 
 
