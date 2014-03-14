@@ -75,7 +75,8 @@ class IrradiationProduction(HasTraits):
             if old_value!=new:
                 self.__dirty__.append(1)
             else:
-                self.__dirty__.pop()
+                if self.__dirty__:
+                    self.__dirty__.pop()
         else:
             self.__edited__[name]=old
             # self.__dirty__.append(1)
