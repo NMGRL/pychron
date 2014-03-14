@@ -47,6 +47,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -248,8 +249,8 @@ class AnalysisEditTask(BaseBrowserTask):
         """
         self.debug('recalling records {}'.format(records))
 
-        if not hasattr(records, '__iter__'):
-            records = [records, ]
+        if not isinstance(records, (list, tuple)):
+            records = (records,)
 
         editor = None
         #check if record already is open
