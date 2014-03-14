@@ -44,6 +44,7 @@ from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 #@todo: add layout editing.
@@ -234,18 +235,27 @@ class FigureTask(AnalysisEditTask):
     # actions
     #===============================================================================
     def save_figure(self):
-        sid = self.active_editor.saved_figure_id
-        if sid:
-            self._save_figure()
-        else:
-            self._save_as_figure()
+        if self.active_editor:
+            if not isinstance(self.active_editor, RecallEditor):
+                sid = self.active_editor.saved_figure_id
+                if sid:
+                    self._save_figure()
+                else:
+                    self._save_as_figure()
+            else:
+                self.warning_dialog('You are trying to save a figure from a Recall Editor. '
+                                    'Select a Figure Editor instead.')
 
     def save_as_figure(self):
         self._save_as_figure()
 
     def set_interpreted_age(self):
         if self.active_editor:
-            self.active_editor.set_interpreted_age()
+            if not isinstance(self.active_editor, RecallEditor):
+                self.active_editor.set_interpreted_age()
+            else:
+                self.warning_dialog('You are trying to set an interpreted age from Recall Editor. '
+                                    'Select a Figure Editor instead')
 
     def browse_interpreted_age(self):
         app = self.application

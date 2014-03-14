@@ -26,7 +26,7 @@ from pychron.envisage.browser.adapters import ProjectAdapter
 
 
 class GroupAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Date','create_date')]
+    columns = [('Name', 'name'), ('Date', 'create_date')]
 
 
 class GroupDialog(HasTraits):
@@ -54,16 +54,14 @@ class IAGroup(HasTraits):
     name = Str
     project = Str
     id = Int
-    create_date=Date
+    create_date = Date
+
 
 class SelectionGroupDialog(GroupDialog):
     groups = List
     db = Any
     selected_groups = List
-    title=Str
-
-    def _scroll_to_row_changed(self):
-        print self.scroll_to_row
+    title = Str
 
     def get_selected_ids(self):
         return [gi.id for gi in self.selected_groups]
@@ -82,7 +80,7 @@ class SelectionGroupDialog(GroupDialog):
                                       create_date=hi.create_date))
             self.groups = gs
             if gs:
-                self.selected_groups=gs[-1:]
+                self.selected_groups = gs[-1:]
                 do_later(self.trait_set, scroll_to_row=len(gs) - 1)
 
     def traits_view(self):
@@ -104,11 +102,11 @@ class SelectionGroupDialog(GroupDialog):
 
 
 class OpenGroupDialog(SelectionGroupDialog):
-    title='Open Interpreted Age Group'
+    title = 'Open Interpreted Age Group'
 
 
 class DeleteGroupDialog(SelectionGroupDialog):
-    title='Delete Interpreted Age Groups'
+    title = 'Delete Interpreted Age Groups'
 
 #============= EOF =============================================
 

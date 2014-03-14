@@ -160,16 +160,39 @@ class OLSRegressor(BaseRegressor):
 
             return varY_hat[0, 0]
 
-        def calc_sd(xi):
-            varY_hat = calc_hat(xi)
-            return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+        # def calc_sd(xi):
+        #     varY_hat = calc_hat(xi)
+        #     return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+        #
+        # def calc_sem(xi):
+        #     varY_hat = calc_hat(xi)
+        #     return sef * sqrt(varY_hat)
+        #
+        # mswd=self.mswd
+        # def calc_modified_sem(xi):
+        #     varY_hat = calc_hat(xi)
+        #     m=1 if mswd<=1 else mswd**0.5
+        #     return sef * sqrt(varY_hat)* m
 
-        def calc_sem(xi):
-            varY_hat = calc_hat(xi)
-            return sef * sqrt(varY_hat)
+        if error_calc == 'SEM':
+            def func(xi):
+                varY_hat = calc_hat(xi)
+                return sef * sqrt(varY_hat)
+        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+            mswd = self.mswd
 
-        func = calc_sem if error_calc == 'SEM' else calc_sd
+            def func(xi):
+                varY_hat = calc_hat(xi)
+                m = 1 if mswd <= 1 else mswd ** 0.5
+                return sef * sqrt(varY_hat) * m
+        else:
+            def func(xi):
+                varY_hat = calc_hat(xi)
+                return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+
         return [func(xi) for xi in x]
+        # func = calc_sem if error_calc == 'SEM' else calc_sd
+        # return [func(xi) for xi in x]
 
     def predict_error_al(self, x, error_calc='sem'):
         """

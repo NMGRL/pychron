@@ -51,6 +51,9 @@ class FluxTool(HasTraits):
     group_positions=Bool(False)
     show_labels = Bool(True)
 
+    mean_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+    predicted_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+
     def _monitor_default(self):
         return DummyFluxMonitor()
 
@@ -72,7 +75,11 @@ class FluxTool(HasTraits):
             VGroup(HGroup(UItem('calculate_button'),
                           UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
                           monitor_grp),
-                   HGroup(Item('group_positions'), Item('object.monitor.sample', style='readonly',label='Sample')),
+                   Item('mean_j_error_type', label='Mean J Error'),
+                   Item('predicted_j_error_type', label='Predicted J Error'),
+                   HGroup(Item('group_positions'),
+                          Item('object.monitor.sample',
+                               style='readonly', label='Sample')),
                    Item('show_labels',
                         label='Display Labels',
                         tooltip='Display hole labels on plot'),

@@ -124,8 +124,11 @@ sem={}
 
         if error_calc == 'SEM':
             e = self.sem
+        elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+            e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
         else:
             e = self.std
+
         return ones(asarray(x).shape) * e
 
     def calculate_standard_error_fit(self):

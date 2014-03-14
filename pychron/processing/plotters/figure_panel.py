@@ -83,8 +83,10 @@ class FigurePanel(HasTraits):
                 #print fig
 
             fig.suppress_ylimits_update=True
+            fig.suppress_xlimits_update = True
             fig.plot(plots)
             fig.suppress_ylimits_update=False
+            fig.suppress_xlimits_update = False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
 
@@ -99,7 +101,6 @@ class FigurePanel(HasTraits):
         if mi is None and ma is None:
             mi, ma = 0, 100
         g.set_x_limits(mi, ma, pad=fig.xpad or 0)
-
 
         self.graph = g
         #print self.graph

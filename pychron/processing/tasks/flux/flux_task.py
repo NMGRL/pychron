@@ -26,6 +26,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -212,6 +213,7 @@ class FluxTask(InterpolationTask):
 
     def _calculate_flux_db(self, editor):
         reg = WeightedMeanRegressor()
+        reg.error_calc_type = editor.tool.mean_j_error_type
         monitor_age = editor.tool.monitor_age
 
         # helper funcs

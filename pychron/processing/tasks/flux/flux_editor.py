@@ -79,6 +79,7 @@ class MonitorPosition(HasTraits):
     y = Float
     z = Float
     theta = Float
+    calc_j = Float
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
@@ -152,6 +153,7 @@ class FluxEditor(GraphEditor):
                               sample=sample,
                               hole_id=pid,
                               x=x, y=y,
+
                               j=j, jerr=jerr,
                               theta=math.atan2(x, y),
                               use=use)
@@ -175,7 +177,7 @@ class FluxEditor(GraphEditor):
     def set_position_j(self, identifier, j, jerr, dev):
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
-            mon.trait_set(j=j, jerr=jerr, dev=dev)
+            mon.trait_set(calc_j=j, j=j, jerr=jerr, dev=dev)
         else:
             self.warning('invalid identifier {}'.format(identifier))
 
@@ -285,7 +287,8 @@ class FluxEditor(GraphEditor):
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
-        reg = klass(xs=xy, ys=z, yserr=ze, error_calc_type='SD')
+        reg = klass(xs=xy, ys=z, yserr=ze,
+                    error_calc_type=self.tool.predicted_j_error_type)
         reg.calculate()
         return reg
 
@@ -349,7 +352,9 @@ class FluxEditor(GraphEditor):
         return g
 
     def _tool_default(self):
-        ft = FluxTool()
+        ft = FluxTool(mean_j_error_type='SEM, but if MSWD>1 use SEM * sqrt(MSWD)',
+                      predicted_j_error_type='SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+
         db = self.processor.db
         fs = []
         with db.session_ctx():
@@ -375,6 +380,7 @@ class FluxEditor(GraphEditor):
             column(name='x', label='X', format='%0.3f', width=50),
             column(name='y', label='Y', format='%0.3f', width=50),
             column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            column(name='saved_j', label='Calc. J'),
             column(name='j', label='J',
                    format_func=lambda x: floatfmt(x, n=7, s=3),
                    width=75),

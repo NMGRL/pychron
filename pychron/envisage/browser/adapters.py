@@ -44,12 +44,12 @@ class SampleAdapter(BrowserAdapter):
     all_columns = [('Sample', 'name'),
                    ('Identifier', 'labnumber'),
                    ('Material', 'material'),
-                   ('Irradiation','irradiation'),
+                   ('Irradiation', 'irradiation'),
                    ('Level', 'irradiation_and_level'),
-                   ('Irrad. Pos.','irradiation_pos')]
+                   ('Irrad. Pos.', 'irradiation_pos')]
     #     material_text = Property
     odd_bg_color = 'lightgray'
 
     name_width = Int(125)
-    labnumber_width = Int(75)
+    labnumber_width = Int(60)
     material_width = Int(75)

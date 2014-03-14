@@ -64,6 +64,7 @@ class BaseArArFigure(HasTraits):
     refresh_unknowns_table = Event
     _suppress_table_update = False
     suppress_ylimits_update=False
+    suppress_xlimits_update = False
     _omit_key=None
     xpad=None
 
@@ -93,6 +94,8 @@ class BaseArArFigure(HasTraits):
             # if po.has_ylimits():
             #     print 'setting ylimits {}'.format(po.ylimits)
             #     pp.value_range.set_bounds(*po.ylimits)
+            if po.has_xlimits():
+                pp.index_range.set_bounds(*po.xlimits)
 
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
@@ -221,6 +224,7 @@ class BaseArArFigure(HasTraits):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
         ap.ylimits = self.graph.get_y_limits(pid)
+        ap.xlimits = self.graph.get_x_limits(pid)
 
     #===========================================================================
     # aux plots
@@ -415,6 +419,26 @@ class BaseArArFigure(HasTraits):
                 axp.set_overlay_position(obj.id, new)
 
                 break
+
+    @on_trait_change('graph:plots:index_mapper:updated')
+    def _handle_index_range(self, obj, name, old, new):
+        if not isinstance(new, bool):
+            if self.suppress_xlimits_update:
+                return
+
+            for p in self.graph.plots:
+                if p.index_mapper == obj:
+                    # plot = p
+                    # title = plot.x_axis.title
+                    #
+                    # if title in PLOT_MAPPING:
+                    #     title = PLOT_MAPPING[title]
+                    #
+                    for op in self.options.aux_plots:
+                        #     if title.startswith(op.name):
+                        op.xlimits = (new.low, new.high)
+                        # break
+                        # break
 
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj,name, old, new):

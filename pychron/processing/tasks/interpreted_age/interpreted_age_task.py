@@ -155,7 +155,10 @@ class InterpretedAgeTask(BaseBrowserTask):
             n = self.active_editor.name
             #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
             r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
-            p, _ = unique_path(r, n, extension='.pdf')
+            if not os.path.isdir(r):
+                p = self.save_file_dialog(ext='.pdf')
+            else:
+                p, _ = unique_path(r, n, extension='.pdf')
             if p:
                 self.active_editor.save_pdf_tables(p)
 
