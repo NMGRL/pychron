@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-
+from traits.api import Bool
 #============= standard library imports ========================
+from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
 #============= local library imports  ==========================
 
 class IrradiationTrayOverlay(AbstractOverlay):
     _cached_pts = None
+    show_labels = Bool(True)
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -31,9 +33,9 @@ class IrradiationTrayOverlay(AbstractOverlay):
             # gc.set_fill_color((1, 0, 1))
             if self._cached_pts is None:
                 self._cached_pts = self._gather_points()
-
-            for x, y, pts in self._cached_pts:
-                self._render_hole(gc, x, y, pts)
+            gc.set_font(str_to_font('modern 10'))
+            for i, (x, y, pts) in enumerate(self._cached_pts):
+                self._render_hole(gc, str(i + 1), x, y, pts)
 
             gc.stroke_path()
 
@@ -41,12 +43,18 @@ class IrradiationTrayOverlay(AbstractOverlay):
         super(IrradiationTrayOverlay, self).do_layout()
         self._cached_pts = None
 
-    def _render_hole(self, gc, x, y, pts):
+    def _render_hole(self, gc, label, x, y, pts):
+        if self.show_labels:
+            with gc:
+                gc.set_text_position(x + 5, y + 5)
+                gc.show_text(label)
+
         with gc:
             #print x, y
             gc.translate_ctm(x, y)
             gc.lines(pts)
             gc.stroke_path()
+
 
     def _gather_points(self):
         pts = []

@@ -49,6 +49,8 @@ class FluxTool(HasTraits):
     monitors=List
 
     group_positions=Bool(False)
+    show_labels = Bool(True)
+
     def _monitor_default(self):
         return DummyFluxMonitor()
 
@@ -71,6 +73,9 @@ class FluxTool(HasTraits):
                           UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
                           monitor_grp),
                    HGroup(Item('group_positions'), Item('object.monitor.sample', style='readonly',label='Sample')),
+                   Item('show_labels',
+                        label='Display Labels',
+                        tooltip='Display hole labels on plot'),
                    HGroup(UItem('plot_kind'),
                           Item('model_kind', label='Fit Model',
                             editor=EnumEditor(values=['Bowl', 'Plane']))),

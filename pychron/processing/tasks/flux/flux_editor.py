@@ -99,6 +99,7 @@ class FluxEditor(GraphEditor):
     save_unknowns_button = Button
     _save_all = True
     _save_unknowns = True
+    irradiation_tray_overlay = Instance(IrradiationTrayOverlay)
 
     def set_save_all(self, v):
         self._save_all = True
@@ -257,7 +258,9 @@ class FluxEditor(GraphEditor):
         p = g.new_plot(xtitle='X', ytitle='Y')
 
         ito = IrradiationTrayOverlay(component=p,
-                                     geometry=self.geometry)
+                                     geometry=self.geometry,
+                                     show_labels=self.tool.show_labels)
+        self.irradiation_tray_overlay = ito
         p.overlays.append(ito)
 
         g.new_series(x, y, type='scatter',
@@ -297,6 +300,12 @@ class FluxEditor(GraphEditor):
             nz[i] = reg.predict(pts)
 
         return nz
+
+    @on_trait_change('tool:show_labels')
+    def _handle_labels(self):
+        if self.irradiation_tray_overlay:
+            self.irradiation_tray_overlay.show_labels = self.tool.show_labels
+            self.irradiation_tray_overlay.invalidate_and_redraw()
 
     @on_trait_change('monitor_positions:[use, j, jerr]')
     def _handle_monitor_pos_change(self, obj, name, old, new):
