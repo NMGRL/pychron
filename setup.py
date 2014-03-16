@@ -13,4 +13,5 @@ setup(name='pychron',
       packages=['pychron.core.regression',
                 'pychron.core.stats',
                 'pychron.core.regression.tests'],
-      test_suite='pychron.core.regression.tests.suite')
+      # test_suite='pychron.core.regression.tests.suite'
+      test_suite='pychron.test_suite.suite')

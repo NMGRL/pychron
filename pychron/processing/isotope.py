@@ -23,10 +23,6 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
 
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -77,9 +73,9 @@ class BaseMeasurement(HasTraits):
             endianness = self.endianness
 
         fmt = '{}ff'.format(endianness)
-        txt=''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
+        txt = ''.join((struct.pack(fmt, x, y) for x, y in izip(self.xs, self.ys)))
         if as_hex:
-            txt=hexlify(txt)
+            txt = hexlify(txt)
         return txt
 
     def _unpack_blob(self, blob, endianness=None):
@@ -103,20 +99,21 @@ class BaseMeasurement(HasTraits):
 class IsotopicMeasurement(BaseMeasurement):
     uvalue = Property(depends_on='value, error, _value, _error, dirty')
 
-    value = Property(depends_on='_value,fit, dirty')
-    error = Property(depends_on='_error,fit, dirty')
+    value = Property(depends_on='_value, dirty')
+    error = Property(depends_on='_error, dirty')
     _value = Float
     _error = Float
 
     fit = Property(depends_on='_fit')
     _fit = String
     fit_abbreviation = Property(depends_on='fit')
-    fit_blocks=List
-    error_type=String('SEM')
+    fit_blocks = List
+    error_type = String('SEM')
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='fit, dirty, error_type')
+    regressor = Property(depends_on='fit')
+    # regressor = Property(depends_on='fit, dirty, error_type')
     dirty = Event
     include_baseline_error = Bool
 
@@ -131,7 +128,6 @@ class IsotopicMeasurement(BaseMeasurement):
         super(IsotopicMeasurement, self).__init__(*args, **kw)
 
     def set_filtering(self, d):
-        # if d.get('filter_outliers', False):
         self.filter_outliers_dict = d.copy()
         self.dirty = True
         # print self.filter_outliers_dict
@@ -140,32 +136,32 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit_blocks(self, fit):
         if re.match(r'\([\w\d\s,]*\)', fit):
-            fs=[]
+            fs = []
             for m in re.finditer(r'\([\w\d\s,]*\)', fit):
-                a=m.group(0)
-                a=a[1:-1]
-                s,e,f=map(str.strip, a.split(','))
+                a = m.group(0)
+                a = a[1:-1]
+                s, e, f = map(str.strip, a.split(','))
 
                 if s is '':
-                    s=-1
+                    s = -1
                 else:
-                    s=int(s)
+                    s = int(s)
 
                 if e is '':
-                    e=Inf
+                    e = Inf
                 else:
-                    e=int(e)
+                    e = int(e)
 
-                fs.append((s,e,f))
+                fs.append((s, e, f))
 
-            self.fit_blocks=fs
+            self.fit_blocks = fs
         else:
-            self.fit=fit
+            self.fit = fit
 
     def get_fit(self, cnt):
-        r=self.get_fit_block(cnt)
+        r = self.get_fit_block(cnt)
         if r is not None:
-            self.fit=r
+            self.fit = r
 
         return self.fit
 
@@ -183,7 +179,8 @@ class IsotopicMeasurement(BaseMeasurement):
             self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                              iterations=int(fit.filter_outlier_iterations or 0),
                                              std_devs=int(fit.filter_outlier_std_devs or 0))
-            self.error_type=fit.error_type or 'SEM'
+            self.error_type = fit.error_type or 'SEM'
+
             self.trait_set(fit=fit.fit, trait_change_notify=notify)
             self.include_baseline_error = fit.include_baseline_error or False
 
@@ -209,7 +206,7 @@ class IsotopicMeasurement(BaseMeasurement):
         self._value = v
 
     def _get_value(self):
-        if len(self.xs) > 1:  # and self.ys is not None:
+        if len(self.xs) > 1:
             self.regressor.calculate()
             v = self.regressor.predict(0)
             return v
@@ -224,17 +221,15 @@ class IsotopicMeasurement(BaseMeasurement):
         else:
             return self._error
 
-    # @cached_property
     def _get_regressor(self):
-        # print '{} getting regerssior'.format(self.name)
-        # try:
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.xs,
                                       ys=self.ys,
-
+                                      # fit=self.fit,
+                                      # filter_outliers_dict=self.filter_outliers_dict,
                                       error_calc_type=self.error_type)
 
             reg.set_degree(self.fit, refresh=False)
@@ -259,6 +254,9 @@ class IsotopicMeasurement(BaseMeasurement):
         f = natural_name_fit(f)
         self._fit = f
 
+    def _error_type_changed(self):
+        self.regressor.error_calc_type = self.error_type
+
     #===============================================================================
     # arthmetic
     #===============================================================================
@@ -278,14 +276,12 @@ class IsotopicMeasurement(BaseMeasurement):
         return self.uvalue - a
 
     def __rsub__(self, a):
-    #        return self.uvalue - a
         return a - self.uvalue
 
     def __div__(self, a):
         return self.uvalue / a
 
     def __rdiv__(self, a):
-    #        return self.uvalue / a
         return a / self.uvalue
 
 
@@ -298,11 +294,6 @@ class CorrectionIsotopicMeasurement(IsotopicMeasurement):
             self._error = dbrecord.user_error if dbrecord.user_value is not None else 0
 
         super(IsotopicMeasurement, self).__init__(*args, **kw)
-
-        #        if self.dbrecord:
-
-#            self._value = self.dbrecord.user_value
-#            self._error = self.dbrecord.user_error
 
 
 class Background(CorrectionIsotopicMeasurement):
@@ -395,10 +386,10 @@ class Isotope(BaseIsotope):
         return v - self.background.uvalue
 
     def set_blank(self, v, e):
-        self.blank=Blank(_value=v, _error=e)
+        self.blank = Blank(_value=v, _error=e)
 
     def set_baseline(self, v, e):
-        self.baseline=Baseline(_value=v, _error=e)
+        self.baseline = Baseline(_value=v, _error=e)
 
     def __eq__(self, other):
         return self.get_baseline_corrected_value().__eq__(other)
@@ -418,6 +409,7 @@ class Isotope(BaseIsotope):
     def __str__(self):
         try:
             return '{} {}'.format(self.name, self.get_baseline_corrected_value())
-        except (OverflowError, ValueError, AttributeError, TypeError),e:
+        except (OverflowError, ValueError, AttributeError, TypeError), e:
             return '{} {}'.format(self.name, e)
+
 #============= EOF =============================================

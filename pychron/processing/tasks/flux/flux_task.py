@@ -27,13 +27,13 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
-from pychron.envisage.browser.record_views import AnalysisRecordView
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.tasks.flux.flux_editor import FluxEditor
@@ -177,7 +177,7 @@ class FluxTask(InterpolationTask):
                     self._calculate_flux_file(editor)
 
                 editor.rebuild_graph()
-                editor.set_unknown_j()
+                editor.set_predicted_j()
                 editor.suppress_update = False
 
     def _calculate_flux_file(self, editor):
@@ -249,26 +249,30 @@ class FluxTask(InterpolationTask):
 
             for ais in ans:
                 if ais:
-                    #remove omitted.
-                    # ais = filter(lambda x: not x.tag_item.omit_ideo, ais)
-
-                    self.analyses.extend([AnalysisRecordView(ai) for ai in ais])
-                    self.analyses.append(GroupMarker)
                     ref = ais[0]
-                    # pid = ref.labnumber.irradiation_position.position
+                    sj = ref.labnumber.selected_flux_history.flux.j
+                    sjerr = ref.labnumber.selected_flux_history.flux.j_err
+                    # if not cj or editor.tool.save_mean_j:
+                    #     self.debug('recalculating mean j')
+
                     ident = ref.labnumber.identifier
-                    cj = ref.labnumber.selected_flux_history.flux.j
+
                     # x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     j = mean_j(aa)
                     dev = 100
-                    if cj:
-                        dev = (j.nominal_value - cj) / cj * 100
+                    if sj:
+                        dev = (j.nominal_value - sj) / sj * 100
 
-                    editor.set_position_j(ident, j.nominal_value, j.std_dev, dev)
-                    # editor.add_monitor_position(int(pid), ident, x, y, j.nominal_value, j.std_dev, dev)
+                    if editor.tool.save_mean_j:
+                        db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
+                        sj, sjerr = j.nominal_value, j.std_dev
 
-            self.analyses.pop()
+                    editor.set_position_j(ident,
+                                          j.nominal_value, j.std_dev,
+                                          sj, sjerr,
+                                          dev)
+
             prog.close()
 
     def _get_geometry(self, irrad=None, level=None, holder=None):
@@ -350,7 +354,8 @@ class FluxTask(InterpolationTask):
                 #         self._calculate_flux_db(self.active_editor)
                 #
                 #         #update flux in db for all positions
-                editor.set_save_all(True)
+                # editor.set_save_all(True)
+                editor.set_save_unknowns(True)
                 editor.save()
         # prog.close()
         return True

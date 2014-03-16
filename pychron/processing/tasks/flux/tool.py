@@ -30,7 +30,7 @@ from traitsui.view import View
 
 
 class DummyFluxMonitor(HasTraits):
-    sample=Str
+    sample = Str
 
 
 class FluxTool(HasTraits):
@@ -42,17 +42,18 @@ class FluxTool(HasTraits):
 
     data_source = Str('database')
     # plot_kind = Str('Contour')
-    plot_kind=Enum('Contour','Hole vs J')
+    plot_kind = Enum('Contour', 'Hole vs J')
 
     # def _plot_kind_default(self,):
-    monitor=Any
-    monitors=List
+    monitor = Any
+    monitors = List
 
-    group_positions=Bool(False)
+    group_positions = Bool(False)
     show_labels = Bool(True)
 
     mean_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
     predicted_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+    save_mean_j = Bool(True)
 
     def _monitor_default(self):
         return DummyFluxMonitor()
@@ -60,7 +61,7 @@ class FluxTool(HasTraits):
     def _get_monitor_age(self):
         ma = 28.02e6
         if self.monitor:
-            ma=self.monitor.age
+            ma = self.monitor.age
 
         return ma
 
@@ -70,11 +71,12 @@ class FluxTool(HasTraits):
                                   editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
                              Item('levels'),
                              visible_when='plot_kind=="Contour"')
-        monitor_grp=Item('monitor', editor=EnumEditor(name='monitors'))
+        monitor_grp = Item('monitor', editor=EnumEditor(name='monitors'))
         v = View(
             VGroup(HGroup(UItem('calculate_button'),
                           UItem('data_source', editor=EnumEditor(values=['database', 'file'])),
                           monitor_grp),
+                   Item('save_mean_j', label='Save Mean J'),
                    Item('mean_j_error_type', label='Mean J Error'),
                    Item('predicted_j_error_type', label='Predicted J Error'),
                    HGroup(Item('group_positions'),
@@ -85,8 +87,8 @@ class FluxTool(HasTraits):
                         tooltip='Display hole labels on plot'),
                    HGroup(UItem('plot_kind'),
                           Item('model_kind', label='Fit Model',
-                            editor=EnumEditor(values=['Bowl', 'Plane']))),
-                          # UItem('plot_kind', editor=EnumEditor(values=['Contour', 'Hole vs J']))),
+                               editor=EnumEditor(values=['Bowl', 'Plane']))),
+                   # UItem('plot_kind', editor=EnumEditor(values=['Contour', 'Hole vs J']))),
                    contour_grp))
         return v
 

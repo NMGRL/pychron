@@ -79,7 +79,12 @@ class MonitorPosition(HasTraits):
     y = Float
     z = Float
     theta = Float
-    calc_j = Float
+    saved_j = Float
+    saved_jerr = Float
+
+    mean_j = Float
+    mean_jerr = Float
+
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
@@ -125,7 +130,14 @@ class FluxEditor(GraphEditor):
                     self._remove_analyses(pp.identifier)
 
     def _remove_analyses(self, identifier):
-        pass
+        proc = self.processor
+        db = proc.db
+        with db.session_ctx():
+            ln = db.get_labnumber(identifier)
+            if ln:
+                for ai in ln.analyses:
+                    if ai.uuid:
+                        proc.remove_from_cache(ai)
 
     def _gather_unknowns(self, refresh_data,
                          exclude='invalid',
@@ -154,30 +166,33 @@ class FluxEditor(GraphEditor):
                               hole_id=pid,
                               x=x, y=y,
 
-                              j=j, jerr=jerr,
+                              saved_j=j, saved_jerr=jerr,
                               theta=math.atan2(x, y),
                               use=use)
 
         self.monitor_positions[identifier] = pos
         # self.positions_dirty = True
 
-    def set_unknown_j(self):
+    def set_predicted_j(self):
         reg = self._regressor
         for p in self.positions:
-            if not p.use:
-                j = reg.predict([(p.x, p.y)])[0]
-                je = reg.predict_error([[(p.x, p.y)]])[0]
-                oj = p.j
-                p.j = j
-                p.jerr = je
+            # if not p.use:
+            j = reg.predict([(p.x, p.y)])[0]
+            je = reg.predict_error([[(p.x, p.y)]])[0]
+            oj = p.saved_j
+            p.j = j
+            p.jerr = je
 
-                p.dev = (oj - j) / j * 100
+            p.dev = (oj - j) / j * 100
+
         self.positions_dirty = True
 
-    def set_position_j(self, identifier, j, jerr, dev):
+    def set_position_j(self, identifier, mean_j, mean_jerr, j, jerr, dev):
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
-            mon.trait_set(calc_j=j, j=j, jerr=jerr, dev=dev)
+            mon.trait_set(saved_j=j, saved_jerr=jerr,
+                          mean_j=mean_j, mean_jerr=mean_jerr,
+                          dev=dev)
         else:
             self.warning('invalid identifier {}'.format(identifier))
 
@@ -186,7 +201,7 @@ class FluxEditor(GraphEditor):
 
     def _rebuild_graph(self):
         try:
-            x, y, z, ze = array([(pos.x, pos.y, pos.j, pos.jerr)
+            x, y, z, ze = array([(pos.x, pos.y, pos.saved_j, pos.saved_jerr)
                                  for pos in self.monitor_positions.itervalues()
                                  if pos.use]).T
 
@@ -375,17 +390,24 @@ class FluxEditor(GraphEditor):
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
             column(name='hole_id', label='Hole'),
-            column(name='identifier', label='Identifier'),
+            #column(name='identifier', label='Identifier'),
             column(name='sample', label='Sample', width=115),
-            column(name='x', label='X', format='%0.3f', width=50),
-            column(name='y', label='Y', format='%0.3f', width=50),
-            column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
-            column(name='saved_j', label='Calc. J'),
-            column(name='j', label='J',
-                   format_func=lambda x: floatfmt(x, n=7, s=3),
+            #column(name='x', label='X', format='%0.3f', width=50),
+            #column(name='y', label='Y', format='%0.3f', width=50),
+            #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            column(name='saved_j', label='Saved J',
+                   format_func=lambda x: floatfmt(x, n=7, s=4)),
+            column(name='saved_jerr', label=u'\u00b1\u03c3',
+                   format_func=lambda x: floatfmt(x, n=8, s=4)),
+            column(name='mean_j', label='Mean J',
+                   format_func=lambda x: floatfmt(x, n=7, s=4) if x else ''),
+            column(name='mean_jerr', label=u'\u00b1\u03c3',
+                   format_func=lambda x: floatfmt(x, n=8, s=4) if x else ''),
+            column(name='j', label='Pred. J',
+                   format_func=lambda x: floatfmt(x, n=7, s=4),
                    width=75),
             column(name='jerr',
-                   format_func=lambda x: floatfmt(x, n=8, s=3),
+                   format_func=lambda x: floatfmt(x, n=8, s=4),
                    label=u'\u00b1\u03c3',
                    width=75),
             column(name='dev', label='dev',

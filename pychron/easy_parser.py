@@ -28,9 +28,10 @@ from pychron.loggable import Loggable
 
 
 doc_mapping = ['setup', 'import', 'iso_fits',
-               'blanks', 'disc','ic',
-               'figures', 'tables','flux',
+               'blanks', 'disc', 'ic',
+               'figures', 'tables', 'flux',
                'sensitivity']
+
 
 class EasyParser(Loggable):
     _docs = List
@@ -50,7 +51,11 @@ class EasyParser(Loggable):
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'ideo_unknowns.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'compare_iso_spec.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'isochron_unknowns.yaml')
-            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_unknowns.yaml')
+            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'fit_unknowns.yaml')
+            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'fit_j.yaml')
+            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_j.yaml')
+            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_unknowns.yaml')
+            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
 
         if os.path.isfile(path):
             with open(path, 'r') as fp:

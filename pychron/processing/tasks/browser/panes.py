@@ -77,6 +77,7 @@ class Tables(HasTraits):
     def traits_view(self):
         group_table = UItem('analysis_groups',
                             label='Groups',
+                            width=0.6,
                             editor=TabularEditor(
                                 adapter=self.pane.analysis_group_tabular_adapter,
                                 editable=False,
@@ -90,6 +91,7 @@ class Tables(HasTraits):
 
         sample_table = UItem('samples',
                              label='Samples',
+                             width=0.6,
                              editor=TabularEditor(
                                  adapter=self.pane.sample_tabular_adapter,
                                  editable=False,
@@ -106,6 +108,7 @@ class Tables(HasTraits):
 
         analysis_table = VGroup(Heading('Analyses'),
                                 UItem(make_name('analyses'),
+                                      width=0.4,
                                       editor=myTabularEditor(
                                           adapter=self.pane.analysis_tabular_adapter,
                                           operations=['move'],
@@ -185,8 +188,7 @@ class BrowserPane(TraitsDockPane):
                                Item('include_unknowns', label='Unknowns')),
                            icon_button_editor('find_by_irradiation',
                                               'edit-find',
-                                              enabled_when='include_monitors or include_unknowns'
-                           ))
+                                              enabled_when='include_monitors or include_unknowns'))
 
         project_grp = VGroup(
             HGroup(Label('Filter'),
@@ -196,9 +198,9 @@ class BrowserPane(TraitsDockPane):
                                       tooltip='Clear selected')),
             HGroup(UItem('projects',
                          editor=TabularEditor(editable=False,
-                                       selected='selected_projects',
-                                       adapter=ProjectAdapter(),
-                                       multi_select=True)),
+                                              selected='selected_projects',
+                                              adapter=ProjectAdapter(),
+                                              multi_select=True)),
                    irrad_grp))
 
         grp = VSplit(project_grp,

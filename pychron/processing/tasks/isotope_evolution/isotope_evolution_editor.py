@@ -99,6 +99,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save_fit_dict(self, unk, meas_analysis, fits, filters):
         fit_hist = None
+        include_baseline_error = True
         for fit_d, filter_d in zip(fits, filters):
             fname = name = fit_d['name']
             fit = fit_d['fit']
@@ -125,7 +126,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                         fit = 'linear'
 
                 fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
-                                             name, fit, filter_d)
+                                             name, fit, 'SEM', filter_d, include_baseline_error)
             else:
                 self.warning('no isotope {} for analysis {}'.format(fname, unk.record_id))
 

@@ -22,6 +22,7 @@ from traits.api import Int
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
 from reportlab.lib.units import inch
@@ -81,7 +82,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         data.extend(meta)
 
         units = self._get_signal_units(analyses)
-
+        scales = self._get_signal_scales(analyses)
         # make header
         headers = self._make_header(style, signal_units=units)
 
@@ -100,7 +101,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             if plateau_bounds:
                 is_plat_step = i >= lb and i <= hb
 
-            r, b = self._make_analysis_row(ai, is_plat_step)
+            r, b = self._make_analysis_row(ai, is_plat_step, scales)
             data.append(r)
             bdata.append(b)
 
@@ -141,7 +142,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         else:
             return t,
 
-    def _make_analysis_row(self, analysis, is_plateau_step):
+    def _make_analysis_row(self, analysis, is_plateau_step, scales):
         value = self._value
         error = self._error
 
@@ -156,16 +157,16 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             #==============================================================
             # signals
             #==============================================================
-            ('Ar40', value(scale=1e3)),
-            ('Ar40', error()),
-            ('Ar39', value(scale=1e3)),
-            ('Ar39', error()),
-            ('Ar38', value()),
-            ('Ar38', error()),
-            ('Ar37', value()),
-            ('Ar37', error()),
-            ('Ar36', value()),
-            ('Ar36', error(scale=1e-2)),
+            ('Ar40', value(scale=scales['Ar40'])),
+            ('Ar40', error(scale=scales['Ar40err'])),
+            ('Ar39', value(scale=scales['Ar39'])),
+            ('Ar39', error(scale=scales['Ar39err'])),
+            ('Ar38', value(scale=scales['Ar38'])),
+            ('Ar38', error(scale=scales['Ar38err'])),
+            ('Ar37', value(scale=scales['Ar37'])),
+            ('Ar37', error(scale=scales['Ar37err'])),
+            ('Ar36', value(scale=scales['Ar36'])),
+            ('Ar36', error(scale=scales['Ar36err'])),
 
             #==============================================================
             # computed
@@ -322,17 +323,56 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
         return i + 1
 
+    def _get_average_blanks(self):
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/average_blanks_map.yaml'
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+
+        #convert to mols
+        ydc = yd['CO2']
+        for k, v in ydc.iteritems():
+            ydc[k] = v * 5e-17 * 1.0e18
+
+        ydc['sens_exp'] = 18
+        ydf = yd['Furnace']
+        for k, v in ydf.iteritems():
+            ydf[k] = v * 1e-16 * 1.0e18
+        ydf['sens_exp'] = 18
+        return ydc, ydf
 
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
 
+        co2_blanks, furnace_blanks = self._get_average_blanks()
+        average_furnace_blanks = 'Average blanks for Furnace: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
+                                 '{Ar37:0.3f}, {Ar36:0.3f}), ' \
+                                 'x10<sup>-{sens_exp:}</sup> ' \
+                                 'for Ar<super>40</super>, Ar<super>39</super>, ' \
+                                 'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
+                                 'respectively'.format(**furnace_blanks)
+
+        average_co2_blanks = 'Average blanks for CO<sub>2</sub>: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
+                             '{Ar37:0.3f}, {Ar36:0.3f}), ' \
+                             'x10<sup>-{sens_exp:}</sup> ' \
+                             'for Ar<super>40</super>, Ar<super>39</super>, ' \
+                             'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
+                             'respectively'.format(**co2_blanks)
+
+        frow = FooterRow(fontsize=6)
+        frow.add_item(span=-1, value=self._new_paragraph(average_furnace_blanks))
+        data.append(frow)
+
+        crow = FooterRow(fontsize=6)
+        crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
+        data.append(crow)
+
         fr = FootNoteRow(fontsize=6)
-        #start=0
 
         self._footnotes.append(self._new_paragraph('P: plateau step'))
         txt = ', '.join([fi.text for fi in self._footnotes])
-        #span=self._calculate_span(fi, start, fontSize=3)
         fr.add_item(value=txt, span=-1)
+        data.append(fr)
+
 
         #for fi in ['P: plateau step',]:
         #    p=self._new_paragraph(fi)
@@ -348,7 +388,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         #        start+=span
         #        self.debug("{} {} {}".format(start, start-span, span))
         #dsaf
-        data.append(fr)
+
 
         #    def factory(f):
         #        r = FootNoteRow(fontsize=6)

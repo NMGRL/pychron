@@ -37,6 +37,26 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             signal_units = 'fA'
         return signal_units
 
+    def _get_signal_scales(self, analyses):
+        ref = analyses[0]
+        if ref.mass_spectrometer.lower() == 'map':
+            s40, s39, s38, s37, s36 = 1, 1, 1, 1, 1
+            e40, e39, e38, e37, e36 = 1, 1, 1, 1, 1
+        else:
+            s40, s39, s38, s37, s36 = 1e3, 1e3, 1, 1, 1
+            e40, e39, e38, e37, e36 = 1, 1, 1, 1, 1e-2
+        return dict(Ar40=s40,
+                    Ar39=s39,
+                    Ar38=s38,
+                    Ar37=s37,
+                    Ar36=s36,
+                    Ar40err=e40,
+                    Ar39err=e39,
+                    Ar38err=e38,
+                    Ar37err=e37,
+                    Ar36err=e36,
+        )
+
     def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))
         title_para = self._new_paragraph(title)
@@ -155,12 +175,13 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         if signal_units == 'nA':
             unit_scale_40 = ''
             unit_scale_39 = ''
+            unit_scale_36err = ''
         else:
             # = '(10{} {})'.format(Superscript(2), signal_units)
             unit_scale_40 = '(10{} {})'.format(Superscript(3), signal_units)
             unit_scale_39 = '(10{} {})'.format(Superscript(3), signal_units)
+            unit_scale_36err = '(10{} {})'.format(Superscript(-2), signal_units)
 
-        minus_102fa = '(10{} {})'.format(Superscript(-2), signal_units)
 
         #         blank = self._make_footnote('BLANK',
         #                                    'Blank Type', 'LR= Linear Regression, AVE= Average',
@@ -175,7 +196,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             (super_ar(39), unit_scale_39), (sigma, ''),
             (super_ar(38), ''), (sigma, ''),
             (super_ar(37), ''), (sigma, ''),
-            (super_ar(36), ''), (sigma, minus_102fa),
+            (super_ar(36), ''), (sigma, unit_scale_36err),
             ('Age', '(Ma)'), (sigma, ''),
             ('%{}*'.format(super_ar(40)), ''),
             # ('{}*/{}{}'.format(super_ar(40),

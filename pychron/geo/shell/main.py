@@ -101,8 +101,8 @@ def make_sample_shape_file(dbname):
 
 
 def make_interpreted_age_points(geo):
-    iag = 'AllAges2'
-    iag_id = 19
+    # iag = 'AllAges2'
+    iag_id = 23
     attrs = ['sample', 'material', 'labnumber', 'age', 'age_err', 'age_kind']
     atypes = ['C', 'C', 'C', 'N', 'N', 'C']
 
@@ -159,8 +159,8 @@ def make_interpreted_age_shape_file(dbname):
 
 
 def main():
-    make_sample_shape_file('pychrondata_minnabluff')
-    # make_interpreted_age_shape_file('pychrondata_minnabluff')
+    # make_sample_shape_file('pychrondata_minnabluff')
+    make_interpreted_age_shape_file('pychrondata_minnabluff')
 
 
 if __name__ == '__main__':
