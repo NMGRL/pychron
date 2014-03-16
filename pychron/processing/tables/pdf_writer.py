@@ -20,14 +20,16 @@ from traits.api import Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+import yaml
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.core.pdf.items import Superscript, Row, NamedParameter
+from pychron.core.pdf.items import Superscript, Row, NamedParameter, FooterRow, Subscript
 
 
 class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
-    default_row_height = 0.1  #inches
+    default_row_height = 0.15  #inches
 
     def _get_signal_units(self, analyses):
         ref = analyses[0]
@@ -216,12 +218,12 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         name_row, unit_row = zip(*line)
 
         default_fontsize = 7
-        nrow = Row(fontsize=default_fontsize)
+        nrow = Row(fontsize=default_fontsize, height=0.2)
         for i, ni in enumerate(name_row):
             nrow.add_item(value=ni)
 
         default_fontsize = 6
-        urow = Row(fontsize=default_fontsize)
+        urow = Row(fontsize=default_fontsize, height=0.2)
         for ni in unit_row:
             urow.add_item(value=ni)
 
@@ -256,4 +258,109 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             row.add_item(value=v, fmt=fmt, fontsize=fontsize)
 
         return row
+
+    def _make_footer_rows(self, data, style):
+        rows = []
+        df = 6
+        for v in ('<b>Constants used</b>', '<b>Atmospheric argon ratios</b>'):
+            row = FooterRow(fontsize=df, height=0.15)
+            row.add_item(value=v, span=-1)
+            rows.append(row)
+            for i in range(19):
+                row.add_item(value='')
+
+        ref = self._ref
+        arar_constants = ref.arar_constants
+        for n, d, key in ((40, 36, 'atm4036'),
+                          (40, 38, 'atm4038')):
+            row = FooterRow(fontsize=df, height=0.15)
+            row.add_item(value='({}Ar/{}Ar){}'.format(
+                Superscript(n),
+                Superscript(d),
+                Subscript('A')),
+                         span=3)
+
+            vv = getattr(arar_constants, key)
+            v, e = floatfmt(vv.nominal_value, n=1), floatfmt(vv.std_dev, n=1)
+
+            cite_key = '{}_citation'.format(key)
+            r = getattr(arar_constants, cite_key)
+
+            row.add_item(value=u'{} \u00b1{}'.format(v, e),
+                         span=2)
+            row.add_item(value=r, span=-1)
+            rows.append(row)
+
+        row = FooterRow(fontsize=df)
+        row.add_item(value='<b>Interferring isotope production ratios</b>', span=-1)
+        rows.append(row)
+
+        for n, d, s, key in (
+                (40, 39, 'K', 'k4039'),
+                (38, 39, 'K', 'k3839'),
+                (37, 39, 'K', 'k3739'),
+                (39, 37, 'Ca', 'ca3937'),
+                (38, 37, 'Ca', 'ca3837'),
+                (36, 37, 'Ca', 'ca3637')):
+            row = FooterRow(fontsize=df, height=0.15)
+            row.add_item(value='({}Ar/{}Ar){}'.format(
+                Superscript(n),
+                Superscript(d),
+                Subscript(s)),
+                         span=3)
+
+            vv = ref.interference_corrections[key]
+            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+            row.add_item(value=u'{} \u00b1{}'.format(v, e),
+                         span=2)
+            rows.append(row)
+
+        row = FooterRow(fontsize=df)
+        row.add_item(value='<b>Decay constants</b>', span=-1)
+        rows.append(row)
+
+        for i, E, dl, key in (
+                (40, 'K', u'\u03BB\u03B5', 'lambda_b'),
+                (40, 'K', u'\u03BB\u03B2', 'lambda_e'),
+                (39, 'Ar', '', 'lambda_Ar39'),
+                (37, 'Ar', '', 'lambda_Ar37')):
+            vv = getattr(arar_constants, key)
+            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+
+            cite_key = '{}_citation'.format(key)
+            r = getattr(arar_constants, cite_key)
+
+            row = FooterRow(fontsize=df, height=0.15)
+            row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
+            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=3)
+            row.add_item(value=r, span=-1)
+            rows.append(row)
+
+        data.extend(rows)
+
+        _get_idxs = lambda x: self._get_idxs(data, x)
+        _get_se = lambda x: (x[0][0], x[-1][0])
+
+        footer_idxs = _get_idxs(FooterRow)
+        sidx, eidx = _get_se(footer_idxs)
+        style.add('VALIGN', (0, sidx), (-1, eidx), 'MIDDLE')
+
+        return rows
+
+    def _get_average_blanks(self):
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/average_blanks_map.yaml'
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+
+        #convert to mols
+        ydc = yd['CO2']
+        for k, v in ydc.iteritems():
+            ydc[k] = v * 5e-17 * 1.0e18
+
+        ydc['sens_exp'] = 18
+        ydf = yd['Furnace']
+        for k, v in ydf.iteritems():
+            ydf[k] = v * 1e-16 * 1.0e18
+        ydf['sens_exp'] = 18
+        return ydc, ydf
         #============= EOF =============================================

@@ -53,6 +53,7 @@ class FigureEditor(GraphEditor):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
             ap.clear_ylimits()
+            ap.clear_xlimits()
 
     def set_items_from_file(self, p):
         if os.path.isfile(p):

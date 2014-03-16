@@ -33,7 +33,8 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
-from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
+from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
@@ -88,7 +89,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         db = self.processor.db
 
         with db.session_ctx():
-            ias = self.interpreted_ages[:1]
+            ias = self.interpreted_ages  #[:1]
+            ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
@@ -109,7 +111,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             fusion, step_heat = map(list, (fusion, step_heat))
 
             shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
-            # fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion[:3]]
+            fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
             prog.close()
 
         head, ext = os.path.splitext(p)
@@ -119,11 +121,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             w.build(p, shgroups, title=self.get_title())
             view_file(p)
 
-            # if fgroups:
-            #     w = FusionPDFTableWriter()
-            #     p = '{}.fusion_data{}'.format(head, ext)
-            #     w.build(p, fgroups, title=self.get_title())
-            #     view_file(p)
+        if fgroups:
+            w = FusionPDFTableWriter()
+            p = '{}.fusion_data{}'.format(head, ext)
+            w.build(p, fgroups, title=self.get_title())
+            view_file(p)
 
 
     def save_summary_table(self, p):

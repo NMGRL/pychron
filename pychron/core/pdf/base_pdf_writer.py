@@ -166,7 +166,7 @@ class BasePDFWriter(Loggable):
         if isinstance(v, (float, int)):
             v = v / float(scale)
 
-        return floatfmt(v, n=n, max_width=8, **kw)
+        return floatfmt(v, n=n, max_width=10, **kw)
 
     def _error(self, **kw):
         return lambda x: self._fmt_attr(x, key='std_dev', **kw)

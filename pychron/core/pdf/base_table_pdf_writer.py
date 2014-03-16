@@ -16,12 +16,14 @@
 
 #============= enthought library imports =======================
 from reportlab.lib import colors
+from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.platypus import Table, TableStyle
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.pdf.base_pdf_writer import BasePDFWriter
+from pychron.core.pdf.items import FooterRow, FootNoteRow, Row
 from pychron.core.pdf.options import PDFTableOptions
 
 
@@ -111,8 +113,15 @@ class BasePDFTableWriter(BasePDFWriter):
 
         return ts
 
-    def _set_row_heights(self, t, data):
-        pass
+    def _set_row_heights(self, table, data):
+        a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
+        for a, v in a_idxs:
+            table._argH[a] = 0.19 * inch
+
+        idx = self._get_idxs(data, Row)
+        for i, v in idx:
+            if v.height:
+                table._argH[i] = v.height * inch
 
     def _set_col_widths(self, t, rows, col_widths):
         cs = col_widths

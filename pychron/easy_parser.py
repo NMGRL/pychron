@@ -55,7 +55,7 @@ class EasyParser(Loggable):
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'fit_j.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_j.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'blank_unknowns.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'flux.yaml')
 
         if os.path.isfile(path):
             with open(path, 'r') as fp:

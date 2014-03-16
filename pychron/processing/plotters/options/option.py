@@ -24,55 +24,59 @@ from pychron.pychron_constants import NULL_STR, FIT_TYPES
 
 class AuxPlotOptions(HasTraits):
     use = Bool
-    name=Str(NULL_STR)
-    plot_name=Property(Str, depends_on='name')
+    name = Str(NULL_STR)
+    plot_name = Property(Str, depends_on='name')
 
-    names = List([NULL_STR,'Analysis Number Stacked','Analysis Number',
-                       'Radiogenic 40Ar','K/Ca','K/Cl','Mol K39', 'Ideogram'])
-    _plot_names=List(['','analysis_number_stacked', 'analysis_number', 'radiogenic_yield',
-                      'kca','kcl','moles_k39','relative_probability'])
+    names = List([NULL_STR, 'Analysis Number Stacked', 'Analysis Number',
+                  'Radiogenic 40Ar', 'K/Ca', 'K/Cl', 'Mol K39', 'Ideogram'])
+    _plot_names = List(['', 'analysis_number_stacked', 'analysis_number', 'radiogenic_yield',
+                        'kca', 'kcl', 'moles_k39', 'relative_probability'])
 
     scale = Enum('linear', 'log')
     height = Int(100, enter_set=True, auto_set=False)
     x_error = Bool(False)
     y_error = Bool(False)
     show_labels = Bool(False)
-    filter_str= String(enter_set=True, auto_set=False)
+    filter_str = String(enter_set=True, auto_set=False)
 
     normalize = None
     use_time_axis = False
-    initialized=False
+    initialized = False
 
-    ylimits=Tuple(Float, Float, transient=True)
+    ylimits = Tuple(Float, Float, transient=True)
     xlimits = Tuple(Float, Float, transient=True)
 
-    overlay_positions=Dict(transient=True)
-    _has_ylimits=Bool(False)
+    overlay_positions = Dict(transient=True)
+    _has_ylimits = Bool(False)
     _has_xlimits = Bool(False)
 
     def set_overlay_position(self, k, v):
-        self.overlay_positions[k]=v
+        self.overlay_positions[k] = v
 
     def has_xlimits(self):
         return self._has_xlimits or (self.xlimits is not None and self.xlimits[0] != self.xlimits[1])
 
     def has_ylimits(self):
-        return self._has_ylimits or (self.ylimits is not None and self.ylimits[0] !=self.ylimits[1])
+        return self._has_ylimits or (self.ylimits is not None and self.ylimits[0] != self.ylimits[1])
 
     def clear_ylimits(self):
-        self._has_ylimits=False
-        self.ylimits=(0,0)
+        self._has_ylimits = False
+        self.ylimits = (0, 0)
+
+    def clear_xlimits(self):
+        self._has_xlimits = False
+        self.xlimits = (0, 0)
 
     def dump_yaml(self):
-        d=dict()
-        attrs=('use','name', 'scale','height',
-               'x_error','y_error', 'show_labels','filter_str')
+        d = dict()
+        attrs = ('use', 'name', 'scale', 'height',
+                 'x_error', 'y_error', 'show_labels', 'filter_str')
         for attr in attrs:
-            d[attr]=getattr(self, attr)
+            d[attr] = getattr(self, attr)
 
-        d['ylimits']=map(float, self.ylimits)
+        d['ylimits'] = map(float, self.ylimits)
         d['xlimits'] = map(float, self.xlimits)
-        d['overlay_positions']=dict(self.overlay_positions)
+        d['overlay_positions'] = dict(self.overlay_positions)
 
         return d
 
@@ -88,15 +92,15 @@ class AuxPlotOptions(HasTraits):
         else:
             return self.name
 
-    #def _get_plot_names(self):
-    #    return {NULL_STR: NULL_STR,
-    #            'analysis_number_stacked': 'Analysis Number Stacked',
-    #            'analysis_number': 'Analysis Number',
-    #            'radiogenic_yield': 'Radiogenic 40Ar',
-    #            'kca': 'K/Ca',
-    #            'kcl': 'K/Cl',
-    #            'moles_K39': 'K39 Moles',
-    #            'relative_probability': 'Ideogram'}
+            #def _get_plot_names(self):
+            #    return {NULL_STR: NULL_STR,
+            #            'analysis_number_stacked': 'Analysis Number Stacked',
+            #            'analysis_number': 'Analysis Number',
+            #            'radiogenic_yield': 'Radiogenic 40Ar',
+            #            'kca': 'K/Ca',
+            #            'kcl': 'K/Cl',
+            #            'moles_K39': 'K39 Moles',
+            #            'relative_probability': 'Ideogram'}
 
 
 class FitPlotterOptions(AuxPlotOptions):
@@ -122,11 +126,11 @@ class InverseIsochronPlotOptions(AuxPlotOptions):
     _plot_names = List(['', 'inverse_isochron'])
     #def _get_plot_names(self):
     #    return {NULL_STR: NULL_STR,
-                #'radiogenic_yield': 'Radiogenic 40Ar',
-                #'kca': 'K/Ca',
-                #'kcl': 'K/Cl',
-                #'moles_K39': 'K39 Moles',
-                #'inverse_isochron': 'Inv. Isochron'}
+    #'radiogenic_yield': 'Radiogenic 40Ar',
+    #'kca': 'K/Ca',
+    #'kcl': 'K/Cl',
+    #'moles_K39': 'K39 Moles',
+    #'inverse_isochron': 'Inv. Isochron'}
 
 
 class SystemMonitorPlotOptions(AuxPlotOptions):

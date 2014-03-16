@@ -18,8 +18,7 @@
 from traits.api import Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
-from reportlab.lib.units import inch
+from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
 
@@ -32,33 +31,37 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
     extract_label = 'Power'
     extract_units = 'W'
 
-    def _build(self, doc, groups, title):
+    # def _build(self, doc, groups, title):
+    #
+    #     title_para = self._new_paragraph(title)
+    #     flowables = [title_para, self._vspacer(0.1)]
+    #
+    #     include_footnotes = True
+    #     for gi in groups:
+    #         aa=gi.analyses
+    #
+    #         t, t2 = self._make_table(aa, gi,
+    #                                  include_footnotes=include_footnotes)
+    #
+    #         include_footnotes = False
+    #
+    #         flowables.append(t)
+    #         flowables.append(self._vspacer(0.1))
+    #
+    #     flowables.append(t2)
+    #
+    #     return flowables, None
 
-        title_para = self._new_paragraph(title)
-        flowables = [title_para, self._vspacer(0.1)]
-
-        include_footnotes = True
-        for gi in groups:
-            aa=gi.analyses
-
-            t, t2 = self._make_table(aa, gi,
-                                     include_footnotes=include_footnotes)
-
-            include_footnotes = False
-
-            flowables.append(t)
-            flowables.append(self._vspacer(0.1))
-
-        flowables.append(t2)
-
-        return flowables, None
-
-    def _make_table(self, analyses, means,
+    def _make_table(self, group,
                     double_first_line=True,
                     include_footnotes=False):
-        style = self._new_style(debug_grid=False)
+
+        analyses = group.analyses
+        self._ref = analyses[0]
+        style = self._new_style(debug_grid=True)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
+        style.add('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
         if double_first_line:
             self._new_line(style, 0, weight=2.5, cmd='LINEABOVE')
@@ -73,153 +76,160 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         data.extend(meta)
 
         # make header
-        header = self._make_header(style)
-        data.extend(header)
+        headers = self._make_header(style)
+        data.extend(headers)
 
         cnt = len(data)
-        for i, ai in enumerate(analyses):
-            r, b = self._make_analysis_row(ai)
-            data.append(r)
-            bdata.append(b)
+        scales = self._get_signal_scales(analyses)
 
+        for i, ai in enumerate(analyses):
+            r = self._make_analysis_row(ai, scales)
+            data.append(r)
+            # bdata.append(b)
             if self.options.use_alternating_background:
                 idx = cnt + i
                 if idx % 2 == 0:
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               colors.lightgrey)
 
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(data[2:])
+
         idx = len(data) - 1
         self._new_line(style, idx)
-        s = self._make_summary_rows(means, idx + 1, style)
+        s = self._make_summary_rows(group, idx + 1, style)
         data.extend(s)
 
-        t = self._new_table(style, data, repeatRows=4)
+        t = self._new_table(style, data, repeatRows=1)
 
         fdata = []
         style = self._new_style()
         style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
-        self._make_footnote_rows(fdata, style)
-        self._make_footer_rows(fdata, style)
-        ft = self._new_table(style, fdata, extend_last=True)
+        if include_footnotes:
+            self._make_footnote_rows(fdata, style)
+            self._make_footer_rows(fdata, style)
+            ft = self._new_table(style, fdata, extend_last=True)
+            return t, ft
+        else:
+            return t,
 
-        return t, ft
-
-    def _make_analysis_row(self, analysis):
+    def _make_analysis_row(self, analysis, scales):
         value = self._value
         error = self._error
         attrs = (
-            ('temp_status', lambda x: '' if x == 0 else 'X'),
+            ('tag', lambda x: '' if x == 'ok' else 'X'),
             ('aliquot_step_str', '{}',),
             ('extract_value', '{}'),
-            ('moles_Ar40', value()),
+            ('moles_Ar40', value(n=3, scale=1e-18)),
 
             #==============================================================
             # signals
             #==============================================================
-            ('Ar40', value(scale=1e3)),
-            ('Ar40', error()),
-            ('Ar39', value(scale=1e3)),
-            ('Ar39', error()),
-            ('Ar38', value()),
-            ('Ar38', error()),
-            ('Ar37', value()),
-            ('Ar37', error()),
-            ('Ar36', value()),
-            ('Ar36', error(scale=1e-2)),
+            ('Ar40', value(scale=scales['Ar40'])),
+            ('Ar40', error(scale=scales['Ar40err'])),
+            ('Ar39', value(scale=scales['Ar39'])),
+            ('Ar39', error(scale=scales['Ar39err'])),
+            ('Ar38', value(scale=scales['Ar38'])),
+            ('Ar38', error(scale=scales['Ar38err'])),
+            ('Ar37', value(scale=scales['Ar37'])),
+            ('Ar37', error(scale=scales['Ar37err'])),
+            ('Ar36', value(scale=scales['Ar36'])),
+            ('Ar36', error(scale=scales['Ar36err'])),
 
             #==============================================================
             # computed
             #==============================================================
+            ('uage', value(n=2)),
+            ('age_err_wo_j', error(n=4)),
             ('rad40_percent', value(n=1)),
-            ('F', value(n=5)),
-            ('age', value(n=2)),
-            ('age', error(n=4)),
+            # ('F', value(n=5)),
             ('kca', value(n=2)),
-            ('kca', error(n=2)),
-
+            ('kca', error(n=3)),
         )
         default_fontsize = 6
 
         row = self._new_row(analysis, attrs, default_fontsize)
 
-        battrs = (
-            #==============================================================
-            # blanks
-            #==============================================================
-            #                     ('', '{}'),
-            #                     ('', '{}'),
-            ('', '{}'),
-            ('', '{}'),
-            #                     ('blank_fit', '{}'),
-            ('Ar40', value(scale=1e3)),
-            ('Ar39', value(scale=1e3)),
-            ('Ar38',),
-            ('Ar37',),
-            ('Ar36', value(scale=1e-2)),
-            #
-        )
+        # battrs = (
+        #     #==============================================================
+        #     # blanks
+        #     #==============================================================
+        #     #                     ('', '{}'),
+        #     #                     ('', '{}'),
+        #     ('', '{}'),
+        #     ('', '{}'),
+        #     #                     ('blank_fit', '{}'),
+        #     ('Ar40', value(scale=1e3)),
+        #     ('Ar39', value(scale=1e3)),
+        #     ('Ar38',),
+        #     ('Ar37',),
+        #     ('Ar36', value(scale=1e-2)),
+        #     #
+        # )
 
-        blankrow = Row(fontsize=default_fontsize)
-        for args in battrs:
-            efmt = self._error()
-            vfmt = self._value()
+        # blankrow = Row(fontsize=default_fontsize)
+        # for args in battrs:
+        #     efmt = self._error()
+        #     vfmt = self._value()
+        #
+        #     if len(args) == 2:
+        #         attr, vfmt = args
+        #     elif len(args) == 3:
+        #         attr, vfmt, efmt = args
+        #     else:
+        #         attr = args[0]
+        #
+        #     s, e = '', ''
+        #     if attr:
+        #         iso = analysis.isotopes.get(attr)
+        #         if iso:
+        #             v = iso.blank.uvalue
+        #
+        #             s = vfmt(v)
+        #
+        #             s = self._new_paragraph('<i>{}</i>'.format(s),
+        #             )
+        #
+        #             e = efmt(v)
+        #             e = self._new_paragraph('<i>{}</i>'.format(e))
+        #
+        #     blankrow.add_item(value=s,
+        #     )
+        #     blankrow.add_item(value=e,
+        #     )
 
-            if len(args) == 2:
-                attr, vfmt = args
-            elif len(args) == 3:
-                attr, vfmt, efmt = args
-            else:
-                attr = args[0]
+        return row
 
-            s, e = '', ''
-            if attr:
-                iso = analysis.isotopes.get(attr)
-                if iso:
-                    v = iso.blank.uvalue
-
-                    s = vfmt(v)
-
-                    s = self._new_paragraph('<i>{}</i>'.format(s),
-                    )
-
-                    e = efmt(v)
-                    e = self._new_paragraph('<i>{}</i>'.format(e))
-
-            blankrow.add_item(value=s,
-            )
-            blankrow.add_item(value=e,
-            )
-
-        return row, blankrow
-
-    def _set_row_heights(self, table, data):
-        a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
-        for a, v in a_idxs:
-            table._argH[a] = 0.19 * inch
-
-        idx = self._get_idxs(data, Row)
-        for i, v in idx:
-            if v.height:
-                table._argH[i] = v.height * inch
+        # def _set_row_heights(self, table, data):
+        #     pass
+        #     # a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
+        #     # for a, v in a_idxs:
+        #     #     table._argH[a] = 0.19 * inch
+        #     #
+        #     idx = self._get_idxs(data, Row)
+        #     for i, v in idx:
+        #         if v.height:
+        #             table._argH[i] = v.height * inch
 
 
-                #===============================================================================
+        #===============================================================================
                 # summary
                 #===============================================================================
 
     def _make_summary_rows(self, mean, idx, style):
-        platrow = Row(fontsize=7, height=0.25)
-        platrow.add_item(value='<b>Weighted Mean Age</b>', span=5)
+        weighted_mean_row = Row(fontsize=7, height=0.15)
+        weighted_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=5)
 
-        platrow.add_blank_item(n=10)
+        weighted_mean_row.add_blank_item(n=10)
         wa = mean.weighted_age
-        platrow.add_item(value=self._value()(wa))
-        platrow.add_item(value=u' \u00b1{}'.format(self._error()(wa)))
+        weighted_mean_row.add_item(value=self._value()(wa))
+        weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error()(wa)))
 
         #         for s, e in platrow.spans:
         #             style.add('SPAN', (s, idx), (e, idx))
         #         platrow.add_item(value='Weighted Mean Age')
-        return [platrow]
+        return [weighted_mean_row]
 
     #===============================================================================
     # blanks
@@ -230,6 +240,17 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
     #===============================================================================
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
+
+        co2_blanks, furnace_blanks = self._get_average_blanks()
+        average_co2_blanks = 'Average blanks for CO<sub>2</sub>: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
+                             '{Ar37:0.3f}, {Ar36:0.3f}), ' \
+                             'x10<sup>-{sens_exp:}</sup> ' \
+                             'for Ar<super>40</super>, Ar<super>39</super>, ' \
+                             'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
+                             'respectively'.format(**co2_blanks)
+        crow = FooterRow(fontsize=6)
+        crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
+        data.append(crow)
 
         def factory(f):
             r = FootNoteRow(fontsize=6)
@@ -246,95 +267,8 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         style.add('VALIGN', (0, sidx), (-1, eidx), 'MIDDLE')
         for idx, _v in footnote_idxs:
             style.add('SPAN', (0, idx), (-1, idx))
-            #            style.add('VALIGN', (1, idx), (-1, idx), 'MIDDLE')
 
-    def _make_footer_rows(self, data, style):
-        rows = []
-        df = 6
-        for v in ('<b>Constants used</b>', '<b>Atmospheric argon ratios</b>'):
-            row = FooterRow(fontsize=df)
-            row.add_item(value=v, span=-1)
-            rows.append(row)
-            for i in range(19):
-                row.add_item(value='')
 
-        for n, d, v, e, r in (
-            (40, 36, 295.5, 0.5, 'Nier (1950)'),
-            (40, 38, 0.1880, 0.5, 'Nier (1950)'),
-        ):
-            row = FooterRow(fontsize=df)
-            row.add_item(value='({}Ar/{}Ar){}'.format(
-                Superscript(n),
-                Superscript(d),
-                Subscript('A'),
-            ),
-                         span=3
-            )
-            row.add_item(value=u'{} \u00b1{}'.format(v, e),
-                         span=2)
-            row.add_item(value=r, span=-1)
-            rows.append(row)
-            #             row.add_item(value='')
-        #             rows.append(row)
-
-        row = FooterRow(fontsize=df)
-        row.add_item(value='<b>Interferring isotope production ratios</b>', span=-1)
-        rows.append(row)
-        for n, d, s, v, e, r in (
-            (40, 39, 'K', 295.5, 0.5, 'Nier (1950)'),
-            (38, 39, 'K', 0.1880, 0.5, 'Nier (1950)'),
-            (37, 39, 'K', 0.1880, 0.5, 'Nier (1950)'),
-            (39, 37, 'Ca', 295.5, 0.5, 'Nier (1950)'),
-            (38, 37, 'Ca', 0.1880, 0.5, 'Nier (1950)'),
-            (36, 37, 'Ca', 0.1880, 0.5, 'Nier (1950)'),
-        ):
-            row = FooterRow(fontsize=df)
-            row.add_item(value='({}Ar/{}Ar){}'.format(
-                Superscript(n),
-                Superscript(d),
-                Subscript(s),
-            ),
-                         span=3
-            )
-            row.add_item(value=u'{} \u00b1{}'.format(v, e),
-                         span=2)
-            row.add_item(value=r, span=-1)
-            rows.append(row)
-
-        row = FooterRow(fontsize=df)
-        row.add_item(value='<b>Decay constants</b>', span=-1)
-        rows.append(row)
-
-        for i, E, dl, v, e, r in (
-            (40, 'K', u'\u03BB\u03B5', 1, 0, 'Foo (1990)'),
-            (40, 'K', u'\u03BB\u03B2', 1, 0, 'Foo (1990)'),
-            (39, 'Ar', '', 1, 0, 'Foo (1990)'),
-            (37, 'Ar', '', 1, 0, 'Foo (1990)'),
-        ):
-            row = FooterRow(fontsize=df)
-            row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
-            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=2)
-            row.add_item(value=r, span=-1)
-            rows.append(row)
-
-        data.extend(rows)
-
-        _get_idxs = lambda x: self._get_idxs(data, x)
-        _get_se = lambda x: (x[0][0], x[-1][0])
-
-        footer_idxs = _get_idxs(FooterRow)
-        sidx, eidx = _get_se(footer_idxs)
-        style.add('VALIGN', (0, sidx), (-1, eidx), 'MIDDLE')
-
-        #         for idx, v in footer_idxs:
-        #             for si, se in v.spans:
-        #                 style.add('SPAN', (si, idx), (se, idx))
-
-        return rows
-
-        #===============================================================================
-
-#
 #===============================================================================
 
 #============= EOF =============================================

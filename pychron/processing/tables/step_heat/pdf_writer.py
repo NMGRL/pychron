@@ -22,10 +22,7 @@ from traits.api import Int
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-import yaml
-from pychron.core.helpers.formatting import floatfmt
-from pychron.core.pdf.items import Row, Subscript, Superscript, FootNoteRow, FooterRow
-from reportlab.lib.units import inch
+from pychron.core.pdf.items import Row, FootNoteRow, FooterRow
 from reportlab.lib import colors
 from pychron.processing.tables.pdf_writer import IsotopePDFTableWriter
 
@@ -53,7 +50,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         analyses = group.analyses
         self._ref = analyses[0]
 
-        style = self._new_style(debug_grid=False)
+        style = self._new_style(debug_grid=True)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
@@ -85,7 +82,6 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         scales = self._get_signal_scales(analyses)
         # make header
         headers = self._make_header(style, signal_units=units)
-
         data.extend(headers)
 
         cnt = len(data)
@@ -101,19 +97,14 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             if plateau_bounds:
                 is_plat_step = i >= lb and i <= hb
 
-            r, b = self._make_analysis_row(ai, is_plat_step, scales)
+            r = self._make_analysis_row(ai, is_plat_step, scales)
             data.append(r)
-            bdata.append(b)
 
             if self.options.use_alternating_background:
                 idx = cnt + i
                 if idx % 2 == 0:
                     style.add('BACKGROUND', (0, idx), (-1, idx), self.options.alternating_background)
-                    #         data.extend([self._make_analysis_row(ai)
-                    #                      for ai in analyses])
 
-                    #         data.extend(header)
-                    #         data.extend([self._make_blank_row(ai) for ai in analyses])
         auto_col_widths = True
         if auto_col_widths:
             self._calculate_col_widths(data[2:])
@@ -182,66 +173,66 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
         row = self._new_row(analysis, attrs, default_fontsize)
 
-        battrs = (
-            #==============================================================
-            # blanks
-            #==============================================================
-            #                     ('', '{}'),
-            #                     ('', '{}'),
-            ('', '{}'),
-            ('', '{}'),
-            #                     ('blank_fit', '{}'),
-            ('Ar40', value(scale=1e3)),
-            ('Ar39', value(scale=1e3)),
-            ('Ar38',),
-            ('Ar37',),
-            ('Ar36', value(scale=1e-2)),
-            #
-        )
+        # battrs = (
+        #     #==============================================================
+        #     # blanks
+        #     #==============================================================
+        #     #                     ('', '{}'),
+        #     #                     ('', '{}'),
+        #     ('', '{}'),
+        #     ('', '{}'),
+        #     #                     ('blank_fit', '{}'),
+        #     ('Ar40', value(scale=1e3)),
+        #     ('Ar39', value(scale=1e3)),
+        #     ('Ar38',),
+        #     ('Ar37',),
+        #     ('Ar36', value(scale=1e-2)),
+        #     #
+        # )
+        #
+        # # blankrow = Row(fontsize=default_fontsize)
+        # for args in battrs:
+        #     efmt = self._error()
+        #     vfmt = self._value()
+        #
+        #     if len(args) == 2:
+        #         attr, vfmt = args
+        #     elif len(args) == 3:
+        #         attr, vfmt, efmt = args
+        #     else:
+        #         attr = args[0]
+        #
+        #     s, e = '', ''
+        #     if attr:
+        #         iso = analysis.isotopes.get(attr)
+        #         if iso:
+        #             v = iso.blank.uvalue
+        #
+        #             s = vfmt(v)
+        #
+        #             s = self._new_paragraph('<i>{}</i>'.format(s))
+        #
+        #             e = efmt(v)
+        #             e = self._new_paragraph('<i>{}</i>'.format(e))
+        #
+        #     blankrow.add_item(value=s)
+        #     blankrow.add_item(value=e)
 
-        blankrow = Row(fontsize=default_fontsize)
-        for args in battrs:
-            efmt = self._error()
-            vfmt = self._value()
+        return row
 
-            if len(args) == 2:
-                attr, vfmt = args
-            elif len(args) == 3:
-                attr, vfmt, efmt = args
-            else:
-                attr = args[0]
-
-            s, e = '', ''
-            if attr:
-                iso = analysis.isotopes.get(attr)
-                if iso:
-                    v = iso.blank.uvalue
-
-                    s = vfmt(v)
-
-                    s = self._new_paragraph('<i>{}</i>'.format(s))
-
-                    e = efmt(v)
-                    e = self._new_paragraph('<i>{}</i>'.format(e))
-
-            blankrow.add_item(value=s)
-            blankrow.add_item(value=e)
-
-        return row, blankrow
-
-    def _set_row_heights(self, table, data):
-
-        a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
-        for a, v in a_idxs:
-            table._argH[a] = 0.19 * inch
-
-        idx = self._get_idxs(data, Row)
-        for i, v in idx:
-            if v.height:
-                table._argH[i] = v.height * inch
+        # def _set_row_heights(self, table, data):
+        #
+        #     a_idxs = self._get_idxs(data, (FooterRow, FootNoteRow))
+        #     for a, v in a_idxs:
+        #         table._argH[a] = 0.19 * inch
+        #
+        #     idx = self._get_idxs(data, Row)
+        #     for i, v in idx:
+        #         if v.height:
+        #             table._argH[i] = v.height * inch
 
 
-                #===============================================================================
+        #===============================================================================
                 # summary
                 #===============================================================================
 
@@ -323,23 +314,6 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
         return i + 1
 
-    def _get_average_blanks(self):
-        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/average_blanks_map.yaml'
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
-
-        #convert to mols
-        ydc = yd['CO2']
-        for k, v in ydc.iteritems():
-            ydc[k] = v * 5e-17 * 1.0e18
-
-        ydc['sens_exp'] = 18
-        ydf = yd['Furnace']
-        for k, v in ydf.iteritems():
-            ydf[k] = v * 1e-16 * 1.0e18
-        ydf['sens_exp'] = 18
-        return ydc, ydf
-
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
 
@@ -351,20 +325,9 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                                  'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
                                  'respectively'.format(**furnace_blanks)
 
-        average_co2_blanks = 'Average blanks for CO<sub>2</sub>: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
-                             '{Ar37:0.3f}, {Ar36:0.3f}), ' \
-                             'x10<sup>-{sens_exp:}</sup> ' \
-                             'for Ar<super>40</super>, Ar<super>39</super>, ' \
-                             'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
-                             'respectively'.format(**co2_blanks)
-
         frow = FooterRow(fontsize=6)
         frow.add_item(span=-1, value=self._new_paragraph(average_furnace_blanks))
         data.append(frow)
-
-        crow = FooterRow(fontsize=6)
-        crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
-        data.append(crow)
 
         fr = FootNoteRow(fontsize=6)
 
@@ -407,97 +370,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         #    style.add('SPAN', (0, idx), (-1, idx))
         #                style.add('VALIGN', (1, idx), (-1, idx), 'MIDDLE')
 
-    def _make_footer_rows(self, data, style):
-        rows = []
-        df = 6
-        for v in ('<b>Constants used</b>', '<b>Atmospheric argon ratios</b>'):
-            row = FooterRow(fontsize=df, height=0.15)
-            row.add_item(value=v, span=-1)
-            rows.append(row)
-            for i in range(19):
-                row.add_item(value='')
 
-        ref = self._ref
-        arar_constants = ref.arar_constants
-        for n, d, key in ((40, 36, 'atm4036'),
-                          (40, 38, 'atm4038')):
-            row = FooterRow(fontsize=df, height=0.15)
-            row.add_item(value='({}Ar/{}Ar){}'.format(
-                Superscript(n),
-                Superscript(d),
-                Subscript('A')),
-                         span=3)
-
-            vv = getattr(arar_constants, key)
-            v, e = floatfmt(vv.nominal_value, n=1), floatfmt(vv.std_dev, n=1)
-
-            cite_key = '{}_citation'.format(key)
-            r = getattr(arar_constants, cite_key)
-
-            row.add_item(value=u'{} \u00b1{}'.format(v, e),
-                         span=2)
-            row.add_item(value=r, span=-1)
-            rows.append(row)
-
-        row = FooterRow(fontsize=df)
-        row.add_item(value='<b>Interferring isotope production ratios</b>', span=-1)
-        rows.append(row)
-
-        for n, d, s, key in (
-                (40, 39, 'K', 'k4039'),
-                (38, 39, 'K', 'k3839'),
-                (37, 39, 'K', 'k3739'),
-                (39, 37, 'Ca', 'ca3937'),
-                (38, 37, 'Ca', 'ca3837'),
-                (36, 37, 'Ca', 'ca3637')):
-            row = FooterRow(fontsize=df, height=0.15)
-            row.add_item(value='({}Ar/{}Ar){}'.format(
-                Superscript(n),
-                Superscript(d),
-                Subscript(s)),
-                         span=3)
-
-            vv = ref.interference_corrections[key]
-            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
-            row.add_item(value=u'{} \u00b1{}'.format(v, e),
-                         span=2)
-            rows.append(row)
-
-        row = FooterRow(fontsize=df)
-        row.add_item(value='<b>Decay constants</b>', span=-1)
-        rows.append(row)
-
-        for i, E, dl, key in (
-                (40, 'K', u'\u03BB\u03B5', 'lambda_b'),
-                (40, 'K', u'\u03BB\u03B2', 'lambda_e'),
-                (39, 'Ar', '', 'lambda_Ar39'),
-                (37, 'Ar', '', 'lambda_Ar37')):
-            vv = getattr(arar_constants, key)
-            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
-
-            cite_key = '{}_citation'.format(key)
-            r = getattr(arar_constants, cite_key)
-
-            row = FooterRow(fontsize=df, height=0.15)
-            row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
-            row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=3)
-            row.add_item(value=r, span=-1)
-            rows.append(row)
-
-        data.extend(rows)
-
-        _get_idxs = lambda x: self._get_idxs(data, x)
-        _get_se = lambda x: (x[0][0], x[-1][0])
-
-        footer_idxs = _get_idxs(FooterRow)
-        sidx, eidx = _get_se(footer_idxs)
-        style.add('VALIGN', (0, sidx), (-1, eidx), 'MIDDLE')
-
-        #         for idx, v in footer_idxs:
-        #             for si, se in v.spans:
-        #                 style.add('SPAN', (si, idx), (se, idx))
-
-        return rows
 
 #============= EOF =============================================
 # class TableSpec(HasTraits):
