@@ -199,6 +199,9 @@ class FusionsDiodeManager(FusionsLaserManager):
             if self.fiber_light.auto_onoff and self.fiber_light.state:
                 self.fiber_light.power_off()
 
+            #disable the temperature_controller unit a value is set
+            self.temperature_controller.disable()
+
             self.response_recorder.start()
             if self.pyrometer:
                 self.pyrometer.start_scan()
