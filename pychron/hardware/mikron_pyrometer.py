@@ -25,7 +25,9 @@ from traitsui.api import Item, spring, Group, HGroup, \
 #=============local library imports  ==========================
 from core.core_device import CoreDevice
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
-
+TIME_CONSTANTS={'0': 'Intrinsic', '1': '0.01 s',
+                           '2': '0.05 s', '3': '0.25', '4': '1.00 s',
+                           '5': '3.00 s', '6': '10.00 s'}
 
 class MikronGA140Pyrometer(CoreDevice):
     """
@@ -51,9 +53,9 @@ class MikronGA140Pyrometer(CoreDevice):
     emmax = Float(100.0)
     time_constant = Property(String(enter_set=True, auto_set=False), depends_on='_time_constant')
     _time_constant = Str
-    time_constants = Dict({'0': 'Intrinsic', '1': '0.01 s',
-                           '2': '0.05 s', '3': '0.25', '4': '1.00 s',
-                           '5': '3.00 s', '6': '10.00 s'})
+    # time_constants = Dict({'0': 'Intrinsic', '1': '0.01 s',
+    #                        '2': '0.05 s', '3': '0.25', '4': '1.00 s',
+    #                        '5': '3.00 s', '6': '10.00 s'})
 
     pointer = Button
     pointing = Bool
@@ -175,7 +177,8 @@ class MikronGA140Pyrometer(CoreDevice):
         cmd = self._build_command('ez', single_digit=True)
         v = self._parse_response(self.ask(cmd))
         if v is not None and not self.simulation:
-            self._time_constant = v
+            if v in TIME_CONSTANTS:
+                self._time_constant =TIME_CONSTANTS[v]
         return v
 
     def set_exposition_time(self, value):
@@ -188,7 +191,8 @@ class MikronGA140Pyrometer(CoreDevice):
         self.ask(cmd)
 
     def _get_time_constant(self):
-        return self._time_constant
+        if self._time_constant in TIME_CONSTANTS:
+            return TIME_CONSTANTS[self._time_constant]
 
     def _set_time_constant(self, v):
         self.debug('set time constant ={}'.format(v))
@@ -254,7 +258,7 @@ class MikronGA140Pyrometer(CoreDevice):
 
     def get_control_group(self):
         cg = Group(HGroup(UItem('pointer', editor=ButtonEditor(label_value='pointer_label')),
-                          Item('time_constant', editor=EnumEditor(name='time_constants')),
+                          Item('time_constant', editor=EnumEditor(values=TIME_CONSTANTS)),
                           spring, ),
                    HGroup(Item('temperature',
                                width=50,

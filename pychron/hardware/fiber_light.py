@@ -35,6 +35,7 @@ class FiberLight(AbstractDevice):
     power_label = Property(depends_on='state')
     state = Bool
     auto_onoff = Bool(False)
+    name = 'fiber_light'
 
     def load_additional_args(self, config):
         """
@@ -97,7 +98,7 @@ class FiberLight(AbstractDevice):
         """
         self._intensity = int(v)
         if self._cdevice is not None:
-            self._cdevice.add_consumable(self._intensity * 0.1)
+            self._cdevice.add_consumable(self._intensity)
 
     @on_trait_change('power')
     def power_fired(self):

@@ -190,7 +190,7 @@ class VueDiodeControlModule(CoreDevice):
 
         return r
 
-    def update(self):
+    def update(self, **kw):
 
         a = self.read_laser_amps(verbose=False)
         if a is not None:
