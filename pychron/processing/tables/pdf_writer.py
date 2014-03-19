@@ -98,6 +98,9 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     def _get_ic_factor(self, ref):
         # ic = (1, 0)
         ic = ref.ic_factor
+        if ic is None:
+            ic=1,0
+            
         if not isinstance(ic, tuple):
             ic = ic.nominal_value, ic.std_dev
 

@@ -26,7 +26,7 @@ from traitsui.api import View, EnumEditor, HGroup, spring, \
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
-from pychron.core.helpers.filetools import view_file
+from pychron.core.helpers.filetools import view_file, add_extension
 from pychron.core.helpers.iterfuncs import partition
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -79,8 +79,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     refresh = Event
 
     def save_pdf_tables(self, p):
-        # self.save_summary_table(p)
-
+        p=add_extension(p, '.pdf')
+        self.save_summary_table(p)
         self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
@@ -89,13 +89,18 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         db = self.processor.db
 
         with db.session_ctx():
-            ias = self.interpreted_ages  #[:1]
-            ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
+            ias = self.interpreted_ages
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
                    if si.analysis.tag != 'invalid']
             prog = self.processor.open_progress(len(ans), close_at_end=False)
+            # hid = db.get_interpreted_age_history(ia.id)
+            # dbia = hid.interpreted_age
+            # ans.extend([si.analysis for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
+            #         if not si.analysis.tag == 'invalid'])
+
+            # groups=[]
 
             def gfactory(klass, ia):
                 hid = db.get_interpreted_age_history(ia.id)
@@ -109,7 +114,9 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             #partition fusion vs stepheat
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
             fusion, step_heat = map(list, (fusion, step_heat))
-
+            # for ia in step_heat:
+            #     groups.append(klass(sample=ans[0].sample,
+            #                         analyses=ans))
             shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
             fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
             prog.close()
@@ -122,11 +129,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             view_file(p)
 
         if fgroups:
-            w = FusionPDFTableWriter()
-            p = '{}.fusion_data{}'.format(head, ext)
-            w.build(p, fgroups, title=self.get_title())
-            view_file(p)
-
+             w = FusionPDFTableWriter()
+             p = '{}.fusion_data{}'.format(head, ext)
+             w.build(p, fgroups, title=self.get_title())
+             view_file(p)
+        #fusion=list(fusion)
 
     def save_summary_table(self, p):
         w = SummaryPDFTableWriter()
