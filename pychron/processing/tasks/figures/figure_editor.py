@@ -27,6 +27,7 @@ import os
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -168,8 +169,16 @@ class FigureEditor(GraphEditor):
         for gid, ans in groupby(unks, key=key):
             ans = filter(lambda x: not x.is_omitted(ok), ans)
 
-            ek = self.plotter_options_manager.plotter_options.error_calc_method
+            po = self.plotter_options_manager.plotter_options
+            if isinstance(po, SpectrumOptions):
+                ek = po.plateau_age_error_kind
+                pk = 'Plateau'
+            else:
+                ek = po.error_calc_method
+                pk = 'Weighted Mean'
+
             ias.append(InterpretedAge(analyses=ans,
+                                      preferred_age_kind=pk,
                                       preferred_age_error_kind=ek,
                                       use=True))
 

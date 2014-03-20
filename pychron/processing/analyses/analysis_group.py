@@ -109,15 +109,22 @@ class AnalysisGroup(HasTraits):
 
         return ufloat(v, e)
 
-    def _modify_error(self, e, kind):
-        mswd = self.mswd
+    def _modify_error(self, e, kind, n=None, mswd=None, include_j_error=None):
+        if n is None:
+            n = self.nanalyses
+        if mswd is None:
+            mswd = self.mswd
+
         if 'SEM' in kind:
-            e *= self.nanalyses ** -0.5
+            e *= n ** -0.5
 
         if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
             e = e * mswd ** 0.5 if mswd > 1 else 1
 
-        if self.include_j_error_in_mean:
+        if include_j_error is None:
+            include_j_error = self.include_j_error_in_mean
+
+        if include_j_error:
             e = (e ** 2 + self.j_err ** 2) ** 0.5
         return e
 
@@ -186,6 +193,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_steps_str = Str
     plateau_steps = None
 
+    plateau_age_error_kind = Str
     nsteps = Int
 
     def _get_nanalyses(self):
@@ -219,16 +227,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
         return zip(*d)
 
-    @cached_property
+    # @cached_property
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
         args = calculate_plateau_age(ages, errors, k39)
         if args:
             v, e, pidx = args
-
-            #include j err
-            if self.include_j_error_in_plateau:
-                e = (e ** 2 + self.j_err ** 2) ** 0.5
 
             self.plateau_steps = pidx
             self.plateau_steps_str = '{}-{}'.format(ALPHAS[pidx[0]],
@@ -239,6 +243,12 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             mswd = calculate_mswd(pages, perrs)
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
             self.plateau_mswd = mswd
+
+            e = self._modify_error(e,
+                                   self.plateau_age_error_kind,
+                                   mswd=mswd,
+                                   n=self.nsteps,
+                                   include_j_error=self.include_j_error_in_plateau)
 
             return ufloat(v, e)
 
@@ -264,6 +274,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
     def _preferred_age_error_kind_changed(self, new):
         self.weighted_age_error_kind = new
         self.arith_age_error_kind = new
+        self.plateau_age_error_kind = new
 
     def get_is_plateau_step(self, an):
         plateau_step = False
