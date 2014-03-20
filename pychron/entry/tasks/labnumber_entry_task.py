@@ -131,6 +131,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
     def import_sample_metadata(self):
         path = '/Users/ross/Programming/git/dissertation/data/minnabluff/lithologies.xls'
         path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/TAS.xls'
+        path = '/Users/ross/Programming/git/dissertation/data/minnabluff/tables/environ.xls'
         if not os.path.isfile(path):
             path = self.open_file_dialog()
 

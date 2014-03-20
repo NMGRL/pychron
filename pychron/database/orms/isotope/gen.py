@@ -88,7 +88,7 @@ class gen_LabTable(Base, BaseMixin):
 
 
 class gen_MassSpectrometerTable(Base, NameMixin):
-#    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
+    #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
     measurements = relationship('meas_MeasurementTable', backref='mass_spectrometer')
     sensitivities = relationship('gen_SensitivityTable', backref='mass_spectrometer')
 
@@ -119,15 +119,16 @@ class gen_SampleTable(Base, NameMixin):
     labnumbers = relationship('gen_LabTable', backref='sample')
     monitors = relationship('flux_MonitorTable', backref='sample')
 
-    igsn=Column(CHAR(9))
-    location=stringcolumn(80)
-    lat=Column(Float)
-    long=Column(Float)
-    elevation=Column(Float)
-    note=Column(BLOB)
+    igsn = Column(CHAR(9))
+    location = stringcolumn(80)
+    lat = Column(Float)
+    long = Column(Float)
+    elevation = Column(Float)
+    note = Column(BLOB)
 
-    alt_name=stringcolumn(80)
-    lithology=stringcolumn(80)
+    alt_name = stringcolumn(80)
+    lithology = stringcolumn(80)
+    environment = stringcolumn(140)
 
     sio2 = Column(Float(32))
     na2o = Column(Float(32))

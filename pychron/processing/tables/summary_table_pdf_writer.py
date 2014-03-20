@@ -135,8 +135,8 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         # row.add_item(value=self._error(n=1)(interpreted_age.weighted_kca))
         # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
         # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
-        row.add_item(value=floatfmt(interpreted_age.wtd_kca, n=4))
-        row.add_item(value=floatfmt(interpreted_age.wtd_kca_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.kca, n=4))
+        row.add_item(value=floatfmt(interpreted_age.kca_err, n=4))
         row.add_item(value=floatfmt(interpreted_age.age, n=4))
         row.add_item(value=floatfmt(interpreted_age.age_err, n=4))
 

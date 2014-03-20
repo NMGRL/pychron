@@ -32,6 +32,8 @@ class SpectrumOptions(AgeOptions):
     step_nsigma = Int(2)
     plot_option_klass = SpectrumPlotOptions
 
+    include_j_error_in_plateau = Bool(True)
+
     force_plateau = Bool(False)
     plateau_steps = Property(Str)
     _plateau_steps = Str
@@ -47,8 +49,8 @@ class SpectrumOptions(AgeOptions):
     envelope_alpha = Float
     center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
-    plateau_line_width=Float
-    plateau_line_color=Color
+    plateau_line_width = Float
+    plateau_line_color = Color
 
     # def _get_info_group(self):
     #     g = VGroup(
@@ -91,7 +93,9 @@ class SpectrumOptions(AgeOptions):
                         'envelope_alpha',
                         '_plateau_steps', 'center_line_style',
                         'extend_plateau_end_caps',
-                        'plateau_line_width', 'plateau_line_color']
+                        'plateau_line_width', 'plateau_line_color',
+                        'include_j_error_in_plateau'
+        ]
 
     def _get_groups(self):
 
@@ -101,6 +105,7 @@ class SpectrumOptions(AgeOptions):
             Item('plateau_line_width'),
             Item('plateau_line_color'),
             Item('nsigma'),
+            Item('include_j_error_in_plateau', label='Include J Error'),
             HGroup(
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),

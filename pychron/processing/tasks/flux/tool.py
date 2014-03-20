@@ -28,6 +28,8 @@ from traitsui.group import VGroup, HGroup
 from traitsui.item import Item, UItem
 from traitsui.view import View
 
+from pychron.pychron_constants import ERROR_TYPES
+
 
 class DummyFluxMonitor(HasTraits):
     sample = Str
@@ -51,8 +53,8 @@ class FluxTool(HasTraits):
     group_positions = Bool(False)
     show_labels = Bool(True)
 
-    mean_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
-    predicted_j_error_type = Enum('SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)')
+    mean_j_error_type = Enum(*ERROR_TYPES)
+    predicted_j_error_type = Enum(*ERROR_TYPES)
     save_mean_j = Bool(True)
 
     def _monitor_default(self):

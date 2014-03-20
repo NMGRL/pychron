@@ -15,6 +15,7 @@
 #===============================================================================
 import struct
 import os
+import traceback
 
 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 from pychron.paths import paths
@@ -51,7 +52,7 @@ def load_isotopedb_defaults(db):
                    'blank_cocktail',
                    'blank_unknown',
                    'background', 'air', 'cocktail', 'unknown']:
-        #                           blank', 'air', 'cocktail', 'background', 'unknown']:
+            #                           blank', 'air', 'cocktail', 'background', 'unknown']:
             db.add_analysis_type(at)
 
         for mi in ['obama', 'jan', 'nmgrl map']:
@@ -78,9 +79,9 @@ def load_isotopedb_defaults(db):
                                      kind=kind,
                                      make=make)
 
-        mdir=paths.irradiation_tray_maps_dir
+        mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
-            load_irradiation_map(db, p, name)
+            load_irradiation_map(db, p, name, overwrite_geometry=False)
 
         mdir = paths.map_dir
         for p, name in iterdir(mdir):
@@ -99,6 +100,7 @@ def _load_tray_map(db, p, name):
     blob = ''.join([struct.pack('>fff', si.x, si.y, r)
                     for si in sm.sample_holes])
     db.add_load_holder(name, geometry=blob)
+
 
 def parse_irradiation_tray_map(p):
     """
@@ -123,7 +125,8 @@ def parse_irradiation_tray_map(p):
                     break
 
             return holes
-    except Exception:
+    except Exception, e:
+        traceback.print_exc()
         return
 
 
@@ -134,8 +137,8 @@ def load_irradiation_map(db, p, name, overwrite_geometry=False):
             blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
             name, _ = os.path.splitext(name)
 
-            h = db.add_irradiation_holder(name, geometry=blob)
-            if overwrite_geometry:
+            h = db.add_irradiation_holder(name)
+            if overwrite_geometry or not h.geometry:
                 h.geometry = blob
         except Exception, e:
             print p, name, e

@@ -94,6 +94,7 @@ class Spectrum(BaseArArFigure):
         # spec.tools.append(sp)
 
         ag = self.analysis_group
+        ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         if ag.plateau_age:
             plateau_age = ag.plateau_age
             plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
@@ -268,7 +269,7 @@ class Spectrum(BaseArArFigure):
                             excludes=None,
                             group_id=0,
                             index_key='k39',
-                            value_key='uage'):
+                            value_key='uage_wo_j_err'):
 
         if excludes is None:
             excludes = []

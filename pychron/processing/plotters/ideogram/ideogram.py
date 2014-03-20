@@ -26,7 +26,6 @@ from pychron.processing.plotters.flow_label import FlowPlotLabel
 
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.core.stats.peak_detection import find_peaks
-from pychron.core.stats.core import calculate_weighted_mean
 from pychron.processing.plotters.point_move_tool import OverlayMoveTool
 
 N = 500
@@ -310,8 +309,8 @@ class Ideogram(BaseArArFigure):
 
     def _add_mean_indicator(self, g, line, bins, probs, pid):
         # maxp = max(probs)
-        wm, we, mswd, valid_mswd = self._calculate_stats(self.xs, self.xes,
-                                                         bins, probs)
+        wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
+
         #ym = maxp * percentH + offset
         #set ym in screen space
         #convert to data space
@@ -401,7 +400,7 @@ class Ideogram(BaseArArFigure):
             fxs, fxes = zip(*[(a, b) for _, (a, b) in d])
 
             xs, ys = self._calculate_probability_curve(fxs, fxes)
-            wm, we, mswd, valid_mswd = self._calculate_stats(fxs, fxes, xs, ys)
+            wm, we, mswd, valid_mswd = self._calculate_stats(xs, ys)
 
             lp.value.set_data(ys)
             lp.index.set_data(xs)
@@ -576,8 +575,13 @@ class Ideogram(BaseArArFigure):
     def _cmp_analyses(self, x):
         return x.age
 
-    def _calculate_stats(self, ages, errors, xs, ys):
-        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple(self.options.include_j_error)
+    def _calculate_stats(self, xs, ys):
+        ag = self.analysis_group
+        ag.weighted_age_error_kind = self.options.error_calc_method
+        ag.include_j_error_in_mean = self.options.include_j_error_in_mean
+        ag.include_j_error_in_individual_analyses = self.options.include_j_error
+
+        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0
@@ -585,21 +589,24 @@ class Ideogram(BaseArArFigure):
             maxs, _mins = find_peaks(ys, xs, delta=delta, lookahead=1)
             wm = max(maxs, axis=1)[0]
         else:
-            wm, we = calculate_weighted_mean(ages, errors)
-            we = self._calc_error(we, mswd)
+            wage = self.analysis_group.weighted_age
+            wm, we = wage.nominal_value, wage.std_dev
 
-        return wm, we, mswd, valid_mswd
+            # wm, we = calculate_weighted_mean(ages, errors)
+            # we = self._calc_error(we, mswd)
 
-    def _calc_error(self, we, mswd):
-        ec = self.options.error_calc_method
-        n = self.options.nsigma
-        if ec == 'SEM':
-            a = 1
-        elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-            a = 1
-            if mswd > 1:
-                a = mswd ** 0.5
-        return we * a * n
+        return wm, we * self.options.nsigma, mswd, valid_mswd
+
+        # def _calc_error(self, we, mswd):
+        #     ec = self.options.error_calc_method
+        #     n = self.options.nsigma
+        #     if ec == 'SEM':
+        #         a = 1
+        #     elif ec == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+        #         a = 1
+        #         if mswd > 1:
+        #             a = mswd ** 0.5
+        #     return we * a * n
 
 
         #============= EOF =============================================

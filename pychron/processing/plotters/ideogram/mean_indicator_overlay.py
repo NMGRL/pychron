@@ -157,8 +157,9 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
         #self._color=color
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        if self.label:
+            self.label.font.face_name = ''
 
-        self.label.font.face_name=''
         with gc:
             oc = other_component
             gc.clip_to_rect(oc.x, oc.y, oc.x2, oc.y2)

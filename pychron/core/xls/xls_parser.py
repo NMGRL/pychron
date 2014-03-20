@@ -27,17 +27,25 @@ from pychron.core.csv.csv_parser import BaseColumnParser
 # @provides(IColumnParser)
 class XLSParser(BaseColumnParser):
     # def load(self, p, header_idx=0):
-        # wb = xlrd.open_workbook(p)
-        # sheet = wb.sheet_by_index(0)
-        # self._sheet = sheet
-        # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
-        # self._header_offset=header_idx+1
-    def _load(self, p, header_idx):
+    # wb = xlrd.open_workbook(p)
+    # sheet = wb.sheet_by_index(0)
+    # self._sheet = sheet
+    # self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+    # self._header_offset=header_idx+1
+    def _load(self, p, header_idx, sheet=None):
         wb = xlrd.open_workbook(p)
 
-        sheet = wb.sheet_by_index(0)
+        if sheet is None:
+            sheet = 0
+
+        if isinstance(sheet, int):
+            sheet = wb.sheet_by_index(sheet)
+        else:
+            sheet = wb.sheet_by_name(sheet)
+
         self._sheet = sheet
         self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
+
     # def has_key(self, key):
     #     """
     #         if key is an int return true if key valid index

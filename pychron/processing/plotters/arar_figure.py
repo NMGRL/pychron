@@ -297,7 +297,7 @@ class BaseArArFigure(HasTraits):
                               use_end_caps=end_caps
                               )
 
-        scatter.overlays.append(ebo)
+        scatter.underlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
         return ebo
 

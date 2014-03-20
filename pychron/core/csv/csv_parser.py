@@ -29,14 +29,14 @@ from pychron.core.i_column_parser import IColumnParser
 class BaseColumnParser(HasTraits):
     _header_offset = 1
 
-    def load(self, p, header_idx=0):
+    def load(self, p, header_idx=0, **kw):
         self._header_offset = header_idx + 1
-        self._load(p, header_idx)
+        self._load(p, header_idx, **kw)
 
     def get_value(self, ri, ci):
         raise NotImplementedError
 
-    def _load(self, p):
+    def _load(self, p, **kw):
         raise NotImplementedError
 
     def has_key(self, key):

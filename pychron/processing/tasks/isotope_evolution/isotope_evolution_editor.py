@@ -146,7 +146,9 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         sel_hist = meas_analysis.selected_histories
         sel_fithist = sel_hist.selected_fits
-        dbfits = sel_fithist.fits
+        dbfits = None
+        if sel_fithist:
+            dbfits = sel_fithist.fits
 
         fit_hist = None
         if dbfits:
