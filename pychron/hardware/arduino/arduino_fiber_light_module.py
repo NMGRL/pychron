@@ -24,6 +24,8 @@
 
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
 '''
+Arduino Sketch fiberlightbox
+
 FiberLight Protocol ver 0.2
 4; on
 5; off
@@ -76,10 +78,12 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
         if resp is not None:
             try:
                 cmd, v = resp.split(',')
+                v = v.strip(';')
+
                 if cmd == '1':
-                    return int(v.strip(';'))
+                    return int(v)
             except Exception, err:
-                print err
+                print 'parse_response {}'.format(resp), err
 
     def _build_command(self, cmd, value=None):
         if value is not None:
