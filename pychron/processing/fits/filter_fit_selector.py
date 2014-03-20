@@ -15,15 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Int, Str
-from traitsui.api import EnumEditor
+from traits.api import Bool, Int, Str, Button
+from traitsui.api import EnumEditor, ButtonEditor
+from traitsui.api import HGroup, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 from pychron.processing.fits.fit import Fit
 from pychron.processing.fits.fit_selector import FitSelector, ObjectColumn, CheckboxColumn
-
 
 class FilterFit(Fit):
     filter_outliers = Bool
@@ -42,6 +42,29 @@ class FilterFit(Fit):
 
 class FilterFitSelector(FitSelector):
     fit_klass = FilterFit
+    filter_all_button = Button('Toggle Filter')
+    filter_state = Bool
+
+    inc_baseline_all_button = Button('Toggle Inc. Base')
+    inc_baseline_state = Bool
+
+    def _filter_all_button_fired(self):
+        self.filter_state = not self.filter_state
+        for fi in self.fits:
+            fi.filter_outliers = self.filter_state
+
+    def _inc_baseline_all_button_fired(self):
+        self.inc_baseline_state = not self.inc_baseline_state
+        for fi in self.fits:
+            fi.include_baseline_error = self.inc_baseline_state
+
+    def _get_toggle_group(self):
+        g = HGroup(
+            UItem('show_all_button', editor=ButtonEditor(label_value='show_all_label')),
+            UItem('filter_all_button'),
+            UItem('inc_baseline_all_button'),
+            UItem('use_all_button'))
+        return g
 
     def _get_columns(self):
         cols = [ObjectColumn(name='name', editable=False),

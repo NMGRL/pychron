@@ -43,6 +43,7 @@ SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
 FIT_TYPES = ['linear', 'parabolic', 'cubic',
              'average', 'weighted_mean']
+FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
 
 ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
 
