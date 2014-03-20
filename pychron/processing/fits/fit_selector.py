@@ -16,13 +16,13 @@
 
 #============= enthought library imports =======================
 from traits.has_traits import HasTraits, on_trait_change
-from traits.trait_types import List, Event, Bool, Button
+from traits.trait_types import List, Event, Bool, Button, Str
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traits.traits import Property
 
-
-from traitsui.editors import EnumEditor
+from traitsui.editors import EnumEditor, ButtonEditor
 from traitsui.extras.checkbox_column import CheckboxColumn as _CheckboxColumn
 from traitsui.group import HGroup, VGroup
 from traitsui.item import UItem, spring, Item
@@ -31,6 +31,7 @@ from traitsui.view import View
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.fit import Fit
 from pychron.core.ui.table_editor import myTableEditor
+from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class ColumnMixin(object):
@@ -58,11 +59,44 @@ class FitSelector(HasTraits):
     plot_button = Button('Plot')
     default_error_type='SD'
 
+    show_all_button = Event
+    show_state = Bool
+    show_all_label = Property(depends_on='show_state')
+
+    use_all_button = Button('Toggle Save')
+    use_state = Bool
+    global_fit = Str
+    global_error_type = Str
+
+    fit_types = List(FIT_TYPES)
+    error_types = List(FIT_ERROR_TYPES)
+
+    def _get_show_all_label(self):
+        return 'Hide All' if self.show_state else 'Show All'
+
     def _plot_button_fired(self):
         self.update_needed = True
 
     def _auto_update_changed(self):
         self.update_needed = True
+
+    def _show_all_button_fired(self):
+        self.show_state = not self.show_state
+        for fi in self.fits:
+            fi.show = self.show_state
+
+    def _use_all_button_fired(self):
+        self.use_state = not self.use_state
+        for fi in self.fits:
+            fi.use = self.use_state
+
+    def _global_fit_changed(self):
+        for fi in self.fits:
+            fi.fit = self.global_fit
+
+    def _global_error_type_changed(self):
+        for fi in self.fits:
+            fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
         return HGroup(icon_button_editor('plot_button', 'chart_curve_go',
@@ -70,6 +104,8 @@ class FitSelector(HasTraits):
                                                  'This may take awhile if many analyses are selected'),
                       icon_button_editor('save_event', 'database_save',
                                          tooltip='Save fits to database'),
+                      UItem('global_fit', editor=EnumEditor(name='fit_types')),
+                      UItem('global_error_type', editor=EnumEditor(name='error_types')),
                       spring,
                       Item('auto_update',
                            label='Auto Plot',
@@ -78,9 +114,19 @@ class FitSelector(HasTraits):
 
     def traits_view(self):
 
-        v = View(VGroup(self._get_auto_group(),
-                        self._get_fit_group()))
+        v = View(VGroup(
+            self._get_auto_group(),
+            self._get_toggle_group(),
+            self._get_fit_group()))
         return v
+
+    def _get_toggle_group(self):
+        g = HGroup(
+            # UItem('global_fit',editor=EnumEditor(name='fit_types')),
+            # UItem('global_error_type', editor=EnumEditor(name='error_types')),
+            UItem('show_all_button', editor=ButtonEditor(label_value='show_all_label')),
+            UItem('use_all_button'))
+        return g
 
     def _get_columns(self):
         cols = [ObjectColumn(name='name', editable=False),
@@ -111,8 +157,8 @@ class FitSelector(HasTraits):
     def _fit_changed(self, obj, name, old, new):
         if self.command_key:
             for fi in self.fits:
-                fi.trait_set(trait_change_notify=False,
-                             **{name: new})
+                fi.trait_set(**{name: new})
+            self.command_key = False
 
         if self.auto_update:
             if name in ('show', 'fit'):

@@ -94,6 +94,8 @@ class Spectrum(BaseArArFigure):
         # spec.tools.append(sp)
 
         ag = self.analysis_group
+        ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
+        ag.plateau_age_error_kind = self.options.plateau_age_error_kind
         if ag.plateau_age:
             plateau_age = ag.plateau_age
             plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
@@ -124,8 +126,8 @@ class Spectrum(BaseArArFigure):
         yl = (ys - es * ns)[::-1]
         yu = ys + es * ns
 
-        miages = min(yl)
-        maages = max(yu)
+        _mi = min(yl)
+        _ma = max(yu)
 
         if op.display_integrated_info:
             fs = op.integrated_font_size
@@ -144,8 +146,12 @@ class Spectrum(BaseArArFigure):
 
         self._add_info(graph, plot)
 
-        if not po.has_ylimits():
-            self._set_y_limits(miages, maages, pad='0.1')
+        # print po.has_ylimits(),po.ylimits
+        pad = '0.1'
+        if po.has_ylimits():
+            _mi, _ma = po.ylimits
+            pad = None
+        self._set_y_limits(_mi, _ma, pad=pad)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -268,7 +274,7 @@ class Spectrum(BaseArArFigure):
                             excludes=None,
                             group_id=0,
                             index_key='k39',
-                            value_key='uage'):
+                            value_key='uage_wo_j_err'):
 
         if excludes is None:
             excludes = []

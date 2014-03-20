@@ -24,6 +24,7 @@ import re
 
 from pychron.processing.plotters.options.age import AgeOptions
 from pychron.processing.plotters.options.option import SpectrumPlotOptions
+from pychron.pychron_constants import ERROR_TYPES
 
 plat_regex = re.compile(r'\w{1,2}-{1}\w{1,2}$')
 
@@ -32,6 +33,8 @@ class SpectrumOptions(AgeOptions):
     step_nsigma = Int(2)
     plot_option_klass = SpectrumPlotOptions
 
+    include_j_error_in_plateau = Bool(True)
+    plateau_age_error_kind = Enum(*ERROR_TYPES)
     force_plateau = Bool(False)
     plateau_steps = Property(Str)
     _plateau_steps = Str
@@ -47,8 +50,13 @@ class SpectrumOptions(AgeOptions):
     envelope_alpha = Float
     center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
-    plateau_line_width=Float
-    plateau_line_color=Color
+    plateau_line_width = Float
+    plateau_line_color = Color
+
+    error_calc_method = Property
+
+    def _get_error_calc_method(self):
+        return self.plateau_age_error_kind
 
     # def _get_info_group(self):
     #     g = VGroup(
@@ -91,7 +99,9 @@ class SpectrumOptions(AgeOptions):
                         'envelope_alpha',
                         '_plateau_steps', 'center_line_style',
                         'extend_plateau_end_caps',
-                        'plateau_line_width', 'plateau_line_color']
+                        'plateau_line_width', 'plateau_line_color',
+                        'include_j_error_in_plateau',
+                        'plateau_age_error_kind']
 
     def _get_groups(self):
 
@@ -101,6 +111,10 @@ class SpectrumOptions(AgeOptions):
             Item('plateau_line_width'),
             Item('plateau_line_color'),
             Item('nsigma'),
+            Item('plateau_age_error_kind',
+                 width=-100,
+                 label='Error Type'),
+            Item('include_j_error_in_plateau', label='Include J Error'),
             HGroup(
                 Item('force_plateau',
                      tooltip='Force a plateau over provided steps'),

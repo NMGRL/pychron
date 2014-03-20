@@ -23,7 +23,9 @@ from pychron.processing.plotters.options.plotter import PlotterOptions
 
 
 class AgeOptions(PlotterOptions):
-    include_j_error = Bool(True)
+    include_j_error = Bool(False)
+    include_j_error_in_mean = Bool(True)
+
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
     nsigma = Enum(1, 2, 3)
@@ -35,9 +37,14 @@ class AgeOptions(PlotterOptions):
     analysis_label_format = String
     analysis_label_display = String
 
+    def _include_j_error_changed(self, new):
+        if new:
+            self.include_j_error_in_mean = False
+
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
         attrs += ['include_j_error',
+                  'include_j_error_in_mean',
                   'include_irradiation_error',
                   'include_decay_error',
                   'nsigma','label_box',

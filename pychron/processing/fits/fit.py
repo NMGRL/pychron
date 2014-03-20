@@ -20,7 +20,7 @@ from traitsui.api import View, HGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pychron_constants import FIT_TYPES
+from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES
 
 
 class Fit(HasTraits):
@@ -30,7 +30,7 @@ class Fit(HasTraits):
     fit = Str
     fit_types = Property
     error_type=Str
-    error_types=List(['SD','SEM','CI'])
+    error_types = List(FIT_ERROR_TYPES)
 
     #     fit = Enum(FIT_TYPES)
     valid = Property(depends_on=('fit, use, show'))

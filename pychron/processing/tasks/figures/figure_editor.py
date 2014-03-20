@@ -27,6 +27,7 @@ import os
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
 from pychron.processing.tasks.figures.interpreted_age_factory import InterpretedAgeFactory
@@ -131,11 +132,17 @@ class FigureEditor(GraphEditor):
         db = self.processor.db
         with db.session_ctx():
             hist = db.add_interpreted_age_history(ln)
-            db_ia = db.add_interpreted_age(hist, age=ia.preferred_age_value or 0,
+            db_ia = db.add_interpreted_age(hist,
+                                           age=ia.preferred_age_value or 0,
                                            age_err=ia.preferred_age_error or 0,
                                            age_kind=ia.preferred_age_kind,
-                                           wtd_kca=float(ia.weighted_kca.nominal_value),
-                                           wtd_kca_err=float(ia.weighted_kca.std_dev),
+                                           kca_kind=ia.preferred_kca_kind,
+                                           kca=float(ia.preferred_kca_value),
+                                           kca_err=float(ia.preferred_kca_error),
+                                           # wtd_kca=float(ia.weighted_kca.nominal_value),
+                                           # wtd_kca_err=float(ia.weighted_kca.std_dev),
+                                           # arith_kca=float(ia.kca.nominal_value),
+                                           # arith_kca_err=float(ia.kca.std_dev),
                                            mswd=float(ia.preferred_mswd))
 
             for ai in ia.analyses:
@@ -161,7 +168,19 @@ class FigureEditor(GraphEditor):
         ok = 'omit_{}'.format(self.basename)
         for gid, ans in groupby(unks, key=key):
             ans = filter(lambda x: not x.is_omitted(ok), ans)
-            ias.append(InterpretedAge(analyses=ans, use=True))
+
+            po = self.plotter_options_manager.plotter_options
+            if isinstance(po, SpectrumOptions):
+                ek = po.plateau_age_error_kind
+                pk = 'Plateau'
+            else:
+                ek = po.error_calc_method
+                pk = 'Weighted Mean'
+
+            ias.append(InterpretedAge(analyses=ans,
+                                      preferred_age_kind=pk,
+                                      preferred_age_error_kind=ek,
+                                      use=True))
 
         return ias
 

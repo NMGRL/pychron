@@ -28,6 +28,39 @@ class SampleLoader(Loggable):
         valid file formats: excel, csv
     """
 
+    def _import_environment(self, manager, p):
+        self._import_environment_sheet(manager, p, 'mb06', 'MB06')
+        self._import_environment_sheet(manager, p, 'mb07', 'MB07')
+
+    def _import_environment_sheet(self, manager, p, sheet, tag):
+        xp = XLSParser()
+        xp.load(p, sheet=sheet)
+        db = manager.db
+
+        with db.session_ctx():
+            # progress = manager.open_progress(xp.nrows)
+            for args in xp.itervalues():
+                sample = args['sample']
+                sample = '{}-{:03n}'.format(tag, int(sample))
+
+                # progress.change_message('Setting environment for {}'.format(sample))
+                dbsample = db.get_sample(sample, project='Minna Bluff', verbose=False)
+                if dbsample:
+                    mapf = args['MapFea'].lower()
+                    env = None
+                    if 'subaerial' in mapf:
+                        env = 'subaerial'
+                    elif 'hyaloclastite' in mapf:
+                        env = 'subglacial'
+                    elif 'quenched' in mapf:
+                        env = 'mixed'
+
+                    if env:
+                        self.debug('setting sample: {} environment: {}'.format(sample, env))
+                        dbsample.environment = env
+                else:
+                    self.debug('no sample in db for {}'.format(sample))
+
     def _import_tas(self, manager, p):
         xp = XLSParser()
         xp.load(p)
@@ -70,7 +103,8 @@ class SampleLoader(Loggable):
 
     def do_import(self, manager, p):
         # self._import_lithologies(manager,p)
-        self._import_tas(manager, p)
+        # self._import_tas(manager, p)
+        self._import_environment(manager, p)
         return
 
         xp = XLSParser()

@@ -23,12 +23,13 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import LabelMaker
 from pychron.processing.plotters.options.age import AgeOptions
+from pychron.pychron_constants import ERROR_TYPES
 
 
 class IdeogramOptions(AgeOptions):
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
-    error_calc_method = Enum('SEM, but if MSWD>1 use SEM * sqrt(MSWD)', 'SEM')
+    error_calc_method = Enum(*ERROR_TYPES)
 
     xlow = Float
     xhigh = Float
@@ -39,7 +40,7 @@ class IdeogramOptions(AgeOptions):
     display_mean = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
-    index_attr=String
+    index_attr = String
     use_asymptotic_limits = Bool
     asymptotic_width = Float
     x_end_caps = Bool(False)
@@ -66,17 +67,17 @@ class IdeogramOptions(AgeOptions):
 
     def _get_groups(self):
         xgrp = VGroup(HGroup(Item('index_attr',
-                                  editor=EnumEditor(values={'uage':'01:Age',
-                                                            'uF':'02:Ar40*/Ar39k',
+                                  editor=EnumEditor(values={'uage': '01:Age',
+                                                            'uF': '02:Ar40*/Ar39k',
                                                             'Ar40/Ar36': '03:Ar40/Ar36',
                                                             'Ar40/Ar39': '04:Ar40/Ar39',
                                                             'Ar40/Ar38': '05:Ar40/Ar38',
-                                                            'Ar39/Ar37':'06:Ar39/Ar37',
-                                                            'Ar40':'07:Ar40',
-                                                            'Ar39':'08:Ar39',
-                                                            'Ar38':'09:Ar38',
-                                                            'Ar37':'10:Ar37',
-                                                            'Ar36':'11:Ar36',}),
+                                                            'Ar39/Ar37': '06:Ar39/Ar37',
+                                                            'Ar40': '07:Ar40',
+                                                            'Ar39': '08:Ar39',
+                                                            'Ar38': '09:Ar38',
+                                                            'Ar37': '10:Ar37',
+                                                            'Ar36': '11:Ar36', }),
                                   label='X Value'),
                              Item('xlow', label='Min.', enabled_when='not object.use_centered_range'),
                              Item('xhigh', label='Max.', enabled_when='not object.use_centered_range')),
@@ -99,7 +100,14 @@ class IdeogramOptions(AgeOptions):
                  width=-150,
                  label='Error Calculation Method'),
             Item('nsigma', label='Age Error NSigma'),
-            Item('include_j_error'),
+            HGroup(
+                Item('include_j_error',
+                     label='Include in Analyses'),
+                Item('include_j_error_in_mean',
+                     label='Include in Mean',
+                     enabled_when='not include_j_error'),
+                show_border=True, label='J Error'),
+
             Item('include_irradiation_error'),
             Item('include_decay_error'),
             label='Calculations')
@@ -118,12 +126,14 @@ class IdeogramOptions(AgeOptions):
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           label='Info'),
+                   show_border=True,
                    label='Display')
 
         egrp = VGroup(HGroup(Item('x_end_caps', label='X'),
                              Item('y_end_caps', label='Y'),
-                            label='End Caps', ),
+                             label='End Caps', ),
                       Item('error_bar_nsigma', label='NSigma'),
+                      show_border=True,
                       label='Error Bars')
         return VGroup(self._get_title_group(),
                       xgrp,

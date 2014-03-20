@@ -86,10 +86,11 @@ class InterpretedAge(HasTraits):
 
     age = Float
     age_err = Float
-    wtd_kca = Float
-    wtd_kca_err = Float
+    kca = Float
+    kca_err = Float
 
     age_kind = Str
+    kca_kind = Str
     mswd = Float
     nanalyses = Int
 
@@ -169,10 +170,11 @@ class IsotopeAdapter(DatabaseAdapter):
                             id=hi.id,
                             age=ia.age,
                             age_err=ia.age_err,
-                            wtd_kca=ia.wtd_kca or 0,
-                            wtd_kca_err=ia.wtd_kca_err or 0,
+                            kca=ia.kca or 0,
+                            kca_err=ia.kca_err or 0,
                             mswd=ia.mswd,
                             age_kind=ia.age_kind,
+                            kca_kind=ia.kca_kind,
                             identifier=hi.identifier,
                             sample=sample or '',
                             irradiation=irrad or '',

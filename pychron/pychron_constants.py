@@ -42,8 +42,10 @@ SCRIPT_KEYS = ['measurement', 'post_measurement', 'extraction', 'post_equilibrat
 SCRIPT_NAMES = ['{}_script'.format(si) for si in SCRIPT_KEYS]
 
 FIT_TYPES = ['linear', 'parabolic', 'cubic',
-             'average','weighted_mean'
-             ]
+             'average', 'weighted_mean']
+FIT_ERROR_TYPES = ['SD', 'SEM', 'CI']
+
+ERROR_TYPES = ['SD', 'SEM', 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)']
 
 INTERPOLATE_TYPES = ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + ['preceding', 'Bracketing Interpolate', 'Bracketing Average']
@@ -102,8 +104,8 @@ DETECTOR_MAP = {o: i for i, o in enumerate(DETECTOR_ORDER)}
 IC_ANALYSIS_TYPE_MAP = {'air': 0, 'cocktail': 1}
 
 QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
-                                  1.048576, 2.097152, 4.194304, 8.388608,
-                                  16.777216, 33.554432, 67.108864]
+                            1.048576, 2.097152, 4.194304, 8.388608,
+                            16.777216, 33.554432, 67.108864]
 
 # MINNA_BLUFF_IRRADIATIONS = [('NM-205', ['E', 'F' , 'G', 'H', 'O']),
 # ('NM-213', ['A', 'C', 'I', 'J', 'K', 'L']),

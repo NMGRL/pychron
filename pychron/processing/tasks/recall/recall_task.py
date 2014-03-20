@@ -27,6 +27,7 @@ from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPa
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -49,8 +50,8 @@ class RecallTask(AnalysisEditTask):
 
     def append_unknown_analyses(self, ans):
 
-        for i,ai in enumerate(ans):
-            if not (i==0 and self.active_editor):
+        for i, ai in enumerate(ans):
+            if not (i == 0 and self.active_editor):
                 self.new_editor()
             self._set_selected_analysis(ai)
 
@@ -60,9 +61,9 @@ class RecallTask(AnalysisEditTask):
 
         self.append_unknown_analyses(ans)
 
-    def activated(self, load=False):
-        super(RecallTask, self).activated()
-        self.recall([DummyRecord('f4d301bd-a217-42a2-b4c9-c1696089acb2')])
+        # def activated(self, load=False):
+        # super(RecallTask, self).activated()
+        # self.recall([DummyRecord('f4d301bd-a217-42a2-b4c9-c1696089acb2')])
 
     #     self.load_projects()
     #     # if load:
@@ -90,10 +91,10 @@ class RecallTask(AnalysisEditTask):
     #         self.active_editor.model = an
     def _active_editor_changed(self):
         if self.active_editor:
-            if hasattr(self.active_editor,'analysis_view'):
+            if hasattr(self.active_editor, 'analysis_view'):
                 self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
             else:
-                self.controls_pane.tool=self.active_editor.tool
+                self.controls_pane.tool = self.active_editor.tool
 
     def _dclicked_sample_changed(self):
         pass
@@ -103,7 +104,7 @@ class RecallTask(AnalysisEditTask):
             id='pychron.recall',
             left=HSplitter(Tabbed(
                 PaneItem('pychron.browser')),
-                PaneItem('pychron.processing.controls')))
+                           PaneItem('pychron.processing.controls')))
 
     def create_dock_panes(self):
         self.controls_pane = ControlsPane()

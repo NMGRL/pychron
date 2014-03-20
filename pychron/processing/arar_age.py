@@ -30,6 +30,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -327,7 +328,6 @@ class ArArAge(Loggable):
         k = self.get_computed_value('k39')
         ca = self.get_non_ar_isotope('ca37')
         prs = self.production_ratios
-
         k_ca_pr = 1
         if prs:
             cak = prs.get('Ca_K', 1)
@@ -478,29 +478,29 @@ class ArArAge(Loggable):
             except ZeroDivisionError:
                 return ufloat(0, 1e-20)
                 #===============================================================================
-        #
-        #===============================================================================
+                #
+                #===============================================================================
 
-        #def __getattr__(self, attr):
-        #    if '/' in attr:
-        #        #treat as ratio
-        #        n, d = attr.split('/')
-        #        try:
-        #            return getattr(self, n) / getattr(self, d)
-        #        except ZeroDivisionError:
-        #            return ufloat(0, 1e-20)
+                #def __getattr__(self, attr):
+                #    if '/' in attr:
+                #        #treat as ratio
+                #        n, d = attr.split('/')
+                #        try:
+                #            return getattr(self, n) / getattr(self, d)
+                #        except ZeroDivisionError:
+                #            return ufloat(0, 1e-20)
 
-        # def _arar_constants_default(self):
-        #     """
-        #         use a global shared arar_constants
-        #     """
-        #
-        #     global arar_constants
-        #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-        #     #print 'asdf', arar_constants
-        #     if arar_constants is None:
-        #         arar_constants = ArArConstants()
-        #         #return ArArConstants()
-        #     return arar_constants
+                # def _arar_constants_default(self):
+                #     """
+                #         use a global shared arar_constants
+                #     """
+                #
+                #     global arar_constants
+                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+                #     #print 'asdf', arar_constants
+                #     if arar_constants is None:
+                #         arar_constants = ArArConstants()
+                #         #return ArArConstants()
+                #     return arar_constants
 
-        #============= EOF =============================================
+                #============= EOF =============================================

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int
+from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 #============= standard library imports ========================
 from numpy import array
 #============= local library imports  ==========================
@@ -26,48 +26,68 @@ from pychron.pychron_constants import ALPHAS
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 
 
-def AGProperty():
-    return Property(depends_on='analyses:[status,temp_status]')
+def AGProperty(*depends):
+    d = 'dirty,analyses:[status,temp_status]'
+    if depends:
+        d = '{},{}'.format(','.join(depends), d)
+
+    return Property(depends_on=d)
 
 
 class AnalysisGroup(HasTraits):
     sample = Str
     analyses = List
     nanalyses = AGProperty()
+
     arith_age = AGProperty()
+    arith_age_error_kind = Str
+    # arith_age_error_kind = Enum(*ERROR_TYPES)
+
     weighted_age = AGProperty()
+    # weighted_age_error_kind = Enum(*ERROR_TYPES)
+    weighted_age_error_kind = Str  #Enum(*ERROR_TYPES)
+
     weighted_kca = AGProperty()
-    mswd = AGProperty()
+    arith_kca = AGProperty()
+
+    mswd = Property
 
     isochron_age = AGProperty()
     identifier = Property
 
-    #    def _calculate_weighted_mean(self, attr):
-    #        vs = array([getattr(ai, attr) for ai in self.analyses
-    #                    if ai.status == 0 and ai.temp_status == 0])
-    #        return vs.mean()
+    j_err = AGProperty()
+    include_j_error_in_mean = Bool(True)
+    include_j_error_in_individual_analyses = Bool(False)
 
-    def get_mswd_tuple(self, include_j_error=True):
-        if not include_j_error:
-            mswd = self._calculate_mswd('uage_wo_j_err')
-        else:
-            mswd = self.mswd
+    dirty = Event
 
+    def get_mswd_tuple(self):
+        mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
 
-    @cached_property
+    # @cached_property
     def _get_mswd(self):
-        return self._calculate_mswd('uage')
+        attr = 'uage_wo_j_err'
+        if self.include_j_error_in_individual_analyses:
+            attr = 'uage'
+
+        return self._calculate_mswd(attr)
 
     def _calculate_mswd(self, attr):
-        m = ''
+        m = None
         args = self._get_values(attr)
         if args:
             vs, es = args
             m = calculate_mswd(vs, es)
 
         return m
+
+    @cached_property
+    def _get_j_err(self):
+        j = self.analyses[0].j
+        e = j.std_dev if j is not None else 0
+        return e
 
     @cached_property
     def _get_isochron_age(self):
@@ -77,17 +97,53 @@ class AnalysisGroup(HasTraits):
     def _get_identifier(self):
         return self.analyses[0].labnumber
 
-    @cached_property
+    # @cached_property
     def _get_weighted_age(self):
-        return self._calculate_weighted_mean('uage')
 
-    @cached_property
+        if self.include_j_error_in_individual_analyses:
+            v, e = self._calculate_weighted_mean('uage')
+        else:
+            v, e = self._calculate_weighted_mean('uage_wo_j_err')
+
+        e = self._modify_error(e, self.weighted_age_error_kind)
+
+        return ufloat(v, e)
+
+    def _modify_error(self, e, kind, n=None, mswd=None, include_j_error=None):
+        if n is None:
+            n = self.nanalyses
+        if mswd is None:
+            mswd = self.mswd
+
+        if 'SEM' in kind:
+            e *= n ** -0.5
+
+        if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+            e = e * mswd ** 0.5 if mswd > 1 else 1
+
+        if include_j_error is None:
+            include_j_error = self.include_j_error_in_mean
+
+        if include_j_error:
+            e = (e ** 2 + self.j_err ** 2) ** 0.5
+        return e
+
+    # @cached_property
     def _get_weighted_kca(self):
-        return self._calculate_weighted_mean('kca')
+        return ufloat(*self._calculate_weighted_mean('kca'))
 
-    @cached_property
+    # @cached_property
+    def _get_arith_kca(self):
+        return ufloat(*self._calculate_arithmetic_mean('kca'))
+
+    # @cached_property
     def _get_arith_age(self):
-        return self._calculate_arithmetic_mean('uage')
+        if self.include_j_error_in_individual_analyses:
+            v, e = self._calculate_arithmetic_mean('uage')
+        else:
+            v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
+        e = self._modify_error(e, self.arith_age_error_kind)
+        return ufloat(v, e)
 
     @cached_property
     def _get_nanalyses(self):
@@ -95,9 +151,7 @@ class AnalysisGroup(HasTraits):
 
     def _get_values(self, attr):
         vs = (getattr(ai, attr) for ai in self.analyses
-              # if not isinstance(ai, Marker) and \
               if not ai.is_omitted())
-        #ai.temp_status == 0 and not ai.tag)
 
         vs = [vi for vi in vs if vi is not None]
         if vs:
@@ -114,22 +168,10 @@ class AnalysisGroup(HasTraits):
             else:
                 av = vs.mean()
                 werr = vs.std(ddof=1)
-
-
-                #if use_weights:
-                #    weights = 1 / es ** 2
-                #else:
-                #    weights = ones(vs.shape)
-
-                #av, sum_weights = average(vs, weights=weights, returned=True)
-                #if use_weights:
-                #    werr = sum_weights ** -0.5
-                #else:
-                #    werr = vs.std(ddof=1)
         else:
             av, werr = 0, 0
 
-        return ufloat(av, werr)
+        return av, werr
 
     def _calculate_arithmetic_mean(self, attr):
         return self._calculate_mean(attr, use_weights=False)
@@ -147,16 +189,18 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_age = AGProperty()
     integrated_age = AGProperty()
 
+    include_j_error_in_plateau = Bool(True)
     plateau_steps_str = Str
     plateau_steps = None
 
+    plateau_age_error_kind = Str
     nsteps = Int
 
     def _get_nanalyses(self):
         if self.plateau_steps:
-            n= self.nsteps
+            n = self.nsteps
         else:
-            n=super(StepHeatAnalysisGroup, self)._get_nanalyses()
+            n = super(StepHeatAnalysisGroup, self)._get_nanalyses()
         return n
 
     def get_plateau_mswd_tuple(self):
@@ -183,7 +227,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
         return zip(*d)
 
-    @cached_property
+    # @cached_property
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
         args = calculate_plateau_age(ages, errors, k39)
@@ -200,46 +244,89 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
             self.plateau_mswd = mswd
 
+            e = self._modify_error(e,
+                                   self.plateau_age_error_kind,
+                                   mswd=mswd,
+                                   n=self.nsteps,
+                                   include_j_error=self.include_j_error_in_plateau)
+
             return ufloat(v, e)
 
 
 class InterpretedAge(StepHeatAnalysisGroup):
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')
-    preferred_age_error = Property(depends_on='preferred_age_kind')
-    preferred_mswd=Property(depends_on='preferred_age_kind')
+    preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')
+    preferred_mswd = Property(depends_on='preferred_age_kind')
+
+    preferred_kca = Property(depends_on='preferred_kca_kind')
+    preferred_kca_value = Property(depends_on='preferred_kca_kind')
+    preferred_kca_error = Property(depends_on='preferred_kca_kind')
+
     preferred_age_kind = Str('Weighted Mean')
+    preferred_kca_kind = Str('Weighted Mean')
+
+    preferred_age_error_kind = Str  #('SD')
     preferred_ages = Property(depends_on='analyses')
+
     use = Bool
 
-    def get_is_plateau_step(self, an):
-        plateau_step=False
-        if self.preferred_age_kind=='Plateau':
-            if self.plateau_age:
-                idx=self.analyses.index(an)
-                ps,pe=self.plateau_steps
+    def _preferred_age_error_kind_changed(self, new):
+        self.weighted_age_error_kind = new
+        self.arith_age_error_kind = new
+        self.plateau_age_error_kind = new
 
-                plateau_step=ps<=idx<=pe
+    def get_is_plateau_step(self, an):
+        plateau_step = False
+        if self.preferred_age_kind == 'Plateau':
+            if self.plateau_age:
+                idx = self.analyses.index(an)
+                ps, pe = self.plateau_steps
+
+                plateau_step = ps <= idx <= pe
 
         return plateau_step
 
     def _get_preferred_mswd(self):
-        if self.preferred_age_kind=='Plateau':
+        if self.preferred_age_kind == 'Plateau':
             return self.plateau_mswd
         else:
             return self.mswd
 
     def _get_preferred_age_value(self):
         pa = self.preferred_age
+        v = 0
         if pa is not None:
-            return float(pa.nominal_value)
-        return 0
+            v = float(pa.nominal_value)
+        return v
 
     def _get_preferred_age_error(self):
         pa = self.preferred_age
+        e = 0
         if pa is not None:
-            return float(pa.std_dev)
-        return 0
+            e = float(pa.std_dev)
+        return e
+
+    def _get_preferred_kca_value(self):
+        pa = self.preferred_kca
+        v = 0
+        if pa is not None:
+            v = float(pa.nominal_value)
+        return v
+
+    def _get_preferred_kca_error(self):
+        pa = self.preferred_kca
+        e = 0
+        if pa is not None:
+            e = float(pa.std_dev)
+        return e
+
+    def _get_preferred_kca(self):
+        if self.preferred_kca_kind == 'Weighted Mean':
+            pa = self.weighted_kca
+        else:
+            pa = self.arith_kca
+        return pa
 
     def _get_preferred_age(self):
         pa = None
