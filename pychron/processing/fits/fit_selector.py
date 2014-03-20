@@ -155,10 +155,10 @@ class FitSelector(HasTraits):
 
     @on_trait_change('fits:[show, fit, use]')
     def _fit_changed(self, obj, name, old, new):
-        # if self.command_key:
-        #     for fi in self.fits:
-        #         fi.trait_set(trait_change_notify=False,
-        #                      **{name: new})
+        if self.command_key:
+            for fi in self.fits:
+                fi.trait_set(**{name: new})
+            self.command_key = False
 
         if self.auto_update:
             if name in ('show', 'fit'):

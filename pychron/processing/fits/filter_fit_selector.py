@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Bool, Int, Str, Button
+from traits.has_traits import on_trait_change
 from traitsui.api import EnumEditor, ButtonEditor
 from traitsui.api import HGroup, UItem
 
@@ -65,6 +66,17 @@ class FilterFitSelector(FitSelector):
             UItem('inc_baseline_all_button'),
             UItem('use_all_button'))
         return g
+
+    @on_trait_change('fits:[error_type, filter_outliers, include_baseline_error]')
+    def _handle_fit_attr_changed(self, obj, name, old, new):
+        if self.command_key:
+            for fi in self.fits:
+                fi.trait_set(**{name: new})
+            self.command_key = False
+
+        if self.auto_update:
+            if name in ('error_type', 'filter_outliers'):
+                self.update_needed = True
 
     def _get_columns(self):
         cols = [ObjectColumn(name='name', editable=False),
