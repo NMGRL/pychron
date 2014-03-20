@@ -52,11 +52,9 @@ class FiberLight(AbstractDevice):
             return True
 
     def initialize(self, *args, **kw):
-        self.read_state()
-        self.read_intensity()
-
         if self._cdevice:
             self._cdevice.setup_consumer(self._write_intensity)
+
         return True
 
     def _write_intensity(self, v):
@@ -70,7 +68,7 @@ class FiberLight(AbstractDevice):
             else:
                 self.state = False
 
-    def read_intensity(self):
+    def read_intensity(self, *args):
         if self._cdevice is not None:
             v = self._cdevice.read_intensity()
             if v is not None:
@@ -83,7 +81,7 @@ class FiberLight(AbstractDevice):
         if self._cdevice is not None:
             self._cdevice.power_on()
 
-    def power_off(self):
+    def power_off(self, *args):
         """
         """
         self.state = False
