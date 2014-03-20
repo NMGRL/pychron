@@ -290,9 +290,9 @@ class StageManager(Manager):
     def get_hole(self, name):
         if self._stage_map:
             return self._stage_map.get_hole(name)
-        #
-        #    def do_pattern(self, patternname):
-        #        return self.pattern_manager.execute_pattern(patternname)
+            #
+            #    def do_pattern(self, patternname):
+            #        return self.pattern_manager.execute_pattern(patternname)
 
     def update_axes(self, update_hole=True):
         '''
@@ -399,8 +399,8 @@ class StageManager(Manager):
                         ), None)
 
 
-        #    def _hole_changed(self):
-        #        self._set_hole(self.hole)
+            #    def _hole_changed(self):
+            #        self._set_hole(self.hole)
 
     def _load_previous_stage_map(self):
         p = os.path.join(paths.hidden_dir, 'stage_map')
@@ -591,7 +591,7 @@ class StageManager(Manager):
                                      mode='absolute', set_stage=False,
                                      #                                     buf=buf
                     )
-                #                sc.execute_command_buffer(buf)
+                    #                sc.execute_command_buffer(buf)
 
                 # finish at first point
                 self.linear_move(p0[0], p0[1],
@@ -783,9 +783,11 @@ class StageManager(Manager):
     #        sc.end_command_buffer()
 
     def _move_to_point(self, pt):
+        self.debug('move to point={}'.format(pt))
         if isinstance(pt, str):
             pt = self.canvas.get_point(pt)
 
+        self.debug('move to point canvas pt={}'.format(pt))
         if pt is not None:
             pos = pt.x, pt.y
 
@@ -834,7 +836,7 @@ class StageManager(Manager):
             self.info('Move complete')
             self.update_axes()  # update_hole=False)
 
-        #        self.move_thread = None
+            #        self.move_thread = None
 
     def is_auto_correcting(self):
         return False
@@ -1282,7 +1284,8 @@ class StageManager(Manager):
         pp.on_trait_change(self.move_polyline, 'line')
         return pp
 
-    #===============================================================================
+        #===============================================================================
+
 # mass spec hacks
 #===============================================================================
 #    _temp_position = None

@@ -227,7 +227,7 @@ class ATLLaserControlUnit(CoreDevice):
         if verbose:
             self.debug('get nburst')
 
-        v = 0
+        v = None
         resp = self._send_query(22, 2, verbose=verbose)
         if resp is not None and len(resp) == 8:
             high = resp[4:]
@@ -391,7 +391,7 @@ class ATLLaserControlUnit(CoreDevice):
             self.burst_readback = b
             if self.firing:
                 self.debug('readback={} burst={} fired={}'.format(b, self.burst_shot, self._was_fired))
-                if self._was_fired and b == self.burst_shot:
+                if not b or (self._was_fired and b == self.burst_shot):
                     self.debug('AUTO STOP LASER')
                     self.laser_stop()
                     self._was_fired = False

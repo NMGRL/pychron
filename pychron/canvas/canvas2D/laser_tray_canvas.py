@@ -341,7 +341,7 @@ class LaserTrayCanvas(MapCanvas):
             return self.get_drill_point(v)
         else:
             # v= p2 e.g. identifier is only 2
-            if v[0] == 'p':
+            if v.startswith('p'):
                 v = v[1:]
 
             return self.scene.get_item(v, klass=LaserPoint)
@@ -668,192 +668,192 @@ class LaserTrayCanvas(MapCanvas):
         #        mo = MarkupOverlay(component=self)
         #        self.overlays.append(mo)
         #    def _draw_hook(self, gc, *args, **kw):
-#        '''
-#        '''
-#        if self.show_desired_position and self.desired_position is not None:
-#            # draw the place you want the laser to be
-#            self._draw_crosshairs(gc, self.desired_position, color=self.desired_position_color, kind=2)
-#
-#        if self.show_laser_position:
-#            # draw where the laser is
-#            # laser indicator is always the center of the screen
-#            pos = (self.x + (self.x2 - self.x) / 2.0  , self.y + (self.y2 - self.y) / 2.0)
-#
-# #            #add the offset
-# #            if self.crosshairs_offset is not (0, 0):
-# #                pos_off = pos[0] + self.crosshairs_offset[0], pos[1] + self.crosshairs_offset[1]
-# #                self._draw_crosshairs(gc, pos_off, color=self.crosshairs_offset_color, kind=5)
-#
-#
-# #            self._draw_crosshairs(gc, pos, color = colors1f[self.crosshairs_color])
-#            self._draw_crosshairs(gc, pos, color=self.crosshairs_color)
-#
-#        super(LaserTrayCanvas, self)._draw_hook(gc, *args, **kw)
+        #        '''
+        #        '''
+        #        if self.show_desired_position and self.desired_position is not None:
+        #            # draw the place you want the laser to be
+        #            self._draw_crosshairs(gc, self.desired_position, color=self.desired_position_color, kind=2)
+        #
+        #        if self.show_laser_position:
+        #            # draw where the laser is
+        #            # laser indicator is always the center of the screen
+        #            pos = (self.x + (self.x2 - self.x) / 2.0  , self.y + (self.y2 - self.y) / 2.0)
+        #
+        # #            #add the offset
+        # #            if self.crosshairs_offset is not (0, 0):
+        # #                pos_off = pos[0] + self.crosshairs_offset[0], pos[1] + self.crosshairs_offset[1]
+        # #                self._draw_crosshairs(gc, pos_off, color=self.crosshairs_offset_color, kind=5)
+        #
+        #
+        # #            self._draw_crosshairs(gc, pos, color = colors1f[self.crosshairs_color])
+        #            self._draw_crosshairs(gc, pos, color=self.crosshairs_color)
+        #
+        #        super(LaserTrayCanvas, self)._draw_hook(gc, *args, **kw)
 
-#    def _draw_crosshairs(self, gc, xy, color=(1, 0, 0), kind=None):
-#        '''
-#        '''
-#
-#        gc.save_state()
-#        gc.set_stroke_color(color)
-#        mx, my = xy
-#        mx += 1
-#        my += 1
-#
-#        if self.crosshairs_kind == 'BeamRadius':
-#            r = self.beam_radius
-#        elif self.crosshairs_kind == 'MaskRadius':
-#            r = 0
-#            if self.parent:
-#                mask = self.parent.parent.get_motor('mask')
-#                if mask is not None:
-#                    r = mask.get_discrete_value()
-#        else:
-#            r = self.crosshairs_radius
-#
-#        if r:
-#            r = self._get_wh(r, 0)[0]
-#            gc.arc(mx, my, r, 0, 360)
-#
-#            gc.move_to(self.x, my)
-#            gc.line_to(mx - r, my)
-#
-#            gc.move_to(mx + r, my)
-#            gc.line_to(self.x2, my)
-#
-#            gc.move_to(mx, self.y)
-#            gc.line_to(mx, my - r)
-#            gc.move_to(mx, my + r)
-#            gc.line_to(mx, self.y2)
-#            gc.stroke_path()
-#
-#        b = 4
-#        gc.move_to(mx - b, my)
-#        gc.line_to(mx + b, my)
-#        gc.move_to(mx, my - b)
-#        gc.line_to(mx, my + b)
-#        gc.stroke_path()
-#
-#        gc.restore_state()
-#===============================================================================
-#
-#           1 |
-#             |
-#        0---- m,m  -----2
-#             |
-#             |3
-#        kind 0 none
-#        kind 1 with circle
-#        kind 2 with out circle
-#        kind 3 +
-#===============================================================================
+        #    def _draw_crosshairs(self, gc, xy, color=(1, 0, 0), kind=None):
+        #        '''
+        #        '''
+        #
+        #        gc.save_state()
+        #        gc.set_stroke_color(color)
+        #        mx, my = xy
+        #        mx += 1
+        #        my += 1
+        #
+        #        if self.crosshairs_kind == 'BeamRadius':
+        #            r = self.beam_radius
+        #        elif self.crosshairs_kind == 'MaskRadius':
+        #            r = 0
+        #            if self.parent:
+        #                mask = self.parent.parent.get_motor('mask')
+        #                if mask is not None:
+        #                    r = mask.get_discrete_value()
+        #        else:
+        #            r = self.crosshairs_radius
+        #
+        #        if r:
+        #            r = self._get_wh(r, 0)[0]
+        #            gc.arc(mx, my, r, 0, 360)
+        #
+        #            gc.move_to(self.x, my)
+        #            gc.line_to(mx - r, my)
+        #
+        #            gc.move_to(mx + r, my)
+        #            gc.line_to(self.x2, my)
+        #
+        #            gc.move_to(mx, self.y)
+        #            gc.line_to(mx, my - r)
+        #            gc.move_to(mx, my + r)
+        #            gc.line_to(mx, self.y2)
+        #            gc.stroke_path()
+        #
+        #        b = 4
+        #        gc.move_to(mx - b, my)
+        #        gc.line_to(mx + b, my)
+        #        gc.move_to(mx, my - b)
+        #        gc.line_to(mx, my + b)
+        #        gc.stroke_path()
+        #
+        #        gc.restore_state()
+        #===============================================================================
+        #
+        #           1 |
+        #             |
+        #        0---- m,m  -----2
+        #             |
+        #             |3
+        #        kind 0 none
+        #        kind 1 with circle
+        #        kind 2 with out circle
+        #        kind 3 +
+        #===============================================================================
 
-#        if kind is None:
-#            kind = self.crosshairs_kind
-#
-#        beam_radius = 0
-#        if kind in [1, 5]:
-# #            args = self.map_screen([(0, 0), (0, self.beam_radius + 0.5),
-# #                                    (0, 0), (self.beam_radius + 0.5, 0)
-# #                                    ])
-# #            beam_radius = abs(args[0][1] - args[1][1])
-#            beam_radius = self._get_wh(self.beam_radius, 0)[0]
-#
-#        elif kind == 2:
-#            beam_radius = 10
-#        elif kind == 3:
-#            beam_radius = 0
-#        elif kind == 4:
-#            beam_radius = self._get_wh(self.crosshairs_radius, 0)[0]
-#        else:
-#            return
-#
-#        gc.set_stroke_color(color)
-#
-#        if kind is not 5:
-#            p00 = self.x, my
-#            p01 = mx - beam_radius, my
-#
-#            p10 = mx, my + beam_radius
-#            p11 = mx, self.y2
-#
-#            p20 = mx + beam_radius, my
-#            p21 = self.x2, my
-#
-#            p30 = mx, my - beam_radius
-#            p31 = mx, self.y
-#
-#            points = [(p00, p01), (p10, p11),
-#                      (p20, p21), (p30, p31)]
-#
-#            for p1, p2 in points:
-#
-#                gc.begin_path()
-#                gc.move_to(*p1)
-#                gc.line_to(*p2)
-#                gc.close_path()
-#                gc.draw_path()
-# #                gc.stroke_path()
-#
-#        if kind in [1, 4, 5]:
-#            gc.set_fill_color((0, 0, 0, 0))
-#            if kind == 5:
-#                step = 20
-#                for i in range(0, 360, step):
-#                    gc.arc(mx, my, beam_radius, math.radians(i),
-#                                           math.radians(i + step / 2.0))
-#                    gc.draw_path()
-#
-#            else:
-#                gc.arc(mx, my, beam_radius, 0, math.radians(360))
-#            gc.draw_path()
-#
-#        gc.restore_state()
+        #        if kind is None:
+        #            kind = self.crosshairs_kind
+        #
+        #        beam_radius = 0
+        #        if kind in [1, 5]:
+        # #            args = self.map_screen([(0, 0), (0, self.beam_radius + 0.5),
+        # #                                    (0, 0), (self.beam_radius + 0.5, 0)
+        # #                                    ])
+        # #            beam_radius = abs(args[0][1] - args[1][1])
+        #            beam_radius = self._get_wh(self.beam_radius, 0)[0]
+        #
+        #        elif kind == 2:
+        #            beam_radius = 10
+        #        elif kind == 3:
+        #            beam_radius = 0
+        #        elif kind == 4:
+        #            beam_radius = self._get_wh(self.crosshairs_radius, 0)[0]
+        #        else:
+        #            return
+        #
+        #        gc.set_stroke_color(color)
+        #
+        #        if kind is not 5:
+        #            p00 = self.x, my
+        #            p01 = mx - beam_radius, my
+        #
+        #            p10 = mx, my + beam_radius
+        #            p11 = mx, self.y2
+        #
+        #            p20 = mx + beam_radius, my
+        #            p21 = self.x2, my
+        #
+        #            p30 = mx, my - beam_radius
+        #            p31 = mx, self.y
+        #
+        #            points = [(p00, p01), (p10, p11),
+        #                      (p20, p21), (p30, p31)]
+        #
+        #            for p1, p2 in points:
+        #
+        #                gc.begin_path()
+        #                gc.move_to(*p1)
+        #                gc.line_to(*p2)
+        #                gc.close_path()
+        #                gc.draw_path()
+        # #                gc.stroke_path()
+        #
+        #        if kind in [1, 4, 5]:
+        #            gc.set_fill_color((0, 0, 0, 0))
+        #            if kind == 5:
+        #                step = 20
+        #                for i in range(0, 360, step):
+        #                    gc.arc(mx, my, beam_radius, math.radians(i),
+        #                                           math.radians(i + step / 2.0))
+        #                    gc.draw_path()
+        #
+        #            else:
+        #                gc.arc(mx, my, beam_radius, 0, math.radians(360))
+        #            gc.draw_path()
+        #
+        #        gc.restore_state()
 
 
-#========================EOF============================
-#    def clear_points(self):
-#        popkeys = []
-#        self.point_counter = 0
-#        for k, v in self.markupcontainer.iteritems():
-#            if isinstance(v, PointIndicator):
-#                popkeys.append(k)
-#        for p in popkeys:
-#            self.markupcontainer.pop(p)
-#        self.request_redraw()
-#
-#    def load_points_file(self, p):
-#        self.point_counter = 0
-#        with open(p, 'r') as f:
-#            for line in f:
-#                identifier, x, y = line.split(',')
-#                pt = self.point_exists(float(x), float(y))
-#                if pt is not None:
-#                    self.markupcontainer.pop(pt.identifier)
-#
-#                self.markupcontainer[identifier] = PointIndicator(float(x), float(y), identifier=identifier, canvas=self)
-#                self.point_counter += 1
-#
-#        self.request_redraw()
-#
-#    def get_points(self):
-#        pts=[]
-#        for _k, v in self.markupcontainer.iteritems():
-#            if isinstance(v, PointIndicator):
-#
-#                pts.append((v.identifier, v.x, v.y))
-#
-# #                lines.append(','.join(map(str, )))
-#        pts=sorted(pts, key=lambda x: x[0])
-#        return pts
-#    def save_points(self, p):
-#        lines = []
-#        for _k, v in self.markupcontainer.iteritems():
-#            if isinstance(v, PointIndicator):
-#                lines.append(','.join(map(str, (v.identifier, v.x, v.y))))
-#
-#        with open(p, 'w') as f:
-#            f.write('\n'.join(lines))
+        #========================EOF============================
+        #    def clear_points(self):
+        #        popkeys = []
+        #        self.point_counter = 0
+        #        for k, v in self.markupcontainer.iteritems():
+        #            if isinstance(v, PointIndicator):
+        #                popkeys.append(k)
+        #        for p in popkeys:
+        #            self.markupcontainer.pop(p)
+        #        self.request_redraw()
+        #
+        #    def load_points_file(self, p):
+        #        self.point_counter = 0
+        #        with open(p, 'r') as f:
+        #            for line in f:
+        #                identifier, x, y = line.split(',')
+        #                pt = self.point_exists(float(x), float(y))
+        #                if pt is not None:
+        #                    self.markupcontainer.pop(pt.identifier)
+        #
+        #                self.markupcontainer[identifier] = PointIndicator(float(x), float(y), identifier=identifier, canvas=self)
+        #                self.point_counter += 1
+        #
+        #        self.request_redraw()
+        #
+        #    def get_points(self):
+        #        pts=[]
+        #        for _k, v in self.markupcontainer.iteritems():
+        #            if isinstance(v, PointIndicator):
+        #
+        #                pts.append((v.identifier, v.x, v.y))
+        #
+        # #                lines.append(','.join(map(str, )))
+        #        pts=sorted(pts, key=lambda x: x[0])
+        #        return pts
+        #    def save_points(self, p):
+        #        lines = []
+        #        for _k, v in self.markupcontainer.iteritems():
+        #            if isinstance(v, PointIndicator):
+        #                lines.append(','.join(map(str, (v.identifier, v.x, v.y))))
+        #
+        #        with open(p, 'w') as f:
+        #            f.write('\n'.join(lines))
         #    def config_view(self):
         #        v = View(
         #                VGroup(

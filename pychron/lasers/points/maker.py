@@ -29,9 +29,9 @@ class BaseMaker(Loggable):
     stage_manager = Any
 
     clear = Button
-#    clear_mode = Enum('all', 'all lines', 'all points', 'current line',
-#                    'current point', 'last point'
-#                    )
+    #    clear_mode = Enum('all', 'all lines', 'all points', 'current line',
+    #                    'current point', 'last point'
+    #                    )
     clear_mode = Enum('all', 'current point')
     accept_point = Button
 
@@ -44,14 +44,13 @@ class BaseMaker(Loggable):
     def save(self):
         d = dict()
 
-
         pts = [dict(identifier=pi.identifier,
-                        z=float(pi.z),
-                        mask=pi.mask, attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)],
-                        calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
-                        offset_x=float(pi.offset_x),
-                        offset_y=float(pi.offset_y),
+                    z=float(pi.z),
+                    mask=pi.mask, attenuator=pi.attenuator,
+                    xy=[float(pi.x), float(pi.y)],
+                    calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
+                    offset_x=float(pi.offset_x),
+                    offset_y=float(pi.offset_y),
         ) for pi in self.canvas.get_points()]
 
         lines = []
@@ -75,6 +74,7 @@ class BaseMaker(Loggable):
 
     def _save(self):
         pass
+
     def _accept_point(self, ptargs):
         pass
 
@@ -85,31 +85,31 @@ class BaseMaker(Loggable):
         elif cm == 'current point':
             self.canvas.pop_point(-1)
 
-#        elif cm == 'current point':
-#            self.canvas.points.pop(-1)
+        #        elif cm == 'current point':
+        #            self.canvas.points.pop(-1)
 
-#        if cm.startswith('current'):
-#            if cm == 'current line':
-#                self.canvas.lines.pop(-1)
-#            else:
-#                self.canvas.points.pop(-1)
-#        elif cm.startswith('all'):
-#            if cm == 'all':
-#                self.canvas.clear_all()
-#            elif cm == 'all lines':
-#                self.canvas.lines = []
-#            else:
-#                self.canvas.points = []
-#        else:
-#            line = self.canvas.lines[-1]
-#            if len(line.points):
-#                if self.mode == 'line':
-#                    line.points.pop(-1)
-#                    if line.lines:
-#                        line.lines.pop(-1)
-#                        line.velocity_segments.pop(-1)
-#                else:
-#                    self.canvas.points.pop(-1)
+        #        if cm.startswith('current'):
+        #            if cm == 'current line':
+        #                self.canvas.lines.pop(-1)
+        #            else:
+        #                self.canvas.points.pop(-1)
+        #        elif cm.startswith('all'):
+        #            if cm == 'all':
+        #                self.canvas.clear_all()
+        #            elif cm == 'all lines':
+        #                self.canvas.lines = []
+        #            else:
+        #                self.canvas.points = []
+        #        else:
+        #            line = self.canvas.lines[-1]
+        #            if len(line.points):
+        #                if self.mode == 'line':
+        #                    line.points.pop(-1)
+        #                    if line.lines:
+        #                        line.lines.pop(-1)
+        #                        line.velocity_segments.pop(-1)
+        #                else:
+        #                    self.canvas.points.pop(-1)
 
         self.canvas.request_redraw()
 
@@ -132,6 +132,15 @@ class BaseMaker(Loggable):
             #x, y = self.canvas.get_offset_stage_position()
         x, y = self.canvas.get_stage_position()
         cx, cy = sm.get_uncalibrated_xy((x, y))
+
+        x, y = map(float, (x, y))
+        cx, cy = map(float, (cx, cy))
+
+        x, y = map('{:0.3f}'.format, (x, y))
+        cx, cy = map('{:0.3f}'.format, (cx, cy))
+
+        x, y = map(float, (x, y))
+        cx, cy = map(float, (cx, cy))
         z = sm.get_z()
         ptargs = dict(xy=(x, y),
                       radius=radius,
@@ -144,14 +153,14 @@ class BaseMaker(Loggable):
                       offset_x=self.canvas.crosshairs_offsetx,
                       offset_y=self.canvas.crosshairs_offsety,
                       #                      mask=mask_value,
-#                      attenuator=attenuator_value,
+                      #                      attenuator=attenuator_value,
                       vline_length=0.1, hline_length=0.1)
         if mask_value is not None:
             ptargs['mask'] = mask_value
         if attenuator_value is not None:
             ptargs['attenuator'] = attenuator_value
 
-        if not self.canvas.point_exists((x, y, z)):
+        if not self.canvas.point_exists(x, y, z):
             self._accept_point(ptargs)
             self.canvas.request_redraw()
 
@@ -178,19 +187,19 @@ class BaseMaker(Loggable):
 
     def traits_view(self):
         g = VGroup(
-                 Item('accept_point', show_label=False),
-                 HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-                 Item('use_simple_render', label='Display Labels',
-                     tooltip='Display labels or only a small spot'
-                     ),
-                Item('spot_color', label='Spot Color',
-                     tooltip='Color for the point indicator spot'
-                     ),
-                Item('spot_size', label='Spot Size'),
-#                 Item('finish', show_label=False,
-#                      enabled_when='mode=="line" and object.is_programming'),
-#                 enabled_when='object.is_programming'
-                 )
+            Item('accept_point', show_label=False),
+            HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
+            Item('use_simple_render', label='Display Labels',
+                 tooltip='Display labels or only a small spot'
+            ),
+            Item('spot_color', label='Spot Color',
+                 tooltip='Color for the point indicator spot'
+            ),
+            Item('spot_size', label='Spot Size'),
+            #                 Item('finish', show_label=False,
+            #                      enabled_when='mode=="line" and object.is_programming'),
+            #                 enabled_when='object.is_programming'
+        )
 
         cg = self._get_controls()
         if cg:
@@ -199,6 +208,7 @@ class BaseMaker(Loggable):
             v = View(g)
         return v
 
+
 class PointMaker(BaseMaker):
     def _accept_point(self, ptargs):
         npt = self.canvas.new_point(default_color=self.point_color,
@@ -206,21 +216,22 @@ class PointMaker(BaseMaker):
 
         self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
 
+
 class FinishableMaker(BaseMaker):
     finish = Button
-#    accept_enabled = Bool(True)
+    #    accept_enabled = Bool(True)
 
     def _finish_fired(self):
         self.canvas.reset_markup()
 
     def traits_view(self):
         g = VGroup(
-                 Item('accept_point',
-#                      enabled_when='accept_enabled',
-                      show_label=False),
-                 HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-                 Item('finish', show_label=False),
-                 )
+            Item('accept_point',
+                 #                      enabled_when='accept_enabled',
+                 show_label=False),
+            HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
+            Item('finish', show_label=False),
+        )
 
         cg = self._get_controls()
         if cg:
@@ -228,6 +239,7 @@ class FinishableMaker(BaseMaker):
         else:
             v = View(g)
         return v
+
 
 class LineMaker(FinishableMaker):
     velocity = Float
@@ -237,9 +249,11 @@ class LineMaker(FinishableMaker):
 
     def _accept_point(self, ptargs):
         self.canvas.new_line_point(point_color=self.point_color,
-                                           line_color=self.point_color,
-                                           velocity=self.velocity,
-                                           **ptargs)
+                                   line_color=self.point_color,
+                                   velocity=self.velocity,
+                                   **ptargs)
+
+
 class PolygonMaker(FinishableMaker):
     velocity = Float(1.0)
     use_convex_hull = Bool(True)
@@ -254,7 +268,7 @@ class PolygonMaker(FinishableMaker):
                    Item('scan_size', label='Scan H (um)'),
                    Item('find_min', label='Find Min. Lines'),
                    HGroup(Item('use_outline'), Item('offset', show_label=False, enabled_when='use_outline'))
-                   )
+        )
         return g
 
     def _save(self):
@@ -266,12 +280,12 @@ class PolygonMaker(FinishableMaker):
 
             for pi in po.points:
                 d = dict(identifier=pi.identifier,
-                        z=float(pi.z),
-#                        mask=pi.mask, attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)])
+                         z=float(pi.z),
+                         #                        mask=pi.mask, attenuator=pi.attenuator,
+                         xy=[float(pi.x), float(pi.y)])
                 pts.append(d)
 
-#            print int(pe) - 1, i
+            #            print int(pe) - 1, i
             if int(pe) - 1 == i:
                 # save the selected polygon with new values
                 v = self.velocity
@@ -305,9 +319,9 @@ class PolygonMaker(FinishableMaker):
                                  use_outline=uo,
                                  offset=o,
                                  find_min=fm
-                                 )
+            )
 
-        return {'polygons':polys}
+        return {'polygons': polys}
 
     def _use_convex_hull_changed(self):
         poly = self.canvas.polygons[-1]
@@ -325,8 +339,10 @@ class PolygonMaker(FinishableMaker):
                                       offset=self.offset,
                                       ptargs=ptargs)
 
+
 class TransectMaker(FinishableMaker):
     step = Float(1, enter_set=True, auto_set=False)
+
     def _save(self):
         trans = []
         for tr in self.canvas.get_transects():
@@ -334,30 +350,30 @@ class TransectMaker(FinishableMaker):
 
             for pi in tr.points:
                 d = dict(identifier=pi.identifier,
-                        z=float(pi.z),
-                        mask=pi.mask,
-                        attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)],
-                        offset_x=float(pi.offset_x),
-                        offset_y=float(pi.offset_y), )
+                         z=float(pi.z),
+                         mask=pi.mask,
+                         attenuator=pi.attenuator,
+                         xy=[float(pi.x), float(pi.y)],
+                         offset_x=float(pi.offset_x),
+                         offset_y=float(pi.offset_y), )
                 pts.append(d)
 
             spts = []
             for pi in tr.step_points:
                 d = dict(identifier=pi.identifier,
-                        z=float(pi.z),
-                        mask=pi.mask,
-                        attenuator=pi.attenuator,
-                        xy=[float(pi.x), float(pi.y)],
-                        offset_x=float(pi.offset_x),
-                        offset_y=float(pi.offset_y), )
+                         z=float(pi.z),
+                         mask=pi.mask,
+                         attenuator=pi.attenuator,
+                         xy=[float(pi.x), float(pi.y)],
+                         offset_x=float(pi.offset_x),
+                         offset_y=float(pi.offset_y), )
                 spts.append(d)
 
             trans.append(dict(points=pts,
                               step_points=spts,
                               step=tr.step))
 
-        return {'transects':trans}
+        return {'transects': trans}
 
     def _get_controls(self):
         return Item('step', label='Step (mm)')
@@ -368,8 +384,9 @@ class TransectMaker(FinishableMaker):
 
     def _accept_point(self, ptargs):
         self.canvas.new_transect_point(point_color=self.point_color,
-                               line_color=self.point_color,
-                               step=self.step,
-                               **ptargs
-                               )
+                                       line_color=self.point_color,
+                                       step=self.step,
+                                       **ptargs
+        )
+
 #============= EOF =============================================
