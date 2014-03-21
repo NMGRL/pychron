@@ -86,7 +86,7 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_j_err(self):
         j = self.analyses[0].j
-        e = j.std_dev if j is not None else 0
+        e = (j.std_dev/j.nominal_value) if j is not None else 0
         return e
 
     @cached_property
@@ -105,11 +105,11 @@ class AnalysisGroup(HasTraits):
         else:
             v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
 
-        e = self._modify_error(e, self.weighted_age_error_kind)
+        e = self._modify_error(v, e, self.weighted_age_error_kind)
 
         return ufloat(v, e)
 
-    def _modify_error(self, e, kind, mswd=None, include_j_error=None):
+    def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
 
         if mswd is None:
             mswd = self.mswd
@@ -121,7 +121,7 @@ class AnalysisGroup(HasTraits):
             include_j_error = self.include_j_error_in_mean
 
         if include_j_error:
-            e = (e ** 2 + self.j_err ** 2) ** 0.5
+            e = ((e/v) ** 2 + self.j_err ** 2) ** 0.5 * v
         return e
 
     # @cached_property
@@ -138,7 +138,7 @@ class AnalysisGroup(HasTraits):
             v, e = self._calculate_arithmetic_mean('uage')
         else:
             v, e = self._calculate_arithmetic_mean('uage_wo_j_err')
-        e = self._modify_error(e, self.arith_age_error_kind)
+        e = self._modify_error(v, e, self.arith_age_error_kind)
         return ufloat(v, e)
 
     @cached_property
@@ -162,7 +162,8 @@ class AnalysisGroup(HasTraits):
             if use_weights:
                 av, werr = calculate_weighted_mean(vs, es)
                 if error_kind == 'SD':
-                    werr = (sum((av - es) ** 2)) ** 0.5
+                    n=len(vs)
+                    werr = (sum((av - vs) ** 2)/(n-1)) ** 0.5
 
             else:
                 av = vs.mean()
