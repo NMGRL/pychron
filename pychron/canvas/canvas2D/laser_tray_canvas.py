@@ -391,6 +391,10 @@ class LaserTrayCanvas(MapCanvas):
         pos = self.get_stage_screen_position()
         return self.map_offset_position(pos)
 
+    def get_offset_stage_screen_position(self):
+        sx, sy = self.get_stage_screen_position()
+        return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
+
     def get_stage_screen_position(self):
         return self.map_screen([self._stage_position])[0]
 
@@ -606,11 +610,12 @@ class LaserTrayCanvas(MapCanvas):
         """
 
         """
-        gc.clip_to_rect(self.outer_x, self.outer_y,
-                        self.outer_width, self.outer_height)
-        DataView.draw(self, gc, *args, **kw)
-        self._draw_hook(gc, *args, **kw)
-        #========================EOF====================================================
+        with gc:
+            gc.clip_to_rect(self.x, self.y,
+                            self.width, self.height)
+            DataView.draw(self, gc, *args, **kw)
+            self._draw_hook(gc, *args, **kw)
+            #========================EOF====================================================
         #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
         #        for pi in tran.step_points:
         #            self.remove_point(pi)

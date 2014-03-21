@@ -192,19 +192,13 @@ class BaseMaker(Loggable):
 
     def traits_view(self):
         g = VGroup(
-            Item('accept_point', show_label=False),
-            HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
+            HGroup(Item('accept_point', show_label=False),
+                   Item('clear'), Item('clear_mode'), show_labels=False),
             Item('use_simple_render', label='Display Labels',
-                 tooltip='Display labels or only a small spot'
-            ),
+                 tooltip='Display labels or only a small spot'),
             Item('spot_color', label='Spot Color',
-                 tooltip='Color for the point indicator spot'
-            ),
-            Item('spot_size', label='Spot Size'),
-            #                 Item('finish', show_label=False,
-            #                      enabled_when='mode=="line" and object.is_programming'),
-            #                 enabled_when='object.is_programming'
-        )
+                 tooltip='Color for the point indicator spot'),
+            Item('spot_size', label='Spot Size'))
 
         cg = self._get_controls()
         if cg:
@@ -409,15 +403,16 @@ class GridOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            pos = self.component.get_stage_screen_position()
+            pos = self.component.get_offset_stage_screen_position()
             gc.translate_ctm(*pos)
 
             self._gather_points()
             gc.set_fill_color((0, 1, 0, self.opacity * 0.01))
             w, h = self.indicator_width, self.indicator_height
+            w2, h2 = w / 2.0, h / 2.0
             for x, y in self._cached_points:
-                gc.rect(x, y, w, h)
-            gc.draw_path()
+                gc.rect(x - w2, y - h2, w, h)
+            gc.fill_path()
 
     def _gather_points(self):
         hspacing, vspacing = self.hspacing, self.vspacing
@@ -449,10 +444,10 @@ class GridMaker(BaseMaker):
         self._add_grid_overlay()
 
     def _add_grid_overlay(self):
-        w, h = self.canvas.get_wh(self.hspacing * .01,
-                                  self.vspacing * .01)
+        w, h = self.canvas.get_wh(self.hspacing * .001,
+                                  self.vspacing * .001)
 
-        ind_s = self.indicator_size * .01
+        ind_s = self.indicator_size * .001
         #convert to screen
         iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
@@ -460,13 +455,12 @@ class GridMaker(BaseMaker):
                          indicator_width=iw, indicator_height=ih,
                          hspacing=w, vspacing=h,
                          ncols=self.ncols, nrows=self.nrows,
-                         opacity=self.indicator_opacity,
-        )
+                         opacity=self.indicator_opacity)
         self.grid_overlay = go
         self.canvas.overlays.append(go)
 
     def _accept_point(self, ptargs):
-        hspacing, vspacing = self.hspacing * 0.01, self.vspacing * 0.01
+        hspacing, vspacing = self.hspacing * 0.001, self.vspacing * 0.001
         ncols, nrows = self.ncols, self.nrows
 
         ox, oy = ptargs['xy']
@@ -496,11 +490,11 @@ class GridMaker(BaseMaker):
     def _handle_spacing_change(self, new):
         if self.grid_overlay:
             #convert to mm then to screen
-            w, h = self.canvas.get_wh(self.hspacing * .01,
-                                      self.vspacing * .01)
+            w, h = self.canvas.get_wh(self.hspacing * .001,
+                                      self.vspacing * .001)
 
             #convert to mm
-            ind_s = self.indicator_size * .01
+            ind_s = self.indicator_size * .001
             #convert to screen
             iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
@@ -527,7 +521,7 @@ class GridMaker(BaseMaker):
                       HGroup(Item('hspacing', label='Hspacing (um)'),
                              Item('vspacing', label='Vspacing (um)')),
                       Item('indicator_size', label='Indicator Size (um)'),
-                      Item('indicator_opacity', label='Opacity'),
-                      UItem('toggle_grid_visible_button', label='Toggle Grid'))
+                      HGroup(UItem('toggle_grid_visible_button', label='Toggle Grid'),
+                             Item('indicator_opacity', label='Opacity')))
 
 #============= EOF =============================================

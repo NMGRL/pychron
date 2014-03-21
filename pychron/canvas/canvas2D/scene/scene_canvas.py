@@ -55,7 +55,6 @@ class SceneCanvas(BaseDataCanvas):
             self.request_redraw()
 
     def _draw_hook(self, gc, *args, **kw):
-
         if self.scene:
         #             self.scene.render_components(gc, weakref.ref(self)())
             self.scene.render_components(gc, self)
