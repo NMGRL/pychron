@@ -21,10 +21,12 @@ import math
 from functools import partial
 #============= local library imports  ==========================
 
-def format_percent_error(v, e, n=2):
+def format_percent_error(v, e, n=2, include_percent_sign=False):
     p = calc_percent_error(v, e)
     if not p == 'NaN':
         sigpee = '{{:0.{}f}}'.format(n).format(p)
+        if include_percent_sign:
+            sigpee = '{}%'.format(sigpee)
     else:
         sigpee = 'NaN'
     return sigpee

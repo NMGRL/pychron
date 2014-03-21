@@ -38,6 +38,7 @@ class IdeogramOptions(AgeOptions):
 
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
+    display_percent_error = Bool(True)
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
     index_attr = String
@@ -114,6 +115,7 @@ class IdeogramOptions(AgeOptions):
 
         g2 = Group(HGroup(Item('display_mean_indicator', label='Indicator'),
                           Item('display_mean', label='Value'),
+                          Item('display_percent_error', label='%Error'),
                           label='Mean'),
                    Item('label_box'),
                    Item('analysis_number_sorting', label='Analysis# Sort'),
@@ -152,6 +154,7 @@ class IdeogramOptions(AgeOptions):
             'use_asymptotic_limits', 'asymptotic_width',
             'display_mean', 'display_mean_indicator',
             'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
-            'analysis_number_sorting']
+            'analysis_number_sorting',
+            'display_percent_error']
 
 #============= EOF =============================================

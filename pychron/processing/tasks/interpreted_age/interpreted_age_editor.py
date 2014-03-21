@@ -79,17 +79,37 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     refresh = Event
 
     def save_pdf_tables(self, p):
-        # self.save_summary_table(p)
+        self.save_summary_table(p)
 
-        self.save_analysis_data_table(p)
+        # self.save_analysis_data_table(p)
 
     def save_analysis_data_table(self, p):
 
         # ans=[]
+        ias = self.interpreted_ages
+        db = self.processor.db
+        with db.session_ctx():
+            #partition into map/argus
+            def pred(ia):
+                hid = db.get_interpreted_age_history(ia.id)
+                ref = hid.interpreted_age.sets[0].analysis
+                return ref.measurement.mass_spectrometer.name.lower() == 'map'
+
+            part = partition(ias, pred)
+            map_spec, argus = map(list, part)
+
+        step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+        fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+        self._save_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
+
+        # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+        # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+        # self._save_data_table(p, argus, step_heat_title, fusion_title)
+
+    def _save_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
         db = self.processor.db
 
         with db.session_ctx():
-            ias = self.interpreted_ages  #[:1]
             ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
 
             ans = [si.analysis for ia in ias
@@ -108,7 +128,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             #partition fusion vs stepheat
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
-            fusion, step_heat = map(list, (fusion, step_heat))
+            # fusion, step_heat = map(list, (fusion, step_heat))
 
             shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
             fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
@@ -117,16 +137,15 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         head, ext = os.path.splitext(p)
         if shgroups:
             w = StepHeatPDFTableWriter()
-            p = '{}.step_heat_data{}'.format(head, ext)
-            w.build(p, shgroups, title=self.get_title())
+            p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
+            w.build(p, shgroups, title=step_heat_title)
             view_file(p)
 
         if fgroups:
             w = FusionPDFTableWriter()
-            p = '{}.fusion_data{}'.format(head, ext)
-            w.build(p, fgroups, title=self.get_title())
+            p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
+            w.build(p, fgroups, title=fusion_title)
             view_file(p)
-
 
     def save_summary_table(self, p):
         w = SummaryPDFTableWriter()

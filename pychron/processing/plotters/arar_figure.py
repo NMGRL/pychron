@@ -30,7 +30,7 @@ from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
 from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
-from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.processing.plotters.flow_label import FlowDataLabel
 from chaco.tools.broadcaster import BroadcasterTool
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
@@ -42,11 +42,12 @@ from pychron.pychron_constants import ARGON_KEYS
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
 
+
 class BaseArArFigure(HasTraits):
     analyses = Any
     sorted_analyses = Property(depends_on='analyses')
     analysis_group = Property(depends_on='analyses')
-    _analysis_group_klass=AnalysisGroup
+    _analysis_group_klass = AnalysisGroup
 
     group_id = Int
     padding = Tuple((60, 10, 5, 40))
@@ -63,10 +64,10 @@ class BaseArArFigure(HasTraits):
 
     refresh_unknowns_table = Event
     _suppress_table_update = False
-    suppress_ylimits_update=False
+    suppress_ylimits_update = False
     suppress_xlimits_update = False
-    _omit_key=None
-    xpad=None
+    _omit_key = None
+    xpad = None
 
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
@@ -191,15 +192,16 @@ class BaseArArFigure(HasTraits):
 
         if '/' in attr:
             n, d = attr.split('/')
+
             def gen():
                 for ai in self.sorted_analyses:
                     if n in ai.isotopes and d in ai.isotopes:
-                        yield ai.isotopes[n].get_intensity()/ai.isotopes[d].get_intensity()
+                        yield ai.isotopes[n].get_intensity() / ai.isotopes[d].get_intensity()
         else:
             def gen():
-                f=lambda x: x
+                f = lambda x: x
                 if attr in ARGON_KEYS:
-                    f=lambda x: x.get_intensity()
+                    f = lambda x: x.get_intensity()
 
                 for ai in self.sorted_analyses:
                     yield f(ai.get_value(attr))
@@ -233,34 +235,34 @@ class BaseArArFigure(HasTraits):
         omits = []
         fs = po.filter_str
         if fs:
-            m=re.match(r'[A-Za-z]+', fs)
+            m = re.match(r'[A-Za-z]+', fs)
             if m:
-                k=m.group(0)
-                ts=[(eval(fs, {k:yi}),i) for i, yi in enumerate(ys)]
-                omits=[idx for ti,idx in ts if ti]
+                k = m.group(0)
+                ts = [(eval(fs, {k: yi}), i) for i, yi in enumerate(ys)]
+                omits = [idx for ti, idx in ts if ti]
 
         return omits
 
-    def _plot_radiogenic_yield(self, po, plot, pid,**kw):
+    def _plot_radiogenic_yield(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('rad40_percent')])
-        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es,**kw)
+        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es, **kw)
 
     def _plot_kcl(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('kcl')])
-        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es,**kw)
+        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es, **kw)
 
     def _plot_kca(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('kca')])
-        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es,**kw)
+        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es, **kw)
 
-    def _plot_moles_k39(self, po, plot, pid,**kw):
+    def _plot_moles_k39(self, po, plot, pid, **kw):
         ys, es = zip(*[(ai.nominal_value, ai.std_dev)
                        for ai in self._unpack_attr('k39')])
 
-        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es,**kw)
+        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es, **kw)
 
     #===============================================================================
     #
@@ -284,7 +286,7 @@ class BaseArArFigure(HasTraits):
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box
-                                )
+        )
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
@@ -295,7 +297,7 @@ class BaseArArFigure(HasTraits):
                               nsigma=nsigma,
                               visible=visible,
                               use_end_caps=end_caps
-                              )
+        )
 
         scatter.underlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
@@ -367,7 +369,7 @@ class BaseArArFigure(HasTraits):
         label.on_trait_change(self._handle_overlay_move, 'label_position')
         return label
 
-    def _build_label_text(self, x, we, mswd, valid_mswd, n):
+    def _build_label_text(self, x, we, mswd, valid_mswd, n, percent_error=False):
         display_n = True
         display_mswd = n >= 2
         if display_n:
@@ -381,14 +383,18 @@ class BaseArArFigure(HasTraits):
         else:
             mswd = ''
 
-        x = floatfmt(x, 3)
-        we = floatfmt(we, 4)
+        sx = floatfmt(x, 3)
+        swe = floatfmt(we, 4)
 
-        if self.options.index_attr in ('uF','Ar40/Ar36'):
-            me='{} +/-{}'.format(x,we)
+        if self.options.index_attr in ('uF', 'Ar40/Ar36'):
+            me = '{} +/-{}'.format(sx, swe)
         else:
             age_units = self._get_age_units()
-            me='{} +/-{} {}'.format(x,we,age_units)
+            pe = ''
+            if percent_error:
+                pe = '({})'.format(format_percent_error(x, we, include_percent_sign=True))
+
+            me = '{} +/-{}{} {}'.format(sx, swe, pe, age_units)
 
         return u'{} {} {}'.format(me, mswd, n)
         # return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
@@ -410,12 +416,12 @@ class BaseArArFigure(HasTraits):
         axps = [a for a in self.options.aux_plots if a.use][::-1]
         for i, p in enumerate(self.graph.plots):
             if next((pp for pp in p.plots.itervalues()
-                            if obj.component==pp[0]),None):
-                axp=axps[i]
+                     if obj.component == pp[0]), None):
+                axp = axps[i]
                 if hasattr(new, '__iter__'):
-                    new=map(float, new)
+                    new = map(float, new)
                 else:
-                    new=float(new)
+                    new = float(new)
                 axp.set_overlay_position(obj.id, new)
 
                 break
@@ -441,18 +447,18 @@ class BaseArArFigure(HasTraits):
                         # break
 
     @on_trait_change('graph:plots:value_mapper:updated')
-    def _handle_value_range(self, obj,name, old, new):
+    def _handle_value_range(self, obj, name, old, new):
         if not isinstance(new, bool):
             if self.suppress_ylimits_update:
                 return
 
             for p in self.graph.plots:
-                if p.value_mapper==obj:
-                    plot=p
+                if p.value_mapper == obj:
+                    plot = p
                     title = plot.y_axis.title
 
                     if title in PLOT_MAPPING:
-                        title=PLOT_MAPPING[title]
+                        title = PLOT_MAPPING[title]
 
                     for op in self.options.aux_plots:
                         if title.startswith(op.name):

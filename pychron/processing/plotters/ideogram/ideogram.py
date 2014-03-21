@@ -320,7 +320,8 @@ class Ideogram(BaseArArFigure):
 
         text = ''
         if self.options.display_mean:
-            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs))
+            text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs),
+                                          percent_error=self.options.display_percent_error)
 
         m = MeanIndicatorOverlay(component=line,
                                  x=wm,
@@ -419,7 +420,8 @@ class Ideogram(BaseArArFigure):
                     #ov.x=wm
                     ov.error = we
                     if ov.label:
-                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n)
+                        ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n,
+                                                               percent_error=self.options.display_percent_error)
 
             # update the data label position
             #for ov in sp.overlays:

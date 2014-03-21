@@ -21,7 +21,7 @@ from traitsui.api import View, UItem, HGroup, HSplit, VSplit
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
-from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
@@ -70,7 +70,8 @@ class MainView(HasTraits):
         jf = 'NaN'
         if j is not None:
             jj = floatfmt(j.nominal_value, n=7, s=5)
-            jf = u'{} \u00b1{:0.2e}'.format(jj, j.std_dev)
+            pe = format_percent_error(j.nominal_value, j.std_dev, include_percent_sign=True)
+            jf = u'{} \u00b1{:0.2e}({})'.format(jj, j.std_dev, pe)
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
