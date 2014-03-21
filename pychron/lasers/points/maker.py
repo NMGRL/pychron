@@ -23,6 +23,7 @@ from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 from pychron.loggable import Loggable
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -465,12 +466,12 @@ class GridMaker(BaseMaker):
 
         ox, oy = ptargs['xy']
         set_sig_figs = lambda v: float('{:0.3f}'.format(float(v)))
+
         for ci in range(ncols):
             x = set_sig_figs(ox + hspacing * ci)
             for ri in range(nrows):
                 y = set_sig_figs(oy + ri * vspacing)
                 ptargs['xy'] = (x, y)
-                ptargs['identifier'] = '{}'.format(ci * nrows + ri)
                 npt = self.canvas.new_point(default_color=self.point_color,
                                             redraw=False, **ptargs)
 
