@@ -101,25 +101,21 @@ class AnalysisGroup(HasTraits):
     def _get_weighted_age(self):
 
         if self.include_j_error_in_individual_analyses:
-            v, e = self._calculate_weighted_mean('uage')
+            v, e = self._calculate_weighted_mean('uage', self.weighted_age_error_kind)
         else:
-            v, e = self._calculate_weighted_mean('uage_wo_j_err')
+            v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
 
         e = self._modify_error(e, self.weighted_age_error_kind)
 
         return ufloat(v, e)
 
-    def _modify_error(self, e, kind, n=None, mswd=None, include_j_error=None):
-        if n is None:
-            n = self.nanalyses
+    def _modify_error(self, e, kind, mswd=None, include_j_error=None):
+
         if mswd is None:
             mswd = self.mswd
 
-        if 'SEM' in kind:
-            e *= n ** -0.5
-
         if kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
-            e = e * mswd ** 0.5 if mswd > 1 else 1
+            e = e * (mswd ** 0.5 if mswd > 1 else 1)
 
         if include_j_error is None:
             include_j_error = self.include_j_error_in_mean
@@ -159,12 +155,15 @@ class AnalysisGroup(HasTraits):
             vs, es = array(vs), array(es)
             return vs, es
 
-    def _calculate_mean(self, attr, use_weights=True):
+    def _calculate_mean(self, attr, use_weights=True, error_kind=None):
         args = self._get_values(attr)
         if args:
             vs, es = args
             if use_weights:
                 av, werr = calculate_weighted_mean(vs, es)
+                if error_kind == 'SD':
+                    werr = (sum((av - es) ** 2)) ** 0.5
+
             else:
                 av = vs.mean()
                 werr = vs.std(ddof=1)
@@ -176,8 +175,8 @@ class AnalysisGroup(HasTraits):
     def _calculate_arithmetic_mean(self, attr):
         return self._calculate_mean(attr, use_weights=False)
 
-    def _calculate_weighted_mean(self, attr):
-        return self._calculate_mean(attr, use_weights=True)
+    def _calculate_weighted_mean(self, attr, error_kind=None):
+        return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
     def _calculate_isochron_age(self):
         args = calculate_isochron(self.analyses)
@@ -244,10 +243,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
             self.plateau_mswd_valid = validate_mswd(mswd, self.nsteps)
             self.plateau_mswd = mswd
 
-            e = self._modify_error(e,
+            e = self._modify_error(v, e,
                                    self.plateau_age_error_kind,
                                    mswd=mswd,
-                                   n=self.nsteps,
                                    include_j_error=self.include_j_error_in_plateau)
 
             return ufloat(v, e)
