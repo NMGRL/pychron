@@ -105,6 +105,7 @@ class FusionsUVManager(FusionsLaserManager):
         pt = sm.canvas.get_point(pos)
         #        sm = self.stage_manager._stage_map
         #        pt = sm.get_point(pos)
+        self.debug('goto point. pos={} pt={}'.format(pos, pt))
         if pt:
             #self.set_motors_for_point(pt)
             self.stage_manager.move_to_point(pt)

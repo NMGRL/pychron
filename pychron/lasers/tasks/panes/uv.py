@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traitsui.api import View, Item, VGroup, \
-    HGroup, spring, UItem, ButtonEditor
+    HGroup, spring, UItem, ButtonEditor, Group
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 from pychron.lasers.tasks.laser_panes import BaseLaserPane, ClientPane, \
@@ -45,10 +45,11 @@ class FusionsUVSupplementalPane(SupplementalPane):
     name = 'UV'
     def traits_view(self):
         v = View(
-                 VGroup(
-                        Item('mode'),
-                        Item('burst_shot'))
-#                VGroup(Item('temperature_controller', style='custom',
+            Group(
+                #VGroup(
+                #       Item('mode'),
+                #       Item('burst_shot')),
+                #                VGroup(Item('temperature_controller', style='custom',
 #                                editor=InstanceEditor(view='control_view'),
 #                                show_label=False,
 #                                ),
@@ -67,10 +68,11 @@ class FusionsUVSupplementalPane(SupplementalPane):
 #                       label='ControlModule',
 #
 #                       ),
-#                   VGroup(Item('fiber_light', style='custom', show_label=False),
-#                          label='FiberLight'
-#                          )
-               )
+VGroup(Item('fiber_light', style='custom', show_label=False),
+       label='FiberLight'
+),
+layout='tabbed')
+        )
         return v
 
 
