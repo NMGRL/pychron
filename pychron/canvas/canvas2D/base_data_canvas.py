@@ -206,6 +206,9 @@ class BaseDataCanvas(DataView):
 
         # self.tools.append(b)
 
+    def get_wh(self, *args):
+        return self._get_wh(*args)
+
     def _get_wh(self, w, h):
         '''
 

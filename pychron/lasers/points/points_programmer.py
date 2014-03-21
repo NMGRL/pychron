@@ -26,10 +26,14 @@ from pychron.experiment.utilities.position_regex import TRANSECT_REGEX
 from pychron.paths import paths
 from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
-    PolygonMaker, TransectMaker
+    PolygonMaker, TransectMaker, GridMaker
 # from pychron.canvas.scene_viewer import LaserMineViewer
 #from pychron.regex import TRANSECT_REGEX
-maker_dict = dict(polygon=PolygonMaker, point=PointMaker, line=LineMaker, transect=TransectMaker)
+maker_dict = dict(polygon=PolygonMaker,
+                  point=PointMaker,
+                  line=LineMaker,
+                  transect=TransectMaker,
+                  grid=GridMaker)
 
 
 class PointsProgrammer(Manager):
@@ -56,7 +60,7 @@ class PointsProgrammer(Manager):
     save_points = Button
 
     stage_map_klass = Any
-    mode = Enum('polygon', 'point', 'line', 'transect')
+    mode = Enum('polygon', 'point', 'line', 'transect', 'grid')
 
     point = Any
     line = Any
@@ -142,6 +146,7 @@ class PointsProgrammer(Manager):
             self.canvas.show_all()
             self.is_programming = True
             self.is_visible = True
+            self.maker.initialize()
 
         self.canvas.request_redraw()
 
@@ -190,8 +195,7 @@ class PointsProgrammer(Manager):
     def _get_maker(self):
         if self.mode in maker_dict:
             maker = maker_dict[self.mode](canvas=self.canvas,
-                                          stage_manager=self.stage_manager,
-            )
+                                          stage_manager=self.stage_manager)
             return maker
 
     def _load_lines(self, lines, ptargs):

@@ -298,16 +298,19 @@ class LaserTrayCanvas(MapCanvas):
             self._point_count -= 1
         self.scene.pop_item(idx, klass=LaserPoint)
 
-    def new_point(self, xy=None, **kw):
+    def new_point(self, xy=None, redraw=True, **kw):
+
         if xy is None:
             xy = self._stage_position
 
-        p = LaserPoint(*xy,
-                       identifier=str(self._point_count),
-                       **kw)
+        if not 'identifier' in kw:
+            kw['identifier'] = str(self._point_count)
+
+        p = LaserPoint(*xy, **kw)
         self._point_count += 1
         self.scene.add_item(p)
-        self.request_redraw()
+        if redraw:
+            self.request_redraw()
         return p
 
     def get_transects(self):
