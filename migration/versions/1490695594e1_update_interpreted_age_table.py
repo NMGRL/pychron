@@ -21,7 +21,7 @@ def upgrade():
     op.alter_column('proc_InterpretedAgeTable', 'wtd_kca_err', new_column_name='kca_err',
                     existing_type=sa.Float)
 
-    op.add_column('proc_InterpretedAgeTable', sa.Column('kca_kind', sa.Float(32)))
+    op.add_column('proc_InterpretedAgeTable', sa.Column('kca_kind', sa.String(32)))
 
 
 def downgrade():
