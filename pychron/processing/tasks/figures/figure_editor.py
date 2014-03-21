@@ -166,21 +166,25 @@ class FigureEditor(GraphEditor):
         unks = sorted(self.analyses, key=key)
         ias = []
         ok = 'omit_{}'.format(self.basename)
+        po = self.plotter_options_manager.plotter_options
+        additional = {}
+        if isinstance(po, SpectrumOptions):
+            ek = po.plateau_age_error_kind
+            pk = 'Plateau'
+            additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
+        else:
+            ek = po.error_calc_method
+            pk = 'Weighted Mean'
+            additional['include_j_error_in_individual_analyses'] = po.include_j_error
+            additional['include_j_error_in_mean'] = po.include_j_error_in_mean
+
         for gid, ans in groupby(unks, key=key):
             ans = filter(lambda x: not x.is_omitted(ok), ans)
-
-            po = self.plotter_options_manager.plotter_options
-            if isinstance(po, SpectrumOptions):
-                ek = po.plateau_age_error_kind
-                pk = 'Plateau'
-            else:
-                ek = po.error_calc_method
-                pk = 'Weighted Mean'
-
             ias.append(InterpretedAge(analyses=ans,
                                       preferred_age_kind=pk,
                                       preferred_age_error_kind=ek,
-                                      use=True))
+                                      use=True,
+                                      **additional))
 
         return ias
 
