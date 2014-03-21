@@ -174,6 +174,12 @@ class ExperimentExecutor(Loggable):
 
         self.console_updated = '{}|{}'.format(color, msg)
 
+    def info_marker(self, char='=', color=None):
+        if color is None:
+            color = 'green'
+        if self.console_display:
+            self.console_display.add_marker(char, color=color)
+
     def info(self, msg, log=True, color=None, *args, **kw):
         if color is None:
             color = 'green'
@@ -231,9 +237,9 @@ class ExperimentExecutor(Loggable):
 
     def info_heading(self, msg):
         self.info('')
-        self.info('=' * 40)
+        self.info_marker('=')
         self.info(msg)
-        self.info('=' * 40)
+        self.info_marker('=' * 40)
         self.info('')
 
     def execute(self):

@@ -29,14 +29,15 @@ from Queue import Queue
 # from pychron.viewable import Viewable
 
 class DisplayModel(HasTraits):
-#     messages = List
-#     max_messages = Int(300)
-#    message = Tuple
+    #     messages = List
+    #     max_messages = Int(300)
+    #    message = Tuple
     clear_event = Event
     refresh = Event
 
     font_size = Int(12)
     bgcolor = Color('white')
+    text_width = Int(10)
 
     #    message = Queue
     def __init__(self, *args, **kw):
@@ -45,16 +46,8 @@ class DisplayModel(HasTraits):
         self.qmessage = Queue()
 
     def add_text(self, txt, color, force=False, **kw):
-        '''
-            if txt,color same as previous txt,color than message only added if force=True
-        '''
-        #         ms = self.messages[-self.max_messages:]
-        #         ms.append((txt, color))
-        #        self.message = (txt, color, force)
         self.qmessage.put((txt, color, force))
         invoke_in_main_thread(self.trait_set, refresh=True)
-
-        #        self.refresh = True
 
 
 class DisplayController(ApplicationController):
@@ -93,7 +86,7 @@ class DisplayController(ApplicationController):
     #        info.object.ui = info.ui
 
     def clear(self, **kw):
-    #        self.clear_event = True
+        #        self.clear_event = True
         self.model.clear_event = True
 
     #        self.model.clear_event = True
@@ -107,6 +100,12 @@ class DisplayController(ApplicationController):
     # @deprecated
     def thaw(self):
         pass
+
+    def add_marker(self, c, **kw):
+
+        txt = c * self.model.text_width
+
+        self.add_text(txt, **kw)
 
     def add_text(self, txt, **kw):
         if 'color' not in kw or kw['color'] is None:
@@ -139,6 +138,7 @@ class DisplayController(ApplicationController):
             font_size='font_size',
             bgcolor='bgcolor',
             font_name=self.font_name,
+            text_width='text_width',
             #font_size=self.font_size,
             max_blocks=self.max_blocks)
 

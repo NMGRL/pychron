@@ -20,28 +20,24 @@ from Queue import Empty
 from traits.api import Color, Str, Event, Int
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
-from PySide.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
+from pyface.qt.QtGui import QPlainTextEdit, QTextCursor, QPalette, QColor, QFont
 
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+
 class _DisplayEditor(Editor):
-    _pv = None
-    _pc = None
     clear = Event
     refresh = Event
     control_klass = QPlainTextEdit
     font_size = Int
     bgcolor = Color
+    text_width = Int
 
     def init(self, parent):
         if self.control is None:
             self.control = self.control_klass()
-            #if self.factory.bg_color:
-            #    p = QPalette()
-            #    p.setColor(QPalette.Base, self.factory.bg_color)
-            #    self.control.setPalette(p)
             self.control.setReadOnly(True)
 
         if self.factory.max_blocks:
@@ -51,6 +47,8 @@ class _DisplayEditor(Editor):
         self.sync_value(self.factory.refresh, 'refresh', mode='from')
         self.sync_value(self.factory.font_size, 'font_size', mode='from')
         self.sync_value(self.factory.bgcolor, 'bgcolor', mode='from')
+
+        # self.sync_value(self.factory.text_width, 'text_width', mode='to')
 
         fmt = self.control.currentCharFormat()
         if self.factory.font_name:
@@ -70,6 +68,7 @@ class _DisplayEditor(Editor):
         fmt.setFontPointSize(self.font_size)
         self.control.setCurrentCharFormat(fmt)
 
+
     def _refresh_fired(self):
         self.update_editor()
 
@@ -79,6 +78,11 @@ class _DisplayEditor(Editor):
 
     def update_editor(self, *args, **kw):
         ctrl = self.control
+        # print self.control.document().idealWidth()
+        # print self.control.document().textWidth()
+        # self.text_width=int(self.control.document().size().width())
+        # print self.control.document().pageSize()
+        # self.text_width=
 
         if self.value:
             while 1:
@@ -86,17 +90,10 @@ class _DisplayEditor(Editor):
                     v, c, force = self.value.get(timeout=0.0001)
                 except Empty:
                     return
-
-                    #            if force or v != self._pv or c != self._pc:
-                    #            ctrl.setTextColor(c)
-                    #            if c != self._pc:
                 fmt = ctrl.currentCharFormat()
                 fmt.setForeground(QColor(c))
                 ctrl.setCurrentCharFormat(fmt)
                 ctrl.appendPlainText(v)
-
-                #            self._pc = c
-                #            self._pv = v
 
                 ctrl.moveCursor(QTextCursor.End)
                 ctrl.ensureCursorVisible()
@@ -112,6 +109,7 @@ class DisplayEditor(BasicEditorFactory):
     font_size = Str
     clear = Str
     refresh = Str
+    text_width = Str
 
 
 class LoggerEditor(DisplayEditor):
