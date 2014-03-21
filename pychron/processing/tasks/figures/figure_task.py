@@ -565,7 +565,7 @@ class FigureTask(AnalysisEditTask):
 
     def _dclicked_sample_changed(self):
         if self.active_editor:
-            if not isinstance(self.active_editor, RecallEditor):
+            if not isinstance(self.active_editor, FigureEditor):
                 self.active_editor.saved_figure_id = 0
                 self.active_editor.clear_aux_plot_limits()
 
