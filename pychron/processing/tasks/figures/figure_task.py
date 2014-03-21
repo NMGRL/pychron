@@ -565,8 +565,9 @@ class FigureTask(AnalysisEditTask):
 
     def _dclicked_sample_changed(self):
         if self.active_editor:
-            self.active_editor.saved_figure_id = 0
-            self.active_editor.clear_aux_plot_limits()
+            if not isinstance(self.active_editor, RecallEditor):
+                self.active_editor.saved_figure_id = 0
+                self.active_editor.clear_aux_plot_limits()
 
         super(FigureTask, self)._dclicked_sample_changed()
 
@@ -611,9 +612,10 @@ class FigureTask(AnalysisEditTask):
     def _options_update(self, obj, name, old, new):
         if name == 'initialized':
             return
-        if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
-            self.active_editor.rebuild()
-            self.active_editor.dump_tool()
+        if self.has_active_editor():
+            if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
+                self.active_editor.rebuild()
+                self.active_editor.dump_tool()
 
     def _active_editor_changed(self):
         if self.active_editor:
