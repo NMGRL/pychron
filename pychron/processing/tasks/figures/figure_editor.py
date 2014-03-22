@@ -139,11 +139,12 @@ class FigureEditor(GraphEditor):
                                            kca_kind=ia.preferred_kca_kind,
                                            kca=float(ia.preferred_kca_value),
                                            kca_err=float(ia.preferred_kca_error),
-                                           # wtd_kca=float(ia.weighted_kca.nominal_value),
-                                           # wtd_kca_err=float(ia.weighted_kca.std_dev),
-                                           # arith_kca=float(ia.kca.nominal_value),
-                                           # arith_kca_err=float(ia.kca.std_dev),
-                                           mswd=float(ia.preferred_mswd))
+                                           mswd=float(ia.preferred_mswd),
+
+                                           include_j_error_in_mean=ia.include_j_error_in_mean,
+                                           include_j_error_in_plateau=ia.include_j_error_in_plateau,
+                                           include_j_error_in_individual_analyses=
+                                           ia.include_j_error_in_individual_analyses)
 
             for ai in ia.analyses:
                 plateau_step = ia.get_is_plateau_step(ai)

@@ -168,8 +168,12 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 
     # arith_kca = Column(Float)
     # arith_kca_err = Column(Float)
-
     mswd = Column(Float)
+
+    age_error_kind = stringcolumn(80)
+    include_j_error_in_mean = Column(Boolean)
+    include_j_error_in_individual_analyses = Column(Boolean)
+
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
 

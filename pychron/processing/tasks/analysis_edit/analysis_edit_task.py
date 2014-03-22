@@ -48,6 +48,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -351,7 +352,7 @@ class AnalysisEditTask(BaseBrowserTask):
                         it.set_tag(tag)
 
                 if use_filter:
-                    self.active_editor.filter_invalid_analyses(items)
+                    self.active_editor.filter_invalid_analyses()
 
                 self.analysis_table.refresh_needed = True
                 if self.unknowns_pane:
@@ -649,11 +650,13 @@ class AnalysisEditTask(BaseBrowserTask):
         items = None
 
         if self.unknowns_pane:
-            items = [i for i in self.unknowns_pane.items
-                     if i.is_temp_omitted()]
-            self.debug('Temp omitted analyses {}'.format(len(items)))
             if not items:
                 items = self.unknowns_pane.selected
+
+            if not items:
+                items = [i for i in self.unknowns_pane.items
+                         if i.is_temp_omitted()]
+                self.debug('Temp omitted analyses {}'.format(len(items)))
 
         if not items:
             items = self.analysis_table.selected

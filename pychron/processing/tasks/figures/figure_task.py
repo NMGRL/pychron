@@ -630,7 +630,7 @@ class FigureTask(AnalysisEditTask):
             self.unknowns_pane.refresh_needed = True
 
     @on_trait_change('active_editor:tag')
-    def _handle_graph_tag(self, new):
+    def _handle_graph_tag(self):
         self.set_tag()
 
     @on_trait_change('active_editor:save_db_figure')
@@ -638,8 +638,7 @@ class FigureTask(AnalysisEditTask):
         self._save_as_figure()
 
     @on_trait_change('active_editor:invalid')
-    def _handle_save_db_figure(self):
-
+    def _handle_invalid(self):
         self.set_tag(Tag(name='invalid'))
 
     #===========================================================================

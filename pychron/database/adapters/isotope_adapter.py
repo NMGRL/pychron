@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 
-from traits.api import Long, HasTraits, Date, Float, Str, Int
+from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
@@ -93,6 +93,11 @@ class InterpretedAge(HasTraits):
     kca_kind = Str
     mswd = Float
     nanalyses = Int
+
+    age_error_kind = Str
+    include_j_error_in_mean = Bool
+    include_j_error_in_plateau = Bool
+    include_j_error_in_individual_analyses = Bool
 
     def traits_view(self):
         return View(HGroup(Item('age_kind',

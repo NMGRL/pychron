@@ -128,15 +128,18 @@ class GraphEditor(BaseUnknownsEditor):
         xs = xs / (60. * 60.)
         return xs
 
-    def filter_invalid_analyses(self, items=None):
-        if items is None:
-            f=lambda x: not x.tag=='invalid'
-            self.analyses=filter(f, self.analyses)
-        else:
-            for ai in self.analyses:
-                if ai in items:
-                    self.analyses.remove(ai)
-
+    def filter_invalid_analyses(self):
+        # print items
+        # if items is None:
+        #     # f=lambda x: not x.tag=='invalid'
+        #     self.analyses=[ai for ai in self.analyses
+        #                    if ai.tag!='invalid']
+        #     # self.analyses=filter(f, self.analyses)
+        # else:
+        #     for ai in self.analyses:
+        #         if ai in items:
+        #             self.analyses.remove(ai)
+        self.analyses = [ai for ai in self.analyses if ai.tag != 'invalid']
         self.rebuild()
 
     def set_items(self, unks, is_append=False, **kw):
