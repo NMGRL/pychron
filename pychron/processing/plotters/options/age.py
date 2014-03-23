@@ -20,20 +20,22 @@ from traits.api import Bool, Enum, String
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.plotters.options.plotter import PlotterOptions
+from pychron.pychron_constants import ERROR_TYPES
 
 
 class AgeOptions(PlotterOptions):
     include_j_error = Bool(False)
     include_j_error_in_mean = Bool(True)
+    error_calc_method = Enum(*ERROR_TYPES)
 
     include_irradiation_error = Bool(True)
     include_decay_error = Bool(False)
     nsigma = Enum(1, 2, 3)
     show_info = Bool(True)
-    show_mean_info=Bool(True)
-    show_error_type_info=Bool(True)
+    show_mean_info = Bool(True)
+    show_error_type_info = Bool(True)
     label_box = Bool(False)
-    index_attr=None
+    index_attr = None
     analysis_label_format = String
     analysis_label_display = String
 
@@ -47,7 +49,8 @@ class AgeOptions(PlotterOptions):
                   'include_j_error_in_mean',
                   'include_irradiation_error',
                   'include_decay_error',
-                  'nsigma','label_box',
+                  'nsigma', 'label_box',
+                  'error_calc_method',
                   'show_info', 'show_mean_info', 'show_error_type_info',
                   'analysis_label_display',
                   'analysis_label_format']

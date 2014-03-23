@@ -162,12 +162,14 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             #==============================================================
             # computed
             #==============================================================
-            ('uage', value(n=2)),
-            ('age_err_wo_j', error(n=4)),
-            ('rad40_percent', value(n=1)),
+
+
             # ('F', value(n=5)),
             ('kca', value(n=1)),
             ('kca', error(n=2, s=1)),
+            ('rad40_percent', value(n=1)),
+            ('uage', value(n=2)),
+            ('age_err_wo_j', error(n=4)),
         )
         default_fontsize = 6
 
@@ -233,8 +235,8 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
 
         #===============================================================================
-                # summary
-                #===============================================================================
+        # summary
+        #===============================================================================
 
     def _make_summary_rows(self, agroup, idx, style):
         span = 14
@@ -369,7 +371,6 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         #for idx, _v in footnote_idxs:
         #    style.add('SPAN', (0, idx), (-1, idx))
         #                style.add('VALIGN', (1, idx), (-1, idx), 'MIDDLE')
-
 
 
 #============= EOF =============================================

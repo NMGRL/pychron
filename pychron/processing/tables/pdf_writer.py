@@ -99,8 +99,8 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         # ic = (1, 0)
         ic = ref.ic_factor
         if ic is None:
-            ic=1,0
-            
+            ic = 1, 0
+
         if not isinstance(ic, tuple):
             ic = ic.nominal_value, ic.std_dev
 
@@ -202,14 +202,16 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             (super_ar(38), ''), (sigma, ''),
             (super_ar(37), ''), (sigma, ''),
             (super_ar(36), ''), (sigma, unit_scale_36err),
-            ('Age', '(Ma)'), (sigma, ''),
-            ('%{}*'.format(super_ar(40)), ''),
+
+
             # ('{}*/{}{}'.format(super_ar(40),
             #                    super_ar(39),
             #                    Subscript('K')), ''),
 
             ('K/Ca', ''),
             (sigma, ''),
+            ('%{}*'.format(super_ar(40)), ''),
+            ('Age', '(Ma)'), (sigma, ''),
             #                 (blank, 'type'),
             #                 (super_ar(40), ''), (sigma, ''),
             #                 (super_ar(39), ''), (sigma, ''),
@@ -269,7 +271,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             row = FooterRow(fontsize=df, height=0.15)
             row.add_item(value=v, span=-1)
             rows.append(row)
-            for i in range(19):
+            for i in range(18):
                 row.add_item(value='')
 
         ref = self._ref

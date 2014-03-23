@@ -160,6 +160,7 @@ class InterpretedAgeTask(BaseBrowserTask):
                 p = self.save_file_dialog(ext='.pdf')
             else:
                 p, _ = unique_path(r, n, extension='.pdf')
+
             if p:
                 self.active_editor.save_pdf_tables(p)
 

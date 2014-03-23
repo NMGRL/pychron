@@ -27,13 +27,13 @@ class InverseIsochronOptions(AgeOptions):
     plot_option_name = 'Inv. Isochron'
     plot_option_klass = InverseIsochronPlotOptions
 
-    fill_ellipses=Bool(False)
+    fill_ellipses = Bool(False)
 
-    show_nominal_intercept=Bool(False)
-    nominal_intercept_label=String('Atm',enter_set=True, auto_set=False)
-    nominal_intercept_value=Property(Float, depends_on='_nominal_intercept_value')
-    _nominal_intercept_value=Float(295.5, enter_set=True, auto_set=False)
-    invert_nominal_intercept=Bool(True)
+    show_nominal_intercept = Bool(False)
+    nominal_intercept_label = String('Atm', enter_set=True, auto_set=False)
+    nominal_intercept_value = Property(Float, depends_on='_nominal_intercept_value')
+    _nominal_intercept_value = Float(295.5, enter_set=True, auto_set=False)
+    invert_nominal_intercept = Bool(True)
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
@@ -45,7 +45,10 @@ class InverseIsochronOptions(AgeOptions):
         return attrs
 
     def _get_groups(self):
-        g = Group(label='Calculations')
+        g = Group(Item('error_calc_method',
+                       width=-150,
+                       label='Error Calculation Method'),
+                  label='Calculations')
 
         g2 = Group(HGroup(Item('show_info', label='Show'),
                           label='Info'),
@@ -53,8 +56,8 @@ class InverseIsochronOptions(AgeOptions):
                    Item('label_box'),
                    VGroup(Item('show_nominal_intercept'),
                           HGroup(Item('nominal_intercept_label', label='Label', enabled_when='show_nominal_intercept'),
-                          Item('_nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept'),
-                          Item('invert_nominal_intercept',label='Invert')),
+                                 Item('_nominal_intercept_value', label='Value', enabled_when='show_nominal_intercept'),
+                                 Item('invert_nominal_intercept', label='Invert')),
                           label='Nominal Intercept'),
                    label='Display')
 
@@ -62,15 +65,16 @@ class InverseIsochronOptions(AgeOptions):
         #            label='Display')
 
         return (VGroup(self._get_title_group(),
-                      # egrp,
-                      g, g2, label='Options'),)
+                       # egrp,
+                       g, g2, label='Options'),)
 
     def _set_nominal_value(self, v):
-        self._nominal_intercept_value=v
+        self._nominal_intercept_value = v
 
     def _get_nominal_intercept_value(self):
-        v=self._nominal_intercept_value
+        v = self._nominal_intercept_value
         if self.invert_nominal_intercept:
             v **= -1
         return v
+
 #============= EOF =============================================

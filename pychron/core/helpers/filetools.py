@@ -21,6 +21,7 @@ import subprocess
 
 def view_file(p, application='Preview', logger=None):
     app_path = '/Applications/{}.app'.format(application)
+    print app_path
     if not os.path.exists(app_path):
         app_path = '/Applications/Preview.app'
 

@@ -27,6 +27,7 @@ import os
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.plotters.options.isochron import InverseIsochronOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.figures.annotation import AnnotationTool, AnnotationOverlay
@@ -173,6 +174,11 @@ class FigureEditor(GraphEditor):
             ek = po.plateau_age_error_kind
             pk = 'Plateau'
             additional['include_j_error_in_plateau'] = po.include_j_error_in_plateau
+        elif isinstance(po, InverseIsochronOptions):
+            pk = 'Isochron'
+            ek = po.error_calc_method
+            additional['include_j_error_in_mean'] = True
+
         else:
             ek = po.error_calc_method
             pk = 'Weighted Mean'

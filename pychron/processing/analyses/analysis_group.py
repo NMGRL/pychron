@@ -41,6 +41,7 @@ class AnalysisGroup(HasTraits):
 
     arith_age = AGProperty()
     arith_age_error_kind = Str
+
     # arith_age_error_kind = Enum(*ERROR_TYPES)
 
     weighted_age = AGProperty()
@@ -53,6 +54,7 @@ class AnalysisGroup(HasTraits):
     mswd = Property
 
     isochron_age = AGProperty()
+    isochron_age_error_kind = Str
     identifier = Property
 
     j_err = AGProperty()
@@ -179,10 +181,19 @@ class AnalysisGroup(HasTraits):
     def _calculate_weighted_mean(self, attr, error_kind=None):
         return self._calculate_mean(attr, use_weights=True, error_kind=error_kind)
 
+    def get_isochron_data(self):
+        return calculate_isochron(self.analyses)
+
     def _calculate_isochron_age(self):
         args = calculate_isochron(self.analyses)
         if args:
-            return args[0]
+            age = args[0]
+            reg = args[1]
+            v, e = age.nominal_value, age.std_dev
+            e = self._modify_error(v, e, self.isochron_age_error_kind,
+                                   mswd=reg.mswd)
+
+            return ufloat(v, e)
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
@@ -274,6 +285,7 @@ class InterpretedAge(StepHeatAnalysisGroup):
         self.weighted_age_error_kind = new
         self.arith_age_error_kind = new
         self.plateau_age_error_kind = new
+        self.isochron_age_error_kind = new
 
     def get_is_plateau_step(self, an):
         plateau_step = False

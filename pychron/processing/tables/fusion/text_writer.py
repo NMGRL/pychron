@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance
+from uncertainties import nominal_value, std_dev
+
 from pychron.loggable import Loggable
+
 #============= standard library imports ========================
-from itertools import groupby
 #============= local library imports  ==========================
 class FusionTableTextOptions(HasTraits):
     use_sample_sheets = Bool(True)
@@ -32,10 +34,20 @@ def _getattr(x, k):
     return v
 
 
+def icf_value(x, k):
+    det = k.split('_')[0]
+    return nominal_value(x.get_ic_factor(det))
+
+
+def icf_error(x, k):
+    det = k.split('_')[0]
+    return std_dev(x.get_ic_factor(det))
+
+
 def value(x, k):
     x = _getattr(x, k)
     if x:
-        return x.nominal_value
+        return nominal_value(x)
     else:
         return ''
 
@@ -43,7 +55,7 @@ def value(x, k):
 def error(x, k):
     x = _getattr(x, k)
     if x:
-        return x.std_dev
+        return std_dev(x)
     else:
         return ''
 
@@ -98,22 +110,42 @@ class LaserTableTextWriter(Loggable):
         ('Ar37Er', 'Ar37', blank_error),
         ('Ar36', 'Ar36', blank_value),
         ('Ar36Er', 'Ar36', blank_error),
+        ('K/Ca', 'kca', value),
+        ('K/CaErr', 'kca', error),
+        ('Age', 'age', value),
+        ('AgeErrWoJ', 'age_err_wo_j', value),
+        ('Disc', 'discrimination', value),
+        ('DiscEr', 'discrimination', error),
+        ('CDD_ICFactor', 'CDD_ic_factor', icf_value),
+        ('CDD_ICFactorErr', 'CDD_ic_factor', icf_error)
 
     )
     default_style = None
 
-    def build(self, p, ans, means, title):
+    def build(self, p, groups, title=None):
         self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
         options = self.options
+        options.use_sample_sheets = False
         if options.use_sample_sheets:
-            for sam, ais in self._group_samples(ans):
-                sh = self._add_sample_sheet(wb, sam)
+            for gi in groups:
+                # for sam, ais in self._group_samples(ans):
+                sh = self._add_sample_sheet(wb, gi.sample)
                 #                 ais = list(ais)
 
                 #                 self._add_metadata(sh, ais[0])
                 self._add_header_row(sh, 0)
-                self._add_analyses(sh, ais, start=2)
+                self._add_analyses(sh, gi.analyses, start=2)
+        else:
+            sh = wb.add_sheet('ArArData')
+            start = 2
+            for i, gi in enumerate(groups):
+                if i == 0:
+                    self._add_header_row(sh, 0)
+
+                self._add_analyses(sh, gi.analyses, start=start)
+                start += len(gi.analyses) + 1
+
         wb.save(p)
 
     def _add_analyses(self, sheet, ans, start):
@@ -122,7 +154,7 @@ class LaserTableTextWriter(Loggable):
 
     def _add_analysis(self, sheet, row, ai):
 
-        status = 'X' if ai.tag else ''
+        status = 'X' if ai.tag != 'ok' else ''
 
         sheet.write(row, 0, status)
         for j, c in enumerate(self.columns[1:]):
@@ -136,9 +168,9 @@ class LaserTableTextWriter(Loggable):
 
             sheet.write(row, j + 1, txt, self.default_style)
 
-    def _group_samples(self, ans):
-        key = lambda x: x.sample
-        return groupby(ans, key=key)
+    # def _group_samples(self, ans):
+    #     key = lambda x: x.sample
+    #     return groupby(ans, key=key)
 
 
     #     def _add_metadata(self, sh, refans):
@@ -156,8 +188,10 @@ class LaserTableTextWriter(Loggable):
         names = [c[0] for c in self.columns]
 
         s1, s2 = self._get_header_styles()
-        sheet.write(hrow, 13, 'Blanks', style=s1)
-        sheet.merge(hrow, hrow, 13, 22)
+        sheet.write(hrow, 7, 'Corrected Isotope Intensities', style=s1)
+        sheet.merge(hrow, hrow, 7, 16)
+        sheet.write(hrow, 17, 'Blanks', style=s1)
+        sheet.merge(hrow, hrow, 17, 27)
 
         for i, ci in enumerate(names):
             sheet.write(hrow + 1, i, ci, style=s2)

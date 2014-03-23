@@ -23,13 +23,11 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import LabelMaker
 from pychron.processing.plotters.options.age import AgeOptions
-from pychron.pychron_constants import ERROR_TYPES
 
 
 class IdeogramOptions(AgeOptions):
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
-    error_calc_method = Enum(*ERROR_TYPES)
 
     xlow = Float
     xhigh = Float

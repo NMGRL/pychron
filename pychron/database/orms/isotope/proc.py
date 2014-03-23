@@ -172,6 +172,7 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 
     age_error_kind = stringcolumn(80)
     include_j_error_in_mean = Column(Boolean)
+    include_j_error_in_plateau = Column(Boolean)
     include_j_error_in_individual_analyses = Column(Boolean)
 
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')

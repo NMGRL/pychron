@@ -30,6 +30,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -82,7 +83,7 @@ def calculate_isochron(analyses, reg='NewYork'):
 
     age = ufloat(0, 0)
     if R > 0:
-        age = age_equation(ref.j, R, arar_constants=ref.arar_constants)
+        age = age_equation((ref.j.nominal_value, 0), R, arar_constants=ref.arar_constants)
     return age, reg, (xs, ys, xerrs, yerrs)
 
 
@@ -352,9 +353,14 @@ def calculate_F(isotopes,
 def age_equation(j, f,
                  include_decay_error=False,
                  arar_constants=None):
-    if isinstance(j, (tuple, str)):
+    if isinstance(j, tuple):
+        j = ufloat(*j)
+    elif isinstance(j, str):
         j = ufloat(j)
-    if isinstance(f, (tuple, str)):
+
+    if isinstance(f, tuple):
+        f = ufloat(*f)
+    elif isinstance(f, str):
         f = ufloat(f)
     if arar_constants is None:
         arar_constants = ArArConstants()

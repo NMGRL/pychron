@@ -35,7 +35,9 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
+from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
+from pychron.processing.tables.step_heat.xls_writer import StepHeatTableXLSWriter
 from pychron.processing.tables.summary_table_pdf_writer import SummaryPDFTableWriter
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -79,11 +81,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     refresh = Event
 
     def save_pdf_tables(self, p):
-        self.save_summary_table(p)
+        # self.save_summary_table(p)
+        self.save_analysis_data_tables(p, pdf=False, xls=True)
 
-        # self.save_analysis_data_table(p)
-
-    def save_analysis_data_table(self, p):
+    def save_analysis_data_tables(self, p, pdf=True, xls=True):
 
         # ans=[]
         ias = self.interpreted_ages
@@ -98,15 +99,36 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             part = partition(ias, pred)
             map_spec, argus = map(list, part)
 
-        step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-        fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-        self._save_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
+        if pdf:
+            step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            self._save_pdf_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
+        if xls:
+            step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Analytical Data'
+            fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Analytical Data'
+            self._save_xls_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
 
-        # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
         # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
         # self._save_data_table(p, argus, step_heat_title, fusion_title)
 
-    def _save_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
+    def _save_xls_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
+        head, ext = os.path.splitext(p)
+        ext = '.xls'
+        shgroups, fgroups = self._assemble_groups(ias)
+        if shgroups:
+            w = StepHeatTableXLSWriter()
+            p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
+            w.build(p, shgroups, title=step_heat_title)
+            view_file(p, application='Microsoft Office 2011/Microsoft Excel')
+
+        if fgroups:
+            w = FusionTableXLSWriter()
+            p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
+            w.build(p, fgroups, title=fusion_title)
+            view_file(p, application='Microsoft Office 2011/Microsoft Excel')
+
+    def _assemble_groups(self, ias):
         db = self.processor.db
 
         with db.session_ctx():
@@ -133,7 +155,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
             fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
             prog.close()
+        return shgroups, fgroups
 
+    def _save_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
+
+        shgroups, fgroups = self._assemble_groups(ias)
         head, ext = os.path.splitext(p)
         if shgroups:
             w = StepHeatPDFTableWriter()

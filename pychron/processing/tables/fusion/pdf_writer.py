@@ -64,7 +64,7 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         style.add('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
         if double_first_line:
-            self._new_line(style, 0, weight=2.5, cmd='LINEABOVE')
+            self._new_line(style, 0, weight=2.5, cmd='LINEABOVE', )
         else:
             self._new_line(style, 0, cmd='LINEABOVE')
 
@@ -104,12 +104,12 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         t = self._new_table(style, data, repeatRows=1)
 
         fdata = []
-        style = self._new_style()
+        style = self._new_style(debug_grid=True)
         style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
         if include_footnotes:
             self._make_footnote_rows(fdata, style)
             self._make_footer_rows(fdata, style)
-            ft = self._new_table(style, fdata, extend_last=True)
+            ft = self._new_table(style, fdata)
             return t, ft
         else:
             return t,
@@ -140,12 +140,13 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             #==============================================================
             # computed
             #==============================================================
-            ('uage', value(n=2)),
-            ('age_err_wo_j', error(n=4)),
-            ('rad40_percent', value(n=1)),
+
             # ('F', value(n=5)),
             ('kca', value(n=2)),
             ('kca', error(n=3)),
+            ('rad40_percent', value(n=1)),
+            ('uage', value(n=2)),
+            ('age_err_wo_j', error(n=4)),
         )
         default_fontsize = 6
 
@@ -214,14 +215,14 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
 
 
         #===============================================================================
-                # summary
-                #===============================================================================
+        # summary
+        #===============================================================================
 
     def _make_summary_rows(self, mean, idx, style):
         weighted_mean_row = Row(fontsize=7, height=0.15)
         weighted_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=5)
 
-        weighted_mean_row.add_blank_item(n=10)
+        weighted_mean_row.add_blank_item(n=12)
         wa = mean.weighted_age
         weighted_mean_row.add_item(value=self._value()(wa))
         weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error()(wa)))
@@ -269,139 +270,139 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             style.add('SPAN', (0, idx), (-1, idx))
 
 
-#===============================================================================
+            #===============================================================================
 
-#============= EOF =============================================
-# class TableSpec(HasTraits):
-#     status_width = Int(5)
-#     id_width = Int(20)
-#     power_width = Int(30)
-#     moles_width = Int(50)
-#
-#
-#     ar40_width = DefaultInt(value=45)
-#     ar40_error_width = DefaultInt()
-#     ar39_width = DefaultInt(value=45)
-#     ar39_error_width = DefaultInt()
-#     ar38_width = DefaultInt()
-#     ar38_error_width = DefaultInt()
-#     ar37_width = DefaultInt()
-#     ar37_error_width = DefaultInt()
-#     ar36_width = DefaultInt()
-#     ar36_error_width = DefaultInt(value=50)
-        #def _make_meta(self, analyses, style, include_footnotes=False):
-        #    ref = analyses[0]
-        #    j = ref.j
-        #
-        #    #ic = ref.ic_factor
-        #    ic = (1, 0)
-        #    sample = ref.sample
-        #    labnumber = ref.labnumber
-        #    material = ref.material
-        #
-        #    igsn = ''
-        #
-        #    if not isinstance(j, tuple):
-        #        j = j.nominal_value, j.std_dev
-        #
-        #    if not isinstance(ic, tuple):
-        #        ic = ic.nominal_value, ic.std_dev
-        #
-        #    line1 = Row(fontsize=8)
-        #    line1.add_item(value=NamedParameter('Sample', sample), span=5)
-        #    line1.add_item(value=NamedParameter('Lab #', labnumber), span=2)
-        #
-        #    js = u'{:0.2E} \u00b1{:0.2E}'.format(j[0], j[1])
-        #    line1.add_item(value=NamedParameter('J', js), span=3)
-        #    ics = u'{:0.3f} \u00b1{:0.4f}'.format(ic[0], ic[1])
-        #    if include_footnotes:
-        #        foot = self._make_footnote('IC',
-        #                                   'IC Factor',
-        #                                   'H1/CDD intercalibration',
-        #                                   '<b>IC</b>',
-        #                                   link_extra=u': {}'.format(ics))
-        #    else:
-        #        foot = NamedParameter('IC', ics)
-        #
-        #    line1.add_item(value=foot, span=3)
-        #
-        #    line2 = Row(fontsize=8)
-        #    line2.add_item(value=NamedParameter('Material', material), span=5)
-        #    line2.add_item(value=NamedParameter('IGSN', igsn), span=2)
-        #
-        #    #         self._sample_summary_row1 = line1
-        #    #         self._sample_summary_row2 = line2
-        #    title = False
-        #    title_row = 0
-        #    sample_row = 0
-        #    if title:
-        #        sample_row += 1
-        #
-        #    style.add('LINEBELOW', (0, sample_row), (-1, sample_row), 1.5, colors.black)
-        #
-        #    return [line1, line2]
+            #============= EOF =============================================
+            # class TableSpec(HasTraits):
+            #     status_width = Int(5)
+            #     id_width = Int(20)
+            #     power_width = Int(30)
+            #     moles_width = Int(50)
+            #
+            #
+            #     ar40_width = DefaultInt(value=45)
+            #     ar40_error_width = DefaultInt()
+            #     ar39_width = DefaultInt(value=45)
+            #     ar39_error_width = DefaultInt()
+            #     ar38_width = DefaultInt()
+            #     ar38_error_width = DefaultInt()
+            #     ar37_width = DefaultInt()
+            #     ar37_error_width = DefaultInt()
+            #     ar36_width = DefaultInt()
+            #     ar36_error_width = DefaultInt(value=50)
+            #def _make_meta(self, analyses, style, include_footnotes=False):
+            #    ref = analyses[0]
+            #    j = ref.j
+            #
+            #    #ic = ref.ic_factor
+            #    ic = (1, 0)
+            #    sample = ref.sample
+            #    labnumber = ref.labnumber
+            #    material = ref.material
+            #
+            #    igsn = ''
+            #
+            #    if not isinstance(j, tuple):
+            #        j = j.nominal_value, j.std_dev
+            #
+            #    if not isinstance(ic, tuple):
+            #        ic = ic.nominal_value, ic.std_dev
+            #
+            #    line1 = Row(fontsize=8)
+            #    line1.add_item(value=NamedParameter('Sample', sample), span=5)
+            #    line1.add_item(value=NamedParameter('Lab #', labnumber), span=2)
+            #
+            #    js = u'{:0.2E} \u00b1{:0.2E}'.format(j[0], j[1])
+            #    line1.add_item(value=NamedParameter('J', js), span=3)
+            #    ics = u'{:0.3f} \u00b1{:0.4f}'.format(ic[0], ic[1])
+            #    if include_footnotes:
+            #        foot = self._make_footnote('IC',
+            #                                   'IC Factor',
+            #                                   'H1/CDD intercalibration',
+            #                                   '<b>IC</b>',
+            #                                   link_extra=u': {}'.format(ics))
+            #    else:
+            #        foot = NamedParameter('IC', ics)
+            #
+            #    line1.add_item(value=foot, span=3)
+            #
+            #    line2 = Row(fontsize=8)
+            #    line2.add_item(value=NamedParameter('Material', material), span=5)
+            #    line2.add_item(value=NamedParameter('IGSN', igsn), span=2)
+            #
+            #    #         self._sample_summary_row1 = line1
+            #    #         self._sample_summary_row2 = line2
+            #    title = False
+            #    title_row = 0
+            #    sample_row = 0
+            #    if title:
+            #        sample_row += 1
+            #
+            #    style.add('LINEBELOW', (0, sample_row), (-1, sample_row), 1.5, colors.black)
+            #
+            #    return [line1, line2]
 
-        #def _make_header(self, style):
-        #    sigma = u'\u00b1 1\u03c3'
-        #    #         sigma = self._plusminus_sigma()
-        #    super_ar = lambda x: '{}Ar'.format(Superscript(x))
-        #
-        #    _102fa = '(10{} fA)'.format(Superscript(2))
-        #    _103fa = '(10{} fA)'.format(Superscript(3))
-        #    minus_102fa = '(10{} fA)'.format(Superscript(-2))
-        #
-        #    #         blank = self._make_footnote('BLANK',
-        #    #                                    'Blank Type', 'LR= Linear Regression, AVE= Average',
-        #    #                                    'Blank')
-        #    #         blank = 'Blank Type'
-        #    line = [
-        #        ('', ''),
-        #        ('N', ''),
-        #        (self.extract_label, self.extract_units),
-        #        (super_ar(40), ''),
-        #        (super_ar(40), _103fa), (sigma, ''),
-        #        (super_ar(39), _103fa), (sigma, ''),
-        #        (super_ar(38), ''), (sigma, ''),
-        #        (super_ar(37), ''), (sigma, ''),
-        #        (super_ar(36), ''), (sigma, minus_102fa),
-        #        ('%{}*'.format(super_ar(40)), ''),
-        #        ('{}*/{}{}'.format(super_ar(40),
-        #                           super_ar(39),
-        #                           Subscript('K')), ''),
-        #        ('Age', '(Ma)'), (sigma, ''),
-        #        ('K/Ca', ''),
-        #        (sigma, ''),
-        #        #                 (blank, 'type'),
-        #        #                 (super_ar(40), ''), (sigma, ''),
-        #        #                 (super_ar(39), ''), (sigma, ''),
-        #        #                 (super_ar(38), ''), (sigma, ''),
-        #        #                 (super_ar(37), ''), (sigma, ''),
-        #        #                 (super_ar(36), ''), (sigma, ''),
-        #    ]
-        #
-        #    name_row, unit_row = zip(*line)
-        #
-        #    default_fontsize = 8
-        #    nrow = Row(fontsize=default_fontsize)
-        #    for i, ni in enumerate(name_row):
-        #        nrow.add_item(value=ni)
-        #
-        #    default_fontsize = 7
-        #    urow = Row(fontsize=default_fontsize)
-        #    for ni in unit_row:
-        #        urow.add_item(value=ni)
-        #
-        #    name_row_idx = 2
-        #    unit_row_idx = 3
-        #    # set style for name header
-        #    style.add('LINEABOVE', (0, name_row_idx),
-        #              (-1, name_row_idx), 1.5, colors.black)
-        #
-        #    # set style for unit header
-        #    style.add('LINEBELOW', (0, unit_row_idx),
-        #              (-1, unit_row_idx), 1.5, colors.black)
-        #
-        #    return [
-        #        nrow,
-        #        urow
-        #    ]
+            #def _make_header(self, style):
+            #    sigma = u'\u00b1 1\u03c3'
+            #    #         sigma = self._plusminus_sigma()
+            #    super_ar = lambda x: '{}Ar'.format(Superscript(x))
+            #
+            #    _102fa = '(10{} fA)'.format(Superscript(2))
+            #    _103fa = '(10{} fA)'.format(Superscript(3))
+            #    minus_102fa = '(10{} fA)'.format(Superscript(-2))
+            #
+            #    #         blank = self._make_footnote('BLANK',
+            #    #                                    'Blank Type', 'LR= Linear Regression, AVE= Average',
+            #    #                                    'Blank')
+            #    #         blank = 'Blank Type'
+            #    line = [
+            #        ('', ''),
+            #        ('N', ''),
+            #        (self.extract_label, self.extract_units),
+            #        (super_ar(40), ''),
+            #        (super_ar(40), _103fa), (sigma, ''),
+            #        (super_ar(39), _103fa), (sigma, ''),
+            #        (super_ar(38), ''), (sigma, ''),
+            #        (super_ar(37), ''), (sigma, ''),
+            #        (super_ar(36), ''), (sigma, minus_102fa),
+            #        ('%{}*'.format(super_ar(40)), ''),
+            #        ('{}*/{}{}'.format(super_ar(40),
+            #                           super_ar(39),
+            #                           Subscript('K')), ''),
+            #        ('Age', '(Ma)'), (sigma, ''),
+            #        ('K/Ca', ''),
+            #        (sigma, ''),
+            #        #                 (blank, 'type'),
+            #        #                 (super_ar(40), ''), (sigma, ''),
+            #        #                 (super_ar(39), ''), (sigma, ''),
+            #        #                 (super_ar(38), ''), (sigma, ''),
+            #        #                 (super_ar(37), ''), (sigma, ''),
+            #        #                 (super_ar(36), ''), (sigma, ''),
+            #    ]
+            #
+            #    name_row, unit_row = zip(*line)
+            #
+            #    default_fontsize = 8
+            #    nrow = Row(fontsize=default_fontsize)
+            #    for i, ni in enumerate(name_row):
+            #        nrow.add_item(value=ni)
+            #
+            #    default_fontsize = 7
+            #    urow = Row(fontsize=default_fontsize)
+            #    for ni in unit_row:
+            #        urow.add_item(value=ni)
+            #
+            #    name_row_idx = 2
+            #    unit_row_idx = 3
+            #    # set style for name header
+            #    style.add('LINEABOVE', (0, name_row_idx),
+            #              (-1, name_row_idx), 1.5, colors.black)
+            #
+            #    # set style for unit header
+            #    style.add('LINEBELOW', (0, unit_row_idx),
+            #              (-1, unit_row_idx), 1.5, colors.black)
+            #
+            #    return [
+            #        nrow,
+            #        urow
+            #    ]

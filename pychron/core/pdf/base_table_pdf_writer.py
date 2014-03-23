@@ -52,7 +52,7 @@ class BasePDFTableWriter(BasePDFWriter):
         for ri in rows:
             for i, ci in enumerate(ri.items):
                 try:
-                    wcols[i]=max(wcols[i], get_width(ci.render()))
+                    wcols[i] = max(wcols[i], get_width(ci.render()))
                 except IndexError:
                     wcols.append(get_width(ci.render()))
 
@@ -71,7 +71,7 @@ class BasePDFTableWriter(BasePDFWriter):
                   weight, getattr(colors, color))
 
     def _new_table(self, style, data, hAlign='LEFT',
-                   col_widths=None, extend_last=False, *args, **kw):
+                   col_widths=None, *args, **kw):
 
         # set spans
 
@@ -136,10 +136,6 @@ class BasePDFTableWriter(BasePDFWriter):
                 cs.extend([30 for _ in range(dn - cn)])
 
             t._argW = cs
-
-
-
-
 
 
 #============= EOF =============================================

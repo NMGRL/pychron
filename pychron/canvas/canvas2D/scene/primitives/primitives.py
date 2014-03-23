@@ -801,6 +801,7 @@ class PointIndicator(Indicator):
     #    active = Bool(False)
     label_item = Any
     show_label = Bool(True)
+    font = Str('modern 10')
 
     def __init__(self, x, y, *args, **kw):
         super(PointIndicator, self).__init__(x, y, *args, **kw)
@@ -810,7 +811,7 @@ class PointIndicator(Indicator):
             self.label_item = Label(self.x, self.y,
                                     text=self.identifier,
                                     visible=self.identifier_visible,
-                                    #                               text=str(int(self.identifier[5:]) + 1),
+                                    font=self.font,
                                     *args, **kw)
             self.primitives.append(self.label_item)
 
