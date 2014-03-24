@@ -31,6 +31,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -475,7 +476,7 @@ class ArArAge(Loggable):
             n, d = attr.split('/')
             try:
                 return self.get_value(n) / self.get_value(d)
-            except ZeroDivisionError:
+            except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
                 #===============================================================================
                 #

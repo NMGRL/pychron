@@ -42,6 +42,8 @@ class MainView(HasTraits):
     extraction_values = List
     measurement_values = List
 
+    _corrected_enabled = True
+
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
         if analysis:
@@ -75,7 +77,6 @@ class MainView(HasTraits):
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
-        #print ar, a39
         ms = [
             MeasurementValue(name='AnalysisID',
                              value=self.analysis_id),
@@ -99,8 +100,7 @@ class MainView(HasTraits):
             MeasurementValue(name='Ar39Decay',
                              value=floatfmt(a39)),
             MeasurementValue(name='Ar37Decay',
-                             value=floatfmt(a37)),
-        ]
+                             value=floatfmt(a37))]
         self.measurement_values = ms
 
     def load_extraction(self, an):
@@ -150,7 +150,9 @@ class MainView(HasTraits):
 
         if self.analysis_type == 'unknown':
             self._load_unknown_computed(an, new_list)
-            self._load_corrected_values(an, new_list)
+            if self._corrected_enabled:
+                self._load_corrected_values(an, new_list)
+
         elif self.analysis_type in ('air', 'blank_air', 'blank_unknown', 'blank_cocktail'):
             self._load_air_computed(an, new_list)
         elif self.analysis_type == 'cocktail':
@@ -159,7 +161,7 @@ class MainView(HasTraits):
     def _get_isotope(self, name):
         return next((iso for iso in self.isotopes if iso.name == name), None)
 
-    def _make_ratios(self, an, ratios):
+    def _make_ratios(self, ratios):
         cv = []
         for name, nd, ref in ratios:
             dr = DetectorRatio(name=name,
@@ -210,7 +212,7 @@ class MainView(HasTraits):
     def _load_air_computed(self, an, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
-            cv = self._make_ratios(an, ratios)
+            cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
             self._update_ratios(an)
@@ -218,7 +220,7 @@ class MainView(HasTraits):
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/39Ar', 'Ar40/Ar39', 1)]
-            cv = self._make_ratios(an, ratios)
+            cv = self._make_ratios(ratios)
             self.computed_values = cv
         else:
             self._update_ratios(an)
@@ -310,8 +312,9 @@ class MainView(HasTraits):
                     ci.error = an.F_err_wo_irrad
                 else:
                     v = getattr(an, attr)
-                    ci.value = nominal_value(v)
-                    ci.error = std_dev(v)
+                    if v is not None:
+                        ci.value = nominal_value(v)
+                        ci.error = std_dev(v)
 
     def _get_editors(self):
         teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),

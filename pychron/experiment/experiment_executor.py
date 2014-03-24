@@ -243,9 +243,9 @@ class ExperimentExecutor(Loggable):
         self.info('')
 
     def execute(self):
-        self._alive = True
 
         if self._pre_execute_check():
+            self._alive = True
             self.end_at_run_completion = False
 
             name = self.experiment_queue.name
@@ -1020,12 +1020,16 @@ class ExperimentExecutor(Loggable):
             if not self.confirmation_dialog(
                     'Not connected to a Mass Spec database. Do you want to continue with pychron only?'):
                 return
-        else:
-            exp = self.experiment_queue
-            # check the first aliquot before delaying
-            arv = exp.cleaned_automated_runs[0]
-            if not self._set_run_aliquot(arv):
-                return
+
+        exp = self.experiment_queue
+        runs = exp.cleaned_automated_runs
+        if not len(runs):
+            return
+
+        # check the first aliquot before delaying
+        arv = runs[0]
+        if not self._set_run_aliquot(arv):
+            return
 
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING PRE EXECUTE CHECK ')

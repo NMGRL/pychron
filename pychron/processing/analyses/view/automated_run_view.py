@@ -26,6 +26,7 @@ class AutomatedRunAnalysisView(MainView):
     # def update_values(self, arar_age):
     #     for ci in self.computed_values:
     #         v = getattr(arar_age, ci)
+    _corrected_enabled = False
 
     def load(self, ar):
         an = ar.arar_age

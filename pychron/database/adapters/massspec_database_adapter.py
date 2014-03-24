@@ -156,9 +156,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                     r = v.fetchone()
                     if r:
                         a, s = r
-                        # if '-' in a:
-                        #     a=a.split('-')[-1]
-
+                        a = a or 0
                         return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
