@@ -36,7 +36,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
-    GraphGroupSelectedAction, FigureFromFile, MakeAnalysisGroupAction
+    GraphGroupSelectedAction, FigureFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -103,7 +103,8 @@ Install to enable MS Excel export''')
                          ClearGroupAction(), )
 
         def graph_grouping_group():
-            return Group(GraphGroupSelectedAction())
+            return Group(GraphGroupSelectedAction(),
+                         GraphGroupbySampleAction())
 
         def reduction_group():
             return Group(IsotopeEvolutionAction(),

@@ -207,7 +207,7 @@ class EasyFigures(BaseEasy):
         self._save(*args)
 
     def _save_fusion(self,editor, *args):
-        # self._save_labnumber(editor, *args)
+        self._save_labnumber(editor, *args)
         if self._save_interpreted:
             editor.save_interpreted_ages()
 

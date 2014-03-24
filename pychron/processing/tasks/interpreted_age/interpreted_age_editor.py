@@ -132,7 +132,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         db = self.processor.db
 
         with db.session_ctx():
-            ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
+            # ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
@@ -157,7 +157,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             prog.close()
         return shgroups, fgroups
 
-    def _save_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
+    def _save_pdf_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
 
         shgroups, fgroups = self._assemble_groups(ias)
         head, ext = os.path.splitext(p)

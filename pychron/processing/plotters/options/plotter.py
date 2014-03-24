@@ -17,8 +17,7 @@
 #============= enthought library imports =======================
 from kiva.fonttools import str_to_font
 from traits.api import Str, Bool, Property, Enum
-from traitsui.api import View, Item, HGroup, Label, spring, Spring, \
-    VGroup, Group, EnumEditor, TableEditor
+from traitsui.api import View, Item, HGroup, VGroup, Group, EnumEditor, TableEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -27,7 +26,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.processing.plotters.options.base import BasePlotterOptions
 
 FONTS = ['modern', 'arial']
-SIZES = [6, 8, 9, 10, 11, 12, 14, 16, 18, 24, 36]
+SIZES = [6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
 
 def _table_column(klass, *args, **kw):
@@ -90,11 +89,11 @@ class PlotterOptions(BasePlotterOptions):
     def _create_axis_group(self, axis, name):
 
         hg = HGroup(
-            Label(name.capitalize()),
-            spring,
-            Item('{}{}_font_name'.format(axis, name), show_label=False),
+            # Label(name.capitalize()),
+            Item('{}{}_font_name'.format(axis, name), label=name.capitalize()),
             Item('{}{}_font_size'.format(axis, name), show_label=False),
-            Spring(width=125, springy=False))
+            # Spring(width=125, springy=False)
+        )
         return hg
 
     def _get_dump_attrs(self):
@@ -169,6 +168,14 @@ class PlotterOptions(BasePlotterOptions):
             self._create_axis_group('x', 'tick'),
             #                    show_border=True,
             label='X')
+        return v
+
+    def _get_y_axis_group(self):
+        v = VGroup(
+            self._create_axis_group('y', 'title'),
+            self._create_axis_group('y', 'tick'),
+            #                    show_border=True,
+            label='Y')
         return v
 
     # def _get_info_group(self):

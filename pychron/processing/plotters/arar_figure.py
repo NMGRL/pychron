@@ -100,6 +100,14 @@ class BaseArArFigure(HasTraits):
 
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
+
+            options = self.options
+            pp.x_axis.title_font = options.xtitle_font
+            pp.x_axis.tick_label_font = options.xtick_font
+
+            pp.y_axis.title_font = options.ytitle_font
+            pp.y_axis.tick_label_font = options.ytick_font
+
             if po:
                 pp.value_scale = po.scale
 
@@ -296,8 +304,7 @@ class BaseArArFigure(HasTraits):
                               orientation=axis,
                               nsigma=nsigma,
                               visible=visible,
-                              use_end_caps=end_caps
-        )
+                              use_end_caps=end_caps)
 
         scatter.underlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))

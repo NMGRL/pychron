@@ -58,7 +58,7 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
 
         analyses = group.analyses
         self._ref = analyses[0]
-        style = self._new_style(debug_grid=True)
+        style = self._new_style(debug_grid=False)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
         style.add('VALIGN', (0, 0), (-1, -1), 'MIDDLE')
@@ -104,7 +104,7 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         t = self._new_table(style, data, repeatRows=1)
 
         fdata = []
-        style = self._new_style(debug_grid=True)
+        style = self._new_style(debug_grid=False)
         style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
         if include_footnotes:
             self._make_footnote_rows(fdata, style)

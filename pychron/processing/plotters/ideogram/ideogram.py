@@ -304,6 +304,7 @@ class Ideogram(BaseArArFigure):
                     pl = FlowPlotLabel(text='\n'.join(ts),
                                        overlay_position='inside top',
                                        hjustify='left',
+                                       font=self.options.error_info_font,
                                        component=plot)
                     plot.overlays.append(pl)
 
@@ -329,8 +330,10 @@ class Ideogram(BaseArArFigure):
                                  error=we,
                                  nsgima=self.options.nsigma,
                                  color=line.color,
-                                 text=text,
                                  visible=self.options.display_mean_indicator)
+
+        m.font = self.options.mean_indicator_font
+        m.text = text
         line.overlays.append(m)
 
         line.tools.append(OverlayMoveTool(component=m,

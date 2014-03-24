@@ -50,7 +50,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
         analyses = group.analyses
         self._ref = analyses[0]
 
-        style = self._new_style(debug_grid=True)
+        style = self._new_style(debug_grid=False)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
         style.add('LEFTPADDING', (0, 0), (-1, -1), 1)
@@ -128,7 +128,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             self._make_footnote_rows(fdata, style)
             self._make_footer_rows(fdata, style)
 
-            ft = self._new_table(style, fdata, extend_last=True)
+            ft = self._new_table(style, fdata)
             return t, ft
         else:
             return t,

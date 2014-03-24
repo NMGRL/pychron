@@ -17,9 +17,11 @@
 #============= enthought library imports =======================
 from traits.api import Int, Property
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -28,7 +30,8 @@ class UnknownsAdapter(TabularAdapter):
                ('Sample', 'sample'),
                ('Age', 'age'),
                (u'\u00b11\u03c3', 'error'),
-               ('Tag', 'tag')
+               ('Tag', 'tag'),
+               ('GID', 'graph_id')
     ]
 
     record_id_width = Int(80)
@@ -36,6 +39,7 @@ class UnknownsAdapter(TabularAdapter):
     age_width = Int(70)
     error_width = Int(60)
     tag_width = Int(50)
+    graph_id_width = Int(30)
 
     font = 'arial 10'
     #     record_id_text_color = Property

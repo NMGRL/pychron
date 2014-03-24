@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
 import os
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -112,20 +114,31 @@ class FigureTask(AnalysisEditTask):
     def graph_group_selected(self):
         if self.unknowns_pane.selected:
             idxs = self._get_selected_indices()
-            all_idxs = range(len(self.unknowns_pane.items))
-            selection = list(set(all_idxs) - set(idxs))
+            # all_idxs = range(len(self.unknowns_pane.items))
+            # selection = list(set(all_idxs) - set(idxs))
 
-            self.clear_grouping(refresh=False, selection=selection)
+            self.clear_grouping(refresh=False, selection=idxs)
             self.active_editor.set_graph_group(
-                self._get_selected_indices(),
-                self._get_unique_graph_id(), rebuild=False)
+                idxs,
+                self._get_unique_graph_id())
 
             self.active_editor.compress_analyses()
             self.active_editor.rebuild()
 
+    def graph_group_by_sample(self):
+
+        ans = self.active_editor.analyses
+        for i, (si, gi) in enumerate(groupby(ans, key=lambda x: x.sample)):
+            idxs = [ans.index(ai) for ai in gi]
+            self.active_editor.set_graph_group(idxs, i)
+        # self._get_unique_graph_id()
+        # self.active_editor.compress_analyses()
+        self.active_editor.rebuild()
+
     #===============================================================================
     # grouping
     #===============================================================================
+
     def group_by_aliquot(self):
         key = lambda x: x.aliquot
         self._group_by(key)

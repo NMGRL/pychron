@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button
+from traits.api import Enum, Float, Bool, String, Button, Property
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
@@ -23,6 +23,7 @@ from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import LabelMaker
 from pychron.processing.plotters.options.age import AgeOptions
+from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
 
 class IdeogramOptions(AgeOptions):
@@ -49,6 +50,10 @@ class IdeogramOptions(AgeOptions):
     # analysis_label_format = String
     # analysis_label_display = String
     edit_label_format = Button
+
+    mean_indicator_font = Property
+    mean_indicator_fontname = Enum(*FONTS)
+    mean_indicator_fontsize = Enum(*SIZES)
 
     # def _index_attr_default(self):
     #     return 'uage'
@@ -135,11 +140,32 @@ class IdeogramOptions(AgeOptions):
                       Item('error_bar_nsigma', label='NSigma'),
                       show_border=True,
                       label='Error Bars')
-        return VGroup(self._get_title_group(),
-                      xgrp,
-                      g, g2, egrp,
-                      label='Options'),
+        main_grp = VGroup(self._get_title_group(),
+                          xgrp,
+                          g, g2, egrp, label='Main')
 
+        label_grp = VGroup(self._get_x_axis_group(),
+                           self._get_y_axis_group(),
+                           self._get_indicator_font_group(),
+                           label='Fonts'
+        )
+        orgp = Group(main_grp,
+                     label_grp,
+                     layout='tabbed',
+                     label='Options')
+
+        return orgp,
+
+    def _get_indicator_font_group(self):
+        g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
+                          Item('mean_indicator_fontsize', show_label=False)),
+                   HGroup(Item('error_info_fontname', label='Error Info'),
+                          Item('error_info_fontsize', show_label=False)))
+        return g
+
+    def _get_mean_indicator_font(self):
+        return '{} {}'.format(self.mean_indicator_fontname,
+                              self.mean_indicator_fontsize)
 
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
@@ -153,6 +179,9 @@ class IdeogramOptions(AgeOptions):
             'display_mean', 'display_mean_indicator',
             'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
             'analysis_number_sorting',
-            'display_percent_error']
+            'display_percent_error',
+            'mean_indicator_fontname',
+            'mean_indicator_fontsize',
+        ]
 
 #============= EOF =============================================

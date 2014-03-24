@@ -15,11 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool, Enum, String
+from traits.api import Bool, Enum, String, Property
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.plotters.options.plotter import PlotterOptions
+from pychron.processing.plotters.options.plotter import PlotterOptions, FONTS, SIZES
 from pychron.pychron_constants import ERROR_TYPES
 
 
@@ -39,9 +39,17 @@ class AgeOptions(PlotterOptions):
     analysis_label_format = String
     analysis_label_display = String
 
+    error_info_font = Property
+    error_info_fontname = Enum(*FONTS)
+    error_info_fontsize = Enum(*SIZES)
+
     def _include_j_error_changed(self, new):
         if new:
             self.include_j_error_in_mean = False
+
+    def _get_error_info_font(self):
+        return '{} {}'.format(self.error_info_fontname,
+                              self.error_info_fontsize)
 
     def _get_dump_attrs(self):
         attrs = super(AgeOptions, self)._get_dump_attrs()
@@ -53,7 +61,10 @@ class AgeOptions(PlotterOptions):
                   'error_calc_method',
                   'show_info', 'show_mean_info', 'show_error_type_info',
                   'analysis_label_display',
-                  'analysis_label_format']
+                  'analysis_label_format',
+                  'error_info_fontname',
+                  'error_info_fontsize'
+        ]
         return attrs
 
 

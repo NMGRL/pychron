@@ -84,6 +84,11 @@ class GraphGroupSelectedAction(GroupAction):
     method = 'graph_group_selected'
 
 
+class GraphGroupbySampleAction(GroupAction):
+    name = 'Graph Group by Sample'
+    method = 'graph_group_by_sample'
+
+
 #     def perform(self, event):
 #         task = event.task
 #         if task.id == 'pychron.processing.figures':
