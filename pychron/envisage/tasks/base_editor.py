@@ -15,8 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Instance
-from traitsui.api import View, Item, UI
+from traits.api import Bool
 # from pyface.tasks.editor import Editor
 from pychron.loggable import Loggable
 from pyface.tasks.traits_editor import TraitsEditor
@@ -39,6 +38,9 @@ class BaseTraitsEditor(TraitsEditor, Loggable):
 
         #self.ui.dispose()
         #self.control = self.ui = None
+
+    def filter_invalid_analyses(self):
+        pass
 
 #
 #    def _create_control(self, parent):

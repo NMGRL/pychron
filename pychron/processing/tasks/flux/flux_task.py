@@ -29,6 +29,8 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -218,21 +220,15 @@ class FluxTask(InterpolationTask):
         monitor_age = editor.tool.monitor_age
 
         # helper funcs
-        def calc_j(ai):
-            # ar40=ai.get_interference_corrected_value('Ar40')
-            # ar39=ai.get_interference_corrected_value('Ar39')
-            # F=ai.uF
-            # ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
-            # ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
-            # print ai.record_id, ai.uF
-            return calculate_flux(ai.uF, monitor_age)
-
         def mean_j(ans):
-            js, errs = zip(*[calc_j(ai) for ai in ans])
-            reg.trait_set(ys=js, yserr=errs)
-            return ufloat(reg.predict([0]), reg.predict_error([0]))
-            # m, ss = average(js, weights=wts, returned=True)
-            # return ufloat(m, ss ** -0.5)
+            ufs = (ai.uF for ai in ans)
+            fs, es = zip(*((fi.nominal_value, fi.std_dev)
+                           for fi in ufs))
+
+            reg.trait_set(ys=fs, yserr=es)
+
+            uf = (reg.predict([0]), reg.predict_error([0]))
+            return ufloat(*calculate_flux(uf, monitor_age))
 
         proc = self.manager
         db = proc.db
@@ -253,12 +249,9 @@ class FluxTask(InterpolationTask):
                     ref = ais[0]
                     sj = ref.labnumber.selected_flux_history.flux.j
                     sjerr = ref.labnumber.selected_flux_history.flux.j_err
-                    # if not cj or editor.tool.save_mean_j:
-                    #     self.debug('recalculating mean j')
 
                     ident = ref.labnumber.identifier
 
-                    # x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
                     n = len(aa)
                     j = mean_j(aa)
