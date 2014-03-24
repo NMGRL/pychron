@@ -442,8 +442,10 @@ class GridMaker(BaseMaker):
     toggle_grid_visible_button = Button
     indicator_size = Float(60, enter_set=True, auto_set=False)
     indicator_opacity = Range(0.0, 100., 75.)
-    # def __init__(self, *args, **kw):
-    #     super(GridMaker, self).__init__(*args, **kw)
+
+    def __init__(self, *args, **kw):
+        super(GridMaker, self).__init__(*args, **kw)
+        self._add_grid_overlay()
 
     def initialize(self):
         self._add_grid_overlay()
@@ -529,6 +531,8 @@ class GridMaker(BaseMaker):
         if self.grid_overlay:
             self.grid_overlay.visible = not self.grid_overlay.visible
             self.canvas.invalidate_and_redraw()
+        else:
+            self._add_grid_overlay()
 
     def _get_controls(self):
         return VGroup(HGroup(Item('ncols', label='N. Cols'),
