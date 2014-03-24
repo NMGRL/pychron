@@ -21,13 +21,11 @@ from pychron.pychron_constants import LINE_STR, ALPHAS
 
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
-                        pa='Pause'
-)
+                        pa='Pause')
 
 # "labnumbers" where extract group is disabled
-NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-                       bg='Background', c='Cocktail', a='Air'
-)
+NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail',
+                       bg='Background', c='Cocktail', a='Air')
 
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
                  'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas']
