@@ -29,6 +29,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -142,7 +143,7 @@ class InterpolationEditor(GraphEditor):
     def rebuild_graph(self):
         super(InterpolationEditor, self).rebuild_graph()
         if self.bounds:
-            for bi in  self.bounds:
+            for bi in self.bounds:
                 self.add_group_divider(bi)
 
     def add_group_divider(self, cen):
@@ -278,7 +279,7 @@ class InterpolationEditor(GraphEditor):
         for i, fit in enumerate(gen):
             iso = fit.name
             fit=fit.fit_tuple()
-            print i, fit
+            print i, fit, self.binned_analyses
             if self.binned_analyses:
                 self._build_binned(i, iso, fit, start)
             else:
@@ -413,26 +414,25 @@ class InterpolationEditor(GraphEditor):
                 self._add_error_bars(s, array(r_es))
 
             if reg:
+
                 p_uys, p_ues = self.set_interpolated_values(iso, reg, ans)
-                # display the predicted values
-                s, _p = graph.new_series(c_xs,
-                                         p_uys,
-                                         isotope=iso,
-                                         yerror=ArrayDataSource(p_ues),
-                                         fit=False,
-                                         type='scatter',
-                                         marker_size=3,
-                                         color='blue',
-                                         plotid=i,
-                                         bind_id=-1)
+                if p_uys:
+                    # display the predicted values
+                    s, _p = graph.new_series(c_xs,
+                                             p_uys,
+                                             isotope=iso,
+                                             yerror=ArrayDataSource(p_ues),
+                                             fit=False,
+                                             type='scatter',
+                                             marker_size=3,
+                                             color='blue',
+                                             plotid=i,
+                                             bind_id=-1)
 
-                graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=i,
-                                       series=series_id)
+                    graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=i,
+                                           series=series_id)
 
-                # print 'c', series_id, len(ans), len(c_xs), len(c_ys), len(c_es)
-                # print 'r', series_id, len(refs), len(r_xs), len(r_ys), len(r_es)
-                # print 'p', '', len(c_xs), len(p_uys), len(p_ues)
-                self._add_error_bars(s, p_ues)
+                    self._add_error_bars(s, p_ues)
 
     def _add_error_bars(self, scatter, errors,
                         orientation='y', visible=True, nsigma=1, line_width=1):

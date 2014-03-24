@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 from traits.api import Str
+
 from pychron.core.regression.base_regressor import BaseRegressor
+
 #============= standard library imports ========================
 from numpy import where, polyval, polyfit, asarray
 #============= local library imports  ==========================
@@ -37,8 +39,10 @@ class InterpolationRegressor(BaseRegressor):
         func = getattr(self, '{}_predictors'.format(kind))
         if not hasattr(xs, '__iter__'):
             xs = (xs,)
+        xs = (func(xi, attr) for xi in xs)
 
-        return [func(xi, attr) for xi in xs]
+        #filter out None values. None values occur say if looking for a preceding blank and none exists
+        return [xi for xi in xs if xi is not None]
 
     def preceding_predictors(self, timestamp, attr='value'):
         xs = self.xs
