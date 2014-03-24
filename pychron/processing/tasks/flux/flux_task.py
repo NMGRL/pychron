@@ -31,6 +31,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -268,6 +269,8 @@ class FluxTask(InterpolationTask):
                              dev=dev, n=n)
 
                     editor.set_position_j(ident, **d)
+                    if editor.tool.auto_clear_cache:
+                        proc.remove_from_cache(aa)
 
             prog.close()
 

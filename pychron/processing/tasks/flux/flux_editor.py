@@ -190,7 +190,6 @@ class FluxEditor(GraphEditor):
         self.positions_dirty = True
 
     def set_position_j(self, identifier, **kw):
-        # mean_j, mean_jerr, j, jerr, dev, n
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
             mon.trait_set(**kw)
@@ -264,7 +263,7 @@ class FluxEditor(GraphEditor):
         point_inspector = PointInspector(scatter)
         pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                    tool=point_inspector)
-        #
+
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
 
@@ -342,7 +341,6 @@ class FluxEditor(GraphEditor):
         self.positions_dirty = True
 
     def _save_all_button_fired(self):
-        # if self._save_all:
         for pp in self.positions:
             pp.save = self._save_all
 
@@ -391,7 +389,7 @@ class FluxEditor(GraphEditor):
         cols = [
             column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
             column(name='hole_id', label='Hole'),
-            #column(name='identifier', label='Identifier'),
+            column(name='identifier', label='Identifier'),
             column(name='sample', label='Sample', width=115),
             #column(name='x', label='X', format='%0.3f', width=50),
             #column(name='y', label='Y', format='%0.3f', width=50),
@@ -415,8 +413,7 @@ class FluxEditor(GraphEditor):
             column(name='dev', label='dev',
                    format='%0.2f',
                    width=70),
-            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)
-        ]
+            column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30)]
 
         editor = TableEditor(columns=cols, sortable=False,
                              reorderable=False)
