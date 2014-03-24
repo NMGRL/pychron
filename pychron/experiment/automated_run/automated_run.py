@@ -1386,11 +1386,16 @@ anaylsis_type={}
         #ncounts = sum([ci+s for _h, ci, s in hops]) * ncycles
         #ncounts = self.measurement_script.ncounts
         # check_conditions = True
+        if self.experiment_executor:
+            sc = self.experiment_executor.signal_color
+        else:
+            sc = 'red'
+
         return self._measure(grpname,
                              data_writer,
                              ncounts,
                              starttime, starttime_offset,
-                             series, check_conditions, 'black')
+                             series, check_conditions, sc)
 
     def _get_data_generator(self):
         def gen():
