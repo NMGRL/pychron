@@ -98,7 +98,8 @@ class InterpolationTask(AnalysisEditTask):
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
 
     def _dclicked_analysis_group_hook(self, unks, b):
-        self.active_editor.set_references([bi.analysis for bi in b])
+        self.active_editor.set_references([bi.analysis for bi in b
+                                           if bi.analysis_type.name == self.default_reference_analysis_type])
 
     def _get_analyses_to_group(self):
         sitems = super(InterpolationTask, self)._get_analyses_to_group()
