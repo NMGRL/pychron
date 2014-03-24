@@ -671,9 +671,6 @@ class CalibrationObject(HasTraits):
 #        self.canvas = canvas
 
 
-
-
-
 class Label(QPrimitive):
     text = String
     use_border = True
@@ -700,12 +697,12 @@ class Label(QPrimitive):
 
         gc.set_stroke_color(self._convert_color(self.default_color))
 
-        offset = 5
+        offset = 0
         mw = -1
         sh = 0
         for li in lines:
             w, h, _, _ = gc.get_full_text_extent(li)
-            mw = max(mw, w + 2 * offset + loffset)
+            mw = max(mw, w + 6)
             sh += h
 
         with gc:
@@ -717,8 +714,8 @@ class Label(QPrimitive):
             if self.use_border:
                 gc.set_fill_color(self._convert_color(self.bgcolor))
                 gc.set_line_width(2)
-                gc.rect(ox - offset + self.soffset_x,
-                        oy - offset + self.soffset_y, mw, 10 + sh + loffset)
+                gc.rect(ox + offset + self.soffset_x,
+                        oy + offset + self.soffset_y, mw, 5 + sh)
                 gc.draw_path()
 
             gc.set_fill_color((0, 0, 0))
@@ -745,9 +742,9 @@ class ValueLabel(Label):
 
 
 class Indicator(QPrimitive):
-    hline_length = 0.5
-    vline_length = 0.5
-    use_simple_render = Bool(False)
+    hline_length = 0.1
+    vline_length = 0.1
+    #use_simple_render = Bool(False)
     use_simple_render = Bool(True)
     spot_size = Int(8)
     spot_color = Color('yellow')
@@ -766,29 +763,37 @@ class Indicator(QPrimitive):
         self.vline = Line(Point(x, y - h, **kw),
                           Point(x, y + h, **kw), **kw)
 
-        self.primitives.append(self.hline)
-        self.primitives.append(self.vline)
+        #self.primitives.append(self.hline)
+        #self.primitives.append(self.vline)
 
-    def _render_(self, *args, **kw):
-        if self.use_simple_render:
+    def _render_(self, gc, *args, **kw):
+        with gc:
+            if self.spot_color:
+                sc = self._convert_color(self.spot_color)
+                gc.set_fill_color(sc)
+                gc.set_stroke_color(sc)
+
+            x, y = self.get_xy()
+            #if self.use_simple_render:
             # render a simple square at the current location
-            gc = args[0]
-            with gc:
-                if self.spot_color:
-                    sc = self._convert_color(self.spot_color)
-                    gc.set_fill_color(sc)
-                    gc.set_stroke_color(sc)
+            #gc = args[0]
+            l = self.spot_size
+            hl = l / 2.
+            x, y = x - hl, y - hl
 
-                l = self.spot_size
-                x, y = self.get_xy()
-                hl = l / 2.
-                x, y = x - hl, y - hl
-                gc.rect(x, y, l, l)
-                gc.draw_path()
+            gc.rect(x, y, l, l)
+            gc.draw_path()
 
-        else:
-            self.hline.render(*args, **kw)
-            self.vline.render(*args, **kw)
+            #else:
+            #    l = self.spot_size
+            #
+            #    hl = l / 4.
+            #    x, y = x - hl, y - hl
+            #
+            #    gc.rect(x, y, l/2., l/2.)
+            #    gc.draw_path()
+            #    self.hline.render(*args, **kw)
+            #    self.vline.render(*args, **kw)
 
 
 #    def set_canvas(self, canvas):
@@ -797,16 +802,16 @@ class Indicator(QPrimitive):
 #        self.vline.set_canvas(canvas)
 
 class PointIndicator(Indicator):
-    radius = 10
+    radius = 8
     #    active = Bool(False)
     label_item = Any
     show_label = Bool(True)
-    font = Str('modern 10')
+    font = Str('modern 8')
 
     def __init__(self, x, y, *args, **kw):
         super(PointIndicator, self).__init__(x, y, *args, **kw)
-        self.circle = Circle(self.x, self.y, *args, **kw)
-        self.primitives.append(self.circle)
+        #self.circle = Circle(self.x, self.y, *args, **kw)
+        #self.primitives.append(self.circle)
         if self.identifier:
             self.label_item = Label(self.x, self.y,
                                     text=self.identifier,
@@ -820,15 +825,15 @@ class PointIndicator(Indicator):
         #        for pi in self.primitives:
         #            pi.set_canvas(canvas)
         #
-        self.circle.set_canvas(canvas)
+        #self.circle.set_canvas(canvas)
         if self.label_item:
             self.label_item.set_canvas(canvas)
 
     def set_state(self, state):
         self.state = state
-        self.hline.state = state
-        self.vline.state = state
-        self.circle.state = state
+        #self.hline.state = state
+        #self.vline.state = state
+        #self.circle.state = state
 
     def is_in(self, sx, sy):
         x, y = self.get_xy()
@@ -837,16 +842,16 @@ class PointIndicator(Indicator):
 
     def adjust(self, dx, dy):
         super(PointIndicator, self).adjust(dx, dy)
-        self.hline.adjust(dx, dy)
-        self.vline.adjust(dx, dy)
-        self.circle.adjust(dx, dy)
+        #self.hline.adjust(dx, dy)
+        #self.vline.adjust(dx, dy)
+        #self.circle.adjust(dx, dy)
         self.label.adjust(dx, dy)
 
     def _render_(self, gc):
         super(PointIndicator, self)._render_(gc)
 
         if not self.use_simple_render:
-            self.circle.render(gc)
+            #self.circle.render(gc)
 
             if self.label_item and self.show_label:
                 self.label_item.render(gc)

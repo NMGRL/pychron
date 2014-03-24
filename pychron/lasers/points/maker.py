@@ -47,6 +47,9 @@ class BaseMaker(Loggable):
     def initialize(self):
         pass
 
+    def deinitialize(self):
+        pass
+
     def save(self):
         d = dict()
 
@@ -409,11 +412,12 @@ class GridOverlay(AbstractOverlay):
 
             self._gather_points()
             gc.set_fill_color((0, 1, 0, self.opacity * 0.01))
+            gc.set_stroke_color((0, 0, 0, self.opacity * 0.01))
             w, h = self.indicator_width, self.indicator_height
             w2, h2 = w / 2.0, h / 2.0
             for x, y in self._cached_points:
-                gc.rect(x - w2, y - h2, w, h)
-            gc.fill_path()
+                gc.rect(x - w2 + 1, y - h2 + 1, w, h)
+            gc.draw_path()
 
     def _gather_points(self):
         hspacing, vspacing = self.hspacing, self.vspacing
@@ -444,21 +448,31 @@ class GridMaker(BaseMaker):
     def initialize(self):
         self._add_grid_overlay()
 
+    def deinitialize(self):
+        if self.grid_overlay:
+            self.grid_overlay.visible = False
+            self.canvas.invalidate_and_redraw()
+
     def _add_grid_overlay(self):
-        w, h = self.canvas.get_wh(self.hspacing * .001,
-                                  self.vspacing * .001)
+        if not self.grid_overlay:
+            w, h = self.canvas.get_wh(self.hspacing * .001,
+                                      self.vspacing * .001)
 
-        ind_s = self.indicator_size * .001
-        #convert to screen
-        iw, ih = self.canvas.get_wh(ind_s, ind_s)
+            ind_s = self.indicator_size * .001
+            #convert to screen
+            iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
-        go = GridOverlay(component=self.canvas,
-                         indicator_width=iw, indicator_height=ih,
-                         hspacing=w, vspacing=h,
-                         ncols=self.ncols, nrows=self.nrows,
-                         opacity=self.indicator_opacity)
-        self.grid_overlay = go
-        self.canvas.overlays.append(go)
+            go = GridOverlay(component=self.canvas,
+                             indicator_width=iw, indicator_height=ih,
+                             hspacing=w, vspacing=h,
+                             ncols=self.ncols, nrows=self.nrows,
+                             opacity=self.indicator_opacity)
+            self.grid_overlay = go
+            self.canvas.overlays.append(go)
+        else:
+            self.grid_overlay.visible = True
+
+        self.canvas.invalidate_and_redraw()
 
     def _accept_point(self, ptargs):
         hspacing, vspacing = self.hspacing * 0.001, self.vspacing * 0.001
@@ -517,10 +531,10 @@ class GridMaker(BaseMaker):
             self.canvas.invalidate_and_redraw()
 
     def _get_controls(self):
-        return VGroup(HGroup(Item('ncols'),
-                             Item('nrows')),
-                      HGroup(Item('hspacing', label='Hspacing (um)'),
-                             Item('vspacing', label='Vspacing (um)')),
+        return VGroup(HGroup(Item('ncols', label='N. Cols'),
+                             Item('nrows', label='N. Rows')),
+                      HGroup(Item('hspacing', label='HSpacing (um)'),
+                             Item('vspacing', label='VSpacing (um)')),
                       Item('indicator_size', label='Indicator Size (um)'),
                       HGroup(UItem('toggle_grid_visible_button', label='Toggle Grid'),
                              Item('indicator_opacity', label='Opacity')))

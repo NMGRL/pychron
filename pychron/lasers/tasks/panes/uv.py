@@ -89,9 +89,9 @@ class FusionsUVControlPane(TraitsDockPane):
                 Item('enabled_led', show_label=False,
                      style='custom', editor=LEDEditor()),
                 button_editor('enable', 'enable_label'),
-                button_editor('object.laser_script_executor.execute_button',
-                              'object.laser_script_executor.execute_label'),
-                Item('object.laser_script_executor.names', show_label=False),
+                #button_editor('object.laser_script_executor.execute_button',
+                #              'object.laser_script_executor.execute_label'),
+                #Item('object.laser_script_executor.names', show_label=False),
                 spring
             ),
             #                      Item('execute_button', show_label=False, editor=ButtonEditor(label_value='execute_label')),

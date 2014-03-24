@@ -142,6 +142,7 @@ class PointsProgrammer(Manager):
             self.canvas.hide_all()
             self.is_programming = False
             self.is_visible = False
+            self.maker.deinitialize()
         else:
             self.canvas.show_all()
             self.is_programming = True
