@@ -24,6 +24,7 @@ import time
 # from pychron.managers.manager import Manager
 from pychron.config_loadable import ConfigLoadable
 from pyface.message_dialog import warning
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
 
 class Monitor(ConfigLoadable):
@@ -65,7 +66,7 @@ class Monitor(ConfigLoadable):
             override loggable warning to issue a warning dialog
         '''
         super(Monitor, self).warning(msg)
-        warning(None, msg)
+        invoke_in_main_thread(warning, None, msg)
 
     def monitor(self):
         '''
