@@ -51,12 +51,14 @@ class FilterFitSelector(FitSelector):
 
     def _filter_all_button_fired(self):
         self.filter_state = not self.filter_state
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.filter_outliers = self.filter_state
 
     def _inc_baseline_all_button_fired(self):
         self.inc_baseline_state = not self.inc_baseline_state
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.include_baseline_error = self.inc_baseline_state
 
     def _get_toggle_group(self):

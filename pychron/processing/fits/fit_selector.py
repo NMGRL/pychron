@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.has_traits import HasTraits, on_trait_change
-from traits.trait_types import List, Event, Bool, Button, Str
+from traits.trait_types import List, Event, Bool, Button, Str, Any
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -71,6 +71,8 @@ class FitSelector(HasTraits):
     fit_types = List(FIT_TYPES)
     error_types = List(FIT_ERROR_TYPES)
 
+    selected = Any
+
     def _get_show_all_label(self):
         return 'Hide All' if self.show_state else 'Show All'
 
@@ -80,22 +82,32 @@ class FitSelector(HasTraits):
     def _auto_update_changed(self):
         self.update_needed = True
 
+    def _get_fits(self):
+        fs = self.selected
+        if not fs:
+            fs = self.fits
+        return fs
+
     def _show_all_button_fired(self):
         self.show_state = not self.show_state
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.show = self.show_state
 
     def _use_all_button_fired(self):
         self.use_state = not self.use_state
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.use = self.use_state
 
     def _global_fit_changed(self):
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.fit = self.global_fit
 
     def _global_error_type_changed(self):
-        for fi in self.fits:
+        fs = self._get_fits()
+        for fi in fs:
             fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
@@ -144,6 +156,8 @@ class FitSelector(HasTraits):
     def _get_fit_group(self):
         cols = self._get_columns()
         editor = myTableEditor(columns=cols,
+                               selected='selected',
+                               selection_mode='rows',
                                sortable=False,
                                on_command_key=self._update_command_key,
                                cell_bg_color='red',

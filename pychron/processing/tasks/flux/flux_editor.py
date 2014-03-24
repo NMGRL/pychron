@@ -85,6 +85,8 @@ class MonitorPosition(HasTraits):
     mean_j = Float
     mean_jerr = Float
 
+    n = Int
+
     j = Float(enter_set=True, auto_set=False)
     jerr = Float(enter_set=True, auto_set=False)
     use = Bool(True)
@@ -187,12 +189,11 @@ class FluxEditor(GraphEditor):
 
         self.positions_dirty = True
 
-    def set_position_j(self, identifier, mean_j, mean_jerr, j, jerr, dev):
+    def set_position_j(self, identifier, **kw):
+        # mean_j, mean_jerr, j, jerr, dev, n
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
-            mon.trait_set(saved_j=j, saved_jerr=jerr,
-                          mean_j=mean_j, mean_jerr=mean_jerr,
-                          dev=dev)
+            mon.trait_set(**kw)
         else:
             self.warning('invalid identifier {}'.format(identifier))
 
@@ -395,6 +396,7 @@ class FluxEditor(GraphEditor):
             #column(name='x', label='X', format='%0.3f', width=50),
             #column(name='y', label='Y', format='%0.3f', width=50),
             #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
+            column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
                    format_func=lambda x: floatfmt(x, n=7, s=4)),
             column(name='saved_jerr', label=u'\u00b1\u03c3',

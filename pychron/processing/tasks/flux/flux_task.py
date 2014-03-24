@@ -28,6 +28,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -223,7 +224,7 @@ class FluxTask(InterpolationTask):
             # F=ai.uF
             # ar40 = ai.isotopes['Ar40'].get_interference_corrected_value()
             # ar39 = ai.isotopes['Ar39'].get_interference_corrected_value()
-            print ai.record_id, ai.uF
+            # print ai.record_id, ai.uF
             return calculate_flux(ai.uF, monitor_age)
 
         def mean_j(ans):
@@ -259,6 +260,7 @@ class FluxTask(InterpolationTask):
 
                     # x, y, r = geom[pid - 1]
                     aa = proc.make_analyses(ais, progress=prog)
+                    n = len(aa)
                     j = mean_j(aa)
                     dev = 100
                     if sj:
@@ -268,10 +270,11 @@ class FluxTask(InterpolationTask):
                         db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
                         sj, sjerr = j.nominal_value, j.std_dev
 
-                    editor.set_position_j(ident,
-                                          j.nominal_value, j.std_dev,
-                                          sj, sjerr,
-                                          dev)
+                    d = dict(saved_j=sj, saved_jerr=sjerr,
+                             mean_j=j.nominal_value, mean_jerr=j.std_dev,
+                             dev=dev, n=n)
+
+                    editor.set_position_j(ident, **d)
 
             prog.close()
 

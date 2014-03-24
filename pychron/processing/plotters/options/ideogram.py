@@ -147,8 +147,7 @@ class IdeogramOptions(AgeOptions):
         label_grp = VGroup(self._get_x_axis_group(),
                            self._get_y_axis_group(),
                            self._get_indicator_font_group(),
-                           label='Fonts'
-        )
+                           label='Fonts')
         orgp = Group(main_grp,
                      label_grp,
                      layout='tabbed',
@@ -160,7 +159,8 @@ class IdeogramOptions(AgeOptions):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
                           Item('mean_indicator_fontsize', show_label=False)),
                    HGroup(Item('error_info_fontname', label='Error Info'),
-                          Item('error_info_fontsize', show_label=False)))
+                          Item('error_info_fontsize', show_label=False)),
+                   label='Info')
         return g
 
     def _get_mean_indicator_font(self):
