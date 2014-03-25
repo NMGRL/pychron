@@ -20,12 +20,14 @@ from traits.api import HasTraits, List, Property, Any, on_trait_change, Instance
 from itertools import groupby
 #============= local library imports  ==========================
 
+
 class FigureModel(HasTraits):
     panels = List
     npanels = Property(depends_on='panels[]')
     analyses = List
     plot_options = Any
     _panel_klass = Instance('pychron.processing.plotters.figure_panel.FigurePanel')
+    titles = List
 
     def refresh(self):
         for p in self.panels:
@@ -57,6 +59,11 @@ class FigureModel(HasTraits):
                                 plot_options=self.plot_options,
                                 graph_id=gid)
               for gid, ais in groupby(ans, key=key)]
+
+        if self.titles:
+            for ti, gi in zip(self.titles, gs):
+                gi.title = ti
+
         return gs
 
     def _get_npanels(self):

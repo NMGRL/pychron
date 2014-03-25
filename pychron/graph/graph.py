@@ -1447,10 +1447,10 @@ class Graph(Viewable, ContextMenuMixin):
         if filename:
             if not filename.endswith('.pdf'):
                 filename += '.pdf'
-                #        if dest_box is None:
-                #            dest_box = [0.5, 0.5, 0.5, 0.5]
+
         gc = PdfPlotGraphicsContext(filename=filename,
-                                    pdf_canvas=canvas)
+                                    pdf_canvas=canvas,
+                                    dest_box=dest_box)
         pc = self.plotcontainer
 
         #pc.do_layout(force=True)

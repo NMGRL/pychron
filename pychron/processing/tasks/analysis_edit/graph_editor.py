@@ -239,7 +239,7 @@ class GraphEditor(BaseUnknownsEditor):
     def _get_component(self):
         return self.graph.plotcontainer
 
-    def save_file(self, path, force_layout=True):
+    def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)
         if tail not in ('.pdf', '.png'):
             path = '{}.pdf'.format(path)
@@ -256,7 +256,8 @@ class GraphEditor(BaseUnknownsEditor):
         if tail == '.pdf':
             from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 
-            gc = PdfPlotGraphicsContext(filename=path)
+            gc = PdfPlotGraphicsContext(filename=path,
+                                        dest_box=dest_box)
             gc.render_component(c, valign='center')
             gc.save()
 

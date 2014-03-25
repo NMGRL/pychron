@@ -50,6 +50,7 @@ class FigureEditor(GraphEditor):
     invalid = Event
 
     saved_figure_id = Int
+    titles = List
 
     def clear_aux_plot_limits(self):
         po = self.plotter_options_manager.plotter_options

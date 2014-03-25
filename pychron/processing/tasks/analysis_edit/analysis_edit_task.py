@@ -49,6 +49,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -308,7 +309,10 @@ class AnalysisEditTask(BaseBrowserTask):
 
             p = self.save_file_dialog(ext='.pdf')
             if p:
-                gc = PdfPlotGraphicsContext(filename=p)
+                gc = PdfPlotGraphicsContext(filename=p,
+                                            dest_box=(1.5, 1, 6, 9)
+                )
+
                 #pc.do_layout(force=True)
                 # pc.use_backbuffer=False
                 comp = self.active_editor.component

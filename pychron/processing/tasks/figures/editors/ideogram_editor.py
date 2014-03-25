@@ -52,7 +52,8 @@ class IdeogramEditor(FigureEditor):
 
         from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
 
-        model = IdeogramModel(plot_options=plotter_options)
+        model = IdeogramModel(plot_options=plotter_options,
+                              titles=self.titles)
         model.analyses = ans
         iv = FigureContainer(model=model)
 

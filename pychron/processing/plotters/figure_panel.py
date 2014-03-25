@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from numpy import Inf
-from traits.api import HasTraits, Any, on_trait_change, List, Int
+from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 #============= standard library imports ========================
 from itertools import groupby
 
@@ -34,6 +34,7 @@ class FigurePanel(HasTraits):
     graph_klass = AnalysisStackedGraph
     graph_spacing = Int
     meta = Any
+    title = Str
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -42,7 +43,8 @@ class FigurePanel(HasTraits):
     def _make_figures(self):
         key = lambda x: x.group_id
         ans = sorted(self.analyses, key=key)
-        gs = [self._figure_klass(analyses=list(ais), group_id=gid)
+        gs = [self._figure_klass(analyses=list(ais),
+                                 group_id=gid)
               for gid, ais in groupby(ans, key=key)]
         return gs
 
@@ -74,13 +76,14 @@ class FigurePanel(HasTraits):
             fig.trait_set(xma=ma, xmi=mi,
                           center=center,
                           options=po,
-                          graph=g)
+                          graph=g,
+                          title=self.title
+            )
 
             plots = list(po.get_aux_plots())
 
             if i == 0:
                 fig.build(plots)
-                #print fig
 
             fig.suppress_ylimits_update=True
             fig.suppress_xlimits_update = True

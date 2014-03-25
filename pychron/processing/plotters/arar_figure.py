@@ -69,6 +69,8 @@ class BaseArArFigure(HasTraits):
     _omit_key = None
     xpad = None
 
+    title = Str
+
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
                        orientation=orientation)
@@ -122,6 +124,7 @@ class BaseArArFigure(HasTraits):
         vertical_resize = not all([p.height for p in plots])
 
         graph.vertical_resize = vertical_resize
+        graph.clear_has_title()
 
         for i, po in enumerate(plots):
             kw = {'padding': self.padding,
@@ -130,7 +133,9 @@ class BaseArArFigure(HasTraits):
             if po.height:
                 kw['bounds'] = [50, po.height]
 
-            if i == 0:
+            if i == (len(plots) - 1):
+                kw['title'] = self.title
+            elif i == 0:
                 kw['ytitle'] = self.ytitle
 
             p = graph.new_plot(**kw)

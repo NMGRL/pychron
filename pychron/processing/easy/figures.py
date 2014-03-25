@@ -56,6 +56,7 @@ class EasyFigures(BaseEasy):
 
         projects = doc['projects']
         identifiers = doc.get('identifiers')
+        grouped_identifiers = doc.get('identifier_groups', None)
         levels = doc.get('levels')
 
         db = self.db
@@ -69,9 +70,6 @@ class EasyFigures(BaseEasy):
                     lns=[pp.labnumber for pp in pos
                             if pp.labnumber.sample.project.name in projects]
 
-                    # ans = [ai for pp in pos
-                    #              for ai in pp.labnumber.analyses
-                    #                 if ai.tag != 'invalid']
                     ans=[ai for li in lns
                                 for ai in li.analyses
                                     if ai.tag!='invalid']
@@ -79,13 +77,19 @@ class EasyFigures(BaseEasy):
 
                     self._make_level(doc, irrad, level, ids, ans)
             else:
-                if identifiers:
-                    lns=[db.get_labnumber(li) for li in identifiers]
+                if grouped_identifiers:
+                    for lns in grouped_identifiers:
+                        lis = [db.get_labnumber(li) for li in lns]
+                        self._make_multi_panel_labnumbers(doc, lis)
+
                 else:
-                    lns = [ln for proj in projects
-                           for si in db.get_samples(project=proj)
-                           for ln in si.labnumbers]
-                self._make_labnumbers(doc, lns)
+                    if identifiers:
+                        lns = [db.get_labnumber(li) for li in identifiers]
+                    else:
+                        lns = [ln for proj in projects
+                               for si in db.get_samples(project=proj)
+                               for ln in si.labnumbers]
+                    self._make_labnumbers(doc, lns)
 
     def _make_level(self, doc, irrad, level,ids, ans):
         root = doc['root']
@@ -115,9 +119,46 @@ class EasyFigures(BaseEasy):
             save_args=(lroot, level, '{} {}'.format(irrad, level),
                        project, ids)
             self._make_editor(fusion, ('fusion','fusion_grouped'),
-                              options, prog, 'aliquot',
+                              options, prog, 'aliquot', False,
                               save_args)
         prog.close()
+
+    def _make_multi_panel_labnumbers(self, doc, lns):
+        root = doc['root']
+        options = doc['options']
+
+        ans = [ai for li in lns for ai in li.analyses]
+        ans = filter(lambda x: not x.tag == 'invalid', ans)
+        # prog = self.open_progress(len(ans), close_at_end=False)
+        # ans = self.make_analyses(ans,
+        #                          progress=prog,
+        #                          use_cache=False)
+        # print lns
+        prog = None
+        pred = lambda x: bool(x.step)
+
+        ident = ','.join([li.identifier for li in lns])
+        li = ident
+
+        ln_root = os.path.join(root, ident)
+        r_mkdir(ln_root)
+
+        ans = sorted(ans, key=pred)
+        stepheat, fusion = map(list, partition(ans, pred))
+        project = 'Minna Bluff'
+        if stepheat and options.has_key('step_heat'):
+            key = lambda x: x.aliquot
+            stepheat = sorted(stepheat, key=key)
+            for aliquot, ais in groupby(stepheat, key=key):
+                name = make_runid(li, aliquot, '')
+                self._make_editor(ais, 'step_heat', options, prog, False,
+                                  True,
+                                  (ln_root, name, name, project, (li,)))
+
+        if fusion and options.has_key('fusion'):
+            self._make_editor(fusion, 'fusion', options, prog, False,
+                              True,
+                              (ln_root, 'fig', li, project, (li,)))
 
     def _make_labnumbers(self, doc, lns):
         root=doc['root']
@@ -159,18 +200,23 @@ class EasyFigures(BaseEasy):
                 for aliquot, ais in groupby(stepheat, key=key):
                     name = make_runid(li, aliquot, '')
                     self._make_editor(ais, 'step_heat', options, prog, False,
+                                      False,
                                       (ln_root, name, name, project, (li,)))
             if options.has_key('isochron'):
                 for aliquot, ais in groupby(stepheat, key=key):
                     name = make_runid(li, aliquot, '')
                     self._make_editor(ais, 'isochron', options, prog, False,
+                                      False,
                                       (ln_root, '{}_isochron'.format(name), name, project, (li,)))
 
         if fusion and options.has_key('fusion'):
             self._make_editor(fusion, 'fusion', options, prog, False,
+                              False,
                               (ln_root, li, li, project, (li,)))
 
-    def _make_editor(self, ans, editor_name, options, prog, apply_grouping, save_args):
+    def _make_editor(self, ans, editor_name, options, prog, apply_grouping,
+                     apply_graph_grouping,
+                     save_args):
         if isinstance(editor_name, tuple):
             editor_name, save_name=editor_name
         else:
@@ -186,6 +232,16 @@ class EasyFigures(BaseEasy):
         editor.set_items(unks)
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
+
+        if apply_graph_grouping:
+            ts = []
+            for i, (si, gi) in enumerate(groupby(unks, key=lambda x: x.sample)):
+                idxs = [unks.index(ai) for ai in gi]
+                editor.set_graph_group(idxs, i)
+                ts.append(si)
+            editor.titles = ts
+            editor.clear_aux_plot_limits()
+
         editor.rebuild()
 
         func=getattr(self, '_save_{}'.format(save_name))
@@ -217,7 +273,7 @@ class EasyFigures(BaseEasy):
     def _save(self, editor, root, pathname, name, project, lns):
         if self._save_pdf_figure:
             p, _ = unique_path(root, pathname, extension='.pdf')
-            editor.save_file(p)
+            editor.save_file(p, dest_box=(1.5, 1, 6, 9))
 
         if self._save_db_figure:
             editor.save_figure('EasyFigure {}'.format(name),
