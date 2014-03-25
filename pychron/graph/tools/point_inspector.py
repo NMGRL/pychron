@@ -25,10 +25,7 @@ from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 
 class PointInspector(InfoInspector):
     convert_index = Callable
-    #    def _build_metadata(self, xy):
-    #        point = self.component.hittest(xy)
-    #        md = dict(point=point)
-    #        return md
+
     def get_selected_index(self):
         xxyy = self.component.hittest(self.current_position)
 
@@ -38,7 +35,6 @@ class PointInspector(InfoInspector):
             spts = self.component.map_screen(d)
             tol = 5
             return where(abs(spts - xxyy[0]) < tol)[0]
-
 
     def percent_error(self, s, e):
         v ='(Inf%)'

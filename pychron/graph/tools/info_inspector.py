@@ -89,29 +89,33 @@ class InfoOverlay(AbstractOverlay):
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
-        lw = max(lws)+4
-        lh = sum(lhs) + len(lhs)*0.75
+        lw = max(lws) + 4
+        lh = sum(lhs) + len(lhs) * 0.75
 
         xoffset = 12
         yoffset = -10
         gc.translate_ctm(xoffset, yoffset)
-        # x += xoffset
-        # y -= yoffset
 
         # if the box doesnt fit in window
         # move left
         x2 = self.component.x2
-        if x+xoffset + lw> x2:
-            x = x2 - lw - xoffset-1
+        y2 = self.component.y2
+
+        if x + xoffset + lw > x2:
+            x = x2 - lw - xoffset - 1
+        #move down if to tall
+        if y + yoffset + lh > y2:
+            y = y2 - lh - yoffset - 1
 
         h = lhs[0]
-        py = max(0, y - lh)
+        # py = max(0, y - lh)
+        # py=y
 
-        gc.rect(x,py, lw, lh)
+        gc.rect(x, y, lw, lh)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
 
-        gc.translate_ctm(x+2,py+2)
+        gc.translate_ctm(x + 2, y + 2)
         for i, mi in enumerate(lines[::-1]):
             gc.set_text_position(0, h * i)
             gc.show_text(mi)
