@@ -36,6 +36,11 @@ class IdeogramEditor(FigureEditor):
                                      age_err=a.age_err)
             return i
 
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
+                ap.use = False
+
         ans=[construct(ia) for ia in iages]
         self.analyses=ans
         self._update_analyses()

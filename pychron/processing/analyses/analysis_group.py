@@ -88,7 +88,10 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_j_err(self):
         j = self.analyses[0].j
-        e = (j.std_dev/j.nominal_value) if j is not None else 0
+        try:
+            e = (j.std_dev / j.nominal_value) if j is not None else 0
+        except ZeroDivisionError:
+            e = 0
         return e
 
     @cached_property

@@ -52,6 +52,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             if iages:
                 task = self.window.application.get_task('pychron.processing.figures')
                 task.new_ideogram()
+
                 task.active_editor.plot_interpreted_ages(iages)
 
     def external_delete_group(self):

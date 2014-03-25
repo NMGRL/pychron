@@ -814,9 +814,9 @@ class IsotopeAdapter(DatabaseAdapter):
         return exp
 
     def add_extraction(self, analysis, extract_device=None, **kw):
-    #        ex = self._get_script('extraction', script_blob)
-    #        if ex is None:
-    #            ha = self._make_hash(script_blob)
+        #        ex = self._get_script('extraction', script_blob)
+        #        if ex is None:
+        #            ha = self._make_hash(script_blob)
         ex = meas_ExtractionTable(**kw)
         self._add_item(ex)
 
@@ -1283,7 +1283,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return ln
 
     def add_analysis(self, labnumber, **kw):
-    #        if isinstance(labnumber, (str, int, unicode)):
+        #        if isinstance(labnumber, (str, int, unicode)):
         labnumber = self.get_labnumber(labnumber, )
 
         anal = meas_AnalysisTable(**kw)
@@ -1316,7 +1316,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_last_labnumber(self, sample=None):
         with self.session_ctx() as s:
-        #         sess = self.get_session()
+            #         sess = self.get_session()
             q = s.query(gen_LabTable)
             if sample:
                 q = q.join(gen_SampleTable)
@@ -1398,7 +1398,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 return 0
 
     def get_unique_analysis(self, ln, ai, step=None):
-    #         sess = self.get_session()
+        #         sess = self.get_session()
         with self.session_ctx() as sess:
             ln = self.get_labnumber(ln)
             if not ln:
@@ -1423,8 +1423,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 return
 
     def get_analysis_uuid(self, value):
-    #         return self.get_analysis(value, key)
-    # #        return meas_AnalysisTable, 'uuid'
+        #         return self.get_analysis(value, key)
+        # #        return meas_AnalysisTable, 'uuid'
         return self._retrieve_item(meas_AnalysisTable, value, key='uuid')
 
     def get_analysis_record(self, value):
@@ -1498,8 +1498,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_irradiation_level(self, irrad, level):
         with self.session_ctx() as s:
-        #         with session(sess) as s:
-        #         sess = self.get_session()
+            #         with session(sess) as s:
+            #         sess = self.get_session()
             q = s.query(irrad_LevelTable)
             q = q.join(irrad_IrradiationTable)
             q = q.filter(irrad_IrradiationTable.name == irrad)
@@ -1511,8 +1511,8 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_irradiation_position(self, irrad, level, pos):
         with self.session_ctx() as s:
-        #         with session(sess) as s:
-        #         sess = self.get_session()
+            #         with session(sess) as s:
+            #         sess = self.get_session()
             q = s.query(irrad_PositionTable)
             q = q.join(irrad_LevelTable)
             q = q.join(irrad_IrradiationTable)
@@ -1707,11 +1707,11 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_labnumbers(self, identifiers=None, **kw):
         if identifiers:
-            f=gen_LabTable.identifier.in_(identifiers)
+            f = gen_LabTable.identifier.in_(identifiers)
             if 'filters' in kw:
                 kw['filters'].append(f)
             else:
-                kw['filters']=[f]
+                kw['filters'] = [f]
 
         # print self.name, identifiers
         # with self.session_ctx() as sess:
