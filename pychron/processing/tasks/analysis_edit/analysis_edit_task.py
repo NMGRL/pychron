@@ -52,6 +52,7 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -105,7 +106,7 @@ class AnalysisEditTask(BaseBrowserTask):
         v.projects = self.projects
         v.selected_projects = self.selected_projects
         # v.groups=self.analysis_groups
-        v.edit_traits()
+        v.edit_traits(kind='livemodal')
         self.analysis_groups = v.groups
 
     def make_analysis_group(self):

@@ -18,11 +18,9 @@
 import os
 import re
 
-from traits.api import List, Str, Bool, Any, Enum, Button, Int, Property, cached_property, DelegatesTo
+from traits.api import List, Str, Bool, Any, Enum, Button, \
+    Int, Property, cached_property, DelegatesTo
 import apptools.sweet_pickle as pickle
-
-
-
 
 
 #============= standard library imports ========================

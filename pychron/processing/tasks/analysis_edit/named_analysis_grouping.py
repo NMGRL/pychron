@@ -90,6 +90,7 @@ class AnalysisGroupDelete(HasTraits):
                                        selected='selected'))),
                  resizable=True,
                  width=500,
+
                  title='Delete Analysis Group',
                  buttons=['OK', 'Cancel'])
         return v
