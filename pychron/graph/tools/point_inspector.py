@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Callable
 #============= standard library imports ========================
-from numpy import where
+from numpy import where, vstack, zeros_like
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
@@ -33,10 +33,12 @@ class PointInspector(InfoInspector):
         xxyy = self.component.hittest(self.current_position)
 
         if xxyy:
-            x, _ = self.component.map_data((xxyy))
             d = self.component.index.get_data()
-            tol = 0.001
-            return where(abs(d - x) < tol)[0]
+            d = vstack((d, zeros_like(d))).T
+            spts = self.component.map_screen(d)
+            tol = 5
+            return where(abs(spts - xxyy[0]) < tol)[0]
+
 
     def percent_error(self, s, e):
         v ='(Inf%)'
