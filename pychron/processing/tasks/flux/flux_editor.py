@@ -340,7 +340,7 @@ class FluxEditor(GraphEditor):
     def _handle_group_monitors(self):
         self.positions_dirty = True
 
-    def _recalculate_button(self):
+    def _recalculate_button_fired(self):
         self.rebuild_graph()
 
     def _save_all_button_fired(self):
