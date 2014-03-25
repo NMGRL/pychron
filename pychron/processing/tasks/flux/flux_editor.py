@@ -109,6 +109,8 @@ class FluxEditor(GraphEditor):
     _save_unknowns = True
     irradiation_tray_overlay = Instance(IrradiationTrayOverlay)
 
+    recalculate_button = Button('Recalculate')
+
     def set_save_all(self, v):
         self._save_all = True
         self._save_unknowns = True
@@ -327,10 +329,8 @@ class FluxEditor(GraphEditor):
 
     @on_trait_change('monitor_positions:[use, j, jerr]')
     def _handle_monitor_pos_change(self, obj, name, old, new):
-        if obj.use:
-            if not self.suppress_update:
-                print 'monitor pos change'
-                self.rebuild_graph()
+        if not self.suppress_update:
+            self.rebuild_graph()
 
     @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind]')
     def _handle_tool_change(self):
@@ -339,6 +339,9 @@ class FluxEditor(GraphEditor):
     @on_trait_change('tool:group_positions')
     def _handle_group_monitors(self):
         self.positions_dirty = True
+
+    def _recalculate_button(self):
+        self.rebuild_graph()
 
     def _save_all_button_fired(self):
         for pp in self.positions:
@@ -422,7 +425,8 @@ class FluxEditor(GraphEditor):
             UItem('graph',
                   style='custom',
                   editor=InstanceEditor(), height=0.72),
-            VGroup(HGroup(spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+            VGroup(HGroup(UItem('recalculate_button'),
+                          spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
                                                      tooltip='Toggle "save" for unknown positions'),
                           icon_button_editor('save_all_button', 'dialog-ok-apply-5',
                                              tooltip='Toggle "save" for all positions')),
