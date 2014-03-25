@@ -96,13 +96,13 @@ class TasklessInterpretedAgeAction(TaskAction):
 class MakeGroupFromFileAction(TasklessInterpretedAgeAction):
     name = 'Group From File'
     method = 'make_group_from_file'
-    image = icon('document-open.png')
+    image = icon('document-open')
 
 
 class DeleteInterpretedAgeGroupAction(TaskAction):
     name = 'Delete Group'
     method = 'delete_group'
-    image = icon('delete.png')
+    image = icon('database_delete')
 
     def perform(self, event=None):
         app = self.task.window.application

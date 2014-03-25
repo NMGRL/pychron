@@ -21,19 +21,21 @@ import binascii
 
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
-from traits.api import Instance, on_trait_change, List
+from traits.api import Instance, on_trait_change
 
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
 from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
+from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
 from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
+
+
 
 
 
@@ -57,34 +59,6 @@ from pychron.processing.analyses.analysis import Analysis
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
-from traits.api import HasTraits, Str, Property
-from traitsui.api import View, Item, UItem, HGroup, TabularEditor
-
-
-class AnalysisGroupEntry(HasTraits):
-    name = Str
-    items = List
-    analyses = Property
-    analysis_type = Str
-
-    def _get_analyses(self):
-        return ((self.items, self.analysis_type),)
-
-    def set_items(self, ans):
-        items, at = ans[0]
-        self.items = items
-        self.analysis_type = at
-
-    def traits_view(self):
-        v = View(
-            HGroup(Item('name', label='Analysis Group Name')),
-            UItem('items', editor=TabularEditor(adapter=AnalysisAdapter())),
-            resizable=True,
-            buttons=['OK', 'Cancel'],
-            kind='livemodal',
-            title='Analysis Group Entry')
-        return v
 
 
 class AnalysisEditTask(BaseBrowserTask):
@@ -125,6 +99,14 @@ class AnalysisEditTask(BaseBrowserTask):
             ieditor = IsotopeEvolutionEditor(name=name, processor=self.manager)
             ieditor.set_items([rec])
             self.editor_area.add_editor(ieditor)
+
+    def delete_analysis_group(self):
+        v = AnalysisGroupDelete(task=self)
+        v.projects = self.projects
+        v.selected_projects = self.selected_projects
+        # v.groups=self.analysis_groups
+        v.edit_traits()
+        self.analysis_groups = v.groups
 
     def make_analysis_group(self):
         ans = self._get_analyses_to_group()
@@ -469,6 +451,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 with db.session_ctx():
                     dbg = db.get_analysis_group(g.id, key='id')
                     unks, b = partition(dbg.analyses, lambda x: x.analysis_type.name == 'unknown')
+
+                    self.active_editor.auto_find = False
                     self.active_editor.set_items([ai.analysis for ai in unks])
                     self._dclicked_analysis_group_hook(unks, b)
 
@@ -517,6 +501,8 @@ class AnalysisEditTask(BaseBrowserTask):
             # required for drag and drop. prevents excessive updates.
             if not obj.no_update:
                 if self.active_editor:
+                    self.debug('Setting auto find to True')
+                    self.active_editor.auto_find = True
                     self.active_editor.set_items(self.unknowns_pane.items)
 
                 if self.plot_editor_pane:
@@ -568,6 +554,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
         if self.active_editor:
             if not isinstance(self.active_editor, RecallEditor):
+                self.active_editor.auto_find = True
                 unks = None
                 if is_append:
                     unks = self.active_editor.analyses

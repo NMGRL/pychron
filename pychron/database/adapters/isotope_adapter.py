@@ -1786,6 +1786,12 @@ class IsotopeAdapter(DatabaseAdapter):
                 self._delete_item(fi)
             self._delete_item(p)
 
+    def delete_analysis_group(self, id):
+        with self.session_ctx():
+            g = self.get_analysis_group(id)
+            if g:
+                self._delete_item(g)
+
     #===============================================================================
     # deleters
     #===============================================================================

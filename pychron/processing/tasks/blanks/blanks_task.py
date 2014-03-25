@@ -42,15 +42,11 @@ class BlanksTask(InterpolationTask):
             left=HSplitter(
                 Tabbed(
                     PaneItem('pychron.browser'),
-                    PaneItem('pychron.search.query'),
-                ),
+                    PaneItem('pychron.search.query')),
                 Tabbed(
                     PaneItem('pychron.processing.unknowns'),
                     PaneItem('pychron.processing.references'),
-                    PaneItem('pychron.processing.controls')
-                ),
-            ),
-        )
+                    PaneItem('pychron.processing.controls'))))
 
     def new_blank(self):
         from pychron.processing.tasks.blanks.blanks_editor import BlanksEditor
@@ -125,7 +121,6 @@ class BlanksTask(InterpolationTask):
 
                     self.active_editor.set_items(ais, progress=prog)
                     self.active_editor.find_references(progress=prog)
-
 
                     #refresh graph
                     # invoke_in_main_thread(self.active_editor.rebuild_graph)

@@ -114,9 +114,26 @@ class ClearGroupAction(GroupAction):
     method = 'clear_grouping'
 
 
-class MakeAnalysisGroupAction(TaskAction):
-    name = 'Make Named Group'
+class AnalysisAction(myTaskAction):
+    task_ids = List(['pychron.processing.figures',
+                     'pychron.processing.blanks',
+                     'pychron.processing.isotope_evolution',
+                     'pychron.processing.ic_factor',
+                     'pychron.processing.flux',
+                     'pychron.processing.batch',
+                     'pychron.processing.discrimination'])
+
+
+class MakeAnalysisGroupAction(AnalysisAction):
+    name = 'Make Analysis Group'
     method = 'make_analysis_group'
+    image = icon('database_add')
+
+
+class DeleteAnalysisGroupAction(AnalysisAction):
+    name = 'Delete Analysis Group'
+    method = 'delete_analysis_group'
+    image = icon('database_delete')
 
 
 #===============================================================================

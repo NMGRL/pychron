@@ -36,7 +36,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
-    GraphGroupSelectedAction, FigureFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction
+    GraphGroupSelectedAction, FigureFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
+    DeleteAnalysisGroupAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -121,7 +122,8 @@ Install to enable MS Excel export''')
                          MakeGroupFromFileAction())
 
         def analysis_group():
-            return Group(MakeAnalysisGroupAction())
+            return Group(MakeAnalysisGroupAction(),
+                         DeleteAnalysisGroupAction())
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
@@ -139,7 +141,7 @@ Install to enable MS Excel export''')
                            ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
-                           ('make_analysis_group', MakeAnalysisGroupAction, 'MenuBar/data.menu'),
+                           ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
                            ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu'),
                            ('make_tas', MakeTASAction, 'MenuBar/data.menu')]
 
