@@ -337,7 +337,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     #    @add
     def add_analysis(self, rid, aliquot, step, irradpos, runtype,
-                     # sess=None,
+                     sess=None,
                      #                     refdetlabel,
                      #                     overwrite=True,
                      **kw):
