@@ -30,6 +30,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -67,25 +68,25 @@ def bin_analyses(ans):
 
 
 def get_bounds(groups):
-    bs=[]
+    bs = []
     for i, gi in enumerate(groups):
 
         try:
-            gii=groups[i+1]
+            gii = groups[i + 1]
         except IndexError:
             break
 
         ua = gi[-1].timestamp
-        bi=(gii[0].timestamp-ua)/2.0+ua
+        bi = (gii[0].timestamp - ua) / 2.0 + ua
         bs.append(bi)
 
     return bs
 
 
 class BinGroup(HasTraits):
-    unknowns=List
-    references=List
-    bounds=Tuple
+    unknowns = List
+    references = List
+    bounds = Tuple
 
 
 class InterpolationEditor(GraphEditor):
@@ -98,46 +99,50 @@ class InterpolationEditor(GraphEditor):
     default_reference_analysis_type = 'air'
     sorted_analyses = Property(depends_on='analyses[]')
     sorted_references = Property(depends_on='references[]')
-    binned_analyses=List
-    bounds=List
+    binned_analyses = List
+    bounds = List
     calculate_reference_age = Bool(False)
 
-    _normalization_factor=3600.
+    _normalization_factor = 3600.
+
     def _get_min_max(self):
         mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)
         ma = max(self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp)
-        return mi,ma
+        return mi, ma
 
     def bin_analyses(self):
-        groups=list(bin_analyses(self.analyses))
-        self.binned_analyses=[]
-        self.bounds=[]
-        n=len(groups)
-        if n>1:
-            mi, ma=self._get_min_max()
-            mi-=1
-            ma+=1
+        groups = list(bin_analyses(self.analyses))
+        self.binned_analyses = []
+        self.bounds = []
+        n = len(groups)
+        if n > 1:
+            mi, ma = self._get_min_max()
+            mi -= 1
+            ma += 1
 
-            bounds=get_bounds(groups)
-            self.bounds=map(lambda x: x-mi, bounds)
+            bounds = get_bounds(groups)
+            self.bounds = map(lambda x: x - mi, bounds)
 
-            gs=[]
-            low=None
-            for i,gi in enumerate(groups):
+            gs = []
+            low = None
+            for i, gi in enumerate(groups):
                 if low is None:
-                    low=mi
+                    low = mi
                 try:
-                    high=bounds[i]
+                    high = bounds[i]
                 except IndexError:
-                    high=ma
+                    high = ma
 
                 refs = filter(lambda x: low < x.timestamp < high, self.sorted_references)
                 gs.append(BinGroup(unknowns=gi,
                                    references=refs,
-                                   bounds=((low-mi)/self._normalization_factor, (high-mi)/self._normalization_factor, i==0, i==n-1)))
-                low=high
+                                   bounds=(
+                                       (low - mi) / self._normalization_factor,
+                                       (high - mi) / self._normalization_factor,
+                                       i == 0, i == n - 1)))
+                low = high
 
-            self.binned_analyses=gs
+            self.binned_analyses = gs
             self.rebuild_graph()
 
     def rebuild_graph(self):
@@ -147,7 +152,7 @@ class InterpolationEditor(GraphEditor):
                 self.add_group_divider(bi)
 
     def add_group_divider(self, cen):
-        self.graph.add_vertical_rule(cen/self._normalization_factor,line_width=1.5,
+        self.graph.add_vertical_rule(cen / self._normalization_factor, line_width=1.5,
                                      color='lightblue', line_style='solid')
         self.graph.redraw()
 
@@ -201,7 +206,7 @@ class InterpolationEditor(GraphEditor):
 
             if n > 1:
                 if progress is None:
-                    progress = proc.open_progress(n+1)
+                    progress = proc.open_progress(n + 1)
                 else:
                     progress.increase_max(n)
 
@@ -225,18 +230,18 @@ class InterpolationEditor(GraphEditor):
                 progress.soft_close()
 
             self.debug('find references finished')
-                #self.task.references_pane.items = ans
+            #self.task.references_pane.items = ans
 
     def set_interpolated_values(self, iso, reg, ans):
-        mi,ma=self._get_min_max()
+        mi, ma = self._get_min_max()
         if ans is None:
             ans = self.sorted_analyses
 
-        xs = [(ai.timestamp-mi)/self._normalization_factor for ai in ans]
+        xs = [(ai.timestamp - mi) / self._normalization_factor for ai in ans]
 
         p_uys = reg.predict(xs)
         p_ues = reg.predict_error(xs)
-        self._set_interpolated_values(iso, ans,p_uys, p_ues)
+        self._set_interpolated_values(iso, ans, p_uys, p_ues)
         return p_uys, p_ues
 
     def _set_interpolated_values(self, *args, **kw):
@@ -278,7 +283,7 @@ class InterpolationEditor(GraphEditor):
         gen = self._graph_generator()
         for i, fit in enumerate(gen):
             iso = fit.name
-            fit=fit.fit_tuple()
+            fit = fit.fit_tuple()
             print i, fit, self.binned_analyses
             if self.binned_analyses:
                 self._build_binned(i, iso, fit, start)
@@ -303,12 +308,12 @@ class InterpolationEditor(GraphEditor):
         p.value_range.tight_bounds = False
 
         for j, gi in enumerate(self.binned_analyses):
-            bis=gi.unknowns
-            refs=gi.references
+            bis = gi.unknowns
+            refs = gi.references
 
-            c_xs=self.normalize([bi.timestamp for bi in bis],start)
-            rxs=[bi.timestamp for bi in refs]
-            r_xs=self.normalize(rxs,start)
+            c_xs = self.normalize([bi.timestamp for bi in bis], start)
+            rxs = [bi.timestamp for bi in refs]
+            r_xs = self.normalize(rxs, start)
             dx = asarray(map(convert_timestamp, rxs))
 
             c_ys, c_es = None, None
@@ -319,8 +324,8 @@ class InterpolationEditor(GraphEditor):
             if refs:
                 r_ys, r_es = self._get_reference_values(iso, refs)
 
-            current_args = bis,c_xs, c_ys, c_es
-            ref_args = refs,r_xs, r_ys, r_es, dx
+            current_args = bis, c_xs, c_ys, c_es
+            ref_args = refs, r_xs, r_ys, r_es, dx
             self._build_plot(i, iso, fit, current_args, ref_args,
                              series_id=j,
                              regression_bounds=gi.bounds)
@@ -331,13 +336,13 @@ class InterpolationEditor(GraphEditor):
         if self.analyses and self.show_current:
             c_ys, c_es = self._get_current_values(iso)
 
-        r_ys, r_es, dx= None, None,  None
+        r_ys, r_es, dx = None, None, None
         if self.references:
             r_ys, r_es = self._get_reference_values(iso)
             dx = asarray(map(convert_timestamp, [ui.timestamp for ui in self.references]))
 
-        current_args=self.sorted_analyses, c_xs, c_ys, c_es
-        ref_args=self.sorted_references, r_xs, r_ys, r_es, dx
+        current_args = self.sorted_analyses, c_xs, c_ys, c_es
+        ref_args = self.sorted_references, r_xs, r_ys, r_es, dx
 
         graph = self.graph
         p = graph.new_plot(
@@ -352,10 +357,10 @@ class InterpolationEditor(GraphEditor):
     def _build_plot(self, i, iso, fit, current_args, ref_args,
                     series_id=0,
                     regression_bounds=None):
-        ans, c_xs, c_ys, c_es=current_args
-        refs, r_xs, r_ys, r_es, display_xs=ref_args
+        ans, c_xs, c_ys, c_es = current_args
+        refs, r_xs, r_ys, r_es, display_xs = ref_args
 
-        graph=self.graph
+        graph = self.graph
         if c_es and c_ys:
             # plot unknowns
             s, _p = graph.new_series(c_xs, c_ys,
@@ -376,7 +381,7 @@ class InterpolationEditor(GraphEditor):
         if r_ys:
             reg = None
             # plot references
-            efit=fit[0]
+            efit = fit[0]
             if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 reg = InterpolationRegressor(xs=r_xs,
                                              ys=r_ys,
@@ -392,10 +397,10 @@ class InterpolationEditor(GraphEditor):
                                          add_inspector=False, )
                 self._add_inspector(s, refs)
                 self._add_error_bars(s, r_es)
-                series_id=(series_id + 1)*2
+                series_id = (series_id + 1) * 2
             else:
 
-                series_id=(series_id + 1) * 3
+                series_id = (series_id + 1) * 3
                 _p, s, l = graph.new_series(r_xs, r_ys,
                                             display_index=ArrayDataSource(data=display_xs),
                                             yerror=ArrayDataSource(data=r_es),
@@ -404,11 +409,11 @@ class InterpolationEditor(GraphEditor):
                                             plotid=i,
                                             marker_size=3,
                                             add_inspector=False,
-                                            )
+                )
                 if hasattr(l, 'regressor'):
                     reg = l.regressor
 
-                l.regression_bounds=regression_bounds
+                l.regression_bounds = regression_bounds
 
                 self._add_inspector(s, refs)
                 self._add_error_bars(s, array(r_es))
@@ -416,7 +421,7 @@ class InterpolationEditor(GraphEditor):
             if reg:
 
                 p_uys, p_ues = self.set_interpolated_values(iso, reg, ans)
-                if p_uys:
+                if len(p_uys):
                     # display the predicted values
                     s, _p = graph.new_series(c_xs,
                                              p_uys,
@@ -492,25 +497,25 @@ class InterpolationEditor(GraphEditor):
 
     @on_trait_change('graph:regression_results')
     def _update_regression(self, new):
-        key='Unknowns-predicted{}'
+        key = 'Unknowns-predicted{}'
         #necessary to handle user excluding points
         if self.binned_analyses:
             gen = self._graph_generator()
 
-            c=0
-            for j,fit in enumerate(gen):
-                for i,g in enumerate(self.binned_analyses):
+            c = 0
+            for j, fit in enumerate(gen):
+                for i, g in enumerate(self.binned_analyses):
                     try:
-                        plotobj,reg=new[c]
+                        plotobj, reg = new[c]
                     except IndexError:
                         break
 
                     if issubclass(type(reg), BaseRegressor):
-                        k=key.format(i)
+                        k = key.format(i)
                         self._set_values(fit, plotobj, reg, k, g.unknowns)
-                    c+=1
+                    c += 1
         else:
-            key=key.format(0)
+            key = key.format(0)
             gen = self._graph_generator()
             for fit, (plotobj, reg) in zip(gen, new):
                 self._set_values(fit, plotobj, reg, key)
@@ -527,6 +532,7 @@ class InterpolationEditor(GraphEditor):
 
     def _clean_references(self):
         return [ri for ri in self.references if ri.temp_status == 0]
+
 #============= EOF =============================================
 
 
