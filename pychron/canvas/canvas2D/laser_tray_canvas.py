@@ -196,7 +196,7 @@ class LaserTrayCanvas(MapCanvas):
         self.overlays.append(im)
 
     def clear_all(self):
-        self._point_count = 1
+        self.point_count = 1
         self.lines = []
         self.transects = []
         self.polygons = []
@@ -295,8 +295,15 @@ class LaserTrayCanvas(MapCanvas):
 
     def pop_point(self, idx):
         if idx == -1:
-            self._point_count -= 1
+            self.point_count -= 1
         self.scene.pop_item(idx, klass=LaserPoint)
+
+    def downsample_point_labels(self, bounds):
+        for pi in self.get_points():
+            for bi in bounds:
+                if not int(pi.identifier) in bi:
+                    pi.show_label = False
+
 
     def new_point(self, xy=None, redraw=True, **kw):
 
@@ -304,10 +311,11 @@ class LaserTrayCanvas(MapCanvas):
             xy = self._stage_position
 
         if not 'identifier' in kw:
-            kw['identifier'] = str(self._point_count)
+            kw['identifier'] = str(self.point_count)
 
         p = LaserPoint(*xy, **kw)
-        self._point_count += 1
+        self.point_count += 1
+
         self.scene.add_item(p)
         if redraw:
             self.request_redraw()
@@ -611,9 +619,9 @@ class LaserTrayCanvas(MapCanvas):
 
         """
         with gc:
+            DataView.draw(self, gc, *args, **kw)
             gc.clip_to_rect(self.x, self.y,
                             self.width, self.height)
-            DataView.draw(self, gc, *args, **kw)
             self._draw_hook(gc, *args, **kw)
             #========================EOF====================================================
         #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):

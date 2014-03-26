@@ -17,10 +17,11 @@
 #============= enthought library imports =======================
 from enable.abstract_overlay import AbstractOverlay
 from traits.api import Any, Button, Enum, Float, Int, Color, \
-    Bool, Range, Instance, on_trait_change
+    Bool, Range, Instance, on_trait_change, List
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
+
 
 
 
@@ -233,8 +234,7 @@ class FinishableMaker(BaseMaker):
                  #                      enabled_when='accept_enabled',
                  show_label=False),
             HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-            Item('finish', show_label=False),
-        )
+            Item('finish', show_label=False))
 
         cg = self._get_controls()
         if cg:
@@ -433,8 +433,8 @@ class GridOverlay(AbstractOverlay):
 
 
 class GridMaker(BaseMaker):
-    ncols = Range(1, 20, 2, mode='spinner')
-    nrows = Range(1, 20, 2, mode='spinner')
+    ncols = Range(1, 40, 2, mode='spinner')
+    nrows = Range(1, 40, 2, mode='spinner')
 
     vspacing = Float(80, enter_set=True, auto_set=False)
     hspacing = Float(80, enter_set=True, auto_set=False)
@@ -442,6 +442,7 @@ class GridMaker(BaseMaker):
     toggle_grid_visible_button = Button
     indicator_size = Float(60, enter_set=True, auto_set=False)
     indicator_opacity = Range(0.0, 100., 75.)
+    grid_indices = List
 
     def __init__(self, *args, **kw):
         super(GridMaker, self).__init__(*args, **kw)
@@ -483,15 +484,35 @@ class GridMaker(BaseMaker):
         ox, oy = ptargs['xy']
         set_sig_figs = lambda v: float('{:0.3f}'.format(float(v)))
 
-        for ci in range(ncols):
-            x = set_sig_figs(ox + hspacing * ci)
-            for ri in range(nrows):
-                y = set_sig_figs(oy + ri * vspacing)
+        vertical = ncols < nrows
+
+        xs = max(ncols, nrows)
+        ys = min(ncols, nrows)
+
+        low_pc = self.canvas.point_count
+        high_pc = low_pc + (ncols * nrows) - 1
+        self.grid_indices.append((low_pc, low_pc + 1, high_pc - 1, high_pc))
+
+        for ci in range(xs):
+            if vertical:
+                y = set_sig_figs(oy + ci * vspacing)
+            else:
+                x = set_sig_figs(ox + hspacing * ci)
+
+            for ri in range(ys):
+                if vertical:
+                    x = set_sig_figs(ox + hspacing * ri)
+                else:
+                    y = set_sig_figs(oy + ri * vspacing)
+
                 ptargs['xy'] = (x, y)
                 npt = self.canvas.new_point(default_color=self.point_color,
                                             redraw=False, **ptargs)
 
                 self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
+
+        if high_pc > 80:
+            self.canvas.downsample_point_labels(self.grid_indices)
 
         self.canvas.request_redraw()
 
@@ -501,7 +522,6 @@ class GridMaker(BaseMaker):
             self.grid_overlay.trait_set(**{name: new})
             self.grid_overlay.points_invalid = True
             self.canvas.invalidate_and_redraw()
-
 
     @on_trait_change('hspacing, vspacing, indicator_size')
     def _handle_spacing_change(self, new):

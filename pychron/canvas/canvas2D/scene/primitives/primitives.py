@@ -826,7 +826,7 @@ class PointIndicator(Indicator):
         #            pi.set_canvas(canvas)
         #
         #self.circle.set_canvas(canvas)
-        if self.label_item:
+        if self.label_item and self.show_label:
             self.label_item.set_canvas(canvas)
 
     def set_state(self, state):
@@ -862,8 +862,7 @@ class PointIndicator(Indicator):
                 gc.rect(x - self.radius - 1,
                         y - self.radius - 1,
                         2 * self.radius + 1,
-                        2 * self.radius + 1
-                )
+                        2 * self.radius + 1)
 
     def _show_label_changed(self):
         self.request_redraw()
