@@ -40,7 +40,7 @@ class BasePDFOptions(HasTraits):
         return d
 
     def load_yaml(self, d):
-        for k,v in d.iteritems():
+        for k, v in d.iteritems():
             try:
                 setattr(self, k, v)
             except TraitError:
@@ -56,12 +56,17 @@ class PDFTableOptions(BasePDFOptions):
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)
     options_button = Button
+    nsigma = Enum(1, 2, 3)
+
+    def _default_nsigma(self):
+        return 2
 
     def load_yaml(self, d):
         super(PDFTableOptions, self).load_yaml(d)
 
-        ab=d['alternating_background']
+        ab = d.get('alternating_background', False)
         self.set_alternating_background(ab)
+        self.nsigma = d.get('nsigma', 2)
 
     def dump_yaml(self):
         """
@@ -72,12 +77,13 @@ class PDFTableOptions(BasePDFOptions):
                       auto_title=self.auto_title,
                       use_alternating_background=self.use_alternating_background,
                       alternating_background=self.get_alternating_background(),
-                      show_page_numbers=self.show_page_numbers))
+                      show_page_numbers=self.show_page_numbers,
+                      nsigma=self.nsigma))
 
         return d
 
     def set_alternating_background(self, t):
-        self.alternating_background=tuple(map(lambda x: int(x *255), t))
+        self.alternating_background = tuple(map(lambda x: int(x * 255), t))
 
     def get_alternating_background(self):
         t = self.alternating_background.toTuple()[:3]
@@ -103,10 +109,12 @@ class PDFTableOptions(BasePDFOptions):
                            Item('top_margin'),
                            Item('bottom_margin'),
                            label='layout')
+        data_grp = Group(Item('nsigma'))
         v = View(
-                 layout_grp,
-                 table_grp,
-                 title='PDF Options',
-                 buttons=['OK', 'Cancel', 'Revert'])
+            layout_grp,
+            table_grp,
+            data_grp,
+            title='PDF Options',
+            buttons=['OK', 'Cancel', 'Revert'])
         return v
         #============= EOF =============================================

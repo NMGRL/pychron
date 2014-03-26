@@ -122,6 +122,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         return (pr, r,)
 
     def _make_interpreted_age_row(self, interpreted_age):
+        nsigma = self.options.nsigma
         row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
         row.add_item(value=interpreted_age.identifier)
@@ -138,7 +139,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         row.add_item(value=floatfmt(interpreted_age.kca, n=4))
         row.add_item(value=floatfmt(interpreted_age.kca_err, n=4))
         row.add_item(value=floatfmt(interpreted_age.age, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age_err * nsigma, n=4))
 
         return row
 
