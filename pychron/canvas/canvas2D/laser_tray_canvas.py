@@ -16,7 +16,7 @@
 
 #=============enthought library imports=======================
 from traits.api import Color, Property, Tuple, Float, Any, Bool, Range, on_trait_change, \
-    Enum, List, Int, File
+    Enum, List, Int, File, Instance
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants
@@ -102,8 +102,7 @@ class ImageOverlay(AbstractOverlay):
             if self._cached_image:
                 gc.draw_image(self._cached_image,
                               rect=(other_component.x, other_component.y,
-                                    other_component.width, other_component.height)
-                )
+                                    other_component.width, other_component.height))
 
     def _compute_cached_image(self):
         pic = Image.open(self.path)
@@ -175,6 +174,8 @@ class LaserTrayCanvas(MapCanvas):
     crosshairs_radius = Range(0.0, 4.0, 1.0)
     crosshairs_offsetx = Int
     crosshairs_offsety = Int
+    crosshairs_overlay = Instance(CrosshairsOverlay)
+
     show_bounds_rect = Bool(True)
     transects = List
     lines = List
@@ -304,7 +305,6 @@ class LaserTrayCanvas(MapCanvas):
                 if not int(pi.identifier) in bi:
                     pi.show_label = False
 
-
     def new_point(self, xy=None, redraw=True, **kw):
 
         if xy is None:
@@ -382,7 +382,6 @@ class LaserTrayCanvas(MapCanvas):
                         return x, y
                 except AttributeError:
                     pass
-
 
     def map_offset_position(self, pos):
         """
@@ -555,7 +554,7 @@ class LaserTrayCanvas(MapCanvas):
 
     def _add_crosshairs(self):
         ch = CrosshairsOverlay(component=self)
-        self.overlays.append(ch)
+        #self.overlays.append(ch)
         self.crosshairs_overlay = ch
 
     #===============================================================================
@@ -623,7 +622,15 @@ class LaserTrayCanvas(MapCanvas):
             gc.clip_to_rect(self.x, self.y,
                             self.width, self.height)
             self._draw_hook(gc, *args, **kw)
-            #========================EOF====================================================
+
+            ch = self.crosshairs_overlay
+            if ch:
+                ch.overlay(self, gc, *args, **kw)
+
+                #for o in self.crosshairs_overlays:
+                #if o.visible:
+                #o.overlay(self, gc, *args, **kw)
+                #========================EOF====================================================
         #    def _set_transect_points(self, tran, step, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs):
         #        for pi in tran.step_points:
         #            self.remove_point(pi)
