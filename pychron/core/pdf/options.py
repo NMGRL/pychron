@@ -93,7 +93,9 @@ class PDFTableOptions(BasePDFOptions):
     default_row_height = Float(0.22)
     default_header_height = Float(0.22)
     options_button = Button
-    nsigma = Enum(1, 2, 3)
+    age_nsigma = Enum(1, 2, 3)
+    kca_nsigma = Enum(1, 2, 3)
+    link_sigmas = Bool(True)
 
     _persistence_name = 'table_pdf_options'
 
@@ -102,7 +104,9 @@ class PDFTableOptions(BasePDFOptions):
         if ab:
             self.set_alternating_background(d.get('alternating_background',
                                                   (0, 0, 0)))
-        self.nsigma = d.get('nsigma', 2)
+        self.age_nsigma = d.get('age_nsigma', 2)
+        self.kca_nsigma = d.get('kca_nsigma', 2)
+        self.link_sigmas = d.get('link_sigmas', True)
 
     def get_dump_dict(self):
         d = super(PDFTableOptions, self).get_dump_dict()
@@ -111,7 +115,9 @@ class PDFTableOptions(BasePDFOptions):
                       use_alternating_background=self.use_alternating_background,
                       alternating_background=self.get_alternating_background(),
                       show_page_numbers=self.show_page_numbers,
-                      nsigma=self.nsigma))
+                      age_nsigma=self.age_nsigma,
+                      kca_nsigma=self.kca_nsigma,
+                      link_sigmas=self.link_sigmas))
 
         return d
 
@@ -125,6 +131,18 @@ class PDFTableOptions(BasePDFOptions):
     def _options_button_fired(self):
         if self.edit_traits(view='advanced_view', kind='livemodal'):
             self.dump_yaml()
+
+    def _age_nsigma_changed(self):
+        if self.link_sigmas:
+            self.kca_nsigma = self.age_nsigma
+
+    def _kca_nsigma_changed(self):
+        if self.link_sigmas:
+            self.age_nsigma = self.kca_nsigma
+
+    def _link_sigmas_changed(self):
+        if self.link_sigmas:
+            self.kca_nsigma = self.age_nsigma
 
     def traits_view(self):
         v = View(HGroup(Item('auto_title'),
@@ -143,7 +161,10 @@ class PDFTableOptions(BasePDFOptions):
                            Item('top_margin'),
                            Item('bottom_margin'),
                            label='layout')
-        data_grp = Group(Item('nsigma'),
+
+        data_grp = Group(Item('link_sigmas', label='Link'),
+                         Item('age_nsigma', label='Age NSigma'),
+                         Item('kca_nsigma', label='K/CA NSigma'),
                          label='Data')
         v = View(
             layout_grp,

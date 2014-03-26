@@ -56,8 +56,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                     Ar39err=e39,
                     Ar38err=e38,
                     Ar37err=e37,
-                    Ar36err=e36,
-        )
+                    Ar36err=e36)
 
     def _build(self, doc, groups, title):
         self.debug('build table {}'.format(title))

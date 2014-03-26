@@ -95,7 +95,8 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         return t
 
     def _make_header(self, style):
-        PMS = u'\u00b1 1\u03c3'
+        PMS_kca = u'\u00b1 {}\u03c3'.format(self.options.kca_nsigma)
+        PMS_age = u'\u00b1 {}\u03c3'.format(self.options.age_nsigma)
 
         pr = Row(height=self.options.default_header_height)
         pr.add_blank_item(7)
@@ -115,14 +116,16 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         r.add_item(value='N')
         r.add_item(value='MSWD')
         r.add_item(value='K/Ca')
-        r.add_item(value=PMS)
+        r.add_item(value=PMS_kca)
         r.add_item(value='Age')
-        r.add_item(value=PMS)
+        r.add_item(value=PMS_age)
 
         return (pr, r,)
 
     def _make_interpreted_age_row(self, interpreted_age):
-        nsigma = self.options.nsigma
+        age_nsigma = self.options.age_nsigma
+        kca_nsigma = self.options.kca_nsigma
+
         row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
         row.add_item(value=interpreted_age.identifier)
@@ -137,9 +140,9 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
         # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
         row.add_item(value=floatfmt(interpreted_age.kca, n=4))
-        row.add_item(value=floatfmt(interpreted_age.kca_err, n=4))
+        row.add_item(value=floatfmt(interpreted_age.kca_err * kca_nsigma, n=4))
         row.add_item(value=floatfmt(interpreted_age.age, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age_err * nsigma, n=4))
+        row.add_item(value=floatfmt(interpreted_age.age_err * age_nsigma, n=4))
 
         return row
 
