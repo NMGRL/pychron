@@ -24,6 +24,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -581,12 +582,15 @@ class FigureTask(AnalysisEditTask):
             if not isinstance(self.active_editor, FigureEditor):
                 self.active_editor.saved_figure_id = 0
                 self.active_editor.clear_aux_plot_limits()
+                self.active_editor.enable_aux_plots()
 
         super(FigureTask, self)._dclicked_sample_changed()
 
     def _dclicked_figure_changed(self):
         sf = self.selected_figures
         if sf:
+            self.active_editor.enable_aux_plots()
+
             db = self.manager.db
             with db.session_ctx():
                 sf = sf[0]

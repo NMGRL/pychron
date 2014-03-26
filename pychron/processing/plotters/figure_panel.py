@@ -77,8 +77,7 @@ class FigurePanel(HasTraits):
                           center=center,
                           options=po,
                           graph=g,
-                          title=self.title
-            )
+                          title=self.title)
 
             plots = list(po.get_aux_plots())
 

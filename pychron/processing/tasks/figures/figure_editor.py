@@ -52,6 +52,11 @@ class FigureEditor(GraphEditor):
     saved_figure_id = Int
     titles = List
 
+    def enable_aux_plots(self):
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            ap.enabled = True
+
     def clear_aux_plot_limits(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:

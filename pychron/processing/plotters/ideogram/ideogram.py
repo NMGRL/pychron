@@ -19,6 +19,7 @@ from traits.api import Float, Array
 #============= standard library imports ========================
 from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
+from numpy import max as np_max
 #============= local library imports  ==========================
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
@@ -592,7 +593,7 @@ class Ideogram(BaseArArFigure):
             wm, we = 0, 0
             delta = 1
             maxs, _mins = find_peaks(ys, xs, delta=delta, lookahead=1)
-            wm = max(maxs, axis=1)[0]
+            wm = np_max(maxs, axis=1)[0]
         else:
             wage = self.analysis_group.weighted_age
             wm, we = wage.nominal_value, wage.std_dev

@@ -50,6 +50,8 @@ class AuxPlotOptions(HasTraits):
     _has_ylimits = Bool(False)
     _has_xlimits = Bool(False)
 
+    enabled = True
+
     def set_overlay_position(self, k, v):
         self.overlay_positions[k] = v
 

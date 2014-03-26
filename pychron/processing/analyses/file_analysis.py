@@ -28,7 +28,7 @@ class NonDBAnalysis(Analysis):
     uage = Property(depends_on='age, age_err')
     uage_wo_j_err = Property(depends_on='age, age_err')
     uuid = Str
-
+    sample = Str
 
     @cached_property
     def _get_uage(self):

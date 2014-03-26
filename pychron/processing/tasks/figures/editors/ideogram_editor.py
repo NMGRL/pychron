@@ -32,6 +32,7 @@ class IdeogramEditor(FigureEditor):
     def plot_interpreted_ages(self, iages):
         def construct(a):
             i=InterpretedAgeAnalysis(record_id='{} ({})'.format(a.sample,a.identifier),
+                                     sample=a.sample,
                                      age=a.age,
                                      age_err=a.age_err)
             return i
@@ -40,6 +41,7 @@ class IdeogramEditor(FigureEditor):
         for ap in po.aux_plots:
             if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
                 ap.use = False
+                ap.enabled = False
 
         ans=[construct(ia) for ia in iages]
         self.analyses=ans
