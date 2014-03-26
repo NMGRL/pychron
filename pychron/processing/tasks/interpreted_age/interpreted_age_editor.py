@@ -203,7 +203,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             with db.session_ctx():
                 histories = db.get_interpreted_age_histories(lns)
 
-                self.histories = [db.interpreted_age_factory(hi) for hi in histories]
+                hs = [db.interpreted_age_factory(hi) for hi in histories]
+                self.histories = [hi for hi in hs if hi]
 
                 self.history_names = [hi.name for hi in self.histories]
                 if self.history_names:

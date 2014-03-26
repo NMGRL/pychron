@@ -165,30 +165,30 @@ class IsotopeAdapter(DatabaseAdapter):
                 irrad = level.irradiation
                 irrad = '{}{} {}'.format(irrad.name, level.name, pos.position)
         ia = hi.interpreted_age
+        if ia:
+            if ia.age_kind == 'Plateau':
+                n = len(filter(lambda x: x.plateau_step, ia.sets))
+            else:
+                n = len(ia.sets)
 
-        if ia.age_kind == 'Plateau':
-            n = len(filter(lambda x: x.plateau_step, ia.sets))
-        else:
-            n = len(ia.sets)
+            it = InterpretedAge(create_date=hi.create_date,
+                                id=hi.id,
+                                age=ia.age,
+                                age_err=ia.age_err,
+                                kca=ia.kca or 0,
+                                kca_err=ia.kca_err or 0,
+                                mswd=ia.mswd,
+                                age_kind=ia.age_kind,
+                                kca_kind=ia.kca_kind,
+                                identifier=hi.identifier,
+                                sample=sample or '',
+                                irradiation=irrad or '',
+                                material=material or '',
+                                lithology=lithology or '',
+                                nanalyses=n,
+                                name='{} - {}'.format(hi.create_date, ia.age_kind))
 
-        it = InterpretedAge(create_date=hi.create_date,
-                            id=hi.id,
-                            age=ia.age,
-                            age_err=ia.age_err,
-                            kca=ia.kca or 0,
-                            kca_err=ia.kca_err or 0,
-                            mswd=ia.mswd,
-                            age_kind=ia.age_kind,
-                            kca_kind=ia.kca_kind,
-                            identifier=hi.identifier,
-                            sample=sample or '',
-                            irradiation=irrad or '',
-                            material=material or '',
-                            lithology=lithology or '',
-                            nanalyses=n,
-                            name='{} - {}'.format(hi.create_date, ia.age_kind))
-
-        return it
+            return it
 
     def get_interpreted_age_group_history(self, gid):
         return self._retrieve_item(proc_InterpretedAgeGroupHistoryTable,

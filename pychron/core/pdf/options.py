@@ -15,12 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, Color, Enum, Button, Float, TraitError
+import os
+
+from traits.api import HasTraits, Str, Bool, Color, Enum, \
+    Button, Float, TraitError, Property
 from traitsui.api import View, Item, UItem, HGroup, Group
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+import yaml
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.paths import paths
 
 
 class BasePDFOptions(HasTraits):
@@ -30,7 +36,22 @@ class BasePDFOptions(HasTraits):
     top_margin = Float(1)
     bottom_margin = Float(1)
 
+    persistence_path = Property
+    _persistence_name = 'base_pdf_options'
+
+    def __init__(self, *args, **kw):
+        super(BasePDFOptions, self).__init__(*args, **kw)
+        self.load_yaml()
+
+    def _get_persistence_path(self):
+        return os.path.join(paths.hidden_dir, self._persistence_name)
+
     def dump_yaml(self):
+        p = self.persistence_path
+        with open(p, 'w') as fp:
+            yaml.dump(self.get_dump_dict(), fp)
+
+    def get_dump_dict(self):
         d = dict(orientation=self.orientation,
                  left_margin=self.left_margin,
                  right_margin=self.right_margin,
@@ -39,12 +60,28 @@ class BasePDFOptions(HasTraits):
 
         return d
 
-    def load_yaml(self, d):
+    def get_load_dict(self):
+        d = {}
+        p = self.persistence_path
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                try:
+                    d = yaml.load(fp)
+                except yaml.YAMLError:
+                    pass
+        return d
+
+    def load_yaml(self):
+        d = self.get_load_dict()
         for k, v in d.iteritems():
             try:
                 setattr(self, k, v)
             except TraitError:
                 pass
+        self._load_yaml_hook(d)
+
+    def _load_yaml_hook(self, d):
+        pass
 
 
 class PDFTableOptions(BasePDFOptions):
@@ -58,21 +95,17 @@ class PDFTableOptions(BasePDFOptions):
     options_button = Button
     nsigma = Enum(1, 2, 3)
 
-    def _default_nsigma(self):
-        return 2
+    _persistence_name = 'table_pdf_options'
 
-    def load_yaml(self, d):
-        super(PDFTableOptions, self).load_yaml(d)
-
-        ab = d.get('alternating_background', False)
-        self.set_alternating_background(ab)
+    def _load_yaml_hook(self, d):
+        ab = d.get('use_alternating_background', False)
+        if ab:
+            self.set_alternating_background(d.get('alternating_background',
+                                                  (0, 0, 0)))
         self.nsigma = d.get('nsigma', 2)
 
-    def dump_yaml(self):
-        """
-            return an object to be dumped in a yaml file
-        """
-        d = super(PDFTableOptions, self).dump_yaml()
+    def get_dump_dict(self):
+        d = super(PDFTableOptions, self).get_dump_dict()
         d.update(dict(title=str(self.title),
                       auto_title=self.auto_title,
                       use_alternating_background=self.use_alternating_background,
@@ -90,7 +123,8 @@ class PDFTableOptions(BasePDFOptions):
         return map(lambda x: x / 255., t)
 
     def _options_button_fired(self):
-        self.edit_traits(view='advanced_view', kind='livemodal')
+        if self.edit_traits(view='advanced_view', kind='livemodal'):
+            self.dump_yaml()
 
     def traits_view(self):
         v = View(HGroup(Item('auto_title'),
@@ -109,7 +143,8 @@ class PDFTableOptions(BasePDFOptions):
                            Item('top_margin'),
                            Item('bottom_margin'),
                            label='layout')
-        data_grp = Group(Item('nsigma'))
+        data_grp = Group(Item('nsigma'),
+                         label='Data')
         v = View(
             layout_grp,
             table_grp,
