@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property
+from traits.api import Enum, Float, Bool, String, Button, Property, Int
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
@@ -54,6 +54,9 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_font = Property
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
+
+    mean_sig_figs = Int
+    mean_error_sig_figs = Int
 
     # def _index_attr_default(self):
     #     return 'uage'
@@ -116,10 +119,17 @@ class IdeogramOptions(AgeOptions):
             Item('include_decay_error'),
             label='Calculations')
 
-        g2 = Group(HGroup(Item('display_mean_indicator', label='Indicator'),
-                          Item('display_mean', label='Value'),
-                          Item('display_percent_error', label='%Error'),
+        g2 = Group(VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
+                                 Item('display_mean', label='Value',
+                                      enabled_when='display_mean_indicator'),
+                                 Item('display_percent_error', label='%Error',
+                                      enabled_when='display_mean_indicator')),
+                          HGroup(Item('mean_sig_figs', label='Mean'),
+                                 Item('mean_error_sig_figs', label='Error'),
+                                 show_border=True,
+                                 label='SigFigs'),
                           label='Mean'),
+
                    Item('label_box'),
                    Item('analysis_number_sorting', label='Analysis# Sort'),
                    HGroup(Item('analysis_label_display',
@@ -182,6 +192,7 @@ class IdeogramOptions(AgeOptions):
             'display_percent_error',
             'mean_indicator_fontname',
             'mean_indicator_fontsize',
-        ]
+            'mean_sig_figs',
+            'mean_error_sig_figs']
 
 #============= EOF =============================================

@@ -323,6 +323,8 @@ class Ideogram(BaseArArFigure):
         text = ''
         if self.options.display_mean:
             text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs),
+                                          value_sig_figs=self.options.mean_sig_figs,
+                                          error_sig_figs=self.options.mean_error_sig_figs,
                                           percent_error=self.options.display_percent_error)
 
         m = MeanIndicatorOverlay(component=line,
@@ -425,7 +427,9 @@ class Ideogram(BaseArArFigure):
                     ov.error = we
                     if ov.label:
                         ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n,
-                                                               percent_error=self.options.display_percent_error)
+                                                               percent_error=self.options.display_percent_error,
+                                                               value_sig_figs=self.options.mean_sig_figs,
+                                                               error_sig_figs=self.options.mean_error_sig_figs)
 
             # update the data label position
             #for ov in sp.overlays:
@@ -546,7 +550,10 @@ class Ideogram(BaseArArFigure):
         step = asymptotic_width * 0.25
         N2 = N / 2.0
         for i in xrange(max_iter):
-            x1, x2 = xmi - step * i, xma + step * i
+            x1 = xmi - step * i if rx1 is None else rx1
+            x2 = xma + step * i if rx2 is None else rx2
+
+            # x1, x2 = xmi - step * i, xma + step * i
             xs, ys = cfunc(x1, x2)
 
             bin_per_ma = N / (x2 - x1)
@@ -563,9 +570,9 @@ class Ideogram(BaseArArFigure):
 
             tt = tol * max(ys)
             # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
-            if low.mean() < tt:  # and low.std()<std_tol:
+            if rx1 is None and low.mean() < tt:  # and low.std()<std_tol:
                 rx1 = x1
-            if high.mean() < tt:  # and high.std()<std_tol:
+            if rx2 is None and high.mean() < tt:  # and high.std()<std_tol:
                 rx2 = x2
             if rx1 is not None and rx2 is not None:
                 break

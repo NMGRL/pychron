@@ -103,7 +103,10 @@ class Spectrum(BaseArArFigure):
 
             e = plateau_age.std_dev * self.options.nsigma
             info_txt = self._build_label_text(plateau_age.nominal_value, e,
-                                              plateau_mswd, valid_mswd, nsteps, )
+                                              plateau_mswd, valid_mswd, nsteps,
+                                              value_sig_figs=self.options.plateau_sig_figs,
+                                              error_sig_figs=self.options.plateau_error_sig_figs
+            )
 
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],

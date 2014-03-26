@@ -381,7 +381,11 @@ class BaseArArFigure(HasTraits):
         label.on_trait_change(self._handle_overlay_move, 'label_position')
         return label
 
-    def _build_label_text(self, x, we, mswd, valid_mswd, n, percent_error=False):
+    def _build_label_text(self, x, we, mswd, valid_mswd, n,
+                          percent_error=False,
+                          value_sig_figs=3,
+                          error_sig_figs=4
+    ):
         display_n = True
         display_mswd = n >= 2
         if display_n:
@@ -395,8 +399,8 @@ class BaseArArFigure(HasTraits):
         else:
             mswd = ''
 
-        sx = floatfmt(x, 3)
-        swe = floatfmt(we, 4)
+        sx = floatfmt(x, value_sig_figs)
+        swe = floatfmt(we, error_sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
             me = '{} +/-{}'.format(sx, swe)
@@ -409,7 +413,6 @@ class BaseArArFigure(HasTraits):
             me = '{} +/-{}{} {}'.format(sx, swe, pe, age_units)
 
         return u'{} {} {}'.format(me, mswd, n)
-        # return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
 
     def _get_age_units(self):
         a = 'Ma'
