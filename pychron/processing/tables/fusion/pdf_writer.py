@@ -56,8 +56,8 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
                     double_first_line=True,
                     include_footnotes=False):
 
-        analyses = group.analyses
-        self._ref = analyses[0]
+        self._ref = group.analyses[0]
+        analyses = group.all_analyses
         style = self._new_style(debug_grid=False)
 
         style.add('ALIGN', (0, 0), (-1, -1), 'LEFT')
@@ -69,7 +69,6 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             self._new_line(style, 0, cmd='LINEABOVE')
 
         data = []
-        bdata = []
         # make meta
         meta = self._make_meta(analyses, style,
                                include_footnotes=include_footnotes)

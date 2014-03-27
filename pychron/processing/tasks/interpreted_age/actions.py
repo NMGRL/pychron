@@ -45,6 +45,12 @@ class SavePDFTablesAction(TaskAction):
     image = icon('file_pdf')
 
 
+class SaveXLSTablesAction(TaskAction):
+    name = 'Save XLS Tables'
+    method = 'save_xls_tables'
+    image = icon('file_xls')
+
+
 class SaveInterpretedAgeGroupAction(TaskAction):
     name = 'Save Group'
     method = 'save_interpreted_age_group'

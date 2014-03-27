@@ -138,6 +138,7 @@ class proc_InterpretedAgeSetTable(Base, BaseMixin):
     analysis_id = foreignkey('meas_AnalysisTable')
     forced_plateau_step = Column(Boolean)
     plateau_step = Column(Boolean)
+    tag = stringcolumn(80)
 
 
 class proc_InterpretedAgeHistoryTable(Base, BaseMixin):

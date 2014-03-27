@@ -81,7 +81,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     refresh = Event
 
     def save_pdf_tables(self, p):
-        # self.save_summary_table(p)
+        self.save_summary_table(p)
+        self.save_analysis_data_tables(p, pdf=True, xls=False)
+
+    def save_xls_tables(self, p):
         self.save_analysis_data_tables(p, pdf=False, xls=True)
 
     def save_analysis_data_tables(self, p, pdf=True, xls=True):
@@ -109,8 +112,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             self._save_xls_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
 
             # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-        # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-        # self._save_data_table(p, argus, step_heat_title, fusion_title)
+            # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            # self._save_data_table(p, argus, step_heat_title, fusion_title)
 
     def _save_xls_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
         head, ext = os.path.splitext(p)
@@ -135,18 +138,27 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             # ias = [ia for ia in ias if ia.age_kind == 'Weighted Mean'][:1]
 
             ans = [si.analysis for ia in ias
-                   for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets
-                   if si.analysis.tag != 'invalid']
+                   for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets]
+            # if si.analysis.tag != 'invalid']
             prog = self.processor.open_progress(len(ans), close_at_end=False)
 
-            def gfactory(klass, ia):
-                hid = db.get_interpreted_age_history(ia.id)
-                ans = (si.analysis for si in hid.interpreted_age.sets \
-                       if not si.analysis.tag == 'invalid')
-                ans = self.processor.make_analyses(ans,
-                                                   calculate_age=True, use_cache=False,
-                                                   progress=prog)
-                return klass(sample=ans[0].sample, analyses=ans)
+            def gfactory(klass, dbia):
+                hid = db.get_interpreted_age_history(dbia.id)
+                # ans = (si.analysis for si in hid.interpreted_age.sets \
+                #        if not si.tag == 'invalid')
+                ia_ans = hid.interpreted_age.sets
+                all_ans = self.processor.make_analyses(ia_ans,
+                                                       calculate_age=True,
+                                                       # use_cache=False,
+                                                       progress=prog)
+                #overwrite the tags for the analyses
+                for ai, sai in zip(all_ans, ia_ans):
+                    ai.set_tag(sai.tag)
+
+                ais = [ai for ai in all_ans if not 'omit' in ai.tag]
+                return klass(sample=ais[0].sample,
+                             all_analyses=all_ans,
+                             analyses=ais)
 
             #partition fusion vs stepheat
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')

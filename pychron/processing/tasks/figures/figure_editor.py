@@ -153,12 +153,14 @@ class FigureEditor(GraphEditor):
                                            include_j_error_in_individual_analyses=
                                            ia.include_j_error_in_individual_analyses)
 
-            for ai in ia.analyses:
+            for ai in ia.all_analyses:
                 plateau_step = ia.get_is_plateau_step(ai)
 
                 ai = db.get_analysis_uuid(ai.uuid)
 
-                db.add_interpreted_age_set(db_ia, ai, plateau_step=plateau_step)
+                db.add_interpreted_age_set(db_ia, ai,
+                                           tag=ai.tag,
+                                           plateau_step=plateau_step)
 
     def save_interpreted_ages(self):
         ias = self.get_interpreted_ages()
@@ -191,9 +193,10 @@ class FigureEditor(GraphEditor):
             additional['include_j_error_in_individual_analyses'] = po.include_j_error
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
-        for gid, ans in groupby(unks, key=key):
-            ans = filter(lambda x: not x.is_omitted(ok), ans)
+        for gid, oans in groupby(unks, key=key):
+            ans = filter(lambda x: not x.is_omitted(ok), oans)
             ias.append(InterpretedAge(analyses=ans,
+                                      all_analyses=oans,
                                       preferred_age_kind=pk,
                                       preferred_age_error_kind=ek,
                                       use=True,

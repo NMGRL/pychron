@@ -267,6 +267,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
 
 class InterpretedAge(StepHeatAnalysisGroup):
+    all_analyses = List
     preferred_age = Property(depends_on='preferred_age_kind')
     preferred_age_value = Property(depends_on='preferred_age_kind')
     preferred_age_error = Property(depends_on='preferred_age_kind, preferred_age_error_kind')

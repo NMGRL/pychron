@@ -20,18 +20,41 @@ from uncertainties import nominal_value, std_dev
 
 from pychron.loggable import Loggable
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class FusionTableTextOptions(HasTraits):
     use_sample_sheets = Bool(True)
 
 
-def _getattr(x, k):
-    if k in x.isotopes:
-        v = x.isotopes[k].get_intensity()
-    else:
-        v = getattr(x, k)
-    return v
+# def _getattr(x, k):
+#     if k in x.isotopes:
+#         v = x.isotopes[k].get_intensity()
+#     else:
+#         v = getattr(x, k)
+#     return v
+
+def iso_value(attr, ve='value'):
+    def f(x, k):
+        if k in x.isotopes:
+            iso = x.isotopes[k]
+            if attr == 'intercept':
+                v = iso.uvalue
+            elif attr == 'baseline':
+                v = iso.baseline.uvalue
+            elif attr == 'disc_ic_corrected':
+                v = iso.get_intensity()
+            elif attr == 'interference_corrected':
+                v = iso.get_interference_corrected_value()
+            elif attr == 'blank':
+                v = iso.blank.uvalue
+        if v is not None:
+            return nominal_value(v) if ve == 'value' else std_dev(v)
+        else:
+            return ''
+
+    return f
 
 
 def icf_value(x, k):
@@ -45,7 +68,7 @@ def icf_error(x, k):
 
 
 def value(x, k):
-    x = _getattr(x, k)
+    x = getattr(x, k)
     if x:
         return nominal_value(x)
     else:
@@ -53,25 +76,9 @@ def value(x, k):
 
 
 def error(x, k):
-    x = _getattr(x, k)
+    x = getattr(x, k)
     if x:
         return std_dev(x)
-    else:
-        return ''
-
-
-def blank_value(x, k):
-    if k in x.isotopes:
-        x = x.isotopes[k]
-        return x.blank.uvalue.nominal_value
-    else:
-        return ''
-
-
-def blank_error(x, k):
-    if k in x.isotopes:
-        x = x.isotopes[k]
-        return x.blank.uvalue.std_dev
     else:
         return ''
 
@@ -88,28 +95,66 @@ class LaserTableTextWriter(Loggable):
         ('Power', 'extract_value'),
 
         #                     'Moles_40Ar',
-        ('Ar40', 'Ar40', value),
-        ('Ar40Er', 'Ar40', error),
-        ('Ar39', 'Ar39', value),
-        ('Ar39Er', 'Ar39', error),
-        ('Ar38', 'Ar38', value),
-        ('Ar38Er', 'Ar38', error),
-        ('Ar37', 'Ar37', value),
-        ('Ar37Er', 'Ar37', error),
-        ('Ar36', 'Ar36', value),
-        ('Ar36Er', 'Ar36', error),
+        # interference corrected
+        ('Ar40_interf', 'Ar40', iso_value('interference_corrected')),
+        ('Ar40Er_interf', 'Ar40', iso_value('interference_corrected', ve='error')),
+        ('Ar39_interf', 'Ar39', iso_value('interference_corrected')),
+        ('Ar39Er_interf', 'Ar39', iso_value('interference_corrected', ve='error')),
+        ('Ar38_interf', 'Ar38', iso_value('interference_corrected')),
+        ('Ar38Er_interf', 'Ar38', iso_value('interference_corrected', ve='error')),
+        ('Ar37_interf', 'Ar37', iso_value('interference_corrected')),
+        ('Ar37Er_interf', 'Ar37', iso_value('interference_corrected', ve='error')),
+        ('Ar36_interf', 'Ar36', iso_value('interference_corrected')),
+        ('Ar36Er_interf', 'Ar36', iso_value('interference_corrected', ve='error')),
+
+        # disc/ic corrected
+        ('Ar40_disc_ic', 'Ar40', iso_value('disc_ic_corrected')),
+        ('Ar40Er_disc_ic', 'Ar40', iso_value('disc_ic_corrected', ve='error')),
+        ('Ar39_disc_ic', 'Ar39', iso_value('disc_ic_corrected')),
+        ('Ar39Er_disc_ic', 'Ar39', iso_value('disc_ic_corrected', ve='error')),
+        ('Ar38_disc_ic', 'Ar38', iso_value('disc_ic_corrected')),
+        ('Ar38Er_disc_ic', 'Ar38', iso_value('disc_ic_corrected', ve='error')),
+        ('Ar37_disc_ic', 'Ar37', iso_value('disc_ic_corrected')),
+        ('Ar37Er_disc_ic', 'Ar37', iso_value('disc_ic_corrected', ve='error')),
+        ('Ar36_disc_ic', 'Ar36', iso_value('disc_ic_corrected')),
+        ('Ar36Er_disc_ic', 'Ar36', iso_value('disc_ic_corrected', ve='error')),
+
+        # intercepts
+        ('Ar40_int', 'Ar40', iso_value('intercept')),
+        ('Ar40Er_int', 'Ar40', iso_value('intercept', ve='error')),
+        ('Ar39_int', 'Ar39', iso_value('intercept')),
+        ('Ar39Er_int', 'Ar39', iso_value('intercept', ve='error')),
+        ('Ar38_int', 'Ar38', iso_value('intercept')),
+        ('Ar38Er_int', 'Ar38', iso_value('intercept', ve='error')),
+        ('Ar37_int', 'Ar37', iso_value('intercept')),
+        ('Ar37Er_int', 'Ar37', iso_value('intercept', ve='error')),
+        ('Ar36_int', 'Ar36', iso_value('intercept')),
+        ('Ar36Er_int', 'Ar36', iso_value('intercept', ve='error')),
+
+        # baselines
+        ('Ar40_bs', 'Ar40', iso_value('baseline')),
+        ('Ar40Er_bs', 'Ar40', iso_value('baseline', ve='error')),
+        ('Ar39_bs', 'Ar39', iso_value('baseline')),
+        ('Ar39Er_bs', 'Ar39', iso_value('baseline', ve='error')),
+        ('Ar38_bs', 'Ar38', iso_value('baseline')),
+        ('Ar38Er_bs', 'Ar38', iso_value('baseline', ve='error')),
+        ('Ar37_bs', 'Ar37', iso_value('baseline')),
+        ('Ar37Er_bs', 'Ar37', iso_value('baseline', ve='error')),
+        ('Ar36_bs', 'Ar36', iso_value('baseline')),
+        ('Ar36Er_bs', 'Ar36', iso_value('baseline', ve='error')),
 
         # blanks
-        ('Ar40', 'Ar40', blank_value),
-        ('Ar40Er', 'Ar40', blank_error),
-        ('Ar39', 'Ar39', blank_value),
-        ('Ar39Er', 'Ar39', blank_error),
-        ('Ar38', 'Ar38', blank_value),
-        ('Ar38Er', 'Ar38', blank_error),
-        ('Ar37', 'Ar37', blank_value),
-        ('Ar37Er', 'Ar37', blank_error),
-        ('Ar36', 'Ar36', blank_value),
-        ('Ar36Er', 'Ar36', blank_error),
+        ('Ar40_bk', 'Ar40', iso_value('blank')),
+        ('Ar40Er_bk', 'Ar40', iso_value('blank', ve='error')),
+        ('Ar39_bk', 'Ar39', iso_value('blank')),
+        ('Ar39Er_bk', 'Ar39', iso_value('blank', ve='error')),
+        ('Ar38_bk', 'Ar38', iso_value('blank')),
+        ('Ar38Er_bk', 'Ar38', iso_value('blank', ve='error')),
+        ('Ar37_bk', 'Ar37', iso_value('blank')),
+        ('Ar37Er_bk', 'Ar37', iso_value('blank', ve='error')),
+        ('Ar36_bk', 'Ar36', iso_value('blank')),
+        ('Ar36Er_bk', 'Ar36', iso_value('blank', ve='error')),
+
         ('K/Ca', 'kca', value),
         ('K/CaErr', 'kca', error),
         ('Age', 'age', value),
@@ -117,8 +162,11 @@ class LaserTableTextWriter(Loggable):
         ('Disc', 'discrimination', value),
         ('DiscEr', 'discrimination', error),
         ('CDD_ICFactor', 'CDD_ic_factor', icf_value),
-        ('CDD_ICFactorErr', 'CDD_ic_factor', icf_error)
-
+        ('CDD_ICFactorErr', 'CDD_ic_factor', icf_error),
+        ('J', 'j', value),
+        ('JEr', 'j', error),
+        ('39ArDecay', 'ar39decayfactor', value)
+        ('37ArDecay', 'ar37decayfactor', value)
     )
     default_style = None
 
@@ -143,7 +191,7 @@ class LaserTableTextWriter(Loggable):
                 if i == 0:
                     self._add_header_row(sh, 0)
 
-                self._add_analyses(sh, gi.analyses, start=start)
+                self._add_analyses(sh, gi.all_analyses, start=start)
                 start += len(gi.analyses) + 1
 
         wb.save(p)
@@ -188,7 +236,7 @@ class LaserTableTextWriter(Loggable):
         names = [c[0] for c in self.columns]
 
         s1, s2 = self._get_header_styles()
-        sheet.write(hrow, 7, 'Corrected Isotope Intensities', style=s1)
+        sheet.write(hrow, 7, 'Disc/IC Corrected Isotope Intensities', style=s1)
         sheet.merge(hrow, hrow, 7, 16)
         sheet.write(hrow, 17, 'Blanks', style=s1)
         sheet.merge(hrow, hrow, 17, 27)

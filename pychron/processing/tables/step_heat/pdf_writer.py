@@ -47,8 +47,8 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                     double_first_line=True,
                     include_footnotes=False):
 
-        analyses = group.analyses
-        self._ref = analyses[0]
+        self._ref = group.analyses[0]
+        analyses = group.all_analyses
 
         style = self._new_style(debug_grid=False)
 

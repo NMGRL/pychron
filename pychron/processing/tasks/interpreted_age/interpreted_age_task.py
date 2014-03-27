@@ -29,7 +29,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
     DeleteInterpretedAgeGroupAction, \
-    PlotIdeogramAction
+    PlotIdeogramAction, SaveXLSTablesAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
 from pychron.processing.tasks.interpreted_age.tas_writer import TASWriter
@@ -38,7 +38,8 @@ from pychron.processing.tasks.interpreted_age.tas_writer import TASWriter
 class InterpretedAgeTask(BaseBrowserTask):
     name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
-    tool_bars = [SToolBar(SavePDFTablesAction()),
+    tool_bars = [SToolBar(SavePDFTablesAction(),
+                          SaveXLSTablesAction()),
                  SToolBar(SaveAsInterpretedAgeGroupAction(),
                           SaveInterpretedAgeGroupAction(),
                           OpenInterpretedAgeGroupAction(),
@@ -75,7 +76,6 @@ class InterpretedAgeTask(BaseBrowserTask):
             tw = TASWriter()
             db = self.manager.db
             tw.write(db, self.active_editor.interpreted_ages)
-
 
     def make_group_from_file(self):
         if self.has_active_editor():
@@ -148,6 +148,21 @@ class InterpretedAgeTask(BaseBrowserTask):
                     project = sgd.selected_project.name
                     if name and project:
                         self.active_editor.save_group(name, project)
+
+    def save_xls_tables(self):
+        if self.has_active_editor():
+            n = self.active_editor.name
+            #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
+            if not os.path.isdir(r):
+                p = self.save_file_dialog(ext='.xls')
+            else:
+                p, _ = unique_path(r, n, extension='.xls')
+
+            if p:
+                self.active_editor.save_xls_tables(p)
+
+            self.view_xls(p)
 
     def save_pdf_tables(self):
         if self.has_active_editor():
