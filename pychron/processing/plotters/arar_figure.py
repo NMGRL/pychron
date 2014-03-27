@@ -126,6 +126,10 @@ class BaseArArFigure(HasTraits):
         graph.vertical_resize = vertical_resize
         graph.clear_has_title()
 
+        title = None
+        if not self.title:
+            title = self.options.title
+
         for i, po in enumerate(plots):
             kw = {'padding': self.padding,
                   'ytitle': po.name}
@@ -134,7 +138,7 @@ class BaseArArFigure(HasTraits):
                 kw['bounds'] = [50, po.height]
 
             if i == (len(plots) - 1):
-                kw['title'] = self.title
+                kw['title'] = title
             elif i == 0:
                 kw['ytitle'] = self.ytitle
 

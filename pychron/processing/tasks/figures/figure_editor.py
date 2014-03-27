@@ -139,9 +139,13 @@ class FigureEditor(GraphEditor):
         db = self.processor.db
         with db.session_ctx():
             hist = db.add_interpreted_age_history(ln)
+
+            age = (ia.preferred_age_value or 0)
+            age_err = (ia.preferred_age_error or 0)
+
             db_ia = db.add_interpreted_age(hist,
-                                           age=ia.preferred_age_value or 0,
-                                           age_err=ia.preferred_age_error or 0,
+                                           age=age,
+                                           age_err=age_err,
                                            age_kind=ia.preferred_age_kind,
                                            kca_kind=ia.preferred_kca_kind,
                                            kca=float(ia.preferred_kca_value),

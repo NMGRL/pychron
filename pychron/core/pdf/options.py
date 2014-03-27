@@ -18,8 +18,8 @@
 import os
 
 from traits.api import HasTraits, Str, Bool, Color, Enum, \
-    Button, Float, TraitError, Property
-from traitsui.api import View, Item, UItem, HGroup, Group
+    Button, Float, TraitError, Property, Int
+from traitsui.api import View, Item, UItem, HGroup, Group, VGroup
 
 
 #============= standard library imports ========================
@@ -97,6 +97,12 @@ class PDFTableOptions(BasePDFOptions):
     kca_nsigma = Enum(1, 2, 3)
     link_sigmas = Bool(True)
 
+    age_units = Enum('Ma', 'ka')
+    kca_sig_figs = Int
+    kca_err_sig_figs = Int
+    age_sig_figs = Int
+    age_err_sig_figs = Int
+
     _persistence_name = 'table_pdf_options'
 
     def _load_yaml_hook(self, d):
@@ -108,6 +114,14 @@ class PDFTableOptions(BasePDFOptions):
         self.kca_nsigma = d.get('kca_nsigma', 2)
         self.link_sigmas = d.get('link_sigmas', True)
 
+        self.age_sig_figs = d.get('age_sig_figs', 3)
+        self.age_err_sig_figs = d.get('age_err_sig_figs', 4)
+
+        self.kca_sig_figs = d.get('kca_sig_figs', 3)
+        self.kca_err_sig_figs = d.get('kca_err_sig_figs', 4)
+
+        self.age_units = d.get('age_units', 'Ma')
+
     def get_dump_dict(self):
         d = super(PDFTableOptions, self).get_dump_dict()
         d.update(dict(title=str(self.title),
@@ -117,7 +131,14 @@ class PDFTableOptions(BasePDFOptions):
                       show_page_numbers=self.show_page_numbers,
                       age_nsigma=self.age_nsigma,
                       kca_nsigma=self.kca_nsigma,
-                      link_sigmas=self.link_sigmas))
+                      link_sigmas=self.link_sigmas,
+                      age_sig_figs=self.age_sig_figs,
+                      age_err_sig_figs=self.age_err_sig_figs,
+
+                      kca_sig_figs=self.kca_sig_figs,
+                      kca_err_sig_figs=self.kca_err_sig_figs,
+
+                      age_units=self.age_units))
 
         return d
 
@@ -165,6 +186,13 @@ class PDFTableOptions(BasePDFOptions):
         data_grp = Group(Item('link_sigmas', label='Link'),
                          Item('age_nsigma', label='Age NSigma'),
                          Item('kca_nsigma', label='K/CA NSigma'),
+                         Item('age_units'),
+                         VGroup(
+                             HGroup(Item('age_sig_figs', label='Age'),
+                                    Item('age_err_sig_figs', label='Error')),
+                             HGroup(Item('kca_sig_figs', label='K/Ca'),
+                                    Item('kca_err_sig_figs', label='Error')),
+                             label='Sig Figs'),
                          label='Data')
         v = View(
             layout_grp,

@@ -117,7 +117,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         r.add_item(value='MSWD')
         r.add_item(value='K/Ca')
         r.add_item(value=PMS_kca)
-        r.add_item(value='Age')
+        r.add_item(value='Age({})'.format(self.options.age_units))
         r.add_item(value=PMS_age)
 
         return (pr, r,)
@@ -125,6 +125,19 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
     def _make_interpreted_age_row(self, interpreted_age):
         age_nsigma = self.options.age_nsigma
         kca_nsigma = self.options.kca_nsigma
+
+        #age in Ma
+        age = interpreted_age.age
+        age_err = interpreted_age.age_err
+
+        if self.options.age_units == 'ka':
+            age *= 1000
+            age_err *= 1000
+
+        age_sig_figs = self.options.age_sig_figs
+        age_err_sig_figs = self.options.age_err_sig_figs
+        kca_sig_figs = self.options.kca_sig_figs
+        kca_err_sig_figs = self.options.kca_err_sig_figs
 
         row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
@@ -139,10 +152,12 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         # row.add_item(value=self._error(n=1)(interpreted_age.weighted_kca))
         # row.add_item(value=self._value(n=4)(interpreted_age.weighted_age))
         # row.add_item(value=self._error(n=4)(interpreted_age.weighted_age))
-        row.add_item(value=floatfmt(interpreted_age.kca, n=4))
-        row.add_item(value=floatfmt(interpreted_age.kca_err * kca_nsigma, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age, n=4))
-        row.add_item(value=floatfmt(interpreted_age.age_err * age_nsigma, n=4))
+        row.add_item(value=floatfmt(interpreted_age.kca,
+                                    n=kca_sig_figs))
+        row.add_item(value=floatfmt(interpreted_age.kca_err * kca_nsigma,
+                                    n=kca_err_sig_figs))
+        row.add_item(value=floatfmt(age, n=age_sig_figs))
+        row.add_item(value=floatfmt(age_err * age_nsigma, n=age_err_sig_figs))
 
         return row
 

@@ -23,18 +23,12 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-class FusionTableTextOptions(HasTraits):
-    use_sample_sheets = Bool(True)
 
 
-# def _getattr(x, k):
-#     if k in x.isotopes:
-#         v = x.isotopes[k].get_intensity()
-#     else:
-#         v = getattr(x, k)
-#     return v
+
 
 def iso_value(attr, ve='value'):
     def f(x, k):
@@ -98,6 +92,10 @@ def error(x, k):
         return std_dev(x)
     else:
         return ''
+
+
+class FusionTableTextOptions(HasTraits):
+    use_sample_sheets = Bool(False)
 
 
 class LaserTableTextWriter(Loggable):
@@ -209,7 +207,6 @@ class LaserTableTextWriter(Loggable):
         self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
         options = self.options
-        options.use_sample_sheets = False
         if options.use_sample_sheets:
             for gi in groups:
                 # for sam, ais in self._group_samples(ans):
