@@ -35,7 +35,7 @@ class PlotFigureAction(TaskAction):
 class PlotIdeogramAction(TaskAction):
     name = 'Ideogram'
     method = 'plot_ideogram'
-    image = icon('file_pdf')
+    image = icon('chart_curve_go')
     tooltip = 'Plot ideogram of interpreted ages'
 
 
@@ -103,6 +103,12 @@ class MakeGroupFromFileAction(TasklessInterpretedAgeAction):
     name = 'Group From File'
     method = 'make_group_from_file'
     image = icon('document-open')
+
+
+class MakeGroupAction(TaskAction):
+    name = 'Make Group'
+    method = 'make_group_from_selected'
+    image = icon('add')
 
 
 class DeleteInterpretedAgeGroupAction(TaskAction):

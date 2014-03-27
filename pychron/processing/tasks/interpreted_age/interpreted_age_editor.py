@@ -106,10 +106,12 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             self._save_pdf_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
+            self._save_pdf_data_table(p, argus, step_heat_title, fusion_title, 'argus')
         if xls:
             step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Analytical Data'
             self._save_xls_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
+            self._save_xls_data_table(p, argus, step_heat_title, fusion_title, 'args')
 
             # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
@@ -203,7 +205,17 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             title = opt.title
         return title
 
+    def add_latest_interpreted_ages(self, lns):
+        db = self.processor.db
+        with db.session_ctx():
+            for li in lns:
+                hist = db.get_latest_interpreted_age_history(li)
+                self.interpreted_ages.append(db.interpreted_age_factory(hist))
+
     def set_identifiers(self, lns):
+        """
+             only use th first identifier
+        """
         self.analyses = []
         self.selected_history_name = ''
         self.selected_history = InterpretedAge()
@@ -211,7 +223,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         if lns:
             db = self.processor.db
             with db.session_ctx():
-                histories = db.get_interpreted_age_histories(lns)
+                histories = db.get_interpreted_age_histories(lns[:1])
 
                 hs = [db.interpreted_age_factory(hi) for hi in histories]
                 self.histories = [hi for hi in hs if hi]
@@ -221,7 +233,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                     self.selected_history_name = self.history_names[0]
 
     def set_samples(self, samples):
-        self.set_identifiers([si.labnumber for si in samples])
+        """
+            only use the first sample
+        """
+        self.set_identifiers([si.labnumber for si in samples[:1]])
 
     def update_group(self):
         gid = self.saved_group_id
@@ -313,7 +328,6 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                 s = dbhist.interpreted_age.sets
 
                 self.analyses = [func(a) for a in s]
-
 
     def _append_button_fired(self):
         self.interpreted_ages.append(self.selected_history)

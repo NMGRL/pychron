@@ -150,7 +150,8 @@ class TableTools(HasTraits):
                                       width=-25,
                                       editor=EnumEditor(name=make_name('analysis_filter_values'))),
                                 icon_button_editor(make_name('configure_analysis_table'), 'cog',
-                                                   tooltip='Configure analysis table'))
+                                                   tooltip='Configure analysis table'),
+                                defined_when=self.pane.analyses_defined)
         sample_tools = HGroup(UItem('sample_filter_parameter',
                                     width=-90,
                                     editor=EnumEditor(name='sample_filter_parameters')),

@@ -29,7 +29,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
     DeleteInterpretedAgeGroupAction, \
-    PlotIdeogramAction, SaveXLSTablesAction
+    PlotIdeogramAction, SaveXLSTablesAction, MakeGroupAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
 from pychron.processing.tasks.interpreted_age.tas_writer import TASWriter
@@ -43,8 +43,9 @@ class InterpretedAgeTask(BaseBrowserTask):
                  SToolBar(SaveAsInterpretedAgeGroupAction(),
                           SaveInterpretedAgeGroupAction(),
                           OpenInterpretedAgeGroupAction(),
-                          MakeGroupFromFileAction(),
                           DeleteInterpretedAgeGroupAction()),
+                 SToolBar(MakeGroupAction(),
+                          MakeGroupFromFileAction()),
                  SToolBar(PlotIdeogramAction())]
 
     def plot_ideogram(self):
@@ -76,6 +77,14 @@ class InterpretedAgeTask(BaseBrowserTask):
             tw = TASWriter()
             db = self.manager.db
             tw.write(db, self.active_editor.interpreted_ages)
+
+    def make_group_from_selected(self):
+        if self.has_active_editor():
+            if self.selected_samples:
+                lns = [si.identifier for si in self.selected_samples]
+                self.active_editor.add_latest_interpreted_ages(lns)
+            else:
+                self.information_dialog('Please select a set of samples.')
 
     def make_group_from_file(self):
         if self.has_active_editor():

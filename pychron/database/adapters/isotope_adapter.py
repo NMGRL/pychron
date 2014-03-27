@@ -240,6 +240,19 @@ class IsotopeAdapter(DatabaseAdapter):
 
                 return self._query_all(q)
 
+    def get_latest_interpreted_age_history(self, value, key='identifier'):
+        with self.session_ctx() as sess:
+            q = sess.query(proc_InterpretedAgeHistoryTable)
+
+            attr = getattr(proc_InterpretedAgeHistoryTable, key)
+            q = q.filter(attr.__eq__(value))
+            q = q.order_by(proc_InterpretedAgeHistoryTable.create_date.desc())
+
+            try:
+                return q.first()
+            except NoResultFound:
+                pass
+
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:
             q = sess.query(proc_InterpretedAgeHistoryTable)
