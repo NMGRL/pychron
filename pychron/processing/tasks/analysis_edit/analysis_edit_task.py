@@ -339,7 +339,8 @@ class AnalysisEditTask(BaseBrowserTask):
                         it.set_tag(tag)
 
                 if use_filter:
-                    self.active_editor.filter_invalid_analyses()
+                    if not isinstance(self.active_editor,RecallEditor):
+                        self.active_editor.filter_invalid_analyses()
 
                 self.analysis_table.refresh_needed = True
                 if self.unknowns_pane:

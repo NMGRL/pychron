@@ -344,7 +344,7 @@ class BaseRegressor(HasTraits):
 
         if self._check_integrity(ys, yserr):
             mswd = calculate_mswd(ys, yserr)
-            self.valid_mswd = validate_mswd(mswd, len(ys))
+            self.valid_mswd = validate_mswd(mswd, len(ys)) or False
             return mswd
 
     def _get_n(self):

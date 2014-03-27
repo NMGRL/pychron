@@ -194,6 +194,7 @@ class FigureEditor(GraphEditor):
             additional['include_j_error_in_mean'] = po.include_j_error_in_mean
 
         for gid, oans in groupby(unks, key=key):
+            oans = list(oans)
             ans = filter(lambda x: not x.is_omitted(ok), oans)
             ias.append(InterpretedAge(analyses=ans,
                                       all_analyses=oans,
@@ -307,20 +308,20 @@ class FigureEditor(GraphEditor):
         db = self.processor.db
         with db.session_ctx() as sess:
             fig = db.get_figure(sid, key='id')
+            if fig:
+                pom = self.plotter_options_manager
+                blob = pom.dump_yaml()
+                fig.preference.options = blob
 
-            pom = self.plotter_options_manager
-            blob = pom.dump_yaml()
-            fig.preference.options = blob
+                for dbai in fig.analyses:
+                    sess.delete(dbai)
 
-            for dbai in fig.analyses:
-                sess.delete(dbai)
-
-            for ai in self.analyses:
-                dbai = db.get_analysis_uuid(ai.uuid)
-                db.add_figure_analysis(fig, dbai,
-                                       status=ai.is_omitted('omit_{}'.format(self.basename)),
-                                       graph=ai.graph_id,
-                                       group=ai.group_id)
+                for ai in self.analyses:
+                    dbai = db.get_analysis_uuid(ai.uuid)
+                    db.add_figure_analysis(fig, dbai,
+                                           status=ai.is_omitted('omit_{}'.format(self.basename)),
+                                           graph=ai.graph_id,
+                                           group=ai.group_id)
 
 #============= EOF =============================================
 # dbans = fig.analyses
