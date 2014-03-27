@@ -118,7 +118,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     def _save_xls_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
         head, ext = os.path.splitext(p)
         ext = '.xls'
-        shgroups, fgroups = self._assemble_groups(ias)
+        shgroups, fgroups = self._assemble_groups(ias[:1])
         if shgroups:
             w = StepHeatTableXLSWriter()
             p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
@@ -144,12 +144,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             def gfactory(klass, dbia):
                 hid = db.get_interpreted_age_history(dbia.id)
-                # ans = (si.analysis for si in hid.interpreted_age.sets \
-                #        if not si.tag == 'invalid')
-                ia_ans = hid.interpreted_age.sets
+                ia_ans = (si.analysis for si in hid.interpreted_age.sets)
                 all_ans = self.processor.make_analyses(ia_ans,
                                                        calculate_age=True,
-                                                       # use_cache=False,
+                                                       use_cache=False,
                                                        progress=prog)
                 #overwrite the tags for the analyses
                 for ai, sai in zip(all_ans, ia_ans):
@@ -194,7 +192,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         # w.use_alternating_background=opt.use_alternating_background
         w.options = opt
         w.build(p, items, title)
-
+        view_file(p)
         # self._save_recipe_file(p)
 
     def get_title(self):

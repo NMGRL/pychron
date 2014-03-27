@@ -22,6 +22,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class FusionTableTextOptions(HasTraits):
@@ -49,6 +50,22 @@ def iso_value(attr, ve='value'):
                 v = iso.get_interference_corrected_value()
             elif attr == 'blank':
                 v = iso.blank.uvalue
+        if v is not None:
+            return nominal_value(v) if ve == 'value' else std_dev(v)
+        else:
+            return ''
+
+    return f
+
+
+def correction_value(ve='value'):
+    def f(x, k):
+        v = None
+        if k in x.interference_corrections:
+            v = x.interference_corrections[k]
+        elif k in x.production_ratios:
+            v = x.production_ratios[k]
+
         if v is not None:
             return nominal_value(v) if ve == 'value' else std_dev(v)
         else:
@@ -165,8 +182,26 @@ class LaserTableTextWriter(Loggable):
         ('CDD_ICFactorErr', 'CDD_ic_factor', icf_error),
         ('J', 'j', value),
         ('JEr', 'j', error),
-        ('39ArDecay', 'ar39decayfactor', value)
-        ('37ArDecay', 'ar37decayfactor', value)
+        ('39ArDecay', 'ar39decayfactor', value),
+        ('37ArDecay', 'ar37decayfactor', value),
+        ('K4039', 'k4039', correction_value()),
+        ('K4039_err', 'k4039', correction_value(ve='error')),
+        ('K3839', 'k3839', correction_value()),
+        ('K3839_err', 'k3839', correction_value(ve='error')),
+        ('K3739', 'k3739', correction_value()),
+        ('K3739_err', 'k3739', correction_value(ve='error')),
+        ('Ca3937', 'ca3937', correction_value()),
+        ('Ca3937_err', 'ca3937', correction_value(ve='error')),
+        ('Ca3837', 'ca3837', correction_value()),
+        ('Ca3837_err', 'ca3837', correction_value(ve='error')),
+        ('Ca3637', 'ca3637', correction_value()),
+        ('Ca3637_err', 'ca3637', correction_value(ve='error')),
+        ('Cl3638', 'cl3638', correction_value()),
+        ('Cl3638_err', 'cl3638', correction_value(ve='error')),
+        ('Ca_K', 'Ca_K', correction_value()),
+        ('Ca_K_err', 'Ca_K', correction_value(ve='error')),
+        ('Cl_K ', 'Cl_K', correction_value()),
+        ('Cl_K_err', 'Cl_K', correction_value(ve='error')),
     )
     default_style = None
 
@@ -236,10 +271,30 @@ class LaserTableTextWriter(Loggable):
         names = [c[0] for c in self.columns]
 
         s1, s2 = self._get_header_styles()
-        sheet.write(hrow, 7, 'Disc/IC Corrected Isotope Intensities', style=s1)
-        sheet.merge(hrow, hrow, 7, 16)
-        sheet.write(hrow, 17, 'Blanks', style=s1)
-        sheet.merge(hrow, hrow, 17, 27)
+        c = 7
+        for t in ('Interference Corrected Isotope Intensities',
+                  'Disc/IC Corrected Isotope Intensities',
+                  'Uncorrected Isotope Intercepts',
+                  'Baselines',
+                  'Blanks'):
+            sheet.write(hrow, c, t, style=s1)
+            sheet.merge(hrow, hrow, c, c + 9)
+            c = c + 10
+
+        # sheet.write(hrow, 7, 'Interference Corrected Isotope Intensities', style=s1)
+        # sheet.merge(hrow, hrow, 7, 16)
+        #
+        # sheet.write(hrow, 17, 'Disc/IC Corrected Isotope Intensities', style=s1)
+        # sheet.merge(hrow, hrow, 17, 26)
+        #
+        # sheet.write(hrow, 27, 'Uncorrected Isotope Intercepts', style=s1)
+        # sheet.merge(hrow, hrow, 26, 34)
+        #
+        # sheet.write(hrow, 35, 'Baselines', style=s1)
+        # sheet.merge(hrow, hrow, 35, 43)
+        #
+        # sheet.write(hrow, 44, 'Blanks', style=s1)
+        # sheet.merge(hrow, hrow, 44, 52)
 
         for i, ci in enumerate(names):
             sheet.write(hrow + 1, i, ci, style=s2)

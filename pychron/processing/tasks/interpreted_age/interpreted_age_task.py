@@ -162,7 +162,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             if p:
                 self.active_editor.save_xls_tables(p)
 
-            self.view_xls(p)
+                # self.view_xls(p)
 
     def save_pdf_tables(self):
         if self.has_active_editor():
@@ -180,7 +180,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             if p:
                 self.active_editor.save_pdf_tables(p)
 
-            self.view_pdf(p)
+                # self.view_pdf(p)
 
     def create_dock_panes(self):
         panes = [self._create_browser_pane(analyses_defined='0')]
