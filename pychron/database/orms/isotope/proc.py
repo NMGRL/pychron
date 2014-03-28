@@ -161,6 +161,7 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 
     age = Column(Float)
     age_err = Column(Float)
+    display_age_units = stringcolumn(2)
 
     kca = Column(Float)
     kca_err = Column(Float)

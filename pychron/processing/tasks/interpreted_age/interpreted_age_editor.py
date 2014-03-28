@@ -47,8 +47,8 @@ class InterpretedAgeAdapter(TabularAdapter):
     columns = [('Sample', 'sample'),
                ('Identifier', 'identifier'),
                ('Kind', 'age_kind'),
-               ('Age', 'age'),
-               ('Error', 'age_err'),
+               ('Age', 'display_age'),
+               ('Error', 'display_age_err'),
                ('NAnalyses', 'nanalyses'),
                ('MSWD', 'mswd')]
 
@@ -56,8 +56,8 @@ class InterpretedAgeAdapter(TabularAdapter):
     sample_width = Int(100)
     identifier_width = Int(100)
     age_kind_width = Int(100)
-    age_width = Int(75)
-    age_err_width = Int(75)
+    display_age_width = Int(75)
+    display_age_err_width = Int(75)
     nanalyses_width = Int(75)
 
 
@@ -307,7 +307,9 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
     @on_trait_change('interpreted_ages[]')
     def _interpreted_ages_changed(self):
-        self.pdf_table_options.title = self._generate_title()
+        if self.interpreted_ages:
+            self.pdf_table_options.title = self._generate_title()
+            self.pdf_table_options.age_units = self.interpreted_ages[0].display_age_units
 
     def _selected_history_name_changed(self):
         if self.selected_history_name:

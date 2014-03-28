@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 
-from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool
+from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool, Property
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
@@ -26,6 +26,7 @@ from sqlalchemy.sql.expression import and_, func, not_
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
@@ -99,12 +100,39 @@ class InterpretedAge(HasTraits):
     include_j_error_in_plateau = Bool
     include_j_error_in_individual_analyses = Bool
 
+    display_age = Property
+    display_age_err = Property
+    display_age_units = Str('Ma')
+
+    def _get_display_age(self):
+        a = self.age
+        return self._scale_age(a)
+
+    def _get_display_age_err(self):
+        e = self.age_err
+        return self._scale_age(e)
+
+    def _scale_age(self, a):
+        if self.display_age_units == 'ka':
+            a *= 1000
+        elif self.display_age_units == 'Ga':
+            a *= 0.001
+
+        return a
+
     def traits_view(self):
         return View(HGroup(Item('age_kind',
                                 style='readonly', show_label=False),
-                           Item('age', style='readonly'),
-                           Item('age_err', style='readonly'),
-                           Item('mswd', style='readonly', label='MSWD')))
+                           Item('display_age', format_func=lambda x: floatfmt(x, 3),
+                                style='readonly'),
+                           Item('display_age_err',
+                                format_func=lambda x: floatfmt(x, 4),
+                                style='readonly'),
+                           Item('display_age_units',
+                                style='readonly', show_label=False),
+                           Item('mswd',
+                                format_func=lambda x: floatfmt(x, 2),
+                                style='readonly', label='MSWD')))
 
 
 class IsotopeAdapter(DatabaseAdapter):
@@ -175,6 +203,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 id=hi.id,
                                 age=ia.age,
                                 age_err=ia.age_err,
+                                display_age_units=ia.display_age_units or 'Ma',
                                 kca=ia.kca or 0,
                                 kca_err=ia.kca_err or 0,
                                 mswd=ia.mswd,

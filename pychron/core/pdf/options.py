@@ -97,7 +97,7 @@ class PDFTableOptions(BasePDFOptions):
     kca_nsigma = Enum(1, 2, 3)
     link_sigmas = Bool(True)
 
-    age_units = Enum('Ma', 'ka')
+    age_units = Enum('Ma', 'ka', 'Ga', 'a')
     kca_sig_figs = Int
     kca_err_sig_figs = Int
     age_sig_figs = Int

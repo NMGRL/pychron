@@ -22,7 +22,7 @@ from numpy import array
 from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, AGE_MA_SCALARS
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 
 
@@ -57,6 +57,7 @@ class AnalysisGroup(HasTraits):
     isochron_age_error_kind = Str
     identifier = Property
     age_scalar = Property
+    age_units = Property
 
     j_err = AGProperty()
     include_j_error_in_mean = Bool(True)
@@ -69,8 +70,12 @@ class AnalysisGroup(HasTraits):
         valid_mswd = validate_mswd(mswd, self.nanalyses)
         return mswd, valid_mswd, self.nanalyses
 
+    def _get_age_units(self):
+        return self.analyses[0].arar_constants.age_units
+
     def _get_age_scalar(self):
-        return self.analyses[0].arar_constants.age_scalar
+        au = self.age_units
+        return AGE_MA_SCALARS[au]
 
     # @cached_property
     def _get_mswd(self):
@@ -306,6 +311,10 @@ class InterpretedAge(StepHeatAnalysisGroup):
 
         return plateau_step
 
+    def get_ma_scaled_age(self):
+        a = self.preferred_age
+        return a * self.age_scalar
+
     def _get_preferred_mswd(self):
         if self.preferred_age_kind == 'Plateau':
             return self.plateau_mswd
@@ -359,10 +368,6 @@ class InterpretedAge(StepHeatAnalysisGroup):
             pa = self.integrated_age
         elif self.preferred_age_kind == 'Plateau':
             pa = self.plateau_age
-
-        #convert to Ma
-        if pa:
-            pa = pa * 1e6 / self.age_scalar
 
         return pa
 

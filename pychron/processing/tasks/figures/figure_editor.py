@@ -24,6 +24,7 @@ from enable.component_editor import ComponentEditor as EnableComponentEditor
 from itertools import groupby
 import os
 #============= local library imports  ==========================
+from uncertainties import nominal_value, std_dev
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.analyses.file_analysis import FileAnalysis
@@ -140,12 +141,12 @@ class FigureEditor(GraphEditor):
         with db.session_ctx():
             hist = db.add_interpreted_age_history(ln)
 
-            age = (ia.preferred_age_value or 0)
-            age_err = (ia.preferred_age_error or 0)
+            a = ia.get_ma_scaled_age()
 
             db_ia = db.add_interpreted_age(hist,
-                                           age=age,
-                                           age_err=age_err,
+                                           age=float(nominal_value(a)),
+                                           age_err=float(std_dev(a)),
+                                           display_age_units=ia.age_units,
                                            age_kind=ia.preferred_age_kind,
                                            kca_kind=ia.preferred_kca_kind,
                                            kca=float(ia.preferred_kca_value),
