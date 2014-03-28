@@ -15,14 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
+
 from kiva.fonttools import str_to_font
-from traits.api import Str, Bool, Property, Enum
-from traitsui.api import View, Item, HGroup, VGroup, Group, EnumEditor, TableEditor
+from traits.api import Str, Bool, Property, Enum, Button, List
+from traitsui.api import View, Item, HGroup, VGroup, Group, \
+    EnumEditor, TableEditor
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.processing.label_maker import TitleMaker
 from pychron.processing.plotters.options.base import BasePlotterOptions
 
 FONTS = ['modern', 'arial']
@@ -44,6 +50,11 @@ def checkbox_column(*args, **kw):
 
 class PlotterOptions(BasePlotterOptions):
     title = Str
+    edit_title_format = Button
+    title_formatter = Str
+    title_attribute_keys = List
+    title_delimiter = Str(',')
+
     auto_generate_title = Bool
     #     data_type = Str('database')
 
@@ -74,6 +85,26 @@ class PlotterOptions(BasePlotterOptions):
     #        if isok:
     #            self._dump()
     #        return True
+    def _edit_title_format_fired(self):
+        tm = TitleMaker(label=self.title)
+        info = tm.edit_traits()
+        if info.result:
+            self.title_formatter = tm.formatter
+            self.title_attribute_keys = tm.attribute_keys
+            self.title = tm.label
+            self.title_delimiter = tm.delimiter
+
+    def generate_title(self, analyses):
+        attrs = self.title_attribute_keys
+        ts = []
+        for gid, ais in groupby(analyses, key=lambda x: x.group_id):
+            ref = ais.next()
+            d = {}
+            for ai in attrs:
+                d[ai] = getattr(ref, ai)
+            t = self.title_formatter.format(**d)
+            ts.append(t)
+        return self.title_delimiter.join(ts)
 
     def construct_plots(self, plist):
         """
@@ -99,7 +130,9 @@ class PlotterOptions(BasePlotterOptions):
     def _get_dump_attrs(self):
         attrs = super(PlotterOptions, self)._get_dump_attrs()
         attrs += ['title', 'auto_generate_title',
-                 #                  'data_type',
+                  'title_formatter',
+                  'title_attribute_keys',
+                  #                  'data_type',
 
                  'xtick_font_size',
                  'xtick_font_name',
@@ -181,8 +214,11 @@ class PlotterOptions(BasePlotterOptions):
     # def _get_info_group(self):
     #     return Group()
     def _get_title_group(self):
-        return HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
-               Item('title', springy=True, enabled_when='not auto_generate_title',
+        return HGroup(Item('auto_generate_title',
+                           tooltip='Auto generate a title based on the analysis list'),
+                      icon_button_editor('edit_title_format', 'cog',
+                                         enabled_when='auto_generate_title'),
+                      Item('title', springy=True, enabled_when='not auto_generate_title',
                     tooltip='User specified plot title'))
 
     def _get_main_group(self):
@@ -219,30 +255,25 @@ class PlotterOptions(BasePlotterOptions):
                              editor=TableEditor(columns=cols,
                                                 sortable=False,
                                                 deletable=False,
-                                                reorderable=False,
-                             ))
+                                                reorderable=False))
         return aux_plots_grp
 
     def traits_view(self):
-        axis_grp = VGroup(
-            self._get_x_axis_group(),
-            VGroup(
-                self._create_axis_group('y', 'title'),
-                self._create_axis_group('y', 'tick'),
-                label='Y'),
-            label='Axes')
+        # axis_grp = VGroup(
+        #     self._get_x_axis_group(),
+        #     VGroup(
+        #         self._create_axis_group('y', 'title'),
+        #         self._create_axis_group('y', 'tick'),
+        #         label='Y'),
+        #     label='Axes')
 
         main_grp = self._get_main_group()
 
-        g = Group(main_grp,
-                  # axis_grp,
-                  orientation='vertical'
-                  )
+        g = VGroup(main_grp)
         grps = self._get_groups()
         if grps:
             g.content.extend(grps)
             g.layout='fold'
-
 
         v = View(VGroup(self._get_refresh_group(),g))
         return v

@@ -166,6 +166,11 @@ class Analysis(ArArAge):
 
         return r
 
+    #mirror labnumber
+    @property
+    def identifier(self):
+        return self.labnumber
+
 
 if __name__ == '__main__':
     pass

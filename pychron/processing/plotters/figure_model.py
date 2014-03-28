@@ -63,6 +63,9 @@ class FigureModel(HasTraits):
         if self.titles:
             for ti, gi in zip(self.titles, gs):
                 gi.title = ti
+        elif self.plot_options.auto_generate_title:
+            for gi in gs:
+                gi.title = self.plot_options.generate_title(gi.analyses)
 
         return gs
 

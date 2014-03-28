@@ -43,6 +43,7 @@ class IdeogramOptions(AgeOptions):
     index_attr = String
     use_asymptotic_limits = Bool
     asymptotic_width = Float
+    asymptotic_percent = Float
     x_end_caps = Bool(False)
     y_end_caps = Bool(False)
     error_bar_nsigma = Enum(1, 2, 3)
@@ -60,6 +61,7 @@ class IdeogramOptions(AgeOptions):
 
     # def _index_attr_default(self):
     #     return 'uage'
+
     def _index_attr_changed(self):
         for ap in self.aux_plots:
             ap.clear_ylimits()
@@ -90,7 +92,11 @@ class IdeogramOptions(AgeOptions):
                              Item('xhigh', label='Max.', enabled_when='not object.use_centered_range')),
                       HGroup(Item('use_asymptotic_limits', enabled_when='not object.use_centered_range'),
                              Item('asymptotic_width', label='Width',
-                                  enabled_when='object.use_asymptotic_limits')),
+                                  tooltip='Width of asymptotic section that is less than the Asymptotic %',
+                                  enabled_when='object.use_asymptotic_limits'),
+                             Item('asymptotic_percent',
+                                  tooltip='Percent of Max probability',
+                                  label='%')),
                       HGroup(Item('use_centered_range', label='Center on fixed range'),
                              UItem('centered_range',
                                    enabled_when='object.use_centered_range')),
@@ -185,7 +191,7 @@ class IdeogramOptions(AgeOptions):
             'error_calc_method',
             'xlow', 'xhigh',
             'use_centered_range', 'centered_range',
-            'use_asymptotic_limits', 'asymptotic_width',
+            'use_asymptotic_limits', 'asymptotic_width', 'asymptotic_percent',
             'display_mean', 'display_mean_indicator',
             'x_end_caps', 'y_end_caps', 'index_attr', 'error_bar_nsigma',
             'analysis_number_sorting',

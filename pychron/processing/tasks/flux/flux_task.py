@@ -32,6 +32,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
@@ -356,6 +357,8 @@ class FluxTask(InterpolationTask):
                 # editor.set_save_all(True)
                 editor.set_save_unknowns(True)
                 editor.save()
+
+        self.information_dialog('Easy Flux Finished')
         # prog.close()
         return True
 

@@ -21,6 +21,7 @@ from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
 from numpy import max as np_max
 #============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -494,8 +495,12 @@ class Ideogram(BaseArArFigure):
             if opt.use_asymptotic_limits and calculate_limits:
                 cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
                 # bins,probs=cfunc(xmi,xma)
+                wa = self.analysis_group.weighted_age
+                m, e = nominal_value(wa), std_dev(wa)
+                xmi, xma = m - e, m + e
                 bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc, xmi, xma,
-                                                                        asymptotic_width=opt.asymptotic_width)
+                                                                        asymptotic_width=opt.asymptotic_width,
+                                                                        tol=(opt.asymptotic_percent or 100) * 0.01)
                 self.trait_setq(xmi=x1, xma=x2)
                 # print x1, x2
                 # self.xmi, self.xma=x1,x2

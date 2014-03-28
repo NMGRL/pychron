@@ -19,29 +19,34 @@ set_qt()
 
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, String, Property, Any, Button
-from traitsui.api import View, ListStrEditor, UItem, HGroup
+from traits.api import HasTraits, List, String, Property, \
+    Any, Button, Str, Dict
+from traitsui.api import View, ListStrEditor, UItem, HGroup, Item, EnumEditor, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
-class LabelMaker(HasTraits):
-    attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
-    attribute_formats = {'step': '',
-                         'aliquot': '02n',
-                         'sample': ''}
-
+class BaseMaker(HasTraits):
+    formatter = Property(depends_on='label')
+    clear_button = Button
     keywords = List
     non_keywords = List
     label = String
     activated = Any
     example = Property(depends_on='label')
+    view_title = Str
+    predefined_label = Str
+    attribute_keys = Property(depends_on='label')
 
-    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001'}
-    formatter = Property(depends_on='label')
-    clear_button = Button
+    def _get_attribute_keys(self):
+        ks = []
+        for k in self.label.split(' '):
+            if k in self.attributes:
+                ks.append(k.lower())
+
+        return ks
 
     def _get_formatter(self):
         ns = []
@@ -73,27 +78,79 @@ class LabelMaker(HasTraits):
                 self.label = new
             self.activated = None
 
+    def _predefined_label_changed(self, new):
+        self.label = new
+
+    def _get_main_view(self):
+        return VGroup(HGroup(Item('predefined_label',
+                                  editor=EnumEditor(name='predefined_labels'))),
+                      UItem('attributes',
+                            editor=ListStrEditor(
+                                editable=False,
+                                activated='activated')),
+                      HGroup(UItem('label'),
+                             icon_button_editor('clear_button', 'edit-clear',
+                                                tooltip='Clear current label'),
+                             label='Label',
+                             show_border=True),
+                      HGroup(UItem('example', style='readonly'), label='Example',
+                             show_border=True))
+
+    def _get_additional_groups(self):
+        pass
+
     def traits_view(self):
-        v = View(UItem('attributes',
-                       editor=ListStrEditor(
-                           editable=False,
-                           activated='activated')),
-                 HGroup(UItem('label'),
-                        icon_button_editor('clear_button', 'edit-clear',
-                                           tooltip='Clear current label'),
-                        label='Label',
-                        show_border=True),
-                 HGroup(UItem('example', style='readonly'), label='Example',
-                        show_border=True),
-                 resizable=True,
-                 title='Label Maker',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        vg = VGroup(self._get_main_view())
+        grps = self._get_additional_groups()
+        if grps:
+            vg.content.extend(grps)
+
+        v = View(
+            vg,
+            resizable=True,
+            title=self.view_title,
+            buttons=['OK', 'Cancel'],
+            kind='livemodal')
         return v
 
 
+class TitleMaker(BaseMaker):
+    attributes = List(['Sample', 'Identifier', '<SPACE>'])
+
+    attribute_formats = {'sample': '',
+                         'identifier': ''}
+
+    example_context = {'sample': 'NM-001', 'identifier': '20001'}
+    view_title = 'Title Maker'
+    predefined_labels = List(['Sample ( Identifier )',
+                              'Sample'])
+
+    delimiter = Str
+    delimiters = Dict({',': 'Comma',
+                       '\t': 'Tab',
+                       ' ': 'Space',
+                       ':': 'Colon',
+                       ';': 'Semicolon'})
+
+    def _get_additional_groups(self):
+        return HGroup(Item('delimiter', editor=EnumEditor(name='delimiters'))),
+
+
+class LabelMaker(BaseMaker):
+    attributes = List(['Sample', 'Aliquot', 'Step', '<SPACE>'])
+    attribute_formats = {'step': '',
+                         'aliquot': '02n',
+                         'sample': ''}
+
+    example_context = {'step': 'A', 'aliquot': 1, 'sample': 'NM-001'}
+    predefined_labels = List(['Sample - Aliquot Step',
+                              'Sample',
+                              'Aliquot Step'])
+    view_title = 'Label Maker'
+
+
 if __name__ == '__main__':
-    lm = LabelMaker()
+    lm = TitleMaker()
     lm.configure_traits()
 #============= EOF =============================================
 
