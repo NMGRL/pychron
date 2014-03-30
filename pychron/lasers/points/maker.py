@@ -15,12 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import math
+
 from enable.abstract_overlay import AbstractOverlay
 from traits.api import Any, Button, Enum, Float, Int, Color, \
     Bool, Range, Instance, on_trait_change, List
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
+
 
 
 
@@ -399,7 +402,7 @@ class GridOverlay(AbstractOverlay):
     hspacing = Float
     indicator_width = Float
     indicator_height = Float
-
+    rotation = Float
     current_pos = (0, 0)
     _cached_points = None
     points_invalid = True
@@ -407,8 +410,13 @@ class GridOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            pos = self.component.get_offset_stage_screen_position()
+            comp = self.component
+            gc.clip_to_rect(comp.x, comp.y,
+                            comp.width, comp.height)
+            pos = comp.get_offset_stage_screen_position()
+
             gc.translate_ctm(*pos)
+            gc.rotate_ctm(math.radians(self.rotation))
 
             self._gather_points()
             gc.set_fill_color((0, 1, 0, self.opacity * 0.01))
@@ -421,13 +429,16 @@ class GridOverlay(AbstractOverlay):
 
     def _gather_points(self):
         hspacing, vspacing = self.hspacing, self.vspacing
+
         if self._cached_points is None or self.points_invalid:
             ox, oy = 0, 0
             self._cached_points = []
             for ci in range(self.ncols):
                 x = ox + ci * hspacing
+
                 for ri in range(self.nrows):
                     y = oy + ri * vspacing
+
                     self._cached_points.append((x, y))
             self.points_invalid = False
 
@@ -436,13 +447,14 @@ class GridMaker(BaseMaker):
     ncols = Range(1, 40, 2, mode='spinner')
     nrows = Range(1, 40, 2, mode='spinner')
 
-    vspacing = Float(80, enter_set=True, auto_set=False)
-    hspacing = Float(80, enter_set=True, auto_set=False)
+    vspacing = Float(800, enter_set=True, auto_set=False)
+    hspacing = Float(800, enter_set=True, auto_set=False)
     grid_overlay = Instance(GridOverlay)
     toggle_grid_visible_button = Button
     indicator_size = Float(60, enter_set=True, auto_set=False)
     indicator_opacity = Range(0.0, 100., 75.)
     grid_indices = List
+    rotation = Range(0.0, 360., 0.0, mode='slider')
 
     def __init__(self, *args, **kw):
         super(GridMaker, self).__init__(*args, **kw)
@@ -469,7 +481,8 @@ class GridMaker(BaseMaker):
                              indicator_width=iw, indicator_height=ih,
                              hspacing=w, vspacing=h,
                              ncols=self.ncols, nrows=self.nrows,
-                             opacity=self.indicator_opacity)
+                             opacity=self.indicator_opacity,
+                             rotation=self.rotation)
             self.grid_overlay = go
             self.canvas.overlays.append(go)
         else:
@@ -478,6 +491,23 @@ class GridMaker(BaseMaker):
         self.canvas.invalidate_and_redraw()
 
     def _accept_point(self, ptargs):
+        """
+            only show the labels for first and last point
+
+            outer loop is always max, inner loop min
+
+            e.g cols=4, rows=2
+
+             2 4 6 8
+            +1 3 5 7
+
+            cols=2, rows=4
+            8 7
+            6 5
+            4 3
+            2 1+
+
+        """
         hspacing, vspacing = self.hspacing * 0.001, self.vspacing * 0.001
         ncols, nrows = self.ncols, self.nrows
 
@@ -489,30 +519,33 @@ class GridMaker(BaseMaker):
         xs = max(ncols, nrows)
         ys = min(ncols, nrows)
 
-        low_pc = self.canvas.point_count
-        high_pc = low_pc + (ncols * nrows) - 1
-        self.grid_indices.append((low_pc, low_pc + 1, high_pc - 1, high_pc))
+        theta = math.radians(self.rotation)
 
         for ci in range(xs):
             if vertical:
-                y = set_sig_figs(oy + ci * vspacing)
+                y = oy + ci * vspacing
             else:
-                x = set_sig_figs(ox + hspacing * ci)
+                x = ox + hspacing * ci
 
             for ri in range(ys):
-                if vertical:
-                    x = set_sig_figs(ox + hspacing * ri)
-                else:
-                    y = set_sig_figs(oy + ri * vspacing)
 
-                ptargs['xy'] = (x, y)
+                if vertical:
+                    x = ox + hspacing * ri
+                else:
+                    y = oy + ri * vspacing
+
+                show_label = (ci == 0 and ri == 0) or (ci == (xs - 1) and ri == (ys - 1))
+
+                xp = x * math.cos(theta) - y * math.sin(theta)
+                yp = x * math.sin(theta) + y * math.cos(theta)
+
+                xp, yp = set_sig_figs(xp), set_sig_figs(yp)
+                ptargs['xy'] = (xp, yp)
                 npt = self.canvas.new_point(default_color=self.point_color,
+                                            show_label=show_label,
                                             redraw=False, **ptargs)
 
                 self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
-
-        if high_pc > 80:
-            self.canvas.downsample_point_labels(self.grid_indices)
 
         self.canvas.request_redraw()
 
@@ -542,6 +575,11 @@ class GridMaker(BaseMaker):
             self.grid_overlay.points_invalid = True
             self.canvas.invalidate_and_redraw()
 
+    def _rotation_changed(self, new):
+        if self.grid_overlay:
+            self.grid_overlay.rotation = new
+            self.canvas.invalidate_and_redraw()
+
     def _indicator_opacity_changed(self, new):
         if self.grid_overlay:
             self.grid_overlay.opacity = new
@@ -559,6 +597,7 @@ class GridMaker(BaseMaker):
                              Item('nrows', label='N. Rows')),
                       HGroup(Item('hspacing', label='HSpacing (um)'),
                              Item('vspacing', label='VSpacing (um)')),
+                      Item('rotation'),
                       Item('indicator_size', label='Indicator Size (um)'),
                       HGroup(UItem('toggle_grid_visible_button', label='Toggle Grid'),
                              Item('indicator_opacity', label='Opacity')))
