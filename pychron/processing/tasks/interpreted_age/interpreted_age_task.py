@@ -24,22 +24,23 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 import yaml
 
-from pychron.core.helpers.filetools import unique_path
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
-from pychron.processing.tasks.interpreted_age.actions import SavePDFTablesAction, SaveInterpretedAgeGroupAction, \
+from pychron.processing.tasks.interpreted_age.actions import SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
     DeleteInterpretedAgeGroupAction, \
-    PlotIdeogramAction, SaveXLSTablesAction, MakeGroupAction
+    PlotIdeogramAction, MakeGroupAction, SaveTablesAction
 from pychron.processing.tasks.interpreted_age.interpreted_age_editor import InterpretedAgeEditor
 from pychron.processing.tasks.interpreted_age.group_dialog import SaveGroupDialog, OpenGroupDialog, DeleteGroupDialog
+from pychron.processing.tasks.interpreted_age.table_selection_dialog import TableSelectionDialog
 from pychron.processing.tasks.interpreted_age.tas_writer import TASWriter
 
 
 class InterpretedAgeTask(BaseBrowserTask):
     name = 'Interpreted Ages'
     id = 'pychron.processing.interpreted_age'
-    tool_bars = [SToolBar(SavePDFTablesAction(),
-                          SaveXLSTablesAction()),
+    tool_bars = [SToolBar(SaveTablesAction()),
+                 # SToolBar(SavePDFTablesAction(),
+                 #          SaveXLSTablesAction()),
                  SToolBar(SaveAsInterpretedAgeGroupAction(),
                           SaveInterpretedAgeGroupAction(),
                           OpenInterpretedAgeGroupAction(),
@@ -158,38 +159,45 @@ class InterpretedAgeTask(BaseBrowserTask):
                     if name and project:
                         self.active_editor.save_group(name, project)
 
-    def save_xls_tables(self):
+    def save_tables(self):
         if self.has_active_editor():
-            n = self.active_editor.name
-            #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
-            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
-            if not os.path.isdir(r):
-                p = self.save_file_dialog(ext='.xls')
-            else:
-                p, _ = unique_path(r, n, extension='.xls')
+            t = TableSelectionDialog()
+            info = t.edit_traits(kind='livemodal')
+            if info.result:
+                self.active_editor.save_tables(t)
 
-            if p:
-                self.active_editor.save_xls_tables(p)
-
-                # self.view_xls(p)
-
-    def save_pdf_tables(self):
-        if self.has_active_editor():
-            # p=self.save_file_dialog()
-            # p = '/Users/ross/Sandbox/interpreted_age.pdf'
-
-            n = self.active_editor.name
-            #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
-            r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
-            if not os.path.isdir(r):
-                p = self.save_file_dialog(ext='.pdf')
-            else:
-                p, _ = unique_path(r, n, extension='.pdf')
-
-            if p:
-                self.active_editor.save_pdf_tables(p)
-
-                # self.view_pdf(p)
+    # def save_xls_tables(self):
+    #     if self.has_active_editor():
+    #         n = self.active_editor.name
+    #         #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+    #         r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
+    #         if not os.path.isdir(r):
+    #             p = self.save_file_dialog(ext='.xls')
+    #         else:
+    #             p, _ = unique_path(r, n, extension='.xls')
+    #
+    #         if p:
+    #             self.active_editor.save_xls_tables(p)
+    #
+    #             # self.view_xls(p)
+    #
+    # def save_pdf_tables(self):
+    #     if self.has_active_editor():
+    #         # p=self.save_file_dialog()
+    #         # p = '/Users/ross/Sandbox/interpreted_age.pdf'
+    #
+    #         n = self.active_editor.name
+    #         #p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/{}.pdf'.format(n)
+    #         r = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/test'
+    #         if not os.path.isdir(r):
+    #             p = self.save_file_dialog(ext='.pdf')
+    #         else:
+    #             p, _ = unique_path(r, n, extension='.pdf')
+    #
+    #         if p:
+    #             self.active_editor.save_pdf_tables(p)
+    #
+    #             # self.view_pdf(p)
 
     def create_dock_panes(self):
         panes = [self._create_browser_pane(analyses_defined='0')]

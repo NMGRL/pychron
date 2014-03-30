@@ -15,20 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Bool, Instance
+from traits.api import HasTraits, Bool, Instance, Enum
 from uncertainties import nominal_value, std_dev
 
 from pychron.loggable import Loggable
 
 
 
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
-
-
 
 def iso_value(attr, ve='value'):
     def f(x, k):
@@ -96,6 +91,8 @@ def error(x, k):
 
 class FusionTableTextOptions(HasTraits):
     use_sample_sheets = Bool(False)
+    age_nsigma = Enum(2, 1, 3)
+    kca_nsigma = Enum(2, 1, 3)
 
 
 class LaserTableTextWriter(Loggable):
@@ -203,7 +200,7 @@ class LaserTableTextWriter(Loggable):
     )
     default_style = None
 
-    def build(self, p, groups, title=None):
+    def build(self, p, iagroups, groups, use_summary_sheet=False, title=None):
         self.info('saving table to {}'.format(p))
         wb = self._new_workbook()
         options = self.options
@@ -217,6 +214,9 @@ class LaserTableTextWriter(Loggable):
                 self._add_header_row(sh, 0)
                 self._add_analyses(sh, gi.analyses, start=2)
         else:
+            if use_summary_sheet:
+                self._write_summary_sheet(wb, iagroups)
+
             sh = wb.add_sheet('ArArData')
             start = 2
             for i, gi in enumerate(groups):
@@ -227,6 +227,48 @@ class LaserTableTextWriter(Loggable):
                 start += len(gi.analyses) + 1
 
         wb.save(p)
+
+    def _write_summary_sheet(self, wb, groups):
+        def set_nsigma(nattr):
+            def f(item, attr):
+                return getattr(item, attr) * getattr(self.options,
+                                                     '{}_nsigma'.format(nattr))
+
+            return f
+
+        sh = wb.add_sheet('Summary')
+        cols = [('Sample', 'sample'),
+                ('Identifier', 'identifier'),
+                ('Material', 'material'),
+                ('Age Type', 'age_kind'),
+                ('Age', 'age'),
+                (u'{}\u03c3'.format(self.options.age_nsigma),
+                 'age_err', set_nsigma('age')),
+                ('MSWD', 'mswd'),
+                ('K/Ca', 'kca'),
+                (u'{}\u03c3'.format(self.options.kca_nsigma),
+                 'kca_err', set_nsigma('kca')),
+        ]
+        start = 1
+        self._add_summary_header_row(sh, cols)
+        for i, gi in enumerate(groups):
+            self._add_summary_row(sh, gi, i + start, cols)
+
+    def _add_summary_header_row(self, sh, cols, start=0):
+        s1, s2 = self._get_header_styles()
+        for i, ci in enumerate(cols):
+            sh.write(start, i, ci[0], style=s2)
+
+    def _add_summary_row(self, sh, gi, row, cols):
+        for j, c in enumerate(cols):
+            attr = c[1]
+            if len(c) == 3:
+                getter = c[2]
+            else:
+                getter = getattr
+
+            txt = getter(gi, attr)
+            sh.write(row, j, txt, self.default_style)
 
     def _add_analyses(self, sheet, ans, start):
         for i, ai in enumerate(ans):

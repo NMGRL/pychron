@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
 
 from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
@@ -26,7 +25,7 @@ from traitsui.api import View, EnumEditor, HGroup, spring, \
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
-from pychron.core.helpers.filetools import view_file
+from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition
 from pychron.database.adapters.isotope_adapter import InterpretedAge
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -80,14 +79,49 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     name = 'Untitled'
     refresh = Event
 
-    def save_pdf_tables(self, p):
-        self.save_summary_table(p)
-        self.save_analysis_data_tables(p, pdf=True, xls=False)
+    # def save_pdf_tables(self, p):
+    #     self.save_summary_table(p)
+    #     self.save_analysis_data_tables(p, pdf=True, xls=False)
+    #
+    # def save_xls_tables(self, p):
+    #     self.save_analysis_data_tables(p, pdf=False, xls=True)
+    def test_save_xls_tables(self):
+        p = '/Users/ross/Sandbox/datatables'
+        self.interpreted_ages = self.interpreted_ages[:2]
+        self.save_analysis_data_tables(p, pdf=False,
+                                       xls_summary=True, xls=True,
+                                       auto_view=True)
 
-    def save_xls_tables(self, p):
-        self.save_analysis_data_tables(p, pdf=False, xls=True)
+    def save_tables(self, t):
+        pdf = t.use_pdf_summary
+        xls_sum = t.use_xls_summary
+        if pdf:
+            self.save_summary_tables(t.root,
+                                     auto_view=t.auto_view)
 
-    def save_analysis_data_tables(self, p, pdf=True, xls=True):
+        pdf = t.use_pdf_data
+        xls = t.use_xls_data
+        if pdf or xls or xls_sum:
+            self.save_analysis_data_tables(t.root, pdf=pdf,
+                                           xls=xls,
+                                           xls_summary=xls_sum)
+
+    def save_summary_table(self, root, auto_view=False):
+        name = '{}_summary'.format(self.name)
+        w = SummaryPDFTableWriter()
+        items = self.interpreted_ages
+        title = self.get_title()
+
+        opt = self.pdf_table_options
+        p, _ = unique_path(root, name, extension='.pdf')
+        w.options = opt
+        w.build(p, items, title)
+        if auto_view:
+            view_file(p)
+
+    def save_analysis_data_tables(self, root, pdf=True, xls=True,
+                                  xls_summary=False,
+                                  auto_view=False):
 
         # ans=[]
         ias = self.interpreted_ages
@@ -105,33 +139,84 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         if pdf:
             step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            self._save_pdf_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
-            self._save_pdf_data_table(p, argus, step_heat_title, fusion_title, 'argus')
+            self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
+                                      auto_view=auto_view)
+            self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
+                                      auto_view=auto_view)
         if xls:
             step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Analytical Data'
-            self._save_xls_data_table(p, map_spec, step_heat_title, fusion_title, 'map')
-            self._save_xls_data_table(p, argus, step_heat_title, fusion_title, 'args')
+            self._save_xls_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
+                                      summary_sheet=xls_summary,
+                                      auto_view=auto_view)
+            self._save_xls_data_table(root, argus, step_heat_title, fusion_title, 'argus',
+                                      summary_sheet=xls_summary,
+                                      auto_view=auto_view)
 
             # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            # self._save_data_table(p, argus, step_heat_title, fusion_title)
+            # self._save_data_table(root, argus, step_heat_title, fusion_title)
 
-    def _save_xls_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
-        head, ext = os.path.splitext(p)
+    def _save_xls_data_table(self, root, ias, step_heat_title, fusion_title, spectrometer,
+                             summary_sheet=False,
+                             auto_view=False):
+        # head, ext = os.path.splitext(p)
+        # head= os.path.join(root, self.name)
         ext = '.xls'
-        shgroups, fgroups = self._assemble_groups(ias[:1])
+        app = 'Microsoft Office 2011/Microsoft Excel'
+        shgroups, fgroups = self._assemble_groups(ias)
+
+        # if summary_sheet:
+        #     self.information_dialog('Excel Summary sheets not yet implemented. Please be patient')
+
         if shgroups:
             w = StepHeatTableXLSWriter()
-            p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
-            w.build(p, shgroups, title=step_heat_title)
-            view_file(p, application='Microsoft Office 2011/Microsoft Excel')
+            name = '{}_{}_step_heat_data'.format(self.name, spectrometer)
+            p, _ = unique_path(root, name, extension=ext)
+
+            iagroups, shgroups = zip(*shgroups)
+            # p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
+            w.build(p, iagroups, shgroups, use_summary_sheet=summary_sheet,
+                    title=step_heat_title)
+            if auto_view:
+                view_file(p, application=app)
 
         if fgroups:
             w = FusionTableXLSWriter()
-            p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
+            # p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
+            name = '{}_{}_fusion_data'.format(self.name, spectrometer)
+            p, _ = unique_path(root, name, extension=ext)
+            iagroups, fgroups = zip(*fgroups)
+            w.build(p, iagroups, fgroups, use_summary_sheet=summary_sheet,
+                    title=fusion_title)
+            if auto_view:
+                view_file(p, application=app)
+
+    def _save_pdf_data_table(self, root, ias, step_heat_title, fusion_title, spectrometer, auto_view=False):
+
+        shgroups, fgroups = self._assemble_groups(ias)
+        # head, ext = os.path.splitext(p)
+        ext = '.pdf'
+        if shgroups:
+            w = StepHeatPDFTableWriter()
+            # p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
+            name = '{}_{}_step_heat_data'.format(self.name, spectrometer)
+            p, _ = unique_path(root, name, extension=ext)
+
+            iagroups, shgroups = zip(*shgroups)
+            w.build(p, shgroups, title=step_heat_title)
+            if auto_view:
+                view_file(p)
+
+        if fgroups:
+            w = FusionPDFTableWriter()
+            # p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
+            name = '{}_{}_fusion_data'.format(self.name, spectrometer)
+            p, _ = unique_path(root, name, extension=ext)
+            iagroups, fgroups = zip(*fgroups)
             w.build(p, fgroups, title=fusion_title)
-            view_file(p, application='Microsoft Office 2011/Microsoft Excel')
+            if auto_view:
+                view_file(p)
 
     def _assemble_groups(self, ias):
         db = self.processor.db
@@ -164,38 +249,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
             # fusion, step_heat = map(list, (fusion, step_heat))
 
-            shgroups = [gfactory(StepHeatAnalysisGroup, ia) for ia in step_heat]
-            fgroups = [gfactory(AnalysisGroup, ia) for ia in fusion]
+            shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in step_heat]
+            fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
             prog.close()
         return shgroups, fgroups
-
-    def _save_pdf_data_table(self, p, ias, step_heat_title, fusion_title, spectrometer):
-
-        shgroups, fgroups = self._assemble_groups(ias)
-        head, ext = os.path.splitext(p)
-        if shgroups:
-            w = StepHeatPDFTableWriter()
-            p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
-            w.build(p, shgroups, title=step_heat_title)
-            view_file(p)
-
-        if fgroups:
-            w = FusionPDFTableWriter()
-            p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
-            w.build(p, fgroups, title=fusion_title)
-            view_file(p)
-
-    def save_summary_table(self, p):
-        w = SummaryPDFTableWriter()
-        items = self.interpreted_ages
-        title = self.get_title()
-
-        opt = self.pdf_table_options
-        # w.use_alternating_background=opt.use_alternating_background
-        w.options = opt
-        w.build(p, items, title)
-        view_file(p)
-        # self._save_recipe_file(p)
 
     def get_title(self):
         opt = self.pdf_table_options

@@ -39,16 +39,22 @@ class PlotIdeogramAction(TaskAction):
     tooltip = 'Plot ideogram of interpreted ages'
 
 
-class SavePDFTablesAction(TaskAction):
-    name = 'Save PDF Tables'
-    method = 'save_pdf_tables'
-    image = icon('file_pdf')
+class SaveTablesAction(TaskAction):
+    name = 'Save Tables'
+    method = 'save_tables'
+    image = icon('table_save')
 
 
-class SaveXLSTablesAction(TaskAction):
-    name = 'Save XLS Tables'
-    method = 'save_xls_tables'
-    image = icon('file_xls')
+# class SavePDFTablesAction(TaskAction):
+#     name = 'Save PDF Tables'
+#     method = 'save_pdf_tables'
+#     image = icon('file_pdf')
+#
+#
+# class SaveXLSTablesAction(TaskAction):
+#     name = 'Save XLS Tables'
+#     method = 'save_xls_tables'
+#     image = icon('file_xls')
 
 
 class SaveInterpretedAgeGroupAction(TaskAction):
