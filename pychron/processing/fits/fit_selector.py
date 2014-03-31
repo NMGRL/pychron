@@ -57,7 +57,7 @@ class FitSelector(HasTraits):
     auto_update = Bool(True)
 
     plot_button = Button('Plot')
-    default_error_type='SD'
+    default_error_type = 'SD'
 
     show_all_button = Event
     show_state = Bool
@@ -65,11 +65,11 @@ class FitSelector(HasTraits):
 
     use_all_button = Button('Toggle Save')
     use_state = Bool
-    global_fit = Str
-    global_error_type = Str
+    global_fit = Str('Fit')
+    global_error_type = Str('Error')
 
-    fit_types = List(FIT_TYPES)
-    error_types = List(FIT_ERROR_TYPES)
+    fit_types = List(['Fit', ''] + FIT_TYPES)
+    error_types = List(['Error', ''] + FIT_ERROR_TYPES)
 
     selected = Any
 
@@ -101,14 +101,16 @@ class FitSelector(HasTraits):
             fi.use = self.use_state
 
     def _global_fit_changed(self):
-        fs = self._get_fits()
-        for fi in fs:
-            fi.fit = self.global_fit
+        if self.global_fit in FIT_TYPES:
+            fs = self._get_fits()
+            for fi in fs:
+                fi.fit = self.global_fit
 
     def _global_error_type_changed(self):
-        fs = self._get_fits()
-        for fi in fs:
-            fi.error_type = self.global_error_type
+        if self.global_error_type in FIT_ERROR_TYPES:
+            fs = self._get_fits()
+            for fi in fs:
+                fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
         return HGroup(icon_button_editor('plot_button', 'chart_curve_go',
