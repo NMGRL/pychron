@@ -23,6 +23,7 @@ from pyface.timer.do_later import do_later
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.browser.adapters import ProjectAdapter
+from pychron.envisage.browser.browser_mixin import filter_func
 
 
 class GroupAdapter(TabularAdapter):
@@ -32,8 +33,14 @@ class GroupAdapter(TabularAdapter):
 class GroupDialog(HasTraits):
     name = Str
     projects = List
+    oprojects = List
     selected_project = Any
     scroll_to_row = Int
+    project_filter = Str
+
+    def _project_filter_changed(self, new):
+        self.projects = filter(filter_func(new, 'name'),
+                               self.oprojects)
 
 
 class SaveGroupDialog(GroupDialog):
@@ -85,6 +92,7 @@ class SelectionGroupDialog(GroupDialog):
 
     def traits_view(self):
         v = View(VGroup(
+            HGroup(Item('project_filter', label='Filter')),
             UItem('projects',
                   editor=TabularEditor(adapter=ProjectAdapter(),
                                        selected='selected_project',

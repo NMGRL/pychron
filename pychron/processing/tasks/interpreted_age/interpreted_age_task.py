@@ -64,7 +64,9 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def delete_group(self):
 
-        dlg = DeleteGroupDialog(projects=self.projects, db=self.manager.db)
+        dlg = DeleteGroupDialog(projects=self.projects,
+                                oprojects=self.projects,
+                                db=self.manager.db)
         info = dlg.edit_traits(kind='livemodal')
         if info.result:
             ids = dlg.get_selected_ids()
@@ -112,14 +114,18 @@ class InterpretedAgeTask(BaseBrowserTask):
 
     def external_open_interpreted_age_group(self):
         self.load_projects()
-        ogd = OpenGroupDialog(projects=self.projects, db=self.manager.db)
+        ogd = OpenGroupDialog(projects=self.projects,
+                              oprojects=self.projects,
+                              db=self.manager.db)
         info = ogd.edit_traits(kind='livemodal')
         if info.result:
             return ogd.get_selected_ids()
 
     def open_interpreted_age_group(self):
         if self.has_active_editor():
-            ogd = OpenGroupDialog(projects=self.projects, db=self.manager.db)
+            ogd = OpenGroupDialog(projects=self.projects,
+                                  oprojects=self.projects,
+                                  db=self.manager.db)
             if self.selected_projects:
                 ogd.selected_project = self.selected_projects[-1]
 
