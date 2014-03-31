@@ -19,11 +19,10 @@
 from traits.api import Any, List, Str, Button, Instance, on_trait_change, Int, Event
 from traitsui.api import View, EnumEditor, HGroup, spring, \
     UItem, VGroup, TabularEditor, InstanceEditor
-
+from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.filetools import view_file, unique_path
 from pychron.core.helpers.iterfuncs import partition
@@ -123,7 +122,6 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                                   xls_summary=False,
                                   auto_view=False):
 
-        # ans=[]
         ias = self.interpreted_ages
         db = self.processor.db
         with db.session_ctx():
@@ -141,6 +139,9 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
                                       auto_view=auto_view)
+
+            step_heat_title = 'Table 1. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            fusion_title = 'Table 2. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       auto_view=auto_view)
         if xls:
@@ -149,25 +150,20 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             self._save_xls_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
                                       summary_sheet=xls_summary,
                                       auto_view=auto_view)
+
+            step_heat_title = 'Table 3. Argus Step heat 40Ar/39Ar Analytical Data'
+            fusion_title = 'Table 4. Argus Fusion 40Ar/39Ar Analytical Data'
             self._save_xls_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       summary_sheet=xls_summary,
                                       auto_view=auto_view)
 
-            # step_heat_title = 'Table 3. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            # fusion_title = 'Table 4. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            # self._save_data_table(root, argus, step_heat_title, fusion_title)
-
     def _save_xls_data_table(self, root, ias, step_heat_title, fusion_title, spectrometer,
                              summary_sheet=False,
                              auto_view=False):
-        # head, ext = os.path.splitext(p)
-        # head= os.path.join(root, self.name)
+
         ext = '.xls'
         app = 'Microsoft Office 2011/Microsoft Excel'
         shgroups, fgroups = self._assemble_groups(ias)
-
-        # if summary_sheet:
-        #     self.information_dialog('Excel Summary sheets not yet implemented. Please be patient')
 
         if shgroups:
             w = StepHeatTableXLSWriter()
@@ -175,7 +171,6 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             p, _ = unique_path(root, name, extension=ext)
 
             iagroups, shgroups = zip(*shgroups)
-            # p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
             w.build(p, iagroups, shgroups, use_summary_sheet=summary_sheet,
                     title=step_heat_title)
             if auto_view:
@@ -183,7 +178,6 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if fgroups:
             w = FusionTableXLSWriter()
-            # p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
             name = '{}_{}_fusion_data'.format(self.name, spectrometer)
             p, _ = unique_path(root, name, extension=ext)
             iagroups, fgroups = zip(*fgroups)
@@ -195,11 +189,9 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     def _save_pdf_data_table(self, root, ias, step_heat_title, fusion_title, spectrometer, auto_view=False):
 
         shgroups, fgroups = self._assemble_groups(ias)
-        # head, ext = os.path.splitext(p)
         ext = '.pdf'
         if shgroups:
             w = StepHeatPDFTableWriter()
-            # p = '{}.{}_step_heat_data{}'.format(head, spectrometer, ext)
             name = '{}_{}_step_heat_data'.format(self.name, spectrometer)
             p, _ = unique_path(root, name, extension=ext)
 
@@ -210,7 +202,6 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if fgroups:
             w = FusionPDFTableWriter()
-            # p = '{}.{}_fusion_data{}'.format(head, spectrometer, ext)
             name = '{}_{}_fusion_data'.format(self.name, spectrometer)
             p, _ = unique_path(root, name, extension=ext)
             iagroups, fgroups = zip(*fgroups)
@@ -226,7 +217,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             ans = [si.analysis for ia in ias
                    for si in db.get_interpreted_age_history(ia.id).interpreted_age.sets]
-            # if si.analysis.tag != 'invalid']
+
             prog = self.processor.open_progress(len(ans), close_at_end=False)
 
             def gfactory(klass, dbia):
@@ -247,11 +238,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             #partition fusion vs stepheat
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
-            # fusion, step_heat = map(list, (fusion, step_heat))
 
             shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in step_heat]
             fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
             prog.close()
+
         return shgroups, fgroups
 
     def get_title(self):
