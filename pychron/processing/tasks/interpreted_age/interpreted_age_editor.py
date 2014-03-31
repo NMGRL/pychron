@@ -95,7 +95,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         pdf = t.use_pdf_summary
         xls_sum = t.use_xls_summary
         if pdf:
-            self.save_summary_tables(t.root,
+            self.save_summary_table(t.root,
                                      auto_view=t.auto_view)
 
         pdf = t.use_pdf_data

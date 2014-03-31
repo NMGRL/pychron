@@ -50,6 +50,8 @@ class TableSelectionDialog(Controller):
                     self.model = pickle.load(fp)
                 except (pickle.PickleError, OSError, EOFError):
                     pass
+        if not self.model:
+            self.model=TableSelectionModel()
 
     def closed(self, info, is_ok):
         if is_ok:

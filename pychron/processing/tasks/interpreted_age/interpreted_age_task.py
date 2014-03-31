@@ -170,7 +170,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             t = TableSelectionDialog()
             info = t.edit_traits(kind='livemodal')
             if info.result:
-                self.active_editor.save_tables(t)
+                self.active_editor.save_tables(t.model)
 
     # def save_xls_tables(self):
     #     if self.has_active_editor():
