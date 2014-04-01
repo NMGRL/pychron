@@ -26,7 +26,8 @@ from traits.api import HasTraits, Int, Str
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, gen_ExtractionDeviceTable
+from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
+    gen_ExtractionDeviceTable
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
 # from pychron.processing.analysis import Analysis
@@ -59,7 +60,7 @@ class Processor(IsotopeDatabaseManager):
         """
         # if not isinstance(analysis, Analysis):
         #     analysis = self.make_analysis(analysis)
-            #             analysis.load_isotopes()
+        #             analysis.load_isotopes()
 
         ms = analysis.mass_spectrometer
         post = analysis.timestamp
@@ -69,9 +70,9 @@ class Processor(IsotopeDatabaseManager):
         if atype is None:
             atype = 'blank_{}'.format(analysis.analysis_type)
 
-        dt=timedelta(hours=delta)
-        lpost=post-dt
-        hpost=post+dt
+        dt = timedelta(hours=delta)
+        lpost = post - dt
+        hpost = post + dt
 
         return self._filter_analyses(ms, lpost, hpost, limit, atype, **kw)
         # br = self._find_analyses(ms, post, -delta, atype, **kw)
@@ -84,7 +85,7 @@ class Processor(IsotopeDatabaseManager):
                 if pos.sample == 'FC-2':
                     return True
 
-        db=self.db
+        db = self.db
         with db.session_ctx():
             if isinstance(level, str):
                 level = db.get_level(level, irradiation)
@@ -211,17 +212,17 @@ class Processor(IsotopeDatabaseManager):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)
 
         func = getattr(self, '_apply_{}_correction'.format(kind))
-        func(history, analysis, fit_obj, set_id)
+        return func(history, analysis, fit_obj, set_id)
 
     def _apply_detector_intercalibration_correction(self, history, analysis, fit_obj, set_id):
         n, d = fit_obj.name.split('/')
 
-        iso=analysis.get_isotope(detector=d)
+        iso = analysis.get_isotope(detector=d)
         if not iso:
             self.debug('************************* {} no detector {}'.format(analysis.record_id, d))
             return
 
-        ic=iso.temporary_ic_factor
+        ic = iso.temporary_ic_factor
         # ic = analysis.get_isotope(detector=d).temporary_ic_factor
         if ic is None:
             self.debug('************************* no ic factor for {} {}'.format(analysis.record_id,
@@ -231,22 +232,23 @@ class Processor(IsotopeDatabaseManager):
         ic_v, ic_e = map(float, ic)
 
         #copy temp ic_factor to ic_factor
-        iso.ic_factor=ufloat(ic_v, ic_e)
+        iso.ic_factor = ufloat(ic_v, ic_e)
 
         db = self.db
         db.add_detector_intercalibration(history,
-                                                detector=d,
-                                                user_value=ic_v,
-                                                user_error=ic_e,
-                                                fit=fit_obj.fit,
-                                                set_id=set_id)
+                                         detector=d,
+                                         user_value=ic_v,
+                                         user_error=ic_e,
+                                         fit=fit_obj.fit,
+                                         set_id=set_id)
+
     def add_predictor_set(self, predictors):
-        set_id=0
+        set_id = 0
         if predictors:
             db = self.db
             #make set_id
-            dbrs=[db.get_analysis_uuid(p.uuid) for p in predictors]
-            set_id=hash(tuple((ai.id for ai in dbrs)))
+            dbrs = [db.get_analysis_uuid(p.uuid) for p in predictors]
+            set_id = hash(tuple((ai.id for ai in dbrs)))
 
             for dbr in dbrs:
                 db.add_detector_intercalibration_set(dbr, set_id=set_id)
@@ -273,7 +275,7 @@ class Processor(IsotopeDatabaseManager):
             blank = ss.blank
 
         db = self.db
-        db.add_blanks(history,
+        return db.add_blanks(history,
                              isotope=fit_obj.name,
                              user_value=float(blank.value),
                              user_error=float(blank.error),
@@ -292,10 +294,10 @@ class Processor(IsotopeDatabaseManager):
         #     ans = db.get_analyses(uuid=f)
         #     for ai in ans:
         #         db.add_blanks_set(item, ai)
-                #for pi in predictors:
-                #    dbr = db.get_analysis_uuid(pi.uuid)
-                #    #                 self.db.add_blanks_set(item, pi.dbrecord)
-                #    db.add_blanks_set(item, dbr)
+        #for pi in predictors:
+        #    dbr = db.get_analysis_uuid(pi.uuid)
+        #    #                 self.db.add_blanks_set(item, pi.dbrecord)
+        #    db.add_blanks_set(item, dbr)
 
     def _find_analyses(self, ms, post, delta, atype, step=0.5, maxtries=10, **kw):
         if delta < 0:
@@ -305,9 +307,9 @@ class Processor(IsotopeDatabaseManager):
             post = datetime.fromtimestamp(post)
 
         for i in range(maxtries):
-            win = timedelta(hours=delta+i*step)
-            lpost=post-win
-            hpost=post+win
+            win = timedelta(hours=delta + i * step)
+            lpost = post - win
+            hpost = post + win
             rs = self._filter_analyses(ms, lpost, hpost, 5, atype, **kw)
             if rs:
                 return rs
@@ -353,7 +355,7 @@ class Processor(IsotopeDatabaseManager):
             q = filter_hook(q)
 
         if exclude_uuids:
-            q=q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
+            q = q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
         q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
         q = q.limit(lim)
@@ -375,68 +377,68 @@ class Processor(IsotopeDatabaseManager):
 
         return self.make_analyses(ans)
 
-#============= EOF =============================================
+        #============= EOF =============================================
 
-#============= EOF =============================================
-#     def new_ideogram2(self, ans, plotter_options=None):
-#         '''
-#             return a plotcontainer
-#         '''
-#
-#         probability_curve_kind = 'cumulative'
-#         mean_calculation_kind = 'weighted_mean'
-#         data_label_font = None
-#         metadata_label_font = None
-# #        highlight_omitted = True
-#         display_mean_indicator = True
-#         display_mean_text = True
-#
-#         p = Ideogram(
-# #                     db=self.db,
-# #                     processing_manager=self,
-#                      probability_curve_kind=probability_curve_kind,
-#                      mean_calculation_kind=mean_calculation_kind
-#                      )
-#         options = dict(
-#                        title='',
-#                        data_label_font=data_label_font,
-#                        metadata_label_font=metadata_label_font,
-#                        display_mean_text=display_mean_text,
-#                        display_mean_indicator=display_mean_indicator,
-#                        )
-#
-#         if plotter_options is None:
-#             pom = IdeogramOptionsManager()
-#             plotter_options = pom.plotter_options
-#
-#         if ans:
-# #             self.analyses = ans
-#             gideo = p.build(ans, options=options,
-#                             plotter_options=plotter_options)
-#             if gideo:
-#                 gideo, _plots = gideo
-#
-#             return gideo, p
-#     def new_spectrum(self, ans, plotter_options=None):
-#         pass
-#
-#         p = Spectrum()
-#
-#         if plotter_options is None:
-#             pom = SpectrumOptionsManager()
-#             plotter_options = pom.plotter_options
-#
-#         options = {}
-#
-#         self._plotter_options = plotter_options
-#         if ans:
-# #             self.analyses = ans
-#             gspec = p.build(ans, options=options,
-#                             plotter_options=plotter_options)
-#             if gspec:
-#                 gspec, _plots = gspec
-#
-#             return gspec, p
+        #============= EOF =============================================
+        #     def new_ideogram2(self, ans, plotter_options=None):
+        #         '''
+        #             return a plotcontainer
+        #         '''
+        #
+        #         probability_curve_kind = 'cumulative'
+        #         mean_calculation_kind = 'weighted_mean'
+        #         data_label_font = None
+        #         metadata_label_font = None
+        # #        highlight_omitted = True
+        #         display_mean_indicator = True
+        #         display_mean_text = True
+        #
+        #         p = Ideogram(
+        # #                     db=self.db,
+        # #                     processing_manager=self,
+        #                      probability_curve_kind=probability_curve_kind,
+        #                      mean_calculation_kind=mean_calculation_kind
+        #                      )
+        #         options = dict(
+        #                        title='',
+        #                        data_label_font=data_label_font,
+        #                        metadata_label_font=metadata_label_font,
+        #                        display_mean_text=display_mean_text,
+        #                        display_mean_indicator=display_mean_indicator,
+        #                        )
+        #
+        #         if plotter_options is None:
+        #             pom = IdeogramOptionsManager()
+        #             plotter_options = pom.plotter_options
+        #
+        #         if ans:
+        # #             self.analyses = ans
+        #             gideo = p.build(ans, options=options,
+        #                             plotter_options=plotter_options)
+        #             if gideo:
+        #                 gideo, _plots = gideo
+        #
+        #             return gideo, p
+        #     def new_spectrum(self, ans, plotter_options=None):
+        #         pass
+        #
+        #         p = Spectrum()
+        #
+        #         if plotter_options is None:
+        #             pom = SpectrumOptionsManager()
+        #             plotter_options = pom.plotter_options
+        #
+        #         options = {}
+        #
+        #         self._plotter_options = plotter_options
+        #         if ans:
+        # #             self.analyses = ans
+        #             gspec = p.build(ans, options=options,
+        #                             plotter_options=plotter_options)
+        #             if gspec:
+        #                 gspec, _plots = gspec
+        #
+        #             return gspec, p
         #def load_sample_analyses(self, labnumber, sample, aliquot=None):
         #    db = self.db
         #    sess = db.get_session()

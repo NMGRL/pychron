@@ -26,6 +26,7 @@ from sqlalchemy.sql.expression import func
 
 
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -73,6 +74,8 @@ class meas_AnalysisTable(Base, BaseMixin):
     # proc relationships
     blanks_histories = relationship('proc_BlanksHistoryTable', backref='analysis')
     blanks_sets = relationship('proc_BlanksSetTable', backref='analysis')
+    preceding_blanks = relationship('proc_BlanksTable', backref='preceding_analysis')
+
     interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
 
     backgrounds_histories = relationship('proc_BackgroundsHistoryTable', backref='analysis')

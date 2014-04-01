@@ -26,6 +26,7 @@ from pychron.database.core.base_orm import BaseMixin, NameMixin
 # from pychron.database.core.base_orm import PathMixin, ResultsMixin, ScriptTable
 from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
+from pychron.experiment.utilities.identifier import make_runid
 
 from util import Base
 
@@ -204,6 +205,16 @@ class proc_BlanksTable(Base, BaseMixin):
     error_type = stringcolumn(default='SD')
 
     set_id = Column(Integer)
+    preceding_id = foreignkey('meas_AnalysisTable')
+
+    def make_summary(self):
+        f = self.fit[:1].upper()
+        s = '{}{}'.format(self.isotope.molecular_weight.name, f)
+        if self.preceding_id:
+            p = self.preceding_analysis
+            rid = make_runid(p.labnumber.identifier, p.aliquot, p.step)
+            s = '{} ({})'.format(s, rid)
+        return s
 
 
 class proc_BackgroundsSetTable(Base, BaseMixin):

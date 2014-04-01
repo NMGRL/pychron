@@ -19,7 +19,7 @@ from traits.api import Str
 # from chaco.array_data_source import ArrayDataSource
 
 #============= standard library imports ========================
-# from numpy import asarray, Inf
+from numpy import where
 #============= local library imports  ==========================
 # from pychron.pychron_constants import FIT_TYPES
 # from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
@@ -62,7 +62,8 @@ class BlanksEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
-            set_id = self.processor.add_predictor_set(self._clean_references())
+            refs = self._clean_references()
+            set_id = self.processor.add_predictor_set(refs)
 
             for unk in self.analyses:
                 if progress:
@@ -80,8 +81,13 @@ class BlanksEditor(InterpolationEditor):
                     else:
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
-                        self.processor.apply_correction(history, unk, si, set_id, cname)
-                        # unk.sync(meas_analysis)
+                        dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
+                        if si.fit == 'preceding':
+                            dbid = self._get_preceding_analysis(db, unk, refs)
+                            if dbid:
+                                dbblank.preceding_id = dbid.id
+
+                                # unk.sync(meas_analysis)
 
             # if self.auto_plot:
             self.rebuild_graph()
@@ -92,6 +98,15 @@ class BlanksEditor(InterpolationEditor):
 
             if progress:
                 progress.soft_close()
+
+    def _get_preceding_analysis(self, db, unk, refs):
+        xs = [ri.timestamp for ri in refs]
+        try:
+            ti = where(xs <= unk.timestamp)[0][-1]
+        except IndexError:
+            ti = 0
+
+        return db.get_analysis_uuid(refs[ti].uuid)
 
     def _set_interpolated_values(self, iso, ans, p_uys, p_ues):
         for ui, v, e in zip(ans, p_uys, p_ues):
@@ -120,6 +135,11 @@ class BlanksEditor(InterpolationEditor):
         return zip(*[self._get_baseline_corrected(ui, iso)
                      for ui in ans])
 
+    def _graph_default(self):
+        return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
+
+
+#============= EOF =============================================
         #     def _rebuild_graph(self):
         #         graph = self.graph
         #
@@ -253,9 +273,3 @@ class BlanksEditor(InterpolationEditor):
         #pass
         #self.tool.load_fits(refiso.isotope_keys,
         #                    refiso.isotope_fits)
-
-    def _graph_default(self):
-        return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
-
-
-#============= EOF =============================================

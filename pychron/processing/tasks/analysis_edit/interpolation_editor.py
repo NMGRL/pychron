@@ -31,6 +31,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -408,8 +409,7 @@ class InterpolationEditor(GraphEditor):
                                             color='red',
                                             plotid=i,
                                             marker_size=3,
-                                            add_inspector=False,
-                )
+                                            add_inspector=False)
                 if hasattr(l, 'regressor'):
                     reg = l.regressor
 
