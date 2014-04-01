@@ -54,7 +54,8 @@ class PlotterOptions(BasePlotterOptions):
     title_formatter = Str
     title_attribute_keys = List
     title_delimiter = Str(',')
-
+    title_leading_text = Str
+    title_trailing_text = Str
     auto_generate_title = Bool
     #     data_type = Str('database')
 
@@ -86,25 +87,50 @@ class PlotterOptions(BasePlotterOptions):
     #            self._dump()
     #        return True
     def _edit_title_format_fired(self):
-        tm = TitleMaker(label=self.title)
+        tm = TitleMaker(label=self.title,
+                        delimiter=self.title_delimiter,
+                        leading_text=self.title_leading_text,
+                        trailing_text=self.title_trailing_text
+        )
         info = tm.edit_traits()
         if info.result:
             self.title_formatter = tm.formatter
             self.title_attribute_keys = tm.attribute_keys
+            self.title_leading_text = tm.leading_text
+            self.title_trailing_text = tm.trailing_text
             self.title = tm.label
             self.title_delimiter = tm.delimiter
 
     def generate_title(self, analyses):
         attrs = self.title_attribute_keys
         ts = []
+        rref, ctx = None, {}
         for gid, ais in groupby(analyses, key=lambda x: x.group_id):
             ref = ais.next()
             d = {}
             for ai in attrs:
                 d[ai] = getattr(ref, ai)
-            t = self.title_formatter.format(**d)
-            ts.append(t)
-        return self.title_delimiter.join(ts)
+
+            if not rref:
+                rref = ref
+                ctx = d
+
+            ts.append(self.title_formatter.format(**d))
+
+        t = self.title_delimiter.join(ts)
+        lt = self.title_leading_text
+        if lt:
+            if lt.lower() in ctx:
+                lt = ctx[lt.lower()]
+            t = '{} {}'.format(lt, t)
+
+        tt = self.title_trailing_text
+        if tt:
+            if tt.lower() in ctx:
+                tt = ctx[tt.lower()]
+            t = '{} {}'.format(t, tt)
+
+        return t
 
     def construct_plots(self, plist):
         """
@@ -132,6 +158,9 @@ class PlotterOptions(BasePlotterOptions):
         attrs += ['title', 'auto_generate_title',
                   'title_formatter',
                   'title_attribute_keys',
+                  'title_delimiter',
+                  'title_leading_text',
+                  'title_trailing_text',
                   #                  'data_type',
 
                  'xtick_font_size',
