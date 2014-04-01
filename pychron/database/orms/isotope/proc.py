@@ -27,6 +27,7 @@ from pychron.database.core.base_orm import BaseMixin, NameMixin
 from sqlalchemy.sql.expression import func
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.pychron_constants import INTERPOLATE_TYPES
 
 from util import Base
 
@@ -208,8 +209,10 @@ class proc_BlanksTable(Base, BaseMixin):
     preceding_id = foreignkey('meas_AnalysisTable')
 
     def make_summary(self):
-        f = self.fit[:1].upper()
-        s = '{}{}'.format(self.isotope.molecular_weight.name, f)
+        f = self.fit
+        if not f in INTERPOLATE_TYPES:
+            f = self.fit[:1].upper()
+        s = '{}{}'.format(self.isotope, f)
         if self.preceding_id:
             p = self.preceding_analysis
             rid = make_runid(p.labnumber.identifier, p.aliquot, p.step)
