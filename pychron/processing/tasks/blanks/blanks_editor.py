@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.legend import Legend
 from traits.api import Str
 # from chaco.array_data_source import ArrayDataSource
 
@@ -135,11 +136,26 @@ class BlanksEditor(InterpolationEditor):
         return zip(*[self._get_baseline_corrected(ui, iso)
                      for ui in ans])
 
+    def _add_legend(self):
+        mapping = {'plot1': 'Blanks',
+                   'Unknowns-Current': 'Current',
+                   'Unknowns-predicted2': 'Predicted'}
+        plot = self.graph.plots[-1]
+        ps = {}
+        for k, v in plot.plots.items():
+            if k in mapping:
+                n = mapping[k]
+                ps[n] = v
+
+        l = Legend(plots=ps)
+        plot.overlays.append(l)
+        # plot.invalidate_and_redraw()
+
     def _graph_default(self):
         return StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom'))
 
 
-#============= EOF =============================================
+        #============= EOF =============================================
         #     def _rebuild_graph(self):
         #         graph = self.graph
         #

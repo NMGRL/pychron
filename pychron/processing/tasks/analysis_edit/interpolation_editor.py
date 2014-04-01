@@ -32,6 +32,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -291,6 +292,9 @@ class InterpolationEditor(GraphEditor):
             else:
                 self._build_non_binned(i, iso, fit, c_uxs, r_xs)
 
+            if i == 0:
+                self._add_legend()
+
         m = abs(end - start) / self._normalization_factor
         graph.set_x_limits(0, m, pad='0.1')
         graph.refresh()
@@ -438,6 +442,9 @@ class InterpolationEditor(GraphEditor):
                                            series=series_id)
 
                     self._add_error_bars(s, p_ues)
+
+    def _add_legend(self):
+        pass
 
     def _add_error_bars(self, scatter, errors,
                         orientation='y', visible=True, nsigma=1, line_width=1):
