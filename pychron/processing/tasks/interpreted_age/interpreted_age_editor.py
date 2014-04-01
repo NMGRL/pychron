@@ -103,7 +103,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         if pdf or xls or xls_sum:
             self.save_analysis_data_tables(t.root, pdf=pdf,
                                            xls=xls,
-                                           xls_summary=xls_sum)
+                                           xls_summary=xls_sum,
+                                           auto_view=t.auto_view)
 
     def save_summary_table(self, root, auto_view=False):
         name = '{}_summary'.format(self.name)

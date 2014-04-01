@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from pychron.core.ui import set_qt
-
-set_qt()
+# from pychron.core.ui import set_qt
+#
+# set_qt()
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Instance, Directory
@@ -48,7 +48,7 @@ class TableSelectionDialog(Controller):
             with open(p, 'r') as fp:
                 try:
                     self.model = pickle.load(fp)
-                except (pickle.PickleError, OSError, EOFError):
+                except (pickle.PickleError, AttributeError, OSError, EOFError):
                     pass
         if not self.model:
             self.model=TableSelectionModel()
@@ -83,10 +83,10 @@ class TableSelectionDialog(Controller):
                  width=400)
         return v
 
-
-if __name__ == '__main__':
-    t = TableSelectionDialog()
-    t.configure_traits()
+#
+# if __name__ == '__main__':
+#     t = TableSelectionDialog()
+#     t.configure_traits()
 
 #============= EOF =============================================
 
