@@ -86,7 +86,7 @@ class Ideogram(BaseArArFigure):
                 scatter, omits = args
                 omit = omit.union(set(omits))
 
-            self._update_options_limits(pid)
+                # self.update_options_limits(pid)
 
         for i, ai in enumerate(self.sorted_analyses):
             # print ai.record_id, i in omit
@@ -502,8 +502,7 @@ class Ideogram(BaseArArFigure):
                                                                         asymptotic_width=opt.asymptotic_width,
                                                                         tol=(opt.asymptotic_percent or 100) * 0.01)
                 self.trait_setq(xmi=x1, xma=x2)
-                # print x1, x2
-                # self.xmi, self.xma=x1,x2
+
                 return bins, probs
             else:
                 return self._cumulative_probability(ages, errors, xmi, xma)
@@ -526,7 +525,7 @@ class Ideogram(BaseArArFigure):
                 continue
 
             # calculate probability curve for ai+/-ei
-            # p=1/(2*p*sigma2) *exp (-(x-u)**2)/(2*sigma2)
+            # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
             # see http://en.wikipedia.org/wiki/Normal_distribution
             ds = (ones(N) * ai - bins) ** 2
             es = ones(N) * ei
@@ -554,6 +553,7 @@ class Ideogram(BaseArArFigure):
         rx1, rx2 = None, None
         step = asymptotic_width * 0.25
         N2 = N / 2.0
+        xmi, xma = self.xmi, self.xma
         for i in xrange(max_iter):
             x1 = xmi - step * i if rx1 is None else rx1
             x2 = xma + step * i if rx2 is None else rx2
@@ -575,13 +575,17 @@ class Ideogram(BaseArArFigure):
 
             tt = tol * max(ys)
             # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
-            if rx1 is None and low.mean() < tt:  # and low.std()<std_tol:
+            # if rx1 is None and low.mean() < tt:  # and low.std()<std_tol:
+            # print aw, tt
+            if rx1 is None and (low < tt).all():  # and low.std()<std_tol:
                 rx1 = x1
-            if rx2 is None and high.mean() < tt:  # and high.std()<std_tol:
+            # if rx2 is None and high.mean() < tt:  # and high.std()<std_tol:
+            if rx2 is None and (high < tt).all():  # and high.std()<std_tol:
                 rx2 = x2
             if rx1 is not None and rx2 is not None:
                 break
 
+        # self.graph.add_horizontal_rule(tt)
         if rx1 is None:
             rx1 = x1
         if rx2 is None:

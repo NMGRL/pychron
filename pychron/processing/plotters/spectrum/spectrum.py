@@ -47,7 +47,7 @@ class Spectrum(BaseArArFigure):
             # plotobj.value_mapper.high_setting = 33
 
             getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
-            self._update_options_limits(pid)
+            # self.update_options_limits(pid)
 
         try:
             self.graph.set_x_title('Cumulative %39ArK')
@@ -190,7 +190,7 @@ class Spectrum(BaseArArFigure):
 
         #        sp = SpectrumTool(ds, spectrum=self, group_id=group_id)
         sp = SpectrumTool(component=ds, cumulative39s=self.xs)
-        ov=SpectrumInspectorOverlay(tool=sp, component=ds)
+        ov = SpectrumInspectorOverlay(tool=sp, component=ds)
         ds.tools.append(sp)
         ds.overlays.append(ov)
 

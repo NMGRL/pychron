@@ -34,7 +34,7 @@ class BasePlotterOptions(HasTraits):
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
     refresh_plot = Button
-    refresh_plot_needed=Event
+    refresh_plot_needed = Event
     auto_refresh = Bool(False)
 
     def __init__(self, root, clean=False, *args, **kw):
@@ -52,30 +52,31 @@ class BasePlotterOptions(HasTraits):
         """
         d = dict()
         for attr in self._get_dump_attrs():
-            obj=getattr(self, attr)
+            obj = getattr(self, attr)
             if attr == 'aux_plots':
-                ap=[ai.dump_yaml() for ai in obj]
+                ap = [ai.dump_yaml() for ai in obj]
                 d[attr] = ap
             else:
                 d[attr] = obj
         return yaml.dump(d)
 
     def load_yaml(self, blob):
-        d=yaml.load(blob)
-        for k,v in d.iteritems():
+        d = yaml.load(blob)
+        print 'loading yaml', self
+        for k, v in d.iteritems():
             try:
-                if k=='aux_plots':
-                    ap=[]
+                if k == 'aux_plots':
+                    ap = []
                     for vi in v:
                         if 'ylimits' in vi:
-                            vi['ylimits']=tuple(vi['ylimits'])
-                            vi['_has_ylimits']=True
+                            vi['ylimits'] = tuple(vi['ylimits'])
+                            vi['_has_ylimits'] = True
                         if 'xlimits' in vi:
                             vi['xlimits'] = tuple(vi['xlimits'])
                             vi['_has_xlimits'] = True
-                        pp=self.plot_option_klass(**vi)
+                        pp = self.plot_option_klass(**vi)
                         ap.append(pp)
-                    self.trait_set(**{k:ap})
+                    self.trait_set(**{k: ap})
                 else:
                     self.trait_set(**{k: v})
             except TraitError, e:
@@ -91,17 +92,18 @@ class BasePlotterOptions(HasTraits):
         return v
 
     def _refresh_plot_fired(self):
-        self.refresh_plot_needed=True
+        self.refresh_plot_needed = True
 
     def _get_refresh_group(self):
         return HGroup(icon_button_editor('refresh_plot', 'chart_curve_go'),
                       spring,
                       Item('auto_refresh', label='Auto Plot'))
+
     # ==============================================================================
     # persistence
     #===============================================================================
     def _get_dump_attrs(self):
-        return ['auto_refresh','aux_plots']
+        return ['auto_refresh', 'aux_plots']
 
     def dump(self, root):
         self._dump(root)

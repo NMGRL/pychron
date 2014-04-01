@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from numpy import Inf
+from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 #============= standard library imports ========================
 from itertools import groupby
@@ -91,21 +91,23 @@ class FigurePanel(HasTraits):
             fig.suppress_xlimits_update = False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
+        # print plots[0], plots[0].has_xlimits(), plots[0].name
+        if plots[0].has_xlimits():
+            tmi, tma = plots[0].xlimits
+            if tmi != -inf and tma != inf:
+                mi, ma = tmi, tma
+                # print 'using previous limits', mi, ma
 
-            #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
-
-            #meta=self.meta
-            #print 'meta',meta
-            #if meta:
-            #    g.load_metadata(meta)
-            # if mi==-Inf and ma==Inf:
-            # mi,ma=0, 100
         if mi is None and ma is None:
             mi, ma = 0, 100
+
         g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
+        for fig in self.figures:
+            for i in range(len(plots)):
+                fig.update_options_limits(i)
+
         self.graph = g
-        #print self.graph
         return g.plotcontainer
 
         #============= EOF =============================================

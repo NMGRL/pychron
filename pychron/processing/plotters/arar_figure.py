@@ -18,7 +18,7 @@
 import re
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import Inf
+from numpy import Inf, inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
@@ -97,8 +97,8 @@ class BaseArArFigure(HasTraits):
             # if po.has_ylimits():
             #     print 'setting ylimits {}'.format(po.ylimits)
             #     pp.value_range.set_bounds(*po.ylimits)
-            if po.has_xlimits():
-                pp.index_range.set_bounds(*po.xlimits)
+            # if po.has_xlimits():
+            #     pp.index_range.set_bounds(*po.xlimits)
 
             pp.x_grid.visible = self.x_grid_visible
             pp.y_grid.visible = self.y_grid_visible
@@ -239,7 +239,7 @@ class BaseArArFigure(HasTraits):
             ma = max_
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
 
-    def _update_options_limits(self, pid):
+    def update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
         ap.ylimits = self.graph.get_y_limits(pid)
@@ -447,23 +447,20 @@ class BaseArArFigure(HasTraits):
 
     @on_trait_change('graph:plots:index_mapper:updated')
     def _handle_index_range(self, obj, name, old, new):
+
         if not isinstance(new, bool):
+            if new.low == -inf or new.high == inf:
+                return
+
             if self.suppress_xlimits_update:
                 return
 
             for p in self.graph.plots:
                 if p.index_mapper == obj:
-                    # plot = p
-                    # title = plot.x_axis.title
-                    #
-                    # if title in PLOT_MAPPING:
-                    #     title = PLOT_MAPPING[title]
-                    #
-                    for op in self.options.aux_plots:
-                        #     if title.startswith(op.name):
-                        op.xlimits = (new.low, new.high)
-                        # break
-                        # break
+                    op = self.options.aux_plots[-1]
+                    op.xlimits = (new.low, new.high)
+                    # print 'setting xlimits', op.xlimits, op, op.name
+                    break
 
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj, name, old, new):

@@ -61,12 +61,12 @@ class YorkRegressor(OLSRegressor):
     def _calculate_correlation_coefficients(self):
 
         if len(self.xds):
-            xds=self._clean_array(self.xds)
-            xns=self._clean_array(self.xns)
-            xdes=self._clean_array(self.xdes)
-            xnes=self._clean_array(self.xnes)
-            yns=self._clean_array(self.yns)
-            ynes=self._clean_array(self.ynes)
+            xds = self._clean_array(self.xds)
+            xns = self._clean_array(self.xns)
+            xdes = self._clean_array(self.xdes)
+            xnes = self._clean_array(self.xnes)
+            yns = self._clean_array(self.yns)
+            ynes = self._clean_array(self.ynes)
 
             fd = xdes / xds  # f40Ar
 
@@ -93,8 +93,8 @@ class YorkRegressor(OLSRegressor):
         return Wx, Wy
 
     def _calculate_UV(self, W):
-        xs=self.clean_xs
-        ys=self.clean_ys
+        xs = self.clean_xs
+        ys = self.clean_ys
 
         # xs, ys = self.xs, self.ys
         x_bar, y_bar = self._calculate_xy_bar(W)
@@ -104,7 +104,7 @@ class YorkRegressor(OLSRegressor):
 
     def _calculate_xy_bar(self, W):
         # xs, ys = self.xs, self.ys
-        xs,ys=self.clean_xs, self.clean_ys
+        xs, ys = self.clean_xs, self.clean_ys
         sW = sum(W)
         try:
             x_bar = sum(W * xs) / sW
@@ -154,7 +154,7 @@ class YorkRegressor(OLSRegressor):
         #
         # sx = self._clean_array(self.xserr)
         # sy = self._clean_array(self.yserr)
-        x,y,sx,sy=self.clean_xs,self.clean_ys,self.clean_xserr, self.clean_yserr
+        x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
         return calculate_mswd2(x, y, sx, sy, a, b, corrcoeffs=self._calculate_correlation_coefficients())
 
 
@@ -162,7 +162,8 @@ class NewYorkRegressor(YorkRegressor):
     """
         mahon 1996
     """
-    _intercept_variance=None
+    _intercept_variance = None
+
     def _calculate(self):
         b = 0
         cnt = 0
@@ -189,8 +190,8 @@ class NewYorkRegressor(YorkRegressor):
             a = YBar - b * XBar
             return b, a, cnt
         else:
-            sig_x=self.clean_xserr
-            sig_y=self.clean_yserr
+            sig_x = self.clean_xserr
+            sig_y = self.clean_yserr
 
             r = self._calculate_correlation_coefficients()
 
@@ -272,7 +273,7 @@ class NewYorkRegressor(YorkRegressor):
         dady = W / sW - xm * dVdy / dVdb
         #eq 18
         var_a = sum(dadx ** 2 * sx ** 2 + dady ** 2 * sy ** 2 + 2 * sxy * dadx * dady)
-        self._intercept_variance=var_a
+        self._intercept_variance = var_a
         return var_b
 
     def predict(self, x):
@@ -282,7 +283,7 @@ class NewYorkRegressor(YorkRegressor):
 
 class ReedYorkRegressor(YorkRegressor):
     """
-        reed 1992
+        reed 1989
     """
     _degree = 1
     #     def _set_degree(self, d):
