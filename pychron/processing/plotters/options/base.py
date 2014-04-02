@@ -33,8 +33,10 @@ class BasePlotterOptions(HasTraits):
     name = Str
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
+
     refresh_plot = Button
     refresh_plot_needed = Event
+
     auto_refresh = Bool(False)
 
     def __init__(self, root, clean=False, *args, **kw):

@@ -65,13 +65,20 @@ class FigurePanel(HasTraits):
         center=None
         mi,ma=Inf, -Inf
         if attr:
-            xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                               for i in self.figures])
-            mi, ma = min(xmis), max(xmas)
+            if po.use_static_limits:
+                mi, ma = po.xlow, po.xhigh
+            else:
+                xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                                   for i in self.figures])
+                mi, ma = min(xmis), max(xmas)
 
-            cs = [i.mean_x(attr) for i in self.figures]
-            center = sum(cs) / len(cs)
+                cs = [i.mean_x(attr) for i in self.figures]
+                center = sum(cs) / len(cs)
+                if po.use_centered_range:
+                    w2 = po.centered_range / 2.0
+                    mi, ma = center - w2, center + w2
 
+        print mi, ma, po.xlow, po.xhigh
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
                           center=center,
@@ -101,6 +108,7 @@ class FigurePanel(HasTraits):
         if mi is None and ma is None:
             mi, ma = 0, 100
 
+        print 'setting limits', mi, ma
         g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
         for fig in self.figures:

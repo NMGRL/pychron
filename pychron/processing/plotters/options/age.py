@@ -35,7 +35,10 @@ class AgeOptions(PlotterOptions):
     show_mean_info = Bool(True)
     show_error_type_info = Bool(True)
     label_box = Bool(False)
+
     index_attr = None
+    use_static_limits = False
+
     analysis_label_format = String
     analysis_label_display = String
 

@@ -21,7 +21,6 @@ from numpy import linspace, pi, exp, zeros, ones, array, arange, \
     Inf
 from numpy import max as np_max
 #============= local library imports  ==========================
-from uncertainties import std_dev, nominal_value
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -93,22 +92,26 @@ class Ideogram(BaseArArFigure):
             ai.value_filter_omit = i in omit
 
         # self._asymptotic_limit_flag = True
-        opt = self.options
-        xmi, xma = self.xmi, self.xma
-        # pad = '0.05'
-        if opt.use_asymptotic_limits:
-            xmi, xma = self.xmi, self.xma
-        elif opt.use_centered_range:
-            w2 = opt.centered_range / 2.0
-            r = self.center
-            xmi, xma = r - w2, w2 + r
+            # opt = self.options
+            # xmi, xma = self.xmi, self.xma
+            # pad = '0.05'
+
+
+            # if opt.use_asymptotic_limits:
+            #     xmi, xma = self.xmi, self.xma
+            # elif opt.use_centered_range:
+            #     w2 = opt.centered_range / 2.0
+            #     r = self.center
+            #     xmi, xma = r - w2, w2 + r
             # pad=False
-        elif opt.xlow or opt.xhigh:
-            xmi, xma = opt.xlow, opt.xhigh
+            # elif opt.xlow or opt.xhigh:
+            #     xmi, xma = opt.xlow, opt.xhigh
             # pad=False
 
-        self.xmi = min(xmi, self.xmi)
-        self.xma = max(xma, self.xma)
+        # print opt.use_centered_range, self.center, xmi, xma
+
+        # self.xmi = min(xmi, self.xmi)
+        # self.xma = max(xma, self.xma)
         # graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
 
         t = index_attr
@@ -496,9 +499,9 @@ class Ideogram(BaseArArFigure):
                 cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
                 # bins,probs=cfunc(xmi,xma)
                 wa = self.analysis_group.weighted_age
-                m, e = nominal_value(wa), std_dev(wa)
-                xmi, xma = m - e, m + e
-                bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc, xmi, xma,
+                # m, e = nominal_value(wa), std_dev(wa)
+                # xmi, xma = m - e, m + e
+                bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc,
                                                                         asymptotic_width=opt.asymptotic_width,
                                                                         tol=(opt.asymptotic_percent or 100) * 0.01)
                 self.trait_setq(xmi=x1, xma=x2)
@@ -538,8 +541,7 @@ class Ideogram(BaseArArFigure):
 
         return bins, probs
 
-    def _calculate_asymptotic_limits(self, cfunc, xmi, xma,
-                                     max_iter=200, asymptotic_width=1,
+    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=1,
                                      tol=0.1):
         """
             cfunc: callable that returns xs,ys and accepts xmin, xmax
@@ -553,7 +555,7 @@ class Ideogram(BaseArArFigure):
         rx1, rx2 = None, None
         step = asymptotic_width * 0.25
         N2 = N / 2.0
-        xmi, xma = self.xmi, self.xma
+        xmi, xma = self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
         for i in xrange(max_iter):
             x1 = xmi - step * i if rx1 is None else rx1
             x2 = xma + step * i if rx2 is None else rx2

@@ -27,6 +27,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -594,7 +595,7 @@ class FigureTask(AnalysisEditTask):
         if not new:
             return
 
-        if self.has_active_editor():
+        if not self.has_active_editor():
             return
 
         sf = self.selected_figures

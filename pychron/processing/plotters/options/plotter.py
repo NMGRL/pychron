@@ -75,23 +75,13 @@ class PlotterOptions(BasePlotterOptions):
     ytitle_font_size = Enum(*SIZES)
     ytitle_font_name = Enum(*FONTS)
 
-    x_filter_str=Str
-    #     data_type_editable = Bool(True)
+    x_filter_str = Str
 
-
-    #    def closed(self, isok):
-    #        self._dump()
-
-    #    def close(self, isok):
-    #        if isok:
-    #            self._dump()
-    #        return True
     def _edit_title_format_fired(self):
         tm = TitleMaker(label=self.title,
                         delimiter=self.title_delimiter,
                         leading_text=self.title_leading_text,
-                        trailing_text=self.title_trailing_text
-        )
+                        trailing_text=self.title_trailing_text)
         info = tm.edit_traits()
         if info.result:
             self.title_formatter = tm.formatter
@@ -163,15 +153,15 @@ class PlotterOptions(BasePlotterOptions):
                   'title_trailing_text',
                   #                  'data_type',
 
-                 'xtick_font_size',
-                 'xtick_font_name',
-                 'xtitle_font_size',
-                 'xtitle_font_name',
-                 'ytick_font_size',
-                 'ytick_font_name',
-                 'ytitle_font_size',
-                 'ytitle_font_name',
-                 'x_filter_str'
+                  'xtick_font_size',
+                  'xtick_font_name',
+                  'xtitle_font_size',
+                  'xtitle_font_name',
+                  'ytick_font_size',
+                  'ytick_font_name',
+                  'ytitle_font_size',
+                  'ytitle_font_name',
+                  'x_filter_str'
         ]
 
         return attrs
@@ -243,26 +233,19 @@ class PlotterOptions(BasePlotterOptions):
     # def _get_info_group(self):
     #     return Group()
     def _get_title_group(self):
-        return HGroup(Item('auto_generate_title',
-                           tooltip='Auto generate a title based on the analysis list'),
-                      icon_button_editor('edit_title_format', 'cog',
-                                         enabled_when='auto_generate_title'),
-                      Item('title', springy=True, enabled_when='not auto_generate_title',
-                    tooltip='User specified plot title'))
+        return VGroup(HGroup(Item('auto_generate_title',
+                                  tooltip='Auto generate a title based on the analysis list'),
+                             icon_button_editor('edit_title_format', 'cog',
+                                                enabled_when='auto_generate_title')),
+                      Item('title', springy=True,
+                           enabled_when='not auto_generate_title',
+                           tooltip='User specified plot title'),
+                      label='Title', show_border=True)
 
     def _get_main_group(self):
-        main_grp = Group(
-            VGroup(
-                # self._get_refresh_group(),
-                # HGroup(Item('auto_generate_title', tooltip='Auto generate a title based on the analysis list'),
-                #        Item('title', springy=True, enabled_when='not auto_generate_title',
-                #             tooltip='User specified plot title')),
-                # self._get_info_group(),
-                self._get_aux_plots_group(),
-                HGroup(Item('x_filter_str', label='X Filter'))
-                ),
-            label='Plots')
-
+        main_grp = VGroup(self._get_aux_plots_group(),
+                          # HGroup(Item('x_filter_str', label='X Filter')),
+                          label='Plots')
         return main_grp
 
     def _get_aux_plots_group(self):
@@ -288,23 +271,18 @@ class PlotterOptions(BasePlotterOptions):
         return aux_plots_grp
 
     def traits_view(self):
-        # axis_grp = VGroup(
-        #     self._get_x_axis_group(),
-        #     VGroup(
-        #         self._create_axis_group('y', 'title'),
-        #         self._create_axis_group('y', 'tick'),
-        #         label='Y'),
-        #     label='Axes')
-
         main_grp = self._get_main_group()
 
-        g = VGroup(main_grp)
         grps = self._get_groups()
         if grps:
-            g.content.extend(grps)
-            g.layout='fold'
+            g = Group(main_grp,
+                      layout='fold', *grps)
+        else:
+            g = main_grp
 
-        v = View(VGroup(self._get_refresh_group(),g))
+        v = View(VGroup(self._get_refresh_group(), g),
+                 scrollable=True)
+        # v = View(VGroup(self._get_refresh_group(),g))
         return v
 
 #============= EOF =============================================

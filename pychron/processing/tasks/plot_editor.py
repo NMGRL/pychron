@@ -175,7 +175,7 @@ class Axis(HasTraits):
 
 class PlotEditor(HasTraits):
     plot = Any
-    analyses = Any
+    # analyses = Any
 
     xmin = EFloat
     xmax = EFloat
@@ -315,20 +315,20 @@ class PlotEditor(HasTraits):
             p.value_range.high_setting = self.ymax
             self.yauto = False
 
-    def _xauto_changed(self):
-        if self.xauto:
-            #p = self.plot
-            # dd = [a.uage for a in self.analyses]
-            dd=[a.get_value(self.index_attr) for a in self.analyses]
-            mid = [di.nominal_value - di.std_dev for di in dd]
-            mad = [di.nominal_value + di.std_dev for di in dd]
-            #mid=[di.nominal_value for di in dd]
-            #mad=[di.nominal_value for di in dd]
-            mi, ma = min(mid), max(mad)
-
-            p = self.auto_xpad * (ma - mi)
-            self.xmin = mi - p
-            self.xmax = ma + p
+    # def _xauto_changed(self):
+    #     if self.xauto:
+    #         #p = self.plot
+    #         # dd = [a.uage for a in self.analyses]
+    #         dd=[a.get_value(self.index_attr) for a in self.analyses]
+    #         mid = [di.nominal_value - di.std_dev for di in dd]
+    #         mad = [di.nominal_value + di.std_dev for di in dd]
+    #         #mid=[di.nominal_value for di in dd]
+    #         #mad=[di.nominal_value for di in dd]
+    #         mi, ma = min(mid), max(mad)
+    #
+    #         p = self.auto_xpad * (ma - mi)
+    #         self.xmin = mi - p
+    #         self.xmax = ma + p
 
     def traits_view(self):
         #renderers_grp = Group(
@@ -342,19 +342,20 @@ class PlotEditor(HasTraits):
                    UItem('selected_renderer', style='custom')),
             label='Selected Plot')
 
-        xlim_grp = HGroup(Item('xauto', label='Auto'),
-                          UItem('xmin', format_str='%0.4f',
-                                enabled_when='not xauto'),
-                          UItem('xmax', format_str='%0.4f',
-                                enabled_when='not xauto'),
-                          label='X Limits')
+        xlim_grp = HGroup(
+            # Item('xauto', label='Auto'),
+            UItem('xmin', format_str='%0.4f',
+                  enabled_when='not xauto'),
+            UItem('xmax', format_str='%0.4f',
+                  enabled_when='not xauto'),
+            label='X Limits')
         ylim_grp = HGroup(UItem('ymin', format_str='%0.4f'),
                           UItem('ymax', format_str='%0.4f'),
                           label='Y Limits')
-        xgrp=VGroup(xlim_grp,
-                    UItem('x_axis', style='custom'), label='X Axis')
-        ygrp=VGroup(ylim_grp,
-                   UItem('y_axis', style='custom'), label='Y Axis')
+        xgrp = VGroup(xlim_grp,
+                      UItem('x_axis', style='custom'), label='X Axis')
+        ygrp = VGroup(ylim_grp,
+                      UItem('y_axis', style='custom'), label='Y Axis')
 
         layout_grp = VGroup(
             Item('padding_left', label='Left'),
@@ -364,7 +365,7 @@ class PlotEditor(HasTraits):
             label='Padding')
 
         general_grp = Group(
-            xgrp,ygrp,
+            xgrp, ygrp,
             layout_grp,
             renderers_grp, layout='tabbed')
 

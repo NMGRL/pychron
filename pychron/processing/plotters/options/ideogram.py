@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int
+from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
 
 #============= standard library imports ========================
@@ -30,9 +30,11 @@ class IdeogramOptions(AgeOptions):
     probability_curve_kind = Enum('cumulative', 'kernel')
     mean_calculation_kind = Enum('weighted mean', 'kernel')
 
+    use_static_limits = Bool
     xlow = Float
     xhigh = Float
     use_centered_range = Bool
+    _use_centered_range = Bool
     centered_range = Float(0.5)
 
     display_mean_indicator = Bool(True)
@@ -41,7 +43,11 @@ class IdeogramOptions(AgeOptions):
     plot_option_name = 'Ideogram'
     # index_attr = Enum('Age', 'Ar40*/Ar39k','Ar40/Ar36')
     index_attr = String
+
     use_asymptotic_limits = Bool
+    _use_asymptotic_limits = Bool
+    _suppress_xlimits_clear = Bool
+
     asymptotic_width = Float
     asymptotic_percent = Float
     x_end_caps = Bool(False)
@@ -59,8 +65,43 @@ class IdeogramOptions(AgeOptions):
     mean_sig_figs = Int
     mean_error_sig_figs = Int
 
+    refresh_asymptotic_button = Button
     # def _index_attr_default(self):
     #     return 'uage'
+    @on_trait_change('use_static_limits, use_centered_range')
+    def _handle_use_limits(self, new):
+        #persist use asymptotic limits
+        self._suppress_xlimits_clear = True
+        if new:
+            self._use_asymptotic_limits = self.use_asymptotic_limits
+            self.trait_set(use_asymptotic_limits=False)
+        else:
+            self.trait_set(use_asymptotic_limits=self._use_asymptotic_limits)
+
+        self._suppress_xlimits_clear = False
+
+    def _use_asymptotic_limits_changed(self, new):
+        #persist use_centered range
+        if not self._suppress_xlimits_clear:
+            if new:
+                self._use_centered_range = self.use_centered_range
+                self.trait_set(use_centered_range=False)
+            else:
+                self.trait_set(use_centered_range=self._use_centered_range)
+
+    def _refresh_asymptotic_button_fired(self):
+        for ap in self.aux_plots:
+            ap.clear_xlimits()
+        self.refresh_plot_needed = True
+
+    @on_trait_change('use_asymptotic_limits, asymptotic+, use_centered_range, centered_range, use_static_limits')
+    def _handle_asymptotic(self, name, new):
+        if name.startswith('use') and not new:
+            return
+
+        if not self._suppress_xlimits_clear:
+            for ap in self.aux_plots:
+                ap.clear_xlimits()
 
     def _index_attr_changed(self):
         for ap in self.aux_plots:
@@ -75,8 +116,8 @@ class IdeogramOptions(AgeOptions):
             self.analysis_label_display = lm.label
 
     def _get_groups(self):
-        xgrp = VGroup(HGroup(Item('index_attr',
-                                  editor=EnumEditor(values={'uage': '01:Age',
+        xgrp = VGroup(Item('index_attr',
+                           editor=EnumEditor(values={'uage': '01:Age',
                                                             'uF': '02:Ar40*/Ar39k',
                                                             'Ar40/Ar36': '03:Ar40/Ar36',
                                                             'Ar40/Ar39': '04:Ar40/Ar39',
@@ -88,19 +129,31 @@ class IdeogramOptions(AgeOptions):
                                                             'Ar37': '10:Ar37',
                                                             'Ar36': '11:Ar36', }),
                                   label='X Value'),
-                             Item('xlow', label='Min.', enabled_when='not object.use_centered_range'),
-                             Item('xhigh', label='Max.', enabled_when='not object.use_centered_range')),
-                      HGroup(Item('use_asymptotic_limits', enabled_when='not object.use_centered_range'),
+                      HGroup(UItem('use_static_limits'),
+                             Item('xlow', label='Min.',
+                                  enabled_when='object.use_static_limits'),
+                             Item('xhigh', label='Max.',
+                                  enabled_when='object.use_static_limits'),
+                             show_border=True,
+                             label='Static Limits'),
+                      HGroup(UItem('use_asymptotic_limits'),
                              Item('asymptotic_width', label='Width',
-                                  tooltip='Width of asymptotic section that is less than the Asymptotic %',
-                                  enabled_when='object.use_asymptotic_limits'),
+                                  tooltip='Width of asymptotic section that is less than the Asymptotic %'),
                              Item('asymptotic_percent',
                                   tooltip='Percent of Max probability',
-                                  label='%')),
-                      HGroup(Item('use_centered_range', label='Center on fixed range'),
+                                  label='%'),
+                             icon_button_editor('refresh_asymptotic_button', 'refresh',
+                                                enabled_when='object.use_asymptotic_limits',
+                                                tooltip='Refresh plot with defined asymptotic limits'),
+                             enabled_when='not object.use_centered_range and not object.use_static_limits',
+                             show_border=True,
+                             label='Asymptotic Limits'),
+                      HGroup(UItem('use_centered_range'),
                              UItem('centered_range',
-                                   enabled_when='object.use_centered_range')),
-                      label='Index')
+                                   enabled_when='object.use_centered_range'),
+                             label='Center on fixed range',
+                             show_border=True,
+                             enabled_when='not object.use_static_limits'))
 
         g = Group(
             Item('probability_curve_kind',
@@ -123,6 +176,7 @@ class IdeogramOptions(AgeOptions):
 
             Item('include_irradiation_error'),
             Item('include_decay_error'),
+            show_border=True,
             label='Calculations')
 
         g2 = Group(VGroup(HGroup(Item('display_mean_indicator', label='Indicator'),
@@ -190,6 +244,7 @@ class IdeogramOptions(AgeOptions):
             'mean_calculation_kind',
             'error_calc_method',
             'xlow', 'xhigh',
+            'use_static_limits',
             'use_centered_range', 'centered_range',
             'use_asymptotic_limits', 'asymptotic_width', 'asymptotic_percent',
             'display_mean', 'display_mean_indicator',
