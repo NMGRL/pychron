@@ -15,13 +15,9 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-import struct
-import time
 
 from traits.api import Instance, Button, Bool, Float
 from traitsui.api import VGroup, Item, InstanceEditor
-
-
 
 #=============standard library imports ========================
 from threading import Timer
@@ -35,54 +31,11 @@ from pychron.hardware.temperature_monitor import DPi32TemperatureMonitor
 from pychron.hardware.pyrometer_temperature_monitor import PyrometerTemperatureMonitor
 
 from pychron.lasers.laser_managers.vue_metrix_manager import VueMetrixManager
+from pychron.lasers.response_recorder import ResponseRecorder
 from pychron.paths import paths
 from pychron.monitors.fusions_diode_laser_monitor import FusionsDiodeLaserMonitor
 
 from fusions_laser_manager import FusionsLaserManager
-
-from traits.api import HasTraits, Array
-from threading import Thread
-from numpy import array, vstack
-
-
-class ResponseRecorder(HasTraits):
-    period = 2
-    response_data = Array
-    output_data = Array
-
-    _alive = False
-
-    def start(self):
-        t = time.time()
-        self.response_data = array([(t, 0)])
-        self.output_data = array([(t, 0)])
-
-        t = Thread(target=self.run)
-        t.start()
-
-    def run(self):
-        self._alive = True
-        while self._alive:
-            t = time.time()
-            r = self.response_device.get_response(force=True)
-            self.response_data = vstack((self.response_data, (t, r)))
-
-            r = self.output_device.get_output()
-            self.output_data = vstack((self.output_data, (t, r)))
-
-            time.sleep(self.period)
-
-    def stop(self):
-        self._alive = False
-
-
-    def get_response_blob(self):
-        if len(self.response_data):
-            return ''.join([struct.pack('<ff', x, y) for x, y in self.response_data])
-
-    def get_output_blob(self):
-        if len(self.output_data):
-            return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
 
 
 class FusionsDiodeManager(FusionsLaserManager):
@@ -257,6 +210,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.temperature_controller,
+                             response_device_secondary=self.pyrometer,
                              output_device=self.temperature_controller)
         return r
 
