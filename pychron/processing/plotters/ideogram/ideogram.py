@@ -91,7 +91,7 @@ class Ideogram(BaseArArFigure):
             # print ai.record_id, i in omit
             ai.value_filter_omit = i in omit
 
-        # self._asymptotic_limit_flag = True
+            # self._asymptotic_limit_flag = True
             # opt = self.options
             # xmi, xma = self.xmi, self.xma
             # pad = '0.05'
@@ -547,53 +547,43 @@ class Ideogram(BaseArArFigure):
             cfunc: callable that returns xs,ys and accepts xmin, xmax
                     xs, ys= cfunc(x1,x2)
 
-            asymptotic_width=width of asymptotic section in index units (Ma,ka)
-                    Essentially amount of white space at either end
+            asymptotic_width=percent of total width that is less than tol% of the total curve
 
             returns xs,ys,xmi,xma
         """
         rx1, rx2 = None, None
-        step = asymptotic_width * 0.25
-        N2 = N / 2.0
+
         xmi, xma = self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
-        for i in xrange(max_iter):
-            x1 = xmi - step * i if rx1 is None else rx1
-            x2 = xma + step * i if rx2 is None else rx2
 
-            # x1, x2 = xmi - step * i, xma + step * i
-            xs, ys = cfunc(x1, x2)
+        step = 0.01 * (xma - xmi)
+        aw = int(asymptotic_width * N * 0.01)
+        if aw > 0:
+            for i in xrange(max_iter):
+                x1 = xmi - step * i if rx1 is None else rx1
+                x2 = xma + step * i if rx2 is None else rx2
 
-            bin_per_ma = N / (x2 - x1)
+                xs, ys = cfunc(x1, x2)
 
-            aw = int(asymptotic_width * bin_per_ma)
-            if aw > N2:
-                continue
+                low = ys[:aw]
+                high = ys[-aw:]
 
-            if aw < 1:
-                break
+                tt = tol * max(ys)
 
-            low = ys[:aw]
-            high = ys[-aw:]
+                if rx1 is None and (low < tt).all():
+                    rx1 = x1
+                if rx2 is None and (high < tt).all():
+                    rx2 = x2
+                if rx1 is not None and rx2 is not None:
+                    break
 
-            tt = tol * max(ys)
-            # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
-            # if rx1 is None and low.mean() < tt:  # and low.std()<std_tol:
-            # print aw, tt
-            if rx1 is None and (low < tt).all():  # and low.std()<std_tol:
-                rx1 = x1
-            # if rx2 is None and high.mean() < tt:  # and high.std()<std_tol:
-            if rx2 is None and (high < tt).all():  # and high.std()<std_tol:
-                rx2 = x2
-            if rx1 is not None and rx2 is not None:
-                break
+        #if tt is not None:
+        #    self.graph.add_horizontal_rule(tt)
 
-        # self.graph.add_horizontal_rule(tt)
         if rx1 is None:
             rx1 = x1
         if rx2 is None:
             rx2 = x2
 
-        # print 'x1,x2',rx1, rx2
         return xs, ys, rx1, rx2
 
     def _cmp_analyses(self, x):
