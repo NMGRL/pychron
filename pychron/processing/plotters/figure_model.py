@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, on_trait_change, Instance
+from traits.api import HasTraits, List, Property, Any, Instance
 #============= standard library imports ========================
 from itertools import groupby
 #============= local library imports  ==========================
@@ -46,8 +46,11 @@ class FigureModel(HasTraits):
         for pp, meta in zip(self.panels, metadata):
             pp.load_metadata(meta)
 
-    @on_trait_change('analyses[]')
-    def _analyses_items_changed(self):
+    # @on_trait_change('analyses[]')
+    # def _analyses_items_changed(self):
+    #     self.refresh_panels()
+
+    def refresh_panels(self):
         ps = self._make_panels()
         self.panels = ps
         self.panel_gen = (gi for gi in self.panels)

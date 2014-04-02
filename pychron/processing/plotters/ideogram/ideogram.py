@@ -557,24 +557,23 @@ class Ideogram(BaseArArFigure):
 
         step = 0.01 * (xma - xmi)
         aw = int(asymptotic_width * N * 0.01)
-        if aw > 0:
-            for i in xrange(max_iter):
-                x1 = xmi - step * i if rx1 is None else rx1
-                x2 = xma + step * i if rx2 is None else rx2
+        for i in xrange(max_iter if aw else 1):
+            x1 = xmi - step * i if rx1 is None else rx1
+            x2 = xma + step * i if rx2 is None else rx2
 
-                xs, ys = cfunc(x1, x2)
+            xs, ys = cfunc(x1, x2)
 
-                low = ys[:aw]
-                high = ys[-aw:]
+            low = ys[:aw]
+            high = ys[-aw:]
 
-                tt = tol * max(ys)
+            tt = tol * max(ys)
 
-                if rx1 is None and (low < tt).all():
-                    rx1 = x1
-                if rx2 is None and (high < tt).all():
-                    rx2 = x2
-                if rx1 is not None and rx2 is not None:
-                    break
+            if rx1 is None and (low < tt).all():
+                rx1 = x1
+            if rx2 is None and (high < tt).all():
+                rx2 = x2
+            if rx1 is not None and rx2 is not None:
+                break
 
         #if tt is not None:
         #    self.graph.add_horizontal_rule(tt)

@@ -17,7 +17,9 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Any, Int
 from chaco.plot_containers import GridPlotContainer
+
 from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -31,8 +33,9 @@ class FigureContainer(HasTraits):
     def _model_changed(self):
 
         gpi = GraphPanelInfo()
-        n = self.model.npanels
 
+        self.model.refresh_panels()
+        n = self.model.npanels
         comp, r, c = self._component_factory(n, gpi)
         for i in range(r):
             for j in range(c):

@@ -57,11 +57,17 @@ class IdeogramEditor(FigureEditor):
             pom = IdeogramOptionsManager()
             plotter_options = pom.plotter_options
 
-        from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+        model = self.figure_model
+        if not model:
+            from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
 
-        model = IdeogramModel(plot_options=plotter_options,
-                              titles=self.titles)
-        model.analyses = ans
+            model = IdeogramModel(plot_options=plotter_options,
+                                  titles=self.titles)
+
+        model.trait_set(plot_options=plotter_options,
+                        titles=self.titles,
+                        analyses=ans)
+
         iv = FigureContainer(model=model)
 
         # if meta:

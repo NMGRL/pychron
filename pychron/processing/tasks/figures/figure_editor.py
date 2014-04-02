@@ -45,6 +45,7 @@ class FigureEditor(GraphEditor):
 
     annotation_tool = Any
     figure_model = Any
+    figure_container = Any
 
     tag = Event
     save_db_figure = Event
