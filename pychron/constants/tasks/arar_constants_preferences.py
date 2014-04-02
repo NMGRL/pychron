@@ -23,6 +23,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -55,7 +56,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     ic_factor = Float(1.0)
     ic_factor_error = Float(0.0)
 
-    age_units = Enum('Ma', 'ka')
+    age_units = Enum('Ma', 'ka', 'Ga')
 
     #citations
     Ar40_Ar36_atm_citation = Str
@@ -106,7 +107,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             HGroup(Item('Ar40_Ar36_atm', label='(40Ar/36Ar)atm'),
                    Item('Ar40_Ar36_atm_error', show_label=False),
                    Item('Ar40_Ar36_atm_citation', show_label=False)
-                   ),
+            ),
             HGroup(Item('Ar40_Ar38_atm', label='(40Ar/38Ar)atm'),
                    Item('Ar40_Ar38_atm_error', show_label=False),
                    Item('Ar40_Ar38_atm_citation', show_label=False)),

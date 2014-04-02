@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, Button, Bool, Event
-from traitsui.api import View, HGroup, Item, spring
+from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
@@ -97,9 +97,13 @@ class BasePlotterOptions(HasTraits):
         self.refresh_plot_needed = True
 
     def _get_refresh_group(self):
+        """
+         disabled auto_refresh. causing a max recursion depth error. something to do with persisted xlimits
+        """
         return HGroup(icon_button_editor('refresh_plot', 'chart_curve_go'),
                       spring,
-                      Item('auto_refresh', label='Auto Plot'))
+                      # Item('auto_refresh', label='Auto Plot')
+        )
 
     # ==============================================================================
     # persistence

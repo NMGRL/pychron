@@ -33,9 +33,10 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.regression.mean_regressor import WeightedMeanRegressor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
@@ -245,7 +246,7 @@ class FluxTask(InterpolationTask):
             geom = self._get_geometry()
             editor = self.active_editor
             editor.geometry = geom
-
+            editor.suppress_update = True
             for ais in ans:
                 if ais:
                     ref = ais[0]
@@ -256,23 +257,26 @@ class FluxTask(InterpolationTask):
 
                     aa = proc.make_analyses(ais, progress=prog)
                     n = len(aa)
-                    j = mean_j(aa)
                     dev = 100
-                    if sj:
-                        dev = (j.nominal_value - sj) / sj * 100
+                    j = 0
+                    if n:
+                        j = mean_j(aa)
+                        if sj:
+                            dev = (j.nominal_value - sj) / sj * 100
 
-                    if editor.tool.save_mean_j:
-                        db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
-                        sj, sjerr = j.nominal_value, j.std_dev
+                        if editor.tool.save_mean_j:
+                            db.save_flux(ident, j.nominal_value, j.std_dev, inform=False)
+                            sj, sjerr = j.nominal_value, j.std_dev
 
                     d = dict(saved_j=sj, saved_jerr=sjerr,
-                             mean_j=j.nominal_value, mean_jerr=j.std_dev,
-                             dev=dev, n=n)
+                             mean_j=nominal_value(j), mean_jerr=std_dev(j),
+                             dev=dev, n=n, use=n > 0)
 
                     editor.set_position_j(ident, **d)
                     if editor.tool.auto_clear_cache:
                         proc.remove_from_cache(aa)
 
+            editor.suppress_update = False
             prog.close()
 
     def _get_geometry(self, irrad=None, level=None, holder=None):

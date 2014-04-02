@@ -31,6 +31,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -366,7 +367,6 @@ def age_equation(j, f,
         arar_constants = ArArConstants()
 
     scalar = float(arar_constants.age_scalar)
-
     lk = arar_constants.lambda_k
     if not include_decay_error:
         lk = lk.nominal_value
