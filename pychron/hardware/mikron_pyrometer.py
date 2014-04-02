@@ -102,7 +102,7 @@ class MikronGA140Pyrometer(CoreDevice):
         return True
 
     #REsponseRecorder Interface
-    def get_response(self):
+    def get_response(self, **kw):
         return self.temperature
 
     def _build_command(self, cmd, value=None, per_mil=False, single_digit=False):

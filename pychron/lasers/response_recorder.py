@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Array, Any
+from traits.api import HasTraits, Array, Any, Instance
 
 #============= standard library imports ========================
 import struct
@@ -24,6 +24,7 @@ from threading import Thread
 from numpy import array, vstack
 
 #============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 
@@ -34,41 +35,63 @@ class ResponseRecorder(HasTraits):
 
     _alive = False
 
-    output_devce = Any
+    output_device = Any
     response_device = Any
     response_device_secondary = Any
+    data_manager = Instance(CSVDataManager)
+
+    _start_time = 0
 
     def start(self):
         t = time.time()
+        self._start_time = t
         self.response_data = array([(t, 0)])
         self.output_data = array([(t, 0)])
 
-        self.dm = CSVDataManager()
-        self.dm.new_frame(base_frame_name='diode_response')
-        self.dm.write_to_frame(('#time', self.output_devce.name,
-                                self.response_device.name,
-                                self.response_device_secondary.name))
+        self.data_manager = CSVDataManager()
+        self.data_manager.new_frame(base_frame_name='diode_response')
+        self.data_manager.write_to_frame(('#time', self.output_device.name,
+                                          self.response_device.name,
+                                          self.response_device_secondary.name))
         t = Thread(target=self.run)
         t.start()
 
     def run(self):
         self._alive = True
+        st = self._start_time
+        p = self.period
+        rd = self.response_device
+        rds = self.response_device_secondary
+        od = self.output_device
+        dm = self.data_manager
+
+        odata = self.output_data
+        rdata = self.response_data
         while self._alive:
-            t = time.time()
-            out = self.output_device.get_output()
-            self.output_data = vstack((self.output_data, (t, out)))
+            to = time.time()
+            t = to - st
+            out = od.get_output()
+            odata = vstack((odata, (t, out)))
 
-            r = self.response_device.get_response(force=True)
-            self.response_data = vstack((self.response_data, (t, r)))
+            r = rd.get_response(force=True)
+            rdata = vstack((rdata, (t, r)))
 
-            r2 = self.response_device_secondary.get_response(force=True)
+            r2 = rds.get_response(force=True)
 
-            self.dm.write_to_frame((t, out, r, r2))
-            time.sleep(self.period)
+            datum = (t, out, r, r2)
+            datum = map(lambda x: floatfmt(x, n=3), datum)
+            dm.write_to_frame(datum)
+            et = time.time() - to
+            slt = p - et - 0.001
+            if slt > 0:
+                time.sleep(slt)
+
+        self.output_data = odata
+        self.response_data = rdata
 
     def stop(self):
         self._alive = False
-        self.dm.close_file()
+        self.data_manager.close_file()
 
     def get_response_blob(self):
         if len(self.response_data):
