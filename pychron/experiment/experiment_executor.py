@@ -324,6 +324,7 @@ class ExperimentExecutor(Loggable):
 
         cnt = 0
         total_cnt = 0
+        is_first_analysis = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
             #                 before = measure_type()
@@ -344,7 +345,7 @@ class ExperimentExecutor(Loggable):
                 overlapping = self.current_run and self.current_run.isAlive()
                 if not overlapping:
                     if force_delay or \
-                            (self.isAlive() and cnt < nruns and not cnt == 0):
+                            (self.isAlive() and cnt < nruns and not is_first_analysis):
                         # delay between runs
                         self._delay(delay)
                         force_delay = False
@@ -375,6 +376,7 @@ class ExperimentExecutor(Loggable):
 
                 cnt += 1
                 total_cnt += 1
+                is_first_analysis = False
                 if self.end_at_run_completion:
                     break
 
