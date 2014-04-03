@@ -24,6 +24,7 @@ from numpy import max as np_max
 
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
+from pychron.processing.plotters.ideogram.ideogram_inset_overlay import IdeogramInset
 
 from pychron.processing.plotters.ideogram.mean_indicator_overlay import MeanIndicatorOverlay
 from pychron.core.stats.peak_detection import find_peaks
@@ -283,15 +284,25 @@ class Ideogram(BaseArArFigure):
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
 
-        #===============================================================================
-        # overlays
-        #===============================================================================
-        #def _add_limits_tool(self, plot):
+        if self.group_id == 0:
+            if self.options.display_inset:
+                xs, ys = self._calculate_probability_curve(self.xs, self.xes,
+                                                           limits=self._calculate_nominal_xlimits())
+                plot.overlays.append(IdeogramInset(xs, ys,
+                                                   width=self.options.inset_width,
+                                                   height=self.options.inset_height,
+                                                   location=self.options.inset_location))
 
-        #t = LimitsTool(component=plot)
-        #o = LimitOverlay(component=plot, tool=t)
-        #plot.tools.append(t)
-        #plot.overlays.append(o)
+
+                #===============================================================================
+                # overlays
+                #===============================================================================
+                #def _add_limits_tool(self, plot):
+
+                #t = LimitsTool(component=plot)
+                #o = LimitOverlay(component=plot, tool=t)
+                #plot.tools.append(t)
+                #plot.overlays.append(o)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -483,11 +494,15 @@ class Ideogram(BaseArArFigure):
                                plotid=pid)
         return s
 
-    def _calculate_probability_curve(self, ages, errors, calculate_limits=False):
+    def _calculate_probability_curve(self, ages, errors, calculate_limits=False, limits=None):
+        xmi, xma = None, None
+        if limits:
+            xmi, xma = limits
 
-        xmi, xma = self.graph.get_x_limits()
-        if xmi == -Inf or xma == Inf:
-            xmi, xma = self.xmi, self.xma
+        if not xmi and not xma:
+            xmi, xma = self.graph.get_x_limits()
+            if xmi == -Inf or xma == Inf:
+                xmi, xma = self.xmi, self.xma
 
         opt = self.options
 
@@ -541,6 +556,9 @@ class Ideogram(BaseArArFigure):
 
         return bins, probs
 
+    def _calculate_nominal_xlimits(self):
+        return self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
+
     def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=1,
                                      tol=0.1):
         """
@@ -552,9 +570,7 @@ class Ideogram(BaseArArFigure):
             returns xs,ys,xmi,xma
         """
         rx1, rx2 = None, None
-
-        xmi, xma = self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
-
+        xmi, xma = self._calculate_nominal_xlimits()
         step = 0.01 * (xma - xmi)
         aw = int(asymptotic_width * N * 0.01)
         for i in xrange(max_iter if aw else 1):

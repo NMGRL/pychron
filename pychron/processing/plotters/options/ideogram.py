@@ -66,8 +66,12 @@ class IdeogramOptions(AgeOptions):
     mean_error_sig_figs = Int
 
     refresh_asymptotic_button = Button
-    # def _index_attr_default(self):
-    #     return 'uage'
+
+    display_inset = Bool
+    inset_location = Enum('Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
+    inset_width = Int(160)
+    inset_height = Int(100)
+
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
         #persist use asymptotic limits
@@ -118,17 +122,17 @@ class IdeogramOptions(AgeOptions):
     def _get_groups(self):
         xgrp = VGroup(Item('index_attr',
                            editor=EnumEditor(values={'uage': '01:Age',
-                                                            'uF': '02:Ar40*/Ar39k',
-                                                            'Ar40/Ar36': '03:Ar40/Ar36',
-                                                            'Ar40/Ar39': '04:Ar40/Ar39',
-                                                            'Ar40/Ar38': '05:Ar40/Ar38',
-                                                            'Ar39/Ar37': '06:Ar39/Ar37',
-                                                            'Ar40': '07:Ar40',
-                                                            'Ar39': '08:Ar39',
-                                                            'Ar38': '09:Ar38',
-                                                            'Ar37': '10:Ar37',
-                                                            'Ar36': '11:Ar36', }),
-                                  label='X Value'),
+                                                     'uF': '02:Ar40*/Ar39k',
+                                                     'Ar40/Ar36': '03:Ar40/Ar36',
+                                                     'Ar40/Ar39': '04:Ar40/Ar39',
+                                                     'Ar40/Ar38': '05:Ar40/Ar38',
+                                                     'Ar39/Ar37': '06:Ar39/Ar37',
+                                                     'Ar40': '07:Ar40',
+                                                     'Ar39': '08:Ar39',
+                                                     'Ar38': '09:Ar38',
+                                                     'Ar37': '10:Ar37',
+                                                     'Ar36': '11:Ar36', }),
+                           label='X Value'),
                       HGroup(UItem('use_static_limits'),
                              Item('xlow', label='Min.',
                                   enabled_when='object.use_static_limits'),
@@ -189,7 +193,12 @@ class IdeogramOptions(AgeOptions):
                                  show_border=True,
                                  label='SigFigs'),
                           label='Mean'),
-
+                   VGroup(Item('display_inset'),
+                          Item('inset_location'),
+                          HGroup(Item('inset_width', label='Width'),
+                                 Item('inset_height', label='Height')),
+                          show_border=True,
+                          label='Inset'),
                    Item('label_box'),
                    Item('analysis_number_sorting', label='Analysis# Sort'),
                    HGroup(Item('analysis_label_display',
@@ -253,7 +262,7 @@ class IdeogramOptions(AgeOptions):
             'display_percent_error',
             'mean_indicator_fontname',
             'mean_indicator_fontsize',
-            'mean_sig_figs',
-            'mean_error_sig_figs']
+            'mean_sig_figs', 'mean_error_sig_figs',
+            'display_inset', 'inset_location', 'inset_width', 'inset_height']
 
 #============= EOF =============================================
