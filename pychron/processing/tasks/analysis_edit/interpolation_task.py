@@ -24,7 +24,7 @@ from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.easy.easy_manager import EasyManager
-from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, BinAnalysesAction, FindAssociatedAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ReferencesPane
 from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
@@ -33,7 +33,6 @@ from pychron.processing.tasks.analysis_edit.adapters import ReferencesAdapter
 #============= local library imports  ==========================
 from pychron.processing.tasks.browser.browser_task import DEFAULT_AT
 from pychron.processing.tasks.browser.panes import AnalysisAdapter
-from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
 
@@ -92,7 +91,7 @@ class InterpolationTask(AnalysisEditTask):
     references_pane_klass = ReferencesPane
     default_reference_analysis_type = 'air'
 
-    tool_bars = [SToolBar(AddIsoEvoAction(), ),
+    tool_bars = [SToolBar(FindAssociatedAction(), ),
                  SToolBar(DatabaseSaveAction(),
                           BinAnalysesAction())]
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
@@ -145,6 +144,10 @@ class InterpolationTask(AnalysisEditTask):
                 items = ritems
 
         return items
+
+    def find_associated_analyses(self):
+        if self.has_active_editor():
+            self.active_editor.find_references()
 
     def bin_analyses(self):
         self.debug('binning analyses')

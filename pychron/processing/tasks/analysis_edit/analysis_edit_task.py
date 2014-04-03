@@ -15,8 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-from datetime import timedelta
 import binascii
 
 from enable.component import Component
@@ -25,7 +23,6 @@ from traits.api import Instance, on_trait_change
 
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
-from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
@@ -34,26 +31,6 @@ from pychron.processing.tasks.analysis_edit.tags import Tag
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -166,63 +143,63 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
-    def find_associated_analyses(self, found=None, use_cache=True, progress=None):
-
-        if self.active_editor:
-            unks = self.active_editor.analyses
-
-            key = lambda x: x.labnumber
-            unks = sorted(unks, key=key)
-
-            db = self.manager.db
-            with db.session_ctx():
-                tans = []
-                if found is None:
-                    uuids = []
-                else:
-                    uuids = found
-
-                ngroups = len(list(groupby(unks, key=key)))
-                if progress is None:
-                    progress = self.manager.open_progress(ngroups + 1)
-                else:
-                    progress.increase_max(ngroups + 1)
-
-                for ln, ais in groupby(unks, key=key):
-                    msg = 'find associated analyses for labnumber {}'.format(ln)
-                    self.debug(msg)
-                    progress.change_message(msg)
-
-                    ais = list(ais)
-                    ts = [get_datetime(ai.timestamp) for ai in ais]
-                    ref = ais[0]
-                    ms = ref.mass_spectrometer
-                    ed = ref.extract_device
-                    self.debug("{} {}".format(ms, ed))
-                    for atype in ('blank_unknown', 'blank_air', 'blank_cocktail',
-                                  'air', 'cocktail'):
-                        for i in range(10):
-                            td = timedelta(hours=6 * (i + 1))
-                            lpost, hpost = min(ts) - td, max(ts) + td
-
-                            ans = db.get_date_range_analyses(lpost, hpost,
-                                                             atype=atype,
-                                                             spectrometer=ms)
-
-                            if ans:
-                                self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
-                                ans = [ai for ai in ans if ai.uuid not in uuids]
-                                self.debug('new ans {}'.format(len(ans)))
-                                if ans:
-                                    tans.extend(ans)
-                                    uuids.extend([ai.uuid for ai in ans])
-                                break
-
-                progress.soft_close()
-
-                self.active_editor.set_items(tans, is_append=True,
-                                             use_cache=use_cache, progress=progress)
-                return uuids
+            # def find_associated_analyses(self, found=None, use_cache=True, progress=None):
+            #
+            # if self.active_editor:
+            #     unks = self.active_editor.analyses
+            #
+            #     key = lambda x: x.labnumber
+            #     unks = sorted(unks, key=key)
+            #
+            #     db = self.manager.db
+            #     with db.session_ctx():
+            #         tans = []
+            #         if found is None:
+            #             uuids = []
+            #         else:
+            #             uuids = found
+            #
+            #         ngroups = len(list(groupby(unks, key=key)))
+            #         if progress is None:
+            #             progress = self.manager.open_progress(ngroups + 1)
+            #         else:
+            #             progress.increase_max(ngroups + 1)
+            #
+            #         for ln, ais in groupby(unks, key=key):
+            #             msg = 'find associated analyses for labnumber {}'.format(ln)
+            #             self.debug(msg)
+            #             progress.change_message(msg)
+            #
+            #             ais = list(ais)
+            #             ts = [get_datetime(ai.timestamp) for ai in ais]
+            #             ref = ais[0]
+            #             ms = ref.mass_spectrometer
+            #             ed = ref.extract_device
+            #             self.debug("{} {}".format(ms, ed))
+            #             for atype in ('blank_unknown', 'blank_air', 'blank_cocktail',
+            #                           'air', 'cocktail'):
+            #                 for i in range(10):
+            #                     td = timedelta(hours=6 * (i + 1))
+            #                     lpost, hpost = min(ts) - td, max(ts) + td
+            #
+            #                     ans = db.get_date_range_analyses(lpost, hpost,
+            #                                                      atype=atype,
+            #                                                      spectrometer=ms)
+            #
+            #                     if ans:
+            #                         self.debug('{} {} to {}. nanalyses={}'.format(atype, lpost, hpost, len(ans)))
+            #                         ans = [ai for ai in ans if ai.uuid not in uuids]
+            #                         self.debug('new ans {}'.format(len(ans)))
+            #                         if ans:
+            #                             tans.extend(ans)
+            #                             uuids.extend([ai.uuid for ai in ans])
+            #                         break
+            #
+            #         progress.soft_close()
+            #
+            #         self.active_editor.set_items(tans, is_append=True,
+            #                                      use_cache=use_cache, progress=progress)
+            #         return uuids
 
     def _get_editor_by_uuid(self, uuid):
         return next((editor for editor in self.editor_area.editors

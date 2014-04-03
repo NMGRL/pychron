@@ -19,21 +19,11 @@ from collections import namedtuple
 import os
 import struct
 
+from pyface.tasks.action.schema import SToolBar
+
 from traits.api import on_trait_change, List, HasTraits
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
-
-
-
-
-
-
-
-
-
-
-
-
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -43,6 +33,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
 from pychron.paths import paths
 from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.flux.flux_editor import FluxEditor
 from pychron.processing.tasks.flux.flux_parser import XLSFluxParser, CSVFluxParser
 from pychron.processing.tasks.flux.panes import IrradiationPane, AnalysesPane
@@ -97,6 +88,7 @@ class FluxTask(InterpolationTask):
     unknowns_pane_klass = UnknownsPane
 
     analyses = List
+    tool_bars = [SToolBar(DatabaseSaveAction())]
 
     def find_associated_analyses(self):
         pass

@@ -56,8 +56,7 @@ class FindAssociatedAction(TaskAction):
     name = 'Find Associated'
     description = 'Find associated analyses'
     method = 'find_associated_analyses'
-    image = icon('find.png')
-
+    image = icon('edit-find.png')
 
 
 class TagAction(TaskAction):
