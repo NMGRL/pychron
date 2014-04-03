@@ -68,11 +68,11 @@ class PointInspector(InfoInspector):
                         # fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
                         # y = fmt.format(y)
                         ye = floatfmt(ye, n=6, s=3)
-                        y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
+                        sy = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
                     else:
-                        y = floatfmt(y, n=6, s=3)
+                        sy = floatfmt(y, n=6, s=3)
 
-                    lines.extend([u'x= {}'.format(x), u'y= {}'.format(y)])
+                    lines.extend([u'x= {}'.format(x), u'y= {}'.format(sy)])
                     if hasattr(self.component, 'display_index'):
                         x = self.component.display_index.get_data()[i]
                         lines.append(u'{}'.format(x))
