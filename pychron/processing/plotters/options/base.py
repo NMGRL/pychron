@@ -64,7 +64,6 @@ class BasePlotterOptions(HasTraits):
 
     def load_yaml(self, blob):
         d = yaml.load(blob)
-        print 'loading yaml', self
         for k, v in d.iteritems():
             try:
                 if k == 'aux_plots':

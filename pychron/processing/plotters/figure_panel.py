@@ -61,9 +61,9 @@ class FigurePanel(HasTraits):
                              container_dict=dict(padding=0, spacing=self.graph_spacing), )
 
         po = self.plot_options
-        attr=po.index_attr
-        center=None
-        mi,ma=Inf, -Inf
+        attr = po.index_attr
+        center = None
+        mi, ma = Inf, -Inf
         if attr:
             if po.use_static_limits:
                 mi, ma = po.xlow, po.xhigh
@@ -78,7 +78,6 @@ class FigurePanel(HasTraits):
                     w2 = po.centered_range / 2.0
                     mi, ma = center - w2, center + w2
 
-        print mi, ma, po.xlow, po.xhigh
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
                           center=center,
@@ -91,10 +90,10 @@ class FigurePanel(HasTraits):
             if i == 0:
                 fig.build(plots)
 
-            fig.suppress_ylimits_update=True
+            fig.suppress_ylimits_update = True
             fig.suppress_xlimits_update = True
             fig.plot(plots)
-            fig.suppress_ylimits_update=False
+            fig.suppress_ylimits_update = False
             fig.suppress_xlimits_update = False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
@@ -108,7 +107,6 @@ class FigurePanel(HasTraits):
         if mi is None and ma is None:
             mi, ma = 0, 100
 
-        print 'setting limits', mi, ma
         g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
         for fig in self.figures:

@@ -28,6 +28,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -255,7 +256,7 @@ class FigureTask(AnalysisEditTask):
         if self.active_editor:
             if not isinstance(self.active_editor, RecallEditor):
                 sid = self.active_editor.saved_figure_id
-                if sid:
+                if sid >= 0:
                     self._save_figure()
                 else:
                     self._save_as_figure()
@@ -585,7 +586,7 @@ class FigureTask(AnalysisEditTask):
             return
 
         if isinstance(self.active_editor, FigureEditor):
-            self.active_editor.saved_figure_id = 0
+            self.active_editor.saved_figure_id = -1
             self.active_editor.clear_aux_plot_limits()
             self.active_editor.enable_aux_plots()
 
