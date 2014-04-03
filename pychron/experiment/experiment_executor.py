@@ -20,7 +20,7 @@ from traits.api import Event, Button, String, \
 # from traitsui.api import View, Item
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
-from pyface.timer.do_later import do_after, do_later
+from pyface.timer.do_later import do_after
 
 #============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock
@@ -354,7 +354,7 @@ class ExperimentExecutor(Loggable):
         cnt = 0
         total_cnt = 0
         is_first_flag = True
-
+        is_first_analysis = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
                 #                 before = measure_type()
@@ -376,7 +376,7 @@ class ExperimentExecutor(Loggable):
                 overlapping = self.measuring_run and self.measuring_run.isAlive()
                 if not overlapping:
                     if force_delay or \
-                            (self.isAlive() and cnt < nruns and not cnt == 0):
+                            (self.isAlive() and cnt < nruns and not is_first_analysis):
                         # delay between runs
                         self._delay(delay)
                         force_delay = False
@@ -416,6 +416,7 @@ class ExperimentExecutor(Loggable):
 
                 cnt += 1
                 total_cnt += 1
+                is_first_analysis = False
                 if self.end_at_run_completion:
                     break
 
@@ -781,9 +782,9 @@ class ExperimentExecutor(Loggable):
         else:
             spec.conflicts_checked = False
             self.message(self._err_message)
-            self.info('No response from user. Canceling run')
-            do_later(self.information_dialog,
-                     'Databases are in conflict. No response from user. Canceling experiment')
+            # self.info('No response from user. Canceling run')
+            # do_later(self.information_dialog,
+            #          'Databases are in conflict. No response from user. Canceling experiment')
         return ret
 
     def _delay(self, delay, message='between'):
@@ -804,7 +805,7 @@ class ExperimentExecutor(Loggable):
         # #                     message=msg
         #                     )
         time.sleep(0.1)
-        # wc.reset()
+        wc.reset()
         wc.start(wtime=delay)
         wg.pop(wc)
 
