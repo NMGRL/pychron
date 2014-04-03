@@ -53,6 +53,8 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 
 
 
+
+
 # from pyface.tasks.task_window_layout import TaskWindowLayout
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -504,7 +506,7 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.no_update:
                 if self.active_editor:
                     self.debug('Setting auto find to True')
-                    self.active_editor.auto_find = True
+                    self.active_editor.set_auto_find(True)
                     self.active_editor.set_items(self.unknowns_pane.items)
 
                 if self.plot_editor_pane:

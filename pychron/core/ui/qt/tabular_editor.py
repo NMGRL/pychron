@@ -230,6 +230,8 @@ class _myTableView(_TableView, ConsumerMixin):
     def dropEvent(self, e):
         if self.is_external():
             data = PyMimeData.coerce(e.mimeData()).instance()
+            if not hasattr(data, '__iter__'):
+                return
 
             df = self.drop_factory
             if not df:
@@ -245,33 +247,15 @@ class _myTableView(_TableView, ConsumerMixin):
                 rows = [ri for ri, _ in data]
                 model.moveRows(rows, row)
             else:
-#                self._editor._no_update = True
-#                parent = QtCore.QModelIndex()
-#                model.beginInsertRows(parent, row, row)
-#                editor = self._editor
-#                 self._editor.object._no_update = True
-
                 with no_update(self._editor.object):
                     for i, (_, di) in enumerate(reversed(data)):
-    #                    print 'insert'
-    #                    obj = paste_func1(di)
-    #                    editor.callx(editor.adapter.insert, editor.object, editor.name, row + i, obj)
                         model.insertRow(row=row, obj=df(di))
-
-    #                 model.insertRow(row=row, obj=paste_func(data[0][1]))
-#                 self._editor.object._no_update = False
-
-
-#                model.endInsertRows()
-#                self._editor._no_update = False
 
             e.accept()
             self._dragging = None
 
         else:
-
             super(_myTableView, self).dropEvent(e)
-
 
     def is_external(self):
 #        print 'is_external', self._editor.factory.drag_external and not self._dragging

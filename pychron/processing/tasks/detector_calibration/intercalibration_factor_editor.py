@@ -31,8 +31,9 @@ class IntercalibrationFactorEditor(InterpolationEditor):
     auto_find = False
     pickle_path = 'ic_fits'
 
-    def _get_dump_tool(self):
-        return self.tool.fits
+    def set_auto_find(self, f):
+        #dont every set Intercalibration to auto_find to true
+        pass
 
     def save(self, progress=None):
         fs = [si for si in self.tool.fits if si.save]
@@ -66,7 +67,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                         # self.debug('saving {} {}'.format(unk.record_id, si.name))
                         self.processor.apply_correction(history, unk, si, set_id, cname)
 
-                        # unk.sync_detector_info(meas_analysis)
+                unk.sync_detector_info(meas_analysis)
 
             # if self.auto_plot:
             self.rebuild_graph()
@@ -76,6 +77,9 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                                                'Update detector intercalibration fits={}'.format(fits))
             if progress:
                 progress.soft_close()
+
+    def _get_dump_tool(self):
+        return self.tool.fits
 
     def _tool_default(self):
         with self.processor.db.session_ctx():

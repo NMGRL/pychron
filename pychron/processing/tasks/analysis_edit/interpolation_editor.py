@@ -33,6 +33,8 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -180,7 +182,11 @@ class InterpolationEditor(GraphEditor):
         end = max(marxs, mauxs)
         return start, end
 
+    def set_auto_find(self, f):
+        self.auto_find = f
+
     def _update_analyses_hook(self):
+        print 'update_analyses_hook', self.auto_find
         if self.auto_find:
             self._find_references()
 
