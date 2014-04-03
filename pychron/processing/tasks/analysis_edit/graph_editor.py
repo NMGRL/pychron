@@ -55,6 +55,12 @@ class GraphEditor(BaseUnknownsEditor):
     tag_event = Event
     invalid_event = Event
 
+    def set_name(self):
+        self._set_name()
+
+    def set_auto_find(self, f):
+        pass
+
     @on_trait_change('tool:save_event')
     def _handle_save_event(self):
         self.save_event = True
