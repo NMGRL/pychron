@@ -50,9 +50,10 @@ class ContourGraph(Graph):
                 c = 'c1'
                 self.series[plotid][1] += (c,)
 
-                self.plots[plotid].data.set_data(c, [])
+                self.plots[plotid].data.set_data(c, z)
                 names += (c,)
-            return plot.plot(names, **rd)
+
+            return plot.plot(names, type=style, **rd)
 
         else:
 

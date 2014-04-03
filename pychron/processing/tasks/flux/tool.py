@@ -39,7 +39,8 @@ class FluxTool(HasTraits):
     calculate_button = Button('Calculate')
     monitor_age = Property(depends_on='monitor')
     color_map_name = Str('jet')
-    levels = Int(10, auto_set=False, enter_set=True)
+    marker_size = Int(5)
+    levels = Int(50, auto_set=False, enter_set=True)
     model_kind = Str('Plane')
 
     data_source = Str('database')
@@ -55,8 +56,8 @@ class FluxTool(HasTraits):
 
     mean_j_error_type = Enum(*ERROR_TYPES)
     predicted_j_error_type = Enum(*ERROR_TYPES)
-    save_mean_j = Bool(True)
-    auto_clear_cache = Bool(False)
+    save_mean_j = Bool(False)
+    auto_clear_cache = Bool(True)
 
     def _monitor_default(self):
         return DummyFluxMonitor()
@@ -69,10 +70,11 @@ class FluxTool(HasTraits):
         return ma
 
     def traits_view(self):
-        contour_grp = VGroup(Item('color_map_name',
+        contour_grp = HGroup(Item('color_map_name',
                                   label='Color Map',
                                   editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
                              Item('levels'),
+                             Item('marker_size'),
                              visible_when='plot_kind=="Contour"')
         monitor_grp = Item('monitor', editor=EnumEditor(name='monitors'))
         v = View(

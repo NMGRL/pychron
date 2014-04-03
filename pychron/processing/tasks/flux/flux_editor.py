@@ -18,17 +18,18 @@
 import math
 
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
-    Dict, Property, Event, Int, Bool, List, cached_property, Button
+    Dict, Property, Event, Int, Bool, List, cached_property, Button, Any
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
-    VSplit, HGroup, VGroup, spring
+    VSplit, HGroup, VGroup, spring, Item
 
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 #============= standard library imports ========================
-from numpy import linspace, array, max, zeros, meshgrid, vstack, arctan2, sin, cos
+from numpy import linspace, array, min, max, zeros, meshgrid, \
+    vstack, arctan2, sin, cos, unravel_index
 
 #============= local library imports  ==========================
 from pychron.envisage.browser.record_views import RecordView
@@ -110,6 +111,12 @@ class FluxEditor(GraphEditor):
     irradiation_tray_overlay = Instance(IrradiationTrayOverlay)
 
     recalculate_button = Button('Recalculate')
+
+    min_j = Float
+    max_j = Float
+    percent_j_change = Float
+    j_gradient = Float
+    cmap_scatter = Any
 
     def set_save_all(self, v):
         self._save_all = True
@@ -218,7 +225,7 @@ class FluxEditor(GraphEditor):
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
             if self.tool.plot_kind == 'Contour':
-                self._rebuild_contour(x, y, r, reg)
+                self._rebuild_contour(x, y, z, r, reg)
             else:
                 self._rebuild_hole_vs_j(x, y, r, reg)
 
@@ -269,7 +276,7 @@ class FluxEditor(GraphEditor):
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
 
-    def _rebuild_contour(self, x, y, r, reg):
+    def _rebuild_contour(self, x, y, z, r, reg):
 
         g = ContourGraph(container_dict={'kind': 'h'})
         self.graph = g
@@ -282,9 +289,6 @@ class FluxEditor(GraphEditor):
         self.irradiation_tray_overlay = ito
         p.overlays.append(ito)
 
-        g.new_series(x, y, type='scatter',
-                     marker='circle')
-
         m = self._model_flux(reg, r)
         s, p = g.new_series(z=m,
                             xbounds=(-r, r),
@@ -294,6 +298,15 @@ class FluxEditor(GraphEditor):
                             colorbar=True,
                             style='contour')
         g.add_colorbar(s)
+
+        # pts = vstack((x, y)).T
+        s = g.new_series(x, y,
+                         z=z,
+                         style='cmap_scatter',
+                         color_mapper=s.color_mapper,
+                         marker='circle',
+                         marker_size=self.tool.marker_size)
+        self.cmap_scatter = s[0]
 
     def _regressor_factory(self, x, y, z, ze):
         if self.tool.model_kind == 'Bowl':
@@ -319,6 +332,16 @@ class FluxEditor(GraphEditor):
             pts = vstack((gx[i], gy[i])).T
             nz[i] = reg.predict(pts)
 
+        self.max_j = maj = max(nz)
+        self.min_j = mij = min(nz)
+        self.percent_j_change = (maj - mij) / maj * 100
+
+        x1, y1 = unravel_index(nz.argmax(), nz.shape)
+        x2, y2 = unravel_index(nz.argmin(), nz.shape)
+
+        d = 2 * r / n * ((x1 - y2) ** 2 + (y1 - y2) ** 2) ** 0.5
+        self.j_gradient = self.percent_j_change / d
+
         return nz
 
     @on_trait_change('tool:show_labels')
@@ -330,18 +353,30 @@ class FluxEditor(GraphEditor):
     @on_trait_change('monitor_positions:[use, j, jerr]')
     def _handle_monitor_pos_change(self, obj, name, old, new):
         if not self.suppress_update:
-            self.rebuild_graph()
+            self.refresh_j()
 
-    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind]')
-    def _handle_tool_change(self):
-        self.rebuild_graph()
+    @on_trait_change('tool:[color_map_name, levels, model_kind, plot_kind, marker_size]')
+    def _handle_tool_change(self, name, new):
+        if name == 'marker_size':
+            self.cmap_scatter.marker_size = new
+            # self.cmap_scatter.invalidate_and_redraw()
+        else:
+            self.rebuild_graph()
+            if name == 'model_kind':
+                self.refresh_j()
 
     @on_trait_change('tool:group_positions')
     def _handle_group_monitors(self):
         self.positions_dirty = True
 
-    def _recalculate_button_fired(self):
+    def refresh_j(self):
+        self.suppress_update = True
         self.rebuild_graph()
+        self.set_predicted_j()
+        self.suppress_update = False
+
+    def _recalculate_button_fired(self):
+        self.refresh_j()
 
     def _save_all_button_fired(self):
         for pp in self.positions:
@@ -421,11 +456,26 @@ class FluxEditor(GraphEditor):
         editor = TableEditor(columns=cols, sortable=False,
                              reorderable=False)
 
+        jfloatfmt = lambda x: floatfmt(x, n=2)
         v = View(VSplit(
             UItem('graph',
                   style='custom',
                   editor=InstanceEditor(), height=0.72),
             VGroup(HGroup(UItem('recalculate_button'),
+                          Item('min_j', format_func=jfloatfmt,
+                               style='readonly',
+                               label='Min. J'),
+                          Item('max_j',
+                               style='readonly',
+                               format_func=jfloatfmt, label='Max. J'),
+                          Item('percent_j_change',
+                               style='readonly',
+                               format_func=floatfmt,
+                               label='Delta J(%)'),
+                          Item('j_gradient',
+                               style='readonly',
+                               format_func=floatfmt,
+                               label='Gradient J(%/cm)'),
                           spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
                                                      tooltip='Toggle "save" for unknown positions'),
                           icon_button_editor('save_all_button', 'dialog-ok-apply-5',

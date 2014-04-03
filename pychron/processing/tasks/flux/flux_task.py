@@ -34,6 +34,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
@@ -182,8 +183,9 @@ class FluxTask(InterpolationTask):
                 else:
                     self._calculate_flux_file(editor)
 
-                editor.rebuild_graph()
-                editor.set_predicted_j()
+                # editor.rebuild_graph()
+                # editor.set_predicted_j()
+                editor.refresh_j()
                 editor.suppress_update = False
 
     def _calculate_flux_file(self, editor):

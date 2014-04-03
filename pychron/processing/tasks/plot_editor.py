@@ -19,6 +19,7 @@ import copy
 
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.base_xy_plot import BaseXYPlot
+from chaco.cmap_image_plot import CMapImagePlot
 from chaco.scatterplot import ScatterPlot
 from enable.colors import transparent_color
 from enable.enable_traits import LineStyle
@@ -210,6 +211,8 @@ class PlotEditor(HasTraits):
             if k == self.selected_renderer_name:
                 if isinstance(r, ScatterPlot):
                     klass = ScatterRendererEditor
+                elif isinstance(r, CMapImagePlot):
+                    klass = CMapRendererEditor
                 else:
                     klass = LineRendererEditor
 
@@ -406,6 +409,17 @@ class RendererEditor(HasTraits):
             )
         )
         return v
+
+
+class CMapRendererEditor(RendererEditor):
+    renderer = Instance(CMapImagePlot)
+
+    def _renderer_changed(self):
+        self.visible = self.renderer.visible
+        self._sync()
+
+    def _get_group(self):
+        return Group()
 
 
 class LineRendererEditor(RendererEditor):
