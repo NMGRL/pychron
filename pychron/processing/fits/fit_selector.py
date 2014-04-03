@@ -101,7 +101,7 @@ class FitSelector(HasTraits):
             fi.use = self.use_state
 
     def _global_fit_changed(self):
-        if self.global_fit in FIT_TYPES:
+        if self.global_fit in self.fit_types:
             fs = self._get_fits()
             for fi in fs:
                 fi.fit = self.global_fit
