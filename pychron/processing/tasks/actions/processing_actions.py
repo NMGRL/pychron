@@ -189,10 +189,16 @@ class InverseIsochronAction(FigureAction):
     accelerator = 'Ctrl+i'
 
 
-class FigureFromFile(FigureAction):
+class IdeogramFromFile(FigureAction):
     name = 'Ideogram from File'
     method = 'new_ideogram_from_file'
     accelerator = 'Ctrl+shift+j'
+
+
+class SpectrumFromFile(FigureAction):
+    name = 'Spectrum from File'
+    method = 'new_spectrum_from_file'
+    accelerator = 'Ctrl+shift+d'
 
 
 #===============================================================================

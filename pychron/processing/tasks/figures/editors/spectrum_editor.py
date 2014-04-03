@@ -18,6 +18,7 @@
 from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotters.figure_container import FigureContainer
 from pychron.processing.plotter_options_manager import SpectrumOptionsManager
@@ -48,6 +49,31 @@ class SpectrumEditor(FigureEditor):
         #self._model = model
         return model, iv.component
 
+    def _check_for_necessary_attributes(self, d):
+        pass
+
+    def _get_items_from_file(self, parser):
+        ans = []
+        for i, d in enumerate(parser.itervalues()):
+            if self._check_for_necessary_attributes(d):
+                f = SpectrumFileAnalysis(age=float(d['age']),
+                                         age_err=float(d['age_err']),
+                                         record_id=d['runid'],
+                                         sample=d['sample'])
+                ans.append(f)
+            else:
+                self.warning('Invalid analysis. Number = {}'.format(i))
+
+                # ans = [construct(args)
+                #        for args in par.itervalues()]
+
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            if ap.name.lower() not in ('spectrum',):
+                ap.use = False
+                ap.enabled = False
+
+        return ans
 
 #class AutoSpectrumEditor(SpectrumEditor):
 #    auto_figure_control = Instance(AutoSpectrumControl, ())

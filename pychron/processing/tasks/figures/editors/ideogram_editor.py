@@ -19,7 +19,7 @@ from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis
+from pychron.processing.analyses.file_analysis import InterpretedAgeAnalysis, FileAnalysis
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.figure_container import FigureContainer
@@ -75,5 +75,25 @@ class IdeogramEditor(FigureEditor):
 
         return model, iv.component
 
+    def _get_items_from_file(self, parser):
+        ans = []
+        for d in parser.itervalues():
+            if d['age'] is not None:
+                f = FileAnalysis(age=float(d['age']),
+                                 age_err=float(d['age_err']),
+                                 record_id=d['runid'],
+                                 sample=d['sample'])
+                ans.append(f)
+
+                # ans = [construct(args)
+                #        for args in par.itervalues()]
+
+        po = self.plotter_options_manager.plotter_options
+        for ap in po.aux_plots:
+            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
+                ap.use = False
+                ap.enabled = False
+
+        return ans
 
 #============= EOF =============================================

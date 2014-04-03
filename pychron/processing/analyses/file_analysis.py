@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Property, cached_property
+from traits.api import Str, Property, cached_property, Float
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -45,6 +45,17 @@ class FileAnalysis(NonDBAnalysis):
 
 class InterpretedAgeAnalysis(NonDBAnalysis):
     pass
+
+
+class SpectrumFileAnalysis(NonDBAnalysis):
+    k39_value = Float
+    k39_err = Float
+
+    k39 = Property
+
+    @cached_property
+    def _get_k39(self):
+        return ufloat(self.k39_value, self.k39_err)
 
 #============= EOF =============================================
 

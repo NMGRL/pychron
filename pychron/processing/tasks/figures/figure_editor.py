@@ -27,7 +27,6 @@ import os
 from uncertainties import nominal_value, std_dev
 from pychron.core.csv.csv_parser import CSVParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
-from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
@@ -70,27 +69,12 @@ class FigureEditor(GraphEditor):
             # def construct(d):
             par = CSVParser()
             par.load(p)
+            self.analyses = self._get_items_from_file(par)
+            self._update_analyses()
+            self.dump_tool()
 
-            ans = []
-            for d in par.itervalues():
-                if d['age'] is not None:
-                    f = FileAnalysis(age=float(d['age']),
-                                     age_err=float(d['age_err']),
-                                     record_id=d['runid'],
-                                     sample=d['sample'])
-                    ans.append(f)
-
-                    # ans = [construct(args)
-                    #        for args in par.itervalues()]
-
-        po = self.plotter_options_manager.plotter_options
-        for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
-                ap.use = False
-
-        self.analyses = ans
-        self._update_analyses()
-        self.dump_tool()
+    def _get_items_from_file(self, parser):
+        pass
 
     def save_figure(self, name, project, labnumbers):
         db = self.processor.db

@@ -36,7 +36,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
-    GraphGroupSelectedAction, FigureFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
+    GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
@@ -88,8 +88,8 @@ Install to enable MS Excel export''')
                 IdeogramAction(),
                 InverseIsochronAction(),
                 SeriesAction(),
-                FigureFromFile()
-            )
+                IdeogramFromFile(),
+                SpectrumFromFile())
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
