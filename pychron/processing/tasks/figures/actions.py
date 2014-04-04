@@ -64,6 +64,11 @@ class NewSpectrumAction(TaskAction):
     image = icon('chart_curve.png')
 
 
+class RefreshActiveEditorAction(TaskAction):
+    name = 'Refresh Plot'
+    method = 'refresh_active_editor'
+    image = icon('refresh')
+
 #============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):
 #     name = 'Append Spectrum'

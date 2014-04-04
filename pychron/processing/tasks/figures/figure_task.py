@@ -24,13 +24,6 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 
 
-
-
-
-
-
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -42,7 +35,7 @@ from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction, SaveAsFigureAction
+    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction
 
 import weakref
 
@@ -66,6 +59,7 @@ class FigureTask(AnalysisEditTask):
     id = 'pychron.processing.figures'
     plotter_options_pane = Instance(PlotterOptionsPane)
     tool_bars = [
+        SToolBar(RefreshActiveEditorAction(), ),
         SToolBar(AddIsoEvoAction(), ),
         SToolBar(
             SavePDFFigureAction(),
@@ -262,6 +256,10 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
+    def refresh_active_editor(self):
+        if self.has_active_editor():
+            self.active_editor.rebuild()
+
     def save_figure(self):
         if self.active_editor:
             if not isinstance(self.active_editor, RecallEditor):
@@ -306,8 +304,7 @@ class FigureTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
-        ans = self.unknowns_pane.items
-        self.new_ideogram(ans=ans or None)
+        self.new_ideogram()
 
         # if isinstance(self.active_editor, IdeogramEditor) and \
         #         not self.unknowns_pane.items:
@@ -316,11 +313,15 @@ class FigureTask(AnalysisEditTask):
         #     self.new_ideogram()
 
     def tb_new_spectrum(self):
-        if isinstance(self.active_editor, SpectrumEditor) and \
-                not self.unknowns_pane.items:
-            self.append_spectrum()
-        else:
-            self.new_spectrum()
+        if not self.has_active_editor():
+            return
+
+        self.new_spectrum()
+        # if isinstance(self.active_editor, SpectrumEditor) and \
+        #         not self.unknowns_pane.items:
+        #     self.append_spectrum()
+        # else:
+        #     self.new_spectrum()
 
     #===============================================================================
     #
