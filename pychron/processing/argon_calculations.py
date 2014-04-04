@@ -32,6 +32,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -159,7 +160,7 @@ def calculate_flux(f, age, arar_constants=None):
         if arar_constants is None:
             arar_constants = ArArConstants()
 
-        j = (umath.exp(age * arar_constants.lambda_k) - 1) / f
+        j = (umath.exp(age * arar_constants.lambda_k.nominal_value) - 1) / f
         return j.nominal_value, j.std_dev
     except ZeroDivisionError:
         return 1, 0

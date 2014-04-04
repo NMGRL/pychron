@@ -25,6 +25,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
@@ -228,10 +229,11 @@ class FluxTask(InterpolationTask):
                 werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
             elif error_kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
                 mswd = calculate_mswd(fs, es)
-                werr *= mswd ** 0.5
+                werr *= (mswd ** 0.5 if mswd > 1 else 1)
+
             # reg.trait_set(ys=fs, yserr=es)
-            uf = (av, werr)
             # uf = (reg.predict([0]), reg.predict_error([0]))
+            uf = (av, werr)
             return ufloat(*calculate_flux(uf, monitor_age))
 
         proc = self.manager
