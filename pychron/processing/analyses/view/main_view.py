@@ -349,16 +349,23 @@ class MainView(HasTraits):
             VSplit(
                 HGroup(
                     UItem('measurement_values',
-                          editor=meditor),
+                          editor=meditor,
+                          height=-200),
                     UItem('extraction_values',
-                          editor=eeditor)),
+                          editor=eeditor,
+                          height=-200)),
                 UItem('isotopes',
-                      editor=teditor),
+                      editor=teditor,
+                      height=0.25),
                 UItem('isotopes',
-                      editor=ieditor),
+                      editor=ieditor,
+                      height=0.25),
                 HSplit(UItem('computed_values',
-                             editor=ceditor),
-                       UItem('corrected_values', editor=ceditor))))
+                             editor=ceditor,
+                             height=-200),
+                       UItem('corrected_values',
+                             height=-200,
+                             editor=ceditor))))
         return v
 
 
