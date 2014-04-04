@@ -129,6 +129,7 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
     marker = Str('vertical')
     end_cap_length = Int(4)
+    label_tool = Any
 
     def clear(self):
         self.altered_screen_point = None
@@ -143,13 +144,20 @@ class MeanIndicatorOverlay(AbstractOverlay, Movable):
 
     def _text_changed(self):
         label = self.label
+
         if label is None:
             label = XYPlotLabel(component=self.component,
                                 font=self.font,
-                                text=self.text)
+                                text=self.text,
+                                id='{}_label'.format(self.id)
+            )
             self.label = label
             self.overlays.append(label)
-            self.tools.append(LabelMoveTool(component=label))
+            tool = LabelMoveTool(component=label)
+            self.tools.append(tool)
+            self.label_tool = tool
+        else:
+            label.text = self.text
             #print self.label
 
     def _color_changed(self):

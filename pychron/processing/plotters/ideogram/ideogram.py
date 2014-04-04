@@ -270,11 +270,7 @@ class Ideogram(BaseArArFigure):
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
-        mo = self._add_mean_indicator(graph, scatter, bins, probs, pid)
-        mo.id = 'mean_{}'.format(self.group_id)
-        if mo.id in po.overlay_positions:
-            ap = po.overlay_positions[mo.id]
-            mo.y = ap[1]
+        self._add_mean_indicator(graph, scatter, po, bins, probs, pid)
 
         mi, ma = min(probs), max(probs)
 
@@ -324,7 +320,7 @@ class Ideogram(BaseArArFigure):
                                        component=plot)
                     plot.overlays.append(pl)
 
-    def _add_mean_indicator(self, g, line, bins, probs, pid):
+    def _add_mean_indicator(self, g, line, po, bins, probs, pid):
         # maxp = max(probs)
         wm, we, mswd, valid_mswd = self._calculate_stats(bins, probs)
 
@@ -348,7 +344,8 @@ class Ideogram(BaseArArFigure):
                                  error=we,
                                  nsgima=self.options.nsigma,
                                  color=line.color,
-                                 visible=self.options.display_mean_indicator)
+                                 visible=self.options.display_mean_indicator,
+                                 id='mean_{}'.format(self.group_id))
 
         m.font = self.options.mean_indicator_font
         m.text = text
@@ -358,6 +355,18 @@ class Ideogram(BaseArArFigure):
                                           constrain='x'))
 
         m.on_trait_change(self._handle_overlay_move, 'altered_screen_point')
+
+        if m.id in po.overlay_positions:
+            ap = po.overlay_positions[m.id]
+            m.y = ap[1]
+
+        if m.label:
+            m.label.on_trait_change(self._handle_label_move, 'altered_screen_point')
+            if m.label.id in po.overlay_positions:
+                ap = po.overlay_positions[m.label.id]
+                m.label.altered_screen_point = (ap[0], ap[1])
+                m.label.trait_set(x=ap[0], y=ap[1])
+
         return m
 
     def update_index_mapper(self, obj, name, old, new):

@@ -114,7 +114,7 @@ class LabelMoveTool(OverlayMoveTool):
     def dragging(self, event):
         comp = self.component
         if not event.handled:
-            x, y = self.component.get_current_point()
+            # x, y = self.component.get_current_point()
             sx, sy = event.x, event.y
             ox, oy = self._offset
             comp.trait_set(x=sx - ox, y=sy - oy)

@@ -80,6 +80,7 @@ class AuxPlotOptions(HasTraits):
         d['xlimits'] = map(float, self.xlimits)
         d['overlay_positions'] = dict(self.overlay_positions)
 
+        print 'dumping yaml', d['overlay_positions']
         return d
 
     def _name_changed(self):

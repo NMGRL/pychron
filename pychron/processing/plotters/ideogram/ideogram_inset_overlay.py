@@ -86,7 +86,7 @@ class IdeogramInset(LinePlot):
             x = x1 + 2
 
         self.x, self.y, self.width, self.height = x, y, w, h
-        print self.x, self.y, self.width, self.height
+        # print self.x, self.y, self.width, self.height
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
