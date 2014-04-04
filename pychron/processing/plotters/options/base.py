@@ -99,7 +99,8 @@ class BasePlotterOptions(HasTraits):
         """
          disabled auto_refresh. causing a max recursion depth error. something to do with persisted xlimits
         """
-        return HGroup(icon_button_editor('refresh_plot', 'chart_curve_go'),
+        return HGroup(icon_button_editor('refresh_plot', 'refresh',
+                                         tooltip='Refresh plot'),
                       spring,
                       # Item('auto_refresh', label='Auto Plot')
         )
