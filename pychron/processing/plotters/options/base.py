@@ -44,6 +44,10 @@ class BasePlotterOptions(HasTraits):
         if not clean:
             self._load(root)
 
+    def deinitialize(self):
+        for po in self.aux_plots:
+            po.initialized = False
+
     def initialize(self):
         for po in self.aux_plots:
             po.initialized = True

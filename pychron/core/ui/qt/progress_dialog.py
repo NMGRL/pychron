@@ -84,8 +84,7 @@ class myProgressDialog(ProgressDialog):
         return self._user_accepted
 
     def change_message(self, message, auto_increment=True):
-    #         print message
-        self.message = message
+        #self.message = message
         try:
             self.message_control.setText(message)
             if auto_increment:

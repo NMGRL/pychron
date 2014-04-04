@@ -48,6 +48,10 @@ class PlotterOptionsManager(HasTraits):
     persistence_name = ''
     persistence_root = Property
 
+    def deinitialize(self):
+        if self.plotter_options:
+            self.plotter_options.deinitialize()
+
     def load_yaml(self, blob):
         po=self.plotter_options_klass(self.persistence_root)
         po.load_yaml(blob)

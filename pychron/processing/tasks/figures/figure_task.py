@@ -27,6 +27,8 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -611,6 +613,7 @@ class FigureTask(AnalysisEditTask):
 
         super(FigureTask, self)._dclicked_sample_changed()
 
+
     def _dclicked_figure_changed(self, new):
         if not new:
             return
@@ -646,22 +649,25 @@ class FigureTask(AnalysisEditTask):
                         self.new_ideogram()
 
                 if self.active_editor:
-                    self.active_editor.plotter_options_manager.load_yaml(blob)
                     self.active_editor.saved_figure_id = int(sf.id)
-
+                    self.active_editor.plotter_options_manager.deinitialize()
                     self.active_editor.set_items([a.analysis for a in db_fig.analyses])
                     for ai, dbai in zip(self.active_editor.analyses, db_fig.analyses):
                         ai.group_id = int(dbai.group or 0)
                         ai.graph_id = int(dbai.graph or 0)
 
+                    self.active_editor.plotter_options_manager.load_yaml(blob)
                     self.active_editor.rebuild()
 
     @on_trait_change('plotter_options_pane:pom:plotter_options:[+, refresh_plot_needed, aux_plots:+]')
     def _options_update(self, obj, name, old, new):
-        if name == 'initialized':
+        if name == 'initialized' or not obj.initialized:
             return
+
+        print obj, name
         if self.has_active_editor():
             if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
+                print 'plotter options rebuild'
                 self.active_editor.rebuild()
                 self.active_editor.dump_tool()
 
