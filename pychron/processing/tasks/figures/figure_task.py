@@ -26,6 +26,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -306,9 +307,6 @@ class FigureTask(AnalysisEditTask):
                 self.plot_editor_pane.set_annotation_tool(at)
 
     def tb_new_ideogram(self):
-        if not self.has_active_editor():
-            return
-
         self.new_ideogram()
 
         # if isinstance(self.active_editor, IdeogramEditor) and \
@@ -318,9 +316,6 @@ class FigureTask(AnalysisEditTask):
         #     self.new_ideogram()
 
     def tb_new_spectrum(self):
-        if not self.has_active_editor():
-            return
-
         self.new_spectrum()
         # if isinstance(self.active_editor, SpectrumEditor) and \
         #         not self.unknowns_pane.items:
