@@ -1327,6 +1327,7 @@ class Graph(Viewable, ContextMenuMixin):
     def _series_factory(self, x, y, yer=None, plotid=0, add=True, **kw):
         """
         """
+
         if x is None:
             x = array([])
         if y is None:

@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 #============= enthought library imports =======================
 from traits.api import HasTraits, \
     Instance, Float, Int, Bool, DelegatesTo, Range
@@ -130,8 +132,16 @@ class PowerMapEditor(LaserEditor):
                    Item('percent_threshold', label='% Threshold'),
                    visible_when='was_executed'
             ),
-            UItem('component', editor=ComponentEditor())
+            UItem('component', editor=ComponentEditor()),
+            resizable=True
         )
         return v
 
+
+if __name__ == '__main__':
+    e = PowerMapEditor()
+    p = '/Users/ross/Sandbox/powermap/powermap-2013-07-26005.hdf5'
+    p = '/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5'
+    e.load(p)
+    e.configure_traits()
 #============= EOF =============================================
