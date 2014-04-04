@@ -37,7 +37,7 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
-from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
@@ -94,6 +94,21 @@ class MonitorPosition(HasTraits):
     save = Bool(False)
     dev = Float
 
+    percent_saved_error = Property
+    percent_mean_error = Property
+    percent_pred_error = Property
+
+    def _get_percent_saved_error(self):
+        return calc_percent_error(self.saved_j, self.saved_jerr)
+
+    def _get_percent_mean_error(self):
+        if self.mean_jerr and self.mean_jerr:
+            return calc_percent_error(self.mean_j, self.mean_jerr)
+
+    def _get_percent_pred_error(self):
+        if self.j and self.jerr:
+            return calc_percent_error(self.j, self.jerr)
+
 
 class FluxEditor(GraphEditor):
     tool = Instance(FluxTool)
@@ -117,6 +132,7 @@ class FluxEditor(GraphEditor):
     percent_j_change = Float
     j_gradient = Float
     cmap_scatter = Any
+    _regressor = Any
 
     def set_save_all(self, v):
         self._save_all = True
@@ -186,17 +202,18 @@ class FluxEditor(GraphEditor):
 
     def set_predicted_j(self):
         reg = self._regressor
-        for p in self.positions:
-            # if not p.use:
-            j = reg.predict([(p.x, p.y)])[0]
-            je = reg.predict_error([[(p.x, p.y)]])[0]
-            oj = p.saved_j
-            p.j = j
-            p.jerr = je
+        if reg:
+            for p in self.positions:
+                # if not p.use:
+                j = reg.predict([(p.x, p.y)])[0]
+                je = reg.predict_error([[(p.x, p.y)]])[0]
+                oj = p.saved_j
+                p.j = j
+                p.jerr = je
 
-            p.dev = (oj - j) / j * 100
+                p.dev = (oj - j) / j * 100
 
-        self.positions_dirty = True
+            self.positions_dirty = True
 
     def set_position_j(self, identifier, **kw):
         if identifier in self.monitor_positions:
@@ -434,20 +451,29 @@ class FluxEditor(GraphEditor):
             #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
             column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
-                   format_func=lambda x: floatfmt(x, n=7, s=4)),
+                   format_func=lambda x: floatfmt(x, n=4, s=4)),
             column(name='saved_jerr', label=u'\u00b1\u03c3',
-                   format_func=lambda x: floatfmt(x, n=8, s=4)),
+                   format_func=lambda x: floatfmt(x, n=4, s=4)),
+            column(name='percent_saved_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2)),
             column(name='mean_j', label='Mean J',
-                   format_func=lambda x: floatfmt(x, n=7, s=4) if x else ''),
+                   format_func=lambda x: floatfmt(x, n=4, s=4) if x else ''),
             column(name='mean_jerr', label=u'\u00b1\u03c3',
-                   format_func=lambda x: floatfmt(x, n=8, s=4) if x else ''),
+                   format_func=lambda x: floatfmt(x, n=4, s=4) if x else ''),
+            column(name='percent_mean_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
             column(name='j', label='Pred. J',
-                   format_func=lambda x: floatfmt(x, n=7, s=4),
+                   format_func=lambda x: floatfmt(x, n=4, s=4),
                    width=75),
             column(name='jerr',
-                   format_func=lambda x: floatfmt(x, n=8, s=4),
+                   format_func=lambda x: floatfmt(x, n=4, s=4),
                    label=u'\u00b1\u03c3',
                    width=75),
+            column(name='percent_pred_error',
+                   label='%',
+                   format_func=lambda x: floatfmt(x, n=2) if x else ''),
             column(name='dev', label='dev',
                    format='%0.2f',
                    width=70),

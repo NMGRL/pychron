@@ -20,15 +20,15 @@ import os
 import struct
 
 from pyface.tasks.action.schema import SToolBar
-
 from traits.api import on_trait_change, List, HasTraits
 from traitsui.tabular_adapter import TabularAdapter
 from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem, Tabbed
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
-from pychron.core.regression.mean_regressor import WeightedMeanRegressor
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.easy_parser import EasyParser
 from pychron.paths import paths
@@ -212,8 +212,9 @@ class FluxTask(InterpolationTask):
             prog.close()
 
     def _calculate_flux_db(self, editor):
-        reg = WeightedMeanRegressor()
-        reg.error_calc_type = editor.tool.mean_j_error_type
+        # reg = WeightedMeanRegressor()
+        # reg.error_calc_type = editor.tool.mean_j_error_type
+        error_kind = editor.tool.mean_j_error_type
         monitor_age = editor.tool.monitor_age
 
         # helper funcs
@@ -221,10 +222,16 @@ class FluxTask(InterpolationTask):
             ufs = (ai.uF for ai in ans)
             fs, es = zip(*((fi.nominal_value, fi.std_dev)
                            for fi in ufs))
-
-            reg.trait_set(ys=fs, yserr=es)
-
-            uf = (reg.predict([0]), reg.predict_error([0]))
+            av, werr = calculate_weighted_mean(fs, es)
+            if error_kind == 'SD':
+                n = len(fs)
+                werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
+            elif error_kind == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
+                mswd = calculate_mswd(fs, es)
+                werr *= mswd ** 0.5
+            # reg.trait_set(ys=fs, yserr=es)
+            uf = (av, werr)
+            # uf = (reg.predict([0]), reg.predict_error([0]))
             return ufloat(*calculate_flux(uf, monitor_age))
 
         proc = self.manager
@@ -241,6 +248,7 @@ class FluxTask(InterpolationTask):
             editor = self.active_editor
             editor.geometry = geom
             editor.suppress_update = True
+            i = 0
             for ais in ans:
                 if ais:
                     ref = ais[0]
@@ -251,6 +259,7 @@ class FluxTask(InterpolationTask):
 
                     aa = proc.make_analyses(ais, progress=prog)
                     n = len(aa)
+
                     dev = 100
                     j = 0
                     if n:

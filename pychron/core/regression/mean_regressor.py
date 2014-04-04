@@ -84,7 +84,7 @@ sem={}
     def sem(self):
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
-            return self.std * 1 / len(ys) ** 0.5
+            return self.std * (len(ys) - self.ddof) ** -0.5
         else:
             return 0
 

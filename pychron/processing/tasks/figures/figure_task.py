@@ -25,6 +25,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -262,6 +263,9 @@ class FigureTask(AnalysisEditTask):
             self.active_editor.rebuild()
 
     def save_figure(self):
+        if not self.has_active_editor():
+            return
+
         if self.active_editor:
             if not isinstance(self.active_editor, RecallEditor):
                 sid = self.active_editor.saved_figure_id
@@ -553,6 +557,7 @@ class FigureTask(AnalysisEditTask):
             self._load_sample_figures(dlg.selected_samples)
 
             idx = next((i for i, o in enumerate(self.ofigures) if o.id == fid), None)
+
             if idx is not None:
                 self.active_editor.saved_figure_id = idx
 
