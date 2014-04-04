@@ -24,6 +24,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -569,7 +570,6 @@ class FigureTask(AnalysisEditTask):
                     sess.delete(ai)
 
                 sess.delete(dbfig)
-
     #===============================================================================
     # handlers
     #===============================================================================
