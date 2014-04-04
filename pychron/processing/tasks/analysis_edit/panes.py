@@ -65,6 +65,7 @@ class TablePane(TraitsDockPane):
                                                   drag_external=True,
                                                   selected='selected',
                                                   dclicked='dclicked',
+                                                  multi_select=True,
                                                   update='update_needed',
                                                   refresh='refresh_needed'))))
         return v
