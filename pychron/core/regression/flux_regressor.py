@@ -15,11 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
+from traits.api import Bool
 #============= standard library imports ========================
 from numpy import asarray, column_stack, ones_like
 #============= local library imports  ==========================
-from statsmodels.regression.linear_model import WLS
+from statsmodels.regression.linear_model import WLS, OLS
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
 
 
@@ -33,6 +33,7 @@ class BowlFluxRegressor(MultipleLinearRegressor):
 
 
 class PlaneFluxRegressor(MultipleLinearRegressor):
+    use_weighted_fit = Bool(False)
     # def calculate_standard_error_fit(self):
     #     e=self.clean_yserr
     #     v=self.clean_ys
@@ -65,7 +66,7 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
         e = self.clean_yserr
         if self._check_integrity(e, e):
             return 1 / e ** 2
-            # return (e/self.clean_ys)**-2
+            return (e / self.clean_ys) ** -2
 
             #e**0.5 =5.56e-6
             #e**2 = 8900
@@ -75,6 +76,9 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
             #e**-0.5
 
     def _engine_factory(self, fy, X):
-        return WLS(fy, X, weights=self._get_weights())
+        if self.use_weighted:
+            return WLS(fy, X, weights=self._get_weights())
+        else:
+            return OLS(fy, X)
 
 #============= EOF =============================================

@@ -56,6 +56,9 @@ class FluxTool(HasTraits):
 
     mean_j_error_type = Enum(*ERROR_TYPES)
     predicted_j_error_type = Enum(*ERROR_TYPES)
+    _prev_predicted_j_error_type = Str
+    use_weighted_fit = Bool(False)
+    use_monte_carlo = Bool(False)
     save_mean_j = Bool(False)
     auto_clear_cache = Bool(False)
 
@@ -68,6 +71,13 @@ class FluxTool(HasTraits):
             ma = self.monitor.age
 
         return ma
+
+    def _use_weighted_fit_changed(self, new):
+        if new:
+            self._prev_predicted_j_error_type = self.predicted_j_error_type
+            self.predicted_j_error_type = 'SD'
+        else:
+            self.predicted_j_error_type = self._prev_predicted_j_error_type
 
     def traits_view(self):
         contour_grp = HGroup(Item('color_map_name',
@@ -84,7 +94,10 @@ class FluxTool(HasTraits):
                    HGroup(Item('save_mean_j', label='Save Mean J'),
                           Item('auto_clear_cache', label='Auto Clear Cache')),
                    Item('mean_j_error_type', label='Mean J Error'),
-                   # Item('predicted_j_error_type', label='Predicted J Error'),
+                   HGroup(Item('use_weighted_fit'),
+                          Item('use_monte_carlo')),
+                   Item('predicted_j_error_type', label='Predicted J Error',
+                        enabled_when='not (object.use_weighted_fit or object.use_monte_carlo)'),
                    HGroup(Item('group_positions'),
                           Item('object.monitor.sample',
                                style='readonly', label='Sample')),

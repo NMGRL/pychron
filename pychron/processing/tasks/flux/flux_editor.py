@@ -204,29 +204,27 @@ class FluxEditor(GraphEditor):
     def set_predicted_j(self):
         reg = self._regressor
         if reg:
-            pts = array([[p.x, p.y] for p in self.positions])
-            nominals = reg.predict(pts)
-            errors = monte_carlo_error_estimation(reg, nominals, pts, ntrials=10000)
-            for p, j, je in zip(self.positions, nominals, errors):
-                oj = p.saved_j
+            if self.tool.use_monte_carlo:
+                pts = array([[p.x, p.y] for p in self.positions])
+                nominals = reg.predict(pts)
+                errors = monte_carlo_error_estimation(reg, nominals, pts, ntrials=10000)
+                for p, j, je in zip(self.positions, nominals, errors):
+                    oj = p.saved_j
 
-                p.j = j
-                p.jerr = je
+                    p.j = j
+                    p.jerr = je
 
-                p.dev = (oj - j) / j * 100
-            # print errors3
-            # print (errors2 - errors3) / errors3
+                    p.dev = (oj - j) / j * 100
+            else:
+                for p in self.positions:
+                    j = reg.predict([(p.x, p.y)])[0]
+                    je = reg.predict_error([[(p.x, p.y)]])[0]
+                    oj = p.saved_j
 
-            # for p, j, je in zip(self.positions, nominals, errors):
-            # for p in self.positions:
-            #     j = reg.predict([(p.x, p.y)])[0]
-            #     je = reg.predict_error([[(p.x, p.y)]])[0]
-            #     oj = p.saved_j
-            #
-            #     p.j = j
-            #     p.jerr = je
-            #
-            #     p.dev = (oj - j) / j * 100
+                    p.j = j
+                    p.jerr = je
+
+                    p.dev = (oj - j) / j * 100
 
             self.positions_dirty = True
 
@@ -350,8 +348,15 @@ class FluxEditor(GraphEditor):
         x = array(x)
         y = array(y)
         xy = vstack((x, y)).T
+        wf = self.tool.use_weighted_fit
+        if wf:
+            ec = 'SD'
+        else:
+            ec = self.tool.predicted_j_error_type
+
         reg = klass(xs=xy, ys=z, yserr=ze,
-                    error_calc_type='SD')
+                    error_calc_type=ec,
+                    use_weighted_fit=wf)
         # error_calc_type=self.tool.predicted_j_error_type)
         reg.calculate()
         return reg
