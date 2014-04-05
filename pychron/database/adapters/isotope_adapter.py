@@ -431,13 +431,14 @@ class IsotopeAdapter(DatabaseAdapter):
             return self._get_paginated_analyses(q, **kw)
 
     def _get_paginated_analyses(self, q, limit=None, offset=None,
-                                include_invalid=False):
+                                include_invalid=False, count_only=False):
         if not include_invalid:
             q = q.filter(meas_AnalysisTable.tag != 'invalid')
 
         q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-
         tc = int(q.count())
+        if count_only:
+            return tc
 
         if limit:
             q = q.limit(limit)

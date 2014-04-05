@@ -75,6 +75,9 @@ class BaseRegressor(HasTraits):
     clean_yserr = Property(depends_on='dirty, xs, ys')
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
+    degrees_of_freedom = Property
+
+
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
 
@@ -335,6 +338,9 @@ class BaseRegressor(HasTraits):
 
         return True
 
+    def _get_degrees_of_freedom(self):
+        return 1
+
     def _get_mswd(self):
         self.valid_mswd = False
         # ys=self._clean_array(self.ys)
@@ -343,8 +349,8 @@ class BaseRegressor(HasTraits):
         yserr = self.clean_yserr
 
         if self._check_integrity(ys, yserr):
-            mswd = calculate_mswd(ys, yserr)
-            self.valid_mswd = validate_mswd(mswd, len(ys)) or False
+            mswd = calculate_mswd(ys, yserr, k=self.degrees_of_freedom)
+            self.valid_mswd = validate_mswd(mswd, len(ys), k=self.degrees_of_freedom) or False
             return mswd
 
     def _get_n(self):

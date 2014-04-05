@@ -21,6 +21,7 @@ from scipy.optimize import fsolve
 #============= local library imports  ==========================
 from pychron.core.regression.ols_regressor import OLSRegressor
 from pychron.core.stats import calculate_mswd2
+from pychron.core.stats.core import validate_mswd
 
 
 class YorkRegressor(OLSRegressor):
@@ -146,16 +147,13 @@ class YorkRegressor(OLSRegressor):
     def _get_mswd(self):
         if not self._slope:
             self.calculate()
-
         a = self.intercept
         b = self.slope
-        # x = self._clean_array(self.xs)
-        # y = self._clean_array(self.ys)
-        #
-        # sx = self._clean_array(self.xserr)
-        # sy = self._clean_array(self.yserr)
         x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
-        return calculate_mswd2(x, y, sx, sy, a, b, corrcoeffs=self._calculate_correlation_coefficients())
+        v = calculate_mswd2(x, y, sx, sy, a, b,
+                            corrcoeffs=self._calculate_correlation_coefficients())
+        self.valid_mswd = validate_mswd(v, len(x), k=2)
+        return v
 
 
 class NewYorkRegressor(YorkRegressor):

@@ -32,6 +32,7 @@ from numpy import linspace, array, min, max, zeros, meshgrid, \
     vstack, arctan2, sin, cos, unravel_index
 
 #============= local library imports  ==========================
+from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
 from pychron.envisage.browser.record_views import RecordView
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
@@ -203,15 +204,29 @@ class FluxEditor(GraphEditor):
     def set_predicted_j(self):
         reg = self._regressor
         if reg:
-            for p in self.positions:
-                # if not p.use:
-                j = reg.predict([(p.x, p.y)])[0]
-                je = reg.predict_error([[(p.x, p.y)]])[0]
+            pts = array([[p.x, p.y] for p in self.positions])
+            nominals = reg.predict(pts)
+            errors = monte_carlo_error_estimation(reg, nominals, pts, ntrials=10000)
+            for p, j, je in zip(self.positions, nominals, errors):
                 oj = p.saved_j
+
                 p.j = j
                 p.jerr = je
 
                 p.dev = (oj - j) / j * 100
+            # print errors3
+            # print (errors2 - errors3) / errors3
+
+            # for p, j, je in zip(self.positions, nominals, errors):
+            # for p in self.positions:
+            #     j = reg.predict([(p.x, p.y)])[0]
+            #     je = reg.predict_error([[(p.x, p.y)]])[0]
+            #     oj = p.saved_j
+            #
+            #     p.j = j
+            #     p.jerr = je
+            #
+            #     p.dev = (oj - j) / j * 100
 
             self.positions_dirty = True
 
@@ -219,6 +234,7 @@ class FluxEditor(GraphEditor):
         if identifier in self.monitor_positions:
             mon = self.monitor_positions[identifier]
             mon.trait_set(**kw)
+            # print mon.x, mon.y, mon.mean_j, mon.mean_jerr
         else:
             self.warning('invalid identifier {}'.format(identifier))
 
@@ -227,7 +243,7 @@ class FluxEditor(GraphEditor):
 
     def _rebuild_graph(self):
         try:
-            x, y, z, ze = array([(pos.x, pos.y, pos.saved_j, pos.saved_jerr)
+            x, y, z, ze = array([(pos.x, pos.y, pos.mean_j, pos.mean_jerr)
                                  for pos in self.monitor_positions.itervalues()
                                  if pos.use]).T
 
@@ -335,7 +351,8 @@ class FluxEditor(GraphEditor):
         y = array(y)
         xy = vstack((x, y)).T
         reg = klass(xs=xy, ys=z, yserr=ze,
-                    error_calc_type=self.tool.predicted_j_error_type)
+                    error_calc_type='SD')
+        # error_calc_type=self.tool.predicted_j_error_type)
         reg.calculate()
         return reg
 
@@ -465,10 +482,10 @@ class FluxEditor(GraphEditor):
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2) if x else ''),
             column(name='j', label='Pred. J',
-                   format_func=lambda x: floatfmt(x, n=4, s=4),
+                   format_func=lambda x: floatfmt(x, n=8, s=4),
                    width=75),
             column(name='jerr',
-                   format_func=lambda x: floatfmt(x, n=4, s=4),
+                   format_func=lambda x: floatfmt(x, n=10, s=4),
                    label=u'\u00b1\u03c3',
                    width=75),
             column(name='percent_pred_error',

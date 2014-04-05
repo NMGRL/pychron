@@ -57,7 +57,7 @@ class FluxTool(HasTraits):
     mean_j_error_type = Enum(*ERROR_TYPES)
     predicted_j_error_type = Enum(*ERROR_TYPES)
     save_mean_j = Bool(False)
-    auto_clear_cache = Bool(True)
+    auto_clear_cache = Bool(False)
 
     def _monitor_default(self):
         return DummyFluxMonitor()
@@ -84,7 +84,7 @@ class FluxTool(HasTraits):
                    HGroup(Item('save_mean_j', label='Save Mean J'),
                           Item('auto_clear_cache', label='Auto Clear Cache')),
                    Item('mean_j_error_type', label='Mean J Error'),
-                   Item('predicted_j_error_type', label='Predicted J Error'),
+                   # Item('predicted_j_error_type', label='Predicted J Error'),
                    HGroup(Item('group_positions'),
                           Item('object.monitor.sample',
                                style='readonly', label='Sample')),

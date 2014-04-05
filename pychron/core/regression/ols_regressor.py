@@ -15,11 +15,10 @@
 #===============================================================================
 #============= enthought library imports =======================
 
-from traits.api import Int, Property, cached_property
+from traits.api import Int, Property
 #============= standard library imports ========================
 from numpy import asarray, column_stack, ones, \
     matrix, sqrt
-from pychron.core.stats import calculate_mswd2, validate_mswd
 
 from statsmodels.api import OLS
 # try:
@@ -44,10 +43,23 @@ class OLSRegressor(BaseRegressor):
     degree = Property(depends_on='_degree')
     _degree = Int
     constant = None
+    ols = None
+
+    def _get_degrees_of_freedom(self):
+        return len(self.coefficients)
 
     def __degree_changed(self):
         if self._degree:
             self.calculate()
+
+    def get_exog(self, x):
+        return self._get_X(x)
+
+    def fast_predict(self, ys, exog):
+        ols = self._ols
+        ols.wendog = ols.whiten(ys)
+        result = ols.fit()
+        return result.predict(exog)
 
     def calculate(self, filtering=False):
         cxs = self.pre_clean_xs
@@ -74,6 +86,7 @@ class OLSRegressor(BaseRegressor):
 
             try:
                 ols = self._engine_factory(fy, X)
+                self._ols = ols
                 self._result = ols.fit()
             except Exception, e:
                 import traceback
@@ -180,10 +193,9 @@ class OLSRegressor(BaseRegressor):
                 return sef * sqrt(varY_hat)
         elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
             mswd = self.mswd
-
             def func(xi):
                 varY_hat = calc_hat(xi)
-                m = 1 if mswd <= 1 else mswd ** 0.5
+                m = mswd ** 0.5 if mswd > 1 else 1
                 return sef * sqrt(varY_hat) * m
         else:
             def func(xi):
@@ -303,46 +315,46 @@ class OLSRegressor(BaseRegressor):
         X = column_stack(cols)
         return X
 
-    @cached_property
-    def _get_mswd(self):
-        self.valid_mswd = False
-        if self._degree == 1:
-            # a = self.intercept
-            # b = self.slope
-            coeffs = self._calculate_coefficients()
-            if not len(coeffs):
-                self.calculate()
-                coeffs = self._calculate_coefficients()
-
-            if len(coeffs):
-                # x = self.xs
-                # y = self.ys
-                #
-                # sx = self.xserr
-                # sy = self.yserr
-
-                # if not len(sx):
-                #     sx=zeros(self.n)
-                # if not len(sy):
-                #     sy=zeros(self.n)
-
-                # x=self._clean_array(x)
-                # y=self._clean_array(y)
-                # sx=self._clean_array(sx)
-                # sy=self._clean_array(sy)
-                x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
-                if self._check_integrity(x, y) and \
-                        self._check_integrity(x, sx) and \
-                        self._check_integrity(x, sy):
-                    m = calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
-                    self.valid_mswd = validate_mswd(m, len(ys), k=2)
-                    return m
-                else:
-                    return 'NaN'
-            else:
-                return 'NaN'
-        else:
-            return super(OLSRegressor, self)._get_mswd()
+        # @cached_property
+        # def _get_mswd(self):
+        #     self.valid_mswd = False
+        #     if self._degree == 1:
+        #         # a = self.intercept
+        #         # b = self.slope
+        #         coeffs = self._calculate_coefficients()
+        #         if not len(coeffs):
+        #             self.calculate()
+        #             coeffs = self._calculate_coefficients()
+        #
+        #         if len(coeffs):
+        #             # x = self.xs
+        #             # y = self.ys
+        #             #
+        #             # sx = self.xserr
+        #             # sy = self.yserr
+        #
+        #             # if not len(sx):
+        #             #     sx=zeros(self.n)
+        #             # if not len(sy):
+        #             #     sy=zeros(self.n)
+        #
+        #             # x=self._clean_array(x)
+        #             # y=self._clean_array(y)
+        #             # sx=self._clean_array(sx)
+        #             # sy=self._clean_array(sy)
+        #             x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
+        #             if self._check_integrity(x, y) and \
+        #                     self._check_integrity(x, sx) and \
+        #                     self._check_integrity(x, sy):
+        #                 m = calculate_mswd2(x, y, sx, sy, coeffs[1], coeffs[0])
+        #                 self.valid_mswd = validate_mswd(m, len(ys), k=2)
+        #                 return m
+        #             else:
+        #                 return 'NaN'
+        #         else:
+        #             return 'NaN'
+        #     else:
+        #         return super(OLSRegressor, self)._get_mswd()
 
 
 class PolynomialRegressor(OLSRegressor):
@@ -359,7 +371,6 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
-
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.clean_xs

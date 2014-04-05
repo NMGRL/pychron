@@ -404,6 +404,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if calculate_age:
                 ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
+                # timethis(ai.sync, args=(meas_analysis,),
+                #          kwargs=dict(unpack=unpack, load_changes=load_changes))
+                # timethis(ai.calculate_age)
+
                 synced = True
 
         if not synced:

@@ -26,6 +26,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
@@ -119,6 +120,9 @@ class FluxTask(InterpolationTask):
         self._open_editor(editor)
         self.flux_editor_count += 1
 
+        # self.irradiation='NM-263'
+        # self.level='E'
+
     @on_trait_change('manager:level')
     def _level_changed(self, new):
         if new:
@@ -164,10 +168,10 @@ class FluxTask(InterpolationTask):
                         editor.add_position(int(pid), ident, sample, x, y, cj, cjerr, use)
 
                 for ii in self.unknowns_pane.items:
-                    add_pos(ii, use=False)
+                    add_pos(ii)
 
                 for ii in self.references_pane.items:
-                    add_pos(ii, use=True)
+                    add_pos(ii)
 
                 editor.positions_dirty = True
 
@@ -217,13 +221,14 @@ class FluxTask(InterpolationTask):
         # reg.error_calc_type = editor.tool.mean_j_error_type
         error_kind = editor.tool.mean_j_error_type
         monitor_age = editor.tool.monitor_age
-
+        print error_kind
         # helper funcs
         def mean_j(ans):
             ufs = (ai.uF for ai in ans)
             fs, es = zip(*((fi.nominal_value, fi.std_dev)
                            for fi in ufs))
             av, werr = calculate_weighted_mean(fs, es)
+
             if error_kind == 'SD':
                 n = len(fs)
                 werr = (sum((av - fs) ** 2) / (n - 1)) ** 0.5
@@ -241,17 +246,21 @@ class FluxTask(InterpolationTask):
         with db.session_ctx():
             refs = self.references_pane.items
 
-            ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
-                             for ri in refs])
-
-            prog = proc.open_progress(n=sum(tcs), close_at_end=False)
+            # ans, tcs = zip(*[db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
+            #                  for ri in refs])
+            lns = [ri.identifier for ri in refs]
+            tcs = db.get_labnumber_analyses(lns, omit_key='omit_ideo', count_only=True)
+            prog = proc.open_progress(n=tcs, close_at_end=False)
 
             geom = self._get_geometry()
             editor = self.active_editor
             editor.geometry = geom
             editor.suppress_update = True
             i = 0
-            for ais in ans:
+            # for ais in ans:
+            for ri in refs:
+                ais, _ = db.get_labnumber_analyses(ri.identifier, omit_key='omit_ideo')
+
                 if ais:
                     ref = ais[0]
                     sj = ref.labnumber.selected_flux_history.flux.j
@@ -266,6 +275,7 @@ class FluxTask(InterpolationTask):
                     j = 0
                     if n:
                         j = mean_j(aa)
+
                         if sj:
                             dev = (j.nominal_value - sj) / sj * 100
 
@@ -275,7 +285,7 @@ class FluxTask(InterpolationTask):
 
                     d = dict(saved_j=sj, saved_jerr=sjerr,
                              mean_j=nominal_value(j), mean_jerr=std_dev(j),
-                             dev=dev, n=n, use=n > 0)
+                             dev=dev, n=n, use=True)
 
                     editor.set_position_j(ident, **d)
                     if editor.tool.auto_clear_cache:
