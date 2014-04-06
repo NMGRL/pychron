@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -316,9 +317,10 @@ class BaseIsotope(IsotopicMeasurement):
         b = self.baseline.uvalue
         if not self.include_baseline_error:
             b = b.nominal_value
-
-        nv = self.uvalue - b
-        return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
+            nv = self.uvalue - b
+            return ufloat(nv.nominal_value, nv.std_dev, tag=self.name)
+        else:
+            return self.uvalue - b
 
     def _get_baseline_fit_abbreviation(self):
         return self.baseline.fit_abbreviation
@@ -361,9 +363,6 @@ class Isotope(BaseIsotope):
         if self.detector.lower() == 'faraday':
             v = v - self.blank.uvalue
 
-        #blank is already ic/disc corrected
-        # if self.correct_for_blank:
-        #     v = v - self.blank.uvalue
         return v
 
     def get_disc_corrected_value(self):

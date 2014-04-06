@@ -9,6 +9,7 @@ from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
 from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
+from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
 __author__ = 'ross'
@@ -246,7 +247,7 @@ class DBAnalysis(Analysis):
             s = f.j
             e = f.j_err
 
-        self.j = ufloat(s, e)
+        self.j = ufloat(s, e, tag='J')
 
     def _sync_production_ratios(self, level):
         pr = level.production
@@ -283,14 +284,14 @@ class DBAnalysis(Analysis):
     def _sync_interference_corrections(self, level):
         pr = level.production
         prs = dict()
-        for pk in ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']:
+        for pk in INTERFERENCE_KEYS:
             v, e = getattr(pr, pk), getattr(pr, '{}_err'.format(pk))
             if v is None:
                 v = 0
             if e is None:
                 e = 0
 
-            prs[pk.lower()] = ufloat(v, e)
+            prs[pk.lower()] = ufloat(v, e, tag=pk)
 
         self.interference_corrections = prs
 
@@ -367,7 +368,7 @@ class DBAnalysis(Analysis):
                 #for i in range(int(ni)-1):
                 #    e*=disc
                 #
-                idisc = ufloat(idisc.nominal_value, e.std_dev)
+                idisc = ufloat(idisc.nominal_value, e.std_dev, tag='{} D'.format(iso.name))
 
             iso.discrimination = idisc
 
@@ -395,7 +396,9 @@ class DBAnalysis(Analysis):
             hist = meas_analysis.selected_histories.selected_detector_intercalibration
             if hist:
                 for ic in hist.detector_intercalibrations:
-                    icfs[ic.detector.name] = ufloat(ic.user_value, ic.user_error)
+                    icfs[ic.detector.name] = ufloat(ic.user_value,
+                                                    ic.user_error,
+                                                    tag='{} IC'.format(ic.detector.name))
 
         return icfs
 
@@ -448,6 +451,7 @@ class DBAnalysis(Analysis):
                 result = None
                 if dbiso.results:
                     result = dbiso.results[-1]
+                kw['name'] = '{} bs'.format(name)
                 r = Baseline(dbresult=result, **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
                 if fit is None:
@@ -460,6 +464,7 @@ class DBAnalysis(Analysis):
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
+                print 'tag', iso.baseline.uvalue.tag
 
             elif dbiso.kind == 'sniff':
                 r = Sniff(**kw)
@@ -497,6 +502,7 @@ class DBAnalysis(Analysis):
                         blank = isodict[isok].blank
                         blank.set_uvalue((ba.user_value,
                                           ba.user_error))
+                        blank.uvalue.tag = '{} bk'.format(isok)
                         blank.fit = ba.fit or ''
                         keys.remove(isok)
                         if not keys:

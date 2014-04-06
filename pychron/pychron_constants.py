@@ -73,6 +73,7 @@ def alphas(idx):
         return '{}{}'.format(seeds[a], seeds[b])
 
 
+INTERFERENCE_KEYS = ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']
 ARGON_KEYS = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36')
 IRRADIATION_KEYS = [('k4039', 'K_40_Over_39'),
                     ('k3839', 'K_38_Over_39'),

@@ -32,6 +32,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -186,6 +187,9 @@ class ArArAge(Loggable):
         return r
 
     def get_error_component(self, key):
+        # for var, error in self.uage.error_components().items():
+        #     print var.tag
+
         v = next((error for (var, error) in self.uage.error_components().items()
                   if var.tag == key), 0)
 

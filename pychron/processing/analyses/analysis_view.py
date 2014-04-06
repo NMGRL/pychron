@@ -21,6 +21,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
 
 from pychron.processing.analyses.view.experiment_view import ExperimentView
 from pychron.processing.analyses.view.history_view import HistoryView
@@ -63,10 +64,13 @@ class AnalysisView(HasTraits):
         experiment_view = ExperimentView(an)
         history_view = HistoryView(an)
         interference_view = InterferencesView(an)
+        error_component_view = ErrorComponentsView(an)
 
         subviews = [main_view,
                     experiment_view,
-                    history_view, interference_view]
+                    history_view,
+                    interference_view,
+                    error_component_view]
 
         pch = PeakCenterView()
         if pch.load(an):
