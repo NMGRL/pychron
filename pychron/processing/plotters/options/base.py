@@ -38,6 +38,7 @@ class BasePlotterOptions(HasTraits):
     refresh_plot_needed = Event
 
     auto_refresh = Bool(False)
+    initialized = True
 
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
@@ -135,12 +136,12 @@ class BasePlotterOptions(HasTraits):
             d = dict()
             attrs = self._get_dump_attrs()
             for t in attrs:
-                d[t] = getattr(self, t)
+                d[t] = v = getattr(self, t)
 
             try:
                 pickle.dump(d, fp)
-            except (pickle.PickleError, TypeError, EOFError, TraitError):
-                pass
+            except (pickle.PickleError, TypeError, EOFError, TraitError), e:
+                print 'error dumping {}'.format(self.name), e
 
     def _load(self, root):
         p = os.path.join(root, self.name)
@@ -149,16 +150,19 @@ class BasePlotterOptions(HasTraits):
                 try:
                     obj = pickle.load(fp)
                     self.trait_set(**obj)
-                except (pickle.PickleError, TypeError, EOFError, TraitError):
-                    pass
+                except (pickle.PickleError, TypeError, EOFError, TraitError), e:
+                    print 'error loading {}'.format(self.name), e
 
         klass = self.plot_option_klass
         name = self.plot_option_name
         if name:
+
             pp = next((p for p in self.aux_plots if p.name == name), None)
             if not pp:
                 po = klass(height=0)
-                po.trait_set(name=name, trait_change_notfiy=False)
+                po.trait_set(name=name,
+                             use=True,
+                             trait_change_notfiy=False)
                 self.aux_plots.append(po)
 
         self.initialize()

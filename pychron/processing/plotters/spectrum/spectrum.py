@@ -96,6 +96,7 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
+        print 'plateau_age', ag.plateau_age
         if ag.plateau_age:
             plateau_age = ag.plateau_age
             plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
@@ -105,8 +106,7 @@ class Spectrum(BaseArArFigure):
             info_txt = self._build_label_text(plateau_age.nominal_value, e,
                                               plateau_mswd, valid_mswd, nsteps,
                                               value_sig_figs=self.options.plateau_sig_figs,
-                                              error_sig_figs=self.options.plateau_error_sig_figs
-            )
+                                              error_sig_figs=self.options.plateau_error_sig_figs)
 
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
@@ -198,9 +198,7 @@ class Spectrum(BaseArArFigure):
         ds.errors = es
 
         ns = self.options.step_nsigma
-        a = self.options.envelope_alpha
-        if a > 1.0:
-            a *= 0.01
+        a = self.options.envelope_alpha * 0.01
 
         sp = SpectrumErrorOverlay(component=ds,
                                   spectrum=self,
@@ -246,14 +244,13 @@ class Spectrum(BaseArArFigure):
         lp.underlays.append(ov)
 
         tool = PlateauTool(component=ov)
-        lp.tools.insert(0, tool)
+        lp.tools.append(tool)
         #plateau_label:[x, y
         ov.on_trait_change(self._handle_plateau_overlay_move, 'position[]')
 
         return ov
 
     def _handle_plateau_overlay_move(self, obj, name, old, new):
-        # print obj, name, old,new
         self._handle_overlay_move(obj, name, old, float(new[0]))
 
     def update_index_mapper(self, gid, obj, name, old, new):

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
-from traits.api import Array, Int, Float,Str, Color, Any, on_trait_change, Event
+from traits.api import Array, Int, Float, Str, Color, Event
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
 from numpy import where, array
@@ -25,7 +25,7 @@ from enable.base_tool import BaseTool
 from enable.tools.drag_tool import DragTool
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
+from pychron.graph.tools.info_inspector import InfoOverlay
 from pychron.pychron_constants import ALPHAS
 
 
@@ -186,13 +186,13 @@ class SpectrumErrorOverlay(AbstractOverlay):
 
 
 class PlateauTool(DragTool):
-    def normal_mouse_move(self, event):
-        if self.is_draggable(event.x, event.y):
-            event.handled = True
-
-    def normal_left_down(self, event):
-        if self.is_draggable(event.x, event.y):
-            event.handled = True
+    # def normal_mouse_move(self, event):
+    #     if self.is_draggable(event.x, event.y):
+    #         event.handled = True
+    #
+    # def normal_left_down(self, event):
+    #     if self.is_draggable(event.x, event.y):
+    #         event.handled = True
 
     def is_draggable(self, x, y):
         return self.component.hittest((x, y))
@@ -206,11 +206,13 @@ class PlateauTool(DragTool):
         plot = self.component.component
         cur_pt = plot.map_data((event.x, event.y), all_values=True)
         dy = cur_pt[1] - self._prev_pt[1]
+
         self.component.y += dy
+
         self.component.dragged = True
         self._prev_pt = cur_pt
-        event.handled = True
-        plot.request_redraw()
+        # event.handled = True
+        plot.invalidate_and_redraw()
 
 
 class PlateauOverlay(BasePlateauOverlay):

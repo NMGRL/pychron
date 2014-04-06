@@ -29,6 +29,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -251,7 +252,7 @@ class FigureTask(AnalysisEditTask):
         self.active_editor.set_items_from_file(p)
 
     def new_spectrum_from_file(self):
-        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages4.txt'
+        p = '/Users/ross/Sandbox/spectrum_file.txt'
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 
@@ -664,7 +665,7 @@ class FigureTask(AnalysisEditTask):
         if name == 'initialized' or not obj.initialized:
             return
 
-        print obj, name
+        # print obj, name
         if self.has_active_editor():
             if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
                 print 'plotter options rebuild'

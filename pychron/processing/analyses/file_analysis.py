@@ -53,6 +53,11 @@ class SpectrumFileAnalysis(NonDBAnalysis):
 
     k39 = Property
 
+    def get_computed_value(self, key):
+        if key == 'k39':
+            return self.k39
+        return 0
+
     @cached_property
     def _get_k39(self):
         return ufloat(self.k39_value, self.k39_err)

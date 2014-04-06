@@ -67,11 +67,14 @@ class FigureEditor(GraphEditor):
     def set_items_from_file(self, p):
         if os.path.isfile(p):
             # def construct(d):
-            par = CSVParser()
-            par.load(p)
-            self.analyses = self._get_items_from_file(par)
-            self._update_analyses()
-            self.dump_tool()
+            if p.endswith('.xls'):
+                self.information_dialog('Plotting Spectra from Excel file not yet implemented')
+            else:
+                par = CSVParser()
+                par.load(p)
+                self.analyses = self._get_items_from_file(par)
+                self._update_analyses()
+                self.dump_tool()
 
     def _get_items_from_file(self, parser):
         pass

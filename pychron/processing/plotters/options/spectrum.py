@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Int, Property, Bool, Enum, Float, Color
+from traits.api import Str, Int, Property, Bool, Enum, Float, Color, Range
 from traitsui.api import Item, Group, HGroup, UItem, EnumEditor, spring, VGroup
 
 #============= standard library imports ========================
@@ -49,7 +49,7 @@ class SpectrumOptions(AgeOptions):
     plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     step_label_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
-    envelope_alpha = Float
+    envelope_alpha = Range(0, 100, style='simple')
     center_line_style = Enum('solid', 'dash', 'dot dash', 'dot', 'long dash')
     extend_plateau_end_caps = Bool(True)
     plateau_line_width = Float
@@ -59,6 +59,9 @@ class SpectrumOptions(AgeOptions):
 
     def _get_error_calc_method(self):
         return self.plateau_age_error_kind
+
+    def _set_error_calc_method(self, v):
+        self.plateau_age_error_kind = v
 
     # def _get_info_group(self):
     #     g = VGroup(

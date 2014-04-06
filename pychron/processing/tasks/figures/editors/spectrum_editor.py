@@ -50,28 +50,34 @@ class SpectrumEditor(FigureEditor):
         return model, iv.component
 
     def _check_for_necessary_attributes(self, d):
-        pass
+        ms = [k for k in ['age', 'age_err', 'k39']
+              if not k in d]
+        return ms
 
     def _get_items_from_file(self, parser):
         ans = []
         for i, d in enumerate(parser.itervalues()):
-            if self._check_for_necessary_attributes(d):
+            missing_keys = self._check_for_necessary_attributes(d)
+            if not missing_keys:
                 f = SpectrumFileAnalysis(age=float(d['age']),
                                          age_err=float(d['age_err']),
-                                         record_id=d['runid'],
-                                         sample=d['sample'])
+                                         k39_value=float(d['k39']),
+                                         record_id=d.get('runid', ''),
+                                         sample=d.get('sample', ''))
                 ans.append(f)
             else:
-                self.warning('Invalid analysis. Number = {}'.format(i))
+                self.warning('Invalid analysis. Number = {}. Missing Keys={}'.format(i, ','.join(missing_keys)))
 
                 # ans = [construct(args)
                 #        for args in par.itervalues()]
 
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            if ap.name.lower() not in ('spectrum',):
+            if ap.name.lower() not in ('age',):
                 ap.use = False
                 ap.enabled = False
+            #clear overlay positions
+            ap.overlay_positions = {}
 
         return ans
 

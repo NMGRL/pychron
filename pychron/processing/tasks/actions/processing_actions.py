@@ -198,7 +198,7 @@ class IdeogramFromFile(FigureAction):
 class SpectrumFromFile(FigureAction):
     name = 'Spectrum from File'
     method = 'new_spectrum_from_file'
-    accelerator = 'Ctrl+shift+d'
+    # accelerator = 'Ctrl+shift+d'
 
 
 #===============================================================================

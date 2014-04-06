@@ -464,7 +464,7 @@ class DBAnalysis(Analysis):
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
-                print 'tag', iso.baseline.uvalue.tag
+                # print 'tag', iso.baseline.uvalue.tag
 
             elif dbiso.kind == 'sniff':
                 r = Sniff(**kw)

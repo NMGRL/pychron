@@ -244,8 +244,9 @@ class StepHeatAnalysisGroup(AnalysisGroup):
 
     def _get_steps(self):
         d = [(ai.age,
-              ai.age_err_wo_j,
-              ai.get_interference_corrected_value('Ar39').nominal_value)
+              ai.uage_wo_j_err.std_dev,
+              ai.get_computed_value('k39').nominal_value)
+             # ai.get_interference_corrected_value('Ar39').nominal_value)
              for ai in self.analyses]
 
         return zip(*d)
@@ -253,6 +254,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     # @cached_property
     def _get_plateau_age(self):
         ages, errors, k39 = self._get_steps()
+
         args = calculate_plateau_age(ages, errors, k39)
         if args:
             v, e, pidx = args
