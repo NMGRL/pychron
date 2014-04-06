@@ -22,6 +22,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -224,7 +225,7 @@ class LaserTableTextWriter(Loggable):
                     self._add_header_row(sh, 0)
 
                 self._add_analyses(sh, gi.all_analyses, start=start)
-                start += len(gi.analyses) + 1
+                start += len(gi.all_analyses) + 1
 
         wb.save(p)
 

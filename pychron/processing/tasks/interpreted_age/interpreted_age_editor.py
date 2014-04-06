@@ -86,7 +86,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
     #     self.save_analysis_data_tables(p, pdf=False, xls=True)
     def test_save_xls_tables(self):
         p = '/Users/ross/Sandbox/datatables'
-        self.interpreted_ages = self.interpreted_ages[:2]
+        self.interpreted_ages = self.interpreted_ages[:4]
         self.save_analysis_data_tables(p, pdf=False,
                                        xls_summary=True, xls=True,
                                        auto_view=True)
@@ -136,6 +136,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             map_spec, argus = map(list, part)
 
         if pdf:
+            self.debug('saving pdf tables')
             step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
@@ -146,6 +147,7 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       auto_view=auto_view)
         if xls:
+            self.debug('saving xls tables')
             step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Analytical Data'
             fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Analytical Data'
             self._save_xls_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
