@@ -184,9 +184,9 @@ class Ideogram(BaseArArFigure):
         if po.show_labels:
             self._add_point_labels(scatter)
 
-        ia = 'uage'
+        ia = 'uage_wo_j_err'
         if self.options.include_j_error:
-            ia = 'uage_wo_j_err'
+            ia = 'uage'
 
         f = lambda x: u'Age= {}'.format(x.value_string(ia))
         self._add_scatter_inspector(scatter,
