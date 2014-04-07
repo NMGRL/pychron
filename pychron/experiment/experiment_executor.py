@@ -44,7 +44,8 @@ from pychron.pychron_constants import NULL_STR
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
 from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, gen_AnalysisTypeTable
+from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, \
+    gen_AnalysisTypeTable
 
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -284,8 +285,8 @@ class ExperimentExecutor(Loggable):
     #===============================================================================
     def _execute(self):
 
-    #         self._alive = True
-    #
+        #         self._alive = True
+        #
 
         # delay before starting
         exp = self.experiment_queue
@@ -308,16 +309,12 @@ class ExperimentExecutor(Loggable):
         self.info('saving experiment "{}" to database'.format(exp.name))
 
         self.datahub.add_experiment(exp)
-        # with self.db.session_ctx():
-        #     dbexp = self.db.add_experiment(exp.path)
-        #     exp.database_identifier = int(dbexp.id)
 
         exp.executed = True
         # scroll to the first run
         exp.automated_runs_scroll_to_row = 0
 
         delay = exp.delay_between_analyses
-        force_delay = False
         last_runid = None
 
         rgen, nruns = exp.new_runs_generator()
@@ -327,7 +324,6 @@ class ExperimentExecutor(Loggable):
         is_first_analysis = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
-            #                 before = measure_type()
                 if not self.isAlive():
                     break
 
@@ -340,15 +336,16 @@ class ExperimentExecutor(Loggable):
                     rgen, nruns = exp.new_runs_generator()
                     cnt = 0
                     self.queue_modified = False
-                    #                    force_delay = True
 
                 overlapping = self.current_run and self.current_run.isAlive()
                 if not overlapping:
-                    if force_delay or \
-                            (self.isAlive() and cnt < nruns and not is_first_analysis):
+                    if self.isAlive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
                         self._delay(delay)
-                        force_delay = False
+                    else:
+                        self.debug('not delaying between runs isAlive={}, '
+                                   'cnts<nruns={}, is_first_analysis={}'.format(self.isAlive(),
+                                                                                cnt < nruns, is_first_analysis))
 
                 try:
                     spec = rgen.next()
@@ -391,8 +388,8 @@ class ExperimentExecutor(Loggable):
         self.info_heading('experiment queue {} finished'.format(exp.name))
 
     def _join_run(self, spec, run):
-    #    def _join_run(self, spec, t, run):
-    #        t.join()
+        #    def _join_run(self, spec, t, run):
+        #        t.join()
         self.debug('join run')
         self._do_run(run)
 
@@ -514,7 +511,7 @@ class ExperimentExecutor(Loggable):
                     self.current_run = None
 
     def _end_runs(self):
-    #         self._last_ran = None
+        #         self._last_ran = None
         if self.stats:
             self.stats.stop_timer()
 
@@ -678,7 +675,7 @@ class ExperimentExecutor(Loggable):
         return ret
 
     def _delay(self, delay, message='between'):
-    #        self.delaying_between_runs = True
+        #        self.delaying_between_runs = True
         msg = 'Delay {} runs {} sec'.format(message, delay)
         self.info(msg)
         self._wait(delay, msg)
@@ -701,11 +698,11 @@ class ExperimentExecutor(Loggable):
     def _set_extract_state(self, state, flash, color='green'):
         if state:
             label = state.upper()
-            wait=False
+            wait = False
             if flash:
                 if self._end_flag:
                     self._end_flag.set()
-                    wait=True
+                    wait = True
                     # time.sleep(0.25)
                     # self._end_flag.clear()
                 else:
@@ -740,7 +737,7 @@ class ExperimentExecutor(Loggable):
                 invoke_in_main_thread(self.trait_set, extraction_state_label='')
 
     def _extraction_state_iter(self, i, iperiod, threshold, label, color, end_flag):
-    #         print '{} {} {} {}'.format(i, iperiod, i % iperiod, threshold)
+        #         print '{} {} {} {}'.format(i, iperiod, i % iperiod, threshold)
         if i % iperiod > threshold:
             self.trait_set(extraction_state_label='')
         else:
@@ -1129,7 +1126,7 @@ If "No" select from database
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':
-        #            em = self.extraction_line_manager
+            #            em = self.extraction_line_manager
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')
             runner = elm.find('runner')
