@@ -1155,7 +1155,7 @@ anaylsis_type={}
                     # comp = m.group(0)
 
                     freq = 1
-                    acr = 1
+                    acr = 0.5
                 except Exception, e:
                     self.debug('truncate_condition parse failed {} {}'.format(e, t))
                     return
