@@ -64,14 +64,13 @@ class AnalysisView(HasTraits):
         experiment_view = ExperimentView(an)
         history_view = HistoryView(an)
         interference_view = InterferencesView(an)
-        error_component_view = ErrorComponentsView(an)
-
         subviews = [main_view,
                     experiment_view,
                     history_view,
-                    interference_view,
-                    error_component_view]
+                    interference_view]
 
+        if analysis_type in ('unknown', 'cocktail'):
+            subviews.append(ErrorComponentsView(an))
         pch = PeakCenterView()
         if pch.load(an):
             subviews.append(pch)
