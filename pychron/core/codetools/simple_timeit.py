@@ -31,8 +31,10 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$'):
     r = func(*args, **kwargs)
     s = '{}s'.format(time.time() - st)
 
-    if msg:
-        s = '{} {}'.format(msg, s)
+    if msg is None:
+        msg = func.func_name
+    # if msg:
+    s = '{} {}'.format(msg, s)
     if decorate:
         s = '{} {}'.format(decorate * 20, s)
 

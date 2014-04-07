@@ -158,29 +158,35 @@ class DBAnalysis(Analysis):
     #         d['age_err_wo_j'] = result.age_err_wo_j
     #         self.arar_result.update(d)
 
-    def _sync(self, meas_analysis, unpack=True, load_changes=False):
+    def _sync(self, meas_analysis, unpack=True, load_changes=False, load_meta=True):
         """
             copy values from meas_AnalysisTable
             and other associated tables
         """
 
-        self._sync_meas_analysis_attributes(meas_analysis)
-        self._sync_analysis_info(meas_analysis)
-
-        # copy related table attrs
-        self._sync_experiment(meas_analysis)
-        self._sync_irradiation(meas_analysis.labnumber)
 
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, unpack)
 
+        self._sync_irradiation(meas_analysis.labnumber)
         self._sync_detector_info(meas_analysis)
-        self._sync_extraction(meas_analysis)
+        self._sync_meta(meas_analysis)
+
+        # timethis(self._sync_isotopes, args=(meas_analysis, unpack))
+        # timethis(self._sync_detector_info, args=(meas_analysis,))
+        # timethis(self._sync_irradiation, args=(meas_analysis.labnumber,))
+        # timethis(self._sync_meta, args=(meas_analysis,))
 
         if load_changes:
             self._sync_changes(meas_analysis)
 
         self.analysis_type = self._get_analysis_type(meas_analysis)
+
+    def _sync_meta(self, meas_analysis):
+        self._sync_experiment(meas_analysis)
+        self._sync_meas_analysis_attributes(meas_analysis)
+        self._sync_analysis_info(meas_analysis)
+        self._sync_extraction(meas_analysis)
 
     def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
@@ -373,8 +379,7 @@ class DBAnalysis(Analysis):
             iso.discrimination = idisc
 
     def _sync_isotopes(self, meas_analysis, unpack):
-        #self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,),
-        #kwargs={'unpack':True},msg='sync-isotopes')
+        # self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,), kwargs=dict(unpack=unpack))
         self.isotopes = self._get_isotopes(meas_analysis,
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
@@ -485,6 +490,11 @@ class DBAnalysis(Analysis):
 
     def _get_isotopes(self, meas_analysis, unpack):
         isotopes = dict()
+
+        # timethis(self._get_signals, args=(isotopes, meas_analysis, unpack))
+        # timethis(self._get_baselines, args=(isotopes, meas_analysis, unpack))
+        # timethis(self._get_blanks, args=(isotopes, meas_analysis))
+
         self._get_signals(isotopes, meas_analysis, unpack)
         self._get_baselines(isotopes, meas_analysis, unpack)
         self._get_blanks(isotopes, meas_analysis)
@@ -510,7 +520,6 @@ class DBAnalysis(Analysis):
 
     def _get_signals(self, isodict, meas_analysis, unpack):
         for iso in meas_analysis.isotopes:
-
             if not iso.kind == 'signal' or not iso.molecular_weight:
                 continue
 
@@ -526,18 +535,23 @@ class DBAnalysis(Analysis):
 
             if iso.results:
                 result = iso.results[-1]
-
             r = Isotope(mass=iso.molecular_weight.mass,
                         dbrecord=iso,
                         dbresult=result,
                         name=name,
                         detector=det,
                         unpack=unpack)
-
+            # r = timethis(Isotope, msg='make_isotope', kwargs=dict(mass=iso.molecular_weight.mass,
+            #                               dbrecord=iso,
+            #                               dbresult=result,
+            #                               name=name,
+            #                               detector=det,
+            #                               unpack=unpack))
             if r.unpack_error:
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
                 self.temp_status = 1
             else:
+
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
                 if fit is None:
                     fit = Fit(fit='linear',
@@ -547,6 +561,7 @@ class DBAnalysis(Analysis):
                               filter_outlier_std_devs=2,
                               include_baseline_error=False)
                 r.set_fit(fit, notify=False)
+                # timethis(r.set_fit, args=(fit,), kwargs=dict(notify=False))
                 isodict[name] = r
 
     def _get_peak_center(self, meas_analysis):
