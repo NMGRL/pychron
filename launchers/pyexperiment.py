@@ -34,7 +34,7 @@ def main():
     """
         entry point
     """
-    from pychron.envisage.pychron_run import launch
+
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import build_directories, paths
 
@@ -46,6 +46,7 @@ def main():
 
     #import app klass and pass to launch function
     from pychron.applications.pyexperiment import PyExperiment as app
+    from pychron.envisage.pychron_run import launch
     launch(app)
 
 if __name__ == '__main__':

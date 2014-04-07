@@ -313,9 +313,6 @@ class ExperimentExecutor(Loggable):
     #===============================================================================
     def _execute(self):
 
-        #         self._alive = True
-        #
-
         # delay before starting
         exp = self.experiment_queue
         delay = exp.delay_before_analyses
@@ -337,16 +334,12 @@ class ExperimentExecutor(Loggable):
         self.info('saving experiment "{}" to database'.format(exp.name))
 
         self.datahub.add_experiment(exp)
-        # with self.db.session_ctx():
-        #     dbexp = self.db.add_experiment(exp.path)
-        #     exp.database_identifier = int(dbexp.id)
 
         exp.executed = True
         # scroll to the first run
         exp.automated_runs_scroll_to_row = 0
 
         delay = exp.delay_between_analyses
-        force_delay = False
         last_runid = None
 
         rgen, nruns = exp.new_runs_generator()
@@ -357,7 +350,6 @@ class ExperimentExecutor(Loggable):
         is_first_analysis = True
         with consumable(func=self._overlapped_run) as con:
             while 1:
-                #                 before = measure_type()
                 if not self.isAlive():
                     break
 
@@ -375,11 +367,13 @@ class ExperimentExecutor(Loggable):
                 # overlapping = self.current_run and self.current_run.isAlive()
                 overlapping = self.measuring_run and self.measuring_run.isAlive()
                 if not overlapping:
-                    if force_delay or \
-                            (self.isAlive() and cnt < nruns and not is_first_analysis):
+                    if self.isAlive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
                         self._delay(delay)
-                        force_delay = False
+                    else:
+                        self.debug('not delaying between runs isAlive={}, '
+                                   'cnts<nruns={}, is_first_analysis={}'.format(self.isAlive(),
+                                                                                cnt < nruns, is_first_analysis))
 
                 try:
                     spec = rgen.next()
