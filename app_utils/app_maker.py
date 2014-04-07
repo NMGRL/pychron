@@ -165,7 +165,8 @@ class Maker(object):
                 name = os.path.basename(src)
             shutil.copyfile(src,
                             self._resource_path(name))
-
+        else:
+            print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
     def _resource_path(self, name):
         return os.path.join(self.dest, 'Resources', name)
 
