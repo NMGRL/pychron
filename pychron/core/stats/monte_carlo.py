@@ -29,7 +29,7 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
     yes = array((ys, yserr)).T
     ga = norm().rvs((ntrials, n))
     yp = zeros(n)
-    res = zeros((ntrials, n))
+    res = zeros((ntrials, len(pts)))
     for i in xrange(ntrials):
         devs = perturb(reg, exog, nominal_ys, yes, ga[i], yp)
         res[i] = devs

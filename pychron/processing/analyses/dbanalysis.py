@@ -163,14 +163,12 @@ class DBAnalysis(Analysis):
             copy values from meas_AnalysisTable
             and other associated tables
         """
-
+        self._sync_meta(meas_analysis)
+        self._sync_irradiation(meas_analysis.labnumber)
 
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, unpack)
-
-        self._sync_irradiation(meas_analysis.labnumber)
         self._sync_detector_info(meas_analysis)
-        self._sync_meta(meas_analysis)
 
         # timethis(self._sync_isotopes, args=(meas_analysis, unpack))
         # timethis(self._sync_detector_info, args=(meas_analysis,))

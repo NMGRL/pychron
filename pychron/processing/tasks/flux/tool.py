@@ -59,6 +59,7 @@ class FluxTool(HasTraits):
     _prev_predicted_j_error_type = Str
     use_weighted_fit = Bool(False)
     use_monte_carlo = Bool(False)
+    monte_carlo_ntrials =Int(10000)
     save_mean_j = Bool(False)
     auto_clear_cache = Bool(False)
 
@@ -95,7 +96,9 @@ class FluxTool(HasTraits):
                           Item('auto_clear_cache', label='Auto Clear Cache')),
                    Item('mean_j_error_type', label='Mean J Error'),
                    HGroup(Item('use_weighted_fit'),
-                          Item('use_monte_carlo')),
+                          Item('use_monte_carlo'),
+                          Item('monte_carlo_ntrials',
+                               enabled_when='object.use_monte_carlo')),
                    Item('predicted_j_error_type', label='Predicted J Error',
                         enabled_when='not (object.use_weighted_fit or object.use_monte_carlo)'),
                    HGroup(Item('group_positions'),

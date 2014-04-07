@@ -207,7 +207,8 @@ class FluxEditor(GraphEditor):
             if self.tool.use_monte_carlo:
                 pts = array([[p.x, p.y] for p in self.positions])
                 nominals = reg.predict(pts)
-                errors = monte_carlo_error_estimation(reg, nominals, pts, ntrials=10000)
+                errors = monte_carlo_error_estimation(reg, nominals, pts,
+                                                      ntrials=self.tool.monte_carlo_ntrials)
                 for p, j, je in zip(self.positions, nominals, errors):
                     oj = p.saved_j
 
@@ -473,16 +474,16 @@ class FluxEditor(GraphEditor):
             #column(name='theta', label=u'\u03b8', format='%0.3f', width=50),
             column(name='n', label='N'),
             column(name='saved_j', label='Saved J',
-                   format_func=lambda x: floatfmt(x, n=4, s=4)),
+                   format_func=lambda x: floatfmt(x, n=6, s=4)),
             column(name='saved_jerr', label=u'\u00b1\u03c3',
-                   format_func=lambda x: floatfmt(x, n=4, s=4)),
+                   format_func=lambda x: floatfmt(x, n=6, s=4)),
             column(name='percent_saved_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2)),
             column(name='mean_j', label='Mean J',
-                   format_func=lambda x: floatfmt(x, n=4, s=4) if x else ''),
+                   format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
             column(name='mean_jerr', label=u'\u00b1\u03c3',
-                   format_func=lambda x: floatfmt(x, n=4, s=4) if x else ''),
+                   format_func=lambda x: floatfmt(x, n=6, s=4) if x else ''),
             column(name='percent_mean_error',
                    label='%',
                    format_func=lambda x: floatfmt(x, n=2) if x else ''),
