@@ -86,7 +86,8 @@ class AnalysisPointInspector(PointInspector):
         if self.current_position:
             inds = self.get_selected_index()
             if inds is not None:
-                for ind in inds:
+                n = len(inds)
+                for i, ind in enumerate(inds):
                     analysis = self.analyses[ind]
 
                     rid = analysis.record_id
@@ -120,10 +121,9 @@ class AnalysisPointInspector(PointInspector):
 
                     if self.additional_info is not None:
                         lines.append(self.additional_info(analysis))
-                    lines.append('           ')
 
-                #remove last new line
-                lines=lines[:-1]
+                    if i < n - 1:
+                        lines.append('--------')
 
         return lines
 

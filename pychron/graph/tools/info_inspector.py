@@ -21,6 +21,22 @@ from enable.base_tool import BaseTool
 from kiva.fonttools import Font
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
+# def intersperse(m, delim):
+#     """
+#         intersperse ```delim``` in m
+#          m=[1,2,3]
+#          delim='---'
+#          result=[1,'---',2,'---',3]
+#
+#     """
+#     m=iter(m)
+#     yield next(m)
+#     for x in m:
+#         yield delim
+#         yield x
+
+
 class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
@@ -82,15 +98,17 @@ class InfoOverlay(AbstractOverlay):
         if not self.tool.current_screen:
             return
 
-        x, y = self.tool.current_screen
+        x, y = sx, sy = self.tool.current_screen
 
         gc.set_font(Font('Arial'))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
+        # for mi in lines:
+        #     print gc.get_full_text_extent(mi)
 
         lw = max(lws) + 4
-        lh = sum(lhs) + len(lhs) * 0.75
+        lh = max(lhs) * len(lhs) + 2
 
         xoffset = 12
         yoffset = -10
@@ -103,13 +121,16 @@ class InfoOverlay(AbstractOverlay):
 
         if x + xoffset + lw > x2:
             x = x2 - lw - xoffset - 1
+
         #move down if to tall
         if y + yoffset + lh > y2:
-            y = y2 - lh - yoffset - 1
+            y = y2 - lh - yoffset -1
+
+        # if current point within bounds of box, move box to left
+        if x < sx:
+            x = sx - lw - xoffset - 6
 
         h = lhs[0]
-        # py = max(0, y - lh)
-        # py=y
 
         gc.rect(x, y, lw, lh)
         gc.draw_path()
