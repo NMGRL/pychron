@@ -98,6 +98,11 @@ class IdeogramOptions(AgeOptions):
             ap.clear_xlimits()
         self.refresh_plot_needed = True
 
+    @on_trait_change('xlow, xhigh')
+    def _handle_static_limits(self):
+        for ap in self.aux_plots:
+            ap.clear_xlimits()
+
     @on_trait_change('use_asymptotic_limits, asymptotic+, use_centered_range, centered_range, use_static_limits')
     def _handle_asymptotic(self, name, new):
         if name.startswith('use') and not new:

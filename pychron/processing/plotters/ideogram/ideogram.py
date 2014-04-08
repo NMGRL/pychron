@@ -282,8 +282,10 @@ class Ideogram(BaseArArFigure):
 
         if self.group_id == 0:
             if self.options.display_inset:
-                xs, ys = self._calculate_probability_curve(self.xs, self.xes,
-                                                           limits=self._calculate_nominal_xlimits())
+                cfunc = lambda x1, x2: self._cumulative_probability(self.xs, self.xes, x1, x2)
+                xs, ys, xmi, xma = self._calculate_asymptotic_limits(cfunc,
+                                                                     asymptotic_width=10,
+                                                                     tol=10)
                 plot.overlays.append(IdeogramInset(xs, ys,
                                                    width=self.options.inset_width,
                                                    height=self.options.inset_height,
@@ -522,12 +524,12 @@ class Ideogram(BaseArArFigure):
             if opt.use_asymptotic_limits and calculate_limits:
                 cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
                 # bins,probs=cfunc(xmi,xma)
-                wa = self.analysis_group.weighted_age
+                # wa = self.analysis_group.weighted_age
                 # m, e = nominal_value(wa), std_dev(wa)
                 # xmi, xma = m - e, m + e
                 bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc,
-                                                                        asymptotic_width=opt.asymptotic_width,
-                                                                        tol=(opt.asymptotic_percent or 100) * 0.01)
+                                                                        asymptotic_width=(opt.asymptotic_width or 10),
+                                                                        tol=(opt.asymptotic_percent or 10))
                 self.trait_setq(xmi=x1, xma=x2)
 
                 return bins, probs
@@ -568,8 +570,8 @@ class Ideogram(BaseArArFigure):
     def _calculate_nominal_xlimits(self):
         return self.min_x(self.options.index_attr), self.max_x(self.options.index_attr)
 
-    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=1,
-                                     tol=0.1):
+    def _calculate_asymptotic_limits(self, cfunc, max_iter=200, asymptotic_width=10,
+                                     tol=10):
         """
             cfunc: callable that returns xs,ys and accepts xmin, xmax
                     xs, ys= cfunc(x1,x2)
@@ -578,6 +580,7 @@ class Ideogram(BaseArArFigure):
 
             returns xs,ys,xmi,xma
         """
+        tol *= 0.01
         rx1, rx2 = None, None
         xmi, xma = self._calculate_nominal_xlimits()
         step = 0.01 * (xma - xmi)
