@@ -30,6 +30,8 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -619,13 +621,8 @@ class FigureTask(AnalysisEditTask):
         if not new:
             return
 
-        if not self.has_active_editor():
-            return
-
         sf = self.selected_figures
-        if sf and isinstance(self.active_editor, FigureEditor):
-            self.active_editor.enable_aux_plots()
-
+        if sf:  #and isinstance(self.active_editor, FigureEditor):
             db = self.manager.db
             with db.session_ctx():
                 sf = sf[0]
@@ -650,6 +647,7 @@ class FigureTask(AnalysisEditTask):
                         self.new_ideogram()
 
                 if self.active_editor:
+                    self.active_editor.enable_aux_plots()
                     self.active_editor.saved_figure_id = int(sf.id)
                     self.active_editor.plotter_options_manager.deinitialize()
                     self.active_editor.set_items([a.analysis for a in db_fig.analyses])
