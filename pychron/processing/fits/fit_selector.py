@@ -113,7 +113,7 @@ class FitSelector(HasTraits):
                 fi.error_type = self.global_error_type
 
     def _get_auto_group(self):
-        return HGroup(icon_button_editor('plot_button', 'chart_curve_go',
+        return HGroup(icon_button_editor('plot_button', 'refresh',
                                          tooltip='Replot the isotope evolutions. '
                                                  'This may take awhile if many analyses are selected'),
                       icon_button_editor('save_event', 'database_save',

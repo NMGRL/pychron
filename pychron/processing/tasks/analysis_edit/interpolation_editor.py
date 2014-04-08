@@ -35,6 +35,7 @@ from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -438,6 +439,7 @@ class InterpolationEditor(GraphEditor):
                                              isotope=iso,
                                              yerror=ArrayDataSource(p_ues),
                                              fit=False,
+                                             add_inspector=False,
                                              type='scatter',
                                              marker_size=3,
                                              color='blue',
