@@ -241,16 +241,18 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
 
-        co2_blanks, furnace_blanks = self._get_average_blanks()
-        average_co2_blanks = 'Average blanks for CO<sub>2</sub>: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
-                             '{Ar37:0.3f}, {Ar36:0.3f}), ' \
-                             'x10<sup>-{sens_exp:}</sup> ' \
-                             'for Ar<super>40</super>, Ar<super>39</super>, ' \
-                             'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
-                             'respectively'.format(**co2_blanks)
-        crow = FooterRow(fontsize=6)
-        crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
-        data.append(crow)
+        blanks = self._get_average_blanks()
+        if blanks:
+            co2_blanks, furnace_blanks = blanks
+            average_co2_blanks = 'Average blanks for CO<sub>2</sub>: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
+                                 '{Ar37:0.3f}, {Ar36:0.3f}), ' \
+                                 'x10<sup>-{sens_exp:}</sup> ' \
+                                 'for Ar<super>40</super>, Ar<super>39</super>, ' \
+                                 'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
+                                 'respectively'.format(**co2_blanks)
+            crow = FooterRow(fontsize=6)
+            crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
+            data.append(crow)
 
         def factory(f):
             r = FootNoteRow(fontsize=6)

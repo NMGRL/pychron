@@ -23,6 +23,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -240,15 +241,18 @@ class LaserTableTextWriter(Loggable):
         sh = wb.add_sheet('Summary')
         cols = [('Sample', 'sample'),
                 ('Identifier', 'identifier'),
+                ('Irradiation', 'irradiation'),
                 ('Material', 'material'),
                 ('Age Type', 'age_kind'),
-                ('Age', 'age'),
-                (u'{}\u03c3'.format(self.options.age_nsigma),
-                 'age_err', set_nsigma('age')),
                 ('MSWD', 'mswd'),
+                ('N', 'nanalyses'),
                 ('K/Ca', 'kca'),
                 (u'{}\u03c3'.format(self.options.kca_nsigma),
                  'kca_err', set_nsigma('kca')),
+
+                ('Age', 'age'),
+                (u'{}\u03c3'.format(self.options.age_nsigma),
+                 'age_err', set_nsigma('age')),
         ]
         start = 1
         self._add_summary_header_row(sh, cols)

@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+
 from reportlab.lib import colors
 from traits.api import Str
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -353,18 +356,19 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
     def _get_average_blanks(self):
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/average_blanks_map.yaml'
-        with open(p, 'r') as fp:
-            yd = yaml.load(fp)
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
 
-        #convert to mols
-        ydc = yd['CO2']
-        for k, v in ydc.iteritems():
-            ydc[k] = v * 5e-17 * 1.0e18
+            #convert to mols
+            ydc = yd['CO2']
+            for k, v in ydc.iteritems():
+                ydc[k] = v * 5e-17 * 1.0e18
 
-        ydc['sens_exp'] = 18
-        ydf = yd['Furnace']
-        for k, v in ydf.iteritems():
-            ydf[k] = v * 1e-16 * 1.0e18
-        ydf['sens_exp'] = 18
-        return ydc, ydf
-        #============= EOF =============================================
+            ydc['sens_exp'] = 18
+            ydf = yd['Furnace']
+            for k, v in ydf.iteritems():
+                ydf[k] = v * 1e-16 * 1.0e18
+            ydf['sens_exp'] = 18
+            return ydc, ydf
+            #============= EOF =============================================

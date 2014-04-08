@@ -318,18 +318,19 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
+        blanks = self._get_average_blanks()
+        if blanks:
+            co2_blanks, furnace_blanks = blanks
+            average_furnace_blanks = 'Average blanks for Furnace: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
+                                     '{Ar37:0.3f}, {Ar36:0.3f}), ' \
+                                     'x10<sup>-{sens_exp:}</sup> ' \
+                                     'for Ar<super>40</super>, Ar<super>39</super>, ' \
+                                     'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
+                                     'respectively'.format(**furnace_blanks)
 
-        co2_blanks, furnace_blanks = self._get_average_blanks()
-        average_furnace_blanks = 'Average blanks for Furnace: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
-                                 '{Ar37:0.3f}, {Ar36:0.3f}), ' \
-                                 'x10<sup>-{sens_exp:}</sup> ' \
-                                 'for Ar<super>40</super>, Ar<super>39</super>, ' \
-                                 'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
-                                 'respectively'.format(**furnace_blanks)
-
-        frow = FooterRow(fontsize=6)
-        frow.add_item(span=-1, value=self._new_paragraph(average_furnace_blanks))
-        data.append(frow)
+            frow = FooterRow(fontsize=6)
+            frow.add_item(span=-1, value=self._new_paragraph(average_furnace_blanks))
+            data.append(frow)
 
         fr = FootNoteRow(fontsize=6)
 
