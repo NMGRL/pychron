@@ -265,6 +265,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     #load remaining analyses
                     n = len(no_db_ans)
                     if n:
+                        #get all dbrecords with one call
+
+
+
 
                         if self.use_vcs:
                             #clone the necessary project repositories
@@ -285,7 +289,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                 progress = self._open_progress(n + 2)
 
                         new_ans = []
-                        for i, ai in enumerate(no_db_ans):
+                        ms = self.db.get_analyses_uuid([ri.uuid for ri in no_db_ans])
+                        for i, (ai, mi) in enumerate(zip(no_db_ans, ms)):
                             if progress:
                                 if progress.canceled:
                                     self.debug('canceling make analyses')
@@ -296,7 +301,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._construct_analysis(ai, progress, unpack=unpack, **kw)
+                            a = self._construct_analysis(ai, mi, progress, unpack=unpack, **kw)
                             if a:
                                 if use_cache:
                                     self._add_to_cache(a)
@@ -364,7 +369,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
-    def _construct_analysis(self, rec, prog, calculate_age=True, unpack=False, load_changes=False):
+    def _construct_analysis(self, rec, meas_analysis, prog, calculate_age=True, unpack=False, load_changes=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -392,7 +397,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             msg = 'loading {}. {}'.format(rid, m)
             prog.change_message(msg)
 
-        meas_analysis = self.db.get_analysis_uuid(rec.uuid)
+        # meas_analysis = self.db.get_analysis_uuid(rec.uuid)
 
         klass = DBAnalysis if not self.use_vcs else VCSAnalysis
         ai = klass(group_id=group_id,
