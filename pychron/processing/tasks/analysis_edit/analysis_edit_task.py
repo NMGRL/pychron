@@ -485,7 +485,8 @@ class AnalysisEditTask(BaseBrowserTask):
             if not obj.no_update:
                 if self.active_editor:
                     self.debug('Setting auto find to True')
-                    self.active_editor.set_auto_find(True)
+                    if hasattr(self.active_editor, 'set_auto_find'):
+                        self.active_editor.set_auto_find(True)
                     self.active_editor.set_items(self.unknowns_pane.items)
 
                 if self.plot_editor_pane:
