@@ -274,6 +274,12 @@ class IsotopeEvolutionEditor(GraphEditor):
                      truncate=trunc,
                      add_tools=add_tools,
                      plotid=i)
+
+        iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
+        iso.filter_outlier_dict = fd
+        # iso.set_fit(fit, notify=False)
+        iso.dirty = True
+
         return xs
 
     def _rebuild_graph(self):
@@ -352,6 +358,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                         if not self.confirmation_dialog(
                                 'No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
                             break
+
+                    unk.calculate_age(force=True)
+                    unk.sync_view()
                     i += 1
 
             if set_x_flag and ma > -Inf:

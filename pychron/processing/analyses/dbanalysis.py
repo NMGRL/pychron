@@ -63,7 +63,6 @@ class DBAnalysis(Analysis):
     blank_changes = List
     fit_changes = List
 
-
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
         if iso:
@@ -378,8 +377,7 @@ class DBAnalysis(Analysis):
 
     def _sync_isotopes(self, meas_analysis, unpack):
         # self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,), kwargs=dict(unpack=unpack))
-        self.isotopes = self._get_isotopes(meas_analysis,
-                                           unpack=unpack)
+        self.isotopes = self._get_isotopes(meas_analysis, unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
 
         pc, data = self._get_peak_center(meas_analysis)

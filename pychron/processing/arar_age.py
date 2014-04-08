@@ -27,12 +27,6 @@ from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
 
 
-
-
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack

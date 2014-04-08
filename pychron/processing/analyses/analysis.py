@@ -131,7 +131,10 @@ class Analysis(ArArAge):
         self._sync_view(v)
         return v
 
-    def _sync_view(self, v):
+    def sync_view(self):
+        self._sync_view()
+
+    def _sync_view(self, v=None):
         pass
 
     def _get_record_id(self):
