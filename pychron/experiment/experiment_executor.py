@@ -791,15 +791,8 @@ class ExperimentExecutor(Loggable):
     def _wait(self, delay, msg):
         wg = self.wait_group
         wc = self.get_wait_control()
-        # wc = wg.active_control
-        invoke_in_main_thread(wc.trait_set, high=delay, current_time=delay,
-                              wtime=delay,
-                              message=msg)
-        #        wc.trait_set(wtime=delay,
-        # #                     message=msg
-        #                     )
-        time.sleep(0.1)
-        wc.reset()
+
+        wc.message = msg
         wc.start(wtime=delay)
         wg.pop(wc)
 

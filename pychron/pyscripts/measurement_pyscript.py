@@ -259,12 +259,20 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def equilibrate(self, eqtime=20, inlet=None, outlet=None, do_post_equilibration=True, delay=3):
+    def equilibrate(self, eqtime=20, inlet=None, outlet=None, do_post_equilibration=True, delay=3,
+                    time_zero_after_inlet=False):
+        """
+            if time_zero_after_inlet is true, set time zero after inlet opens
+            if time_zero_after_inlet is integer set time zero after inlet opens and use integer value as time zero offset
+            if time_zero_after_inlet is false set time zero after outlet closes
+
+        """
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
-                                       delay=delay)
+                                       delay=delay,
+                                       time_zero_after_inlet=time_zero_after_inlet)
         if not evt:
             self.cancel()
         else:
@@ -427,6 +435,7 @@ class MeasurementPyScript(ValvePyScript):
                 T_eq= inlet closes
 
         """
+        self.info('setting time zero')
         self._time_zero = time.time() + offset
         self._time_zero_offset = offset
 
