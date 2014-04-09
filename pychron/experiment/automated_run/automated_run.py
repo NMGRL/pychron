@@ -367,9 +367,15 @@ class AutomatedRun(Loggable):
                     a.isotopes.pop(iso)
                 else:
                     ii = a.isotope_factory(name=iso, detector=di)
-                    pid = g.plots.index(plot)
-                    n = len(plot.plots)
+                    if plot is not None:
+                        pid = g.plots.index(plot)
+                        n = len(plot.plots)
+                    else:
+                        n = 1
+                        pid=len(g.plots)
+
                     plot = self.plot_panel.new_plot(add=pid + 1)
+
                     pid = g.plots.index(plot)
                     for i in range(n):
                         g.new_series(kind='scatter', fit=None, plotid=pid)
