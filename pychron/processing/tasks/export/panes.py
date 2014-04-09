@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from canopy.logging.logging_pane import TraitsTaskPane, TraitsDockPane
+from pyface.tasks.traits_dock_pane import TraitsDockPane
+from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, TabularEditor, HGroup
 
 #============= standard library imports ========================

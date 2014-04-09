@@ -33,7 +33,7 @@ gFORMAT = '%(name)-{}s: %(asctime)s %(levelname)-7s (%(threadName)-10s) %(messag
 gLEVEL = logging.DEBUG
 
 
-rhandler = None
+# rhandler = None
 
 def logging_setup(name, **kw):
     '''

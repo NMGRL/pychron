@@ -143,14 +143,13 @@ class FusionsLaserManager(LaserManager):
     #        self._recording_power_state = not self._recording_power_state
 
     def bind_preferences(self, pref_id):
+        self.debug('binding preferences')
         super(FusionsLaserManager, self).bind_preferences(pref_id)
         bind_preference(self, 'recording_zoom',
-                        '{}.recording_zoom'.format(pref_id)
-        )
+                        '{}.recording_zoom'.format(pref_id))
         bind_preference(self, 'record_brightness',
-                        '{}.record_brightness'.format(pref_id)
-        )
-
+                        '{}.record_brightness'.format(pref_id))
+        self.debug('preferences bound')
 
     def set_light(self, state):
         if state:

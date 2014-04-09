@@ -20,9 +20,7 @@ import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
-#
 from pychron.monitors.laser_monitor import LaserMonitor
-# from pychron.managers.graph_manager import GraphManager
 from pychron.lasers.laser_managers.pulse import Pulse
 from pychron.paths import paths
 from pychron.lasers.laser_managers.laser_script_executor import LaserScriptExecutor
@@ -32,9 +30,9 @@ from pychron.core.helpers.filetools import list_directory
 
 
 class LaserManager(BaseLaserManager):
-    '''
+    """
         Base class for a GUI representation of a laser device
-    '''
+    """
 
     laser_script_executor = Instance(LaserScriptExecutor)
 
@@ -66,6 +64,7 @@ class LaserManager(BaseLaserManager):
         bind_preference(self, 'window_y', '{}.y'.format(pref_id))
         bind_preference(self, 'use_calibrated_power', '{}.use_calibrated_power'.format(pref_id))
 
+        self.debug('binding stage manager preferences')
         self.stage_manager.bind_preferences(pref_id)
 
     def set_xy(self, xy, velocity=None):
