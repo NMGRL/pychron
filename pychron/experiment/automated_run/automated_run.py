@@ -236,6 +236,7 @@ class AutomatedRun(Loggable):
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
+                         time_zero_after_inlet=False,
                          delay=None):
         evt = TEvent()
         if not self._alive:
@@ -248,6 +249,7 @@ class AutomatedRun(Loggable):
                                inlet=inlet,
                                outlet=outlet,
                                delay=delay,
+                               time_zero_after_inlet=time_zero_after_inlet,
                                do_post_equilibration=do_post_equilibration))
         t.start()
 
@@ -1101,7 +1103,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank') \
-                    and not self.spec.analysis_type.startswith('background')):
+                and not self.spec.analysis_type.startswith('background')):
 
             cb = True
             #blanks=None
@@ -1227,6 +1229,7 @@ anaylsis_type={}
 
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
+                     time_zero_after_inlet=False,
                      do_post_equilibration=True):
 
         elm = self.extraction_line_manager
@@ -1242,6 +1245,10 @@ anaylsis_type={}
                 elm.open_valve(inlet, mode='script')
 
         evt.set()
+
+        if time_zero_after_inlet:
+            offset = int(time_zero_after_inlet)
+            self.measurement_script.set_time_zero(offset=offset)
 
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
