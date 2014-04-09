@@ -49,7 +49,7 @@ class ResponseRecorder(HasTraits):
         self.output_data = array([(t, 0)])
 
         self.data_manager = CSVDataManager()
-        self.data_manager.new_frame(base_frame_name='diode_response')
+        self.data_manager.new_frame(base_frame_name='diode_response_tc_control')
         self.data_manager.write_to_frame(('#time', self.output_device.name,
                                           self.response_device.name,
                                           self.response_device_secondary.name))

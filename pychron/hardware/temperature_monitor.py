@@ -85,7 +85,7 @@ class ISeriesDevice(CoreDevice):
 
 
 INPUT_CLASS_MAP = {0: 'TC', 1: 'RTD', 2: 'PROCESS'}
-TC_MAP = {0: 'J', 1: 'K', 2: 'T', 3: 'E', 4: 'N', 5: 'Din-J', 6: 'R', 7: 'S', 8: 'B', 110: 'C'}
+TC_MAP = {0: 'J', 1: 'K', 2: 'T', 3: 'E', 4: 'N', 5: 'Din-J', 6: 'R', 7: 'S', 8: 'B', 9: 'C'}
 TC_KEYS = ['J', 'K', 'T', 'E', 'N', 'Din-J', 'R', 'S', 'B', 'C']
 
 
@@ -112,6 +112,12 @@ class DPi32TemperatureMonitor(ISeriesDevice):
 
         self.info('getting input type')
         return self.read_input_type()
+
+    #ResponseRecorder interface
+    def get_response(self, force=False):
+        if force:
+            self.read_temperature()
+        return self.process_value
 
     def _get_input_type(self):
         """

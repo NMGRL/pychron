@@ -47,7 +47,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     pyrometer = Instance(MikronGA140Pyrometer)
     temperature_controller = Instance(WatlowEZZone)
-    # temperature_monitor = Instance(DPi32TemperatureMonitor)
+    temperature_monitor = Instance(DPi32TemperatureMonitor)
     response_recorder = Instance(ResponseRecorder)
 
     control_module_manager = Instance(VueMetrixManager)
@@ -210,6 +210,7 @@ class FusionsDiodeManager(FusionsLaserManager):
 
     def _response_recorder_default(self):
         r = ResponseRecorder(response_device=self.temperature_controller,
+                             # response_device_secondary = self.temperature_monitor,
                              response_device_secondary=self.pyrometer,
                              output_device=self.temperature_controller)
         return r
