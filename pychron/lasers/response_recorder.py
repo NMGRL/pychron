@@ -22,7 +22,6 @@ import struct
 import time
 from threading import Thread
 from numpy import array, vstack
-
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
