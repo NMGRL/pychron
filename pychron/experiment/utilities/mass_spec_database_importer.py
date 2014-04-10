@@ -337,7 +337,8 @@ class MassSpecDatabaseImporter(Loggable):
                             'Ar37': 'L2', 'Ar36': 'CDD'}
 
             if spec.is_peak_hop:
-                det = PEAK_HOP_MAP[iso]
+                if iso in PEAK_HOP_MAP:
+                    det = PEAK_HOP_MAP[iso]
 
             dbdet = db.add_detector(det, Label=det)
 

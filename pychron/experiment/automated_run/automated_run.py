@@ -45,7 +45,7 @@ from pychron.experiment.utilities.identifier import convert_identifier, \
     make_runid, get_analysis_type, convert_extract_device
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS
+    EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
 from pychron.experiment.automated_run.condition import TruncationCondition, \
     ActionCondition, TerminationCondition
 from pychron.processing.arar_age import ArArAge
@@ -143,9 +143,7 @@ class AutomatedRun(Loggable):
     # pyscript interface
     #===============================================================================
     def py_set_integration_time(self, v):
-        spectrometer = self.spectrometer_manager
-        nv = spectrometer.set_integration_time(v, force=True)
-        self._integration_seconds = nv
+        self.set_integration_time(v)
 
     def py_is_last_run(self):
         return self.is_last
@@ -182,7 +180,6 @@ class AutomatedRun(Loggable):
             else:
                 self.warning('Invalid fit "{}". '
                              'check the measurement script "{}"'.format(k, self.measurement_script.name))
-
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
@@ -379,9 +376,15 @@ class AutomatedRun(Loggable):
                     a.isotopes.pop(iso)
                 else:
                     ii = a.isotope_factory(name=iso, detector=di)
-                    pid = g.plots.index(plot)
-                    n = len(plot.plots)
+                    if plot is not None:
+                        pid = g.plots.index(plot)
+                        n = len(plot.plots)
+                    else:
+                        n = 1
+                        pid=len(g.plots)
+
                     plot = self.plot_panel.new_plot(add=pid + 1)
+
                     pid = g.plots.index(plot)
                     for i in range(n):
                         g.new_series(kind='scatter', fit=None, plotid=pid)
@@ -621,6 +624,11 @@ class AutomatedRun(Loggable):
     def get_detector(self, det):
         return self.spectrometer_manager.spectrometer.get_detector(det)
 
+    def set_integration_time(self, v):
+        spectrometer = self.spectrometer_manager.spectrometer
+        nv = spectrometer.set_integration_time(v, force=True)
+        self._integration_seconds = nv
+
     def set_magnet_position(self, *args, **kw):
         self._set_magnet_position(*args, **kw)
 
@@ -628,6 +636,7 @@ class AutomatedRun(Loggable):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
 
     def start(self):
+        self.set_integration_time(DEFAULT_INTEGRATION_TIME)
 
         if self.monitor is None:
             return self._start()

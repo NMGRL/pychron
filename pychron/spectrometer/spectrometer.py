@@ -114,6 +114,7 @@ class Spectrometer(SpectrometerDevice):
         if self.integration_time!=it or force:
             name = 'SetIntegrationTime'
             self.set_parameter(name, it)
+            self.trait_setq(integration_time=it)
 
         return it
 
