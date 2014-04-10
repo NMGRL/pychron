@@ -614,7 +614,7 @@ class AutomatedRun(Loggable):
         return self.spectrometer_manager.spectrometer.get_detector(det)
 
     def set_integration_time(self, v):
-        spectrometer = self.spectrometer_manager
+        spectrometer = self.spectrometer_manager.spectrometer
         nv = spectrometer.set_integration_time(v, force=True)
         self._integration_seconds = nv
 
