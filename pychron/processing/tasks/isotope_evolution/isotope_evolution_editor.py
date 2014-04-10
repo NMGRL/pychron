@@ -56,7 +56,7 @@ class IsotopeEvolutionEditor(GraphEditor):
     pickle_path = 'iso_fits'
     unpack_peaktime = True
     update_on_analyses = False
-    calculate_age = True
+    calculate_age = False
 
     def _set_name(self):
         if not self.name:

@@ -265,10 +265,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     #load remaining analyses
                     n = len(no_db_ans)
                     if n:
-                        #get all dbrecords with one call
-
-
-
 
                         if self.use_vcs:
                             #clone the necessary project repositories
@@ -289,6 +285,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                 progress = self._open_progress(n + 2)
 
                         new_ans = []
+                        #get all dbrecords with one call
                         ms = self.db.get_analyses_uuid([ri.uuid for ri in no_db_ans])
                         for i, (ai, mi) in enumerate(zip(no_db_ans, ms)):
                             if progress:
@@ -412,8 +409,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
                 ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
-
-
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age)

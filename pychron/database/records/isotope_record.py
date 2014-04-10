@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 import time
+
 from traits.api import HasTraits
+
 
 #============= standard library imports ========================
 # import re
@@ -45,6 +47,11 @@ class IsotopeRecordView(HasTraits):
 
     is_plateau_step = False
     identifier = ''
+
+    def __init__(self, dbrecord=None, *args, **kw):
+        super(IsotopeRecordView, self).__init__(*args, **kw)
+        if dbrecord:
+            self.create(dbrecord)
 
     def set_tag(self, tag):
         self.tag = tag.name
