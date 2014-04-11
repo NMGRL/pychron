@@ -505,5 +505,5 @@ class BaseArArFigure(HasTraits):
 
     @cached_property
     def _get_analysis_group(self):
-        return self._analysis_group_klass(analyses=self.analyses)
+        return self._analysis_group_klass(analyses=self.sorted_analyses)
         #============= EOF =============================================
