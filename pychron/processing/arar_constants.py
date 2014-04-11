@@ -21,6 +21,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
+
 #=============local library imports  ==========================
 
 # class ICFactor(HasTraits):
@@ -89,12 +90,12 @@ class ArArConstants(HasTraits):
 
     # ic_factors = Either(List, Str)
 
-    atm4036_citation = Str#'Nier (1950)'
-    atm4038_citation = Str#'Nier (1950)'
-    lambda_b_citation = Str#'Min (2008)'
-    lambda_e_citation = Str#'Min (2008)'
-    lambda_Ar39_citation = Str#'Min (2008)'
-    lambda_Ar37_citation = Str#'Min (2008)'
+    atm4036_citation = Str  #'Nier (1950)'
+    atm4038_citation = Str  #'Nier (1950)'
+    lambda_b_citation = Str  #'Min (2008)'
+    lambda_e_citation = Str  #'Min (2008)'
+    lambda_Ar39_citation = Str  #'Min (2008)'
+    lambda_Ar37_citation = Str  #'Min (2008)'
 
     def __init__(self, *args, **kw):
         #print 'init arar constants'
@@ -137,19 +138,17 @@ class ArArConstants(HasTraits):
         except AttributeError:
             print 'cannot bind to ArArConstants preferences'
 
-
         super(ArArConstants, self).__init__(*args, **kw)
 
     def to_dict(self):
-        d=dict()
-        for ai in ('fixed_k3739','atm4036','atm4038',
-                   'lambda_Cl36','lambda_Ar37','lambda_Ar39','lambda_k',):
+        d = dict()
+        for ai in ('fixed_k3739', 'atm4036', 'atm4038',
+                   'lambda_Cl36', 'lambda_Ar37', 'lambda_Ar39', 'lambda_k',):
+            v = getattr(self, ai)
+            d[ai] = nominal_value(v)
+            d['{}_err'.format(ai)] = float(std_dev(v))
 
-            v=getattr(self, ai)
-            d[ai]=nominal_value(v)
-            d['{}_err'.format(ai)]=float(std_dev(v))
-
-        d['abundance_sensitivity']=self.abundance_sensitivity
+        d['abundance_sensitivity'] = self.abundance_sensitivity
         return d
 
     def _get_fixed_k3739(self):
@@ -185,8 +184,9 @@ class ArArConstants(HasTraits):
         return self._get_ufloat('lambda_e')
 
     def _get_lambda_k(self):
-        k = self.lambda_b + self.lambda_e
-        return ufloat(k.nominal_value, k.std_dev)
+        return self.lambda_b + self.lambda_e
+
+        # return ufloat(k.nominal_value, k.std_dev)
 
     def _get_age_scalar(self):
         try:

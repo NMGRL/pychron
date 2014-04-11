@@ -25,6 +25,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -58,7 +59,6 @@ class BaseMeasurement(HasTraits):
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
-        # print 'uasdf', unpack, self.name, type(self)
         if dbrecord and unpack:
             try:
                 if unpacker is None:
@@ -99,10 +99,12 @@ class BaseMeasurement(HasTraits):
 
 
 class IsotopicMeasurement(BaseMeasurement):
-    uvalue = Property(depends_on='value, error, _value, _error, dirty')
+    uvalue = Property(depends_on='dirty')  #depends_on='value, error, _value, _error, dirty')
 
-    value = Property(depends_on='_value, dirty')
-    error = Property(depends_on='_error, dirty')
+    # value = Property(depends_on='_value, dirty')
+    # error = Property(depends_on='_error, dirty')
+    value = Property(depends_on='dirty')
+    error = Property(depends_on='dirty')
     _value = Float
     _error = Float
 
@@ -181,7 +183,7 @@ class IsotopicMeasurement(BaseMeasurement):
             self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
                                              iterations=int(fit.filter_outlier_iterations or 0),
                                              std_devs=int(fit.filter_outlier_std_devs or 0))
-            #self.error_type=fit.error_type or 'SEM'
+            # self.error_type=fit.error_type or 'SEM'
             self.trait_set(fit=fit.fit,
                            error_type=fit.error_type or 'SEM',
                            trait_change_notify=notify)
@@ -239,7 +241,6 @@ class IsotopicMeasurement(BaseMeasurement):
             reg.filter_outliers_dict = self.filter_outliers_dict
 
         reg.calculate()
-
         return reg
 
     @cached_property
@@ -336,8 +337,8 @@ class Isotope(BaseIsotope):
     _kind = 'signal'
 
     blank = Instance(Blank, ())
-    background = Instance(Background, ())
-    sniff = Instance(Sniff, ())
+    background = Instance(Background)
+    sniff = Instance(Sniff)
 
     correct_for_blank = True
     ic_factor = Either(Variable, AffineScalarFunc)
@@ -384,13 +385,22 @@ class Isotope(BaseIsotope):
         if self.correct_for_blank and self.detector.lower() != 'faraday':
             v = v - self.blank.uvalue
 
-        return v - self.background.uvalue
+        if self.background:
+            v = v - self.background.uvalue
+
+        return v
 
     def set_blank(self, v, e):
         self.blank = Blank(_value=v, _error=e)
 
     def set_baseline(self, v, e):
         self.baseline = Baseline(_value=v, _error=e)
+
+    def _sniff_default(self):
+        return Sniff()
+
+    def _background_default(self):
+        return Background()
 
     def __eq__(self, other):
         return self.get_baseline_corrected_value().__eq__(other)
