@@ -1471,7 +1471,7 @@ class IsotopeAdapter(DatabaseAdapter):
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             try:
                 return q.all()
             except NoResultFound:
