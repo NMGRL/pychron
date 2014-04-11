@@ -136,7 +136,7 @@ class IonOpticsManager(Manager):
             dac = spec.correct_dac(det, dac)
 
             self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
-            mag.set_dac(dac)
+            return mag.set_dac(dac)
 
     def get_center_dac(self, det, iso):
         spec = self.spectrometer

@@ -635,7 +635,7 @@ class AutomatedRun(Loggable):
         self._integration_seconds = nv
 
     def set_magnet_position(self, *args, **kw):
-        self._set_magnet_position(*args, **kw)
+        return self._set_magnet_position(*args, **kw)
 
     def set_deflection(self, det, defl):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
@@ -1300,7 +1300,7 @@ anaylsis_type={}
                              remove_non_active=True):
         ion = self.ion_optics_manager
         if ion is not None:
-            ion.position(pos, detector, dac, update_isotopes=update_isotopes)
+            change = ion.position(pos, detector, dac, update_isotopes=update_isotopes)
 
         if update_labels:
             self._update_labels()
@@ -1316,6 +1316,8 @@ anaylsis_type={}
         if self.plot_panel:
             self.plot_panel.analysis_view.load(self)
             self.plot_panel.analysis_view.refresh_needed = True
+
+        return change
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,

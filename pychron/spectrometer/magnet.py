@@ -169,9 +169,10 @@ class Magnet(SpectrometerDevice):
                         micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
                 if unblank:
                     micro.ask('BlankBeam False', verbose=verbose)
-
+        change = v != self._dac
         self._dac = v
         self.dac_changed = True
+        return change
 
     @get_float
     def read_dac(self):

@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 import time
+
 from traits.api import List, Int, Instance
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -120,13 +122,14 @@ class PeakHopCollector(DataCollector):
 
                     self.measurement_script.set_deflection(det, defl)
 
-            self.parent.set_magnet_position(isotope, detector,
-                                            update_detectors=False, update_labels=False,
+            change = self.parent.set_magnet_position(isotope, detector,
+                                                     update_detectors=False, update_labels=False,
                                             update_isotopes=True,
                                             remove_non_active=False)
-            msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
-            self.parent.wait(settle, msg)
-            self.debug(msg)
+            if change:
+                msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
+                self.parent.wait(settle, msg)
+                self.debug(msg)
 
         d = self.parent.get_detector(detector)
         # self.debug('cycle {} count {} {}'.format(cycle, count, id(self)))
