@@ -25,7 +25,7 @@ import time
 import ast
 import yaml
 from threading import Thread, Event as TEvent
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 from numpy import Inf
 # from memory_profiler import profile
 import weakref
@@ -235,7 +235,6 @@ class AutomatedRun(Loggable):
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
-                         time_zero_after_inlet=False,
                          delay=None):
         evt = TEvent()
         if not self._alive:
@@ -248,7 +247,6 @@ class AutomatedRun(Loggable):
                                inlet=inlet,
                                outlet=outlet,
                                delay=delay,
-                               time_zero_after_inlet=time_zero_after_inlet,
                                do_post_equilibration=do_post_equilibration))
         t.start()
 
@@ -359,6 +357,11 @@ class AutomatedRun(Loggable):
         hops = sorted(hops, key=key)
         a = self.arar_age
         g = self.plot_panel.isotope_graph
+
+        pb = self.get_previous_blanks()
+        pbs = self.get_previous_baselines()
+        correct_for_blank =(not self.spec.analysis_type.startswith('blank') and
+                            not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
             #if is_baseline contiune
@@ -376,6 +379,14 @@ class AutomatedRun(Loggable):
                     a.isotopes.pop(iso)
                 else:
                     ii = a.isotope_factory(name=iso, detector=di)
+                    if correct_for_blank:
+                        if iso in pb:
+                            b = pb[iso]
+                            ii.set_blank(nominal_value(b), std_dev(b))
+                    if iso in pbs:
+                        b = pbs[iso]
+                        ii.set_baseline(nominal_value(b), std_dev(b))
+
                     if plot is None:
                         plot = self.plot_panel.new_plot()
                         pid = g.plots.index(plot)
@@ -1309,7 +1320,6 @@ anaylsis_type={}
 
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
-                     time_zero_after_inlet=False,
                      do_post_equilibration=True):
 
         elm = self.extraction_line_manager
@@ -1326,11 +1336,6 @@ anaylsis_type={}
 
         #set the passed in event
         evt.set()
-
-        if time_zero_after_inlet:
-            offset = int(time_zero_after_inlet)
-            self.measurement_script.set_time_zero(offset=offset)
-
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
@@ -1514,7 +1519,7 @@ anaylsis_type={}
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError:
+                except IndexError,e:
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',

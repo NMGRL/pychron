@@ -115,7 +115,7 @@ class DataCollector(Loggable):
         with consumable(func=self._iter_step) as con:
             self._iter(con, evt, 1)
             while not evt.is_set():
-                time.sleep(0.25)
+                time.sleep(0.05)
 
         self.debug('measurement finished')
 
@@ -158,7 +158,6 @@ class DataCollector(Loggable):
 
     def _save_data(self, x, keys, signals):
         self.data_writer(self.detectors, x, keys, signals)
-
         #update arar_age
         if self.is_baseline and self.for_peak_hop:
             self._update_baseline_peak_hop(x, keys, signals)
