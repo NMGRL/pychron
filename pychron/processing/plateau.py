@@ -15,24 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List
+from traits.api import HasTraits, List, Array
 
 #============= standard library imports ========================
 from numpy import argmax, array
 #============= local library imports  ==========================
-# import logging
-# logging.basicConfig()
-# log=logging.getLogger('plateau')
 # from pychron.core.helpers.logger_setup import logging_setup, new_logger
-#
 # logging_setup('plateau', use_archiver=False)
 # log = new_logger('foo')
 
 
 class Plateau(HasTraits):
-    ages = List
-    errors = List
-    signals = List
+    ages = Array
+    errors = Array
+    signals = Array
     exclude = List
 
     nsteps = 3
@@ -73,6 +69,7 @@ class Plateau(HasTraits):
 
             if not self.check_overlap(start, i):
                 # log.debug('{} {} overlap failed'.format(start, i))
+                # potential_end=None
                 break
 
             if not self.check_nsteps(start, i):
@@ -89,9 +86,12 @@ class Plateau(HasTraits):
             return start, potential_end
 
     def check_percent_released(self, start, end):
-        s = sum(self.signals[start:end + 1])
-        # log.debug('percent {}'.format(s / self.total_signal))
-        return s / self.total_signal >= 0.5
+        ss = sum([(s if not i in self.exclude else 0)
+                  for i, s in enumerate(self.signals)][start:end + 1])
+
+        # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
+
+        return ss / self.total_signal >= 0.5
 
     def check_overlap(self, start, end):
         overlap_sigma = self.overlap_sigma
