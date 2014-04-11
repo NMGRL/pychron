@@ -22,6 +22,7 @@ from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -60,13 +61,13 @@ class UnknownsAdapter(TabularAdapter):
     def _get_age_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age, n=2)
+            r = floatfmt(self.item.age, n=3)
         return r
 
     def _get_error_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age_err_wo_j, n=3)
+            r = floatfmt(self.item.age_err_wo_j, n=4)
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
