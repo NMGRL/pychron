@@ -21,7 +21,7 @@
 import time
 
 
-def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$'):
+def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', rettime=False):
     if args is None:
         args = tuple()
     if kwargs is None:
@@ -29,7 +29,8 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$'):
 
     st = time.time()
     r = func(*args, **kwargs)
-    s = '{}s'.format(time.time() - st)
+    et = time.time() - st
+    s = '{}s'.format(et)
 
     if msg is None:
         msg = func.func_name
@@ -42,8 +43,10 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$'):
         log(s)
     else:
         print 'timethis', s
-
+    if rettime:
+        return et
     return r
+
 
 # def timer(msg=None):
 #     def _timer(func):

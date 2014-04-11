@@ -120,10 +120,10 @@ class DatabaseAdapter(Loggable):
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
-        import logging
-
-        logging.basicConfig()
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+        # import logging
+        #
+        # logging.basicConfig()
+        # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
     def create_all(self, metadata):

@@ -15,7 +15,6 @@ setup(name='pychron',
                 'pychron.core.stats',
                 'pychron.core.regression.tests',
 
-                'pychron.processing.tests',
-      ],
+                'pychron.processing.tests', ],
       # test_suite='pychron.core.regression.tests.suite'
       test_suite='pychron.test_suite.suite')

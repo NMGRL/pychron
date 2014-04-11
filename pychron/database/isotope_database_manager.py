@@ -15,9 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import String, Property, Event, \
     cached_property, Any, Bool, Int
 from apptools.preferences.preference_binding import bind_preference
+
 #============= standard library imports ========================
 import weakref
 #============= local library imports  ==========================
@@ -225,7 +228,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             loading the analysis' signals appears to be the most expensive operation.
             the majority of the load time is in _construct_analysis
         """
-
         if exclude:
             ans = self.filter_analysis_tag(ans, exclude)
 
@@ -285,9 +287,15 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                 progress = self._open_progress(n + 2)
 
                         new_ans = []
+
                         #get all dbrecords with one call
                         ms = self.db.get_analyses_uuid([ri.uuid for ri in no_db_ans])
-                        for i, (ai, mi) in enumerate(zip(no_db_ans, ms)):
+                        construct = self._construct_analysis
+                        append = new_ans.append
+                        add_to_cache = self._add_to_cache
+                        dbrecords = groupby(ms, key=lambda x: x[0])
+                        for i, ai in enumerate(no_db_ans):
+                            mi, gi = dbrecords.next()
                             if progress:
                                 if progress.canceled:
                                     self.debug('canceling make analyses')
@@ -298,15 +306,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._construct_analysis(ai, mi, progress, unpack=unpack, **kw)
+                            a = construct(ai, gi, progress, unpack=unpack, **kw)
                             if a:
                                 if use_cache:
-                                    self._add_to_cache(a)
-                                new_ans.append(a)
-
-                                # if progress:
-                                #     progress.on_trait_change(self._progress_closed,
-                                #                              'closed', remove=True)
+                                    add_to_cache(a)
+                                append(a)
 
                         db_ans.extend(new_ans)
 
@@ -366,7 +370,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ANALYSIS_CACHE_COUNT.pop(k)
             self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
-    def _construct_analysis(self, rec, meas_analysis, prog, calculate_age=True, unpack=False, load_changes=False):
+    def _construct_analysis(self, rec, group, prog, calculate_age=True, unpack=False, load_changes=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -407,7 +411,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
-                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
+                ai.sync(group, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
@@ -416,7 +420,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 synced = True
 
         if not synced:
-            ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
+            ai.sync(group, unpack=unpack, load_changes=load_changes)
 
         return ai
 

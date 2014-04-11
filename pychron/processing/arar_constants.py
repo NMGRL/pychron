@@ -22,6 +22,8 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
 
 
+
+
 #=============local library imports  ==========================
 
 # class ICFactor(HasTraits):
@@ -136,7 +138,7 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
 
         except AttributeError:
-            print 'cannot bind to ArArConstants preferences'
+            pass
 
         super(ArArConstants, self).__init__(*args, **kw)
 

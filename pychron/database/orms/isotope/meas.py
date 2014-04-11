@@ -27,6 +27,8 @@ from sqlalchemy.sql.expression import func
 
 
 
+
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -68,7 +70,9 @@ class meas_AnalysisTable(Base, BaseMixin):
                  ForeignKey('proc_TagTable.name'), default='ok')
 
     # meas relationships
-    isotopes = relationship('meas_IsotopeTable', backref='analysis')
+    isotopes = relationship('meas_IsotopeTable',
+                            # lazy='dynamic',
+                            backref='analysis')
     peak_center = relationship('meas_PeakCenterTable', backref='analysis', uselist=False)
 
     # proc relationships
@@ -186,6 +190,7 @@ class meas_IsotopeTable(Base, BaseMixin):
     fits = relationship('proc_FitTable',
                         backref='isotope')
     results = relationship('proc_IsotopeResultsTable',
+                           lazy="dynamic",
                            backref='isotope')
 
 

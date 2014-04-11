@@ -1469,7 +1469,16 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analyses_uuid(self, uuids):
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
+            q = sess.query(meas_AnalysisTable,
+                           gen_LabTable,
+                           meas_IsotopeTable,
+                           gen_SampleTable.name,
+                           gen_ProjectTable.name,
+                           gen_MaterialTable.name)
+            q = q.join(meas_IsotopeTable)
+            q = q.join(gen_LabTable)
+            q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             try:
