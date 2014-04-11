@@ -137,15 +137,31 @@ class BlanksEditor(InterpolationEditor):
                      for ui in ans])
 
     def _add_legend(self):
-        mapping = {'plot1': 'Blanks',
-                   'Unknowns-Current': 'Current',
-                   'Unknowns-predicted2': 'Predicted'}
+        # mapping = {'plot1': 'Blanks',
+        #            'Unknowns-Current': 'Current',
+        #            'Unknowns-predicted': 'Predicted'}
         plot = self.graph.plots[-1]
         ps = {}
+
         for k, v in plot.plots.items():
-            if k in mapping:
-                n = mapping[k]
-                ps[n] = v
+            if k == 'Unknowns-Current':
+                ps['Current'] = v
+            elif k.startswith('Unknowns-predicted'):
+                ps['Predicted'] = v
+            elif k.startswith('data') or k == 'plot1':
+                ps['Blanks'] = v
+
+        # print plot.plots.keys()
+        # for k, v in plot.plots.items():
+        #     for ki in mapping.keys():
+        #         if k.startswith(ki):
+        #             n = mapping[ki]
+        #             ps[n] = v
+        #             break
+        #     else:
+        #         if k in mapping:
+        #             n = mapping[k]
+        #             ps[n] = v
 
         l = Legend(plots=ps)
         plot.overlays.append(l)

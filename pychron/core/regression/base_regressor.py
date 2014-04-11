@@ -108,9 +108,9 @@ class BaseRegressor(HasTraits):
     def calculate(self, *args, **kw):
         pass
 
-    def percent_error(self, s, e):
+    def format_percent_error(self, s, e):
         try:
-            return abs(e / s * 100)
+            return '{:0.2}%'.format(abs(e / s * 100))
         except ZeroDivisionError:
             return 'Inf'
 
@@ -219,7 +219,7 @@ class BaseRegressor(HasTraits):
         coeffs = []
         s = u''
         for a, ci, ei in zip(ALPHAS, cs, ce):
-            pp = '({:0.2f}%)'.format(self.percent_error(ci, ei))
+            pp = '({:0.2f}%)'.format(self.format_percent_error(ci, ei))
             #            print pp, ci, ei, self.percent_error(ci, ei)
             fmt = '{{:0.{}e}}' if abs(ci) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ci = fmt.format(sig_figs).format(ci)

@@ -224,7 +224,6 @@ class StackedGraph(Graph):
                         if si.bind_id == bind_id:
                             si.index.metadata = obj.metadata
 
-
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
         if bind_selection:
             u = lambda obj, name, old, new: self._update_metadata(bind_id,

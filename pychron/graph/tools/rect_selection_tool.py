@@ -99,16 +99,17 @@ class RectSelectionTool(BaseTool):
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
-
-        token = self._get_selection_token(event)
-        if token is None:
-            if not self._near_edge(event):
-                self._start_select(event)
-        else:
-            if self._already_selected(token):
-                self._deselect_token(token)
+        if not event.handled:
+            token = self._get_selection_token(event)
+            if token is None:
+                if not self._near_edge(event):
+                    self._start_select(event)
             else:
-                self._select_token(token)
+                if self._already_selected(token):
+                    self._deselect_token(token)
+                else:
+                    self._select_token(token)
+            event.handled = True
 
     def _near_edge(self, event, tol=5):
         if self.filter_near_edge:

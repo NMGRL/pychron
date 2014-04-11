@@ -19,6 +19,7 @@
 from numpy import average, ones, asarray, where
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
+from pychron.core.helpers.formatting import floatfmt
 
 
 class MeanRegressor(BaseRegressor):
@@ -84,7 +85,11 @@ sem={}
     def sem(self):
         ys = self.clean_ys
         if self._check_integrity(ys, ys):
-            return self.std * (len(ys) - self.ddof) ** -0.5
+            n = len(ys) - self.ddof
+            if n > 0:
+                return self.std * n ** -0.5
+            else:
+                return 0
         else:
             return 0
 
@@ -103,14 +108,23 @@ sem={}
         uy = fy + e
         return ly, uy
 
-    def tostring(self, sig_figs=5, error_sig_figs=5):
-        fmt = 'mean={{}} std={{:0.{}f}} ({{:0.2f}}%), sem={{:0.{}f}} ({{:0.2f}}%)'.format(sig_figs, error_sig_figs)
+    def tostring(self, sig_figs=3, error_sig_figs=4):
+        # fmt = 'mean={{}} std={{:0.{}f}} ({{:0.2f}}%), sem={{:0.{}f}} ({{:0.2f}}%)'.format(sig_figs, error_sig_figs)
 
         m = self.mean
         std = self.std
         sem = self.sem
-        s = fmt.format(m, std, self.percent_error(m, std),
-                       sem, self.percent_error(m, sem))
+
+        sm = floatfmt(m, n=3)
+        sstd = floatfmt(std, n=4)
+        ssem = floatfmt(sem, n=4)
+
+        pstd = self.format_percent_error(m, std)
+        psem = self.format_percent_error(m, sem)
+
+        s = 'mean={}, std={} ({}), sem={} ({})'.format(sm, sstd, pstd, ssem, psem)
+        # s = fmt.format(m, std, self.percent_error(m, std),
+        #                sem, self.percent_error(m, sem))
         return s
 
     def make_equation(self):
