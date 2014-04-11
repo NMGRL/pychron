@@ -9,9 +9,13 @@ from setuptools import setup
 setup(name='pychron',
       version='2.0.4',
       setup_requires=['nose>=1.0'],
-      py_modules=['pychron.pychron_constants'],
+      py_modules=['pychron.pychron_constants',
+                  'pychron.processing.plateau'],
       packages=['pychron.core.regression',
                 'pychron.core.stats',
-                'pychron.core.regression.tests'],
+                'pychron.core.regression.tests',
+
+                'pychron.processing.tests',
+      ],
       # test_suite='pychron.core.regression.tests.suite'
       test_suite='pychron.test_suite.suite')

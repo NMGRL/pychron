@@ -2,6 +2,7 @@ __author__ = 'ross'
 import unittest
 
 from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
+from pychron.processing.tests.plateau import PlateauTestCase
 
 
 def suite():
@@ -11,6 +12,7 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
+    suite.addTest(loader.loadTestsFromTestCase(PlateauTestCase))
     return suite
 
 

@@ -4,7 +4,7 @@ import unittest
 from pychron.processing.plateau import Plateau
 
 
-class MyTestCase(unittest.TestCase):
+class PlateauTestCase(unittest.TestCase):
     # def test_find_plateaus_real_fail(self):
     #     ages, errors, signals, idx = self._get_test_data_real_fail()
     #     p = Plateau(ages=ages, errors=errors, signals=signals)
