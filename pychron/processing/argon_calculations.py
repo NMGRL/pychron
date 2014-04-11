@@ -28,11 +28,6 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
-
-
-
-
-
 #============= local library imports  ==========================
 
 
@@ -117,8 +112,13 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
     errors = asarray(errors)
 
     k39 = asarray(k39)
-    pidx = find_plateaus(ages, errors, k39,
-                         overlap_sigma=2)
+    from pychron.processing.plateau import Plateau
+
+    p = Plateau(ages=ages,
+                errors=errors, signals=k39)
+    pidx = p.find_plateaus()
+    # pidx = find_plateaus(ages, errors, k39,
+    #                      overlap_sigma=2)
     if pidx:
         sx = slice(*pidx)
         plateau_ages = ages[sx]
@@ -378,7 +378,6 @@ def age_equation(j, f,
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}
-
 
 def overlap(a1, a2, e1, e2, overlap_sigma):
     e1 *= overlap_sigma

@@ -35,14 +35,14 @@ gLEVEL = logging.DEBUG
 
 # rhandler = None
 
-def logging_setup(name, **kw):
+def logging_setup(name, use_archiver=True, **kw):
     '''
     '''
-    from pychron.core.helpers.archiver import Archiver
+
 
     # set up deprecation warnings
-#     import warnings
-#     warnings.simplefilter('default')
+    #     import warnings
+    #     warnings.simplefilter('default')
 
     # make sure we have a log directory
     # bdir = os.path.join(paths.root, 'logs')
@@ -68,46 +68,50 @@ def logging_setup(name, **kw):
             shutil.copyfile(v, '{}{}'.format(backup_logpath, t))
             os.remove(v)
 
-#    if sys.version.split(' ')[0] < '2.4.0':
-#        logging.basicConfig()
-#    else:
+        #    if sys.version.split(' ')[0] < '2.4.0':
+        #        logging.basicConfig()
+        #    else:
     root = logging.getLogger()
     root.setLevel(gLEVEL)
     shandler = logging.StreamHandler()
-# #
-# # #        global rhandler
+    # #
+    # # #        global rhandler
     rhandler = RotatingFileHandler(
-                    logpath, maxBytes=1e7, backupCount=5)
-#
+        logpath, maxBytes=1e7, backupCount=5)
+    #
     for hi in (shandler, rhandler):
-#        for hi in (rhandler,):
+        #        for hi in (rhandler,):
         hi.setLevel(gLEVEL)
         hi.setFormatter(logging.Formatter(gFORMAT))
         root.addHandler(hi)
 
-#     new_logger('main')
+    #     new_logger('main')
     # archive logs older than 1 month
-    a = Archiver(archive_days=30,
-                 archive_months=6,
-                 root=bdir
-                 )
-    a.clean(False)
+    if use_archiver:
+        from pychron.core.helpers.archiver import Archiver
+
+        a = Archiver(archive_days=30,
+                     archive_months=6,
+                     root=bdir
+        )
+        a.clean(False)
+
 
 def new_logger(name):
     name = '{:<{}}'.format(name, NAME_WIDTH)
-#    if name.strip() == 'main':
-#        l = logging.getLogger()
-#    else:
+    #    if name.strip() == 'main':
+    #        l = logging.getLogger()
+    #    else:
 
     l = logging.getLogger(name)
 
 
-#    print name
+    #    print name
     l.setLevel(gLEVEL)
 
-#    handler = logging.StreamHandler(stream=sys.stdout)
-#    handler.setFormatter(logging.Formatter(gFORMAT))
-#    l.addHandler(handler)
+    #    handler = logging.StreamHandler(stream=sys.stdout)
+    #    handler.setFormatter(logging.Formatter(gFORMAT))
+    #    l.addHandler(handler)
 
     return l
 
@@ -117,29 +121,29 @@ def wrap(items, width=40, indent=90, delimiter=','):
         wrap a list
     """
     if isinstance(items, str):
-        items=items.split(delimiter)
+        items = items.split(delimiter)
 
-    gcols=iter(items)
-    t=0
-    rs=[]
-    r=[]
+    gcols = iter(items)
+    t = 0
+    rs = []
+    r = []
 
     while 1:
         try:
-            c=gcols.next()
-            t+=1+len(c)
-            if t<width:
+            c = gcols.next()
+            t += 1 + len(c)
+            if t < width:
                 r.append(c)
             else:
                 rs.append(','.join(r))
-                r=[c]
-                t=len(c)
+                r = [c]
+                t = len(c)
 
         except StopIteration:
             rs.append(','.join(r))
             break
 
-    return ',\n{}'.format(' '*indent).join(rs)
+    return ',\n{}'.format(' ' * indent).join(rs)
 
 #============================== EOF ===================================
 # LOGGER_LIST = []
@@ -233,7 +237,7 @@ def wrap(items, width=40, indent=90, delimiter=','):
 # #            console.setLevel(logging.NOTSET)
 # #
 #            logger.addHandler(console)
-            # rich text or styled text handlers
+# rich text or styled text handlers
 #            if display:
 #
 # #                _class_ = 'DisplayHandler'
