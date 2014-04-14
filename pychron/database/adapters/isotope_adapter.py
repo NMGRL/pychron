@@ -305,8 +305,9 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_ProjectTable)
             if filter_non_run:
                 q = q.join(meas_AnalysisTable)
-                q = q.filter(and_(gen_ProjectTable.name.in_(project_names),
-                                  count(meas_AnalysisTable) > 0))
+                q = q.filter(gen_ProjectTable.name.in_(project_names))
+                q = q.group_by(gen_LabTable)
+                q = q.having(count(meas_AnalysisTable.id) > 0)
             else:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
 
