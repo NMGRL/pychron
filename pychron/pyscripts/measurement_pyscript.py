@@ -256,6 +256,7 @@ class MeasurementPyScript(ValvePyScript):
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
                                        delay=delay)
+                                       
         if not evt:
             self.cancel()
         else:
@@ -418,7 +419,6 @@ class MeasurementPyScript(ValvePyScript):
                 T_eq= inlet closes
 
         """
-        self.info('setting time zero')
         self._time_zero = time.time() + offset
         self._time_zero_offset = offset
 
@@ -484,21 +484,24 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_source_optics(self, **kw):
-        ''' 
+        """
         set_source_optics(YSymmetry=10.0)
         set ysymmetry to 10 use config.cfg
-        
-        '''
+
+        """
         attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
         self._set_from_file(attrs, 'SourceOptics', **kw)
 
     @verbose_skip
     @command_register
     def set_source_parameters(self, **kw):
-        '''            
-        '''
         attrs = ['IonRepeller', 'ElectronVolts']
         self._set_from_file(attrs, 'SourceParameters', **kw)
+
+    @verbose_skip
+    @command_register
+    def set_accelerating_voltage(self, v=''):
+        self._set_spectrometer_parameter('SetHV', v)
 
     @verbose_skip
     @command_register
