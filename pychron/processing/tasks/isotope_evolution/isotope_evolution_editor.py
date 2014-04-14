@@ -276,7 +276,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                      plotid=i)
 
         iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
-        iso.filter_outlier_dict = fd
+        iso.filter_outliers_dict = fd
         # iso.set_fit(fit, notify=False)
         iso.dirty = True
 
