@@ -261,8 +261,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
                     #increment value in cache_count
-                    for ci in cached_ans:
-                        self._add_to_cache(ci)
+                    if use_cache:
+                        for ci in cached_ans:
+                            self._add_to_cache(ci)
 
                     #load remaining analyses
                     n = len(no_db_ans)
@@ -289,11 +290,14 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         new_ans = []
 
                         #get all dbrecords with one call
-                        ms = self.db.get_analyses_uuid([ri.uuid for ri in no_db_ans])
+                        uuids = [ri.uuid for ri in no_db_ans]
+                        ms = self.db.get_analyses_uuid(uuids)
                         construct = self._construct_analysis
                         append = new_ans.append
                         add_to_cache = self._add_to_cache
-                        dbrecords = groupby(ms, key=lambda x: x[0])
+                        key = lambda x: x[0]
+
+                        dbrecords = groupby(ms, key=key)
                         for i, ai in enumerate(no_db_ans):
                             mi, gi = dbrecords.next()
                             if progress:

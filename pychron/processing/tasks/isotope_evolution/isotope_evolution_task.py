@@ -24,6 +24,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
     VSplitter
 
 
+
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -127,17 +128,16 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             m = '\n'.join(['{} {} = {}'.format(*f) for f in found])
             msg = 'Found Associated Analyses\n{}\n Continue?'.format(m)
             if self.confirmation_dialog(msg):
-                tans = [IsotopeRecordView(ai) for ai in tans]
+                # tans = [IsotopeRecordView(ai) for ai in tans]
                 unks.extend(tans)
                 self.active_editor.set_items(unks, is_append=True)
 
     def _get_find_parameters(self):
         f = FindAssociatedParametersDialog()
 
-        unks = []
         ais = self.active_editor.analyses
         if ais:
-            ans = ais
+            unks = ais
         elif self.analysis_table.selected:
             ans = self.analysis_table.selected
             unks = ans[:]
@@ -145,13 +145,14 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             ans = self.analysis_table.analyses
             unks = ans[:]
         elif self.selected_projects:
-            ans = self._get_projects_analyzed_analyses(self.selected_projects)
-            unks = [IsotopeRecordView(ai) for ai in ans]
+            with self.manager.db.session_ctx():
+                ans = self._get_projects_analyzed_analyses(self.selected_projects)
+                unks = [IsotopeRecordView(ai) for ai in ans]
         else:
             self.information_dialog('Select a list of projects, samples or analyses')
             return
 
-        ts = [get_datetime(ai.timestamp) for ai in ans]
+        ts = [get_datetime(ai.timestamp) for ai in unks]
         lpost, hpost = min(ts), max(ts)
         f.model.nominal_lpost_date = lpost.date()
         f.model.nominal_hpost_date = hpost.date()
@@ -159,7 +160,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         f.model.nominal_lpost_time = lpost.time()
         f.model.nominal_hpost_time = hpost.time()
 
-        ms = list(set([ai.mass_spectrometer for ai in ans]))
+        ms = list(set([ai.mass_spectrometer for ai in unks]))
         f.model.available_mass_spectrometers = ms
         f.model.mass_spectrometers = ms
 

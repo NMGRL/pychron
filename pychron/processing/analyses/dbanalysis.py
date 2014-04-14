@@ -168,12 +168,13 @@ class DBAnalysis(Analysis):
             and other associated tables
         """
 
-        ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
+        ms, ls, isos, shs, samples, projects, materials = izip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
         sample = samples[0]
         project = projects[0]
         material = materials[0]
+        selected_histories = shs[0]
 
         if sample:
             self.sample = sample
@@ -185,7 +186,9 @@ class DBAnalysis(Analysis):
         self._sync_irradiation(lab)
 
         #this is the dominant time sink
-        self._sync_isotopes(meas_analysis, isos, unpack, load_peak_center=load_changes)
+        self._sync_isotopes(meas_analysis, isos,
+                            selected_histories,
+                            unpack, load_peak_center=load_changes)
         self._sync_detector_info(meas_analysis)
 
         # timethis(self._sync_isotopes, args=(meas_analysis, unpack))
@@ -287,16 +290,6 @@ class DBAnalysis(Analysis):
                         for pwr, st, en in doses
                         if st is not None and en is not None]
 
-            # for pwr, st, en in doses:
-            #     if st is not None and en is not None:
-            #         dur = en - st
-            #         dt = analts - st
-            #         segments.append((pwr, convert_days(dur), convert_days(dt)))
-
-            # it = 0
-            # if d_o is not None:
-            #     it =
-
             d_o = doses[0][1]
             self.irradiation_time = time.mktime(d_o.timetuple()) if d_o else 0
             self.chron_segments = segments
@@ -304,7 +297,6 @@ class DBAnalysis(Analysis):
 
     def _sync_interference_corrections(self, level):
         pr = level.production
-        prname = pr.name
 
         prs = dict()
         for pk in INTERFERENCE_KEYS:
@@ -360,15 +352,9 @@ class DBAnalysis(Analysis):
         av.load(self)
 
     def _sync_analysis_info(self, meas_analysis):
-        # self.sample = self._get_sample(meas_analysis)
-        # self.material = self._get_material(meas_analysis)
-        # self.project = self._get_project(meas_analysis)
         self.mass_spectrometer = self._get_mass_spectrometer(meas_analysis)
 
     def _sync_detector_info(self, meas_analysis, **kw):
-
-        #disc_idx=['Ar36','Ar37','Ar38','Ar39','Ar40']
-
         #discrimination saved as 1amu disc not 4amu
         discriminations = self._get_discriminations(meas_analysis)
 
@@ -395,9 +381,13 @@ class DBAnalysis(Analysis):
 
             iso.discrimination = idisc
 
-    def _sync_isotopes(self, meas_analysis, isos, unpack, load_peak_center=False):
+    def _sync_isotopes(self, meas_analysis, isos,
+                       selected_histories,
+                       unpack, load_peak_center=False):
         # self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,), kwargs=dict(unpack=unpack))
-        self.isotopes = self._get_isotopes(meas_analysis, isos, unpack=unpack)
+        self.isotopes = self._get_isotopes(meas_analysis, isos,
+                                           selected_histories,
+                                           unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
         if load_peak_center:
             pc, data = self._get_peak_center(meas_analysis)
@@ -463,7 +453,9 @@ class DBAnalysis(Analysis):
 
         return fs + bs
 
-    def _get_isotopes(self, meas_analysis, dbisos, unpack):
+    def _get_isotopes(self, meas_analysis, dbisos,
+                      selected_histories,
+                      unpack):
         isotopes = dict()
 
         # timethis(self._get_signals, args=(isotopes, meas_analysis, unpack))
@@ -472,13 +464,13 @@ class DBAnalysis(Analysis):
 
         self._get_signals(isotopes, meas_analysis, dbisos, unpack)
         self._get_baselines(isotopes, meas_analysis, dbisos, unpack)
-        self._get_blanks(isotopes, meas_analysis)
+        self._get_blanks(isotopes, selected_histories)
 
         return isotopes
 
-    def _get_blanks(self, isodict, meas_analysis):
-        if meas_analysis.selected_histories:
-            history = meas_analysis.selected_histories.selected_blanks
+    def _get_blanks(self, isodict, selected_histories):
+        if selected_histories:
+            history = selected_histories.selected_blanks
             keys = isodict.keys()
             if history:
                 for ba in history.blanks:
@@ -495,11 +487,12 @@ class DBAnalysis(Analysis):
 
     def _get_signals(self, isodict, meas_analysis, dbisos, unpack):
 
-        for iso in dbisos:  #meas_analysis.isotopes:
-            if not iso.kind == 'signal' or not iso.molecular_weight:
+        for iso in dbisos:
+            mw = iso.molecular_weight
+            if not iso.kind == 'signal' or not mw:
                 continue
 
-            name = iso.molecular_weight.name
+            name = mw.name
             if name in isodict:
                 continue
 
@@ -512,7 +505,7 @@ class DBAnalysis(Analysis):
             except IndexError:
                 result = None
 
-            r = Isotope(mass=iso.molecular_weight.mass,
+            r = Isotope(mass=mw.mass,
                         dbrecord=iso,
                         dbresult=result,
                         name=name,
@@ -528,7 +521,6 @@ class DBAnalysis(Analysis):
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
                 self.temp_status = 1
             else:
-
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
                 if fit is None:
                     fit = Fit(fit='linear',
@@ -544,15 +536,15 @@ class DBAnalysis(Analysis):
     def _get_baselines(self, isotopes, meas_analysis, dbisos, unpack):
 
         for dbiso in dbisos:
-            if not dbiso.molecular_weight:
+            mw = dbiso.molecular_weight
+            if not mw:
                 continue
 
-            name = dbiso.molecular_weight.name
+            name = mw.name
             if not name in isotopes:
                 continue
 
             det = dbiso.detector.name
-
             iso = isotopes[name]
 
             kw = dict(dbrecord=dbiso,
@@ -560,10 +552,13 @@ class DBAnalysis(Analysis):
                       detector=det,
                       unpack=unpack)
 
-            if dbiso.kind == 'baseline':
-                result = None
-                if dbiso.results:
+            kind = dbiso.kind
+            if kind == 'baseline':
+                try:
                     result = dbiso.results[-1]
+                except IndexError:
+                    result = None
+
                 kw['name'] = '{} bs'.format(name)
                 r = Baseline(dbresult=result, **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
@@ -577,9 +572,7 @@ class DBAnalysis(Analysis):
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
-                # print 'tag', iso.baseline.uvalue.tag
-
-            elif dbiso.kind == 'sniff':
+            elif kind == 'sniff':
                 r = Sniff(**kw)
                 iso.sniff = r
 
