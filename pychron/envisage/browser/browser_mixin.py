@@ -23,6 +23,7 @@ from traits.api import List, Str, Bool, Any, Enum, Button, \
 import apptools.sweet_pickle as pickle
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -240,7 +241,6 @@ class BrowserMixin(ColumnSorterMixin):
         p = self._get_sample_filter_parameter()
         self.sample_filter_values = list(set([getattr(si, p) for si in sams]))
 
-
     def _set_recent_samples(self, recent_name):
 
         if not self.search_criteria.recent_hours:
@@ -260,10 +260,6 @@ class BrowserMixin(ColumnSorterMixin):
 
             sams = [LabnumberRecordView(li, low_post=lpost)
                     for li in lns if li.sample]
-            #ss = db.get_recent_samples(lpost, ms)
-            #print ss
-            #sams = [SampleRecordView(s)
-            #        for s in ss]
 
         return sams
 
@@ -281,41 +277,60 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _set_samples(self):
         db = self.manager.db
-        sams = []
 
         with db.session_ctx():
             sp = self.selected_projects
             if not hasattr(sp, '__iter__'):
                 sp = (sp,)
 
+            ls = db.get_project_labnumbers([p.name for p in sp],
+                                           self.filter_non_run_samples)
             prog = None
-            for pp in sp:
-                if not pp:
-                    continue
+            n = len(ls)
+            if n > 50:
+                prog = self.manager.open_progress(n=n)
+            if prog:
+                def ln_factory(ll):
+                    prog.change_message('Loading Labnumber {}'.format(ll.identifier))
+                    return LabnumberRecordView(ll)
+            else:
+                def ln_factory(ll):
+                    return LabnumberRecordView(ll)
+            sams = [ln_factory(li) for li in ls]
 
-                ss = db.get_samples(project=pp.name)
-                n = sum([1 if len(li.analyses) else 0 for si in ss for li in si.labnumbers])
-                if n > 50:
-                    prog = self.manager.open_progress(n=n)
+            # for li in ls:
+            #     sams.append(LabnumberRecordView(li))
 
-                test = lambda x: True
-                if self.filter_non_run_samples:
-                    test = lambda x: len(x.analyses)
+            # for pp in sp:
+            #     if not pp:
+            #         continue
 
-                if prog:
-                    for s in ss:
-                        for li in s.labnumbers:
-                            if test(li):
-                                prog.change_message('Loading Labnumber {}'.format(li.identifier))
-                                sams.append(LabnumberRecordView(li))
-                    prog.close()
-                else:
-                    sams.extend([LabnumberRecordView(li) for s in ss
-                                 for li in s.labnumbers if test(li)])
+            # ss = db.get_samples(project=pp.name)
+            # n = sum([1 if len(li.analyses) else 0 for si in ss for li in si.labnumbers])
+            # if n > 50:
+            #     prog = self.manager.open_progress(n=n)
+            #
+            # test=None
+            # if self.filter_non_run_samples:
+            #     test = lambda x: len(x.analyses)
+            #
+            # if prog:
+            #     for s in ss:
+            #         for li in s.labnumbers:
+            #             if test and test(li):
+            #                 prog.change_message('Loading Labnumber {}'.format(li.identifier))
+            #                 sams.append(LabnumberRecordView(li))
+            #     prog.close()
+            # else:
+            #     if test:
+            #         ll= [LabnumberRecordView(li) for s in ss
+            #          for li in s.labnumbers if test(li)]
+            #     else:
+            #         ll=[LabnumberRecordView(li) for s in ss
+            #             for li in s.labnumbers]
+            #     sams.extend(ll)
 
         return sams
-        #self.samples = sams
-        #self.osamples = sams
 
     def _project_filter_changed(self, new):
         self.projects = filter(filter_func(new, 'name'), self.oprojects)
@@ -379,11 +394,12 @@ class BrowserMixin(ColumnSorterMixin):
                                                 # offset=o,
                                                 include_invalid=include_invalid)
             prog = None
-            n = len(ans)
-            if n > 25 or len(lns) > 2:
-                prog = self.manager.open_progress(n)
 
-            ans = [self._record_view_factory(a, progress=prog) for a in ans]
+            if tc > 25 or len(lns) > 2:
+                prog = self.manager.open_progress(tc)
+
+            record_view_factory = self._record_view_factory
+            ans = [record_view_factory(a, progress=prog) for a in ans]
             if prog:
                 prog.close()
 

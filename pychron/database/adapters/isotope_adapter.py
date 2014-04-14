@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from sqlalchemy.sql.functions import count
 
 from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool, Property
 from traitsui.api import View, Item, HGroup
@@ -291,6 +292,23 @@ class IsotopeAdapter(DatabaseAdapter):
             attr = getattr(proc_InterpretedAgeHistoryTable, key)
             q = q.filter(attr.in_(values))
             q = q.order_by(proc_InterpretedAgeHistoryTable.create_date.desc())
+
+            try:
+                return q.all()
+            except NoResultFound:
+                pass
+
+    def get_project_labnumbers(self, project_names, filter_non_run):
+        with self.session_ctx() as sess:
+            q = sess.query(gen_LabTable)
+            q = q.join(gen_SampleTable)
+            q = q.join(gen_ProjectTable)
+            if filter_non_run:
+                q = q.join(meas_AnalysisTable)
+                q = q.filter(and_(gen_ProjectTable.name.in_(project_names),
+                                  count(meas_AnalysisTable) > 0))
+            else:
+                q = q.filter(gen_ProjectTable.name.in_(project_names))
 
             try:
                 return q.all()
