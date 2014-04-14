@@ -22,19 +22,19 @@ from kiva.fonttools import Font
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-# def intersperse(m, delim):
-#     """
-#         intersperse ```delim``` in m
-#          m=[1,2,3]
-#          delim='---'
-#          result=[1,'---',2,'---',3]
-#
-#     """
-#     m=iter(m)
-#     yield next(m)
-#     for x in m:
-#         yield delim
-#         yield x
+def intersperse(m, delim):
+    """
+        intersperse ```delim``` in m
+         m=[1,2,3]
+         delim='---'
+         result=[1,'---',2,'---',3]
+
+    """
+    m=iter(m)
+    yield next(m)
+    for x in m:
+        yield delim
+        yield x
 
 
 class InfoInspector(BaseTool):

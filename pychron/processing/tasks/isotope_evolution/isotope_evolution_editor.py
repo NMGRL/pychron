@@ -213,7 +213,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         f, e = convert_fit(fit)
         iso.fit = f
         iso.error_type = et or e
-        iso.include_baseline_error = include_baseline_error
+        iso.include_baseline_error = bool(include_baseline_error)
         if filter_dict:
             iso.set_filtering(filter_dict)
 

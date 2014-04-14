@@ -20,7 +20,7 @@ from traits.api import Callable
 from numpy import where, vstack, zeros_like
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
-from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
+from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay, intersperse
 
 
 class PointInspector(InfoInspector):
@@ -37,7 +37,7 @@ class PointInspector(InfoInspector):
             return where(abs(spts - xxyy[0]) < tol)[0]
 
     def percent_error(self, s, e):
-        v ='(Inf%)'
+        v = '(Inf%)'
         try:
             return '({:0.2f}%)'.format(abs(e / s) * 100)
         except ZeroDivisionError:
@@ -47,45 +47,39 @@ class PointInspector(InfoInspector):
     def assemble_lines(self):
         pt = self.current_position
         if pt:
-            x, y = self.component.map_data(pt)
-            if self.convert_index:
-                x = self.convert_index(x)
-            else:
-                x = '{:0.5f}'.format(x)
+            # x, y = self.component.map_data(pt)
 
+            comp = self.component
             inds = self.get_selected_index()
-            lines=[]
+            lines = []
+            convert_index = self.convert_index
             if inds is not None:
                 he = hasattr(self.component, 'yerror')
-                for i in inds:
+
+                ys = comp.value.get_data()[inds]
+                xs = comp.index.get_data()[inds]
+                for i, x, y in zip(inds, xs, ys):
                     if he:
-                        ye = self.component.yerror.get_data()[i]
+                        ye = comp.yerror.get_data()[i]
                         pe = self.percent_error(y, ye)
 
-                        # fmt = '{:0.3e}' if abs(ye) < 10e-6 else '{:0.6f}'
-                        # ye = fmt.format(ye)
-
-                        # fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
-                        # y = fmt.format(y)
                         ye = floatfmt(ye, n=6, s=3)
                         sy = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
                     else:
                         sy = floatfmt(y, n=6, s=3)
 
-                    lines.extend([u'x= {}'.format(x), u'y= {}'.format(sy)])
-                    if hasattr(self.component, 'display_index'):
-                        x = self.component.display_index.get_data()[i]
+                    if convert_index:
+                        x = convert_index(x)
+                    else:
+                        x = '{:0.5f}'.format(x)
+
+                    lines.extend([u'pt={:03n}, x= {}, y= {}'.format(i+1, x, sy)])
+                    if hasattr(comp, 'display_index'):
+                        x = comp.display_index.get_data()[i]
                         lines.append(u'{}'.format(x))
 
-                        # lines = [u'{}'.format(x)] + lines
-            # else:
-            #     lines = [u'x= {}'.format(x), u'y= {}'.format(y)]
-
-            # if inds is not None and hasattr(self.component, 'display_index'):
-            #     x = self.component.display_index.get_data()[ind][0]
-            #     lines = [u'{}'.format(x)] + lines
-
-            return lines
+            delim_n = max([len(li) for li in lines])
+            return intersperse(lines, '-' * delim_n)
         else:
             return []
 
