@@ -214,8 +214,8 @@ class MainView(HasTraits):
             ratios = [('40Ar/36Ar', 'Ar40/Ar36', 295.5), ('40Ar/38Ar', 'Ar40/Ar38', 1)]
             cv = self._make_ratios(ratios)
             self.computed_values = cv
-        else:
-            self._update_ratios(an)
+
+        self._update_ratios(an)
 
     def _load_cocktail_computed(self, an, new_list):
         if new_list:
@@ -231,8 +231,7 @@ class MainView(HasTraits):
                  ('40/36', 'Ar40/Ar36'),
                  ('38/39', 'Ar38/Ar39_decay_corrected'),
                  ('37/39', 'Ar37_decay_corrected/Ar39_decay_corrected'),
-                 ('36/39', 'Ar36/Ar39_decay_corrected'),
-        )
+                 ('36/39', 'Ar36/Ar39_decay_corrected'))
 
         if new_list:
             def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
@@ -275,8 +274,7 @@ class MainView(HasTraits):
                  ('K/Cl', 'kcl'),
                  ('40Ar*', 'rad40_percent'),
                  ('F', 'uF'),
-                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad')
-        )
+                 ('w/o Irrad', 'wo_irrad', '', 'uF', 'F_err_wo_irrad'))
 
         if new_list:
             def comp_factory(n, a, value=None, value_tag=None, error_tag=None):
