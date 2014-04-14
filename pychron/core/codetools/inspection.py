@@ -19,6 +19,8 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import inspect
+import traceback
+
 
 def caller(func):
     def dec(*args, **kw):
@@ -27,6 +29,17 @@ def caller(func):
         return func(*args, **kw)
 
     return dec
+
+
+def caller_stack(func):
+    def dec(*args, **kw):
+        stack = inspect.stack()
+        traceback.print_stack()
+        print '{} called by {}'.format(func.func_name, stack[1][3])
+        return func(*args, **kw)
+
+    return dec
+
 
 
 

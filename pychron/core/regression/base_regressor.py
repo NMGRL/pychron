@@ -23,6 +23,7 @@ import re
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller_stack
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
@@ -339,6 +340,7 @@ class BaseRegressor(HasTraits):
     def _get_degrees_of_freedom(self):
         return 1
 
+    @cached_property
     def _get_mswd(self):
         self.valid_mswd = False
         # ys=self._clean_array(self.ys)
