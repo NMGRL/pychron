@@ -1127,9 +1127,10 @@ If "No" select from database
                 q = q.join(gen_ExtractionDeviceTable)
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+
             dbr = None
             if last:
-                q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
                 q.limit(1)
                 try:
                     dbr = q.first()
@@ -1139,7 +1140,7 @@ If "No" select from database
             else:
                 q = q.limit(100)
                 dbs = q.all()
-
+                dbs = reversed(dbs)
                 sel.load_records(dbs, load=False)
                 sel.selected = sel.records[-1]
                 info = sel.edit_traits(kind='livemodal')
