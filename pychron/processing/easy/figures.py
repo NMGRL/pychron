@@ -43,16 +43,16 @@ class EasyFigures(BaseEasy):
 
     _tag = 'Figure'
 
-    _save_db_figure=False
+    _save_db_figure = False
 
     def _make(self, ep):
         #make a figure for each labnumber
 
         doc = ep.doc('figures')
 
-        self._save_db_figure=doc['save_db_figure']
+        self._save_db_figure = doc['save_db_figure']
         self._save_pdf_figure = doc['save_pdf_figure']
-        self._save_interpreted=doc['save_interpreted']
+        self._save_interpreted = doc['save_interpreted']
 
         projects = doc['projects']
         identifiers = doc.get('identifiers')
@@ -65,15 +65,15 @@ class EasyFigures(BaseEasy):
                 for li_str in levels:
                     irrad, level = li_str.split(' ')
                     dblevel = db.get_irradiation_level(irrad, level)
-                    pos=[pp for pp in dblevel.positions if pp.labnumber]
+                    pos = [pp for pp in dblevel.positions if pp.labnumber]
 
-                    lns=[pp.labnumber for pp in pos
-                            if pp.labnumber.sample.project.name in projects]
+                    lns = [pp.labnumber for pp in pos
+                           if pp.labnumber.sample.project.name in projects]
 
-                    ans=[ai for li in lns
-                                for ai in li.analyses
-                                    if ai.tag!='invalid']
-                    ids=[li.identifier for li in lns]
+                    ans = [ai for li in lns
+                           for ai in li.analyses
+                           if ai.tag != 'invalid']
+                    ids = [li.identifier for li in lns]
 
                     self._make_level(doc, irrad, level, ids, ans)
             else:
@@ -91,14 +91,14 @@ class EasyFigures(BaseEasy):
                                for ln in si.labnumbers]
                     self._make_labnumbers(doc, lns)
 
-    def _make_level(self, doc, irrad, level,ids, ans):
+    def _make_level(self, doc, irrad, level, ids, ans):
         root = doc['root']
         options = doc['options']
 
         lroot = os.path.join(root, irrad, level)
         r_mkdir(lroot)
 
-        n=len(ans)
+        n = len(ans)
         prog = self.open_progress(n, close_at_end=False)
 
         ans = self.make_analyses(ans, progress=prog, use_cache=False)
@@ -112,13 +112,13 @@ class EasyFigures(BaseEasy):
         # stepheat = sorted(stepheat, key=apred)
         # if stepheat:
         #     self._make_editor(stepheat, 'step_heat', options, prog, ln_root, li)
-        project='J'
+        project = 'J'
         # lns=[li.identifier for li in level.labnumbers]
 
         if fusion:
-            save_args=(lroot, level, '{} {}'.format(irrad, level),
-                       project, ids)
-            self._make_editor(fusion, ('fusion','fusion_grouped'),
+            save_args = (lroot, level, '{} {}'.format(irrad, level),
+                         project, ids)
+            self._make_editor(fusion, ('fusion', 'fusion_grouped'),
                               options, prog, 'aliquot', False,
                               save_args)
         prog.close()
@@ -161,7 +161,7 @@ class EasyFigures(BaseEasy):
                               (ln_root, 'fig', li, project, (li,)))
 
     def _make_labnumbers(self, doc, lns):
-        root=doc['root']
+        root = doc['root']
         options = doc['options']
         n = len(lns) + sum([len(li.analyses) for li in lns])
         prog = self.open_progress(n, close_at_end=False)
@@ -181,7 +181,7 @@ class EasyFigures(BaseEasy):
         prog.change_message('Making {} for {}'.format(self._tag, ident))
 
         #filter invalid analyses
-        ans=filter(lambda x: not x.tag=='invalid', li.analyses)
+        ans = filter(lambda x: not x.tag == 'invalid', li.analyses)
 
         #group by stepheat vs fusion
         pred = lambda x: bool(x.step)
@@ -189,7 +189,7 @@ class EasyFigures(BaseEasy):
         ans = sorted(ans, key=pred)
         stepheat, fusion = map(list, partition(ans, pred))
 
-        project='Minna Bluff'
+        project = 'Minna Bluff'
 
         li = li.identifier
         if stepheat:
@@ -218,35 +218,37 @@ class EasyFigures(BaseEasy):
                      apply_graph_grouping,
                      save_args):
         if isinstance(editor_name, tuple):
-            editor_name, save_name=editor_name
+            editor_name, save_name = editor_name
         else:
-            editor_name,save_name=editor_name, editor_name
+            editor_name, save_name = editor_name, editor_name
 
-        editor=getattr(self, '_{}_editor'.format(editor_name))
+        editor = getattr(self, '_{}_editor'.format(editor_name))
         if editor is None:
-            klass=getattr(self, '{}_editor_klass'.format(editor_name))
-            editor=klass(processor=self)
+            klass = getattr(self, '{}_editor_klass'.format(editor_name))
+            editor = klass(processor=self)
             editor.plotter_options_manager.set_plotter_options(options[editor_name])
 
-        unks = self.make_analyses(ans, progress=prog, use_cache=False)
-        editor.set_items(unks)
+        # unks = self.make_analyses(ans, progress=prog, use_cache=False)
+        editor.set_items(ans, progress=prog, update_graph=False, use_cache=False)
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
 
         if apply_graph_grouping:
             ts = []
+            unks = editor.analyses
             for i, (si, gi) in enumerate(groupby(unks, key=lambda x: x.sample)):
                 idxs = [unks.index(ai) for ai in gi]
                 editor.set_graph_group(idxs, i)
                 ts.append(si)
             editor.titles = ts
-            editor.clear_aux_plot_limits()
 
+        editor.clear_aux_plot_limits()
         editor.rebuild()
 
-        func=getattr(self, '_save_{}'.format(save_name))
+        func = getattr(self, '_save_{}'.format(save_name))
         func(editor, *save_args)
         setattr(self, '_{}_editor'.format(editor_name), editor)
+        del editor
 
     #save
     def _save_isochron(self, editor, *args):
@@ -254,7 +256,7 @@ class EasyFigures(BaseEasy):
         if self._save_interpreted:
             editor.save_interpreted_ages()
 
-    def _save_step_heat(self,editor, *args):
+    def _save_step_heat(self, editor, *args):
         self._save(editor, *args)
         if self._save_interpreted:
             editor.save_interpreted_ages()
@@ -262,7 +264,7 @@ class EasyFigures(BaseEasy):
     def _save_fusion_grouped(self, *args):
         self._save(*args)
 
-    def _save_fusion(self,editor, *args):
+    def _save_fusion(self, editor, *args):
         self._save_labnumber(editor, *args)
         if self._save_interpreted:
             editor.save_interpreted_ages()
