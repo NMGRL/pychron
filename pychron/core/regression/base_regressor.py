@@ -217,10 +217,8 @@ class BaseRegressor(HasTraits):
         ce = self.coefficient_errors[::-1]
 
         coeffs = []
-        s = u''
         for a, ci, ei in zip(ALPHAS, cs, ce):
-            pp = '({:0.2f}%)'.format(self.format_percent_error(ci, ei))
-            #            print pp, ci, ei, self.percent_error(ci, ei)
+            pp = '({})'.format(self.format_percent_error(ci, ei))
             fmt = '{{:0.{}e}}' if abs(ci) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ci = fmt.format(sig_figs).format(ci)
 
