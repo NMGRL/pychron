@@ -1392,6 +1392,8 @@ anaylsis_type={}
             self.plot_panel.analysis_view.refresh_needed = True
         return change
 
+        return change
+
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
                   check_conditions):

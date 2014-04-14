@@ -95,6 +95,14 @@ class PeakHopCollector(DataCollector):
             self.parent.measurement_script._series_count -= 2
             self.parent.measurement_script._fit_series_count -= 1
 
+            change = self.parent.set_magnet_position(isotope, detector,
+                                                     update_detectors=False, update_labels=False,
+                                            update_isotopes=True,
+                                            remove_non_active=False)
+            if change:
+                msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
+                self.parent.wait(settle, msg)
+                self.debug(msg)
             self.plot_panel._ncounts = pocounts
             self.measurement_script.ncounts = ocounts
             self.plot_panel.ncycles = ocycles
