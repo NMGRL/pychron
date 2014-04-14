@@ -28,6 +28,7 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
+
 #============= local library imports  ==========================
 
 
@@ -108,6 +109,9 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
 
         return age, error
     """
+    # print ages
+    # print errors
+    # print k39
     ages = asarray(ages)
     errors = asarray(errors)
 

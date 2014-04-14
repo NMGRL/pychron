@@ -72,7 +72,7 @@ class Spectrum(BaseArArFigure):
         graph.set_y_title(title,
                           plotid=pid)
 
-        xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
+        xs, ys, es, _, _, _ = self._calculate_spectrum(value_key=vk)
         s = self._add_plot(xs, ys, es, pid, po)
         return s
 
@@ -80,7 +80,7 @@ class Spectrum(BaseArArFigure):
         graph = self.graph
         op = self.options
 
-        xs, ys, es, c39s = self._calculate_spectrum()
+        xs, ys, es, c39s, s39, vs = self._calculate_spectrum()
         self.xs = c39s
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
@@ -96,7 +96,8 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
         ag.include_j_error_in_plateau = self.options.include_j_error_in_plateau
         ag.plateau_age_error_kind = self.options.plateau_age_error_kind
-        print 'plateau_age', ag.plateau_age
+
+        pma = None
         if ag.plateau_age:
             plateau_age = ag.plateau_age
             plateau_mswd, valid_mswd, nsteps = ag.get_plateau_mswd_tuple()
@@ -111,11 +112,13 @@ class Spectrum(BaseArArFigure):
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
                                                 info_txt)
-
+            pma = plateau_age.nominal_value * 1.25
             overlay.id = 'plateau'
             if overlay.id in po.overlay_positions:
                 y = po.overlay_positions[overlay.id]
                 overlay.y = y
+                pma = y
+
 
         # tga = self._calculate_total_gas_age(self.sorted_analyses)
         # print tga
@@ -124,13 +127,28 @@ class Spectrum(BaseArArFigure):
         text = self._build_integrated_age_label(tga, *mswd)
         # text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
 
-        ys, es = array(ys), array(es)
-        ns = op.step_nsigma
-        yl = (ys - es * ns)[::-1]
-        yu = ys + es * ns
+        # ys, es = array(ys), array(es)
+
+        #filter ys,es if 39Ar < 1% of total
+        ps = s39 / s39.sum()
+        ps = ps > 0.01
+        # print ps
+        vs = vs[ps]
+        vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
+        vs, es = array(vs), array(es)
+        # es=ves[ps]
+        # ys=ys[ps]
+        # es=es[ps]
+        nes = es * op.step_nsigma
+        yl = vs - nes
+        yu = vs + nes
+        # yl = (ys - es * ns)#[::-1]
+        # yu = ys + es * ns
 
         _mi = min(yl)
         _ma = max(yu)
+        if pma:
+            _ma = max(pma, _ma)
 
         if op.display_integrated_info:
             fs = op.integrated_font_size
@@ -150,11 +168,13 @@ class Spectrum(BaseArArFigure):
         self._add_info(graph, plot)
 
         # print po.has_ylimits(),po.ylimits
-        pad = '0.1'
+        pad = '0.25'
         if po.has_ylimits():
             _mi, _ma = po.ylimits
             pad = None
-        self._set_y_limits(_mi, _ma, pad=pad)
+        # print 'setting', _mi, _ma
+        self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
+        # self._set_y_limits(_mi, _ma, pad=pad)
 
     def _add_info(self, g, plot):
         if self.group_id == 0:
@@ -317,7 +337,7 @@ class Spectrum(BaseArArFigure):
             es.append(ei)
             prev = s
 
-        return array(xs), array(ys), array(es), array(c39s)  # , array(ar39s), array(values)
+        return array(xs), array(ys), array(es), array(c39s), array(ar39s), array(values)
 
     def _calc_error(self, we, mswd):
         ec = self.options.error_calc_method

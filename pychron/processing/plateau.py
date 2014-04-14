@@ -25,6 +25,17 @@ from numpy import argmax, array
 # log = new_logger('foo')
 
 
+def memoize(function):
+    cache = {}
+
+    def closure(*args):
+        if args not in cache:
+            cache[args] = function(*args)
+        return cache[args]
+
+    return closure
+
+
 class Plateau(HasTraits):
     ages = Array
     errors = Array
@@ -47,10 +58,11 @@ class Plateau(HasTraits):
         idxs = []
         spans = []
 
+        overlap_func = memoize(self._overlap)
         for i in range(n):
             if i in exclude:
                 continue
-            idx = self._find_plateaus(n, i, exclude)
+            idx = self._find_plateaus(n, i, exclude, overlap_func)
             if idx:
                 # log.debug('found {} {}'.format(*idx))
                 idxs.append(idx)
@@ -61,13 +73,13 @@ class Plateau(HasTraits):
 
         return idxs
 
-    def _find_plateaus(self, n, start, exclude):
+    def _find_plateaus(self, n, start, exclude, overlap_func):
         potential_end = None
         for i in range(start, n, 1):
             if i in exclude:
                 continue
 
-            if not self.check_overlap(start, i):
+            if not self.check_overlap(start, i, overlap_func):
                 # log.debug('{} {} overlap failed'.format(start, i))
                 # potential_end=None
                 break
@@ -93,8 +105,19 @@ class Plateau(HasTraits):
 
         return ss / self.total_signal >= 0.5
 
-    def check_overlap(self, start, end):
+    def check_overlap(self, start, end, overlap_func):
         overlap_sigma = self.overlap_sigma
+        for i in range(start, end):
+            for j in range(start + i, end + 1):
+                if i == j:
+                    continue
+                if not overlap_func(i, j, overlap_sigma):
+                    return
+        else:
+            return True
+
+    def _overlap(self, start, end, overlap_sigma):
+        # log.debug('checking overlap {} {}'.format(start, end))
         a1 = self.ages[start]
         a2 = self.ages[end]
         e1 = self.errors[start]
