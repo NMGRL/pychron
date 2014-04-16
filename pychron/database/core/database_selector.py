@@ -81,7 +81,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     dclick_recall_enabled = Bool(False)
 
     db = Instance(DatabaseAdapter)
-    tabular_adapter = BaseTabularAdapter
+    tabular_adapter_klass = BaseTabularAdapter
+    tabular_adapter = Any  #Instance(BaseTabularAdapter
     id_string = Str
     title = ''
 
@@ -96,6 +97,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     wx = 0.4
     wy = 0.1
+    window_height = 650
+    window_width = 600
     opened_windows = Dict
 
     query_table = None
@@ -417,8 +420,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _query_factory(self, removable=True, **kw):
         q = self.query_klass(selector=self,
                              removable=removable,
-                             date_str=self.date_str,
-        )
+                             date_str=self.date_str)
 
         q.trait_set(trait_change_notify=False, **kw)
         return q
@@ -440,15 +442,15 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def traits_view(self):
         v = self._view_factory()
         v.title = self.title
-        v.width = 600
-        v.height = 650
+        v.width = self.window_width
+        v.height = self.window_height
         v.x = 0.1
         v.y = 0.1
 
         return v
 
     def _view_factory(self):
-        editor = myTabularEditor(adapter=self.tabular_adapter(),
+        editor = myTabularEditor(adapter=self.tabular_adapter,
                                  dclicked='object.dclicked',
                                  selected='object.selected',
                                  selected_row='object.selected_row',
@@ -457,9 +459,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                                  #                               auto_update=True,
                                  column_clicked='object.column_clicked',
                                  editable=False,
-                                 multi_select=not self.style == 'single',
-
-        )
+                                 multi_select=not self.style == 'single')
 
         button_grp = self._get_button_grp()
         v = View(
@@ -471,7 +471,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                          editor=editor,
                          show_label=False,
                          height=0.75,
-                         width=600,
+                         # width=600,
                     ),
                     Item('queries', show_label=False,
                          style='custom',
@@ -479,13 +479,10 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                          editor=ListEditor(mutable=False,
                                            style='custom',
                                            editor=InstanceEditor()),
-                         defined_when='style in ["normal","panel"]')
-                ),
-                button_grp,
-            ),
+                         defined_when='style in ["normal","panel"]')),
+                button_grp),
             resizable=True,
-            handler=SelectorHandler
-        )
+            handler=SelectorHandler)
 
         if self.style == 'single':
             v.buttons = ['OK', 'Cancel']
@@ -497,6 +494,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _queries_default(self):
         return [self._query_factory(removable=False)]
 
+    def _tabular_adapter_default(self):
+        return self.tabular_adapter_klass()
 
 #============= EOF =============================================
 #        if criteria is None:

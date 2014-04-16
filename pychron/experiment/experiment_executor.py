@@ -1045,10 +1045,6 @@ class ExperimentExecutor(Loggable):
             invoke_in_main_thread(self.warning_dialog, msg)
             return
 
-        # exp = self.experiment_queue
-        # check the first aliquot before delaying
-        # arv = exp.cleaned_automated_runs[0]
-        # self._check_run_aliquot(arv)
         self.debug('pre check complete')
         return True
 
@@ -1064,10 +1060,6 @@ If "No" select from database
         types = ['air', 'unknown', 'cocktail']
         # get first air, unknown or cocktail
         aruns = exp.cleaned_automated_runs
-        #         an = next((a for a in aruns
-        #                                     if not a.skip and \
-        #                                         a.analysis_type in types and \
-        #                                             a.state == 'not run'), None)
 
         an = next((a for a in aruns if a.analysis_type in types), None)
 
@@ -1112,43 +1104,50 @@ If "No" select from database
     def _get_blank(self, kind, ms, ed, last=False):
         mainstore = self.datahub.mainstore
         db = mainstore.db
-        sel = db.selector_factory(style='single')
+
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable)
-            q = q.join(gen_AnalysisTypeTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
 
-            q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
             if ms:
                 q = q.join(gen_MassSpectrometerTable)
                 q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-            if ed and ed != NULL_STR and kind == 'unknown':
-                q = q.join(meas_ExtractionTable)
-                q = q.join(gen_ExtractionDeviceTable)
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-
             dbr = None
             if last:
-                q.limit(1)
+                q = q.limit(1)
                 try:
                     dbr = q.first()
-                except NoResultFound:
-                    pass
+                except NoResultFound, e:
+                    self.debug('No result found {}'.format(e))
 
             else:
-                q = q.limit(100)
-                dbs = q.all()
+                dbs = q.limit(50).all()
                 dbs = reversed(dbs)
+
+                sel = db.selector_factory(style='single')
+                sel.set_columns(exclude='irradiation_info',
+                                append=[('Measurement', 'meas_script_name', 120),
+                                        ('Extraction', 'extract_script_name', 90)])
                 sel.load_records(dbs, load=False)
                 sel.selected = sel.records[-1]
+                sel.window_width = 750
+                sel.title = 'Select Default Blank'
                 info = sel.edit_traits(kind='livemodal')
                 if info.result:
                     dbr = sel.selected
 
             if dbr:
-                dbr = mainstore.make_analysis(dbr)
+                dbr = mainstore.make_analysis(dbr, calculate_age=False)
                 return dbr
 
     def _check_managers(self, inform=True, n=1):
@@ -1308,69 +1307,5 @@ If "No" select from database
             else:
                 self.warning('no automated run monitor avaliable. '
                              'Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg')
-                #============= EOF =============================================
-                # def _check_all_aliquots_queue(self):
-                #     for ei in self.experiment_queues:
-                #         if self._check_all_aliquots(ei):
-                #             break
-                #
-                # def _check_all_aliquots(self, eq):
-                #     db = self.massspec_importer.db
-                #     with db.session_ctx():
-                #         for ai in eq.cleaned_automated_runs:
-                #             if self._analysis_exists(db, ai):
-                #                 return True
-                #
-                # def _analysis_exists(self, db, ai):
-                #     ident = ai.labnumber
-                #     aliquot = ai.aliquot
-                #     step = ai.step
-                #     if db.get_analysis(ident, aliquot, step):
-                #         self.warning_dialog('Analysis {} already exists in secondary database. '
-                #                             'Modify your experiment accordingly'.format(ai.record_id))
-                #         return True
-                # def _check_run_aliquot(self, arv):
-                #     """
-                #         check the secondary database for this labnumber
-                #         get last aliquot
-                #
-                #     """
-                #     if self.massspec_importer:
-                #         self.debug('Checking run {} aliquot'.format(arv.runid))
-                #         db = self.massspec_importer.db
-                #         if db.connected:
-                #         # try:
-                #         # _ = int(arv.labnumber)
-                #             identifier = self.massspec_importer.get_identifier(arv)
-                #
-                #             ai = db.get_analysis(identifier, arv.aliquot, arv.step)
-                #             if ai is not None:
-                #                 al, st = db.get_latest_analysis_aliquot(identifier)
-                #                 if arv.step:
-                #                     new_step = st + 1
-                #                     new_aliquot = al
-                #                 else:
-                #                     new_aliquot = al + 1
-                #                     new_step = ''
-                #
-                #                 self.message(
-                #                     '{}-{:02n}{} exists in secondary database. Modifying analysis to {}-{:02n}{}'.format(identifier,
-                #                                                                                                          arv.aliquot,
-                #                                                                                                          arv.step,
-                #                                                                                                          identifier,
-                #                                                                                                          new_aliquot,
-                #                                                                                                          new_step))
-                #                 arv.aliquot = new_aliquot
-                #                 arv.step = new_step
-                #                 #update aliquot for all runs with this labnumber
-                #                 i = 1
-                #                 j = 1
-                #                 for ei in self.experiment_queue.cleaned_automated_runs:
-                #                     if ei.labnumber == identifier and ei != arv:
-                #                         if ei.step:
-                #                             ei.aliquot = new_aliquot
-                #                             ei.step = new_step + j
-                #                             j += 1
-                #                         else:
-                #                             ei.aliquot = new_aliquot + i
-                #                             i += 1
+
+#============= EOF =============================================

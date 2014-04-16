@@ -33,7 +33,10 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
     s = '{}s'.format(et)
 
     if msg is None:
-        msg = func.func_name
+        if hasattr(func, 'func_name'):
+            msg = func.func_name
+        else:
+            msg = ''
     # if msg:
     s = '{} {}'.format(msg, s)
     if decorate:

@@ -1491,12 +1491,10 @@ class IsotopeAdapter(DatabaseAdapter):
             q = sess.query(meas_AnalysisTable,
                            gen_LabTable,
                            meas_IsotopeTable,
-                           proc_SelectedHistoriesTable,
                            gen_SampleTable.name,
                            gen_ProjectTable.name,
                            gen_MaterialTable.name)
             q = q.join(meas_IsotopeTable)
-            q = q.join(proc_SelectedHistoriesTable)
             q = q.join(gen_LabTable)
             q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
 

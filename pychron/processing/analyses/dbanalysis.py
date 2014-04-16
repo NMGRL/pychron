@@ -168,13 +168,12 @@ class DBAnalysis(Analysis):
             and other associated tables
         """
 
-        ms, ls, isos, shs, samples, projects, materials = izip(*dbrecord_tuple)
+        ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
         sample = samples[0]
         project = projects[0]
         material = materials[0]
-        selected_histories = shs[0]
 
         if sample:
             self.sample = sample
@@ -187,7 +186,6 @@ class DBAnalysis(Analysis):
 
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
-                            selected_histories,
                             unpack, load_peak_center=load_changes)
         self._sync_detector_info(meas_analysis)
 
@@ -382,11 +380,12 @@ class DBAnalysis(Analysis):
             iso.discrimination = idisc
 
     def _sync_isotopes(self, meas_analysis, isos,
-                       selected_histories,
                        unpack, load_peak_center=False):
         # self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,), kwargs=dict(unpack=unpack))
+        # self.isotopes = self._get_isotopes(meas_analysis, isos,
+        #                                    selected_histories,
+        #                                    unpack=unpack)
         self.isotopes = self._get_isotopes(meas_analysis, isos,
-                                           selected_histories,
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
         if load_peak_center:
@@ -454,7 +453,6 @@ class DBAnalysis(Analysis):
         return fs + bs
 
     def _get_isotopes(self, meas_analysis, dbisos,
-                      selected_histories,
                       unpack):
         isotopes = dict()
 
@@ -464,11 +462,12 @@ class DBAnalysis(Analysis):
 
         self._get_signals(isotopes, meas_analysis, dbisos, unpack)
         self._get_baselines(isotopes, meas_analysis, dbisos, unpack)
-        self._get_blanks(isotopes, selected_histories)
+        self._get_blanks(isotopes, meas_analysis)
 
         return isotopes
 
-    def _get_blanks(self, isodict, selected_histories):
+    def _get_blanks(self, isodict, meas_analysis):
+        selected_histories = meas_analysis.selected_histories
         if selected_histories:
             history = selected_histories.selected_blanks
             keys = isodict.keys()

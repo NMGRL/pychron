@@ -48,7 +48,7 @@ class InterferenceAdapter(TabularAdapter):
     value_text = Property
     error_text = Property
     percent_error_text = Property
-    font = 'modern 10'
+    font = '10'
 
     def _get_value_text(self):
         return floatfmt(self.item.value)

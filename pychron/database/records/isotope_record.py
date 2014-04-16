@@ -15,9 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 import time
 
 from traits.api import HasTraits
+
 
 
 #============= standard library imports ========================
@@ -48,6 +50,9 @@ class IsotopeRecordView(HasTraits):
     is_plateau_step = False
     identifier = ''
 
+    meas_script_name = ''
+    extract_script_name = ''
+
     def __init__(self, dbrecord=None, *args, **kw):
         super(IsotopeRecordView, self).__init__(*args, **kw)
         if dbrecord:
@@ -57,7 +62,7 @@ class IsotopeRecordView(HasTraits):
         self.tag = tag.name
 
     def create(self, dbrecord):
-    #        print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
+        #        print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
         try:
             if dbrecord is None or not dbrecord.labnumber:
                 return
@@ -94,10 +99,12 @@ class IsotopeRecordView(HasTraits):
             meas = dbrecord.measurement
             if meas is not None:
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
+                self.meas_script_name = self._clean_script_name(meas.script.name)
                 if meas.analysis_type:
                     self.analysis_type = meas.analysis_type.name
             ext = dbrecord.extraction
             if ext:
+                self.extract_script_name = self._clean_script_name(ext.script.name)
                 if ext.extraction_device:
                     self.extract_device = ext.extraction_device.name
 
@@ -112,6 +119,11 @@ class IsotopeRecordView(HasTraits):
 
             traceback.print_exc()
             print e
+
+    def _clean_script_name(self, name):
+        n = name.replace('{}_'.format(self.mass_spectrometer.lower()), '')
+        n, t = os.path.splitext(n)
+        return n
 
     def to_string(self):
         return '{} {} {} {}'.format(self.labnumber, self.aliquot, self.timestamp, self.uuid)
