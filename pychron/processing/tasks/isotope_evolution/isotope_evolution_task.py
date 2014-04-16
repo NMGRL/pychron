@@ -25,6 +25,7 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, HSplitter, \
 
 
 
+
 #from pychron.pychron_constants import MINNA_BLUFF_IRRADIATIONS
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -36,6 +37,7 @@ from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction, FindAssociatedAction
 from pychron.processing.tasks.figures.actions import SavePDFFigureAction
 from pychron.processing.tasks.isotope_evolution.find_associated_parameters import FindAssociatedParametersDialog
+from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
 
 
 class IsotopeEvolutionTask(AnalysisEditTask):
@@ -76,7 +78,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         return panes
 
     def new_isotope_evolution(self):
-        from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+
 
         editor = IsotopeEvolutionEditor(name='Iso Evo {:03n}'.format(self.iso_evo_editor_count),
                                         processor=self.manager)
@@ -95,6 +97,10 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         """
         """
         if not self.has_active_editor():
+            return
+
+        if not isinstance(self.active_editor, IsotopeEvolutionEditor):
+            self.warning_dialog('Find associated only available from Isotope Evolution tab.')
             return
 
         db = self.manager.db
