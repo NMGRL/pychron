@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
+from traits.api import Float
+from traitsui.api import View, VGroup, HGroup, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector
@@ -23,16 +24,23 @@ from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 
 class IsoEvoFitSelector(FilterFitSelector):
     default_error_type = 'SEM'
+
+    time_zero_offset = Float
+
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
         # bfs = ['average' for fi in fits]
 
         super(IsoEvoFitSelector, self).load_fits(keys + bs, fits)
 
-        # def traits_view(self):
-    #     v = View(
-    #         self
-    #         self._get_fit_group())
-    #     return v
+    def traits_view(self):
+        v = View(VGroup(
+            self._get_auto_group(),
+            self._get_toggle_group(),
+            HGroup(Item('time_zero_offset',
+                        label='Time Zero Offset (s)',
+                        tooltip='Subtract the "Time Zero Offset" from the data points')),
+            self._get_fit_group()))
+        return v
 
-        #============= EOF =============================================
+#============= EOF =============================================

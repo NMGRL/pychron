@@ -133,6 +133,7 @@ class IsotopeEvolutionEditor(GraphEditor):
     def _save_fit(self, unk, meas_analysis):
 
         tool_fits = [fi for fi in self.tool.fits if fi.save]
+        time_zero_offset = self.tool.time_zero_offset
         if not tool_fits:
             return
 
@@ -163,7 +164,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                     tool_fits.remove(tf)
                     fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                                  tf.name, tf.fit, tf.error_type, fd,
-                                                 tf.include_baseline_error)
+                                                 tf.include_baseline_error,
+                                                 time_zero_offset)
                     if not fit_hist:
                         db = self.processor.db
                         sess = db.get_session()
@@ -181,7 +183,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                     fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                                  name,
                                                  dbfi.fit, dbfi.error_type, fd,
-                                                 dbfi.include_baseline_error)
+                                                 dbfi.include_baseline_error,
+                                                 dbfi.time_zero_offset)
 
         for fi in tool_fits:
             fd = dict(filter_outliers=fi.filter_outliers,
@@ -198,7 +201,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 break
 
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict,
-                     include_baseline_error):
+                     include_baseline_error, time_zero_offset):
         db = self.processor.db
         if name.endswith('bs'):
             name = name[:-2]
@@ -214,6 +217,7 @@ class IsotopeEvolutionEditor(GraphEditor):
         iso.fit = f
         iso.error_type = et or e
         iso.include_baseline_error = bool(include_baseline_error)
+        iso.time_zero_offset = time_zero_offset
         if filter_dict:
             iso.set_filtering(filter_dict)
 
@@ -234,7 +238,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                    filter_outliers=fod['filter_outliers'],
                    filter_outlier_iterations=fod['iterations'],
                    filter_outlier_std_devs=fod['std_devs'],
-                   include_baseline_error=include_baseline_error)
+                   include_baseline_error=include_baseline_error,
+                   time_zero_offset=time_zero_offset)
 
         #update isotoperesults
         v, e = float(iso.value), float(iso.error)
@@ -246,7 +251,10 @@ class IsotopeEvolutionEditor(GraphEditor):
     def _plot_baselines(self, add_tools, fd, fit, trunc, g, i, isok, unk):
         isok = isok[:-2]
         iso = unk.isotopes[isok]
-        xs, ys = iso.baseline.xs, iso.baseline.ys
+        time_zero_offset = self.tool.time_zero_offset
+        iso.baseline.time_zero_offset = time_zero_offset
+        xs, ys = iso.baseline.offset_xs, iso.baseline.ys
+
         g.new_series(xs, ys,
                      fit=fit.fit,
                      filter_outliers_dict=fd,
@@ -262,12 +270,20 @@ class IsotopeEvolutionEditor(GraphEditor):
         iso = unk.isotopes[isok]
         if display_sniff:
             sniff = iso.sniff
+            offset = iso.time_zero_offset
+
             if sniff:
-                g.new_series(sniff.xs, sniff.ys,
+                g.new_series(sniff.xs - offset, sniff.ys,
                              plotid=i,
                              type='scatter',
                              fit=False)
-        xs, ys = iso.xs, iso.ys
+
+        iso.time_zero_offset = self.tool.time_zero_offset
+
+        iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
+        iso.filter_outlier_dict = fd
+
+        xs, ys = iso.offset_xs, iso.ys
         g.new_series(xs, ys,
                      fit=(fit.fit, fit.error_type),
                      filter_outliers_dict=fd,
@@ -275,8 +291,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                      add_tools=add_tools,
                      plotid=i)
 
-        iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
-        iso.filter_outliers_dict = fd
         # iso.set_fit(fit, notify=False)
         iso.dirty = True
 
@@ -332,6 +346,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                 ma = -Inf
                 set_x_flag = False
                 i = 0
+
                 for fit in fits:
                     set_x_flag = True
                     isok = fit.name

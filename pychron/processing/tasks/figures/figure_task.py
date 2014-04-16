@@ -32,6 +32,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -246,7 +247,7 @@ class FigureTask(AnalysisEditTask):
                                 add_table=add_table)
 
     def new_ideogram_from_file(self):
-        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages4.txt'
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages5.txt'
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 
@@ -575,6 +576,7 @@ class FigureTask(AnalysisEditTask):
                     sess.delete(ai)
 
                 sess.delete(dbfig)
+
     #===============================================================================
     # handlers
     #===============================================================================
@@ -665,7 +667,8 @@ class FigureTask(AnalysisEditTask):
 
         # print obj, name
         if self.has_active_editor():
-            if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
+            if name == 'refresh_plot_needed':
+                # if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
                 print 'plotter options rebuild'
                 self.active_editor.rebuild()
                 self.active_editor.dump_tool()

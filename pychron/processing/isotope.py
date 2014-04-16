@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -56,6 +57,8 @@ class BaseMeasurement(HasTraits):
     unpack_error = None
     endianness = '>'
     reverse_unpack = False
+    time_zero_offset = Float
+    offset_xs = Property
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
@@ -97,6 +100,9 @@ class BaseMeasurement(HasTraits):
     def _get_n(self):
         return len(self.xs)
 
+    def _get_offset_xs(self):
+        return self.xs - self.time_zero_offset
+
 
 class IsotopicMeasurement(BaseMeasurement):
     uvalue = Property(depends_on='dirty')  #depends_on='value, error, _value, _error, dirty')
@@ -116,7 +122,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='fit')
+    regressor = Property(depends_on='fit, time_zero_offset')
     # regressor = Property(depends_on='fit, dirty, error_type')
     dirty = Event
     include_baseline_error = Bool
@@ -185,6 +191,7 @@ class IsotopicMeasurement(BaseMeasurement):
                                              std_devs=int(fit.filter_outlier_std_devs or 0))
             # self.error_type=fit.error_type or 'SEM'
             self.trait_set(fit=fit.fit,
+                           time_zero_offset=fit.time_zero_offset,
                            error_type=fit.error_type or 'SEM',
                            trait_change_notify=notify)
             self.include_baseline_error = fit.include_baseline_error or False
@@ -197,12 +204,6 @@ class IsotopicMeasurement(BaseMeasurement):
             self._error = v.std_dev
 
         self.dirty = True
-
-    def _mean_regressor_factory(self):
-        reg = MeanRegressor(xs=self.xs, ys=self.ys,
-                            filter_outliers_dict=self.filter_outliers_dict,
-                            error_calc_type=self.error_type or 'SEM')
-        return reg
 
     def _set_error(self, v):
         self._error = v
@@ -226,12 +227,20 @@ class IsotopicMeasurement(BaseMeasurement):
         else:
             return self._error
 
+    def _mean_regressor_factory(self):
+        xs = self.offset_xs
+        reg = MeanRegressor(xs=xs, ys=self.ys,
+                            filter_outliers_dict=self.filter_outliers_dict,
+                            error_calc_type=self.error_type or 'SEM')
+        return reg
+
     def _get_regressor(self):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
+
             reg = PolynomialRegressor(tag=self.name,
-                                      xs=self.xs,
+                                      xs=self.offset_xs,
                                       ys=self.ys,
                                       # fit=self.fit,
                                       # filter_outliers_dict=self.filter_outliers_dict,

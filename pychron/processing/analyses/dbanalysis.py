@@ -528,7 +528,8 @@ class DBAnalysis(Analysis):
                               filter_outliers=False,
                               filter_outlier_iterations=1,
                               filter_outlier_std_devs=2,
-                              include_baseline_error=False)
+                              include_baseline_error=False,
+                              time_zero_offset=0)
                 r.set_fit(fit, notify=False)
                 # timethis(r.set_fit, args=(fit,), kwargs=dict(notify=False))
                 isodict[name] = r
@@ -568,7 +569,8 @@ class DBAnalysis(Analysis):
                               filter_outliers=False,
                               filter_outlier_iterations=0,
                               filter_outlier_std_devs=0,
-                              include_baseline_error=False)
+                              include_baseline_error=False,
+                              time_zero_offset=0)
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r

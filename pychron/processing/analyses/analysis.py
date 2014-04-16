@@ -32,7 +32,7 @@ from pychron.processing.isotope import Isotope
 
 Fit = namedtuple('Fit', 'fit '
                         'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
-                        'error_type include_baseline_error')
+                        'error_type include_baseline_error, time_zero_offset')
 
 logger = new_logger('Analysis')
 

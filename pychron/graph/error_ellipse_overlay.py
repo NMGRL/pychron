@@ -96,7 +96,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
         # aspectratio=(height/width)
         # aspectratio=(dy/dx)
         # aspectratio=self.component.aspect_ratio
-        # aspectratio=1
+        aspectratio = 1
         try:
             for cx, cy, sx, sy, pxyi in zip(x, y, xer, yer, pxy):
                 a, b, rot = error_ellipse(sx, sy, pxyi, aspectratio=aspectratio)
