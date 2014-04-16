@@ -191,7 +191,7 @@ class IsotopicMeasurement(BaseMeasurement):
                                              std_devs=int(fit.filter_outlier_std_devs or 0))
             # self.error_type=fit.error_type or 'SEM'
             self.trait_set(fit=fit.fit,
-                           time_zero_offset=fit.time_zero_offset,
+                           time_zero_offset=fit.time_zero_offset or 0,
                            error_type=fit.error_type or 'SEM',
                            trait_change_notify=notify)
             self.include_baseline_error = fit.include_baseline_error or False
