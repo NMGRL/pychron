@@ -116,13 +116,14 @@ class SystemMonitorTask(FigureTask):
                                          task=self)
             editor.start()
             self._open_editor(editor)
+
             #if editor:
             #    do_later(editor.run_added_handler)
 
             return editor
 
     def _dashboard_editor_factory(self, names):
-        editor = DashboardEditor()
+        editor = DashboardEditor(processor=self.manager)
         editor.set_measurements(names)
         self._open_editor(editor)
         self.dashboard_editor = editor

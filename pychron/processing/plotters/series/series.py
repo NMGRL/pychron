@@ -127,8 +127,8 @@ class Series(BaseArArFigure):
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
             #p.value_scale = po.scale
-            self._add_error_bars(scatter, yerr, 'y', 1,
-                                 visible=po.y_error)
+            end_caps=True
+            self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
         except (KeyError, ZeroDivisionError), e:
             print 'Series', e
 
@@ -140,9 +140,10 @@ class Series(BaseArArFigure):
         elif attr == 'PC':
             return super(Series, self)._unpack_attr(attr)
         else:
-            gs = super(Series, self)._unpack_attr(attr)
-            f = lambda x: x.get_intensity()
-            return map(f, gs)
+            return super(Series, self)._unpack_attr(attr)
+
+            # f = lambda x: x.get_intensity()
+            # return map(f, gs)
 
             #if attr.endswith('bs'):
             #    return (ai.isotopes[attr[:-2]].baseline.uvalue

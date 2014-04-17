@@ -39,6 +39,8 @@ class BasePlotterOptions(HasTraits):
 
     auto_refresh = Bool(False)
     initialized = True
+    auto_generate_title = Bool(False)
+    index_attr = Str
 
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)

@@ -77,41 +77,40 @@ class FigurePanel(HasTraits):
                 if po.use_centered_range:
                     w2 = po.centered_range / 2.0
                     mi, ma = center - w2, center + w2
+        plots = list(po.get_aux_plots())
+        if plots:
+            for i, fig in enumerate(self.figures):
+                fig.trait_set(xma=ma, xmi=mi,
+                              center=center,
+                              options=po,
+                              graph=g,
+                              title=self.title)
 
-        for i, fig in enumerate(self.figures):
-            fig.trait_set(xma=ma, xmi=mi,
-                          center=center,
-                          options=po,
-                          graph=g,
-                          title=self.title)
+                if i == 0:
+                    fig.build(plots)
 
-            plots = list(po.get_aux_plots())
+                fig.suppress_ylimits_update = True
+                fig.suppress_xlimits_update = True
+                fig.plot(plots)
+                fig.suppress_ylimits_update = False
+                fig.suppress_xlimits_update = False
+                ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
-            if i == 0:
-                fig.build(plots)
+            # print plots[0], plots[0].has_xlimits(), plots[0].name
+            if plots[0].has_xlimits():
+                tmi, tma = plots[0].xlimits
+                if tmi != -inf and tma != inf:
+                    mi, ma = tmi, tma
+                    # print 'using previous limits', mi, ma
 
-            fig.suppress_ylimits_update = True
-            fig.suppress_xlimits_update = True
-            fig.plot(plots)
-            fig.suppress_ylimits_update = False
-            fig.suppress_xlimits_update = False
-            ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+            if mi is None and ma is None:
+                mi, ma = 0, 100
 
-        # print plots[0], plots[0].has_xlimits(), plots[0].name
-        if plots[0].has_xlimits():
-            tmi, tma = plots[0].xlimits
-            if tmi != -inf and tma != inf:
-                mi, ma = tmi, tma
-                # print 'using previous limits', mi, ma
+            g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
-        if mi is None and ma is None:
-            mi, ma = 0, 100
-
-        g.set_x_limits(mi, ma, pad=fig.xpad or 0)
-
-        for fig in self.figures:
-            for i in range(len(plots)):
-                fig.update_options_limits(i)
+            for fig in self.figures:
+                for i in range(len(plots)):
+                    fig.update_options_limits(i)
 
         self.graph = g
         return g.plotcontainer

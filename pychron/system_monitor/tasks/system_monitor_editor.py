@@ -67,6 +67,7 @@ class SystemMonitorEditor(SeriesEditor):
 
     _air_editor = None
     _blank_air_editor = None
+    _blank_unknown_editor = None
     _cocktail_editor = None
     _blank_cocktail_editor = None
     _background_editor = None
@@ -132,7 +133,8 @@ class SystemMonitorEditor(SeriesEditor):
                     self._refresh_sys_mon_series(an)
                     self._refresh_figures(an)
 
-        invoke_in_main_thread(func)
+        func()
+        # invoke_in_main_thread(func)
 
     def start(self):
 
@@ -157,20 +159,21 @@ class SystemMonitorEditor(SeriesEditor):
                 url = self.conn_spec.url
                 self.warning('System publisher not available url={}'.format(url))
 
-        last_run_uuid = self._get_last_run_uuid()
+        # last_run_uuid = self._get_last_run_uuid()
         #self.run_added_handler(last_run_uuid)
 
-        t = Thread(name='poll', target=self._poll, args=(last_run_uuid,))
+        t = Thread(name='poll', target=self._poll)
+                   # args=(last_run_uuid,))
         t.setDaemon(True)
         t.start()
 
     def _get_dump_tool(self):
         return self.tool
 
-    def _load_tool(self, obj):
+    def _load_tool(self, obj, **kw):
         self.tool = obj
 
-    def _poll(self, last_run_uuid):
+    def _poll(self, last_run_uuid=None):
         self._polling = True
         sub = self.subscriber
 
@@ -201,7 +204,7 @@ class SystemMonitorEditor(SeriesEditor):
                         self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                         if lr != last_run_uuid:
                             last_run_uuid = lr
-                        invoke_in_main_thread(self.run_added_handler, lr)
+                            invoke_in_main_thread(self.run_added_handler, lr)
             else:
                 break
 
@@ -229,9 +232,13 @@ class SystemMonitorEditor(SeriesEditor):
                   hours=self.tool.hours,
                   limit=self.tool.limit)
 
-        ans = self.processor.analysis_series(ms,
-                                             **kw)
+        ans = self.processor.analysis_series(ms, **kw)
+        # for ai in ans:
+        #     print ai.record_id, ai.timestamp
+
+        ans = self._sort_analyses(ans)
         self.analyses = ans
+        self.rebuild_graph()
 
     def _refresh_figures(self, an):
         if an.analysis_type == 'unknown':
@@ -244,6 +251,9 @@ class SystemMonitorEditor(SeriesEditor):
 
             func = getattr(self, '_refresh_{}'.format(atype))
             func(an.labnumber)
+
+    def _refresh_blank_unknown(self, identifier):
+        self._set_series('blank_unknown', identifier)
 
     def _refresh_air(self, identifier):
         self._set_series('air', identifier)
@@ -306,11 +316,15 @@ class SystemMonitorEditor(SeriesEditor):
         ans = self._get_analyses(identifier,
                                  aliquot, use_date_range)
 
-        editor.unknowns = ans
-        group_analyses_by_key(editor, editor.unknowns, 'labnumber')
+        ans =self._sort_analyses(ans)
+        editor.analyses = ans
+        group_analyses_by_key(editor, editor.analyses, 'labnumber')
         #        self.task.group_by_labnumber()
-
+        editor.rebuild_graph()
         return editor
+
+    def _sort_analyses(self, ans):
+        return sorted(ans, key=lambda x: x.timestamp)
 
     def _get_analyses(self, identifier, aliquot=None, use_date_range=False):
         db = self.processor.db

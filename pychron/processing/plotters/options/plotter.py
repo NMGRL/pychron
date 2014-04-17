@@ -56,7 +56,7 @@ class PlotterOptions(BasePlotterOptions):
     title_delimiter = Str(',')
     title_leading_text = Str
     title_trailing_text = Str
-    auto_generate_title = Bool
+    # auto_generate_title = Bool
     #     data_type = Str('database')
 
     xtick_font = Property

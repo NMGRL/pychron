@@ -25,6 +25,7 @@ from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
 from uncertainties import ufloat
+from pychron.database.core.query import compile_query
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
     gen_ExtractionDeviceTable
@@ -140,6 +141,7 @@ class Processor(IsotopeDatabaseManager):
             if ed:
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
+            q = q.order_by(attr.desc())
             if limit:
                 q = q.limit(limit)
 

@@ -216,12 +216,13 @@ class BaseArArFigure(HasTraits):
                         yield ai.isotopes[n].get_intensity() / ai.isotopes[d].get_intensity()
         else:
             def gen():
-                f = lambda x: x
-                if attr in ARGON_KEYS:
-                    f = lambda x: x.get_intensity()
+                # f = lambda x: x
+                # if attr in ARGON_KEYS:
+                #     f = lambda x: x.get_intensity()
 
                 for ai in self.sorted_analyses:
-                    yield f(ai.get_value(attr))
+                    yield ai.get_value(attr)
+                    # yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
