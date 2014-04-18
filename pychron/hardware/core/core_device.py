@@ -15,7 +15,6 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-import inspect
 
 from traits.api import HasTraits, Str, Any, List, \
     Bool, Enum, implements
@@ -25,6 +24,8 @@ from traits.api import HasTraits, Str, Any, List, \
 import random
 # from threading import Lock
 from datetime import datetime
+import inspect
+import time
 #=============local library imports  ==========================
 # from traits.has_traits import provides
 from i_core_device import ICoreDevice
@@ -165,6 +166,31 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         """
         """
         return True
+
+    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None):
+        """
+            repeatedly ask func at 1/period rate
+            if func returns true return True
+            if timeout return False
+        """
+        if isinstance(func, str):
+            func = getattr(self, func)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = dict()
+
+        st = time.time()
+        while 1:
+            if func(*args, **kwargs):
+                return True
+            elif timeout:
+                et = time.time() - st
+                if et > timeout:
+                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.func_name, timeout))
+                    return
+            time.sleep(period)
+
 
     @crc_caller
     def ask(self, cmd, **kw):

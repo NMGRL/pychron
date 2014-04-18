@@ -19,6 +19,7 @@ from traits.api import List
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 # from pychron.lasers.laser_managers.extraction_device import ILaserManager
@@ -148,6 +149,8 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # commands
     #===============================================================================
+
+
     @verbose_skip
     @command_register
     def power_map(self, cx, cy, padding, bd, power):
@@ -279,6 +282,17 @@ class ExtractionPyScript(ValvePyScript):
         self.info('set tray to {}'.format(tray))
         result = self._extraction_action([('set_stage_map', (tray,), {})])
         return result
+
+    @verbose_skip
+    @command_register
+    def extract_pipette(self, identifier=''):
+        if identifier == '':
+            identifier = self.extract_value
+
+        rets = self._extraction_action([('load_pipette', (identifier,), {})],
+                                       protocol=IPipetteManager)
+        if not rets[0]:
+            self.cancel()
 
     @verbose_skip
     @command_register
@@ -500,9 +514,15 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # private
     #===============================================================================
-    def _extraction_action(self, *args, **kw):
-        kw['name'] = self.extract_device
-        kw['protocol'] = ILaserManager
+    def _extraction_action(self, name=None, protocol=None, *args, **kw):
+        if name is None:
+            name = self.extract_device
+
+        if protocol is None:
+            protocol = ILaserManager
+
+        kw['name'] = name
+        kw['protocol'] = protocol
         return self._manager_action(*args, **kw)
 
     def _disable(self):
