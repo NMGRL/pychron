@@ -29,6 +29,7 @@ def memoize(function):
     cache = {}
 
     def closure(*args):
+        return function(*args)
         if args not in cache:
             cache[args] = function(*args)
         return cache[args]
@@ -79,14 +80,14 @@ class Plateau(HasTraits):
             if i in exclude:
                 continue
 
+            if not self.check_nsteps(start, i):
+                # log.debug('{} {} nsteps failed'.format(start, i))
+                continue
+
             if not self.check_overlap(start, i, overlap_func):
                 # log.debug('{} {} overlap failed'.format(start, i))
                 # potential_end=None
                 break
-
-            if not self.check_nsteps(start, i):
-                # log.debug('{} {} nsteps failed'.format(start, i))
-                continue
 
             if not self.check_percent_released(start, i):
                 # log.debug('{} {} percent failed'.format(start, i))
@@ -107,8 +108,8 @@ class Plateau(HasTraits):
 
     def check_overlap(self, start, end, overlap_func):
         overlap_sigma = self.overlap_sigma
-        for i in range(start, end):
-            for j in range(start + i, end + 1):
+        for c, i in enumerate(range(start, end, 1)):
+            for j in range(start + c, end + 1, 1):
                 if i == j:
                     continue
                 if not overlap_func(i, j, overlap_sigma):
@@ -117,7 +118,8 @@ class Plateau(HasTraits):
             return True
 
     def _overlap(self, start, end, overlap_sigma):
-        # log.debug('checking overlap {} {}'.format(start, end))
+        # log.debug('checking overlap {} {} '.format(start, end))
+
         a1 = self.ages[start]
         a2 = self.ages[end]
         e1 = self.errors[start]
@@ -125,6 +127,8 @@ class Plateau(HasTraits):
 
         e1 *= overlap_sigma
         e2 *= overlap_sigma
+
+        # log.debug('{}<{} {}>{}'.format(a1 - e1 , a2 + e2, a1 + e1 , a2 - e2))
         if a1 - e1 < a2 + e2 and a1 + e1 > a2 - e2:
             return True
 

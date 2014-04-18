@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
+from numpy import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
 from traitsui.api import View, UItem
@@ -131,6 +132,11 @@ class FigureEditor(GraphEditor):
 
             a = ia.get_ma_scaled_age()
 
+            mswd = ia.preferred_mswd
+
+            if isnan(mswd):
+                mswd = 0
+
             db_ia = db.add_interpreted_age(hist,
                                            age=float(nominal_value(a)),
                                            age_err=float(std_dev(a)),
@@ -139,7 +145,7 @@ class FigureEditor(GraphEditor):
                                            kca_kind=ia.preferred_kca_kind,
                                            kca=float(ia.preferred_kca_value),
                                            kca_err=float(ia.preferred_kca_error),
-                                           mswd=float(ia.preferred_mswd),
+                                           mswd=float(mswd),
 
                                            include_j_error_in_mean=ia.include_j_error_in_mean,
                                            include_j_error_in_plateau=ia.include_j_error_in_plateau,

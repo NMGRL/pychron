@@ -174,7 +174,10 @@ class SpectrumOptions(AgeOptions):
             # self._get_info_group(),
             label='Options')
 
-        return (g, )
+        label_grp = VGroup(self._get_x_axis_group(),
+                           self._get_y_axis_group(),
+                           label='Fonts')
+        return g, label_grp
 
 
 #============= EOF =============================================

@@ -248,7 +248,6 @@ class EasyFigures(BaseEasy):
         func = getattr(self, '_save_{}'.format(save_name))
         func(editor, *save_args)
         setattr(self, '_{}_editor'.format(editor_name), editor)
-        del editor
 
     #save
     def _save_isochron(self, editor, *args):

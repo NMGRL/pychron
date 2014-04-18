@@ -102,9 +102,9 @@ def make_sample_shape_file(dbname):
 
 def make_interpreted_age_points(geo):
     # iag = 'AllAges2'
-    iag_id = 23
-    attrs = ['sample', 'material', 'labnumber', 'age', 'age_err', 'age_kind']
-    atypes = ['C', 'C', 'C', 'N', 'N', 'C']
+    iag_id = 29
+    attrs = ['sample', 'material', 'labnumber', 'age', 'age_err', 'age_kind', 'elevation']
+    atypes = ['C', 'C', 'C', 'N', 'N', 'C', 'N']
 
     AgePoint = namedtuple('SamplePoint', ','.join(['x', 'y'] + attrs))
 
@@ -125,42 +125,97 @@ def make_interpreted_age_points(geo):
             else:
                 print 'adding {} lat: {:0.5f} long: {:0.5f}'.format(s.name, s.lat, s.long)
                 x, y = proj_pt(s.lat, s.long)
-
+                print s.elevation
                 pts.append(AgePoint(x, y,
                                     s.name,
                                     s.material.name if s.material else '',
                                     ln.identifier,
-                                    aa.age, aa.age_err, aa.age_kind
-                ))
+                                    aa.age, aa.age_err, aa.age_kind, s.elevation))
 
     return pts, zip(attrs, atypes)
 
 
-def make_interpreted_age_shape_file(dbname):
+def make_binned_elevations(dbname):
+    geo = get_processor(dbname)
+    if geo.connect():
+        pts, attrs = make_interpreted_age_points(geo)
+        root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'gis')
+        root = os.path.join(root, 'construct_evo')
+        pts = sorted(pts, key=lambda x: x.age)
+        ps = [pts[0].elevation]
+        cbin = int(pts[0].age)
+        p = os.path.join(root, 'elevations.txt')
+
+        def write_row(cbin, pp):
+            mi, ma = min(pp), max(pp)
+            writer.writerow((cbin, mi, ma, ma - mi ))
+
+        with open(p, 'w') as fp:
+            writer = csv.writer(fp)
+
+            for po in pts[1:]:
+                if int(po.age) != cbin:
+                    write_row(cbin, ps)
+                    # writer.writerow((cbin,mi, ma, ma-mi ))
+                    ps = [po.elevation]
+                    cbin = int(po.age)
+                else:
+                    ps.append(po.elevation)
+
+            if ps:
+                write_row(cbin, ps)
+
+
+def make_interpreted_age_shape_file(dbname, group=False):
     name = 'interpreted_ages'
+
     geo = get_processor(dbname)
     if geo.connect():
         pts, attrs = make_interpreted_age_points(geo)
 
-        writer = ShapeFileWriter()
         root = os.path.join(paths.dissertation, 'data', 'minnabluff', 'gis')
-        p = os.path.join(root, '{}.shp'.format(name))
-        writer.write_points(p, points=pts,
-                            attrs=attrs)
 
-        #write to csv
-        p = os.path.join(root, '{}.csv'.format(name))
-        with open(p, 'w') as fp:
-            writer = csv.writer(fp)
-            writer.writerow(attrs)
-            for pt in pts:
-                data = [getattr(pt, ai[0]) for ai in attrs]
-                writer.writerow(data)
+        if group:
+            root = os.path.join(root, 'construct_evo')
+            pts = sorted(pts, key=lambda x: x.age)
+            ps = pts[:1]
+            cbin = int(ps[0].age)
+            for po in pts[1:]:
+                if int(po.age) != cbin:
+                    p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                    write_shape_file(ps, attrs, p)
+                    ps = [po]
+                    cbin = int(po.age)
+                else:
+                    ps.append(po)
+
+            if ps:
+                p = os.path.join(root, 'ages_{:02n}'.format(cbin))
+                write_shape_file(ps, attrs, p)
+
+        else:
+            p = os.path.join(root, '{}.shp'.format(name))
+            write_shape_file(pts, attrs, p)
+            #write to csv
+            p = os.path.join(root, '{}.csv'.format(name))
+            with open(p, 'w') as fp:
+                writer = csv.writer(fp)
+                writer.writerow(attrs)
+                for pt in pts:
+                    data = [getattr(pt, ai[0]) for ai in attrs]
+                    writer.writerow(data)
+
+
+def write_shape_file(pts, attrs, p):
+    writer = ShapeFileWriter()
+    writer.write_points(p, points=pts,
+                        attrs=attrs)
 
 
 def main():
     # make_sample_shape_file('pychrondata_minnabluff')
     make_interpreted_age_shape_file('pychrondata_minnabluff')
+    # make_binned_elevations('pychrondata_minnabluff')
 
 
 if __name__ == '__main__':

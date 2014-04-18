@@ -98,7 +98,7 @@ class InterpretedAgeTask(BaseBrowserTask):
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all3.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all4.yaml'
             p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all5.yaml'
-            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all6.yaml'
+            p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/interpreted_ages_all7.yaml'
             if not os.path.isfile(p):
                 p = self.open_file_dialog()
             if p:

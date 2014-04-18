@@ -22,6 +22,7 @@ from traits.api import HasTraits
 
 
 
+
 #============= standard library imports ========================
 # import re
 #============= local library imports  ==========================
@@ -99,12 +100,14 @@ class IsotopeRecordView(HasTraits):
             meas = dbrecord.measurement
             if meas is not None:
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
-                self.meas_script_name = self._clean_script_name(meas.script.name)
+                if meas.script:
+                    self.meas_script_name = self._clean_script_name(meas.script.name)
                 if meas.analysis_type:
                     self.analysis_type = meas.analysis_type.name
             ext = dbrecord.extraction
             if ext:
-                self.extract_script_name = self._clean_script_name(ext.script.name)
+                if ext.script:
+                    self.extract_script_name = self._clean_script_name(ext.script.name)
                 if ext.extraction_device:
                     self.extract_device = ext.extraction_device.name
 

@@ -78,8 +78,16 @@ class BlanksTask(InterpolationTask):
         unks = [ai for proj in projects
                 for si in db.get_samples(project=proj)
                 for ln in si.labnumbers
-                for ai in ln.analyses if si.material.name in ('Feldspar', 'Sanidine')]
-
+                for ai in ln.analyses
+                if ai.measurement.mass_spectrometer.name == 'MAP'
+            and ai.extraction.extraction_device.name in ('Furnace', 'Eurotherm')]
+        # for proj in projects:
+        #     for si in db.get_samples(project=proj):
+        #         for ln in si.labnumbers:
+        #             for ai in ln.analyses:
+        #                 print ai.measurement.mass_spectrometer.name,ai.extraction.extraction_device.name
+        #                 print ai.measurement.mass_spectrometer.name == 'nmgrl map' and ai.extraction.extraction_device.name in ('Furnace','Eurotherm')
+        print len(unks)
         prog = manager.progress
         # prog = self.manager.open_progress(len(ans) + 1)
         #bin analyses
