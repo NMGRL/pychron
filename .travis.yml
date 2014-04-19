@@ -23,8 +23,8 @@ install:
   - pip install git+http://github.com/enthought/traits.git#egg=traits
   #- pip install git+http://github.com/enthought/pyface.git#egg=pyface
   - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui
-  - pip install git+http://github.com/enthought/enable.git#egg=enable
-  - pip install git+http://github.com/enthought/chaco.git#egg=chaco
+#  - pip install git+http://github.com/enthought/enable.git#egg=enable
+#  - pip install git+http://github.com/enthought/chaco.git#egg=chaco
 
   #install pandas from source
   #- pip install Cython>=0.16
