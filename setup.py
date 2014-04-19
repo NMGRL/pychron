@@ -17,7 +17,7 @@ setup(name='pychron',
 
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
-                'pychron.external_pipette.tests'
+                # 'pychron.external_pipette.tests'
       ],
       # test_suite='pychron.core.regression.tests.suite'
       test_suite='pychron.test_suite.suite')

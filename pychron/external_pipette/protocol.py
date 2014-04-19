@@ -19,7 +19,7 @@ from traits.api import Interface
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class IPipetteManager(Interface):
-    def load_pipette(self, name):
+    def load_pipette(self, name, timeout=10, period=1):
         pass
 
     def bind_preferences(self, prefid):

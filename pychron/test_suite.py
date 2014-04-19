@@ -3,7 +3,7 @@ import unittest
 
 from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
 from pychron.processing.tests.plateau import PlateauTestCase
-from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
+# from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
 
 
 def suite():
@@ -14,7 +14,7 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(PlateauTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(ExternalPipetteTestCase))
+    # suite.addTest(loader.loadTestsFromTestCase(ExternalPipetteTestCase))
     return suite
 
 

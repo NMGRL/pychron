@@ -19,6 +19,7 @@ from traits.api import implements, Instance, Button, Bool, Str, List
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.canvas.canvas2D.extraction_line_canvas2D import ExtractionLineCanvas2D
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.apis_controller import ApisController
 from pychron.hardware.core.core_device import TimeoutError
@@ -47,7 +48,23 @@ class ApisManager(Manager):
     testing = Bool
     test_result = Str
 
+    reload_canvas_button = Button('Reload Canvas')
+
     _timeout_flag = False
+    canvas = Instance(ExtractionLineCanvas2D)
+
+    def open_valve(self, name, **kw):
+        ok = self.controller.open_valve(name)
+        change = True
+        return ok, change
+
+    def close_valve(self, name, **kw):
+        ok = self.controller.close_valve(name)
+        change = True
+        return ok, change
+
+    def set_selected_explanation_item(self, name):
+        pass
 
     def bind_preferences(self, prefid):
         pass
@@ -81,8 +98,21 @@ class ApisManager(Manager):
         # self.test_result = 'OK' if ret else 'Failed'
         self.testing = False
 
+    def _reload_canvas_button_fired(self):
+        self._load_canvas(self.canvas)
+        self.canvas.request_redraw()
+
+    def _load_canvas(self, c):
+        c.load_canvas_file('apis_canvas_config.xml',
+                           setup_name='apis_canvas')
+
     def _controller_default(self):
         return ApisController(name='apis')
+
+    def _canvas_default(self):
+        c = ExtractionLineCanvas2D(manager=self)
+        self._load_canvas(c)
+        return c
 
 #============= EOF =============================================
 

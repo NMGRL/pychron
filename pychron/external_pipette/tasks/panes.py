@@ -15,8 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traitsui.api import View, Item, UItem, VGroup, HGroup
+from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -24,11 +25,14 @@ from traitsui.api import View, Item, UItem
 
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('test_load_1',
-                       enabled_when='not testing'),
-                 Item('test_result',
+        v = View(VGroup(HGroup(UItem('test_load_1',
+                                     enabled_when='not testing'),
+                               UItem('reload_canvas_button')),
+                        Item('test_result',
                       style='readonly',
-                      label='Test Result'))
+                      label='Test Result')),
+                 UItem('canvas', style='custom',
+                       editor=ComponentEditor()))
         return v
 
 #============= EOF =============================================
