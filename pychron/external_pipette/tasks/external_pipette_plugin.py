@@ -30,20 +30,28 @@ class ExternalPipettePlugin(BaseTaskPlugin):
 
     _manager = None
 
-    def _get_manager(self):
-        pkg = 'pychron.external_pipette.apis_manager'
-        klass = 'APISManager'
-        factory = __import__(pkg, fromlist=[klass])
-        m = getattr(factory, klass)()
-        m.bootstrap()
-        m.plugin_id = self.id
-        m.bind_preferences(self.id)
-        self._manager = m
-        return m
+    def _manager_factory(self, **kw):
+        if self._manager:
+            return self._manager
+        else:
+            pkg = 'pychron.external_pipette.apis_manager'
+            klass = 'ApisManager'
+            factory = __import__(pkg, fromlist=[klass])
+            m = getattr(factory, klass)(name='ExternalPipette')
+            m.bootstrap()
+            m.plugin_id = self.id
+            m.bind_preferences(self.id)
+            self._manager = m
+            return m
+
+    def _service_offers_default(self):
+        so = self.service_offer_factory(protocol='pychron.external_pipette.apis_manager.ApisManager',
+                                        factory=self._manager_factory)
+        return [so, ]
 
     def _managers_default(self):
         return [dict(name='ExternalPipette',
-                     manager=self._get_manager())]
+                     manager=self._manager_factory())]
 
     def _tasks_default(self):
         return [TaskFactory(id=self.id,

@@ -113,7 +113,7 @@ def count_verbose_skip(func):
                                                                                            args, kw))
             #        if obj._cancel:
         if obj.testing_syntax:
-        #             print func.func_name, obj._estimated_duration
+            #             print func.func_name, obj._estimated_duration
             func(obj, calc_time=True, *args, **kw)
             #             print func.func_name, obj._estimated_duration
             return
@@ -196,8 +196,7 @@ class PyScript(Loggable):
 
     def calculate_estimated_duration(self, force=False):
         if not self.syntax_checked or force:
-
-            self.syntax_checked=False
+            self.syntax_checked = False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
 
@@ -214,7 +213,7 @@ class PyScript(Loggable):
 
     def execute(self, new_thread=False, bootstrap=True,
                 trace=False,
-                finished_callback=None, 
+                finished_callback=None,
                 argv=None):
         if bootstrap:
             self.bootstrap()
@@ -240,7 +239,7 @@ class PyScript(Loggable):
     def test(self, argv=None):
         if not self.syntax_checked:
             self.debug('testing...')
-            self._estimated_duration=0
+            self._estimated_duration = 0
             self.syntax_checked = True
             self.testing_syntax = True
             self._syntax_error = True
@@ -296,16 +295,16 @@ class PyScript(Loggable):
             except TypeError:
                 script.main()
             except AttributeError, e:
-                self.debug('{} {}'.format(e,traceback.format_exc()))
+                self.debug('{} {}'.format(e, traceback.format_exc()))
                 return MainError
 
         else:
-        #         sys.settrace(self._tracer)
+            #         sys.settrace(self._tracer)
             code_or_err = self.compile_snippet(snippet)
             if not isinstance(code_or_err, Exception):
                 try:
                     exec code_or_err in safe_dict
-                    func=safe_dict['main']
+                    func = safe_dict['main']
                 except KeyError, e:
                     print e, safe_dict.keys()
                     self.debug('{} {}'.format(e, traceback.format_exc()))
@@ -582,7 +581,7 @@ class PyScript(Loggable):
     @command_register
     def sleep(self, duration=0, message=None):
         #dont add to duration if within an interval
-        if not self._interval_stack.qsize()%2:
+        if not self._interval_stack.qsize() % 2:
             self._estimated_duration += duration
             if self.parent_script is not None:
                 self.parent_script._estimated_duration += self._estimated_duration
@@ -669,8 +668,14 @@ class PyScript(Loggable):
         if man is not None:
             if not isinstance(func, list):
                 func = [(func, args, kw)]
-
-            return [getattr(man, f)(*a, **k) for f, a, k in func]
+            rs = []
+            for f, a, k in func:
+                r = None
+                if hasattr(man, f):
+                    r = getattr(man, f)(*a, **k)
+                rs.append(r)
+            return rs
+            # return [getattr(man, f)(*a, **k) for f, a, k in func]
         else:
             self.warning('could not find manager {}'.format(name))
 
@@ -693,7 +698,7 @@ class PyScript(Loggable):
 
     def _setup_wait_control(self, timeout, message):
         if self.manager:
-            wd=self.manager.get_wait_control()
+            wd = self.manager.get_wait_control()
         else:
             wd = self._wait_control
 

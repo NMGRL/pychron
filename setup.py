@@ -13,8 +13,11 @@ setup(name='pychron',
                   'pychron.processing.plateau'],
       packages=['pychron.core.regression',
                 'pychron.core.stats',
-                'pychron.core.regression.tests',
+                'pychron.external_pipette',
 
-                'pychron.processing.tests', ],
+                'pychron.core.regression.tests',
+                'pychron.processing.tests',
+                'pychron.external_pipette.tests'
+      ],
       # test_suite='pychron.core.regression.tests.suite'
       test_suite='pychron.test_suite.suite')

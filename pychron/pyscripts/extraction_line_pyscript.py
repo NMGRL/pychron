@@ -19,7 +19,9 @@ from traits.api import List
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
+from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
+from pychron.hardware.core.core_device import TimeoutError
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 # from pychron.lasers.laser_managers.extraction_device import ILaserManager
@@ -285,14 +287,19 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier=''):
+    def extract_pipette(self, identifier='', timeout=10):
         if identifier == '':
             identifier = self.extract_value
+        try:
+            rets = self._extraction_action([('load_pipette', (identifier,),
+                                             {'timeout': timeout})],
+                                           name='ExternalPipette',
+                                           protocol=IPipetteManager)
 
-        rets = self._extraction_action([('load_pipette', (identifier,), {})],
-                                       protocol=IPipetteManager)
-        if not rets[0]:
+            return rets[0]
+        except (TimeoutError, InvalidPipetteError), e:
             self.cancel()
+            return str(e)
 
     @verbose_skip
     @command_register
@@ -514,15 +521,13 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # private
     #===============================================================================
-    def _extraction_action(self, name=None, protocol=None, *args, **kw):
-        if name is None:
-            name = self.extract_device
+    def _extraction_action(self, *args, **kw):
+        if not 'name' in kw:
+            kw['name'] = self.extract_device
 
-        if protocol is None:
-            protocol = ILaserManager
+        if not 'protocol' in kw:
+            kw['protocol'] = ILaserManager
 
-        kw['name'] = name
-        kw['protocol'] = protocol
         return self._manager_action(*args, **kw)
 
     def _disable(self):

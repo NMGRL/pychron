@@ -21,6 +21,7 @@ from traitsui.api import View, Item, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
         v = View(UItem('test_load_1',

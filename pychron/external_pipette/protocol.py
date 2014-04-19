@@ -25,10 +25,10 @@ class IPipetteManager(Interface):
     def bind_preferences(self, prefid):
         pass
 
-    def bootstrap(self):
+    def bootstrap(self, *args, **kw):
         pass
 
-    def load(self):
+    def load(self, *args, **kw):
         pass
 
 #============= EOF =============================================

@@ -15,49 +15,70 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import implements, Instance, Button, Bool, Str
+from traits.api import implements, Instance, Button, Bool, Str, List
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.apis_controller import ApisController
+from pychron.hardware.core.core_device import TimeoutError
 from pychron.managers.manager import Manager
 
 
-class APISManager(Manager):
+class InvalidPipetteError(BaseException):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return 'Invalid Pipette name={}'.format(self.name)
+
+    def __str__(self):
+        return repr(self)
+
+
+class ApisManager(Manager):
     implements(IPipetteManager)
     controller = Instance(ApisController)
+
+    available_pipettes = List(['1', '2'])
 
     #testing buttons
     test_load_1 = Button('Test Load 1')
     testing = Bool
     test_result = Str
 
+    _timeout_flag = False
+
     def bind_preferences(self, prefid):
         pass
 
-    # def bootstrap(self):
-    #     pass
-    #
-    # def load(self):
-    #     pass
-
     def load_pipette(self, name, timeout=10, period=1):
+        name = str(name)
+        if not name in self.available_pipettes:
+            raise InvalidPipetteError(name)
+
         self.controller.load_pipette(name)
 
         #wait for completion
         return self._loading_complete(timeout=timeout, period=period)
 
     def _loading_complete(self, **kw):
-        self.controller.blocking_poll('get_loading_status', **kw)
+        if self._timeout_flag:
+            return True
+        else:
+            return self.controller.blocking_poll('get_loading_status', **kw)
 
     #testing buttons
     def _test_load_1_fired(self):
         self.debug('Test load 1 fired')
         self.testing = True
         self.test_result = ''
-        ret = self.load_pipette('1', timeout=3)
-        self.test_result = 'OK' if ret else 'Failed'
+        try:
+            ret = self.load_pipette('1', timeout=3)
+            self.test_result = 'OK'
+        except (TimeoutError, InvalidPipetteError), e:
+            self.test_result = str(e)
+        # self.test_result = 'OK' if ret else 'Failed'
         self.testing = False
 
     def _controller_default(self):

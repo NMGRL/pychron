@@ -38,8 +38,7 @@ class HardwareManager(Manager):
 
     def load_devices(self):
         self.devices = self.application.service_registry.get_services('pychron.hardware.core.i_core_device.ICoreDevice',
-                                                                      "display==True"
-        )
+                                                                      "display==True")
         self.devices.sort()
 
     def _selected_changed(self):

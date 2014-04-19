@@ -39,6 +39,7 @@ from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.consumer_mixin import ConsumerMixin
 
+
 def crc_caller(func):
     def d(*args, **kw):
         try:
@@ -48,6 +49,19 @@ def crc_caller(func):
             print '{} called by {}'.format(func.func_name, stack[1][3])
 
     return d
+
+
+class TimeoutError(BaseException):
+    def __init__(self, name, timeout):
+        self.name = name
+        self.timeout = timeout
+
+    def __repr__(self):
+        return 'TimeoutError func={}, timeout={}'.format(self.name, self.timeout)
+
+    def __str__(self):
+        return repr(self)
+
 
 class Alarm(HasTraits):
     alarm_str = Str
@@ -83,6 +97,7 @@ class Alarm(HasTraits):
         tstamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
+
 
 # @provides(ICoreDevice)
 class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
@@ -188,7 +203,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                 et = time.time() - st
                 if et > timeout:
                     self.warning('blocking poll of "{}" timed out after {}s'.format(func.func_name, timeout))
-                    return
+                    raise TimeoutError(func.func_name, timeout)
             time.sleep(period)
 
 
@@ -229,7 +244,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         """
         """
         if self._communicator is not None:
-           return self._communicator.read(*args, **kw)
+            return self._communicator.read(*args, **kw)
 
     #        if self.simulation:
     #            return 'simulation'

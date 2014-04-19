@@ -101,8 +101,7 @@ class HardwarePlugin(BaseTaskPlugin):
 
         so_fm = self.service_offer_factory(
             protocol=FlagManager,
-            factory=self._flag_manager_factory
-        )
+            factory=self._flag_manager_factory)
         #        return [so, so1, so2]
         return [so_hm, so_rhm, so_fm]
 
