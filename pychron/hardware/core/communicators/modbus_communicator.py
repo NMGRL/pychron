@@ -21,18 +21,9 @@
 import struct
 import binascii
 #=============local library imports  =========================
+from pychron.hardware.core.communicators.exceptions import CRCError
 from serial_communicator import SerialCommunicator
 from pychron.hardware.core.checksum_helper import computeCRC
-
-
-class CRCError(BaseException):
-    _cmd = ''
-
-    def __init__(self, cmd):
-        self._cmd = cmd
-
-    def __str__(self):
-        return self._cmd
 
 
 class ModbusCommunicator(SerialCommunicator):
