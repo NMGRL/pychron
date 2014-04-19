@@ -16,8 +16,8 @@ install:
   - pip install cython
   - sudo apt-get install python-numpy python-scipy
   - sudo apt-get install swig
-  - sudo apt-get install python-numpy python-scipy
-  - sudo apt-get install swig
+  - pip install PIL --allow-external PIL --allow-unverified PIL
+  - pip install pyparsing
   - pip install patsy
   - pip install git+http://github.com/enthought/traits.git#egg=traits
   - pip install git+http://github.com/enthought/pyface.git#egg=pyface
