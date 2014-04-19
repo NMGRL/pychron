@@ -4,7 +4,7 @@
 #xlwt==0.7.2
 #GitPython>=0.3.2.RC1
 #PyMySQL
-#PyYAML
+PyYAML
 #Reportlab
 #lxml
 #paramiko
