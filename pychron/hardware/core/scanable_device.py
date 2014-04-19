@@ -27,8 +27,6 @@ from pychron.database.data_warehouse import DataWarehouse
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
-from pychron.graph.graph import Graph
-from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
 
 class ScanableDevice(ViewableDevice):
@@ -49,8 +47,7 @@ class ScanableDevice(ViewableDevice):
     scan_root = Str
     scan_name = Str
 
-    graph_klass = TimeSeriesStreamGraph
-    graph = Instance(Graph)
+    graph = Instance('pychron.graph.graph.Graph')
     graph_ytitle = Str
 
     data_manager = None
@@ -245,11 +242,9 @@ class ScanableDevice(ViewableDevice):
             self.start_scan()
 
     def _graph_default(self):
+        from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 
-        g = self.graph_klass(
-            #container_dict=dict(padding=[40, 10, 10, 10])
-        )
-
+        g = TimeSeriesStreamGraph()
         self.graph_builder(g)
 
         return g
