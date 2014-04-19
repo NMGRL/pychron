@@ -7,19 +7,19 @@ python:
 virtualenv:
   system_site_packages: true
 before_install:
- - sudo apt-get install xvfb
+# - sudo apt-get install xvfb
  #- sudo apt-get --no-install-recommends install python-pandas>=0.12.0
  #- sudo apt-get --no-install-recommends install python-pandas-lib
 # - pip install patsy
 
 install:
   #- sudo apt-get install python-pyside
-  - pip install cython
+#  - pip install cython
   - sudo apt-get install python-numpy python-scipy
-  - sudo apt-get install swig
-  - pip install PIL --allow-external PIL --allow-unverified PIL
-  - pip install pyparsing
-  - pip install patsy
+#  - sudo apt-get install swig
+#  - pip install PIL --allow-external PIL --allow-unverified PIL
+#  - pip install pyparsing
+#  - pip install patsy
   - pip install git+http://github.com/enthought/traits.git#egg=traits
   #- pip install git+http://github.com/enthought/pyface.git#egg=pyface
   - pip install git+http://github.com/enthought/traitsui.git#egg=traitsui

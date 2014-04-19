@@ -22,10 +22,8 @@ import os
 #============= local library imports  ==========================
 from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.graph.plot_record import PlotRecord
-from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
 from pychron.database.data_warehouse import DataWarehouse
-from pychron.core.helpers.timer import Timer
 from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.hardware.core.alarm import Alarm
@@ -165,6 +163,8 @@ class ScanableDevice(ViewableDevice):
         self.info('Starting scan')
         if self.record_scan_data:
             if self.dm_kind == 'h5':
+                from pychron.managers.data_managers.h5_data_manager import H5DataManager
+
                 klass = H5DataManager
             else:
                 klass = CSVDataManager
@@ -188,6 +188,9 @@ class ScanableDevice(ViewableDevice):
                 self.save_scan_to_db()
 
         sp = self.scan_period * self.time_dict[self.scan_units]
+
+        from pychron.core.helpers.timer import Timer
+
         self.timer = Timer(sp, self.scan)
         self.info('Scan started')
 
