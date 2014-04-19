@@ -10,14 +10,14 @@ setup(name='pychron',
       version='2.0.4',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
-                  'pychron.processing.plateau'],
+                  'pychron.processing.plateau',
+                  'pychron.core.ui'],
       packages=['pychron.core.regression',
                 'pychron.core.stats',
                 'pychron.external_pipette',
-
+                'pychron.pyscripts',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
-                # 'pychron.external_pipette.tests'
+                'pychron.external_pipette.tests'
       ],
-      # test_suite='pychron.core.regression.tests.suite'
       test_suite='pychron.test_suite.suite')
