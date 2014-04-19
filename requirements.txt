@@ -1,10 +1,11 @@
-#statsmodels==0.5.0
+statsmodels==0.5.0
+PyYAML
+
 #uncertainties
 #xlrd==0.7.1
 #xlwt==0.7.2
 #GitPython>=0.3.2.RC1
 #PyMySQL
-PyYAML
 #Reportlab
 #lxml
 #paramiko
