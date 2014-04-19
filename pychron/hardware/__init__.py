@@ -17,28 +17,28 @@
 
 
 HW_PACKAGE_MAP = {
-'CommandProcessor':                 'pychron.messaging.command_processor',
-'RemoteCommandServer':              'pychron.messaging.remote_command_server',
+    'CommandProcessor': 'pychron.messaging.command_processor',
+    'RemoteCommandServer': 'pychron.messaging.remote_command_server',
 
-'ArduinoSubsystem':                 'pychron.hardware.subsystems.arduino_subsystem',
-'DPi32TemperatureMonitor':          'pychron.hardware.temperature_monitor',
-'ValveController':                  'pychron.hardware.actuators.valve_controller',
-'AnalogPowerMeter':                 'pychron.hardware.analog_power_meter',
-'ADC':                              'pychron.hardware.adc.adc_device',
-'AgilentADC':                       'pychron.hardware.adc.analog_digital_converter',
-'Eurotherm':                        'pychron.hardware.eurotherm',
-'ThermoRack':                       'pychron.hardware.thermorack',
-'MicroIonController':               'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
-'ArgusController':                  'pychron.hardware.argus_controller',
-'FerrupsUPS':                       'pychron.hardware.FerrupsUPS',
-'QtegraDevice':                     'pychron.hardware.qtegra_device',
-'PidController':                    'pychron.hardware.pid_controller',
-'PychronLaser':                     'pychron.hardware.pychron_laser',
-'AgilentMultiplexer':               'pychron.hardware.agilent.agilent_multiplexer',
-'Transducer': 'pychron.hardware.transducer',
+    'ArduinoSubsystem': 'pychron.hardware.subsystems.arduino_subsystem',
+    'DPi32TemperatureMonitor': 'pychron.hardware.temperature_monitor',
+    'ValveController': 'pychron.hardware.actuators.valve_controller',
+    'AnalogPowerMeter': 'pychron.hardware.analog_power_meter',
+    'ADC': 'pychron.hardware.adc.adc_device',
+    'AgilentADC': 'pychron.hardware.adc.analog_digital_converter',
+    'Eurotherm': 'pychron.hardware.eurotherm',
+    'ThermoRack': 'pychron.hardware.thermorack',
+    'MicroIonController': 'pychron.hardware.gauges.granville_phillips.micro_ion_controller',
+    'ArgusController': 'pychron.hardware.argus_controller',
+    'FerrupsUPS': 'pychron.hardware.FerrupsUPS',
+    'QtegraDevice': 'pychron.hardware.qtegra_device',
+    'PidController': 'pychron.hardware.pid_controller',
+    'PychronLaser': 'pychron.hardware.pychron_laser',
+    'AgilentMultiplexer': 'pychron.hardware.agilent.agilent_multiplexer',
+    'Transducer': 'pychron.hardware.transducer',
+    'ApisController': 'pychron.hardware.apis_controller',
+    'RemoteThermoRack': 'pychron.hardware.remote.thermorack',
+    'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
 
-'RemoteThermoRack':                 'pychron.hardware.remote.thermorack',
-'RemoteNewportMotionController': 'pychron.hardware.remote.newport_motion_controller',
-
-# 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
+    # 'ControlModule': 'pychron.hardware.fusions.vue_diode_control_module'
 }

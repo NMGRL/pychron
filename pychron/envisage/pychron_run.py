@@ -19,7 +19,6 @@ from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pyface.message_dialog import warning
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
@@ -31,10 +30,7 @@ try:
     from pychron.updater.tasks.update_plugin import UpdatePlugin
 except ImportError:
     logger.warning('Git is required to use UpdatePlugin')
-    UpdatePlugin=None
-
-
-
+    UpdatePlugin = None
 
 PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
@@ -73,7 +69,9 @@ PACKAGE_DICT = dict(
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin')
+    GeoPlugin='pychron.geo.tasks.geo_plugin',
+    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin'
+)
 
 
 def get_module_name(klass):
@@ -112,8 +110,7 @@ def get_klass(package, name):
         traceback.print_exc()
         klass = None
         logger.warning('****** {} could not be imported {} ******'.format(name, e),
-                       extra={'threadName_': 'Launcher'}
-        )
+                       extra={'threadName_': 'Launcher'})
     return klass
 
 
@@ -175,8 +172,7 @@ def app_factory(klass):
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
-        LoggerPlugin(),
-        ]
+        LoggerPlugin()]
 
     if UpdatePlugin is not None:
         plugins.append(UpdatePlugin())
@@ -196,8 +192,7 @@ def check_dependencies():
 
     try:
         mod = __import__('uncertainties',
-                         fromlist=['__version__']
-        )
+                         fromlist=['__version__'])
         __version__ = mod.__version__
     except ImportError:
         warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
@@ -208,8 +203,7 @@ def check_dependencies():
     if int(maj) < 2:
         warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
                                                                                            __version__,
-                                                                                           '2.1'
-        ))
+                                                                                           '2.1'))
         return
 
     return True

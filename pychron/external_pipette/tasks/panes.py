@@ -15,23 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traitsui.api import View, Item, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
 
-
-class ApisController(CoreDevice):
-    def load_pipette(self, name):
-        self.ask('Load {}'.format(name))
-
-    def get_loading_status(self):
-        return self.ask('GetStatus')
-
-    def get_loading_complete(self):
-        status = self.get_loading_status()
-        return status == 'Complete'
-
+class ExternalPipettePane(TraitsTaskPane):
+    def traits_view(self):
+        v = View(UItem('test_load_1',
+                       enabled_when='not testing'),
+                 Item('test_result',
+                      style='readonly',
+                      label='Test Result'))
+        return v
 
 #============= EOF =============================================
 

@@ -22,5 +22,14 @@ class IPipetteManager(Interface):
     def load_pipette(self, name):
         pass
 
+    def bind_preferences(self, prefid):
+        pass
+
+    def bootstrap(self):
+        pass
+
+    def load(self):
+        pass
+
 #============= EOF =============================================
 

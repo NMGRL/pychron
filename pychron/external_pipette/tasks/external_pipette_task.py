@@ -18,20 +18,18 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.external_pipette.tasks.panes import ExternalPipettePane
 
 
-class ApisController(CoreDevice):
-    def load_pipette(self, name):
-        self.ask('Load {}'.format(name))
+class ExternalPipetteTask(BaseManagerTask):
+    name = 'External Pipette'
 
-    def get_loading_status(self):
-        return self.ask('GetStatus')
+    def create_central_pane(self):
+        return ExternalPipettePane(model=self.manager)
 
-    def get_loading_complete(self):
-        status = self.get_loading_status()
-        return status == 'Complete'
-
+        # def _default_layout_default(self):
+        #     return TaskLayout()
 
 #============= EOF =============================================
 
