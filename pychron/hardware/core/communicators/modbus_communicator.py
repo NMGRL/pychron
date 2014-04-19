@@ -21,7 +21,7 @@
 import struct
 import binascii
 #=============local library imports  =========================
-from pychron.hardware.core.communicators.exceptions import CRCError
+from pychron.hardware.core.exceptions import CRCError
 from serial_communicator import SerialCommunicator
 from pychron.hardware.core.checksum_helper import computeCRC
 

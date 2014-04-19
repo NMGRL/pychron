@@ -32,7 +32,7 @@ from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
-from pychron.hardware.core.communicators.exceptions import CRCError
+from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
 from pychron.has_communicator import HasCommunicator
@@ -49,18 +49,6 @@ def crc_caller(func):
             print '{} called by {}'.format(func.func_name, stack[1][3])
 
     return d
-
-
-class TimeoutError(BaseException):
-    def __init__(self, name, timeout):
-        self.name = name
-        self.timeout = timeout
-
-    def __repr__(self):
-        return 'TimeoutError func={}, timeout={}'.format(self.name, self.timeout)
-
-    def __str__(self):
-        return repr(self)
 
 
 class Alarm(HasTraits):

@@ -21,7 +21,7 @@ import time
 #============= local library imports  ==========================
 from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
-from pychron.hardware.core.core_device import TimeoutError
+from pychron.hardware.core.exceptions import TimeoutError
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 # from pychron.lasers.laser_managers.extraction_device import ILaserManager

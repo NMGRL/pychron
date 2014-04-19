@@ -21,7 +21,7 @@ from traits.api import implements, Instance, Button, Bool, Str, List
 #============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.apis_controller import ApisController
-from pychron.hardware.core.core_device import TimeoutError
+from pychron.hardware.core.exceptions import TimeoutError
 from pychron.managers.manager import Manager
 
 
