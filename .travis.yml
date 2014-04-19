@@ -13,6 +13,7 @@ before_install:
 # - pip install patsy
 
 install:
+  - sudo apt-get install python-pyside
   - pip install cython
   - sudo apt-get install python-numpy python-scipy
   - sudo apt-get install swig
