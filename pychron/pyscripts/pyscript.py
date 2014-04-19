@@ -36,7 +36,7 @@ import sys
 # from pychron.core.ui.thread import Thread
 import weakref
 from pychron.globals import globalv
-from pychron.wait.wait_control import WaitControl
+
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -697,6 +697,8 @@ class PyScript(Loggable):
             time.sleep(v)
 
     def _setup_wait_control(self, timeout, message):
+        from pychron.wait.wait_control import WaitControl
+
         if self.manager:
             wd = self.manager.get_wait_control()
         else:

@@ -24,8 +24,6 @@ from threading import Thread
 from Queue import Queue, Empty
 import time
 
-from pychron.core.ui.gui import invoke_in_main_thread
-
 
 class ConsumerMixin(object):
     _consumer_queue = None
@@ -105,12 +103,16 @@ class ConsumerMixin(object):
                 if v:
                     if cfunc:
                         if self._main:
+                            from pychron.core.ui.gui import invoke_in_main_thread
+
                             invoke_in_main_thread(cfunc, v)
                         else:
                             cfunc(v)
                     elif isinstance(v, tuple):
                         func, a = v
                         if self._main:
+                            from pychron.core.ui.gui import invoke_in_main_thread
+
                             invoke_in_main_thread(func, a)
                         else:
                             func(a)

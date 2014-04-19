@@ -68,6 +68,8 @@ class Globals(object):
     load_soft_locks = True
 
     debug = False
+    use_logger_display = True
+    use_warning_display = True
 
     def build(self, ip):
 

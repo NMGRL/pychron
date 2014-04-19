@@ -26,8 +26,8 @@ from pychron.core.helpers.logger_setup import new_logger
 from threading import current_thread
 from pychron.core.ui.thread import currentThreadName
 
-from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
-from pychron.core.ui.gui import invoke_in_main_thread
+# from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
+# from pychron.core.ui.gui import invoke_in_main_thread
 
 color_name_gen = colorname_generator()
 NAME_WIDTH = 40
@@ -40,6 +40,7 @@ def confirmation_dialog(msg, return_retval=False,
 
     if size is None:
         size = (-1, -1)
+    from pychron.core.ui.dialogs import myConfirmationDialog
 
     dlg = myConfirmationDialog(
         timeout_return_code=timeout_ret,
@@ -70,8 +71,8 @@ class Loggable(HasTraits):
     logger = Any  # (transient=True)
     name = String
     logger_name = String
-    use_logger_display = True
-    use_warning_display = True
+    # use_logger_display = True
+    # use_warning_display = True
     logcolor = 'black'
     shared_logger = False
 
@@ -122,9 +123,13 @@ class Loggable(HasTraits):
             ui = obj.edit_traits(**kw)
             self.add_window(ui)
 
+        from pychron.core.ui.gui import invoke_in_main_thread
+
         invoke_in_main_thread(_open_)
 
     def warning_dialog(self, msg, sound=None, title='Warning'):
+        from pychron.core.ui.dialogs import myMessageDialog
+
         dialog = myMessageDialog(
             parent=None, message=str(msg),
             title=title,
@@ -142,6 +147,8 @@ class Loggable(HasTraits):
         return confirmation_dialog(*args, **kw)
 
     def information_dialog(self, msg, title='Information'):
+        from pychron.core.ui.dialogs import myMessageDialog
+
         dlg = myMessageDialog(parent=None, message=msg,
                               title=title,
                               severity='information')
@@ -155,6 +162,8 @@ class Loggable(HasTraits):
 
         if not gMessageDisplay.opened and not gMessageDisplay.was_closed:
             gMessageDisplay.opened = True
+            from pychron.core.ui.gui import invoke_in_main_thread
+
             invoke_in_main_thread(gMessageDisplay.edit_traits)
 
         gMessageDisplay.add_text(msg)
@@ -166,7 +175,7 @@ class Loggable(HasTraits):
         """
 
         if self.logger is not None:
-            if self.use_warning_display:
+            if globalv.use_warning_display:
                 from pychron.displays.gdisplays import gWarningDisplay
 
                 if globalv.show_warnings:
@@ -185,7 +194,7 @@ class Loggable(HasTraits):
 
         """
         if self.logger is not None:
-            if self.use_logger_display:
+            if globalv.use_logger_display:
                 from pychron.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:

@@ -1,6 +1,9 @@
-from pychron.core.ui import set_qt
+#from pychron.core.ui import set_qt
+#set_qt()
+from pychron.globals import globalv
 
-set_qt()
+globalv.use_warning_display = False
+globalv.use_logger_display = False
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.external_pipette.apis_manager import ApisManager
