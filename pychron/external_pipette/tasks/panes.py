@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, Item, UItem, VGroup, HGroup
+from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
 from enable.component_editor import ComponentEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 
@@ -25,14 +25,17 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('test_load_1',
-                                     enabled_when='not testing'),
-                               UItem('reload_canvas_button')),
-                        Item('test_result',
-                      style='readonly',
-                      label='Test Result')),
-                 UItem('canvas', style='custom',
-                       editor=ComponentEditor()))
+        testing_grp = VGroup(HGroup(UItem('test_load_1', ),
+                                    UItem('test_script_button', ),
+                                    enabled_when='not testing'),
+                             Item('test_result',
+                                  style='readonly',
+                                  label='Test Result'))
+        canvas_button_grp = HGroup(UItem('reload_canvas_button'), spring)
+        v = View(VGroup(testing_grp,
+                        canvas_button_grp,
+                        UItem('canvas', style='custom',
+                              editor=ComponentEditor())))
         return v
 
 #============= EOF =============================================

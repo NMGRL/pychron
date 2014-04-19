@@ -47,6 +47,8 @@ class ApisManager(Manager):
     testing = Bool
     test_result = Str
 
+    test_script_button = Button('Test Script')
+
     reload_canvas_button = Button('Reload Canvas')
 
     _timeout_flag = False
@@ -84,6 +86,9 @@ class ApisManager(Manager):
         else:
             return self.controller.blocking_poll('get_loading_status', **kw)
 
+    def set_extract_state(self, state):
+        pass
+
     #testing buttons
     def _test_load_1_fired(self):
         self.debug('Test load 1 fired')
@@ -95,6 +100,15 @@ class ApisManager(Manager):
         except (TimeoutError, InvalidPipetteError), e:
             self.test_result = str(e)
         # self.test_result = 'OK' if ret else 'Failed'
+        self.testing = False
+
+    def _test_script_button_fired(self):
+        self.testing = True
+        from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
+        e = ExtractionPyScript(manager=self)
+        e.setup_context(extract_device='')
+        e.extract_pipette(1, timeout=3)
         self.testing = False
 
     def _reload_canvas_button_fired(self):

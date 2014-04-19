@@ -21,6 +21,7 @@ from traits.api import List
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.external_pipette.tasks.external_pipette_task import ExternalPipetteTask
 
 
@@ -45,7 +46,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
             return m
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol='pychron.external_pipette.apis_manager.ApisManager',
+        so = self.service_offer_factory(protocol=IPipetteManager,
                                         factory=self._manager_factory)
         return [so, ]
 
@@ -58,7 +59,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
                             task_group='hardware',
                             factory=self._task_factory,
                             name='External Pipette',
-                            #image='laser.png',
+                            image='pipette.png',
                             accelerator='Ctrl+Shift+0')]
 
     def _task_factory(self):

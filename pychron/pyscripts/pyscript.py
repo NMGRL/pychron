@@ -676,8 +676,8 @@ class PyScript(Loggable):
                 rs.append(r)
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
-        else:
-            self.warning('could not find manager {}'.format(name))
+        elif name:
+            self.warning('could not find manager name="{}"'.format(name))
 
     def _cancel_hook(self):
         pass
