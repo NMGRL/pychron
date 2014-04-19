@@ -37,4 +37,4 @@ install:
   #- python setup.py develop
 
 # command to run tests, e.g. python setup.py test
-script:  python setup.py test
+script: DISPLAY=localhost:1.0 xvfb-run python setup.py test
