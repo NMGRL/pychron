@@ -24,7 +24,6 @@ from pychron.globals import globalv
 from pychron.core.helpers.color_generators import colorname_generator
 from pychron.core.helpers.logger_setup import new_logger
 from threading import current_thread
-from pychron.core.ui.thread import currentThreadName
 
 # from pychron.core.ui.dialogs import myConfirmationDialog, myMessageDialog
 # from pychron.core.ui.gui import invoke_in_main_thread
@@ -233,8 +232,9 @@ class Loggable(HasTraits):
         def get_thread_name():
             ct = current_thread()
             name = ct.name
-            if name.startswith('Dummy'):
-                name = currentThreadName()
+            # from pychron.core.ui.thread import currentThreadName
+            # if name.startswith('Dummy'):
+            #     name = currentThreadName()
 
             return name
 
