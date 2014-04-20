@@ -53,21 +53,32 @@ class ApisManager(Manager):
 
     _timeout_flag = False
     canvas = Instance('pychron.canvas.canvas2D.extraction_line_canvas2D.ExtractionLineCanvas2D')
+    valve_manager = Instance('pychron.extraction_line.valve_manager.ValveManager')
+    mode = 'normal'
+
+    def finish_loading(self):
+        from pychron.extraction_line.valve_manager import ValveManager
+
+        vm = ValveManager(extraction_line_manager=self)
+        vm.load_valves_from_file('apis_valves.xml')
+        for v in vm.valves.values():
+            v.actuator = self.controller
+
+        self.valve_manager = vm
 
     def open_valve(self, name, **kw):
-        ok = self.controller.open_valve(name)
-        change = True
-        return ok, change
+        return self._change_valve_state(name, 'normal', 'open')
 
     def close_valve(self, name, **kw):
-        ok = self.controller.close_valve(name)
-        change = True
-        return ok, change
+        return self._change_valve_state(name, 'normal', 'close')
 
     def set_selected_explanation_item(self, name):
         pass
 
     def bind_preferences(self, prefid):
+        pass
+
+    def set_extract_state(self, state):
         pass
 
     def load_pipette(self, name, timeout=10, period=1):
@@ -80,14 +91,29 @@ class ApisManager(Manager):
         #wait for completion
         return self._loading_complete(timeout=timeout, period=period)
 
+    #private
     def _loading_complete(self, **kw):
         if self._timeout_flag:
             return True
         else:
             return self.controller.blocking_poll('get_loading_status', **kw)
 
-    def set_extract_state(self, state):
-        pass
+    def _change_valve_state(self, name, mode, action):
+        result, change = False, False
+        func = getattr(self.valve_manager, '{}_by_name'.format(action))
+        ret = func(name, mode=mode)
+        if ret:
+            result, change = ret
+            if isinstance(result, bool):
+                if change:
+                    self.canvas.update_valve_state(name, True if action == 'open' else False)
+                    self.canvas.request_redraw()
+
+        return result, change
+
+    def _load_canvas(self, c):
+        c.load_canvas_file('apis_canvas_config.xml',
+                           setup_name='apis_canvas')
 
     #testing buttons
     def _test_load_1_fired(self):
@@ -114,10 +140,6 @@ class ApisManager(Manager):
     def _reload_canvas_button_fired(self):
         self._load_canvas(self.canvas)
         self.canvas.request_redraw()
-
-    def _load_canvas(self, c):
-        c.load_canvas_file('apis_canvas_config.xml',
-                           setup_name='apis_canvas')
 
     def _controller_default(self):
         return ApisController(name='apis')

@@ -44,10 +44,10 @@ class ValveGroup(object):
 
 
 class ValveManager(Manager):
-    '''
+    """
     Manager to interface with the UHV and HV pneumatic valves
     
-    '''
+    """
     valves = Dict
     explanable_items = List
     extraction_line_manager = Any
@@ -79,8 +79,8 @@ class ValveManager(Manager):
         self._save_soft_lock_states()
 
     def create_device(self, name, *args, **kw):
-        '''
-        '''
+        """
+        """
         dev = super(ValveManager, self).create_device(name, *args, **kw)
         if 'actuator' in name or 'controller' in name:
             if dev is not None:
@@ -89,10 +89,13 @@ class ValveManager(Manager):
             #            self.actuator = dev
             return dev
 
+    def load_valves_from_file(self, name):
+        setup_file = os.path.join(paths.extraction_line_dir, name)
+        self._load_valves_from_file(setup_file)
+
     def finish_loading(self, update=False):
-        '''
-   
-        '''
+        """
+        """
         if self.actuators:
             for a in self.actuators:
                 self.info('setting actuator {}'.format(a.name))
@@ -100,8 +103,9 @@ class ValveManager(Manager):
                 self.info('comm. device = {} '.format(a._cdevice.__class__.__name__))
 
         # open config file
-        setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
-        self._load_valves_from_file(setup_file)
+        # setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        # self._load_valves_from_file(setup_file)
+        self.load_valves_from_file('valves.xml')
 
         if globalv.load_valve_states:
             self._load_states()
@@ -171,10 +175,10 @@ class ValveManager(Manager):
     def load_valve_owners(self, refresh=True):
         elm = self.extraction_line_manager
 
-        '''
+        """
             needs to return all valves
             not just ones that are owned
-        '''
+        """
         owners = self.get_owners_word()
         if not owners:
             #self.debug('didnt not parse owners word')
@@ -196,7 +200,7 @@ class ValveManager(Manager):
             elm.refresh_canvas()
 
     def get_owners_word(self):
-        '''
+        """
          eg.
                 1. 129.128.12.141-A,B,C:D,E,F
                 2. A,B,C,D,E,F
@@ -204,7 +208,7 @@ class ValveManager(Manager):
                     A,B,C owned by 141,
                     D,E owned by 150
                     F free
-        '''
+        """
         if self.actuators:
             rs = []
             actuator = self.actuators[0]
@@ -298,7 +302,7 @@ class ValveManager(Manager):
                             self.unlock(v, save=False)
 
     def get_owners(self):
-        '''
+        """
             eg.
                 1. 129.128.12.141-A,B,C:D,E,F
                 2. A,B,C,D,E,F
@@ -306,7 +310,7 @@ class ValveManager(Manager):
                     A,B,C owned by 141,
                     D,E owned by 150
                     F free
-        '''
+        """
         self.valves['C'].owner = '129.138.12.135'
         self.valves['X'].owner = '129.138.12.135'
 
@@ -331,14 +335,14 @@ class ValveManager(Manager):
                          for k, v in self.valves.iteritems()])
 
     def get_states(self, timeout=1):
-        '''
+        """
             get as many valves states before time expires
             remember last set of valves returned. 
         
             if last set of valves less than total return 
             states for the remainder valves
             
-        '''
+        """
         st = time.time()
         states = []
         keys = []
@@ -349,13 +353,13 @@ class ValveManager(Manager):
             prev_keys = self._prev_keys
 
         for k, v in self.valves.iteritems():
-            '''
+            """
                 querying a lot of valves can add up hence timeout.
                 
                 most valves are not queried by default which also helps shorten
                 execution time for get_states. 
                 
-            '''
+            """
             if k in prev_keys:
                 continue
 
@@ -375,13 +379,13 @@ class ValveManager(Manager):
         return ','.join(states)
 
     def get_valve_by_address(self, a):
-        '''
-        '''
+        """
+        """
         return self._get_valve_by(a, 'address')
 
     def get_valve_by_description(self, a):
-        '''
-        '''
+        """
+        """
         return self._get_valve_by(a, 'description')
 
     def _get_valve_by(self, a, attr):
@@ -389,14 +393,14 @@ class ValveManager(Manager):
                      if getattr(valve, attr) == a), None)
 
     def get_valve_by_name(self, n):
-        '''    
-        '''
+        """    
+        """
         if n in self.valves:
             return self.valves[n]
 
     def get_name_by_address(self, k):
-        '''
-        '''
+        """
+        """
         v = self.get_valve_by_address(k)
         if v is not None:
             return v.name
@@ -408,13 +412,13 @@ class ValveManager(Manager):
 
 
     def get_evalve_by_name(self, n):
-        '''  
-        '''
+        """  
+        """
         return next((item for item in self.explanable_items if item.name == n), None)
 
     def get_state_by_name(self, n):
-        '''
-        '''
+        """
+        """
         v = self.get_valve_by_name(n)
         state = None
         if v is not None:
@@ -423,8 +427,8 @@ class ValveManager(Manager):
         return state
 
     def get_state_by_description(self, n):
-        '''
-        '''
+        """
+        """
         v = self.get_valve_by_description(n)
         state = None
         if v is not None:
@@ -433,8 +437,8 @@ class ValveManager(Manager):
         return state
 
     def _get_state_by(self, v):
-        '''
-        '''
+        """
+        """
         state = None
         if self.query_valve_state and v.query_state:
             state = v.get_hardware_state()  # actuator.get_channel_state(v)
@@ -461,8 +465,8 @@ class ValveManager(Manager):
             return v.software_lock
 
     def check_soft_interlocks(self, name):
-        ''' 
-        '''
+        """ 
+        """
 
         cv = self.get_valve_by_name(name)
         self.debug('check software interlocks {} {}'.format(name, cv))
@@ -476,13 +480,13 @@ class ValveManager(Manager):
                         return True
 
     def open_by_name(self, name, mode='normal'):
-        '''
-        '''
+        """
+        """
         return self._open_(name, mode)
 
     def close_by_name(self, name, mode='normal'):
-        '''
-        '''
+        """
+        """
         return self._close_(name, mode)
 
     def sample(self, name, period):
@@ -497,8 +501,8 @@ class ValveManager(Manager):
             self.close_by_name(name)
 
     def lock(self, name, save=True):
-        '''
-        '''
+        """
+        """
         v = self.get_valve_by_name(name)
         if v is not None:
         #            ev = self.get_evalve_by_name(name)
@@ -510,8 +514,8 @@ class ValveManager(Manager):
                 self._save_soft_lock_states()
 
     def unlock(self, name, save=True):
-        '''
-        '''
+        """
+        """
         v = self.get_valve_by_name(name)
         if v is not None:
         #            ev = self.get_evalve_by_name(name)
@@ -528,16 +532,16 @@ class ValveManager(Manager):
             v.owner = owner
 
     def validate(self, v):
-        '''
+        """
         return false if v's interlock valve(s) is(are) open
         else return true
-        '''
+        """
 
         return next((False for vi in v.interlocks if self.get_valve_by_name(vi).state), True)
 
     def _open_(self, name, mode):
-        '''
-        '''
+        """
+        """
         action = 'set_open'
         # check software interlocks and return None if True
         if self.check_soft_interlocks(name):
@@ -547,17 +551,17 @@ class ValveManager(Manager):
         r, c = self._actuate_(name, action, mode)
         if r and c:
             for pip in self.pipette_trackers:
-                '''
+                """
                     a single valve can increment at most one pipette
-                '''
+                """
                 if pip.check_shot(name):
                     break
 
         return r, c
 
     def _close_(self, name, mode):
-        '''
-        '''
+        """
+        """
         action = 'set_closed'
         if self.check_soft_interlocks(name):
             self.warning('Software Interlock')
@@ -566,8 +570,8 @@ class ValveManager(Manager):
         return self._actuate_(name, action, mode)
 
     def _actuate_(self, name, action, mode, address=None):
-        '''
-        '''
+        """
+        """
         changed = False
         if address is None:
             v = self.get_valve_by_name(name)
@@ -592,8 +596,8 @@ class ValveManager(Manager):
         return result, changed
 
     def _load_valves_from_file(self, path):
-        '''
-        '''
+        """
+        """
         self.info('loading valve definitions file  {}'.format(path))
 
         def factory(v):
@@ -644,6 +648,7 @@ class ValveManager(Manager):
 
         actname = act_elem.text.strip() if act_elem is not None else 'valve_controller'
         actuator = self.get_actuator_by_name(actname)
+
         if actuator is None:
             if not globalv.ignore_initialization_warnings:
                 self.warning_dialog(
@@ -752,12 +757,12 @@ if __name__ == '__main__':
                 # return ''.join(states)
 
         def get_states(self):
-            '''
+            """
                 with this method you need to ensure the communicators timeout
                 is sufficiently low. the communicator will block until a response
                 or a timeout. the times up event only breaks between state queries.
             
-            '''
+            """
             states_queue = Queue()
             times_up_event = Event()
             t = Timer(1, lambda: times_up_event.set())
@@ -826,8 +831,8 @@ if __name__ == '__main__':
 #            self.systems[name] = host
 #
 #     def _load_sections_from_file(self, path):
-#         '''
-#         '''
+#         """
+#         """
 #         self.sections = []
 #         config = self.get_configuration(path=path)
 #         if config is not None:
@@ -873,7 +878,7 @@ if __name__ == '__main__':
 #                break
 #            _gstate(k)
 #    def get_states2(self, timeout=1):
-#        '''
+#        """
 #            use event and timer to allow for partial responses
 #            the timer t will set the event in timeout seconds
 #
@@ -886,7 +891,7 @@ if __name__ == '__main__':
 #
 #            to prevent the communicator from blocking longer then the times up event
 #            the _gs_thread is joined and timeouts out after 1.01s
-#        '''
+#        """
 #
 #        states_queue = Queue()
 #        times_up_event = Event()
@@ -916,9 +921,9 @@ if __name__ == '__main__':
 #
 #        return s
 # def _load_valves_from_filetxt(self, path):
-#        '''
+#        """
 #
-#        '''
+#        """
 #        c = parse_setupfile(path)
 #
 #        self.sector_inlet_valve = c[0][0]

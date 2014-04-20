@@ -32,12 +32,12 @@ class ApisController(CoreDevice):
         status = self.get_loading_status()
         return status == 'Complete'
 
-    def open_valve(self, name):
-        self.ask('Open {}'.format(name))
+    def open_channel(self, obj):
+        self.ask('Open {}'.format(obj.name))
         return True
 
-    def close_valve(self, name):
-        self.ask('Close {}'.format(name))
+    def close_channel(self, obj):
+        self.ask('Close {}'.format(obj.name))
         return True
 
 #============= EOF =============================================
