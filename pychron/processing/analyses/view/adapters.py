@@ -100,15 +100,19 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
     value_text=Property
 
     def _get_value_text(self):
-        if self.item.display_value:
-            v=self.item.value
-            return floatfmt(v, n=10, s=10)
+        item = self.item
+        if item.display_value:
+            v = item.value
+            n = item.value_sig_figs
+            return floatfmt(v, n=n, s=n)
         else:
             return ''
 
     def _get_error_text(self):
-        v = self.item.error
-        return floatfmt(v, 8)
+        item = self.item
+        v = item.error
+        n = item.error_sig_figs
+        return floatfmt(v, n)
 
     def _get_percent_error_text(self):
         e = self.item.error

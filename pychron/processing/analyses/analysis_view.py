@@ -55,15 +55,36 @@ class AnalysisView(HasTraits):
 
     refresh_needed = Event
 
+    main_view = None
+    _experiment_view = None
+    _history_view = None
+    _interference_view = None
+
     def load(self, an):
         analysis_type = an.analysis_type
         analysis_id = an.record_id
         self.analysis_id = analysis_id
 
-        main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
-        experiment_view = ExperimentView(an)
-        history_view = HistoryView(an)
-        interference_view = InterferencesView(an)
+        history_view = self._history_view
+        if history_view is None:
+            history_view = HistoryView(an)
+            self._history_view = history_view
+        experiment_view = self._experiment_view
+        if experiment_view is None:
+            experiment_view = ExperimentView(an)
+            self._experiment_view = experiment_view
+        interference_view = self._interference_view
+        if interference_view is None:
+            interference_view = InterferencesView(an)
+            self._interference_view = interference_view
+        main_view = self.main_view
+        if main_view is None:
+            main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
+            self.main_view = main_view
+            # else:
+            # self.main_view.load_computed(an)
+            # self.main_view.refresh_needed=True
+
         subviews = [main_view,
                     experiment_view,
                     history_view,
@@ -71,6 +92,7 @@ class AnalysisView(HasTraits):
 
         if analysis_type in ('unknown', 'cocktail'):
             subviews.append(ErrorComponentsView(an))
+
         pch = PeakCenterView()
         if pch.load(an):
             subviews.append(pch)

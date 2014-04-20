@@ -23,10 +23,6 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
 
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -109,8 +105,9 @@ class IsotopicMeasurement(BaseMeasurement):
 
     # value = Property(depends_on='_value, dirty')
     # error = Property(depends_on='_error, dirty')
-    value = Property(depends_on='dirty')
-    error = Property(depends_on='dirty')
+    value = Property(Float(enter_set=True, auto_set=False),
+                     depends_on='dirty')
+    error = Property(Float(enter_set=True, auto_set=False), depends_on='dirty')
     _value = Float
     _error = Float
 
@@ -127,9 +124,17 @@ class IsotopicMeasurement(BaseMeasurement):
     dirty = Event
     include_baseline_error = Bool
 
+    use_static = Bool
+    user_defined_value = Bool
+    user_defined_error = Bool
+
+    _oerror = None
+    _ovalue = None
+
     def __init__(self, dbresult=None, *args, **kw):
 
         if dbresult:
+
             self._value = dbresult.signal_
             self._error = dbresult.signal_err
         else:
@@ -205,13 +210,36 @@ class IsotopicMeasurement(BaseMeasurement):
 
         self.dirty = True
 
+    def revert_user_defined(self):
+        self.user_defined_error = False
+        self.user_defined_value = False
+        if self._ovalue is not None:
+            self._value = self._ovalue
+        if self._oerror is not None:
+            self._error = self._oerror
+
     def _set_error(self, v):
-        self._error = v
+        self.user_defined_error = True
+        try:
+            self._oerror = self._error
+            self._error = float(v)
+        except ValueError:
+            pass
 
     def _set_value(self, v):
-        self._value = v
+        self.user_defined_value = True
+        try:
+            self._ovalue = self._value
+            self._value = float(v)
+        except ValueError:
+            pass
 
     def _get_value(self):
+        if self.use_static and self._value:
+            return self._value
+        elif self.user_defined_value:
+            return self._value
+
         if len(self.xs) > 1:
             self.regressor.calculate()
             v = self.regressor.predict(0)
@@ -220,6 +248,11 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._value
 
     def _get_error(self):
+        if self.use_static and self._error:
+            return self._error
+        elif self.user_defined_error:
+            return self._error
+
         if len(self.xs) > 1:
             self.regressor.calculate()
             v = self.regressor.predict_error(0)

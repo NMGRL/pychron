@@ -49,16 +49,16 @@ class MainView(HasTraits):
         if analysis:
             self._load(analysis)
 
-    def load(self, an):
+    def load(self, an, refresh=False):
         self._load(an)
+        if refresh:
+            self.refresh_needed = True
 
     def _load(self, an):
         self.isotopes = [an.isotopes[k] for k in an.isotope_keys]
-
         self.load_computed(an)
         self.load_extraction(an)
         self.load_measurement(an, an)
-
 
     def _get_irradiation(self, an):
         return an.irradiation_label

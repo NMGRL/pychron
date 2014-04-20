@@ -35,4 +35,9 @@ class AddDiffAction(TaskAction):
     image = icon('edit_diff.png')
 
 
+class EditDataAction(TaskAction):
+    name = 'Edit Data'
+    method = 'edit_data'
+    image = icon('edit_diff.png')
+
 #============= EOF =============================================

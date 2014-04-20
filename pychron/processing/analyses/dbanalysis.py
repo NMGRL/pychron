@@ -15,7 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import weakref
+
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
+
 #============= standard library imports ========================
 from datetime import datetime
 from itertools import izip
@@ -358,7 +361,8 @@ class DBAnalysis(Analysis):
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
-        av.load(self)
+
+        av.load(weakref.ref(self)())
 
     def _sync_analysis_info(self, meas_analysis):
         self.mass_spectrometer = self._get_mass_spectrometer(meas_analysis)

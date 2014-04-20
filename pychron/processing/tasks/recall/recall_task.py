@@ -18,12 +18,14 @@
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
 
-from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction
+from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
+from pychron.processing.tasks.recall.edit_analysis_view import AnalysisEditView
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+
 
 
 
@@ -45,6 +47,7 @@ class RecallTask(AnalysisEditTask):
     tool_bars = [
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
+                 EditDataAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
 
@@ -134,8 +137,23 @@ class RecallTask(AnalysisEditTask):
     #         ieditor = IsotopeEvolutionEditor(name=name,processor=self.manager)
     #         ieditor.set_items([rec])
     #         self.editor_area.add_editor(ieditor)
+    def edit_data(self):
+        if not self.has_active_editor():
+            return
+
+        if hasattr(self.active_editor, 'edit_view') and self.active_editor.edit_view:
+            self.active_editor.edit_view.show()
+        else:
+            e = AnalysisEditView(editor=self.active_editor)
+            e.load_isotopes()
+            info = e.edit_traits()
+            e.control = info.ui.control
+            self.active_editor.edit_view = e
 
     def add_diff(self):
+        if not self.has_active_editor():
+            return
+
         left = None
         if self.active_editor:
             left = self.active_editor.model
