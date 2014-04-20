@@ -83,6 +83,7 @@ class SessionCTX(object):
                 self._sess.rollback()
             finally:
                 self._sess.close()
+                del self._sess
 
 
 class DatabaseAdapter(Loggable):

@@ -16,14 +16,18 @@
 
 #============= enthought library imports =======================
 import time
+
 from chaco.array_data_source import ArrayDataSource
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Array
+
 #============= standard library imports ========================
 from numpy import array, Inf
 #============= local library imports  ==========================
+from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.processing.plotters.arar_figure import BaseArArFigure
+from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, analysis_type_formatter
 
 N = 500
 
@@ -49,22 +53,29 @@ class Series(BaseArArFigure):
 
     def build(self, plots):
         graph = self.graph
-        for po in plots:
-            if po.use:
-                p = graph.new_plot(padding=self.padding,
-                                   ytitle=po.name,
-                                   xtitle='Time')
+        plots = (pp for pp in plots if pp.use)
+        for i, po in enumerate(plots):
+            p = graph.new_plot(padding=self.padding,
+                               ytitle=po.name,
+                               xtitle='Time')
 
-                p.value_scale = po.scale
-                p.padding_left = 75
-                p.value_range.tight_bounds = False
+            if po.name == 'AnalysisType':
+                p.y_axis.tick_label_formatter = tick_formatter
+                p.y_axis.tick_generator = StaticTickGenerator()
+                p.y_axis.tick_label_rotate_angle = 45
+                graph.set_y_limits(min_=-1, max_=7, plotid=i)
+
+            p.value_scale = po.scale
+            p.padding_left = 75
+            p.value_range.tight_bounds = False
+
 
     def plot(self, plots):
         """
             plot data on plots
         """
 
-        omits=self._get_omitted(self.sorted_analyses, omit='omit_series')
+        omits = self._get_omitted(self.sorted_analyses, omit='omit_series')
         graph = self.graph
 
         xs = array([ai.timestamp for ai in self.sorted_analyses])
@@ -97,38 +108,43 @@ class Series(BaseArArFigure):
     def _plot_series(self, po, pid, omits):
         graph = self.graph
         try:
-            ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
-            yerr = [ai.std_dev for ai in self._unpack_attr(po.name)]
+            if po.name == 'AnalysisType':
+                ys = list(self._unpack_attr(po.name))
+                kw = dict(y=ys)
+                yerr = None
+                value_format = analysis_type_formatter
+            else:
+                value_format = None
+                ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
+                yerr = [ai.std_dev for ai in self._unpack_attr(po.name)]
+                kw = dict(y=ys, yerror=yerr)
 
             n = [ai.record_id for ai in self.sorted_analyses]
-
             args = graph.new_series(x=self.xs,
-                                    y=ys,
                                     display_index=ArrayDataSource(data=n),
-                                    yerror=yerr,
                                     fit=po.fit,
                                     plotid=pid,
                                     type='scatter',
                                     add_inspector=False,
-                                    # add_tools=False
-                                    )
+                                    **kw)
             if len(args) == 2:
                 scatter, p = args
             else:
                 p, scatter, l = args
 
-            sel=scatter.index.metadata.get('selections',[])
-            sel+=omits
-            scatter.index.metadata['selections']=list(set(sel))
+            sel = scatter.index.metadata.get('selections', [])
+            sel += omits
+            scatter.index.metadata['selections'] = list(set(sel))
 
-            self._add_scatter_inspector(scatter)
+            self._add_scatter_inspector(scatter, value_format=value_format)
 
             if po.use_time_axis:
                 p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
             #p.value_scale = po.scale
-            end_caps=True
-            self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
+            end_caps = True
+            if yerr:
+                self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
         except (KeyError, ZeroDivisionError), e:
             print 'Series', e
 
@@ -136,27 +152,12 @@ class Series(BaseArArFigure):
         if attr.endswith('bs'):
             # f=lambda x: x.baseline.uvalue
             return (ai.get_baseline(attr).uvalue for ai in self.sorted_analyses)
-
-        elif attr == 'PC':
-            return super(Series, self)._unpack_attr(attr)
+        elif attr == 'AnalysisType':
+            # amap={'unknown':1, 'blank_unknown':2, 'blank_air':3, 'blank_cocktail':4}
+            f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
+            return (f(ai.analysis_type) for ai in self.sorted_analyses)
         else:
             return super(Series, self)._unpack_attr(attr)
-
-            # f = lambda x: x.get_intensity()
-            # return map(f, gs)
-
-            #if attr.endswith('bs'):
-            #    return (ai.isotopes[attr[:-2]].baseline.uvalue
-            #            for ai in self.sorted_analyses)
-            ##elif '/' in attr:
-            ##    n, d = attr.split('/')
-            #    #return (getattr(ai, n) / getattr(ai, d)
-            #    #        for ai in self.sorted_analyses)
-            #elif attr == 'PC':
-            #    return (getattr(ai, 'peak_center')
-            #            for ai in self.sorted_analyses)
-            #else:
-            #    return super(Series, self)._unpack_attr(attr)
 
     def update_graph_metadata(self, obj, name, old, new):
         sorted_ans = self.sorted_analyses
@@ -179,13 +180,14 @@ class Series(BaseArArFigure):
             # set the temp_status for all the analyses
             #for i, a in enumerate(sorted_ans):
             #    a.temp_status = 1 if i in sel else 0
-        # else:
+            # else:
             #sel = [i for i, a in enumerate(sorted_ans)
             #            if a.temp_status]
             # sel = self._get_omitted(sorted_ans, omit='omit_ideo')
             #print 'update graph meta'
             # self._rebuild_ideo(sel)
             # self.
+
 #===============================================================================
 # plotters
 #===============================================================================

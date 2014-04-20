@@ -44,6 +44,8 @@ class SeriesOptions(BasePlotterOptions):
                 keys.append('Ar40/Ar36')
 
         keys.append('PC')
+        keys.append('AnalysisType')
+
         ap = [f(k) for k in keys]
         self.trait_set(aux_plots=ap)
 

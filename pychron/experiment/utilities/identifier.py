@@ -22,6 +22,11 @@ from pychron.pychron_constants import LINE_STR, ALPHAS
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
                         pa='Pause')
+ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1, air=2, cocktail=3,
+                             blank_air=4,
+                             blank_cocktail=5,
+                             blank_unknown=6)
+
 
 # "labnumbers" where extract group is disabled
 NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail',
@@ -35,7 +40,8 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
-                       degas='dg')
+                       degas='dg',
+                       unknown='u')
 #        sn = ['Blank_air', 'Blank_cocktail', 'Blank_unknown',
 #              'Background', 'Air', 'Cocktail']
 # SPECIAL_IDS = {1:'Blank Air', 2:'Blank Cocktail', 3:'Blank Unknown',
@@ -50,12 +56,13 @@ cp = ConfigParser()
 p = os.path.join(paths.setup_dir, 'identifiers.cfg')
 if os.path.isfile(p):
     cp.read(p)
-    for option in cp.options('AnalysisNames'):
+    for i, option in enumerate(cp.options('AnalysisNames')):
         v = cp.get('AnalysisNames', option)
         labnumber, kname = v.split(',')
         ANALYSIS_MAPPING[option] = kname
         SPECIAL_NAMES.append(kname)
         SPECIAL_MAPPING[kname] = option
+        ANALYSIS_MAPPING_INTS[kname] = i + 7
 
 #        SPECIAL_IDS[int(labnumber)] = name
 

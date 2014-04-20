@@ -1458,7 +1458,16 @@ class IsotopeAdapter(DatabaseAdapter):
                 self.debug('got last analysis {}-{}'.format(r.labnumber.identifier, r.aliquot))
                 return r
             except NoResultFound, e:
-                self.debug('no analyses for {}'.format(ln.identifier))
+                if ln:
+                    name = ln.identifier
+                elif spectrometer:
+                    name = spectrometer
+
+                if name:
+                    self.debug('no analyses for {}'.format(name))
+                else:
+                    self.debug('no analyses for get_last_analysis')
+
                 return 0
 
     def get_unique_analysis(self, ln, ai, step=None):
