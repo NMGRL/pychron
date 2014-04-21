@@ -100,10 +100,10 @@ class Scene(HasTraits):
                 if test(ci))
 
     def get_items(self, klass=None):
-    #         return [ci for li in self.layers
-    #                 for ci in li.components
-    #                     if isinstance(ci, klass)]
-    #
+        #         return [ci for li in self.layers
+        #                 for ci in li.components
+        #                     if isinstance(ci, klass)]
+        #
         comps = (ci for li in self.layers
                  for ci in li.components)
         if klass:
@@ -118,7 +118,6 @@ class Scene(HasTraits):
             cb = True
             if klass is not None:
                 cb = isinstance(la, klass)
-
             return cb and (nb or ib)
 
         layers = self.layers
@@ -172,10 +171,10 @@ class Scene(HasTraits):
         for li in layers:
             li.pop_item(v, klass=klass)
 
-        #        layer[key] = v
-        #===============================================================================
-        # handlers
-        #===============================================================================
+            #        layer[key] = v
+            #===============================================================================
+            # handlers
+            #===============================================================================
 
     def _selected_changed(self, name, old, new):
         if issubclass(type(new), Primitive):

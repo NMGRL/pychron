@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import implements, Instance, Button, Bool, Str, List
+from traits.api import implements, Instance, Button, Bool, Str, List, on_trait_change
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -65,6 +65,9 @@ class ApisManager(Manager):
             v.actuator = self.controller
 
         self.valve_manager = vm
+        for p in vm.pipette_trackers:
+            p.load()
+            self._set_pipette_counts(p.name, p.counts)
 
     def open_valve(self, name, **kw):
         return self._change_valve_state(name, 'normal', 'open')
@@ -111,6 +114,13 @@ class ApisManager(Manager):
 
         return result, change
 
+    def _set_pipette_counts(self, name, value):
+        c = self.canvas
+        obj = c.scene.get_item('vlabel_{}'.format(name))
+        if obj is not None:
+            obj.value = value
+            c.request_redraw()
+
     def _load_canvas(self, c):
         c.load_canvas_file('apis_canvas_config.xml',
                            setup_name='apis_canvas')
@@ -136,6 +146,10 @@ class ApisManager(Manager):
         e.setup_context(extract_device='')
         e.extract_pipette(1, timeout=3)
         self.testing = False
+
+    @on_trait_change('valve_manager:pipette_trackers:counts')
+    def _update_pipette_counts(self, obj, name, old, new):
+        self._set_pipette_counts(obj.name, new)
 
     def _reload_canvas_button_fired(self):
         self._load_canvas(self.canvas)
