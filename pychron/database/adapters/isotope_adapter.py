@@ -419,7 +419,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #def count_sample_analyses(self, *args, **kw):
     #    return self._get_sample_analyses('count', *args, **kw)
     def get_labnumber_analyses(self, lns, low_post=None, high_post=None,
-                               omit_key=None, **kw):
+                               omit_key=None, exclude_uuids=None, **kw):
         """
             get analyses that have labnunmbers in lns.
             low_post and high_post used to filter a date range.
@@ -446,6 +446,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
             if omit_key:
                 q = q.filter(not_(getattr(proc_TagTable, omit_key)))
+
+            if exclude_uuids:
+                q = q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
             return self._get_paginated_analyses(q, **kw)
 

@@ -24,6 +24,7 @@ import apptools.sweet_pickle as pickle
 
 
 
+
 #============= standard library imports ========================
 from datetime import timedelta, datetime
 #============= local library imports  ==========================
@@ -370,6 +371,7 @@ class BrowserMixin(ColumnSorterMixin):
                              limit=500,
                              low_post=None,
                              high_post=None,
+                             exclude_uuids=None,
                              # page=None, page_width=None,
                              include_invalid=False):
         db = self.manager.db
@@ -391,6 +393,7 @@ class BrowserMixin(ColumnSorterMixin):
                                                 low_post=low_post,
                                                 high_post=high_post,
                                                 limit=limit,
+                                                exclude_uuids=exclude_uuids,
                                                 # offset=o,
                                                 include_invalid=include_invalid)
             prog = None

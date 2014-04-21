@@ -19,7 +19,6 @@ from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
-from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -27,7 +26,6 @@ from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
-from pychron.processing.tasks.browser.actions import NewBrowserEditorAction
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.panes import BrowserPane
 
@@ -52,9 +50,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # danalysis_table = Instance(AnalysisTable)
 
     analysis_filter = String(enter_set=True, auto_set=False)
-
-    tool_bars = [SToolBar(NewBrowserEditorAction(),
-                          image_size=(16, 16))]
 
     irradiations = DelegatesTo('manager')
     irradiation = DelegatesTo('manager')
@@ -112,7 +107,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.dump_browser_selection()
         self.dump_browser_options()
         self._activated = False
-        # self.analysis_table.dump()
 
     def activated(self):
         self.load_projects()
@@ -124,35 +118,21 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._load_extraction_devices()
 
         self.datasource_url = db.datasource_url
-        # self._set_db()
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
         self.load_browser_options()
         self._activated = True
-        # self.analysis_table.load()
-
-        # def _set_db(self):
-        #self.analysis_table.db = self.manager.db
-        # self.danalysis_table.db = self.manager.db
 
     def _get_selected_analyses(self, unks=None):
         s = self.analysis_table.selected
         if not s:
             if self.selected_samples:
                 iv = not self.analysis_table.omit_invalid
-
-                uuids = []
-                if unks:
-                    uuids = [x.uuid for x in unks]
-
-                def test(aa):
-                    return not aa.uuid in uuids
-
+                uuids = [x.uuid for x in unks] if unks else None
                 s = [ai for ai in self._get_sample_analyses(self.selected_samples,
-                                                            include_invalid=iv)
-                     if test(ai)]
-
+                                                            exclude_uuids=uuids,
+                                                            include_invalid=iv)]
         return s
 
     def _load_mass_spectrometers(self):
@@ -179,11 +159,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _ok_query(self):
         ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
         at = self.analysis_type not in (DEFAULT_AT, 'None')
-
         return ms and at
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
+
+    def _set_selected_analysis(self, new):
+        pass
 
     def _level_changed(self):
         self._find_by_irradiation_fired()
@@ -195,25 +177,21 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         man = self.manager
         db = man.db
         with db.session_ctx():
-            level = self.manager.get_level(self.level)
+            level = man.get_level(self.level)
             if level:
 
-                refs, unks = self.manager.group_level(level)
+                refs, unks = man.group_level(level)
                 xs = []
                 if self.include_monitors:
-                    xs.append(refs)
+                    xs.extend(refs)
 
                 if self.include_unknowns:
-                    xs.append(unks)
+                    xs.extend(unks)
 
-                def sfactory(ri):
-                    dbrecord = db.get_labnumber(ri.identifier)
-                    if dbrecord and dbrecord.sample:
-                        return LabnumberRecordView(dbrecord)
-
-                samples = [sfactory(ri) for x in xs
-                           for ri in x]
-                self.samples = [si for si in samples if si]
+                lns = [x.identifier for x in xs]
+                self.samples = [LabnumberRecordView(li)
+                                for li in db.get_labnumbers(lns)
+                                if li.sample]
 
     def _advanced_query_fired(self):
 
@@ -229,9 +207,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _selected_analysis_changed(self, new):
         self._set_selected_analysis(new)
 
-    def _set_selected_analysis(self, new):
-        pass
-
     @on_trait_change('analysis_table:omit_invalid')
     def _omit_invalid_changed(self):
         self._selected_samples_changed(self.selected_samples)
@@ -243,7 +218,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _selected_samples_changed(self, new):
         if new:
-            # self._set_page(-1, reset_page=True)
             at = self.analysis_table
             lp, hp, lim = at.low_post, at.high_post, at.limit
             ans = self._get_sample_analyses(self.selected_samples,
@@ -254,113 +228,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)
-            # ans=self.analysis_table.analyses
-            # if ans:
-            # # if ans and self.auto_select_analysis:
-            #     self.analysis_table.selected = ans[-1:]
-
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)
         return at
-        #============= EOF =============================================
-        # @on_trait_change('analysis_table:page')
-        # def _page_changed(self, new):
-        #     self._set_page(new)
 
-        # def _set_page(self, page, reset_page=False):
-        #     if not self.analysis_table.no_update:
-        #         include_invalid = not self.analysis_table.omit_invalid
-        #         page_width = self.analysis_table.page_width
-        #
-        #         ans, tc = self._get_sample_analyses(self.selected_samples,
-        #                                             include_invalid=include_invalid,
-        #                                             page_width=page_width,
-        #                                             page=page)
-        #
-        #         self.analysis_table.set_analyses(ans, tc, page, reset_page=reset_page)
-        # def _danalysis_table_default(self):
-        #     at = AnalysisTable(db=self.manager.db)
-        #     return at
+#============= EOF =============================================
 
-        #class BrowserTask(BaseBrowserTask):
-        #    name = 'Analysis Browser'
-        #
-        #
-        #    def activated(self):
-        #        editor = RecallEditor()
-        #        self._open_editor(editor)
-        #        self.load_projects()
-        #
-        #    def new_editor(self):
-        #        editor = RecallEditor()
-        #        self._open_editor(editor)
-        #
-        #    def _default_layout_default(self):
-        #        return TaskLayout(left=PaneItem('pychron.browser'))
-        #
-        #    def _set_selected_analysis(self, an):
-        #        if an and isinstance(self.active_editor, RecallEditor):
-        #        #             l, a, s = strip_runid(s)
-        #        #             an = self.manager.db.get_unique_analysis(l, a, s)
-        #            an = self.manager.make_analyses([an], calculate_age=True)[0]
-        #            #             an.load_isotopes(refit=False)
-        #            #self.active_editor.analysis_summary = an.analysis_summary
-        #            self.active_editor.analysis_view = an.analysis_view
-        #
-        #    def create_dock_panes(self):
-        #        return [self._create_browser_pane(multi_select=False)]
-        #
-        #    def _analysis_table_default(self):
-        #        at = AnalysisTable(db=self.manager.db)
-        #        return at
-        #
-        #    def _danalysis_table_default(self):
-        #        at = AnalysisTable(db=self.manager.db)
-        #        return at
-        #
-        #    def _dclicked_sample_changed(self):
-        #        pass
-
-        #===============================================================================
-        # handlers
-        #===============================================================================
-
-        # @on_trait_change('mass_spectrometer, analysis_type, extraction_device')
-        # def _query(self):
-        #     if self._ok_query():
-        #
-        #         db = self.manager.db
-        #         with db.session_ctx() as sess:
-        #             q = sess.query(meas_AnalysisTable)
-        #             q = q.join(gen_LabTable)
-        #             q = q.join(meas_MeasurementTable)
-        #             q = q.join(gen_MassSpectrometerTable)
-        #             q = q.join(gen_AnalysisTypeTable)
-        #
-        #             if self._ok_ed():
-        #                 q = q.join(meas_ExtractionTable)
-        #                 q = q.join(gen_ExtractionDeviceTable)
-        #
-        #             name = self.mass_spectrometer
-        #             q = q.filter(gen_MassSpectrometerTable.name == name)
-        #             if self._ok_ed():
-        #                 q = q.filter(gen_ExtractionDeviceTable.name == self.extraction_device)
-        #
-        #             q = q.filter(gen_AnalysisTypeTable.name == self.analysis_type)
-        #             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-        #             q = q.limit(200)
-        #
-        #             ans = q.all()
-        #
-        #             aa = [self._record_view_factory(ai) for ai in ans]
-        #
-        #             # self.danalysis_table.analyses = aa
-        #             # self.danalysis_table.oanalyses = aa
-        #     else:
-        #         if self.mass_spectrometer == 'None':
-        #             self.mass_spectrometer = DEFAULT_SPEC
-        #         if self.extraction_device == 'None':
-        #             self.extraction_device = DEFAULT_ED
-        #         if self.analysis_type == 'None':
-        #             self.analysis_type = DEFAULT_AT
