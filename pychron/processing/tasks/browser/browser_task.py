@@ -87,15 +87,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     browser_pane = Any
     advanced_query = Button
 
-    #def set_projects(self, ps, sel):
-    #    self.oprojects = ps
-    #    self.projects = ps
-    #    self.trait_set(selected_project=sel)
-    #
-    #def set_samples(self, s, sel):
-    #    self.samples = s
-    #    self.osamples = s
-    #    self.trait_set(selected_sample=sel)
+    _activated = False
+
     def dump_browser_options(self):
         d = {'include_monitors': self.include_monitors,
              'include_unknowns': self.include_unknowns}
@@ -118,6 +111,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def prepare_destroy(self):
         self.dump_browser_selection()
         self.dump_browser_options()
+        self._activated = False
         # self.analysis_table.dump()
 
     def activated(self):
@@ -135,6 +129,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
         self.load_browser_selection()
         self.load_browser_options()
+        self._activated = True
         # self.analysis_table.load()
 
         # def _set_db(self):
@@ -190,7 +185,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
 
+    def _level_changed(self):
+        self._find_by_irradiation_fired()
+
     def _find_by_irradiation_fired(self):
+        if not (self.level and self._activated):
+            return
+
         man = self.manager
         db = man.db
         with db.session_ctx():

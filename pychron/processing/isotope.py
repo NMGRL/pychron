@@ -24,6 +24,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -242,7 +243,6 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._value
 
         if len(self.xs) > 1:
-            # self.regressor.calculate(force=False)
             v = self.regressor.predict(0)
             return v
         else:
@@ -255,7 +255,6 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._error
 
         if len(self.xs) > 1:
-            # self.regressor.calculate(force=False)
             v = self.regressor.predict_error(0)
             return v
         else:
