@@ -30,6 +30,7 @@ from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPa
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -141,14 +142,18 @@ class RecallTask(AnalysisEditTask):
         if not self.has_active_editor():
             return
 
-        if hasattr(self.active_editor, 'edit_view') and self.active_editor.edit_view:
-            self.active_editor.edit_view.show()
+        editor = self.active_editor
+        if hasattr(editor, 'edit_view') and editor.edit_view:
+            editor.edit_view.show()
         else:
-            e = AnalysisEditView(editor=self.active_editor)
-            e.load_isotopes()
-            info = e.edit_traits()
-            e.control = info.ui.control
-            self.active_editor.edit_view = e
+            e = AnalysisEditView(editor)
+
+            # e.load_isotopes()
+            # info = e.edit_traits()
+            # info = timethis(e.edit_traits)
+            info = self.application.open_view(e)
+            e.control = info.control
+            editor.edit_view = e
 
     def add_diff(self):
         if not self.has_active_editor():

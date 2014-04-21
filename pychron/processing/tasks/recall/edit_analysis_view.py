@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, on_trait_change, Bool, Event
-from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler
+from traitsui.api import View, UItem, TableEditor, HGroup, spring, Handler, VGroup, Group
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -33,24 +33,43 @@ class AnalysisEditViewHandler(Handler):
 
 class AnalysisEditView(HasTraits):
     isotopes = List
+    baselines = List
+    blanks = List
     revert_button = Event
     dirty = Bool
 
     control = None
     editor = None
 
+    def __init__(self, editor, *args, **kw):
+        super(AnalysisEditView, self).__init__(*args, **kw)
+        self.editor = editor
+        self.load()
+
+    def load(self):
+        m = self.editor.model
+        self.title = 'Edit Data - {}'.format(m.record_id)
+        self.load_isotopes()
+
     def load_isotopes(self):
         isos = self.editor.model.isotopes
         ns = []
+        bks = []
+        bs = []
         for k in self.editor.model.isotope_keys:
             iso = isos[k]
             iso.use_static = True
             ns.append(iso)
+            bks.append(iso.blank)
+            bs.append(iso.baseline)
 
         self.isotopes = ns
+        self.blanks = bks
+        self.baselines = bs
+
         # self.isotopes = [isos[k] for k in self.editor.model.isotope_keys]
 
-    @on_trait_change('isotopes:[_value,_error]')
+    @on_trait_change('[isotopes,blanks,baselines]:[_value,_error]')
     def _handle_change(self, obj, name, old, new):
         self.dirty = True
         obj.dirty = True
@@ -81,16 +100,35 @@ class AnalysisEditView(HasTraits):
                 ObjectColumn(name='value'),
                 ObjectColumn(name='error')]
 
-        v = View(UItem('isotopes',
-                       editor=TableEditor(columns=cols)),
-                 HGroup(icon_button_editor('revert_button',
-                                           'arrow_undo',
-                                           tooltip='Undo changes',
-                                           enabled_when='dirty'), spring),
+        iso_grp = VGroup(UItem('isotopes',
+                               editor=TableEditor(columns=cols,
+                                                  sortable=False)),
+                         label='Intercepts', show_border=True)
+
+        baseline_grp = VGroup(UItem('baselines',
+                                    editor=TableEditor(sortable=False,
+                                                       columns=cols)),
+                              label='Baselines', show_border=True)
+
+        blank_grp = VGroup(UItem('blanks',
+                                 editor=TableEditor(
+                                     sortable=False,
+                                     columns=cols)),
+                           label='Blanks', show_border=True)
+
+        bgrp = HGroup(icon_button_editor('revert_button',
+                                         'arrow_undo',
+                                         tooltip='Undo changes',
+                                         enabled_when='dirty'), spring)
+
+        v = View(VGroup(Group(iso_grp, baseline_grp, layout='tabbed'),
+                        blank_grp, bgrp),
                  buttons=['OK', 'Cancel'],
                  handler=AnalysisEditViewHandler(),
-                 x=0.1,
-                 y=0.1)
+                 resizable=True,
+                 title=self.title,
+                 x=0.05,
+                 y=0.05)
 
         return v
 

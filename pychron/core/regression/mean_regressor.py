@@ -26,7 +26,7 @@ class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
 
-    def calculate(self, filtering=False):
+    def calculate(self, filtering=False, **kw):
         # cxs, cys = self.pre_clean_ys, self.pre_clean_ys
         if not filtering:
             #prevent infinite recursion

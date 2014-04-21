@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -210,7 +211,7 @@ class IsotopicMeasurement(BaseMeasurement):
 
         self.dirty = True
 
-    def revert_user_defined(self):
+    def _revert_user_defined(self):
         self.user_defined_error = False
         self.user_defined_value = False
         if self._ovalue is not None:
@@ -241,7 +242,7 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._value
 
         if len(self.xs) > 1:
-            self.regressor.calculate()
+            # self.regressor.calculate(force=False)
             v = self.regressor.predict(0)
             return v
         else:
@@ -254,7 +255,7 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._error
 
         if len(self.xs) > 1:
-            self.regressor.calculate()
+            # self.regressor.calculate(force=False)
             v = self.regressor.predict_error(0)
             return v
         else:
@@ -267,6 +268,7 @@ class IsotopicMeasurement(BaseMeasurement):
                             error_calc_type=self.error_type or 'SEM')
         return reg
 
+    @cached_property
     def _get_regressor(self):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
@@ -391,6 +393,11 @@ class Isotope(BaseIsotope):
     discrimination = Either(Variable, AffineScalarFunc)
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
+
+    def revert_user_defined(self):
+        self.blank._revert_user_defined()
+        self.baseline._revert_user_defined()
+        self._revert_user_defined()
 
     def get_interference_corrected_value(self):
         if self.interference_corrected_value is not None:

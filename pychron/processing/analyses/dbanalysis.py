@@ -491,13 +491,21 @@ class DBAnalysis(Analysis):
                     isok = ba.isotope
                     if isok in keys:
                         blank = isodict[isok].blank
+                        blank.name = n = '{} bk'.format(isok)
                         blank.set_uvalue((ba.user_value,
                                           ba.user_error))
-                        blank.uvalue.tag = '{} bk'.format(isok)
+                        blank.uvalue.tag = n
                         blank.fit = ba.fit or ''
                         keys.remove(isok)
                         if not keys:
                             break
+
+            # set names for isotopes with no blank
+            for k in keys:
+                blank = isodict[k].blank
+                n = '{} bk'.format(k)
+                blank.uvalue.tag = n
+                blank.name = n
 
     def _get_signals(self, isodict, meas_analysis, dbisos, unpack):
 

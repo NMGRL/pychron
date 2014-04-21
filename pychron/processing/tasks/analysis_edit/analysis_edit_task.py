@@ -156,12 +156,13 @@ class AnalysisEditTask(BaseBrowserTask):
         self.debug('recalling records {}'.format(records))
 
         if not isinstance(records, (list, tuple)):
-            records = (records,)
+            records = [records]
+        elif isinstance(records, tuple):
+            records = list(records)
 
         editor = None
         #check if record already is open
         for r in records:
-
             editor = self._get_editor_by_uuid(r.uuid)
             if editor:
                 records.remove(r)

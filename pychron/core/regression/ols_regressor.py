@@ -43,7 +43,7 @@ class OLSRegressor(BaseRegressor):
     degree = Property(depends_on='_degree')
     _degree = Int
     constant = None
-    ols = None
+    _ols = None
 
     def _get_degrees_of_freedom(self):
         return len(self.coefficients)
@@ -193,6 +193,7 @@ class OLSRegressor(BaseRegressor):
                 return sef * sqrt(varY_hat)
         elif error_calc == 'SEM, but if MSWD>1 use SEM * sqrt(MSWD)':
             mswd = self.mswd
+
             def func(xi):
                 varY_hat = calc_hat(xi)
                 m = mswd ** 0.5 if mswd > 1 else 1
@@ -371,6 +372,7 @@ class MultipleLinearRegressor(OLSRegressor):
         if you have a tuple of x,y pairs
         X=array(xy)
     """
+
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.clean_xs
