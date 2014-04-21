@@ -29,6 +29,7 @@ from sqlalchemy.sql.expression import func
 
 
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -195,6 +196,8 @@ class meas_IsotopeTable(Base, BaseMixin):
 
 
 class meas_MeasurementTable(Base, BaseMixin):
+    time_zero_offset = Column(Float)
+
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')
     analysis_type_id = foreignkey('gen_AnalysisTypeTable')
     spectrometer_parameters_id = foreignkey('meas_SpectrometerParametersTable')

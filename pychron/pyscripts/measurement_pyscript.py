@@ -568,6 +568,13 @@ class MeasurementPyScript(ValvePyScript):
                 r = cg.getfloat('Default', 'eqtime', )
             return r
 
+    @property
+    def time_zero_offset(self):
+        if self.automated_run:
+            return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
+        else:
+            return 0
+
 #===============================================================================
 # handler
 #===============================================================================

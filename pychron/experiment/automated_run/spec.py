@@ -94,9 +94,10 @@ class AutomatedRunSpec(Loggable):
     overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
-
     truncate_condition = Str
     syn_extraction = Str
+
+    time_zero_offset = Float
 
     #===========================================================================
     # info
@@ -278,7 +279,7 @@ class AutomatedRunSpec(Loggable):
     def _get_run_attrs(self):
         return ('labnumber', 'aliquot', 'step',
                 'extract_value', 'extract_units', 'ramp_duration',
-                'position', 'duration', 'cleanup',
+                'position', 'duration', 'cleanup', 'time_zero_offset',
                 'pattern',
                 'beam_diameter',
                 'truncate_condition',

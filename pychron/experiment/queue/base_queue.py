@@ -283,6 +283,7 @@ class BaseExperimentQueue(Loggable):
                ('beam_diam', 'beam_diameter'),
                'pattern',
                ('extraction', 'extraction_script'),
+               ('t_o', 'time_zero_offset'),
                ('measurement', 'measurement_script'),
                ('truncate','truncate_condition'),
                'syn_extraction',
@@ -326,8 +327,7 @@ load: {}
             self.delay_between_analyses,
             self.extract_device,
             self.tray or '',
-            self.load_name or ''
-        )
+            self.load_name or '')
 
         if fp:
             fp.write(s)

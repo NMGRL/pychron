@@ -160,6 +160,7 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
+    time_zero_offset = Float
     #===========================================================================
     # extract
     #===========================================================================
@@ -415,6 +416,7 @@ class AutomatedRunFactory(Loggable):
     def _get_run_attr(self):
         return ['position',
                 'extract_value', 'extract_units', 'cleanup', 'duration',
+                'time_zero_offset',
                 'pattern', 'beam_diameter',
                 'weight', 'comment',
                 'sample', 'irradiation',
@@ -465,6 +467,7 @@ class AutomatedRunFactory(Loggable):
                      'extract_value', 'extract_units', 'cleanup', 'duration',
                      'pattern', 'beam_diameter',
                      'position',
+                     'time_zero_offset',
                      'weight', 'comment'):
 
             if attr in excludes:
@@ -959,7 +962,7 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,time_zero_offset,
 extract_units,
 pattern,
 position,

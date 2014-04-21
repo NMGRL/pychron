@@ -839,6 +839,7 @@ class AutomatedRun(Loggable):
 
         #load extraction metadata
         self.eqtime = self._get_extraction_parameter('eqtime', 15)
+        self.time_zero_offset = self.spec.time_zero_offset
 
         #setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()

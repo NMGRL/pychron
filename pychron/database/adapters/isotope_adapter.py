@@ -1123,23 +1123,18 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_measurement(self, analysis, analysis_type, mass_spec, **kw):
         meas = meas_MeasurementTable(**kw)
-        #        if isinstance(analysis, str):
 
-        self._add_item(meas, )
+        self._add_item(meas)
 
-        an = self.get_analysis(analysis, )
-        at = self.get_analysis_type(analysis_type, )
-        ms = self.get_mass_spectrometer(mass_spec, )
+        an = self.get_analysis(analysis)
+        at = self.get_analysis_type(analysis_type)
+        ms = self.get_mass_spectrometer(mass_spec)
         if an:
             an.measurement = meas
 
         meas.mass_spectrometer = ms
         meas.analysis_type = at
-        #if at:
-        #    meas.analysis_type_id = at.id
-        #if ms:
-        #    meas.mass_spectrometer_id = ms.id
-        #
+
         return meas
 
     def add_mass_spectrometer(self, name):
