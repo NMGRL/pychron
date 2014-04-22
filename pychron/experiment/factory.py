@@ -73,6 +73,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
     def destroy(self):
         self._should_consume = False
+        self.run_factory.deactivate()
 
     def set_selected_runs(self, runs):
         self.run_factory.set_selected_runs(runs)
@@ -208,7 +209,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
 
-        rf.load_truncations()
+        rf.activate()
         rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
         return rf

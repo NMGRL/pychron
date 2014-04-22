@@ -74,6 +74,8 @@ class DBAnalysis(Analysis):
     timestamp = Float
     rundate = Date
 
+    collection_time_zero_offset = Float
+
     peak_center = Float
     peak_center_data = Any
 
@@ -195,7 +197,7 @@ class DBAnalysis(Analysis):
             self.material = material
 
         self._sync_meas_analysis_attributes(meas_analysis)
-        self._sync_analysis_info(meas_analysis)
+        # self._sync_analysis_info(meas_analysis)
         self._sync_irradiation(lab)
 
         #this is the dominant time sink
@@ -209,11 +211,19 @@ class DBAnalysis(Analysis):
         # timethis(self._sync_meta, args=(meas_analysis,))
 
         if load_changes:
+            self._sync_measurement(meas_analysis)
             self._sync_changes(meas_analysis)
             self._sync_experiment(meas_analysis)
             self._sync_extraction(meas_analysis)
 
-        self.analysis_type = self._get_analysis_type(meas_analysis)
+        self._sync_measurement(meas_analysis)
+
+    def _sync_measurement(self, meas_analysis):
+        if meas_analysis:
+            meas = meas_analysis.measurement
+            self.analysis_type = meas.analysis_type.name
+            self.mass_spectrometer = meas.mass_spectrometer.name.lower()
+            self.collection_time_zero_offset = meas.time_zero_offset or 0
 
     def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
@@ -223,19 +233,14 @@ class DBAnalysis(Analysis):
             ('labnumber', 'labnumber', lambda x: x.identifier),
             ('aliquot', 'aliquot', int),
             ('step', 'step', str),
-            #                  ('status', 'status', int),
             ('comment', 'comment', str),
             ('uuid', 'uuid', str),
             ('rundate', 'analysis_timestamp', nocast),
             ('timestamp', 'analysis_timestamp',
-             lambda x: time.mktime(x.timetuple())
-            ),
-        ]
+             lambda x: time.mktime(x.timetuple()))]
         for key, attr, cast in attrs:
             v = getattr(meas_analysis, attr)
             setattr(self, key, cast(v))
-
-        # self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
 
         tag = meas_analysis.tag
         if tag:
@@ -243,7 +248,6 @@ class DBAnalysis(Analysis):
             self.set_tag(tag)
 
     def _sync_changes(self, meas_analysis):
-
         self.blank_changes = [BlankChange(bi) for bi in meas_analysis.blanks_histories]
         self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
 
@@ -291,7 +295,6 @@ class DBAnalysis(Analysis):
     def _sync_chron_segments(self, irradiation):
         chron = irradiation.chronology
         if chron:
-
             analts = self.timestamp
             if isinstance(analts, float):
                 analts = datetime.fromtimestamp(analts)
@@ -364,9 +367,6 @@ class DBAnalysis(Analysis):
 
         av.load(weakref.ref(self)())
 
-    def _sync_analysis_info(self, meas_analysis):
-        self.mass_spectrometer = self._get_mass_spectrometer(meas_analysis)
-
     def _sync_detector_info(self, meas_analysis, **kw):
         #discrimination saved as 1amu disc not 4amu
         discriminations = self._get_discriminations(meas_analysis)
@@ -379,17 +379,13 @@ class DBAnalysis(Analysis):
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
                 disc, refmass = discriminations[det]
-                # ni = mass - round(refmass)
 
                 mass = iso.mass
                 n = mass - refmass
-                #self.info('{} {} {}'.format(iso.name, n, ni))
+
                 #calculate discrimination
                 idisc = disc ** n
                 e = disc
-                #for i in range(int(ni)-1):
-                #    e*=disc
-                #
                 idisc = ufloat(idisc.nominal_value, e.std_dev, tag='{} D'.format(iso.name))
 
             iso.discrimination = idisc
@@ -456,14 +452,22 @@ class DBAnalysis(Analysis):
 
     def _get_isotope_fits(self):
         keys = self.isotope_keys
-        fs = [(self.isotopes[ki].fit,
-               self.isotopes[ki].error_type,
-               self.isotopes[ki].filter_outliers_dict)
-              for ki in keys]
-        bs = [(self.isotopes[ki].baseline.fit,
-               self.isotopes[ki].baseline.error_type,
-               self.isotopes[ki].baseline.filter_outliers_dict)
-              for ki in keys]
+        isos = self.isotopes
+        fs, bs = [], []
+        for k in keys:
+            iso = isos[k]
+            fs.append(iso.fit, iso.error_type, iso.filter_outliers_dict)
+            iso = iso.baseline
+            bs.append(iso.fit, iso.error_type, iso.filter_outliers_dict)
+
+        # fs = [(isos[ki].fit,
+        #        isos[ki].error_type,
+        #        isos[ki].filter_outliers_dict)
+        #       for ki in keys]
+        # bs = [(isos[ki].baseline.fit,
+        #        isos[ki].baseline.error_type,
+        #        isos[ki].baseline.filter_outliers_dict)
+        #       for ki in keys]
 
         return fs + bs
 
@@ -617,14 +621,14 @@ class DBAnalysis(Analysis):
             r = extraction.extraction_device.name
         return r
 
-    def _get_analysis_type(self, meas_analysis):
-        r = ''
-        if meas_analysis:
-            r = meas_analysis.measurement.analysis_type.name
-        return r
+    # def _get_analysis_type(self, meas_analysis):
+    #     r = ''
+    #     if meas_analysis:
+    #         r = meas_analysis.measurement.analysis_type.name
+    #     return r
 
-    def _get_mass_spectrometer(self, meas_analysis):
-        return meas_analysis.measurement.mass_spectrometer.name.lower()
+    # def _get_mass_spectrometer(self, meas_analysis):
+    #     return meas_analysis.measurement.mass_spectrometer.name.lower()
 
     def _get_discriminations(self, meas_analysis):
         """

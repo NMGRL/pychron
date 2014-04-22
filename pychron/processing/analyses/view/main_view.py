@@ -118,6 +118,9 @@ class MainView(HasTraits):
                             units='s'),
             ExtractionValue(name='Cleanup',
                             value=an.cleanup,
+                            units='s'),
+            ExtractionValue(name='T_o',
+                            value=an.collection_time_zero_offset,
                             units='s')]
 
         if 'UV' in an.extract_device:
@@ -147,7 +150,6 @@ class MainView(HasTraits):
         self.extraction_values = ev
 
     def load_computed(self, an, new_list=True):
-
         if self.analysis_type == 'unknown':
             self._load_unknown_computed(an, new_list)
             if self._corrected_enabled:

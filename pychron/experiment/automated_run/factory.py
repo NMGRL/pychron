@@ -18,8 +18,9 @@
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, \
     Button, \
     Event, Enum
-
+import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
+from traits.trait_errors import TraitError
 import yaml
 import os
 #============= local library imports  ==========================
@@ -251,6 +252,15 @@ class AutomatedRunFactory(Loggable):
     mass_spectrometer = String
     extract_device = Str
 
+    _default_attrs = ('time_zero_offset',)
+
+    def activate(self):
+        self.load_truncations()
+        self.load_defaults()
+
+    def deactivate(self):
+        self.dump_defaults()
+
     def set_end_after(self, v):
         self._update_run_values('end_after', v)
 
@@ -281,6 +291,34 @@ class AutomatedRunFactory(Loggable):
 
     def load_truncations(self):
         self.truncations = self._get_truncations()
+
+    def load_defaults(self):
+        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+        if os.path.isfile(p):
+            d = None
+            with open(p, 'r') as fp:
+                try:
+                    d = pickle.load(fp)
+                except BaseException, e:
+                    self.debug('could not load defaults Exception: {}'.format(e))
+            if d:
+                for attr in self._default_attrs:
+                    try:
+                        setattr(self, attr, d.get(attr))
+                    except (KeyError, TraitError), e:
+                        self.debug(e)
+
+    def dump_defaults(self):
+        d = {}
+        for attr in self._default_attrs:
+            d[attr] = getattr(self, attr)
+
+        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+        with open(p, 'w') as fp:
+            try:
+                pickle.dump(d, fp)
+            except BaseException, e:
+                self.debug('failed dumping defaults Exception: {}'.format(e))
 
     def use_frequency(self):
         return self.labnumber in ANALYSIS_MAPPING and self.frequency

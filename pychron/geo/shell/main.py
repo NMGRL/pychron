@@ -64,8 +64,8 @@ def make_sample_points(geo):
         v = db.get_project(pr)
         samples = v.samples
         yr1, yr2 = partition(samples, lambda x: x.name.startswith('MB06'))
-        for name, sams in (('MB06_all_samples', yr1),):
-            #('MB07_all_samples', yr2)):
+        for name, sams in (('MB06_all_samples', yr1),
+                           ('MB07_all_samples', yr2)):
             pts = []
             for s in sams:
                 if not s.lat:
@@ -213,8 +213,8 @@ def write_shape_file(pts, attrs, p):
 
 
 def main():
-    # make_sample_shape_file('pychrondata_minnabluff')
-    make_interpreted_age_shape_file('pychrondata_minnabluff')
+    make_sample_shape_file('pychrondata_minnabluff')
+    # make_interpreted_age_shape_file('pychrondata_minnabluff')
     # make_binned_elevations('pychrondata_minnabluff')
 
 

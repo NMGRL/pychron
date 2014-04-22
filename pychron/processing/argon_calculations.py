@@ -28,10 +28,7 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
-
-
 #============= local library imports  ==========================
-
 
 def extract_isochron_xy(analyses):
     ans = [(ai.get_interference_corrected_value('Ar39'),
@@ -384,6 +381,7 @@ def age_equation(j, f,
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}
+
 
 def overlap(a1, a2, e1, e2, overlap_sigma):
     e1 *= overlap_sigma
