@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from threading import Thread, Lock
 import time
 #from apptools.preferences.preference_binding import bind_preference
+from pyface.timer.do_later import do_later
 from traits.api import Instance, Property, Int, Bool, on_trait_change, Any
 
 #============= standard library imports ========================
@@ -201,8 +202,8 @@ class SystemMonitorEditor(SeriesEditor):
                     if time.time() - st > db_poll_interval:
                         st = time.time()
                         lr = self._get_last_run_uuid()
-                        self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                         if lr != last_run_uuid:
+                            self.debug('current uuid {} <> {}'.format(last_run_uuid, lr))
                             last_run_uuid = lr
                             invoke_in_main_thread(self.run_added_handler, lr)
             else:
@@ -306,11 +307,11 @@ class SystemMonitorEditor(SeriesEditor):
                        use_date_range=False):
         if editor is None:
             editor = editor_factory()
-            if layout:
-                self.task.split_editors(-2, -1)
-        else:
-            if not self._polling:
-                self.task.activate_editor(editor)
+        #     if layout:
+        #         self.task.split_editors(-2, -1)
+        # else:
+        #     if not self._polling:
+        #         self.task.activate_editor(editor)
 
         #gather analyses
         ans = self._get_analyses(identifier,
@@ -320,7 +321,8 @@ class SystemMonitorEditor(SeriesEditor):
         editor.analyses = ans
         group_analyses_by_key(editor, editor.analyses, 'labnumber')
         #        self.task.group_by_labnumber()
-        editor.rebuild_graph()
+        # editor.rebuild()
+        do_later(editor.rebuild)
         return editor
 
     def _sort_analyses(self, ans):
@@ -334,7 +336,7 @@ class SystemMonitorEditor(SeriesEditor):
                 def func(a, l):
                     return l.identifier == identifier, a.aliquot == aliquot
 
-                ans = db.get_analyses(func=func, limit=limit)
+                ans = db.get_analyses(func=func)
             elif use_date_range:
                 end = datetime.now()
                 start = end - timedelta(hours=self.tool.hours,
@@ -345,7 +347,7 @@ class SystemMonitorEditor(SeriesEditor):
                                                  labnumber=identifier,
                                                  limit=limit)
             else:
-                ans, tc = db.get_labnumber_analyses(identifier, limit=limit)
+                ans, tc = db.get_labnumber_analyses(identifier)
 
             return self.processor.make_analyses(ans)
 

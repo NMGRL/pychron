@@ -243,8 +243,11 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         return age_equation(rad40 / k39, j, a.arar_constants)
 
     def _get_steps(self):
+
+        # for ai in self.analyses:
+        #     print ai.record_id, ai.age, ai.uage_wo_j_err
         d = [(ai.age,
-              ai.uage_wo_j_err.std_dev,
+              ai.uage_wo_j_err.std_dev if ai.uage_wo_j_err else 0,
               ai.get_computed_value('k39').nominal_value)
              # ai.get_interference_corrected_value('Ar39').nominal_value)
              for ai in self.analyses]

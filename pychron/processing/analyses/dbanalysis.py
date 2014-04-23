@@ -214,8 +214,8 @@ class DBAnalysis(Analysis):
             self._sync_measurement(meas_analysis)
             self._sync_changes(meas_analysis)
             self._sync_experiment(meas_analysis)
-            self._sync_extraction(meas_analysis)
 
+        self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
 
     def _sync_measurement(self, meas_analysis):
@@ -456,9 +456,9 @@ class DBAnalysis(Analysis):
         fs, bs = [], []
         for k in keys:
             iso = isos[k]
-            fs.append(iso.fit, iso.error_type, iso.filter_outliers_dict)
+            fs.append((iso.fit, iso.error_type, iso.filter_outliers_dict))
             iso = iso.baseline
-            bs.append(iso.fit, iso.error_type, iso.filter_outliers_dict)
+            bs.append((iso.fit, iso.error_type, iso.filter_outliers_dict))
 
         # fs = [(isos[ki].fit,
         #        isos[ki].error_type,

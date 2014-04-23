@@ -377,7 +377,7 @@ class Processor(IsotopeDatabaseManager):
 
             traceback.print_exc()
 
-        return self.make_analyses(ans)
+        return self.make_analyses(ans, calculate_age=True)
 
         #============= EOF =============================================
 

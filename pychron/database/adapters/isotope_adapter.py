@@ -1701,7 +1701,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_irradiation_holders(self, **kw):
         return self._retrieve_items(irrad_HolderTable, **kw)
 
-    def get_analyses(self, **kw):
+    def get_analyses(self, limit=None, **kw):
         """
             kw: meas_Analysis attributes
                 or callable predicate that accepts "meas_AnalysisTable" and "gen_LabTable"
@@ -1721,7 +1721,8 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(meas_AnalysisTable.aliquot.asc())
             q = q.order_by(meas_AnalysisTable.step.asc())
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-
+            if limit:
+                q=q.limit(limit)
             return q.all()
 
     def get_figures(self, project=None):
