@@ -40,7 +40,7 @@ class APISEmulator(BaseRequestHandler):
         """
         List of Air run scripts available
         """
-        return 'A1,A2,A3'
+        return 'Air1,Air2,Air3'
 
     def cmd102(self):
         """

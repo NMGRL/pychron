@@ -165,7 +165,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('Beam (mm)', 'beam_diameter'),
             ('Pattern', 'pattern'),
             ('Extraction', 'extraction_script'),
-            ('T_o Offset', 'time_zero_offset'),
+            ('T_o Offset', 'collection_time_zero_offset'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
             ('SynExtraction', 'syn_extraction'),

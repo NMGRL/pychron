@@ -386,20 +386,20 @@ class PyScript(Loggable):
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
 
-    def cancel(self):
+    def cancel(self, **kw):
         self._cancel = True
         if self._gosub_script is not None:
             if not self._gosub_script._cancel:
-                self._gosub_script.cancel()
+                self._gosub_script.cancel(**kw)
 
         if self.parent_script:
             if not self.parent_script._cancel:
-                self.parent_script.cancel()
+                self.parent_script.cancel(**kw)
 
         if self._wait_control:
             self._wait_control.stop()
 
-        self._cancel_hook()
+        self._cancel_hook(**kw)
 
     def bootstrap(self, load=True, **kw):
         self._interval_stack = LifoQueue()
@@ -677,9 +677,10 @@ class PyScript(Loggable):
             return rs
             # return [getattr(man, f)(*a, **k) for f, a, k in func]
         elif name:
-            self.warning('could not find manager name="{}"'.format(name))
+            self.warning('could not find manager name="{}" func="{}"'.format(name,
+                                                                             ','.join([f for f, _, _ in func])))
 
-    def _cancel_hook(self):
+    def _cancel_hook(self, **kw):
         pass
 
     def _finished(self):

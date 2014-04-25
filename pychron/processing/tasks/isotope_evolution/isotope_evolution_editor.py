@@ -133,7 +133,7 @@ class IsotopeEvolutionEditor(GraphEditor):
     def _save_fit(self, unk, meas_analysis):
 
         tool_fits = [fi for fi in self.tool.fits if fi.save]
-        time_zero_offset = self.tool.time_zero_offset
+        time_zero_offset = self.tool.time_zero_offset or 0
         if not tool_fits:
             return
 
