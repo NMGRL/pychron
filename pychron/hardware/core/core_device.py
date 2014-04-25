@@ -194,7 +194,6 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
                     raise TimeoutError(func.func_name, timeout)
             time.sleep(period)
 
-
     @crc_caller
     def ask(self, cmd, **kw):
         """
@@ -203,8 +202,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if comm is not None:
             if comm.scheduler:
                 r = comm.scheduler.schedule(comm.ask, args=(cmd,),
-                                            kwargs=kw
-                )
+                                            kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
             self._communicate_hook(cmd, r)

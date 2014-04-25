@@ -6,14 +6,16 @@ globalv.use_warning_display = False
 globalv.use_logger_display = False
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.external_pipette.apis_manager import ApisManager
+from pychron.external_pipette.apis_manager import SimpleApisManager
 
 __author__ = 'ross'
 import unittest
 
 
 class DummyApp(object):
-    _man = ApisManager(_timeout_flag=True)
+    _man = SimpleApisManager(_timeout_flag=True)
+    _man.available_pipettes = ['A1', 'A2']
+    _man.available_blanks = ['B1', 'B2']
 
     def get_service(self, *args, **kw):
         return self._man
@@ -33,17 +35,17 @@ class ExternalPipetteTestCase(unittest.TestCase):
 
     def test_extract_pipette_explicit_invalid_name(self):
         e = self.script
-        ret = e.extract_pipette(10, timeout=1)
-        self.assertEqual(ret, 'Invalid Pipette name=10')
+        ret = e.extract_pipette('A4', timeout=1)
+        self.assertEqual(ret, 'Invalid Pipette name=A4')
 
     def test_extract_pipette_explicit(self):
         e = self.script
-        ret = e.extract_pipette(1, timeout=1)
+        ret = e.extract_pipette('A1', timeout=1)
         self.assertEqual(ret, True)
 
     def test_extract_pipette_implicit(self):
         e = self.script
-        e.setup_context(extract_value=1, )
+        e.setup_context(extract_value='A1', )
         ret = e.extract_pipette(timeout=1)
         self.assertEqual(ret, True)
 
@@ -51,9 +53,9 @@ class ExternalPipetteTestCase(unittest.TestCase):
         apis_man = self.script.manager.application.get_service()
         apis_man._timeout_flag = False
         e = self.script
-        e.setup_context(extract_value=1, )
+        e.setup_context(extract_value='A1', )
         ret = e.extract_pipette(timeout=1)
-        self.assertEqual(ret, 'TimeoutError func=get_loading_status, timeout=1')
+        self.assertEqual(ret, 'TimeoutError func=get_loading_complete, timeout=1')
 
 
 if __name__ == '__main__':

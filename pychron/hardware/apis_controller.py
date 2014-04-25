@@ -20,25 +20,58 @@
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
+CMD_MAP = {'list_blanks': '100',
+           'list_airs': '101',
+           'last_runid': '102',
+           'pipette_record': '103',
+           'status': '104',
+           'load_blank': '105',
+           'load_air': '106',
+           'cancel': '107',
+           'set_external_pumping': '108'}
+
+STATUS_MAP = {'0': 'Idle',
+              '1': 'Pumping pipette',
+              '2': 'Loading pipette',
+              '3': 'Expanding pipettes',
+              '4': 'Expansion complete'}
+
 
 class ApisController(CoreDevice):
+    def make_command(self, cmd):
+        try:
+            return CMD_MAP[cmd]
+        except KeyError:
+            return 'invalid command cmd={}'.format(cmd)
+
+    def load_blank(self, name):
+        cmd = self.make_command('load_blank')
+        self.ask('{},{}'.format(cmd, name))
+
     def load_pipette(self, name):
-        self.ask('Load {}'.format(name))
+        cmd = self.make_command('load_air')
+        self.ask('{},{}'.format(cmd, name))
 
     def get_loading_status(self):
-        return self.ask('GetStatus')
+        cmd = self.make_command('status')
+        status = self.ask(cmd)
+        try:
+            status = STATUS_MAP[status]
+            return status
+        except KeyError:
+            pass
 
     def get_loading_complete(self):
         status = self.get_loading_status()
-        return status == 'Complete'
+        return status == 'Expansion complete'
 
-    def open_channel(self, obj):
-        self.ask('Open {}'.format(obj.name))
-        return True
+    def get_available_blanks(self):
+        cmd = self.make_command('list_blanks')
+        return self.ask(cmd)
 
-    def close_channel(self, obj):
-        self.ask('Close {}'.format(obj.name))
-        return True
+    def get_available_airs(self):
+        cmd = self.make_command('list_airs')
+        return self.ask(cmd)
 
 #============= EOF =============================================
 

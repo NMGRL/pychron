@@ -366,8 +366,8 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
                 self.info('opening {}'.format(dev.name))
                 if not dev.open(prefs=self.device_prefs):
                     self.info('failed connecting to {}'.format(dev.name))
-                else:
-                    opened.append(dev)
+                    # else:
+                    #     opened.append(dev)
             else:
                 self.info('failed loading {}'.format(dev.name))
 
@@ -398,8 +398,7 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
         '''
         '''
         pd = myProgressDialog(max=n, message='Welcome',
-                              size=(500, 50)
-        )
+                              size=(500, 50))
         self.pd = pd
         self.pd.open()
 

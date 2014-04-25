@@ -15,8 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
-from enable.component_editor import ComponentEditor
+from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 #============= standard library imports ========================
@@ -25,17 +24,39 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
-        testing_grp = VGroup(HGroup(UItem('test_load_1', ),
-                                    UItem('test_script_button', ),
-                                    enabled_when='not testing'),
-                             Item('test_result',
-                                  style='readonly',
-                                  label='Test Result'))
-        canvas_button_grp = HGroup(UItem('reload_canvas_button'), spring)
-        v = View(VGroup(testing_grp,
-                        canvas_button_grp,
-                        UItem('canvas', style='custom',
-                              editor=ComponentEditor())))
+        command_entry = HGroup(UItem('test_command'),
+                               UItem('test_button', enabled_when='not testing'),
+                               UItem('test_command',
+                                     editor=EnumEditor(values={'100': '01:List blanks',
+                                                               '101': '02:List airs',
+                                                               '102': '03:Last runid',
+                                                               '103': '04:Get record',
+                                                               '104': '05:Status',
+                                                               '105,': '06:Load blank',
+                                                               '106,': '07:Load air',
+                                                               '107': '08:Cancel',
+                                                               '108': '09:Set external pumping',
+                                     })))
+
+        response = VGroup(UItem('test_command_response', style='custom'),
+                          HGroup(UItem('test_script_button', enabled_when='not testing'), spring),
+                          HGroup(UItem('clear_test_response_button'),
+                                 spring))
+
+        v = View(VGroup(command_entry,
+                        response))
+
+        # testing_grp = VGroup(HGroup(UItem('test_load_1', ),
+        #                             UItem('test_script_button', ),
+        #                             enabled_when='not testing'),
+        #                      Item('test_result',
+        #                           style='readonly',
+        #                           label='Test Result'),)
+        # canvas_button_grp = HGroup(UItem('reload_canvas_button'), spring)
+        # v = View(VGroup(testing_grp,
+        #                 canvas_button_grp,
+        #                 UItem('canvas', style='custom',
+        #                       editor=ComponentEditor())))
         return v
 
 #============= EOF =============================================

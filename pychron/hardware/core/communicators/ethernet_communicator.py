@@ -33,23 +33,29 @@ class Handler(Loggable):
     def send_packet(self, p):
         pass
 
-    def open_socket(self, addr, timeout=0.1):
-        self.address = addr
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.connect(addr)
-        self.sock.settimeout(timeout)
 
     def end(self):
         pass
 
 
 class TCPHandler(Handler):
+    datasize = 2 ** 10
+
+    def open_socket(self, addr, timeout=1.0):
+        self.address = addr
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect(addr)
+        self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
-        pass
+        try:
+            return self.sock.recv(self.datasize)
+        except socket.timeout:
+            return
 
     def send_packet(self, p):
-        pass
+        self.sock.send(p)
+        return True
 
     def end(self):
         self.sock.close()
@@ -66,7 +72,7 @@ class UDPHandler(Handler):
 
     def get_packet(self, cmd):
         r = None
-#        cnt = 3
+        #        cnt = 3
         cnt = 1
         for _ in range(cnt):
             try:
@@ -80,7 +86,7 @@ class UDPHandler(Handler):
         return r
 
     def send_packet(self, p):
-#        self.sock.sendto(p, self.address)
+        #        self.sock.sendto(p, self.address)
         ok = False
         try:
             self.sock.sendto(p, self.address)
@@ -98,9 +104,10 @@ class EthernetCommunicator(Communicator):
     port = None
     handler = None
     kind = 'UDP'
+
     def load(self, config, path):
-        '''
-        '''
+        """
+        """
         self.host = self.config_get(config, 'Communications', 'host')
         # self.host = 'localhost'
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
@@ -119,9 +126,12 @@ class EthernetCommunicator(Communicator):
         handler = self.get_handler()
         # send a test command so see if wer have connection
         cmd = '***'
-        if handler.send_packet(cmd):
-            r = handler.get_packet(cmd)
-            if r is None:
+        if handler:
+            if handler.send_packet(cmd):
+                r = handler.get_packet(cmd)
+                if r is None:
+                    self.simulation = True
+            else:
                 self.simulation = True
         else:
             self.simulation = True
@@ -137,6 +147,10 @@ class EthernetCommunicator(Communicator):
                 h = self.handler
         else:
             h = TCPHandler()
+            try:
+                h.open_socket((self.host, self.port))
+            except socket.error:
+                h = None
 
         self.handler = h
         return h
@@ -145,9 +159,9 @@ class EthernetCommunicator(Communicator):
         self.handler = None
 
     def ask(self, cmd, retries=3, verbose=True, info=None, *args, **kw):
-        '''
+        """
 
-        '''
+        """
 
         def _ask():
             if handler.send_packet(cmd):
@@ -160,11 +174,11 @@ class EthernetCommunicator(Communicator):
 
         r = None
         with self._lock:
-#            self._lock.acquire()
+            #            self._lock.acquire()
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
             handler = self.get_handler()
             if self.simulation:
-#                self._lock.release()
+                #                self._lock.release()
                 return 'simulation'
 
             for _ in range(retries):
@@ -173,7 +187,7 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     self._reset_connection()
-#            self._lock.release()
+                #            self._lock.release()
 
         if r is not None:
             re = self.process_response(r)
