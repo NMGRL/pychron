@@ -145,13 +145,13 @@ class FitSelector(HasTraits):
     def _get_columns(self):
         cols = [ObjectColumn(name='name', editable=False),
                 CheckboxColumn(name='show'),
+                CheckboxColumn(name='use', label='Save'),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
                              width=150),
                 ObjectColumn(name='error_type',
                              editor=EnumEditor(name='error_types'),
-                             width=50),
-                CheckboxColumn(name='use', label='Save DB')]
+                             width=50)]
 
         return cols
 

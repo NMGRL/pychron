@@ -222,8 +222,9 @@ class InterpolationEditor(GraphEditor):
                         ans.append(ai)
 
             self.debug('find references pre make')
-            ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
+
             ans = self.processor.make_analyses(ans, progress=progress)
+            ans = sorted(list(ans), key=lambda x: x.analysis_timestamp)
             self.references = ans
 
             if progress:
@@ -284,7 +285,7 @@ class InterpolationEditor(GraphEditor):
         for i, fit in enumerate(gen):
             iso = fit.name
             fit = fit.fit_tuple()
-            print i, fit, self.binned_analyses
+            # print i, fit, self.binned_analyses
             if self.binned_analyses:
                 self._build_binned(i, iso, fit, start)
             else:

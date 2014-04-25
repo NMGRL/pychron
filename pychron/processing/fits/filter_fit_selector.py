@@ -83,6 +83,7 @@ class FilterFitSelector(FitSelector):
     def _get_columns(self):
         cols = [ObjectColumn(name='name', editable=False),
                 CheckboxColumn(name='show'),
+                CheckboxColumn(name='use', label='Save'),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
                              width=75),
@@ -93,8 +94,7 @@ class FilterFitSelector(FitSelector):
                 ObjectColumn(name='filter_iterations', label='F. Iter.'),
                 ObjectColumn(name='filter_std_devs', label='F. SD'),
                 ObjectColumn(name='truncate', label='Trunc.'),
-                CheckboxColumn(name='include_baseline_error', label='Inc. BsErr'),
-                CheckboxColumn(name='use', label='Save')]
+                CheckboxColumn(name='include_baseline_error', label='Inc. BsErr')]
 
         return cols
 
