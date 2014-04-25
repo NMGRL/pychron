@@ -127,7 +127,6 @@ class FitSelector(HasTraits):
                                    'It is not advisable to use this option with many analyses'))
 
     def traits_view(self):
-
         v = View(VGroup(
             self._get_auto_group(),
             self._get_toggle_group(),
@@ -161,6 +160,7 @@ class FitSelector(HasTraits):
                                selected='selected',
                                selection_mode='rows',
                                sortable=False,
+                               clear_selection_on_dclicked=True,
                                on_command_key=self._update_command_key,
                                cell_bg_color='red',
                                cell_font='modern 10')
