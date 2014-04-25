@@ -283,7 +283,7 @@ class BaseExperimentQueue(Loggable):
                ('beam_diam', 'beam_diameter'),
                'pattern',
                ('extraction', 'extraction_script'),
-               ('t_o', 'time_zero_offset'),
+               ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
                ('truncate','truncate_condition'),
                'syn_extraction',

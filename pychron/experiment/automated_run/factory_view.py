@@ -60,7 +60,7 @@ class FactoryView(HasTraits):
                         editor=EnumEditor(name='extract_units_names')),
                    Item('ramp_duration', label='Ramp Dur. (s)'), ),
             HGroup(
-                Item('time_zero_offset',
+                Item('collection_time_zero_offset',
                      label='T_o offset (s)',
                      tooltip='# of seconds afer inlet opens to set time zero'),
                 Item('overlap', label='Overlap (s)', tooltip='Duration to wait before staring next run')),

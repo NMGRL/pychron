@@ -38,7 +38,7 @@ class ExternalPipettePlugin(BaseTaskPlugin):
             pkg = 'pychron.external_pipette.apis_manager'
             klass = 'SimpleApisManager'
             factory = __import__(pkg, fromlist=[klass])
-            m = getattr(factory, klass)(name='ExternalPipette')
+            m = getattr(factory, klass)(name='externalpipette')
             m.bootstrap()
             m.plugin_id = self.id
             m.bind_preferences(self.id)

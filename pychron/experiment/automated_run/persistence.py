@@ -369,7 +369,7 @@ class AutomatedRunPersister(Loggable):
             analysis,
             self.run_spec.analysis_type,
             self.run_spec.mass_spectrometer,
-            time_zero_offset=self.run_spec.time_zero_offset)
+            time_zero_offset=self.run_spec.collection_time_zero_offset)
         script = db.add_script(self.measurement_name, self.measurement_blob)
 
         meas.script_id = script.id

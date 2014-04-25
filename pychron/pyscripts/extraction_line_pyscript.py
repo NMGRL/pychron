@@ -287,19 +287,24 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier='', timeout=10):
+    def extract_pipette(self, identifier='', timeout=50):
+
         if identifier == '':
             identifier = self.extract_value
+
+        cmd = 'load_blank' if self.analysis_type == 'blank' else 'load_pipette'
         try:
-            rets = self._extraction_action([('load_pipette', (identifier,),
+            rets = self._extraction_action([(cmd, (identifier,),
                                              {'timeout': timeout})],
-                                           name='ExternalPipette',
+                                           name='externalpipette',
                                            protocol=IPipetteManager)
 
             return rets[0]
         except (TimeoutError, InvalidPipetteError), e:
-            self.cancel()
-            return str(e)
+            self.cancel(protocol=IPipetteManager)
+            e = str(e)
+            self.warning(e)
+            return e
 
     @verbose_skip
     @command_register
@@ -530,12 +535,12 @@ class ExtractionPyScript(ValvePyScript):
 
         return self._manager_action(*args, **kw)
 
-    def _disable(self):
+    def _disable(self, protocol=None):
         self.debug('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% disable')
         if self.manager:
             self.manager.set_extract_state(False)
 
-        return self._extraction_action([('disable_device', (), {})])
+        return self._extraction_action([('disable_device', (), {})], protocol=protocol)
 
     def _set_axis(self, name, value, velocity):
         kw = dict(block=True)
@@ -549,18 +554,18 @@ class ExtractionPyScript(ValvePyScript):
             self.info('move to position suceeded')
         return True
 
-    def _cancel_hook(self):
+    def _cancel_hook(self, **kw):
         if self._resource_flag:
             self._resource_flag.clear()
 
         # disable the extract device
-        self._disable()
+        self._disable(**kw)
 
         # stop patterning
-        self._stop_pattern()
+        self._stop_pattern(**kw)
 
-    def _stop_pattern(self):
-        self._extraction_action([('stop_pattern', (), {})])
+    def _stop_pattern(self, protocol=None):
+        self._extraction_action([('stop_pattern', (), {})], protocol=protocol)
 
 #============= EOF ====================================
 
