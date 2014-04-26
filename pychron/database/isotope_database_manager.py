@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
-import struct
 
 from traits.api import String, Property, Event, \
     cached_property, Any, Bool, Int
@@ -216,14 +215,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         return filter(lambda x: not x.tag in exclude, ans)
 
-    def load_raw_data(self, ai, endianness='>'):
+    def load_raw_data(self, ai):
         if not ai.has_raw_data:
             db = self.db
-
-            def unpack_blob(blob):
-                return zip(*[struct.unpack('{}ff'.format(endianness), blob[i:i + 8]) for i in
-                             xrange(0, len(blob), 8)])
-
             with db.session_ctx():
                 dbisos = db.get_analysis_isotopes(ai.uuid)
                 isos = ai.isotopes
@@ -231,14 +225,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     name = dbmw.name
                     if name in isos:
                         blob = dbiso.signal.data
-                        xs, ys = unpack_blob(blob)
                         iso = isos[name]
                         if dbiso.kind == 'signal':
-                            iso.trait_set(xs=xs, ys=ys)
+                            iso.unpack_data(blob)
                         elif dbiso.kind == 'baseline':
-                            iso.baseline.trait_set(xs=xs, ys=ys)
+                            iso.baseline.unpack_data(blob)
                         elif dbiso.kind == 'sniff':
-                            iso.sniff.trait_set(xs=xs, ys=ys)
+                            iso.sniff.unpack_data(blob)
                 ai.has_raw_data = True
 
     def make_analysis(self, ai, **kw):

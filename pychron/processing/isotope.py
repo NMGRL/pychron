@@ -26,6 +26,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -62,15 +63,11 @@ class BaseMeasurement(HasTraits):
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
         if dbrecord and unpack:
-            try:
-                if unpacker is None:
-                    unpacker = lambda x: x.signal.data
-                xs, ys = self._unpack_blob(unpacker(dbrecord))
-            except (ValueError, TypeError, IndexError, AttributeError), e:
-                self.unpack_error = e
-                return
-            self.xs = array(xs)
-            self.ys = array(ys)
+            if unpacker is None:
+                unpacker = lambda x: x.signal.data
+
+            blob = unpacker(dbrecord)
+            self.unpack_data(blob)
 
     def pack(self, endianness=None, as_hex=True):
         if endianness is None:
@@ -81,6 +78,17 @@ class BaseMeasurement(HasTraits):
         if as_hex:
             txt = hexlify(txt)
         return txt
+
+    def unpack_data(self, blob):
+        try:
+            xs, ys = self._unpack_blob(blob)
+        except (ValueError, TypeError, IndexError, AttributeError), e:
+            self.unpack_error = e
+            return
+
+        self.xs = array(xs)
+        self.ys = array(ys)
+
 
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
