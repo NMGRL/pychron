@@ -41,6 +41,19 @@ from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
 
+class CTXObject(object):
+    def update(self, ctx):
+        self.__dict__.update(**ctx)
+
+
+class EXPObject(CTXObject):
+    pass
+
+
+class CMDObject(CTXObject):
+    pass
+
+
 class IntervalContext(object):
     def __init__(self, obj, dur):
         self.obj = obj
@@ -172,6 +185,8 @@ class PyScript(Loggable):
     hash_key = None
 
     _ctx = None
+    _exp_obj = None
+
     _text = Str
 
     _interval_stack = None
@@ -348,8 +363,16 @@ class PyScript(Loggable):
     def setup_context(self, **kw):
         if self._ctx is None:
             self._ctx = dict()
+        if self._exp_obj is None:
+            self._exp_obj = EXPObject()
+        # self._ctx.update(kw)
 
-        self._ctx.update(kw)
+        self._exp_obj.update(kw)
+        # self._exp_obj.__dict__.update(**kw)
+        self._ctx['exp'] = self._exp_obj
+
+        #for backwards compatiblity add kw to main context
+        self._ctx.update(**kw)
 
     def get_context(self):
         ctx = dict()
@@ -362,11 +385,23 @@ class PyScript(Loggable):
 
             ctx[name] = func
 
+        exp_ctx = {}
         for v in self.get_variables() + self.load_interpolation_context():
             ctx[v] = getattr(self, v)
+            exp_ctx[v] = getattr(self, v)
+
+        if self._exp_obj:
+            self._exp_obj.update(exp_ctx)
+            ctx['exp'] = self._exp_obj
 
         if self._ctx:
             ctx.update(self._ctx)
+
+        #use a cmd object for visual clarity when writing pyscripts ie ```cmd.sleep``` instead of ```sleep```
+        # cmd=CMDObject()
+        # cmd.update(ctx)
+        # ctx['cmd']=cmd
+
         return ctx
 
     def get_variables(self):
