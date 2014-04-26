@@ -478,50 +478,64 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # properties
     #===============================================================================
+    def _get_propetry(self, key, default=None):
+        ctx = self.get_context()
+        return ctx.get(key, default=default)
+
     @property
     def duration(self):
-        return self.get_context()['duration']
+        return self._get_propetry('duration')
+        # return self.get_context()['duration']
 
     @property
     def cleanup(self):
-        return self.get_context()['cleanup']
+        return self._get_propetry('cleanup')
+        # return self.get_context()['cleanup']
 
     @property
     def pattern(self):
-        return self.get_context()['pattern']
+        return self._get_propetry('pattern')
+        # return self.get_context()['pattern']
 
     @property
     def analysis_type(self):
-        return self.get_context()['analysis_type']
+        return self._get_propetry('analysis_type')
+        # return self.get_context()['analysis_type']
 
     @property
     def extract_device(self):
-        return self.get_context()['extract_device']
+        return self._get_propetry('extract_device')
+        # return self.get_context()['extract_device']
 
     @property
     def tray(self):
-        return self.get_context()['tray']
+        return self._get_propetry('tray')
+        # return self.get_context()['tray']
 
     @property
     def position(self):
         """
             if position is 0 return None
         """
-        pos = self.get_context()['position']
+        # pos = self.get_context()['position']
+        pos = self._get_propetry('position')
         if pos:
             return pos
 
     @property
     def extract_value(self):
-        return self.get_context()['extract_value']
+        return self._get_propetry('extract_value')
+        # return self.get_context()['extract_value']
 
     @property
     def extract_units(self):
-        return self.get_context()['extract_units']
+        return self._get_propetry('extract_units')
+        # return self.get_context()['extract_units']
 
     @property
     def beam_diameter(self):
-        return self.get_context()['beam_diameter']
+        return self._get_propetry('beam_diameter')
+        # return self.get_context()['beam_diameter']
 
     #===============================================================================
     # private
