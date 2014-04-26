@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import weakref
 
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
 
@@ -364,8 +363,8 @@ class DBAnalysis(Analysis):
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
-
-        av.load(weakref.ref(self)())
+        av.load(self)
+        # av.load(weakref.ref(self)())
 
     def _sync_detector_info(self, meas_analysis, **kw):
         #discrimination saved as 1amu disc not 4amu

@@ -268,7 +268,6 @@ class MainView(HasTraits):
                 ci.error = std_dev(v)
 
     def _load_unknown_computed(self, an, new_list):
-
         attrs = (('Age', 'uage'),
                  # ('Age', 'age', None, None, 'age_err'),
                  ('w/o J', 'wo_j', '', 'uage', 'age_err_wo_j'),

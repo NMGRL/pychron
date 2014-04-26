@@ -81,9 +81,9 @@ class AnalysisView(HasTraits):
         if main_view is None:
             main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
             self.main_view = main_view
-            # else:
-            # self.main_view.load_computed(an)
-            # self.main_view.refresh_needed=True
+
+        else:
+            self.main_view.load(an, refresh=True)
 
         subviews = [main_view,
                     experiment_view,

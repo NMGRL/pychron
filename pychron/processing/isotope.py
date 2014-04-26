@@ -25,6 +25,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -109,19 +110,20 @@ class IsotopicMeasurement(BaseMeasurement):
     # error = Property(depends_on='_error, dirty')
     value = Property(Float(enter_set=True, auto_set=False),
                      depends_on='dirty')
-    error = Property(Float(enter_set=True, auto_set=False), depends_on='dirty')
+    error = Property(Float(enter_set=True, auto_set=False),
+                     depends_on='dirty')
     _value = Float
     _error = Float
 
     fit = Property(depends_on='_fit')
     _fit = String
-    fit_abbreviation = Property(depends_on='fit')
+    fit_abbreviation = Property(depends_on='dirty')
     fit_blocks = List
     error_type = String('SEM')
 
     filter_outliers_dict = Dict
 
-    regressor = Property(depends_on='fit, time_zero_offset')
+    regressor = Property(depends_on='fit, time_zero_offset, dirty')
     # regressor = Property(depends_on='fit, dirty, error_type')
     dirty = Event
     include_baseline_error = Bool
@@ -237,6 +239,8 @@ class IsotopicMeasurement(BaseMeasurement):
             pass
 
     def _get_value(self):
+        # if not (self.name.endswith('bs') or self.name.endswith('bk')):
+        #     print self.name, self.use_static,self.user_defined_value
         if self.use_static and self._value:
             return self._value
         elif self.user_defined_value:

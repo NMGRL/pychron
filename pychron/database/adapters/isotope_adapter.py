@@ -1512,6 +1512,17 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 return []
 
+    def get_analysis_isotopes(self, uuid):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable, meas_IsotopeTable, gen_MolecularWeightTable)
+            q = q.join(meas_IsotopeTable)
+            q = q.join(gen_MolecularWeightTable)
+            q = q.filter(meas_AnalysisTable.uuid == uuid)
+            try:
+                return q.all()
+            except NoResultFound:
+                return []
+
     def get_analysis_uuid(self, value):
         #         return self.get_analysis(value, key)
         # #        return meas_AnalysisTable, 'uuid'
@@ -1722,7 +1733,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.order_by(meas_AnalysisTable.step.asc())
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             if limit:
-                q=q.limit(limit)
+                q = q.limit(limit)
             return q.all()
 
     def get_figures(self, project=None):

@@ -292,7 +292,6 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         # iso.set_fit(fit, notify=False)
         iso.dirty = True
-
         return xs
 
     def _rebuild_graph(self):

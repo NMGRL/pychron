@@ -69,13 +69,15 @@ class AnalysisEditTask(BaseBrowserTask):
         if rec is None:
             return
 
-        from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+        self.manager.load_raw_data(rec)
 
         name = 'IsoEvo {}'.format(name)
         editor = self.get_editor(name)
         if editor:
             self.activate_editor(editor)
         else:
+            from pychron.processing.tasks.isotope_evolution.isotope_evolution_editor import IsotopeEvolutionEditor
+
             ieditor = IsotopeEvolutionEditor(name=name, processor=self.manager)
             ieditor.set_items([rec])
             self.editor_area.add_editor(ieditor)
@@ -173,7 +175,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
         if records:
             ans = self.manager.make_analyses(records,
-                                             unpack=True,
+                                             # unpack=True,
                                              calculate_age=True,
                                              load_changes=True)
 
