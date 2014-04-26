@@ -24,6 +24,7 @@ from traitsui.api import View, Item, VGroup
 from pychron.core.helpers.timer import Timer
 from pychron.loggable import Loggable
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
@@ -76,7 +77,7 @@ class ExperimentStats(Loggable):
             ni = len(runs)
             dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
 
-            btw = (self.delay_between_analyses * ni)
+            btw = self.delay_between_analyses * (ni - 1)
             dur += btw + self.delay_before_analyses
 
         return dur

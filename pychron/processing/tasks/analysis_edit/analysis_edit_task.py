@@ -392,17 +392,21 @@ class AnalysisEditTask(BaseBrowserTask):
 
         super(AnalysisEditTask, self)._dclicked_sample_changed()
 
-    def _active_editor_changed(self):
-        if self.active_editor:
+    def _active_editor_changed(self, new):
+        if new:
             if self.controls_pane:
                 tool = None
-                if hasattr(self.active_editor, 'tool'):
-                    tool = self.active_editor.tool
+                if isinstance(new, RecallEditor):
+                    tool = new.analysis_view.selection_tool
+                elif hasattr(new, 'tool'):
+                    tool = new.tool
 
                 self.controls_pane.tool = tool
+
             if self.unknowns_pane:
-                if hasattr(self.active_editor, 'analyses'):
-                    self.unknowns_pane.items = self.active_editor.analyses
+                if hasattr(new, 'analyses'):
+                    self.unknowns_pane.trait_setq(items=new.analyses)
+                    # self.unknowns_pane.items = self.active_editor.analyses
 
     @on_trait_change('active_editor:save_event')
     def _handle_save_event(self):

@@ -31,6 +31,7 @@ from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPa
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -93,12 +94,12 @@ class RecallTask(AnalysisEditTask):
     #         self.active_editor.analysis_view = an.analysis_view
     #         self.controls_pane.tool = an.analysis_view.selection_tool
     #         self.active_editor.model = an
-    def _active_editor_changed(self):
-        if self.active_editor:
-            if hasattr(self.active_editor, 'analysis_view'):
-                self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
-            else:
-                self.controls_pane.tool = self.active_editor.tool
+    # def _active_editor_changed(self):
+    #     if self.active_editor:
+    #         if hasattr(self.active_editor, 'analysis_view'):
+    #             self.controls_pane.tool = self.active_editor.analysis_view.selection_tool
+    #         else:
+    #             self.controls_pane.tool = self.active_editor.tool
 
     def _dclicked_sample_changed(self):
         pass
