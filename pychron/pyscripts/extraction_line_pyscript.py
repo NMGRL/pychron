@@ -480,7 +480,7 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     def _get_property(self, key, default=None):
         ctx = self.get_context()
-        return ctx.get(key, default=default)
+        return ctx.get(key, default)
 
     @property
     def duration(self):
