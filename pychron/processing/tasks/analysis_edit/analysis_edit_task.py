@@ -15,12 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import binascii
-
+from traits.api import Instance, on_trait_change
 from enable.component import Component
 from pyface.tasks.action.schema import SToolBar
-from traits.api import Instance, on_trait_change
-
+from pyface.qt.QtGui import QTabBar
+#============= standard library imports ========================
+import binascii
+#============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
@@ -36,9 +37,6 @@ from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 from pychron.processing.analyses.analysis import Analysis
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
 
 
 class AnalysisEditTask(BaseBrowserTask):
@@ -446,6 +444,23 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             if not obj.suppress_pane_change:
                 self._show_pane(self.plot_editor_pane)
+
+
+    @on_trait_change('analysis_table:selected')
+    def _handle_analysis_selected(self, new):
+        show = bool(new)
+        if hasattr(self, 'references_pane'):
+            ref = self.references_pane
+            ch = ref.control.parent().children()
+            for ci in ch:
+                if isinstance(ci, QTabBar):
+                    idx = ci.currentIndex()
+                    text = ci.tabText(idx)
+                    if text == 'References':
+                        show = False
+                        break
+        if show:
+            self._show_pane(self.unknowns_pane)
 
     @on_trait_change('analysis_table:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):
