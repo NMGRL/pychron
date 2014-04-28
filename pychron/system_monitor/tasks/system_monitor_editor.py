@@ -75,13 +75,13 @@ class SystemMonitorEditor(SeriesEditor):
 
     task = Any
 
-    db_lock=None
+    db_lock = None
 
     def __init__(self, *args, **kw):
         super(SystemMonitorEditor, self).__init__(*args, **kw)
         color_bind_preference(self.console_display.model, 'bgcolor', 'pychron.sys_mon.bgcolor')
         color_bind_preference(self.console_display, 'default_color', 'pychron.sys_mon.textcolor')
-        self.db_lock=Lock()
+        self.db_lock = Lock()
 
     def prepare_destroy(self):
         self.stop()
@@ -116,6 +116,7 @@ class SystemMonitorEditor(SeriesEditor):
                 else
                     add to ideogram
         """
+
         def func():
             #with self.db_lock:
             self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
@@ -129,7 +130,9 @@ class SystemMonitorEditor(SeriesEditor):
 
                 #if last_run_uuid:
                 #    dbrun = db.get_analysis_uuid(last_run_uuid)
+                self.debug('run_added_handler dbrun={}'.format(dbrun))
                 if dbrun:
+                    self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
                     an = proc.make_analysis(dbrun)
                     self._refresh_sys_mon_series(an)
                     self._refresh_figures(an)
@@ -164,7 +167,7 @@ class SystemMonitorEditor(SeriesEditor):
         #self.run_added_handler(last_run_uuid)
 
         t = Thread(name='poll', target=self._poll)
-                   # args=(last_run_uuid,))
+        # args=(last_run_uuid,))
         t.setDaemon(True)
         t.start()
 
@@ -238,7 +241,7 @@ class SystemMonitorEditor(SeriesEditor):
         #     print ai.record_id, ai.timestamp
 
         ans = self._sort_analyses(ans)
-        self.analyses = ans
+        self.set_items(ans)
         self.rebuild_graph()
 
     def _refresh_figures(self, an):
@@ -317,7 +320,7 @@ class SystemMonitorEditor(SeriesEditor):
         ans = self._get_analyses(identifier,
                                  aliquot, use_date_range)
 
-        ans =self._sort_analyses(ans)
+        ans = self._sort_analyses(ans)
         editor.analyses = ans
         group_analyses_by_key(editor, editor.analyses, 'labnumber')
         #        self.task.group_by_labnumber()

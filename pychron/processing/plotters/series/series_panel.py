@@ -30,6 +30,7 @@ class SeriesPanel(FigurePanel):
     equi_stack = True
     graph_klass = AnalysisStackedRegressionGraph
     graph_spacing = 5
+    use_previous_limits = False
 
 
 class DashboardSeriesPanel(SeriesPanel):

@@ -35,6 +35,7 @@ class FigurePanel(HasTraits):
     graph_spacing = Int
     meta = Any
     title = Str
+    use_previous_limits=True
 
     @on_trait_change('analyses[]')
     def _analyses_items_changed(self):
@@ -77,6 +78,7 @@ class FigurePanel(HasTraits):
                 if po.use_centered_range:
                     w2 = po.centered_range / 2.0
                     mi, ma = center - w2, center + w2
+
         plots = list(po.get_aux_plots())
         if plots:
             for i, fig in enumerate(self.figures):
@@ -96,16 +98,18 @@ class FigurePanel(HasTraits):
                 fig.suppress_xlimits_update = False
                 ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
 
-            # print plots[0], plots[0].has_xlimits(), plots[0].name
-            if plots[0].has_xlimits():
-                tmi, tma = plots[0].xlimits
-                if tmi != -inf and tma != inf:
-                    mi, ma = tmi, tma
-                    # print 'using previous limits', mi, ma
+            if self.use_previous_limits:
+                # print plots[0], plots[0].has_xlimits(), plots[0].name
+                if plots[0].has_xlimits():
+                    tmi, tma = plots[0].xlimits
+                    if tmi != -inf and tma != inf:
+                        mi, ma = tmi, tma
+                        print 'using previous limits', mi, ma
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
+            print 'setting xlimits', mi, ma
             g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
             for fig in self.figures:

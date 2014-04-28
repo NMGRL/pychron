@@ -69,7 +69,6 @@ class Series(BaseArArFigure):
             p.padding_left = 75
             p.value_range.tight_bounds = False
 
-
     def plot(self, plots):
         """
             plot data on plots
@@ -101,9 +100,12 @@ class Series(BaseArArFigure):
                 for i, po in enumerate(plots):
                     self._plot_series(po, i, omits)
 
-                if plots:
-                    graph.set_x_limits(min_=min(self.xs), max_=max(self.xs), pad='0.1',
-                                       plotid=0)
+                self.xmi, self.xma=self.min_x(), self.max_x()
+                print 'set xmi, xma', self.xmi, self.xma
+                self.xpad='0.1'
+                    # if plots:
+                    #     graph.set_x_limits(min_=min(self.xs), max_=max(self.xs), pad='0.1',
+                    #                        plotid=0)
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph
@@ -113,11 +115,13 @@ class Series(BaseArArFigure):
                 kw = dict(y=ys)
                 yerr = None
                 value_format = analysis_type_formatter
+                set_ylimits = False
             else:
                 value_format = None
-                ys = [ai.nominal_value for ai in self._unpack_attr(po.name)]
-                yerr = [ai.std_dev for ai in self._unpack_attr(po.name)]
+                ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
+                yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
                 kw = dict(y=ys, yerror=yerr)
+                set_ylimits = True
 
             n = [ai.record_id for ai in self.sorted_analyses]
             args = graph.new_series(x=self.xs,
@@ -143,8 +147,13 @@ class Series(BaseArArFigure):
 
             #p.value_scale = po.scale
             end_caps = True
-            if yerr:
+            if yerr is not None:
                 self._add_error_bars(scatter, yerr, 'y', 2, end_caps, visible=True)
+
+            if set_ylimits:
+                mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
+                graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+
         except (KeyError, ZeroDivisionError), e:
             print 'Series', e
 
