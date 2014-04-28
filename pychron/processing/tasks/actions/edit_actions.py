@@ -31,7 +31,6 @@ class AnalysisEditAction(TaskAction):
     #
     def perform(self, event):
         app = event.task.window.application
-        _id = self.task_id
         task = app.open_task(self.task_id)
         self.task = task
 

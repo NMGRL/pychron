@@ -213,7 +213,9 @@ class BaseArArFigure(HasTraits):
             def gen():
                 for ai in self.sorted_analyses:
                     if n in ai.isotopes and d in ai.isotopes:
-                        yield ai.isotopes[n].get_intensity() / ai.isotopes[d].get_intensity()
+                        nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
+                        if n is not None and d is not None:
+                            yield nv/dv
         else:
             def gen():
                 # f = lambda x: x
@@ -221,7 +223,9 @@ class BaseArArFigure(HasTraits):
                 #     f = lambda x: x.get_intensity()
 
                 for ai in self.sorted_analyses:
-                    yield ai.get_value(attr)
+                    v= ai.get_value(attr)
+                    if v is not None:
+                        yield v
                     # yield f(ai.get_value(attr))
         return gen()
 

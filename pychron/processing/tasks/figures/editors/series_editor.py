@@ -41,6 +41,8 @@ class SeriesEditor(FigureEditor):
         ref = self.analyses[0]
         po.load_aux_plots(ref)
 
+        self._set_name()
+
     def get_component(self, ans, plotter_options):
     #         print plotter_options
         if plotter_options is None:

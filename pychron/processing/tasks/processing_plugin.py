@@ -125,8 +125,12 @@ Install to enable MS Excel export''')
             return Group(MakeAnalysisGroupAction(),
                          DeleteAnalysisGroupAction())
 
+        def recall_group():
+            return Group(RecallAction(), OpenAdvancedQueryAction())
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
                            ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),

@@ -101,11 +101,7 @@ class Series(BaseArArFigure):
                     self._plot_series(po, i, omits)
 
                 self.xmi, self.xma=self.min_x(), self.max_x()
-                print 'set xmi, xma', self.xmi, self.xma
                 self.xpad='0.1'
-                    # if plots:
-                    #     graph.set_x_limits(min_=min(self.xs), max_=max(self.xs), pad='0.1',
-                    #                        plotid=0)
 
     def _plot_series(self, po, pid, omits):
         graph = self.graph

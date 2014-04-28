@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from numpy import Inf, inf
+from numpy import Inf, inf, isinf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
 #============= standard library imports ========================
 from itertools import groupby
@@ -109,8 +109,9 @@ class FigurePanel(HasTraits):
             if mi is None and ma is None:
                 mi, ma = 0, 100
 
-            print 'setting xlimits', mi, ma
-            g.set_x_limits(mi, ma, pad=fig.xpad or 0)
+            if not (isinf(mi) or isinf(ma)):
+                print 'setting xlimits', mi, ma
+                g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
             for fig in self.figures:
                 for i in range(len(plots)):

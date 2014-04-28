@@ -448,19 +448,20 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('analysis_table:selected')
     def _handle_analysis_selected(self, new):
-        show = bool(new)
-        if hasattr(self, 'references_pane'):
-            ref = self.references_pane
-            ch = ref.control.parent().children()
-            for ci in ch:
-                if isinstance(ci, QTabBar):
-                    idx = ci.currentIndex()
-                    text = ci.tabText(idx)
-                    if text == 'References':
-                        show = False
-                        break
-        if show:
-            self._show_pane(self.unknowns_pane)
+        if hasattr(self, 'unknowns_pane'):
+            show = bool(new)
+            if hasattr(self, 'references_pane'):
+                ref = self.references_pane
+                ch = ref.control.parent().children()
+                for ci in ch:
+                    if isinstance(ci, QTabBar):
+                        idx = ci.currentIndex()
+                        text = ci.tabText(idx)
+                        if text == 'References':
+                            show = False
+                            break
+            if show:
+                self._show_pane(self.unknowns_pane)
 
     @on_trait_change('analysis_table:dclicked')
     def _dclicked_analysis_changed(self, obj, name, old, new):

@@ -321,8 +321,9 @@ class SystemMonitorEditor(SeriesEditor):
                                  aliquot, use_date_range)
 
         ans = self._sort_analyses(ans)
-        editor.analyses = ans
-        group_analyses_by_key(editor, editor.analyses, 'labnumber')
+        editor.set_items(ans, update_graph=False)
+        # editor.analyses = ans
+        # group_analyses_by_key(editor, editor.analyses, 'labnumber')
         #        self.task.group_by_labnumber()
         # editor.rebuild()
         do_later(editor.rebuild)

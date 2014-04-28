@@ -147,22 +147,22 @@ class Ideogram(BaseArArFigure):
     def max_x(self, attr):
         try:
             return max([ai.nominal_value + ai.std_dev
-                        for ai in self._unpack_attr(attr)])
-        except (AttributeError, ValueError):
+                        for ai in self._unpack_attr(attr) if ai is not None])
+        except (AttributeError, ValueError), e:
+            print 'max',e, 'attr={}'.format(attr)
             return 0
 
     def min_x(self, attr):
         try:
             return min([ai.nominal_value - ai.std_dev
-                        for ai in self._unpack_attr(attr)])
-        except (AttributeError, ValueError):
+                        for ai in self._unpack_attr(attr) if ai is not None])
+        except (AttributeError, ValueError),e:
+            print 'min',e
             return 0
-
 
     #===============================================================================
     # plotters
     #===============================================================================
-
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
 
