@@ -71,6 +71,31 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         super(ExperimentFactory, self).__init__(*args, **kw)
         self.setup_consumer(self._add_run, main=True)
 
+    def sync_queue_meta(self):
+        eq = self.queue
+        qf = self.queue_factory
+        for a in ('username', 'mass_spectrometer', 'extract_device',
+                  'load_name',
+                  'delay_before_analyses', 'delay_between_analyses'):
+
+            if not self._sync_queue_to_factory(eq, qf, a):
+                self._sync_factory_to_queue(eq, qf, a)
+
+    def _sync_queue_to_factory(self, eq, qf, a):
+        v = getattr(eq, a)
+        if isinstance(v, str):
+            v = v.strip()
+            if v:
+                setattr(qf, a, v)
+                return True
+
+    def _sync_factory_to_queue(self, eq, qf, a):
+        v = getattr(qf, a)
+        if isinstance(v, str):
+            v = v.strip()
+            if v:
+                setattr(eq, a, v)
+
     def destroy(self):
         self._should_consume = False
         self.run_factory.deactivate()

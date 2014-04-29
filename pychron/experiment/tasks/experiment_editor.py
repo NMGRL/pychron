@@ -38,13 +38,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
-    #     merge_id = Int(0)
-    #     group = Int(0)
-
-    #     dirty = Bool(False)
-
-    #    def create(self, parent):
-    #        self.control = self._create_control(parent)
 
     def _dirty_changed(self):
         self.debug('dirty changed {}'.format(self.dirty))
@@ -98,7 +91,7 @@ class ExperimentEditor(BaseTraitsEditor):
 
     #    @on_trait_change('queue:automated_runs[], queue:changed')
     def _queue_changed(self):
-    #        f = lambda: self.trait_set(dirty=True)
+        #        f = lambda: self.trait_set(dirty=True)
         f = self._set_queue_dirty
         self.queue.on_trait_change(f, 'automated_runs[]')
         self.queue.on_trait_change(f, 'changed')
@@ -108,8 +101,8 @@ class ExperimentEditor(BaseTraitsEditor):
         self.queue.path = self.path
 
     def _set_queue_dirty(self, obj, name, old, new):
-    #         print 'ggg', obj, name, old, new
-    #         print 'set qirty', self.queue._no_update, self.queue.initialized
+        #         print 'ggg', obj, name, old, new
+        #         print 'set qirty', self.queue._no_update, self.queue.initialized
 
         if not self.queue._no_update and self.queue.initialized:
             self.dirty = True
@@ -144,7 +137,7 @@ class ExperimentEditor(BaseTraitsEditor):
     def _validate_experiment_queues(self, eqs):
         # check runs
         for qi in eqs:
-            hec=qi.human_error_checker
+            hec = qi.human_error_checker
 
             qi.executable = True
             qi.initialized = True

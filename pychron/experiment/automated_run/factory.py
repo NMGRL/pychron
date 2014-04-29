@@ -161,7 +161,7 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
-    time_zero_offset = Float
+    collection_time_zero_offset = Float(0)
     #===========================================================================
     # extract
     #===========================================================================
@@ -306,7 +306,7 @@ class AutomatedRunFactory(Loggable):
                     try:
                         setattr(self, attr, d.get(attr))
                     except (KeyError, TraitError), e:
-                        self.debug(e)
+                        self.debug('load automated run factory defaults err={}'.format(e))
 
     def dump_defaults(self):
         d = {}
@@ -709,11 +709,12 @@ class AutomatedRunFactory(Loggable):
 
                         # the default value trumps pychron's
                         if self.extract_device:
-                            e = self.extract_device.split(' ')[1].lower()
-                            if skey == 'extraction':
-                                new_script_name = e
-                            elif skey == 'post_equilibration':
-                                new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
+                            if ' ' in self.extract_device:
+                                e = self.extract_device.split(' ')[1].lower()
+                                if skey == 'extraction':
+                                    new_script_name = e
+                                elif skey == 'post_equilibration':
+                                    new_script_name = default_scripts.get(skey, 'pump_{}'.format(e))
 
                     elif labnumber == 'dg':
                         e = self.extract_device.split(' ')[1].lower()

@@ -35,6 +35,7 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
+from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -1264,10 +1265,12 @@ anaylsis_type={}
 
 
     def _make_iterable(self, pos):
-        if '(' in pos and ')' in pos and ',' in pos:
-            # interpret as (x,y)
-            pos = pos.strip()[1:-1]
-            ps = [map(float, pos.split(','))]
+        # if '(' in pos and ')' in pos and ',' in pos:
+        #     # interpret as (x,y)
+        #     pos = pos.strip()[1:-1]
+        #     ps = [map(float, pos.split(','))]
+        if XY_REGEX[0].match(pos):
+            ps = XY_REGEX[1](pos)
 
         elif ',' in pos:
             # interpert as list of holenumbers

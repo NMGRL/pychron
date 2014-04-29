@@ -552,11 +552,12 @@ class ExperimentEditorTask(EditorTask):
 
     @on_trait_change('active_editor:dirty')
     def _update_active_editor_dirty(self):
-        if self.active_editor.dirty:
-            self.manager.executor.executable = False
+        if self.active_editor:
+            if self.active_editor.dirty:
+                self.manager.executor.executable = False
 
-            #===============================================================================
-            # default/factory
+                #===============================================================================
+                # default/factory
             #===============================================================================
 
     #def _notifier_factory(self):
