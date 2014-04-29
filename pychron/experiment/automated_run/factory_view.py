@@ -23,15 +23,16 @@ from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor, EnumE
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
-1. 4 or p4 (goto position 4)
-2. 3,4,5 (goto positions 3,4,5. treat as one analysis)
-3. 7-12 (goto positions 7,8,9,10,11,12. treat as individual analyses)
-4. 7:12 (same as #3)
-5. 10:16:2 (goto positions 10,12,14,16. treat as individual analyses)
-6. D1 (drill position 1)
-7. T1-2 (goto named position T1-2 i.e transect 1, point 2)
-8. L3 (trace path L3)
-9. 1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
+1.  4 or p4 (goto position 4)
+2.  3,4,5 (goto positions 3,4,5. treat as one analysis)
+3.  7-12 (goto positions 7,8,9,10,11,12. treat as individual analyses)
+4.  7:12 (same as #3)
+5.  10:16:2 (goto positions 10,12,14,16. treat as individual analyses)
+6.  D1 (drill position 1)
+7.  T1-2 (goto named position T1-2 i.e transect 1, point 2)
+8.  L3 (trace path L3)
+9.  1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
+10. 1.0,2.0 (goto the point defined by x,y[,z]. Use ";" to treat multiple points as one analysis e.g 1.0,2.0;3.0,4.0)
 '''
 
 PATTERN_TOOLTIP = 'Select a pattern from Remote or Local Patterns. \

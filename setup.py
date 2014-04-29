@@ -11,7 +11,8 @@ setup(name='pychron',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.processing.plateau',
-                  'pychron.core.ui.__init__'],
+                  'pychron.core.ui.__init__',
+                  'pychron.experiment.utilities.position_regex'],
       packages=['pychron.core.regression',
                 'pychron.core.stats',
                 'pychron.external_pipette',
@@ -19,5 +20,6 @@ setup(name='pychron',
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
                 'pychron.external_pipette.tests'
+                'pychron.expeirment.tests'
       ],
       test_suite='pychron.test_suite.suite')

@@ -810,9 +810,10 @@ class AutomatedRunFactory(Loggable):
         if not pos.strip():
             return ''
 
-        for r, _, _ in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                        TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+        for r, _, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
+                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
             if r.match(pos):
+                self.debug('matched {} to {}'.format(name, pos))
                 return pos
         else:
             for po in pos.split(','):
