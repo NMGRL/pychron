@@ -19,7 +19,6 @@ from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pyface.message_dialog import warning
 from pychron.displays.gdisplays import gTraceDisplay
 from pychron.envisage.tasks.tasks_plugin import myTasksPlugin
 from pychron.core.helpers.logger_setup import new_logger
@@ -32,9 +31,6 @@ try:
 except ImportError:
     logger.warning('Git is required to use UpdatePlugin')
     UpdatePlugin=None
-
-
-
 
 PACKAGE_DICT = dict(
     ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
@@ -73,7 +69,8 @@ PACKAGE_DICT = dict(
     EntryPlugin='pychron.entry.tasks.entry_plugin',
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin')
+    GeoPlugin='pychron.geo.tasks.geo_plugin',
+    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin')
 
 
 def get_module_name(klass):
@@ -175,8 +172,7 @@ def app_factory(klass):
     plugins = [
         CorePlugin(),
         myTasksPlugin(),
-        LoggerPlugin(),
-        ]
+        LoggerPlugin()]
 
     if UpdatePlugin is not None:
         plugins.append(UpdatePlugin())

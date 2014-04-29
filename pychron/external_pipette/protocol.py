@@ -15,30 +15,27 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
+from traits.api import Interface
 #============= standard library imports ========================
 #============= local library imports  ==========================
+class IPipetteManager(Interface):
+    def load_pipette(self, *args, **kw):
+        pass
 
+    def load_blank(self, *args, **kw):
+        pass
 
-class CRCError(BaseException):
-    _cmd = ''
+    def bind_preferences(self, prefid):
+        pass
 
-    def __init__(self, cmd):
-        self._cmd = cmd
+    def bootstrap(self, *args, **kw):
+        pass
 
-    def __str__(self):
-        return self._cmd
+    def load(self, *args, **kw):
+        pass
 
-
-class TimeoutError(BaseException):
-    def __init__(self, name, timeout):
-        self.name = name
-        self.timeout = timeout
-
-    def __repr__(self):
-        return 'TimeoutError func={}, timeout={}'.format(self.name, self.timeout)
-
-    def __str__(self):
-        return repr(self)
+    def set_extract_state(self, state):
+        pass
 
 #============= EOF =============================================
+

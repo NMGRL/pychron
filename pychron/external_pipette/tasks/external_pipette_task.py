@@ -18,27 +18,18 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.external_pipette.tasks.panes import ExternalPipettePane
 
 
-class CRCError(BaseException):
-    _cmd = ''
+class ExternalPipetteTask(BaseManagerTask):
+    name = 'External Pipette'
 
-    def __init__(self, cmd):
-        self._cmd = cmd
+    def create_central_pane(self):
+        return ExternalPipettePane(model=self.manager)
 
-    def __str__(self):
-        return self._cmd
-
-
-class TimeoutError(BaseException):
-    def __init__(self, name, timeout):
-        self.name = name
-        self.timeout = timeout
-
-    def __repr__(self):
-        return 'TimeoutError func={}, timeout={}'.format(self.name, self.timeout)
-
-    def __str__(self):
-        return repr(self)
+        # def _default_layout_default(self):
+        #     return TaskLayout()
 
 #============= EOF =============================================
+

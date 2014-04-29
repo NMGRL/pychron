@@ -203,7 +203,7 @@ class AutomatedRun(Loggable):
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.set_parameter(name, v)
 
-    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0):
+    def py_data_collection(self, obj, ncounts, starttime, starttime_offset, series=0, fit_series=0):
         if not self._alive:
             return
 
@@ -283,7 +283,7 @@ class AutomatedRun(Loggable):
         return result
 
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
-                     series=0, settling_time=4):
+                     series=0, fit_series=0, settling_time=4):
 
         if not self._alive:
             return
@@ -354,8 +354,8 @@ class AutomatedRun(Loggable):
 
         pb = self.get_previous_blanks()
         pbs = self.get_previous_baselines()
-        correct_for_blank =(not self.spec.analysis_type.startswith('blank') and
-                            not self.spec.analysis_type.startswith('background'))
+        correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
+                             not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
             add_detector = len(dets) > 1
@@ -382,18 +382,18 @@ class AutomatedRun(Loggable):
                         pid = g.plots.index(plot)
                         g.new_series(kind='scatter', fit=None, plotid=pid)
 
-                    # if plot is not None:
-                    #     pid = g.plots.index(plot)
-                    #     n = len(plot.plots)
-                    # else:
-                    #     n = 1
-                    #     pid=len(g.plots)
-                    #
-                    # plot = self.plot_panel.new_plot(add=pid + 1)
-                    #
-                    # pid = g.plots.index(plot)
-                    # for i in range(n):
-                    #     g.new_series(kind='scatter', fit=None, plotid=pid)
+                        # if plot is not None:
+                        #     pid = g.plots.index(plot)
+                        #     n = len(plot.plots)
+                        # else:
+                        #     n = 1
+                        #     pid=len(g.plots)
+                        #
+                        # plot = self.plot_panel.new_plot(add=pid + 1)
+                        #
+                        # pid = g.plots.index(plot)
+                        # for i in range(n):
+                        #     g.new_series(kind='scatter', fit=None, plotid=pid)
 
                 if add_detector:
                     name = '{}{}'.format(name, di)
@@ -404,7 +404,7 @@ class AutomatedRun(Loggable):
         self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(self, cycles, counts, hops, starttime, starttime_offset,
-                    series=0, group='signal'):
+                    series=0, fit_series=0, group='signal'):
 
         if not self._alive:
             return
@@ -1123,7 +1123,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank') \
-                and not self.spec.analysis_type.startswith('background')):
+                    and not self.spec.analysis_type.startswith('background')):
 
             cb = True
             #blanks=None
@@ -1447,7 +1447,7 @@ anaylsis_type={}
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError,e:
+                except IndexError, e:
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',

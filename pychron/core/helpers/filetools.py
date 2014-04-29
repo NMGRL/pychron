@@ -16,6 +16,20 @@
 
 #========== standard library imports ==========
 import os
+import subprocess
+
+
+def view_file(p, application='Preview', logger=None):
+    app_path = '/Applications/{}.app'.format(application)
+    if not os.path.exists(app_path):
+        app_path = '/Applications/Preview.app'
+
+    try:
+        subprocess.call(['open', '-a', app_path, p])
+    except OSError:
+        if logger:
+            logger.debug('failed opening {} using {}'.format(p, app_path))
+        subprocess.call(['open', p])
 
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
@@ -198,7 +212,7 @@ def filetolist(f, commentchar='#'):
         cc = li[:1]
         return not (cc == commentchar or isNewLine(cc))
 
-    r = [line for line in f if test(line)]
+    r = (line for line in f if test(line))
     r = [line.split(commentchar)[0].strip() for line in r]
     # r = []
     #
@@ -210,3 +224,17 @@ def filetolist(f, commentchar='#'):
     #         line = line.split('#')[0]
     #         r.append(line.strip())
     return r
+
+
+def fileiter(fp, commentchar='#'):
+    def isNewLine(c):
+        return c in ('\r', '\n')
+
+    def test(li):
+        cc = li[:1]
+        return not (cc == commentchar or isNewLine(cc))
+
+    for line in fp:
+        if test(line):
+            yield line
+

@@ -15,11 +15,11 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import Property, DelegatesTo, Instance
+from traits.api import Property, DelegatesTo, Instance, provides
 #=============standard library imports ========================
 #=============local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
-from traits.has_traits import provides
+# from traits.has_traits import provides
 from pychron.hardware.core.i_core_device import ICoreDevice
 # from viewable_device import ViewableDevice
 from pychron.has_communicator import HasCommunicator
@@ -27,6 +27,7 @@ from pychron.rpc.rpcable import RPCable
 from pychron.hardware.core.core_device import CoreDevice
 # from pychron.hardware.core.viewable_device import ViewableDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
+
 
 @provides(ICoreDevice)
 class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
@@ -76,6 +77,7 @@ class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
                 self._loaded = True
                 self._cdevice.load()
                 return True
+
     def __getattr__(self, attr):
         #print 'abstrcat {}'.format(attr)
         if hasattr(self._cdevice, attr):

@@ -15,24 +15,40 @@
 #===============================================================================
 
 #=============enthought library imports=======================
+
 from traits.api import HasTraits, Str, Any, List, \
-    Bool, Enum
+    Bool, Enum, provides
+
 # from pyface.timer.api import Timer
 #=============standard library imports ========================
 import random
 # from threading import Lock
 from datetime import datetime
+import inspect
+import time
 #=============local library imports  ==========================
-from traits.has_traits import provides
+# from traits.has_traits import provides
 from i_core_device import ICoreDevice
 # from pychron.core.helpers.timer import Timer
 # from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 # from pychron.core.helpers.datetime_tools import generate_datetimestamp
+from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.hardware.core.scanable_device import ScanableDevice
 from pychron.rpc.rpcable import RPCable
 from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.consumer_mixin import ConsumerMixin
+
+
+def crc_caller(func):
+    def d(*args, **kw):
+        try:
+            return func(*args, **kw)
+        except CRCError:
+            stack = inspect.stack()
+            print '{} called by {}'.format(func.func_name, stack[1][3])
+
+    return d
 
 
 class Alarm(HasTraits):
@@ -69,6 +85,7 @@ class Alarm(HasTraits):
         tstamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
+
 
 @provides(ICoreDevice)
 class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
@@ -113,10 +130,10 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         self.last_response = r if r else ''
 
     def load(self, *args, **kw):
-        '''
+        """
             Load a configuration file.  
             Get Communications info to make a new communicator
-        '''
+        """
         config = self.get_configuration()
         if config:
 
@@ -149,13 +166,38 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         return a and b
 
     def load_additional_args(self, config):
-        '''
-        '''
+        """
+        """
         return True
 
+    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None):
+        """
+            repeatedly ask func at 1/period rate
+            if func returns true return True
+            if timeout return False
+        """
+        if isinstance(func, str):
+            func = getattr(self, func)
+        if args is None:
+            args = tuple()
+        if kwargs is None:
+            kwargs = dict()
+
+        st = time.time()
+        while 1:
+            if func(*args, **kwargs):
+                return True
+            elif timeout:
+                et = time.time() - st
+                if et > timeout:
+                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.func_name, timeout))
+                    raise TimeoutError(func.func_name, timeout)
+            time.sleep(period)
+
+    @crc_caller
     def ask(self, cmd, **kw):
-        '''
-        '''
+        """
+        """
         comm = self._communicator
         if comm is not None:
             if comm.scheduler:
@@ -169,22 +211,25 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         else:
             self.info('no communicator for this device {}'.format(self.name))
 
+    @crc_caller
     def write(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         self.tell(*args, **kw)
 
+    @crc_caller
     def tell(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         if self._communicator is not None:
             cmd = ' '.join(map(str, args) + map(str, kw.iteritems()))
             self._communicate_hook(cmd, '-')
             return self._communicator.tell(*args, **kw)
 
+    @crc_caller
     def read(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         if self._communicator is not None:
             return self._communicator.read(*args, **kw)
 
@@ -206,16 +251,15 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self.auto_start:
             self.start_scan()
 
-
     def get_random_value(self, mi=0, ma=10):
-        '''
+        """
             convienent method for getting a random integer between min and max
             
             Defaults:
                 min=0
                 max=10
 
-        '''
+        """
         return random.randint(mi, ma)
 
     def setup_scheduler(self, name=None):
