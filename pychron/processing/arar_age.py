@@ -21,6 +21,7 @@ from copy import copy
 import os
 
 from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either, cached_property
+from pychron.core.codetools.inspection import caller
 
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
@@ -102,9 +103,9 @@ class ArArAge(Loggable):
     _kca_warning = False
     _kcl_warning = False
 
-    def __init__(self, *args, **kw):
-        HasTraits.__init__(self, *args, **kw)
-        self.logger = logger
+    # def __init__(self, *args, **kw):
+    #     HasTraits.__init__(self, *args, **kw)
+    #     self.logger = logger
 
     def clear_isotopes(self):
         for iso in self.isotopes:
@@ -286,6 +287,7 @@ class ArArAge(Loggable):
 
         self.isotopes[iso].baseline.set_uvalue(v)
 
+    # @caller
     def calculate_age(self, force=False, **kw):
         """
             force: force recalculation of age. necessary if you want error components
@@ -381,8 +383,10 @@ class ArArAge(Loggable):
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
             Isotope.get_intensity takes about 5ms.
         """
+        self.debug('calculate age')
         isos = self._assemble_ar_ar_isotopes()
         if not isos:
+            self.debug('faile assembling isotopes')
             return
 
         arc = self.arar_constants
@@ -417,6 +421,7 @@ class ArArAge(Loggable):
 
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
+
         self.uage = age
 
         self.age = float(age.nominal_value)

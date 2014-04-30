@@ -231,8 +231,9 @@ class BaseTask(Task, Loggable):
                 ctrl.show()
             ctrl.raise_()
 
-        self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
-        invoke_in_main_thread(do_later, _show)
+        if p:
+            self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
+            invoke_in_main_thread(do_later, _show)
 
     def _menu_bar_factory(self, menus=None):
         if not menus:

@@ -95,6 +95,7 @@ class Loggable(HasTraits):
         """
 
         """
+
         if self.logger_name:
             name = self.logger_name
         elif self.name:
@@ -102,7 +103,8 @@ class Loggable(HasTraits):
         else:
             name = self.__class__.__name__
 
-        self.logger = new_logger(name)
+        if self.logger is None:
+            self.logger = new_logger(name)
 
         c = color_name_gen.next()
         if c in ['gray', 'silver', 'greenyellow']:

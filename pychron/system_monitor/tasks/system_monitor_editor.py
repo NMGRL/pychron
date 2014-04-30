@@ -52,7 +52,7 @@ def camel_case(name):
 class SystemMonitorEditor(SeriesEditor):
     conn_spec = Instance(ConnectionSpec, ())
     name = Property(depends_on='conn_spec:+')
-    tool = Instance(SystemMonitorControls)
+    search_tool = Instance(SystemMonitorControls)
     subscriber = Instance(Subscriber)
     plotter_options_manager_klass = SystemMonitorOptionsManager
 
@@ -117,28 +117,23 @@ class SystemMonitorEditor(SeriesEditor):
                     add to ideogram
         """
 
-        def func():
-            #with self.db_lock:
-            self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
-            proc = self.processor
-            db = proc.db
-            with db.session_ctx():
-                if last_run_uuid is None:
-                    dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
-                else:
-                    dbrun = db.get_analysis_uuid(last_run_uuid)
+        self.info('refresh analyses. last UUID={}'.format(last_run_uuid))
+        proc = self.processor
+        db = proc.db
+        with db.session_ctx():
+            if last_run_uuid is None:
+                dbrun = db.get_last_analysis(spectrometer=self.conn_spec.system_name)
+            else:
+                dbrun = db.get_analysis_uuid(last_run_uuid)
 
-                #if last_run_uuid:
-                #    dbrun = db.get_analysis_uuid(last_run_uuid)
-                self.debug('run_added_handler dbrun={}'.format(dbrun))
-                if dbrun:
-                    self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
-                    an = proc.make_analysis(dbrun)
-                    self._refresh_sys_mon_series(an)
-                    self._refresh_figures(an)
+            self.debug('run_added_handler dbrun={}'.format(dbrun))
+            if dbrun:
+                self.debug('run_added_handler identifier={}'.format(dbrun.labnumber.identifier))
+                an = proc.make_analysis(dbrun)
+                self._refresh_sys_mon_series(an)
+                self._refresh_figures(an)
+                # self._refresh_spectrum('62908', 11)
 
-        func()
-        # invoke_in_main_thread(func)
 
     def start(self):
 
@@ -172,10 +167,10 @@ class SystemMonitorEditor(SeriesEditor):
         t.start()
 
     def _get_dump_tool(self):
-        return self.tool
+        return self.search_tool
 
     def _load_tool(self, obj, **kw):
-        self.tool = obj
+        self.search_tool = obj
 
     def _poll(self, last_run_uuid=None):
         self._polling = True
@@ -231,10 +226,10 @@ class SystemMonitorEditor(SeriesEditor):
     def _refresh_sys_mon_series(self, an):
 
         ms = an.mass_spectrometer
-        kw = dict(weeks=self.tool.weeks,
-                  days=self.tool.days,
-                  hours=self.tool.hours,
-                  limit=self.tool.limit)
+        kw = dict(weeks=self.search_tool.weeks,
+                  days=self.search_tool.days,
+                  hours=self.search_tool.hours,
+                  limit=self.search_tool.limit)
 
         ans = self.processor.analysis_series(ms, **kw)
         # for ai in ans:
@@ -284,6 +279,7 @@ class SystemMonitorEditor(SeriesEditor):
                                      add_iso=False)
             self.task.tab_editors(0, -1)
             e.basename = '{} Series'.format(camel_case(attr))
+            e.search_tool = SystemMonitorControls()
             return e
 
         editor = self._update_editor(editor, new, identifier, None, layout=False,
@@ -296,18 +292,18 @@ class SystemMonitorEditor(SeriesEditor):
         """
         editor = self._ideogram_editor
         f = lambda: self.task.new_ideogram(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, None)
+        editor = self._update_editor(editor, f, identifier, None, calculate_age=True)
         self._ideogram_editor = editor
 
     def _refresh_spectrum(self, identifier, aliquot):
         editor = self._spectrum_editor
         f = lambda: self.task.new_spectrum(add_table=False, add_iso=False)
-        editor = self._update_editor(editor, f, identifier, aliquot)
+        editor = self._update_editor(editor, f, identifier, aliquot, calculate_age=True)
         self._spectrum_editor = editor
 
     def _update_editor(self, editor, editor_factory,
                        identifier, aliquot, layout=True,
-                       use_date_range=False):
+                       use_date_range=False, calculate_age=False):
         if editor is None:
             editor = editor_factory()
         #     if layout:
@@ -317,25 +313,32 @@ class SystemMonitorEditor(SeriesEditor):
         #         self.task.activate_editor(editor)
 
         #gather analyses
-        ans = self._get_analyses(identifier,
-                                 aliquot, use_date_range)
+        tool=None
+        if hasattr(editor, 'search_tool'):
+            tool = editor.search_tool
 
+        ans = self._get_analyses(tool, identifier,
+                                 aliquot, use_date_range)
         ans = self._sort_analyses(ans)
+
+        if calculate_age:
+            for ai in ans:
+                ai.calculate_age()
+
         editor.set_items(ans, update_graph=False)
-        # editor.analyses = ans
-        # group_analyses_by_key(editor, editor.analyses, 'labnumber')
-        #        self.task.group_by_labnumber()
-        # editor.rebuild()
+        group_analyses_by_key(editor, editor.analyses, 'labnumber')
+
+        editor.clear_aux_plot_limits()
         do_later(editor.rebuild)
+        # editor.rebuild()
         return editor
 
     def _sort_analyses(self, ans):
         return sorted(ans, key=lambda x: x.timestamp)
 
-    def _get_analyses(self, identifier, aliquot=None, use_date_range=False):
+    def _get_analyses(self, tool, identifier, aliquot=None, use_date_range=False):
         db = self.processor.db
         with db.session_ctx():
-            limit = self.tool.limit
             if aliquot is not None:
                 def func(a, l):
                     return l.identifier == identifier, a.aliquot == aliquot
@@ -343,19 +346,19 @@ class SystemMonitorEditor(SeriesEditor):
                 ans = db.get_analyses(func=func)
             elif use_date_range:
                 end = datetime.now()
-                start = end - timedelta(hours=self.tool.hours,
-                                        weeks=self.tool.weeks,
-                                        days=self.tool.days)
+                start = end - timedelta(hours=tool.hours,
+                                        weeks=tool.weeks,
+                                        days=tool.days)
 
                 ans = db.get_date_range_analyses(start, end,
                                                  labnumber=identifier,
-                                                 limit=limit)
+                                                 limit=tool.limit)
             else:
                 ans, tc = db.get_labnumber_analyses(identifier)
 
             return self.processor.make_analyses(ans)
 
-    @on_trait_change('tool:[+, refresh_button]')
+    @on_trait_change('search_tool:[+, refresh_button]')
     def _handle_tool_change(self):
         self.run_added_handler()
 
@@ -369,7 +372,7 @@ class SystemMonitorEditor(SeriesEditor):
         return '{}-{}'.format(self.conn_spec.system_name,
                               self.conn_spec.host)
 
-    def _tool_default(self):
+    def _search_tool_default(self):
         tool = SystemMonitorControls()
         return tool
 

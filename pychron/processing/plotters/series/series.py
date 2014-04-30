@@ -62,7 +62,7 @@ class Series(BaseArArFigure):
             if po.name == 'AnalysisType':
                 p.y_axis.tick_label_formatter = tick_formatter
                 p.y_axis.tick_generator = StaticTickGenerator()
-                p.y_axis.tick_label_rotate_angle = 45
+                # p.y_axis.tick_label_rotate_angle = 45
                 graph.set_y_limits(min_=-1, max_=7, plotid=i)
 
             p.value_scale = po.scale
@@ -108,7 +108,7 @@ class Series(BaseArArFigure):
         try:
             if po.name == 'AnalysisType':
                 ys = list(self._unpack_attr(po.name))
-                kw = dict(y=ys)
+                kw = dict(y=ys, colors=ys, type='cmap_scatter', marker_size=4, color_map_name='gist_rainbow')
                 yerr = None
                 value_format = analysis_type_formatter
                 set_ylimits = False
@@ -116,7 +116,7 @@ class Series(BaseArArFigure):
                 value_format = None
                 ys = array([ai.nominal_value for ai in self._unpack_attr(po.name)])
                 yerr = array([ai.std_dev for ai in self._unpack_attr(po.name)])
-                kw = dict(y=ys, yerror=yerr)
+                kw = dict(y=ys, yerror=yerr, type='scatter')
                 set_ylimits = True
 
             n = [ai.record_id for ai in self.sorted_analyses]
@@ -124,7 +124,7 @@ class Series(BaseArArFigure):
                                     display_index=ArrayDataSource(data=n),
                                     fit=po.fit,
                                     plotid=pid,
-                                    type='scatter',
+                                    # type='scatter',
                                     add_inspector=False,
                                     **kw)
             if len(args) == 2:

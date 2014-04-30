@@ -171,8 +171,10 @@ class Spectrum(BaseArArFigure):
         pad = '0.25'
         if po.has_ylimits():
             _mi, _ma = po.ylimits
+            print 'using previous limits', _mi, _ma
             pad = None
         # print 'setting', _mi, _ma
+
         self.graph.set_y_limits(min_=_mi, max_=_ma, pad=pad, plotid=pid)
         # self._set_y_limits(_mi, _ma, pad=pad)
 

@@ -135,8 +135,11 @@ class SystemMonitorTask(FigureTask):
         if new:
             if self.controls_pane:
                 tool = None
-                if hasattr(new, 'tool'):
-                    tool = new.tool
+                # if hasattr(new, 'tool'):
+                #     tool = new.tool
+
+                if hasattr(new, 'search_tool'):
+                    tool = new.search_tool
 
                 self.controls_pane.tool = tool
             if isinstance(new, FigureEditor):
@@ -184,7 +187,7 @@ class SystemMonitorTask(FigureTask):
     @on_trait_change('window:opened')
     def _opened(self):
         editor = self.add_system_monitor()
-        self.add_dashboard_editor()
+        # self.add_dashboard_editor()
 
         #if editor:
         #    ideo = self.new_ideogram(add_table=False, add_iso=False)
