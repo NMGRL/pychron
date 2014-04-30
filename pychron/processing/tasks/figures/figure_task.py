@@ -674,12 +674,12 @@ class FigureTask(AnalysisEditTask):
                 self.active_editor.rebuild()
                 self.active_editor.dump_tool()
 
-    def _active_editor_changed(self):
+    def _active_editor_changed(self, new):
         if self.active_editor:
             if isinstance(self.active_editor, FigureEditor):
                 self.plotter_options_pane.pom = self.active_editor.plotter_options_manager
 
-        super(FigureTask, self)._active_editor_changed()
+        super(FigureTask, self)._active_editor_changed(new)
 
     @on_trait_change('active_editor:refresh_unknowns_table')
     def _ac_refresh_table(self):
