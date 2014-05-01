@@ -1500,7 +1500,7 @@ class IsotopeAdapter(DatabaseAdapter):
                            meas_IsotopeTable,
                            gen_SampleTable.name,
                            gen_ProjectTable.name,
-                           gen_MaterialTable.name)
+                           gen_MaterialTable)
             q = q.join(meas_IsotopeTable)
             q = q.join(gen_LabTable)
             q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)

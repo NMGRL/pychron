@@ -26,6 +26,7 @@ from itertools import groupby
 import pickle
 #============= local library imports  ==========================
 from pychron.paths import paths
+from pychron.processing.analyses.dbanalysis import DBAnalysis
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.editor import BaseUnknownsEditor
@@ -54,6 +55,7 @@ class GraphEditor(BaseUnknownsEditor):
     recall_event = Event
     tag_event = Event
     invalid_event = Event
+    update_graph_on_set_items = False
 
     def set_name(self):
         self._set_name()
@@ -148,22 +150,28 @@ class GraphEditor(BaseUnknownsEditor):
         self.analyses = [ai for ai in self.analyses if ai.tag != 'invalid']
         self.rebuild()
 
-    def set_items(self, unks, is_append=False, update_graph=True, **kw):
+    def set_items(self, unks, is_append=False, update_graph=None, **kw):
         ans = self.processor.make_analyses(unks,
                                            calculate_age=self.calculate_age,
                                            unpack=self.unpack_peaktime,
                                            **kw)
 
+        # print 'pre', all(map(lambda x: isinstance(x, DBAnalysis), ans))
         if is_append:
             pans = self.analyses
+            # print 'pans', all(map(lambda x: isinstance(x, DBAnalysis), pans))
             pans.extend(ans)
             ans = pans
+        # print 'post', all(map(lambda x: isinstance(x, DBAnalysis), ans))
+
+        if update_graph is None:
+            update_graph=self.update_graph_on_set_items
 
         self.analyses = ans
         self._update_analyses(update_graph=update_graph)
         self.dump_tool()
 
-    def _update_analyses(self, update_graph=True):
+    def _update_analyses(self, update_graph=False):
         ans = self.analyses
         if ans:
             self.debug('analyses changed nanalyses={}'.format(len(ans)))

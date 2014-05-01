@@ -78,11 +78,11 @@ class no_auto_ctx(object):
 
     def __enter__(self):
         self.obj.auto_find = False
-        self.obj.update_on_analyses = False
+        # self.obj.update_on_analyses = False
 
     def __exit__(self, *args):
         self.obj.auto_find = True
-        self.obj.update_on_analyses = True
+        # self.obj.update_on_analyses = True
 
 
 class InterpolationTask(AnalysisEditTask):

@@ -619,7 +619,6 @@ class FigureTask(AnalysisEditTask):
 
         super(FigureTask, self)._dclicked_sample_changed()
 
-
     def _dclicked_figure_changed(self, new):
         if not new:
             return

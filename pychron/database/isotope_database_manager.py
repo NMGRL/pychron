@@ -243,6 +243,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                       exclude=None,
                       use_cache=True,
                       unpack=False,
+                      calculate_age=False,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -259,6 +260,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if ans:
                 #partition into DBAnalysis vs IsotopeRecordView
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
+                if calculate_age:
+                    for ca in db_ans:
+                        ca.calculate_age()
+
                 if unpack:
                     for di in db_ans:
                         if not di.has_raw_data:
@@ -280,10 +285,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                 print ca.record_id, 'no rawasffas'
                                 no_db_ans.append(ci)
                             else:
+                                if calculate_age:
+                                    ca.calculate_age()
                                 db_ans.append(ca)
                     else:
+                        cns=[ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
+                        if calculate_age:
+                            for ca in cns:
+                                ca.calculate_age()
                         #add analyses from cache to db_ans
-                        db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
+                        db_ans.extend(cns)
 
                     #increment value in cache_count
                     if use_cache:
@@ -335,7 +346,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = construct(ai, gi, progress, unpack=unpack, **kw)
+                            a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
                             if a:
                                 if use_cache:
                                     add_to_cache(a)

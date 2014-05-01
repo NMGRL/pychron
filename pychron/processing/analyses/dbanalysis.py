@@ -193,7 +193,8 @@ class DBAnalysis(Analysis):
         if sample:
             self.sample = sample
             self.project = project
-            self.material = material
+            if material:
+                self.material = material.name
 
         self._sync_meas_analysis_attributes(meas_analysis)
         # self._sync_analysis_info(meas_analysis)

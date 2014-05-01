@@ -107,7 +107,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
         ret = self._get_find_parameters()
         if not ret:
             return
-        model, unks = ret
+        model = ret
 
         uuids = [ai.uuid for ai in self.unknowns_pane.items]
         tans = []
@@ -135,8 +135,9 @@ class IsotopeEvolutionTask(AnalysisEditTask):
             msg = 'Found Associated Analyses\n{}\n Continue?'.format(m)
             if self.confirmation_dialog(msg):
                 # tans = [IsotopeRecordView(ai) for ai in tans]
-                unks.extend(tans)
-                self.active_editor.set_items(unks, is_append=True)
+                # ans = self.active_editor.analyses
+                # ans.extend(tans)
+                self.active_editor.set_items(tans, is_append=True)
 
     def _get_find_parameters(self):
         f = FindAssociatedParametersDialog()
@@ -172,7 +173,7 @@ class IsotopeEvolutionTask(AnalysisEditTask):
 
         info = f.edit_traits(kind='livemodal')
         if info.result:
-            return f.model, unks
+            return f.model
 
     def _find_associated_analyses(self, db, lpost, hpost, atype, ms):
         ans = db.get_date_range_analyses(lpost, hpost,

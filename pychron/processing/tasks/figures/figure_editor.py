@@ -54,6 +54,8 @@ class FigureEditor(GraphEditor):
     saved_figure_id = Int
     titles = List
 
+    update_graph_on_set_items = True
+
     def enable_aux_plots(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:

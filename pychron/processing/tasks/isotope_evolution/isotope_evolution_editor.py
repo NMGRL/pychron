@@ -24,6 +24,7 @@ from numpy import Inf, polyfit
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
+from pychron.processing.analyses.dbanalysis import DBAnalysis
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #from pychron.core.ui.thread import Thread
@@ -55,7 +56,7 @@ class IsotopeEvolutionEditor(GraphEditor):
     tool = Instance(IsoEvoFitSelector)
     pickle_path = 'iso_fits'
     unpack_peaktime = True
-    update_on_analyses = False
+    # update_on_analyses = False
     calculate_age = False
 
     def _set_name(self):
@@ -371,10 +372,10 @@ class IsotopeEvolutionEditor(GraphEditor):
                         if not self.confirmation_dialog(
                                 'No data for {} {}\n Do you want to continue?'.format(unk.record_id, fit.name)):
                             break
-
-                    unk.calculate_age(force=True)
-                    unk.sync_view()
                     i += 1
+
+                unk.calculate_age(force=True)
+                unk.sync_view()
 
             if set_x_flag and ma > -Inf:
                 g.set_x_limits(0, ma * 1.1)
