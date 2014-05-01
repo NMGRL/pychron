@@ -237,6 +237,79 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def make_analysis(self, ai, **kw):
         return self.make_analyses((ai,), **kw)[0]
 
+    def _calculate_cached_ages(self, ans, calculate_age):
+        if calculate_age:
+            for ca in ans:
+                ca.calculate_age()
+
+    def _unpack_cached_analyses(self, ans, calculate_age):
+        no_db_ans = []
+        db_ans = []
+        for ca in ans:
+            if not ca.has_raw_data:
+                print ca.record_id, 'no rawasffas'
+                no_db_ans.append(ca)
+            else:
+                if calculate_age:
+                    ca.calculate_age()
+                db_ans.append(ca)
+        return db_ans, no_db_ans
+
+    def _increment_cache(self, cached_ans, use_cache):
+        if use_cache:
+            for ci in cached_ans:
+                self._add_to_cache(ci)
+
+    def _clone_vcs_repos(self, no_db_ans):
+        if self.use_vcs:
+            #clone the necessary project repositories
+            def f(x):
+                try:
+                    return x.labnumber.sample.project.name
+                except AttributeError:
+                    pass
+
+            prs = filter(lambda x: not x is None, (f(ai) for ai in no_db_ans))
+            self.vcs.clone_project_repos(prs)
+
+    def _setup_progress(self, n, progress, use_progress):
+        if n > 1:
+            if progress is not None:
+                if progress.max < (n + progress.get_value()):
+                    progress.increase_max(n + 2)
+            elif use_progress:
+                progress = self._open_progress(n + 2)
+        return progress
+
+    def _construct_analyses(self, n, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
+        new_ans = []
+        #get all dbrecords with one call
+        uuids = [ri.uuid for ri in no_db_ans]
+        ms = self.db.get_analyses_uuid(uuids)
+        construct = self._construct_analysis
+        append = new_ans.append
+        add_to_cache = self._add_to_cache
+        key = lambda x: x[0]
+        dbrecords = groupby(ms, key=key)
+        for i, ai in enumerate(no_db_ans):
+            mi, gi = dbrecords.next()
+            if progress:
+                if progress.canceled:
+                    self.debug('canceling make analyses')
+                    db_ans = []
+                    new_ans = []
+                    break
+                elif progress.accepted:
+                    self.debug('accepting {}/{} analyses'.format(i, n))
+                    break
+
+            a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
+            if a:
+                if use_cache:
+                    add_to_cache(a)
+                append(a)
+        return db_ans, new_ans
+
     def make_analyses(self, ans,
                       progress=None,
                       use_progress=True,
@@ -260,9 +333,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if ans:
                 #partition into DBAnalysis vs IsotopeRecordView
                 db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
-                if calculate_age:
-                    for ca in db_ans:
-                        ca.calculate_age()
+                self._calculate_cached_ages(db_ans, calculate_age)
 
                 if unpack:
                     for di in db_ans:
@@ -277,80 +348,29 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     cached_ans = list(cached_ans)
                     no_db_ans = list(no_db_ans)
 
+                    cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
                     #if unpack is true make sure cached analyses have raw data
                     if unpack:
-                        for ci in cached_ans:
-                            ca = ANALYSIS_CACHE[ci.uuid]
-                            if not ca.has_raw_data:
-                                print ca.record_id, 'no rawasffas'
-                                no_db_ans.append(ci)
-                            else:
-                                if calculate_age:
-                                    ca.calculate_age()
-                                db_ans.append(ca)
+                        a, b = self._unpack_cached_analyses(cns)
+                        db_ans.extend(a)
+                        no_db_ans.extend(b)
                     else:
-                        cns=[ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
-                        if calculate_age:
-                            for ca in cns:
-                                ca.calculate_age()
+                        self._calculate_cached_ages(cns, calculate_age)
                         #add analyses from cache to db_ans
                         db_ans.extend(cns)
 
                     #increment value in cache_count
-                    if use_cache:
-                        for ci in cached_ans:
-                            self._add_to_cache(ci)
+                    self._increment_cache(cached_ans, use_cache)
 
                     #load remaining analyses
                     n = len(no_db_ans)
                     if n:
+                        self._clone_vcs_repos(no_db_ans)
 
-                        if self.use_vcs:
-                            #clone the necessary project repositories
-                            def f(x):
-                                try:
-                                    return x.labnumber.sample.project.name
-                                except AttributeError:
-                                    pass
+                        progress = self._setup_progress(n, progress, use_progress)
 
-                            prs = filter(lambda x: not x is None, (f(ai) for ai in no_db_ans))
-                            self.vcs.clone_project_repos(prs)
-
-                        if n > 1:
-                            if progress is not None:
-                                if progress.max < (n + progress.get_value()):
-                                    progress.increase_max(n + 2)
-                            elif use_progress:
-                                progress = self._open_progress(n + 2)
-
-                        new_ans = []
-
-                        #get all dbrecords with one call
-                        uuids = [ri.uuid for ri in no_db_ans]
-                        ms = self.db.get_analyses_uuid(uuids)
-                        construct = self._construct_analysis
-                        append = new_ans.append
-                        add_to_cache = self._add_to_cache
-                        key = lambda x: x[0]
-
-                        dbrecords = groupby(ms, key=key)
-                        for i, ai in enumerate(no_db_ans):
-                            mi, gi = dbrecords.next()
-                            if progress:
-                                if progress.canceled:
-                                    self.debug('canceling make analyses')
-                                    db_ans = []
-                                    new_ans = []
-                                    break
-                                elif progress.accepted:
-                                    self.debug('accepting {}/{} analyses'.format(i, n))
-                                    break
-
-                            a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
-                            if a:
-                                if use_cache:
-                                    add_to_cache(a)
-                                append(a)
+                        db_ans, new_ans = self._construct_analyses(n, no_db_ans, db_ans, progress,
+                                                          calculate_age, unpack, use_cache, **kw)
 
                         db_ans.extend(new_ans)
 

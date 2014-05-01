@@ -383,22 +383,22 @@ class ArArAge(Loggable):
             approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
             Isotope.get_intensity takes about 5ms.
         """
-        self.debug('calculate age')
-        isos = self._assemble_ar_ar_isotopes()
-        if not isos:
-            self.debug('faile assembling isotopes')
+        # self.debug('calculate age')
+        iso_intensities = self._assemble_ar_ar_isotopes()
+        if not iso_intensities:
+            self.debug('failed assembling isotopes')
             return
 
         arc = self.arar_constants
-        isos = abundance_sensitivity_correction(isos, arc.abundance_sensitivity)
-        isos[1] *= self.ar39decayfactor
-        isos[3] *= self.ar37decayfactor
-        self.Ar39_decay_corrected = isos[1]
-        self.Ar37_decay_corrected = isos[3]
+        iso_intensities = abundance_sensitivity_correction(iso_intensities, arc.abundance_sensitivity)
+        iso_intensities[1] *= self.ar39decayfactor
+        iso_intensities[3] *= self.ar37decayfactor
+        self.Ar39_decay_corrected = iso_intensities[1]
+        self.Ar37_decay_corrected = iso_intensities[3]
 
         # print isos[4]
         # print 'ifc',self.interference_corrections
-        f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(isos,
+        f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
                                                                               decay_time=self.decay_days,
                                                                               interferences=self.interference_corrections,
                                                                               arar_constants=self.arar_constants)
@@ -406,8 +406,9 @@ class ArArAge(Loggable):
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']
+        isotopes = self.isotopes
         for k, v in interference_corrected.iteritems():
-            self.isotopes[k].interference_corrected_value = v
+            isotopes[k].interference_corrected_value = v
 
         self.uF = f
         self.F = f.nominal_value
@@ -451,7 +452,7 @@ class ArArAge(Loggable):
         j.std_dev = 0
         self.age_err_wo_j_irrad = float(age.std_dev)
 
-        for iso in self.isotopes.itervalues():
+        for iso in isotopes.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
 
     def _get_isotope_keys(self):
