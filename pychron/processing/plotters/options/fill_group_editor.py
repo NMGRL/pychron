@@ -43,8 +43,7 @@ class Fill(HasTraits):
     def simple_view(self):
         v = View(VGroup(HGroup(UItem('use_filled_line'),
                                Item('color', enabled_when='use_filled_line')),
-                        Item('alpha'),
-                        show_border=True))
+                        Item('alpha')))
         return v
 
 

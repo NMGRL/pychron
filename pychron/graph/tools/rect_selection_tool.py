@@ -109,7 +109,7 @@ class RectSelectionTool(BaseTool):
                     self._deselect_token(token)
                 else:
                     self._select_token(token)
-            event.handled = True
+                    event.handled = True
 
     def _near_edge(self, event, tol=5):
         if self.filter_near_edge:
