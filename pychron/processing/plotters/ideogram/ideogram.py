@@ -257,20 +257,31 @@ class Ideogram(BaseArArFigure):
         gid = ogid + 1
         sgid = ogid * 2
         # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
-        scatter, _p = graph.new_series(x=bins, y=probs, plotid=pid)
+        plotkw=dict()
+        # if self.group_id==0:
+            # if self.options.use_filled_line:
+        plotkw.update(**self.options.get_fill_dict(ogid))
+                # color= self.options.fill_color
+                # color.setAlphaF(self.options.fill_alpha*0.01)
+                # plotkw['fill_color']=self.options.fill_color
+                # plotkw['type']='filled_line'
+        # else:
+
+
+        line, _p = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
         # add the dashed original line
         graph.new_series(x=bins, y=probs,
                          plotid=pid,
                          visible=False,
-                         color=scatter.color,
+                         color=line.color,
                          line_style='dash')
 
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
-        self._add_mean_indicator(graph, scatter, po, bins, probs, pid)
+        self._add_mean_indicator(graph, line, po, bins, probs, pid)
 
         mi, ma = min(probs), max(probs)
 

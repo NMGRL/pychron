@@ -164,6 +164,7 @@ class FigureTask(AnalysisEditTask):
             self.active_editor.set_group(
                 self._get_selected_indices(),
                 self._get_unique_group_id())
+            self.refresh_active_editor()
 
     def clear_grouping(self, refresh=True, selection=None):
         """

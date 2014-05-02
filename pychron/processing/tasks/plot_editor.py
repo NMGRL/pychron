@@ -392,7 +392,9 @@ class RendererEditor(HasTraits):
         self.renderer.request_redraw()
 
     def _renderer_changed(self):
-        self.line_width = self.renderer.line_width
+        if hasattr(self.renderer, 'line_width'):
+            self.line_width = self.renderer.line_width
+
         self.visible = self.renderer.visible
         #self.color = self.renderer.color
         self._sync()

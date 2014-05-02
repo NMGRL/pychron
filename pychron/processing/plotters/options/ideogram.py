@@ -15,14 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change
-from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor
+from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, Color, Range, Dict, List
+from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.color_generators import colornames
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import LabelMaker
 from pychron.processing.plotters.options.age import AgeOptions
+from pychron.processing.plotters.options.fill_group_editor import Fill, FillGroupEditor
 from pychron.processing.plotters.options.plotter import FONTS, SIZES
 
 
@@ -71,6 +73,31 @@ class IdeogramOptions(AgeOptions):
     inset_location = Enum('Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
     inset_width = Int(160)
     inset_height = Int(100)
+
+    # use_filled_line = Bool
+    # fill_color = Color
+    # fill_alpha = Range(0.0, 100.0)
+    edit_group_fill_color_button = Button
+    fill_groups = List
+    fill_group = Property  #(trait=Fill)
+
+    def get_fill_dict(self, group_id):
+        n = len(self.fill_groups)
+        gid = group_id % n
+        fg = self.fill_groups[gid]
+        if fg.use_filled_line:
+            color = fg.color
+            color.setAlphaF(fg.alpha * 0.01)
+            return dict(fill_color=fg.color,
+                        type='filled_line')
+        else:
+            return {}
+
+    def _edit_group_fill_color_button_fired(self):
+        eg = FillGroupEditor(fill_groups=self.fill_groups)
+        info=eg.edit_traits()
+        if info.result:
+            self.refresh_plot_needed=True
 
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
@@ -215,6 +242,16 @@ class IdeogramOptions(AgeOptions):
                           Item('show_mean_info', label='Mean', enabled_when='show_info'),
                           Item('show_error_type_info', label='Error Type', enabled_when='show_info'),
                           label='Info'),
+                   VGroup(UItem('fill_group', style='custom',
+                                editor=InstanceEditor(view='simple_view')),
+                          HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'),spring),
+                          show_border=True, label='Fill'),
+                   # VGroup(HGroup(UItem('use_filled_line'),
+                   #               Item('fill_color', enabled_when='use_filled_line')),
+                   #        Item('fill_alpha'),
+                   #        icon_button_editor('edit_group_fill_color_button', 'cog'),
+                   #        label='Fill',
+                   #        show_border=True),
                    show_border=True,
                    label='Display')
 
@@ -251,6 +288,14 @@ class IdeogramOptions(AgeOptions):
         return '{} {}'.format(self.mean_indicator_fontname,
                               self.mean_indicator_fontsize)
 
+    def _get_fill_group(self):
+        return self.fill_groups[0]
+
+    def _fill_groups_default(self):
+        return [Fill(group_id=i,
+                     color=colornames[i+1],
+                     alpha=100) for i in range(10)]
+
     def _get_dump_attrs(self):
         attrs = super(IdeogramOptions, self)._get_dump_attrs()
         return attrs + [
@@ -268,6 +313,9 @@ class IdeogramOptions(AgeOptions):
             'mean_indicator_fontname',
             'mean_indicator_fontsize',
             'mean_sig_figs', 'mean_error_sig_figs',
-            'display_inset', 'inset_location', 'inset_width', 'inset_height']
+            'display_inset', 'inset_location', 'inset_width', 'inset_height',
+            'fill_groups'
+            # 'use_filled_line', 'fill_color', 'fill_alpha'
+        ]
 
 #============= EOF =============================================
