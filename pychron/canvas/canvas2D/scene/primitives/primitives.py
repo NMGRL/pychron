@@ -562,7 +562,7 @@ class LoadIndicator(Circle):
     degas_indicator = False
     measured_indicator = False
     degas_color = (1, 0.5, 0)
-    measured_color = (1, 0, 0)
+    measured_color = (0.69, 0.77, 0.87)
 
     #     _text = List
     labnumber_label = None

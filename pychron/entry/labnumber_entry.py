@@ -53,6 +53,17 @@ class save_ctx(object):
         self._p.information_dialog('Changes saved to database')
 
 
+class dirty_ctx(object):
+    def __init__(self, p):
+        self._p = p
+
+    def __enter__(self):
+        self._p.suppress_dirty = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._p.suppress_dirty = False
+
+
 class LabnumberEntry(IsotopeDatabaseManager):
     irradiation_tray = Str
     trays = Property
@@ -86,8 +97,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
     selected_sample = Any
     irradiation_prefix = Str
 
-    dirty = False
-    initialized = False
+    dirty = Bool
+    suppress_dirty = Bool
 
     #labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
@@ -195,15 +206,16 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def _load_canvas_analyses(self, db, level):
         poss = db.get_analyzed_positions(level)
         if poss:
-            # positions=self.irradiated_positions
+            positions = self.irradiated_positions
             canvas = self.canvas
             scene = canvas.scene
-            for idx, cnt in poss:
-                item = scene.get_item(idx)
-                item.measured_indicator = bool(cnt)
-                # canvas.request_redraw()
-                # irp = positions[idx - 1]
-                # irp.analyzed=bool(cnt)
+            with dirty_ctx(self):
+                for idx, cnt in poss:
+                    analyzed = bool(cnt)
+                    item = scene.get_item(idx)
+                    item.measured_indicator = analyzed
+                    irp = positions[idx - 1]
+                    irp.analyzed = analyzed
 
     def _load_holder_canvas(self, holder):
         geom = holder.geometry
@@ -215,14 +227,12 @@ class LabnumberEntry(IsotopeDatabaseManager):
     def _load_holder_positions(self, holder):
         self.irradiated_positions = []
         geom = holder.geometry
-        if geom:
-            self.initialized = False
-            self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
-                                         for c, (x, y, r) in iter_geom(geom)]
-            self.initialized = True
-
-        elif holder.name:
-            self._load_holder_positons_from_file(holder.name)
+        with dirty_ctx(self):
+            if geom:
+                self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
+                                             for c, (x, y, r) in iter_geom(geom)]
+            elif holder.name:
+                self._load_holder_positons_from_file(holder.name)
 
     def _load_holder_positons_from_file(self, name):
         p = os.path.join(self._get_map_path(), name)
@@ -230,10 +240,8 @@ class LabnumberEntry(IsotopeDatabaseManager):
         with open(p, 'r') as f:
             line = f.readline()
             nholes, _diam = line.split(',')
-            self.initialized = False
             self.irradiated_positions = [IrradiatedPosition(hole=ni + 1)
                                          for ni in range(int(nholes))]
-            self.initialized = True
 
     def _save_to_db(self):
         db = self.db
@@ -484,9 +492,8 @@ THIS CHANGE CANNOT BE UNDONE')
             self.debug('positions in level {}.  \
 available holder positions {}'.format(n, len(self.irradiated_positions)))
             if positions:
-                self.initialized = False
-                self._make_positions(n, positions)
-                self.initialized = True
+                with dirty_ctx(self):
+                    self._make_positions(n, positions)
 
     # @simple_timer()
     def _make_positions(self, n, positions):
@@ -619,7 +626,7 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
     @on_trait_change('irradiated_positions:+')
     def _set_dirty(self, name, new):
-        if self.initialized:
+        if not self.suppress_dirty:
             self.dirty = True
 
 

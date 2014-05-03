@@ -17,7 +17,9 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, Float, Bool, Int, Property
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.pychron_constants import PLUSMINUS
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class BaseIrradiatedPosition(HasTraits):
@@ -54,25 +56,11 @@ class BaseIrradiatedPosition(HasTraits):
 
 
 class IrradiatedPosition(BaseIrradiatedPosition):
-#    labnumber = Str
-#    material = Str
-#    sample = Str
-#    hole = Int
-#    project = Str
     size = Str
     weight = Str
     note = Str
+    analyzed = Bool
 
-#    j = Float
-#    j_err = Float
-
-#     auto_assigned = Bool(False)
-# #
-#     @on_trait_change('labnumber,sample, project, material')
-#     def _update_auto_assigned(self, obj, name, old, new):
-# #        print 'ol', name, old, new
-#         if old:
-#             self.auto_assigned = False
 
 class BaseIrradiatedPositionAdapter(TabularAdapter):
     columns = [
@@ -83,8 +71,7 @@ class BaseIrradiatedPositionAdapter(TabularAdapter):
         ('Project', 'project'),
         ('J', 'j'),
         (u'{}J'.format(PLUSMINUS), 'j_err'),
-        ('Note', 'note')
-    ]
+        ('Note', 'note')]
 
     hole_width = Int(45)
 
@@ -100,8 +87,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
         ('Weight', 'weight'),
         ('J', 'j'),
         (u'{}J'.format(PLUSMINUS), 'j_err'),
-        ('Note', 'note')
-    ]
+        ('Note', 'note')]
 
     labnumber_width = Int(80)
     hole_width = Int(50)
@@ -115,13 +101,14 @@ class IrradiatedPositionAdapter(TabularAdapter):
 
     font = 'arial 10'
 
-#    hole_can_edit = False
+    #    hole_can_edit = False
 
-#    def _get_hole_width(self):
-#        return 35
+    #    def _get_hole_width(self):
+    #        return 35
 
-#     def get_bg_color(self, obj, trait, row, column):
-#         item = getattr(obj, trait)[row]
-#         if item.auto_assigned:
-#             return '#B0C4DE'
+    def get_bg_color(self, obj, trait, row, column):
+        item = getattr(obj, trait)[row]
+        if item.analyzed:
+            return '#B0C4DE'
+
 #============= EOF =============================================

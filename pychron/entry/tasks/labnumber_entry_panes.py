@@ -99,8 +99,7 @@ class LabnumbersPane(TraitsTaskPane):
                                             refresh='refresh_table',
                                             multi_select=True,
                                             selected='selected',
-                                            operations=['edit'])),
-        )
+                                            operations=['edit'])), )
         return v
 
 
@@ -139,7 +138,7 @@ class IrradiationPane(TraitsDockPane):
                                enabled_when='edit_level_enabled'),
             icon_button_editor('add_level_button', 'database_add'))
 
-        conn=HGroup(spring,CustomLabel('datasource_url', color='maroon'),spring)
+        conn = HGroup(spring, CustomLabel('datasource_url', color='maroon'), spring)
         v = View(VGroup(conn, irrad, level))
         return v
 
