@@ -253,6 +253,21 @@ class IsotopeAdapter(DatabaseAdapter):
             group.analyses.append(obj)
         return obj
 
+    def get_analyzed_positions(self, level):
+        with self.session_ctx() as sess:
+            q = sess.query(irrad_PositionTable.position,
+                           # gen_LabTable.identifier,
+                           func.count(meas_AnalysisTable.id))
+            q = q.join(irrad_LevelTable)
+            q = q.join(irrad_IrradiationTable)
+            q = q.join(gen_LabTable)
+            q = q.join(meas_AnalysisTable)
+
+            q = q.filter(irrad_IrradiationTable.name == level.irradiation.name)
+            q = q.filter(irrad_LevelTable.name == level.name)
+            q = q.group_by(irrad_PositionTable.position)
+            return self._query_all(q)
+
     def get_analysis_group(self, v, key='id', **kw):
         return self._retrieve_item(proc_AnalysisGroupTable, v, key, **kw)
 

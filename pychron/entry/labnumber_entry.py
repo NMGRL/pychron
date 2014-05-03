@@ -192,6 +192,19 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
         self.refresh_table = True
 
+    def _load_canvas_analyses(self, db, level):
+        poss = db.get_analyzed_positions(level)
+        if poss:
+            # positions=self.irradiated_positions
+            canvas = self.canvas
+            scene = canvas.scene
+            for idx, cnt in poss:
+                item = scene.get_item(idx)
+                item.measured_indicator = bool(cnt)
+                # canvas.request_redraw()
+                # irp = positions[idx - 1]
+                # irp.analyzed=bool(cnt)
+
     def _load_holder_canvas(self, holder):
         geom = holder.geometry
         if geom:
@@ -462,6 +475,7 @@ THIS CHANGE CANNOT BE UNDONE')
                 self.debug('holder {}'.format(level.holder.name))
                 self._load_holder_positions(level.holder)
                 self._load_holder_canvas(level.holder)
+                self._load_canvas_analyses(db, level)
                 #if debug:
             #    return
 

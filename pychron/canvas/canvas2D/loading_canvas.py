@@ -80,10 +80,11 @@ class LoadingCanvas(SceneCanvas):
                         return it
 
     def normal_mouse_move(self, event):
-        if self.hittest(event):
-            event.window.set_pointer(self.select_pointer)
-        else:
-            self._set_normal_pointer(event)
+        if self.editable:
+            if self.hittest(event):
+                event.window.set_pointer(self.select_pointer)
+            else:
+                self._set_normal_pointer(event)
 
     def _set_normal_pointer(self, event):
         event.window.set_pointer(self.normal_pointer)
