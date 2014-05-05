@@ -174,7 +174,10 @@ class DatabaseAdapter(Loggable):
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=False)
                     if test:
-                        self.connected = self._test_db_connection()
+                        if self.test_func:
+                            self.connected = self._test_db_connection()
+                        else:
+                            self.connected = True
                     else:
                         self.connected = True
 
@@ -272,14 +275,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
     def _test_db_connection(self):
         with self.session_ctx():
             try:
-                connected = False
-                if self.test_func is not None:
-                    #                 self.sess = None
-                    #                 self.get_session()
-                    #                sess = self.session_factory()
-                    self.info('testing database connection {}'.format(self.test_func))
-                    getattr(self, self.test_func)(reraise=True)
-                    connected = True
+                # connected = False
+                # if self.test_func is not None:
+                #                 self.sess = None
+                #                 self.get_session()
+                #                sess = self.session_factory()
+                self.info('testing database connection {}'.format(self.test_func))
+                getattr(self, self.test_func)(reraise=True)
+                connected = True
             except Exception, e:
                 print 'exception', e
 
