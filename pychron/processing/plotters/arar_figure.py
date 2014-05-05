@@ -37,7 +37,6 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
-from pychron.pychron_constants import ARGON_KEYS
 
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
@@ -208,14 +207,14 @@ class BaseArArFigure(HasTraits):
     def _unpack_attr(self, attr):
 
         if '/' in attr:
-            n, d = attr.split('/')
-
             def gen():
                 for ai in self.sorted_analyses:
-                    if n in ai.isotopes and d in ai.isotopes:
-                        nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
-                        if n is not None and d is not None:
-                            yield nv/dv
+                    r = ai.get_ratio(attr)
+                    if r is not None:
+                        yield r
+                        # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
+                        # if n is not None and d is not None:
+                        #     yield nv/dv
         else:
             def gen():
                 # f = lambda x: x

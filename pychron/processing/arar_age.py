@@ -20,12 +20,12 @@ from ConfigParser import ConfigParser
 from copy import copy
 import os
 
-from traits.api import HasTraits, Dict, Property, Instance, Float, Str, List, Either, cached_property
-from pychron.core.codetools.inspection import caller
+from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
 
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
+
 
 
 #============= standard library imports ========================
@@ -128,12 +128,24 @@ class ArArAge(Loggable):
         elif hasattr(self, attr):
             return True
 
+    def get_ratio(self, r):
+        n, d = r.split('/')
+        isos = self.isotopes
+        func = self.get_intensity
+        if n in isos and d in isos:
+            try:
+                return func(n) / func(d)
+            except ZeroDivisionError:
+                pass
+
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.value
+        elif '/' in attr:
+            r = self.get_ratio(attr)
         elif attr in self.computed:
             r = self.computed[attr]
         elif attr in self.isotopes:

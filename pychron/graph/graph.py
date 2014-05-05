@@ -606,19 +606,20 @@ class Graph(Viewable, ContextMenuMixin):
             pass
 
     def get_x_limits(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_limits('index', plotid=plotid)
 
     def get_y_limits(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_limits('value', plotid=plotid)
 
     def set_y_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         mmin, mmax = self.get_y_limits(plotid)
+
         if min_ is None:
             min_ = mmin
         if max_ is None:
@@ -630,8 +631,8 @@ class Graph(Viewable, ContextMenuMixin):
     #                               min_, max_, 'value', plotid, pad, **kw)
 
     def set_x_limits(self, min_=None, max_=None, pad=0, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         #         invoke_in_main_thread(self._set_limits,
         #                               min_, max_, 'index', plotid, pad, **kw)
         self._set_limits(min_, max_, 'index', plotid, pad, **kw)
