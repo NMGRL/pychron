@@ -24,11 +24,7 @@ from pychron.envisage.resources import icon
 from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 
-class OpenHopsEditorAction(Action):
-    description = 'Open Hops Editor'
-    name = 'Open Hops Editor'
-    image = icon('document-open')
-
+class HopsEditorAction(Action):
     def perform(self, event):
         application = event.task.window.application
         spec = application.get_service('pychron.spectrometer.spectrometer_manager.SpectrometerManager')
@@ -38,9 +34,29 @@ class OpenHopsEditorAction(Action):
 
         m = HopEditorModel(detectors=dets)
         h = HopEditorView(model=m)
-        m.open()
+        self._perform(m)
         h.edit_traits(kind='livemodal')
-        # application.add_view(info)
+
+    def _perform(self, h):
+        pass
+
+
+class OpenHopsEditorAction(HopsEditorAction):
+    description = 'Open existing peak hop editor'
+    name = 'Open Peak Hops'
+    image = icon('document-open')
+
+    def _perform(self, m):
+        m.open()
+
+
+class NewHopsEditorAction(HopsEditorAction):
+    description = 'Open new peak hop editor'
+    name = 'New Peak Hops'
+    # image = icon('document-new')
+
+    def _perform(self, m):
+        m.new()
 
 
 class OpenPyScriptAction(Action):
@@ -59,19 +75,20 @@ class OpenPyScriptAction(Action):
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout('pychron.pyscript',
                                                              size=(1200, 100)
-                                                             ))
+            ))
             task = win.active_task
-            test_path='/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+            test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
             # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
             if task.open(path=test_path):
                 win.open()
+
 
 class NewPyScriptAction(Action):
     """
     """
     description = 'New pyscript'
     name = 'New Script'
-#    accelerator = 'Shift+Ctrl+O'
+    #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
     def perform(self, event):
         if event.task.id == 'pychron.pyscript':
@@ -86,8 +103,9 @@ class NewPyScriptAction(Action):
 
 
 class JumpToGosubAction(TaskAction):
-    name='Jump to Gosub'
+    name = 'Jump to Gosub'
     image = icon('script_go.png')
-    method='jump_to_gosub'
+    method = 'jump_to_gosub'
     tooltip = 'Jump to gosub defined at the current line. CMD+click on a gosub will also work.'
+
 #============= EOF =============================================

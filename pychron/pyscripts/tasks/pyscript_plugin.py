@@ -25,7 +25,7 @@ from pyface.tasks.action.schema import SMenu
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
-    NewPyScriptAction, OpenHopsEditorAction
+    NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
 
 
@@ -50,6 +50,9 @@ class PyScriptPlugin(BaseTaskPlugin):
                     SchemaAddition(id='open_hops_editor',
                                    path='MenuBar/File/Open',
                                    factory=OpenHopsEditorAction),
+                    SchemaAddition(id='new_hops_editor',
+                                   path='MenuBar/File/New',
+                                   factory=NewHopsEditorAction),
                     SchemaAddition(id='open_script',
                                    path='MenuBar/File/Open',
                                    factory=OpenPyScriptAction),
