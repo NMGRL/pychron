@@ -23,7 +23,9 @@ from pychron.social.tasks.panes import EmailPane
 
 
 class EmailTask(BaseManagerTask):
+    name = 'Email'
+
     def create_central_pane(self):
-        return EmailPane()
+        return EmailPane(model=self.manager)
 
 #============= EOF =============================================

@@ -25,16 +25,17 @@ from traits.api import HasTraits, Str, List, Enum, Bool
 from traitsui.api import View
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.config_loadable import ConfigMixin
 from pychron.paths import paths
 
 
 class User(HasTraits):
     name = Str
     email = Str
-    email_enabled = Bool
+    enabled = Bool
     level = Enum(0, 1, 2)
 
     telephone = Str
@@ -46,15 +47,15 @@ class User(HasTraits):
                     'telephone')
 
 
-class Emailer(Loggable):
+class Emailer(ConfigMixin):
     server_username = Str
     server_password = Str
     users = List
 
     def __init__(self, *args, **kw):
         super(Emailer, self).__init__(*args, **kw)
-        bind_preference('server_username', 'server_username', 'pychron.email')
-        bind_preference('server_password', 'server_password', 'pychron.email')
+        bind_preference(self, 'server_username', 'pychron.email')
+        bind_preference(self, 'server_password', 'pychron.email')
 
     def connect(self):
         if self._server is None:
@@ -108,7 +109,7 @@ class Emailer(Loggable):
         for user in config.sections():
             self.info('loading user {}'.format(user))
             kw = dict(name=user)
-            for opt, func in [('email', None), ('level', 'int'), ('email_enabled', 'boolean')]:
+            for opt, func in [('email', None), ('level', 'int'), ('enabled', 'boolean')]:
                 if func is None:
                     func = config.get
                 else:

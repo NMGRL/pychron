@@ -16,14 +16,24 @@
 
 #============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View
+from traitsui.api import View, UItem, TableEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
+
 
 class EmailPane(TraitsTaskPane):
     def traits_view(self):
-        v = View()
+        cols = [CheckboxColumn(name='enabled'),
+                ObjectColumn(name='name', editable=False),
+                ObjectColumn(name='email', editable=False),
+                ObjectColumn(name='level')]
+
+        v = View(UItem('object.users',
+                       editor=TableEditor(columns=cols,
+                                          sortable=False)))
         return v
 
         #============= EOF =============================================
