@@ -45,8 +45,8 @@ class DisplayModel(HasTraits):
 
         self.qmessage = Queue()
 
-    def add_text(self, txt, color, force=False, **kw):
-        self.qmessage.put((txt, color, force))
+    def add_text(self, txt, color, force=False, is_marker=False, **kw):
+        self.qmessage.put((txt, color, force, is_marker))
         invoke_in_main_thread(self.trait_set, refresh=True)
 
 
@@ -101,11 +101,8 @@ class DisplayController(ApplicationController):
     def thaw(self):
         pass
 
-    def add_marker(self, c, **kw):
-
-        txt = c * self.model.text_width
-
-        self.add_text(txt, **kw)
+    def add_marker(self, txt, **kw):
+        self.add_text(txt, is_marker=True, **kw)
 
     def add_text(self, txt, **kw):
         if 'color' not in kw or kw['color'] is None:

@@ -239,7 +239,7 @@ class ExperimentExecutor(Loggable):
         self.info('')
         self.info_marker('=')
         self.info(msg)
-        self.info_marker('=' * 40)
+        self.info_marker('=')
         self.info('')
 
     def execute(self):
@@ -470,6 +470,10 @@ class ExperimentExecutor(Loggable):
 
     def _do_run(self, run):
         self.debug('do run')
+
+        if self.stats:
+            self.stats.setup_run_clock(run)
+
         mem_log('< start')
 
         run.state = 'not run'
@@ -497,7 +501,8 @@ class ExperimentExecutor(Loggable):
                 run.state = 'success'
 
         if self.stats:
-            self.stats.nruns_finished += 1
+            # self.stats.nruns_finished += 1
+            self.stats.finish_run()
 
         if run.state in ('success', 'truncated'):
             self.run_completed = run

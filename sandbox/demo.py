@@ -16,10 +16,8 @@
 from traits.etsconfig.etsconfig import ETSConfig
 
 ETSConfig.toolkit = 'qt4'
-import time
 
-from traits.api import HasTraits, Any, Int, Button, Float, List, Event, \
-    Instance
+from traits.api import HasTraits, Instance
 from traitsui.api import View, Item
 
 from pychron.canvas.canvas2D.laser_tray_canvas import LaserTrayCanvas
@@ -44,10 +42,12 @@ class Demo(HasTraits):
         )
         return v
 
-    # from pychron.core.ui.qt.pie_clock_editor import PieClockEditor
+        # from pychron.core.ui.qt.pie_clock_editor import PieClockEditor
+
+
 # from pychron.core.ui.thread import Thread
 # class Demo(HasTraits):
-#     pie_clock = Float
+#     current_time = Float
 #     test = Button
 # #     slices = List
 #     slices = List
@@ -68,15 +68,15 @@ class Demo(HasTraits):
 #         total = float(sum(slices))
 #
 #         for i in range(int(total)):
-#             self.pie_clock = 360 / total * i
+#             self.current_time = 360 / total * i
 #             time.sleep(1)
 #
-#         self.pie_clock = 0
+#         self.current_time = 0
 #
 #     def traits_view(self):
 #         v = View(
 #                  Item('test'),
-#                  Item('pie_clock',
+#                  Item('current_time',
 #                       show_label=False,
 #                       editor=PieClockEditor(
 #                                             slices='slices',

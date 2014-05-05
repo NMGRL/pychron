@@ -34,6 +34,7 @@ class _DisplayEditor(Editor):
     font_size = Int
     bgcolor = Color
     text_width = Int
+    _nominal_character_width = None
 
     def init(self, parent):
         if self.control is None:
@@ -76,23 +77,46 @@ class _DisplayEditor(Editor):
         if self.control:
             self.control.clear()
 
+    def _calculate_nominal_character_width(self, v, ctrl):
+        fm = ctrl.fontMetrics()
+        br = fm.boundingRect
+        width = ctrl.width()
+        i = 0
+        while 1:
+            if br(v * i).width() > width:
+                break
+            i += 1
+        self._nominal_character_width = i - 3
+
+    def _check_character_width(self, v, ctrl):
+        fm = ctrl.fontMetrics()
+        br = fm.boundingRect
+        width = ctrl.width()
+        return br(v).width() > width
+
     def update_editor(self, *args, **kw):
         ctrl = self.control
-        # print self.control.document().idealWidth()
-        # print self.control.document().textWidth()
-        # self.text_width=int(self.control.document().size().width())
-        # print self.control.document().pageSize()
-        # self.text_width=
 
         if self.value:
             while 1:
                 try:
-                    v, c, force = self.value.get(timeout=0.0001)
+                    v, c, force, is_marker = self.value.get(timeout=0.0001)
                 except Empty:
                     return
                 fmt = ctrl.currentCharFormat()
                 fmt.setForeground(QColor(c))
                 ctrl.setCurrentCharFormat(fmt)
+
+                if is_marker:
+                    ov = v
+                    if self._nominal_character_width is None:
+                        self._calculate_nominal_character_width(ov, ctrl)
+                    v = ov * self._nominal_character_width
+
+                    if self._check_character_width(v, ctrl):
+                        self._calculate_nominal_character_width(ov, ctrl)
+                        v = ov * self._nominal_character_width
+
                 ctrl.appendPlainText(v)
 
                 ctrl.moveCursor(QTextCursor.End)

@@ -18,15 +18,19 @@
 import datetime
 import time
 
-from traits.api import Property, String, Float, Any, Int, List
-from traitsui.api import View, Item, VGroup
+from traits.api import Property, String, Float, Any, Int, List, Instance
+from traitsui.api import View, Item, VGroup, UItem
 
 from pychron.core.helpers.timer import Timer
+from pychron.core.ui.pie_clock import PieClockModel
 from pychron.loggable import Loggable
+
 
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
+
 FUDGE_COEFFS = (0, 0, 0)  # x**n+x**n-1....+c
 
 
@@ -46,11 +50,12 @@ class ExperimentStats(Loggable):
     delay_before_analyses = Float
     _start_time = None
 
+    clock = Instance(PieClockModel, ())
     #    experiment_queue = Any
 
     def calculate_duration(self, runs=None):
-    #        if runs is None:
-    #            runs = self.experiment_queue.cleaned_automated_runs
+        #        if runs is None:
+        #            runs = self.experiment_queue.cleaned_automated_runs
         dur = self._calculate_duration(runs)
         # add an empirical fudge factor
         #         ff = polyval(FUDGE_COEFFS, len(runs))
@@ -102,7 +107,8 @@ class ExperimentStats(Loggable):
             Item('time_at', style='readonly'),
             Item('etf', style='readonly', label='Est. finish'),
             Item('elapsed',
-                 style='readonly')))
+                 style='readonly')),
+                 UItem('clock', style='custom', width=100, height=100))
         return v
 
     def start_timer(self):
@@ -128,6 +134,27 @@ class ExperimentStats(Loggable):
         self._start_time = None
         self.nruns_finished = 0
         self._elapsed = 0
+
+    def finish_run(self):
+        self.nruns_finished += 1
+        self.clock.stop()
+
+    def setup_run_clock(self, run):
+
+        extraction_slice = run.extraction_script.calculate_estimated_duration()
+        measurement_slice = run.measurement_script.calculate_estimated_duration()
+
+        def convert_hexcolor_to_int(c):
+            c = c[1:]
+            func = lambda i: int(c[i:i + 2], 16)
+            return map(func, (0, 2, 4))
+
+        ec, mc = map(convert_hexcolor_to_int,
+                     (EXTRACTION_COLOR, MEASUREMENT_COLOR))
+
+        self.clock.set_slices([extraction_slice, measurement_slice],
+                              [ec, mc])
+        self.clock.start()
 
 
 class StatsGroup(ExperimentStats):

@@ -88,7 +88,7 @@ class ExperimentEditorTask(EditorTask):
         super(ExperimentEditorTask, self).prepare_destroy()
 
         self.manager.experiment_factory.destroy()
-        
+
         if self.use_notifications:
             self.notifier.close()
 
@@ -103,7 +103,7 @@ class ExperimentEditorTask(EditorTask):
         if self.use_notifications:
             self.notifier.setup(self.notifier.port)
 
-         #sys logger
+            #sys logger
         bind_preference(self, 'use_syslogger',
                         'pychron.use_syslogger')
         if self.use_syslogger:
@@ -114,7 +114,8 @@ class ExperimentEditorTask(EditorTask):
     def _use_syslogger_changed(self):
         if self.use_syslogger:
             from pychron.experiment.sys_log import SysLogger
-            self.syslogger=SysLogger()
+
+            self.syslogger = SysLogger()
             bind_preference(self.syslogger, 'username',
                             'pychron.syslogger.username')
             bind_preference(self.syslogger, 'password',
@@ -235,12 +236,12 @@ class ExperimentEditorTask(EditorTask):
     def _set_last_experiment(self, p):
         with open(paths.last_experiment, 'w') as fp:
             fp.write(p)
-        self.last_experiment_changed=True
+        self.last_experiment_changed = True
 
     def open(self, path=None):
 
         #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
-#        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
+        #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
         if not os.path.isfile(path):
             path = None
 
@@ -556,9 +557,9 @@ class ExperimentEditorTask(EditorTask):
             if self.active_editor.dirty:
                 self.manager.executor.executable = False
 
-                #===============================================================================
-                # default/factory
-            #===============================================================================
+    #===============================================================================
+    # default/factory
+    #===============================================================================
 
     #def _notifier_factory(self):
     #    n = Notifier(port=self.notifications_port)
@@ -595,8 +596,7 @@ class ExperimentEditorTask(EditorTask):
         lm = self.window.application.get_service('pychron.loading.loading_manager.LoadingManager')
         if lm:
             lm.trait_set(db=self.manager.db,
-                         show_group_positions=True,
-            )
+                         show_group_positions=True)
             #         lm = LoadingManager(db=self.manager.db,
             #                             show_group_positions=True
             #                             )

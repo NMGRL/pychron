@@ -267,12 +267,8 @@ class WaitPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-            #                  UItem('wait_dialog',
             UItem('wait_group',
-                  style='custom',
-            ),
-            #                 height=-100
-        )
+                  style='custom'))
         return v
 
 
@@ -282,13 +278,12 @@ class StatsPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-            UItem('stats', style='custom')
-        )
+            UItem('stats', style='custom'))
         return v
 
 
 class ControlsPane(TraitsDockPane):
-#     name = 'Controls'
+    #     name = 'Controls'
     id = 'pychron.experiment.controls'
 
     movable = False
@@ -315,41 +310,32 @@ Quick=   measure_iteration stopped at current step
                 icon_button_editor('start_button',
                                    'start',
                                    enabled_when='can_start',
-                                   tooltip=start_tt,
-                ),
+                                   tooltip=start_tt),
                 icon_button_editor('stop_button', 'stop',
                                    enabled_when='not can_start',
-                                   tooltip=stop_tt
-                ),
+                                   tooltip=stop_tt),
 
                 spacer(-20),
                 Item('end_at_run_completion',
                      label='Stop at Completion',
-                     tooltip=end_tt
-                ),
+                     tooltip=end_tt),
                 spacer(-20),
                 icon_button_editor('cancel_run_button', 'cancel',
                                    enabled_when='can_cancel',
-                                   tooltip=cancel_tt
-                ),
+                                   tooltip=cancel_tt),
                 spacer(-20),
                 icon_button_editor('truncate_button',
                                    'lightning',
                                    enabled_when='measuring',
-                                   tooltip=truncate_tt
-                ),
+                                   tooltip=truncate_tt),
                 UItem('truncate_style',
                       enabled_when='measuring',
-                      tooltip=truncate_style_tt,
-                ),
+                      tooltip=truncate_style_tt),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',
                             size=24,
-                            weight='bold'
-                ),
-            ),
-        )
+                            weight='bold')))
         return v
 
 
