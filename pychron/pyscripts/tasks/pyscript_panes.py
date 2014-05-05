@@ -16,14 +16,17 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import List, Instance, Str, Property, Any, String, Button
 from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
     HGroup, spring, VSplit, Label
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.tabular_adapter import TabularAdapter
+
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
+
 
 # from pychron.pyscripts.commands.core import ICommand
 #============= standard library imports ========================
@@ -132,19 +135,19 @@ class CommandsPane(TraitsDockPane):
     command_objects = List
 
     def set_command(self, line):
-        args=line.split('(')
-        cmd=args[0]
+        args = line.split('(')
+        cmd = args[0]
         if cmd:
-            self.selected_command=cmd
-            s='('.join(args[1:])
-            s=s[:-1]
+            self.selected_command = cmd
+            s = '('.join(args[1:])
+            s = s[:-1]
             self.command_object.load_str(s)
 
 
     def _selected_command_changed(self):
         if self.selected_command:
             obj = next((ci for ci in self.command_objects
-                        if ci.name == self.selected_command), None)
+                        if ci and ci.name == self.selected_command), None)
             self.command_object = obj
 
     def _set_commands(self, cs):

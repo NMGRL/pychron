@@ -43,10 +43,19 @@ def iterdir(d, exclude=None):
         yield p, t
 
 
+def populate_isotopes(db):
+    isos = [i[0] for i in db.get_molecular_weight_names()]
+    from pychron.pychron_constants import set_isotope_names
+
+    set_isotope_names(list(sorted(isos, reverse=True)))
+
+
 def load_isotopedb_defaults(db):
     with db.session_ctx() as sess:
         for name, mass in MOLECULAR_WEIGHTS.iteritems():
             db.add_molecular_weight(name, mass)
+
+        populate_isotopes(db)
 
         for at in ['blank_air',
                    'blank_cocktail',

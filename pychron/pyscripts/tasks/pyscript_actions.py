@@ -21,6 +21,26 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
+
+
+class OpenHopsEditorAction(Action):
+    description = 'Open Hops Editor'
+    name = 'Open Hops Editor'
+    image = icon('document-open')
+
+    def perform(self, event):
+        application = event.task.window.application
+        spec = application.get_service('pychron.spectrometer.spectrometer_manager.SpectrometerManager')
+        dets = []
+        if spec:
+            dets = [di.name for di in spec.spectrometer.detectors]
+
+        m = HopEditorModel(detectors=dets)
+        h = HopEditorView(model=m)
+        m.open()
+        h.edit_traits(kind='livemodal')
+        # application.add_view(info)
 
 
 class OpenPyScriptAction(Action):

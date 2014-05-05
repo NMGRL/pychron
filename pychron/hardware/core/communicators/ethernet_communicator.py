@@ -44,8 +44,8 @@ class TCPHandler(Handler):
     def open_socket(self, addr, timeout=1.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(addr)
         self.sock.settimeout(timeout)
+        self.sock.connect(addr)
 
     def get_packet(self, cmd):
         try:
@@ -187,7 +187,7 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     self._reset_connection()
-                #            self._lock.release()
+                    #            self._lock.release()
 
         if r is not None:
             re = self.process_response(r)

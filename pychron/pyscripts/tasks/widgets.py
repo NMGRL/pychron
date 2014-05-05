@@ -28,10 +28,10 @@ from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
 
 
 class myCodeWidget(CodeWidget):
-    dclicked=QtCore.Signal((str,))
-    modified_select=QtCore.Signal((str,))
-    _current_pos=None
-    gotos=['gosub']
+    dclicked = QtCore.Signal((str,))
+    modified_select = QtCore.Signal((str,))
+    _current_pos = None
+    gotos = ['gosub']
 
     def keyPressEvent(self, event):
         super(myCodeWidget, self).keyPressEvent(event)
@@ -51,9 +51,9 @@ class myCodeWidget(CodeWidget):
         QApplication.restoreOverrideCursor()
 
     def clear_underline(self):
-        cursor=self.textCursor()
+        cursor = self.textCursor()
         cursor.select(QTextCursor.Document)
-        fmt=cursor.charFormat()
+        fmt = cursor.charFormat()
         fmt.setFontUnderline(False)
         cursor.beginEditBlock()
         cursor.setCharFormat(fmt)
@@ -66,7 +66,7 @@ class myCodeWidget(CodeWidget):
 
             for goto in self.gotos:
                 if line.strip().startswith(goto):
-                    fmt=QTextCharFormat()
+                    fmt = QTextCharFormat()
                     fmt.setFontUnderline(True)
                     fmt.setUnderlineStyle(QTextCharFormat.WaveUnderline)
                     fmt.setUnderlineColor(QtGui.QColor('blue'))
@@ -81,17 +81,17 @@ class myCodeWidget(CodeWidget):
 
         super(myCodeWidget, self).mouseMoveEvent(event)
 
-    def mousePressEvent(self,event):
+    def mousePressEvent(self, event):
         if event.modifiers() & Qt.ControlModifier:
-            cursor, line=self._get_line_cursor(event.pos())
+            cursor, line = self._get_line_cursor(event.pos())
             self.modified_select.emit(line.strip())
             self.clear_selected()
 
-        self._current_pos=None
+        self._current_pos = None
         super(myCodeWidget, self).mousePressEvent(event)
 
     def get_current_line(self):
-        cursor=self.textCursor()
+        cursor = self.textCursor()
         cursor.select(QTextCursor.LineUnderCursor)
         line = cursor.selectedText()
         return line.strip()
@@ -106,18 +106,18 @@ class myCodeWidget(CodeWidget):
     def mouseDoubleClickEvent(self, event):
         self.clear_selected()
 
-        self._current_pos=event.pos()
-        cursor, line=self._get_line_cursor(self._current_pos)
+        self._current_pos = event.pos()
+        cursor, line = self._get_line_cursor(self._current_pos)
         self.dclicked.emit(line.strip())
 
 
     def replace_command(self, cmd):
         if self._current_pos:
-            cursor, line=self._get_line_cursor(self._current_pos)
-            lead=len(line)-len(line.lstrip())
+            cursor, line = self._get_line_cursor(self._current_pos)
+            lead = len(line) - len(line.lstrip())
             cursor.beginEditBlock()
             cursor.removeSelectedText()
-            cursor.insertText('{}{}'.format(' '*lead,cmd))
+            cursor.insertText('{}{}'.format(' ' * lead, cmd))
             cursor.endEditBlock()
 
 
@@ -128,7 +128,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         QtGui.QWidget.__init__(self, parent)
 
         self.setAcceptDrops(True)
-        self.commands=commands
+        self.commands = commands
         self.code = myCodeWidget(self, font=font)
 
         #set lexer manually instead of by name
@@ -180,10 +180,10 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
 
     def dropEvent(self, e):
         mime = e.mimeData()
-        idx = mime.data('traits-ui-tabular-editor')
-
+        data = mime.data('traits-ui-tabular-editor')
+        idx = int(data.split(' ')[1])
         #        cmd = ''
-        cmd = self.commands.command_objects[int(idx)]
+        cmd = self.commands.command_objects[idx]
         if cmd:
             text = cmd.to_string()
             if text:
@@ -219,5 +219,6 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         selection.cursor.setPosition(pos)
         selection.cursor.clearSelection()
         self.code.setExtraSelections([selection])
+
 #============= EOF =============================================
 

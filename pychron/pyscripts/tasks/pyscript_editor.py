@@ -22,6 +22,8 @@ from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
 
+
+
 # from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -36,7 +38,7 @@ class Commands(HasTraits):
     command_objects = List
 
     def get_command(self, name):
-        return next((ci for ci in self.script_commands if ci==name), None)
+        return next((ci for ci in self.script_commands if ci == name), None)
 
     def load_commands(self, kind):
         ps = self._pyscript_factory(kind)
@@ -59,7 +61,6 @@ class Commands(HasTraits):
         try:
             cmd = getattr(self, cmd_name)
         except AttributeError:
-
             m = __import__(pkg, globals={}, locals={}, fromlist=[klass])
             try:
                 cmd = getattr(m, klass)()
@@ -94,9 +95,9 @@ class PyScriptEditor(Editor):
     auto_detab = Bool(True)
     highlight_line = Int
     trace_delay = Int  # ms
-    selected_gosub=String
-    selected_command=String
-    _cached_text=''
+    selected_gosub = String
+    selected_command = String
+    _cached_text = ''
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -123,7 +124,7 @@ class PyScriptEditor(Editor):
     def _create_control(self, parent):
 
         self.control = control = myAdvancedCodeWidget(parent,
-                                              commands=self.commands)
+                                                      commands=self.commands)
         self._show_line_numbers_changed()
 
         # Connect signals for text changes.
@@ -137,7 +138,7 @@ class PyScriptEditor(Editor):
         return control
 
     def get_active_gosub(self):
-        line=self.control.code.get_current_line()
+        line = self.control.code.get_current_line()
         cmd = self._get_command(line)
         if cmd == 'gosub':
             return line[7:-2]
@@ -154,34 +155,34 @@ class PyScriptEditor(Editor):
 
     def _on_modified_select(self, line):
         if line:
-            cmd=self._get_command(line)
-            if cmd=='gosub':
-                self.selected_gosub=line[7:-2]
-                self.selected_gosub=''
+            cmd = self._get_command(line)
+            if cmd == 'gosub':
+                self.selected_gosub = line[7:-2]
+                self.selected_gosub = ''
 
     def _on_dclicked(self, line):
         if line:
-            cmd=self._get_command(line)
+            cmd = self._get_command(line)
             if cmd:
-                self.selected_command=line
+                self.selected_command = line
 
     def _on_dirty_changed(self, dirty):
         if dirty:
-            dirty=str(self.getText()) != str(self._cached_text)
+            dirty = str(self.getText()) != str(self._cached_text)
 
         self.dirty = dirty
         self._cached_text = self.getText()
 
     def _on_text_changed(self):
         # print len(self.getText()), len(self._cached_text)
-        if str(self.getText()) !=str(self._cached_text):
+        if str(self.getText()) != str(self._cached_text):
             # print self.getText()
             # print self._cached_text
-    #        if not self.suppress_change:
-    #     self.editor.parse(self.getText())
+            #        if not self.suppress_change:
+            #     self.editor.parse(self.getText())
             self.changed = True
             self.dirty = True
-            self._cached_text=self.getText()
+            self._cached_text = self.getText()
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
@@ -220,7 +221,7 @@ class PyScriptEditor(Editor):
         self.control.code.setPlainText(text)
 
         self.dirty = False
-        self._cached_text=text
+        self._cached_text = text
 
     def dump(self, path, txt=None):
         if txt is None:

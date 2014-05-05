@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
+
 PLUSMINUS = u'\u00b1'
 try:
     PLUSMINUS_ERR = u'{}Err.'.format(PLUSMINUS)
@@ -75,18 +76,25 @@ def alphas(idx):
 
 INTERFERENCE_KEYS = ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637', 'Cl3638']
 ARGON_KEYS = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36')
+
+ISOTOPES = ARGON_KEYS
+
+
+def set_isotope_names(isos):
+    global ISOTOPES
+    ISOTOPES = isos
+
+
 IRRADIATION_KEYS = [('k4039', 'K_40_Over_39'),
                     ('k3839', 'K_38_Over_39'),
                     ('k3739', 'K_37_Over_39'),
                     ('ca3937', 'Ca_39_Over_37'),
                     ('ca3837', 'Ca_38_Over_37'),
                     ('ca3637', 'Ca_36_Over_37'),
-                    ('cl3638', 'P36Cl_Over_38Cl')
-]
+                    ('cl3638', 'P36Cl_Over_38Cl')]
 
 DECAY_KEYS = [('a37decayfactor', '37_Decay'),
-              ('a39decayfactor', '39_Decay'),
-]
+              ('a39decayfactor', '39_Decay')]
 
 MEASUREMENT_COLOR = '#FF7EDF'  # magenta
 EXTRACTION_COLOR = '#FFFF66'
