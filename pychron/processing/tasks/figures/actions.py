@@ -52,6 +52,11 @@ class OpenFigureAction(TaskAction):
     image = icon('page_white_database.png')
 
 
+class NewXYScatterAction(TaskAction):
+    name = 'New XY Scatter'
+    method = 'tb_xy_scatter'
+
+
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
     method = 'tb_new_ideogram'

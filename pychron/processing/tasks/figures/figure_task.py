@@ -34,9 +34,11 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
+from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.tags import Tag
@@ -236,7 +238,7 @@ class FigureTask(AnalysisEditTask):
     def new_series(self, ans=None, name='Series',
                    klass=None, tklass=None,
                    add_iso=False,
-                   add_table=True):
+                   add_table=False):
         if klass is None:
             klass = SeriesEditor
 
@@ -244,6 +246,16 @@ class FigureTask(AnalysisEditTask):
             from pychron.processing.tasks.tables.editors.fusion.fusion_table_editor import \
                 FusionTableEditor as tklass
 
+        return self._new_figure(ans, name, klass, tklass,
+                                add_iso=add_iso,
+                                add_table=add_table)
+
+    def new_xy_scatter(self, ans=None, name='XYScatter',
+                       klass=None, tklass=None,
+                       add_iso=False,
+                       add_table=False):
+        if klass is None:
+            klass = XYScatterEditor
         return self._new_figure(ans, name, klass, tklass,
                                 add_iso=add_iso,
                                 add_table=add_table)
@@ -330,6 +342,9 @@ class FigureTask(AnalysisEditTask):
         #     self.append_spectrum()
         # else:
         #     self.new_spectrum()
+
+    def tb_new_xy_scatter(self):
+        self.new_xy_scatter()
 
     #===============================================================================
     #

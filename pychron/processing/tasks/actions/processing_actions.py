@@ -164,6 +164,12 @@ class FigureAction(Action):
             getattr(task, self.method)()
 
 
+class XYScatterAction(FigureAction):
+    name = 'XY Scatter'
+    method = 'new_xy_scatter'
+    accelerator = 'Ctrl+Shift+x'
+
+
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
     accelerator = 'Ctrl+J'

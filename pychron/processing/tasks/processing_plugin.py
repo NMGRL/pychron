@@ -37,7 +37,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
-    DeleteAnalysisGroupAction
+    DeleteAnalysisGroupAction, XYScatterAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -88,6 +88,7 @@ Install to enable MS Excel export''')
                 IdeogramAction(),
                 InverseIsochronAction(),
                 SeriesAction(),
+                XYScatterAction(),
                 IdeogramFromFile(),
                 SpectrumFromFile())
 
@@ -127,6 +128,7 @@ Install to enable MS Excel export''')
 
         def recall_group():
             return Group(RecallAction(), OpenAdvancedQueryAction())
+
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
@@ -193,8 +195,7 @@ Install to enable MS Excel export''')
 
     def _meta_task_factory(self, i, f, n, task_group=None,
                            accelerator='', include_view_menu=False,
-                           image=None
-    ):
+                           image=None):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
