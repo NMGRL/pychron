@@ -691,7 +691,7 @@ class FigureTask(AnalysisEditTask):
 
     def _active_editor_changed(self, new):
         if self.active_editor:
-            if isinstance(self.active_editor, FigureEditor):
+            if isinstance(self.active_editor, (FigureEditor, XYScatterEditor)):
                 self.plotter_options_pane.pom = self.active_editor.plotter_options_manager
 
         super(FigureTask, self)._active_editor_changed(new)

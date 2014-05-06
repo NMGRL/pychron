@@ -29,7 +29,7 @@ from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import TitleMaker
-from pychron.processing.plotters.options.base import BasePlotterOptions
+from pychron.processing.plotters.options.base import FigurePlotterOptions
 
 FONTS = ['modern', 'arial']
 SIZES = [6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
@@ -48,7 +48,7 @@ def checkbox_column(*args, **kw):
     return _table_column(CheckboxColumn, *args, **kw)
 
 
-class PlotterOptions(BasePlotterOptions):
+class PlotterOptions(FigurePlotterOptions):
     title = Str
     edit_title_format = Button
     title_formatter = Str
