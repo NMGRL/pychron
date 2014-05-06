@@ -351,7 +351,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
                     #if unpack is true make sure cached analyses have raw data
                     if unpack:
-                        a, b = self._unpack_cached_analyses(cns)
+                        a, b = self._unpack_cached_analyses(cns, calculate_age)
                         db_ans.extend(a)
                         no_db_ans.extend(b)
                     else:
