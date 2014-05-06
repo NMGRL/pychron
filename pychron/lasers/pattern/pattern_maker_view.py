@@ -14,10 +14,13 @@
 # limitations under the License.
 #===============================================================================
 
-from traits.etsconfig.etsconfig import ETSConfig
-import os
-ETSConfig.toolkit = 'qt4'
+# from traits.etsconfig.etsconfig import ETSConfig
+# ETSConfig.toolkit = 'qt4'
 
+from pychron.core.ui import set_qt
+set_qt()
+
+import os
 #============= enthought library imports =======================
 from traits.api import Property, Enum, Str, on_trait_change
 from traitsui.api import View, Item, InstanceEditor
@@ -30,41 +33,15 @@ from pychron.paths import paths
 
 
 class PatternMakerView(Saveable, Patternable):
-    kind = Property(Enum(
-                         'Polygon',
+    kind = Property(Enum('Polygon',
+                         'Linear',
                          'Arc',
                          'LineSpiral',
-                        'SquareSpiral',
-                        'Random',
-                        'CircularContour'
-                        ),
-                        depends_on='_kind')
-    _kind = Str('CircularContour')
-
-#     executor = Any
-#     execute_button = Button('Execute')
-#     execute_button = Event
-#     execute_label = Property(depends_on='executor._alive')
-#     execute_enabled = Property
-#     def _get_execute_enabled(self):
-#         if self.executor:
-#             if self.pattern.name:
-#         return self.executor and self.pattern.name
-
-#     def _get_execute_label(self):
-#         if self.executor:
-#             return 'Stop' if self.executor.isPatterning() else 'Start'
-#         else:
-#             return 'Start'
-
-#     def _execute_button_fired(self):
-#         if self.executor:
-#             if self.executor.isPatterning():
-#                 self.executor.stop()
-#             else:
-
-#                 self.executor.load_pattern(self.pattern.name)
-#                 self.executor.execute(block=False)
+                         'SquareSpiral',
+                         'Random',
+                         'CircularContour'),
+                    depends_on='_kind')
+    _kind = Str('Polygon')
 
     def load_pattern(self, path=None):
         if path is None:
@@ -106,28 +83,23 @@ class PatternMakerView(Saveable, Patternable):
 
     def traits_view(self):
         v = View(
-                 Item('pattern_name',
-                      style='readonly', show_label=False),
-                 Item('kind', show_label=False),
-#                  HGroup(Item('execute_button',
-#                              show_label=False,
-#                              editor=ButtonEditor(label_value='execute_label'),
-#                              enabled_when='execute_enabled'
-#                              ),
-#                         spring,
-#                         ),
-                 Item('pattern',
-                      style='custom',
-                      editor=InstanceEditor(view='maker_view'),
-                      show_label=False),
-                 handler=self.handler_klass,
-                 buttons=SaveableButtons,
-                 title='Pattern Editor'
-                 )
+            Item('pattern_name',
+                 style='readonly', show_label=False),
+            Item('kind', show_label=False),
+            Item('pattern',
+                 style='custom',
+                 editor=InstanceEditor(view='maker_view'),
+                 show_label=False),
+            handler=self.handler_klass,
+            buttons=SaveableButtons,
+            title='Pattern Editor',
+            resizable=True,
+        )
         return v
-#===============================================================================
-# property get/set
-#===============================================================================
+
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_kind(self):
         return self._kind
 
@@ -135,30 +107,31 @@ class PatternMakerView(Saveable, Patternable):
         self._kind = v
         self.pattern = self.pattern_factory(v)
 
-#===============================================================================
-# factories
-#===============================================================================
+    #===============================================================================
+    # factories
+    #===============================================================================
     def pattern_factory(self, kind):
         name = '{}Pattern'.format(kind)
         try:
             factory = __import__('pychron.lasers.pattern.patterns',
-                             fromlist=[name])
+                                 fromlist=[name])
             pattern = getattr(factory, name)()
-    #        pattern = globals()['{}Pattern'.format(kind)]()
             pattern.replot()
             pattern.calculate_transit_time()
             return pattern
-        except ImportError:
-            pass
-#===============================================================================
-# defaults
-#===============================================================================
+        except ImportError, e:
+            print e
+            #===============================================================================
+            # defaults
+            #===============================================================================
+
     def _pattern_default(self):
         p = self.pattern_factory(self.kind)
         return p
 
+
 if __name__ == '__main__':
     pm = PatternMakerView()
-    pm.load_pattern()
+    # pm.load_pattern()
     pm.configure_traits()
 #============= EOF =============================================
