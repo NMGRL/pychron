@@ -13,19 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-
+from pychron.core.ui import set_qt
+set_qt()
 #============= enthought library imports =======================
-
+from traits.api import Instance
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 import shutil
 from git import Repo
 from pychron.loggable import Loggable
+from pychron.workspace.index import IndexAdapter, Base, AnalysisIndex
 
 
 class WorkspaceManager(Loggable):
     _repo = None
+    index_db = Instance(IndexAdapter)
 
     def init_repo(self, path):
         """
@@ -58,7 +61,7 @@ class WorkspaceManager(Loggable):
         repo = Repo.init(p)
         self._repo = repo
 
-    def add_record(self, path, commit=True, message=None):
+    def add_record(self, path, commit=True, message=None, **kw):
         """
             path: absolute path to flat file
             commit: commit changes
@@ -91,6 +94,11 @@ class WorkspaceManager(Loggable):
 
             working.commit = repo.head.commit
 
+        #add to sqlite index
+        im = self.index_db
+        im.add(repo=repo.working_dir,
+               **kw)
+
     def modify_record(self, path, message=None):
         """
             commit the modification to path to the working branch
@@ -118,15 +126,24 @@ class WorkspaceManager(Loggable):
 
 
 if __name__ == '__main__':
-    root = '/Users/ross/Sandbox/workspace'
+    root = os.path.expanduser('~')
+    root = os.path.join(root, 'Sandbox','workspace')
+    # root = '/Users/ross/Sandbox/workspace'
     wm = WorkspaceManager()
+    idx = IndexAdapter(path=os.path.join(root, 'index.db'),
+                       schema=AnalysisIndex)
+    idx.connect()
+
+    idx.create_all(Base.metadata)
+
+    wm.index_db = idx
     wm.create_repo('test', root, None)
 
     tpath = os.path.join(root, 'record.txt')
-    wm.add_record(tpath)
+    wm.add_record(tpath, identifier='12345', aliquot=1)
 
     tpath = os.path.join(root, 'record2.txt')
-    wm.add_record(tpath)
+    wm.add_record(tpath, identifier='12345', aliquot=2)
 
     mpath = os.path.join(root, 'test', 'record2.txt')
     with open(mpath, 'w') as fp:
@@ -134,6 +151,9 @@ if __name__ == '__main__':
 
     wm.modify_record(mpath)
     wm.commit_modification()
+
+
+
 #============= EOF =============================================
 
 
