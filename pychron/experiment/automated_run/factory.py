@@ -44,6 +44,10 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
+class EditEvent(Event):
+    pass
+
+
 class UpdateSelectedCTX(object):
     _factory = None
 
@@ -112,6 +116,8 @@ def generate_positions(pos):
 class AutomatedRunFactory(Loggable):
     db = Any
     datahub=Instance(Datahub)
+    undoer = Any
+    edit_event = EditEvent
 
     default_fits_button = Button
     extraction_script = Instance(Script)
@@ -613,11 +619,12 @@ class AutomatedRunFactory(Loggable):
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
+
+            self.edit_event = dict(attribute=attr, value=v, runs=self._selected_runs,
+                                   previous_state=[(ri, getattr(ri, attr)) for ri in self._selected_runs])
+
             for si in self._selected_runs:
                 setattr(si, attr, v)
-
-            if attr == 'extract_group':
-                self.update_info_needed = True
 
             self.changed = True
             self.refresh_table_needed = True

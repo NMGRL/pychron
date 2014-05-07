@@ -84,6 +84,10 @@ class ExperimentEditorTask(EditorTask):
             self.active_editor.queue.selected = []
             self.active_editor.queue.executed_selected = []
 
+    def undo(self):
+        if self.active_editor:
+            self.manager.experiment_factory.undo()
+
     def prepare_destroy(self):
         super(ExperimentEditorTask, self).prepare_destroy()
 

@@ -23,6 +23,7 @@ from pychron.experiment.automated_run.uv.factory import UVAutomatedRunFactory
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.experiment.queue.factory import ExperimentQueueFactory
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
+from pychron.experiment.undoer import ExperimentUndoer
 from pychron.pychron_constants import LINE_STR
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.loggable import Loggable
@@ -34,6 +35,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     db = Any
     run_factory = Instance(AutomatedRunFactory)
     queue_factory = Instance(ExperimentQueueFactory)
+    undoer = Instance(ExperimentUndoer)
 
     #     templates = DelegatesTo('run_factory')
     #     template = DelegatesTo('run_factory')
@@ -70,6 +72,10 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
         self.setup_consumer(self._add_run, main=True)
+
+    def undo(self):
+        self.info('undo')
+        self.undoer.undo()
 
     def sync_queue_meta(self):
         eq = self.queue
@@ -160,7 +166,6 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
         self.run_factory.set_end_after(new)
 
-
     @on_trait_change('''queue_factory:[mass_spectrometer,
 extract_device, delay_+, tray, username, load_name, email]''')
     def _update_queue(self, name, new):
@@ -239,6 +244,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         rf.activate()
         rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
+
         return rf
 
     #    def _can_edit_scripts_changed(self):
@@ -247,6 +253,9 @@ extract_device, delay_+, tray, username, load_name, email]''')
     #===============================================================================
     # defaults
     #===============================================================================
+    def _undoer_default(self):
+        return ExperimentUndoer(run_factory=self.run_factory)
+
     def _run_factory_default(self):
         return self._run_factory_factory()
 

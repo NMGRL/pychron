@@ -47,6 +47,7 @@ class ExperimentAction(Action):
 
         #         for wi in application.windows:
 
+
 #             if wi.active_task.id == self.task_id:
 #                 wi.activate()
 #                 break
@@ -71,9 +72,9 @@ class BasePatternAction(TaskAction):
                 self._enabled = False
 
     def _enabled_update(self):
-        '''
+        """
              reimplement ListeningAction's _enabled_update
-        '''
+        """
         if self.enabled_name:
             if self.object:
                 self.enabled = bool(self._get_attr(self.object,
@@ -109,6 +110,11 @@ class DeselectAction(TaskAction):
     tooltip = 'Deselect the selected run(s)'
 
 
+class UndoAction(TaskAction):
+    name = 'Undo'
+    method = 'undo'
+    accelerator = 'Ctrl+Z'
+
 
 class QueueAction(ExperimentAction):
     def _open_experiment(self, event, path=None):
@@ -143,9 +149,10 @@ class OpenLastExperimentQueueAction(QueueAction):
     description = 'Open last executed experiment'
     name = 'Open Last Experiment...'
     accelerator = 'Alt+Ctrl+O'
+
     def __init__(self, *args, **kw):
-        super(OpenLastExperimentQueueAction,self).__init__(*args, **kw)
-        self.enabled=os.path.isfile(paths.last_experiment)
+        super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
+        self.enabled = os.path.isfile(paths.last_experiment)
 
     def perform(self, event):
         if os.path.isfile(paths.last_experiment):

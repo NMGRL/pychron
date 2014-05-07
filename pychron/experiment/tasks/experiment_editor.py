@@ -39,78 +39,6 @@ class ExperimentEditor(BaseTraitsEditor):
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
 
-    def _dirty_changed(self):
-        self.debug('dirty changed {}'.format(self.dirty))
-
-    def traits_view(self):
-
-        arun_grp = UItem('automated_runs',
-                         editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
-                                                operations=['delete',
-                                                            'move'],
-                                                editable=True,
-                                                dclicked='dclicked',
-                                                selected='selected',
-                                                paste_function='paste_function',
-                                                refresh='refresh_table_needed',
-                                                scroll_to_row='automated_runs_scroll_to_row',
-                                                copy_cache='linked_copy_cache',
-                                                multi_select=True),
-                         height=200)
-
-        executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
-                                                    editable=False,
-                                                    auto_update=True,
-                                                    selectable=True,
-                                                    copy_cache='linked_copy_cache',
-                                                    selected='executed_selected',
-                                                    multi_select=True,
-                                                    scroll_to_row='executed_runs_scroll_to_row'
-                             ),
-                             height=500,
-                             visible_when='executed'
-        )
-
-        v = View(
-            #                 VGroup(
-            executed_grp,
-            arun_grp,
-            #                     ),
-            resizable=True
-        )
-        return v
-
-
-    def trait_context(self):
-        """ Use the model object for the Traits UI context, if appropriate.
-        """
-        if self.queue:
-            return {'object': self.queue}
-        return super(ExperimentEditor, self).trait_context()
-
-    #    @on_trait_change('queue:automated_runs[], queue:changed')
-    def _queue_changed(self):
-        #        f = lambda: self.trait_set(dirty=True)
-        f = self._set_queue_dirty
-        self.queue.on_trait_change(f, 'automated_runs[]')
-        self.queue.on_trait_change(f, 'changed')
-        self.queue.path = self.path
-
-    def _path_changed(self):
-        self.queue.path = self.path
-
-    def _set_queue_dirty(self, obj, name, old, new):
-        #         print 'ggg', obj, name, old, new
-        #         print 'set qirty', self.queue._no_update, self.queue.initialized
-
-        if not self.queue._no_update and self.queue.initialized:
-            self.dirty = True
-
-            #===========================================================================
-            #
-            #===========================================================================
-
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
         if txt:
@@ -133,6 +61,65 @@ class ExperimentEditor(BaseTraitsEditor):
                 self.dirty = False
 
                 return True
+
+    def traits_view(self):
+        arun_grp = UItem('automated_runs',
+                         editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
+                                                operations=['delete',
+                                                            'move'],
+                                                editable=True,
+                                                dclicked='dclicked',
+                                                selected='selected',
+                                                paste_function='paste_function',
+                                                refresh='refresh_table_needed',
+                                                scroll_to_row='automated_runs_scroll_to_row',
+                                                copy_cache='linked_copy_cache',
+                                                multi_select=True),
+                         height=200)
+
+        executed_grp = UItem('executed_runs',
+                             editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
+                                                    editable=False,
+                                                    auto_update=True,
+                                                    selectable=True,
+                                                    copy_cache='linked_copy_cache',
+                                                    selected='executed_selected',
+                                                    multi_select=True,
+                                                    scroll_to_row='executed_runs_scroll_to_row'),
+                             height=500,
+                             visible_when='executed')
+
+        v = View(
+            executed_grp,
+            arun_grp,
+            resizable=True)
+        return v
+
+    def trait_context(self):
+        """ Use the model object for the Traits UI context, if appropriate.
+        """
+        if self.queue:
+            return {'object': self.queue}
+        return super(ExperimentEditor, self).trait_context()
+
+    #===============================================================================
+    # handlers
+    #===============================================================================
+    def _dirty_changed(self):
+        self.debug('dirty changed {}'.format(self.dirty))
+
+    def _queue_changed(self):
+        f = self._set_queue_dirty
+        self.queue.on_trait_change(f, 'automated_runs[]')
+        self.queue.on_trait_change(f, 'changed')
+        self.queue.path = self.path
+
+    def _path_changed(self):
+        self.queue.path = self.path
+
+    def _set_queue_dirty(self, obj, name, old, new):
+        if not self.queue._no_update and self.queue.initialized:
+            self.dirty = True
 
     def _validate_experiment_queues(self, eqs):
         # check runs
@@ -178,29 +165,9 @@ class ExperimentEditor(BaseTraitsEditor):
 
         return p
 
-
-    #===============================================================================
-    # handlers
-    #===============================================================================
-    #    def _path_changed(self):
-    #        '''
-    #            parse the file at path
-    #        '''
-    #        if os.path.isfile(self.path):
-    #            with open(self.path) as fp:
-    #                txt = fp.read()
-    #                queues = self._parse_text(txt)
-    #                for qi in queues:
-    #                    qu=self.new_queue()
-    #                    exp.load(text):
-
-
     #===============================================================================
     # property get/set
     #===============================================================================
-    def _get_tooltip(self):
-        return self.path
-
     def _get_name(self):
         if self.path:
             name = os.path.basename(self.path)

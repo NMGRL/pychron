@@ -32,7 +32,7 @@ from pychron.experiment.tasks.experiment_preferences import ExperimentPreference
 from pychron.experiment.tasks.experiment_actions import NewExperimentQueueAction, \
     OpenExperimentQueueAction, SignalCalculatorAction, \
     DeselectAction, SendTestNotificationAction, \
-    NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction
+    NewPatternAction, OpenPatternAction, ResetQueuesAction, OpenLastExperimentQueueAction, UndoAction
 
 
 class ExperimentPlugin(BaseTaskPlugin):
@@ -40,7 +40,8 @@ class ExperimentPlugin(BaseTaskPlugin):
 
     def _my_task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
-                                ResetQueuesAction())
+                                ResetQueuesAction(),
+                                UndoAction())
 
         return [TaskExtension(task_id='pychron.experiment',
                               actions=[SchemaAddition(
