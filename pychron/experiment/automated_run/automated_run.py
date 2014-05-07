@@ -1118,8 +1118,8 @@ anaylsis_type={}
     def _get_default_fits_file(self):
         p = self._get_measurement_parameter('default_fits')
         dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
-        if os.path.isfile(p):
-            return p
+        if os.path.isfile(dfp):
+            return dfp
         else:
             self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
 
@@ -1141,10 +1141,10 @@ anaylsis_type={}
 
     def _get_default_fods(self):
         def extract_fit_dict(fods, yd):
-            for yi in ys:
+            for yi in yd:
                 fod = {'filter_outliers': yi['filter_outliers'],
                        'iterations': yi['filter_iterations'],
-                       'std_devs': yi['std_devs']}
+                       'std_devs': yi['filter_std_devs']}
                 fods[yi['name']] = fod
 
         sfods, bsfods = {}, {}
