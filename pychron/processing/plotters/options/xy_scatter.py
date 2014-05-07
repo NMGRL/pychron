@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from enable.colors import ColorTrait
 from enable.markers import MarkerTrait
-from traits.api import HasTraits, Str, Range, on_trait_change, Event, Bool, Dict, Enum, Property
+from traits.api import Str, Range, on_trait_change, Bool, Dict, Enum, Property
 from traitsui.api import View, Item, EnumEditor, HGroup, VGroup
 
 #============= standard library imports ========================
@@ -53,7 +53,10 @@ class XYScatterOptions(BasePlotterOptions):
                   'timestamp': '11:Analysis Time',
                   'cleanup': '12:Cleanup',
                   'extract_value': '13:Extract Value',
-                  'duration': '14:Extract Duration'})
+                  'duration': '14:Extract Duration',
+                  'uage': '15:Age',
+                  'uage_wo_j_err': '16:Age w/o Jerr'
+    })
     index_error = Bool
     value_error = Bool
 

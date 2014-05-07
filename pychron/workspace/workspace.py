@@ -32,10 +32,11 @@ from pychron.workspace.index import IndexAdapter, Base, AnalysisIndex
 
 logging_setup('wm')
 
+
 class WorkspaceManager(Loggable):
     _repo = None
     index_db = Instance(IndexAdapter)
-    test= Button
+    test = Button
 
     def init_repo(self, path):
         """
@@ -139,7 +140,8 @@ class WorkspaceManager(Loggable):
         master_commit = repo.heads.master.commit
         working_commit = repo.heads.working.commit
 
-        ds = working_commit.diff(master_commit)
+        ds = working_commit.diff(master_commit, create_patch=True)
+        # ds = working_commit.diff(master_commit)
 
         if not isinstance(attrs, (tuple, list)):
             attrs = (attrs, )
@@ -170,14 +172,15 @@ class WorkspaceManager(Loggable):
         return attr_diff
 
     def _test_fired(self):
-        self.schema_diff('age')
+        print self.schema_diff('age')
         # self.schema_diff('error')
 
 
 class TestController(Controller):
     def traits_view(self):
-        v=View(Item('test'))
+        v = View(Item('test'))
         return v
+
 
 if __name__ == '__main__':
     root = os.path.expanduser('~')
@@ -207,7 +210,7 @@ if __name__ == '__main__':
 
     wm.modify_record(mpath)
 
-    tc=TestController(model=wm)
+    tc = TestController(model=wm)
     tc.configure_traits()
     # print wm.schema_diff(('age', 'error'))
     # wm.commit_modification()
