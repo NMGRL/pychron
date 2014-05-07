@@ -16,6 +16,7 @@
 import ast
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui import set_qt
 
 set_qt()
@@ -38,7 +39,7 @@ from pychron.processing.fits.filter_fit_selector import FilterFitSelector, Filte
 
 
 class MeasurementFit(FilterFit):
-    pass
+    is_baseline = False
 
 
 ATTRS = ['fit', 'error_type', 'name', 'filter_outliers', 'filter_iterations', 'filter_std_devs']
@@ -60,31 +61,37 @@ class MeasurementFitsSelector(FilterFitSelector):
             yd = yaml.load(docstr)
             return yd.get('default_fits')
 
-    def save(self):
+    def _dump(self, fs):
         ys = []
-        for fi in self.fits:
+        for fi in fs:
             d = {ai: getattr(fi, ai) for ai in ATTRS}
             ys.append(d)
+        return ys
+
+    def save(self):
+        sfs, bfs = partition(self.fits, lambda x: x.is_baseline)
+        yd = {'signal': self._dump(sfs),
+              'baseline': self._dump(bfs)}
 
         p = os.path.join(paths.fits_dir, '{}.yaml'.format(self.name))
         with open(p, 'w') as fp:
-            yaml.dump(ys, fp, default_flow_style=False)
+            yaml.dump(yd, fp, default_flow_style=False)
 
     def load(self, p):
         with open(p, 'r') as fp:
             yd = yaml.load(fp)
             fits = self._load_fits(yd['signal'])
-            fits.extend(self._load_fits(yd['baseline']))
+            fits.extend(self._load_fits(yd['baseline'], is_baseline=True))
             self.fits = fits
 
         h, _ = os.path.splitext(os.path.basename(p))
         self.name = h
 
-    def _load_fits(self, fs):
+    def _load_fits(self, fs, is_baseline=False):
         fits = []
         for fi in fs:
             d = {ai: fi[ai] for ai in ATTRS}
-            f = MeasurementFit(**d)
+            f = MeasurementFit(is_baseline=is_baseline, **d)
             fits.append(f)
         return fits
 
@@ -104,7 +111,9 @@ class MeasurementFitsSelectorView(Controller):
                       UItem('global_error_type', editor=EnumEditor(name='error_types')))
 
     def _get_fit_group(self):
-        cols = [ObjectColumn(name='name', editable=False),
+        cols = [ObjectColumn(name='name', editable=False,
+                             tooltip='If name is an isotope e.g Ar40 '
+                                     'fit is for a signal, if name is a detector e.g H1 fit is for a baseline'),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
                              width=75),
@@ -121,9 +130,7 @@ class MeasurementFitsSelectorView(Controller):
                                selection_mode='rows',
                                sortable=False,
                                clear_selection_on_dclicked=True,
-                               on_command_key=self._update_command_key,
-                               cell_bg_color='red',
-                               cell_font='modern 10')
+                               on_command_key=self._update_command_key, )
         grp = UItem('fits',
                     style='custom',
                     editor=editor)
