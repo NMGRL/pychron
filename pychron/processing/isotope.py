@@ -27,6 +27,7 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -162,6 +163,19 @@ class IsotopicMeasurement(BaseMeasurement):
         # self.regressor.calculate()
 
     def set_fit_blocks(self, fit):
+        """
+            fit: either tuple of (fit, error_type) or str
+            if str either linear, parabolic etc or
+            a fit block e.g
+                1.  (,10,average)
+                    fit average from start to 10 counts
+                2.  (10,,linear)
+                    fit linear from 10 to end counds
+        """
+        if isinstance(fit, tuple):
+            fit, error = fit
+            self.error_type = error
+
         if re.match(r'\([\w\d\s,]*\)', fit):
             fs = []
             for m in re.finditer(r'\([\w\d\s,]*\)', fit):

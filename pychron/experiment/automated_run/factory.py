@@ -24,7 +24,8 @@ import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
-from pychron.experiment.automated_run.analysis_fits_selector import MeasurementFitsSelector, MeasurementFitsSelectorView
+from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+    MeasurementFitsSelectorView
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX

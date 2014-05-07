@@ -289,8 +289,6 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_baseline_fits(self, *fits):
-        if not fits:
-            fits = 'average_SEM'
         self._automated_run_call('py_set_baseline_fits', fits)
 
     @verbose_skip

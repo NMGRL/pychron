@@ -24,11 +24,9 @@ import time
 import math
 #============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
-import yaml
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
-from pychron.core.helpers.filetools import add_extension
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.automated_run.hop_util import parse_hops
@@ -51,8 +49,8 @@ class AutomatedRunPersister(Loggable):
     data_manager = Instance(H5DataManager, ())
     monitor = Any
 
-    _signal_fods = Dict
-    _baseline_fods = Dict
+    signal_fods = Dict
+    baseline_fods = Dict
     # default_outlier_filtering = Property(depends_on='filter_outliers, fo_+')
     # filter_outliers = Bool(False)
     # fo_iterations = Int(1)
@@ -103,23 +101,6 @@ class AutomatedRunPersister(Loggable):
     #     bind_preference(self, 'filter_outliers', '{}.filter_outliers'.format(prefid))
     #     bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
     #     bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
-
-    def load_filter_outlier_dicts(self, name):
-        p = os.path.join(paths.fits_dir, add_extension(name, '.yaml'))
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                ys = yaml.load(fp)
-                for yi in ys:
-                    name = yi['name']
-                    fod = {'filter_outliers': yi['filter_outliers'],
-                           'iterations': yi['filter_iterations'],
-                           'std_devs': yi['std_devs']}
-                    if 'bs' in name:
-                        self._baseline_fods[name[:-2]] = fod
-                    else:
-                        self._signal_fods[name] = fod
-        else:
-            self.warning_dialog('Invalid default fit file: {}'.format(p))
 
     def get_last_aliquot(self, identifier):
         return self.datahub.get_greatest_aliquot(identifier)
@@ -325,14 +306,16 @@ class AutomatedRunPersister(Loggable):
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
             self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
-    def _get_filter_outlier_dict(self, name, kind):
+    def _get_filter_outlier_dict(self, iso, kind):
         if kind == 'baseline':
-            fods = self._baseline_fods
+            fods = self.baseline_fods
+            key = iso.detector
         else:
-            fods = self._signal_fods
+            fods = self.signal_fods
+            key = iso.name
 
         try:
-            fod = fods[name]
+            fod = fods[key]
         except KeyError:
             fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
         return fod
@@ -349,7 +332,7 @@ class AutomatedRunPersister(Loggable):
         add_result = kind in ('baseline', 'signal')
 
         if add_result:
-            fod = self._get_filter_outlier_dict(iso.name, kind)
+            fod = self._get_filter_outlier_dict(iso, kind)
             m.set_filtering(fod)
             if m.fit:
                 # add fit

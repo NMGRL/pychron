@@ -170,28 +170,12 @@ class AutomatedRun(Loggable):
         else:
             self._activate_detectors(dets)
 
-    def _get_default_fits(self):
-        """
-            get name of default fits file from measurement docstr
-            return dict of iso:fit pairs
-        """
-        p = self._get_measurement_parameter('default_fits')
-        dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
-        if os.path.isfile(p):
-            with open(dfp, 'r') as fp:
-                yd = yaml.load(fp)
-                fd = {yi['name']: yi['fit'] for yi in yd}
-        else:
-            fd = {}
-            self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
-
-        return fd
-
     def py_set_fits(self, fits):
         isotopes = self.arar_age.isotopes
-
         if not fits:
             fits = self._get_default_fits()
+        elif len(fits) == 1:
+            fits = {i: fits for i in isotopes}
         else:
             fits = dict([f.split(':') for f in fits])
 
@@ -202,18 +186,18 @@ class AutomatedRun(Loggable):
                 fi = 'linear'
                 self.warning('Invalid fit "{}". '
                              'check the measurement script "{}"'.format(k, self.measurement_script.name))
-
             iso.set_fit_blocks(fi)
+
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
-        if len(fits) == 1:
-            fs = []
-            for di in self._active_detectors:
-                fs.append('{}:{}'.format(di.name, fits[0]))
-            fits = fs
+        if not fits:
+            fits = self._get_default_fits(is_baseline=True)
+        elif len(fits) == 1:
+            fits = {i: fits for i in isotopes}
+        else:
+            fits = dict([f.split(':') for f in fits])
 
-        fits = dict([f.split(':') for f in fits])
         for k, iso in isotopes.iteritems():
             iso.baseline.set_fit_blocks(fits[iso.detector])
 
@@ -689,47 +673,6 @@ class AutomatedRun(Loggable):
         else:
             self.warning('failed to start monitor')
 
-    def _wait_for(self, predicate, msg):
-        st = time.time()
-        i = 0
-        while self._alive:
-            time.sleep(1.0)
-            et = time.time() - st
-            if predicate(et):
-                break
-
-            if i % 5 == 0:
-                self.debug(msg(et))
-                i = 0
-            i += 1
-
-    def _wait_for_min_ms_pumptime(self):
-        overlap, mp = self.spec.overlap
-        if not overlap:
-            self.debug('no overlap. not waiting for min ms pumptime')
-            return
-
-        if self.is_first:
-            self.debug('this is the first run. not waiting for min ms pumptime')
-            return
-
-        if not mp:
-            self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
-            mp = self.min_ms_pumptime
-
-        #ensure mim mass spectrometer pump time
-        #wait until pumping started
-        self.debug('wait for mass spec pump out to start')
-        self._wait_for(lambda x: not self.experiment_executor.ms_pumptime_start is None,
-                       msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
-        self.debug('mass spec pump out to started')
-
-        #wait for min pump time
-        pred = lambda x: self.elapsed_ms_pumptime > mp
-        msg = lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x)
-        self._wait_for(pred, msg)
-        self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
-
     def wait_for_overlap(self):
         """
             by default overlap_evt is set
@@ -769,9 +712,21 @@ class AutomatedRun(Loggable):
                 i = 0
             i += 1
 
-    @property
-    def elapsed_ms_pumptime(self):
-        return time.time() - self.experiment_executor.ms_pumptime_start
+    def post_measurement_save(self):
+        if self._measured:
+            if self.spectrometer_manager:
+                self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
+                                         defl_dict=self.spectrometer_manager.make_deflections_dict(),
+                                         active_detectors=self._active_detectors)
+
+            self.persister.post_measurement_save()
+            if self.persister.secondary_database_fail:
+                if self.experiment_executor:
+                    self.experiment_executor.cancel(cancel_run=True,
+                                                    msg=self.persister.secondary_database_fail)
+            else:
+                return True
+
 
     def get_previous_blanks(self):
         blanks = None
@@ -809,67 +764,6 @@ class AutomatedRun(Loggable):
         if self.experiment_executor:
             self.experiment_executor._prev_baselines = pb
 
-    def _start(self):
-        if self._use_arar_age():
-            if self.arar_age is None:
-                #             # load arar_age object for age calculation
-                self.arar_age = ArArAge()
-
-            es = self.extraction_script
-            if es is not None:
-                # get senstivity multiplier from extraction script
-                v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
-                self.arar_age.sensitivity_multiplier = v
-
-            ln = self.spec.labnumber
-            ln = convert_identifier(ln)
-            self.persister.datahub.load_analysis_backend(ln, self.arar_age)
-
-        self.info('Start automated run {}'.format(self.runid))
-
-        self.measuring = False
-        self.truncated = False
-
-        self._alive = True
-
-        if self.plot_panel:
-            self.plot_panel.total_counts = 0
-            self.plot_panel.is_peak_hop = False
-            self.plot_panel.is_baseline = False
-
-        self.multi_collector.canceled = False
-        self.multi_collector.is_baseline = False
-        self.multi_collector.for_peak_hop = False
-
-        self._equilibration_done = False
-        self.refresh_scripts()
-
-        # setup the scripts
-        ip = self.spec.script_options
-        if ip:
-            ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
-
-        if self.measurement_script:
-            self.measurement_script.reset(weakref.ref(self)())
-
-            #set the interpolation path
-            self.measurement_script.interpolation_path = ip
-
-        for si in ('extraction', 'post_measurement', 'post_equilibration'):
-            script = getattr(self, '{}_script'.format(si))
-            if script:
-                self._setup_context(script)
-                script.interpolation_path = ip
-
-        #load extraction metadata
-        self.eqtime = self._get_extraction_parameter('eqtime', 15)
-        self.time_zero_offset = self.spec.collection_time_zero_offset
-
-        #setup persister. mirror a few of AutomatedRunsAttributes
-        self.setup_persister()
-
-        return True
-
     #===============================================================================
     # setup
     #===============================================================================
@@ -890,13 +784,11 @@ class AutomatedRun(Loggable):
             ext_name = self.extraction_script.name
             ext_blob = self._assemble_extraction_blob()
 
-        ms_name, ms_blob = '', ''
+        ms_name, ms_blob, sfods, bsfods = '', '', {}, {}
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
-            dfp = self._get_measurement_parameter('default_fits')
-            if dfp:
-                self.persister.load_filter_outlier_dicts(dfp)
+            sfods, bsfods = self._get_default_fods()
 
         ext_pos = []
         if self.extraction_script:
@@ -918,7 +810,10 @@ class AutomatedRun(Loggable):
                                  measurement_blob=ms_blob,
                                  previous_blanks=pb,
                                  runscript_name=script_name,
-                                 runscript_blob=script_blob)
+                                 runscript_blob=script_blob,
+                                 signal_fods=sfods,
+                                 baseline_fods=bsfods
+        )
 
     #===============================================================================
     # doers
@@ -1146,6 +1041,7 @@ anaylsis_type={}
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
 
+
     #===============================================================================
     # private
     #===============================================================================
@@ -1154,6 +1050,113 @@ anaylsis_type={}
     #             from pychron.core.ui.thread import Thread as mThread
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
+    def _start(self):
+        if self._use_arar_age():
+            if self.arar_age is None:
+                #             # load arar_age object for age calculation
+                self.arar_age = ArArAge()
+
+            es = self.extraction_script
+            if es is not None:
+                # get senstivity multiplier from extraction script
+                v = self._get_yaml_parameter(es, 'sensitivity_multiplier', default=1)
+                self.arar_age.sensitivity_multiplier = v
+
+            ln = self.spec.labnumber
+            ln = convert_identifier(ln)
+            self.persister.datahub.load_analysis_backend(ln, self.arar_age)
+
+        self.info('Start automated run {}'.format(self.runid))
+
+        self.measuring = False
+        self.truncated = False
+
+        self._alive = True
+
+        if self.plot_panel:
+            self.plot_panel.total_counts = 0
+            self.plot_panel.is_peak_hop = False
+            self.plot_panel.is_baseline = False
+
+        self.multi_collector.canceled = False
+        self.multi_collector.is_baseline = False
+        self.multi_collector.for_peak_hop = False
+
+        self._equilibration_done = False
+        self._refresh_scripts()
+
+        # setup the scripts
+        ip = self.spec.script_options
+        if ip:
+            ip = os.path.join(paths.scripts_dir, 'options', add_extension(ip, '.yaml'))
+
+        if self.measurement_script:
+            self.measurement_script.reset(weakref.ref(self)())
+
+            #set the interpolation path
+            self.measurement_script.interpolation_path = ip
+
+        for si in ('extraction', 'post_measurement', 'post_equilibration'):
+            script = getattr(self, '{}_script'.format(si))
+            if script:
+                self._setup_context(script)
+                script.interpolation_path = ip
+
+        #load extraction metadata
+        self.eqtime = self._get_extraction_parameter('eqtime', 15)
+        self.time_zero_offset = self.spec.collection_time_zero_offset
+
+        #setup persister. mirror a few of AutomatedRunsAttributes
+        self.setup_persister()
+
+        return True
+
+    def _refresh_scripts(self):
+        for name in SCRIPT_KEYS:
+            setattr(self, '{}_script'.format(name), self._load_script(name))
+
+    def _get_default_fits_file(self):
+        p = self._get_measurement_parameter('default_fits')
+        dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
+        if os.path.isfile(p):
+            return p
+        else:
+            self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
+
+    def _get_default_fits(self, is_baseline=False):
+        """
+            get name of default fits file from measurement docstr
+            return dict of iso:fit pairs
+        """
+        dfp = self._get_default_fits_file()
+        if dfp:
+            with open(dfp, 'r') as fp:
+                yd = yaml.load(fp)
+                key = 'baseline' if is_baseline else 'signal'
+                fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
+        else:
+            fd = {}
+
+        return fd
+
+    def _get_default_fods(self):
+        def extract_fit_dict(fods, yd):
+            for yi in ys:
+                fod = {'filter_outliers': yi['filter_outliers'],
+                       'iterations': yi['filter_iterations'],
+                       'std_devs': yi['std_devs']}
+                fods[yi['name']] = fod
+
+        sfods, bsfods = {}, {}
+        dfp = self._get_default_fits_file()
+        if dfp:
+            with open(dfp, 'r') as fp:
+                ys = yaml.load(fp)
+                extract_fit_dict(sfods, ys['signal'])
+                extract_fit_dict(bsfods, ys['baseline'])
+
+        return sfods, bsfods
+
     def _start_script(self, name):
         script = getattr(self, '{}_script'.format(name))
         self.debug('start {}'.format(name))
@@ -1576,6 +1579,47 @@ anaylsis_type={}
         #                          add_tools=False)
         return graph
 
+    def _wait_for(self, predicate, msg):
+        st = time.time()
+        i = 0
+        while self._alive:
+            time.sleep(1.0)
+            et = time.time() - st
+            if predicate(et):
+                break
+
+            if i % 5 == 0:
+                self.debug(msg(et))
+                i = 0
+            i += 1
+
+    def _wait_for_min_ms_pumptime(self):
+        overlap, mp = self.spec.overlap
+        if not overlap:
+            self.debug('no overlap. not waiting for min ms pumptime')
+            return
+
+        if self.is_first:
+            self.debug('this is the first run. not waiting for min ms pumptime')
+            return
+
+        if not mp:
+            self.debug('using default min ms pumptime={}'.format(self.min_ms_pumptime))
+            mp = self.min_ms_pumptime
+
+        #ensure mim mass spectrometer pump time
+        #wait until pumping started
+        self.debug('wait for mass spec pump out to start')
+        self._wait_for(lambda x: not self.experiment_executor.ms_pumptime_start is None,
+                       msg=lambda x: 'waiting for mass spec pumptime to start {:0.2f}'.format(x))
+        self.debug('mass spec pump out to started')
+
+        #wait for min pump time
+        pred = lambda x: self.elapsed_ms_pumptime > mp
+        msg = lambda x: 'waiting for min mass spec pumptime {}, elapse={:0.2f}'.format(mp, x)
+        self._wait_for(pred, msg)
+        self.debug('min pumptime elapsed {} {}'.format(mp, self.elapsed_ms_pumptime))
+
     #===============================================================================
     # save
     #===============================================================================
@@ -1585,20 +1629,7 @@ anaylsis_type={}
     #             attrs['USER'] = self.spec.username
     #             attrs['ANALYSIS_TYPE'] = self.spec.analysis_type
     #             attrs['TIMESTAMP'] = time.time()
-    def post_measurement_save(self):
-        if self._measured:
-            if self.spectrometer_manager:
-                self.persister.trait_set(spec_dict=self.spectrometer_manager.make_parameters_dict(),
-                                         defl_dict=self.spectrometer_manager.make_deflections_dict(),
-                                         active_detectors=self._active_detectors)
 
-            self.persister.post_measurement_save()
-            if self.persister.secondary_database_fail:
-                if self.experiment_executor:
-                    self.experiment_executor.cancel(cancel_run=True,
-                                                    msg=self.persister.secondary_database_fail)
-            else:
-                return True
 
     #===============================================================================
     # scripts
@@ -1754,10 +1785,6 @@ anaylsis_type={}
 
         return default
 
-    def refresh_scripts(self):
-        for name in SCRIPT_KEYS:
-            setattr(self, '{}_script'.format(name), self._load_script(name))
-
     def _measurement_script_default(self):
         return self._load_script('measurement')
 
@@ -1797,6 +1824,10 @@ anaylsis_type={}
                 okinds.append(s)
 
         return assemble_script_blob(bs, kinds=okinds)
+
+    @property
+    def elapsed_ms_pumptime(self):
+        return time.time() - self.experiment_executor.ms_pumptime_start
 
     #===============================================================================
     # handlers

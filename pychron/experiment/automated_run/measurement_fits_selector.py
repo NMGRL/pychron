@@ -41,18 +41,17 @@ class MeasurementFit(FilterFit):
     pass
 
 
-ATTRS = ['fit', 'name', 'detector', 'filter_outliers', 'filter_iterations', 'filter_std_devs']
+ATTRS = ['fit', 'error_type', 'name', 'filter_outliers', 'filter_iterations', 'filter_std_devs']
 
 
 class MeasurementFitsSelector(FilterFitSelector):
     fit_klass = MeasurementFit
     name = Str
 
-    def open(self, scritp_path):
-        dfp = self._extract_default_fits_file(scritp_path)
+    def open(self, script_path):
+        dfp = self._extract_default_fits_file(script_path)
         if dfp:
             self.load(os.path.join(paths.fits_dir, add_extension(dfp, '.yaml')))
-            self.name = dfp
 
     def _extract_default_fits_file(self, path):
         with open(path, 'r') as fp:
@@ -73,19 +72,21 @@ class MeasurementFitsSelector(FilterFitSelector):
 
     def load(self, p):
         with open(p, 'r') as fp:
-            ys = yaml.load(fp)
-            fits = []
-            for fi in ys:
-                d = {ai: fi[ai] for ai in ATTRS}
-                f = MeasurementFit(**d)
-                fits.append(f)
-
+            yd = yaml.load(fp)
+            fits = self._load_fits(yd['signal'])
+            fits.extend(self._load_fits(yd['baseline']))
             self.fits = fits
 
-    def load_fits(self, keys, detectors, fits):
-        super(MeasurementFitsSelector, self).load_fits(keys, fits)
-        for fi, di in zip(self.fits, detectors):
-            fi.detector = di
+        h, _ = os.path.splitext(os.path.basename(p))
+        self.name = h
+
+    def _load_fits(self, fs):
+        fits = []
+        for fi in fs:
+            d = {ai: fi[ai] for ai in ATTRS}
+            f = MeasurementFit(**d)
+            fits.append(f)
+        return fits
 
 
 class MeasurementFitsSelectorView(Controller):
@@ -104,8 +105,6 @@ class MeasurementFitsSelectorView(Controller):
 
     def _get_fit_group(self):
         cols = [ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='detector',
-                             width=75),
                 ObjectColumn(name='fit',
                              editor=EnumEditor(name='fit_types'),
                              width=75),
@@ -135,6 +134,7 @@ class MeasurementFitsSelectorView(Controller):
                         self._get_toggle_group(),
                         self._get_auto_group(),
                         self._get_fit_group()),
+                 title='Edit Default Fits',
                  buttons=['OK', 'Cancel'],
                  resizable=True)
         return v
@@ -151,7 +151,6 @@ if __name__ == '__main__':
 
     t = os.path.join(paths.fits_dir, 'test.yaml')
     m.load(t)
-    # m.load_fits(keys, detectors, fits)
     a = MeasurementFitsSelectorView(model=m)
     a.configure_traits()
 
