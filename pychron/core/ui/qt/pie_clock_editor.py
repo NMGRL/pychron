@@ -32,6 +32,7 @@ class PieClock(QWidget):
     #         self.setGeometry(300, 300, 280, 170)
     indicator = 0
     slices = None
+    continue_flag = False
 
     def resizeEvent(self, event):
         print self.width(), self.height()
@@ -132,17 +133,29 @@ class ClockThread(QThread):
         s, _ = zip(*control.slices)
         total = float(sum(s))
         period = self._period
-        for i in xrange(int(total) + 1):
-            control.indicator = 360 / total * i
-            control.update()
-            self.msleep(period)
+        tc = 0
+        for si in s:
+            n = int(si)
+            for i in xrange(n + 1):
+                if control.continue_flag:
+                    control.continue_flag = False
+                    break
+                control.indicator = 360 / total * (i + tc)
+                control.update()
+                self.msleep(period)
+            tc += n
+
+        control.indicator = 360
+        control.update()
 
 
 class _PieClockEditor(Editor):
     update_slices_event = Event
     start_event = Event
     stop_event = Event
+    finish_slice_event = Event
     _clock_thread = None
+
 
     def init(self, parent):
         self.control = self._create_control(parent)
@@ -154,6 +167,9 @@ class _PieClockEditor(Editor):
                         'from')
         self.sync_value(self.factory.stop_event,
                         'stop_event',
+                        'from')
+        self.sync_value(self.factory.finish_slice_event,
+                        'finish_slice_event',
                         'from')
         self._set_slices()
         # direction=QBoxLayout.LeftToRight
@@ -168,6 +184,9 @@ class _PieClockEditor(Editor):
 
     def _update_slices_event_changed(self):
         self._set_slices()
+
+    def _finish_slice_event_changed(self):
+        self.control.continue_flag = True
 
     def _set_slices(self):
         if hasattr(self.value, 'slices'):
@@ -196,5 +215,6 @@ class PieClockEditor(BasicEditorFactory):
     update_slices_event = Str
     start_event = Str
     stop_event = Str
+    finish_slice_event = Str
 
 #============= EOF =============================================

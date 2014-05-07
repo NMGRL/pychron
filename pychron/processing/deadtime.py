@@ -47,7 +47,7 @@ class DeadTimeModel(HasTraits):
         xs = []
         ys = []
         for r in self._cp.itervalues():
-            xs.append(float(r['NShots']))
+            xs.append(int(r['NShots']))
             ys.append(float(r['Ar40']) / float(r['Ar36']))
 
         return xs, ys
@@ -55,16 +55,15 @@ class DeadTimeModel(HasTraits):
     def _deadtime_correct(self, v, tau):
         return v / (1 - v * tau)
 
-
     def get_mean_raw(self, tau=None):
         vs = []
+        corrfunc = self._deadtime_correct
         for r in self._cp.itervalues():
             n = int(r['NShots'])
             nv = ufloat(float(r['Ar40']), float(r['Ar40err'])) * 6240
-
             dv = ufloat(float(r['Ar36']), float(r['Ar36err'])) * 6240
             if tau:
-                dv = self._deadtime_correct(dv, tau * 1e-9)
+                dv = corrfunc(dv, tau * 1e-9)
 
             vs.append((n, nv / dv))
 
@@ -149,7 +148,6 @@ class DeadTimeGrapher(HasTraits):
 
         g.set_x_title('deadtime (ns)', plotid=2)
         g.set_y_title('MSWD', plotid=2)
-
 
     def traits_view(self):
         v = View(UItem('graph', style='custom'), resizable=True)

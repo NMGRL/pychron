@@ -29,6 +29,7 @@ class PieClock(TraitType):
     def create_editor(self):
         editor = PieClockEditor(start_event='start_event',
                                 stop_event='stop_event',
+                                finish_slice_event='finish_slice_event',
                                 update_slices_event='update_slices_event')
         return editor
 
@@ -37,6 +38,7 @@ class PieClockModel(HasTraits):
     pie_clock = PieClock
     start_event = Event
     stop_event = Event
+    finish_slice_event = Event
     update_slices_event = Event
 
     def traits_view(self):
@@ -54,6 +56,9 @@ class PieClockModel(HasTraits):
 
     def stop(self):
         self.stop_event = True
+
+    def finish_slice(self):
+        self.finish_slice_event = True
 
 
 #============= EOF =============================================
