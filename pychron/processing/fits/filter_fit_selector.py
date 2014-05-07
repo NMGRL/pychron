@@ -89,10 +89,10 @@ class FilterFitSelector(FitSelector):
                              width=75),
                 ObjectColumn(name='error_type',
                              editor=EnumEditor(name='error_types'),
-                             width=75),
-                CheckboxColumn(name='filter_outliers', label='F. Outliers'),
-                ObjectColumn(name='filter_iterations', label='F. Iter.'),
-                ObjectColumn(name='filter_std_devs', label='F. SD'),
+                             width=75, label='Error'),
+                CheckboxColumn(name='filter_outliers', label='Out.'),
+                ObjectColumn(name='filter_iterations', label='Iter.'),
+                ObjectColumn(name='filter_std_devs', label='SD'),
                 ObjectColumn(name='truncate', label='Trunc.'),
                 CheckboxColumn(name='include_baseline_error', label='Inc. BsErr')]
 

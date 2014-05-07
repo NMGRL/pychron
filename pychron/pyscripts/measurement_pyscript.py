@@ -266,7 +266,7 @@ class MeasurementPyScript(ValvePyScript):
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
                                        delay=delay)
-                                       
+
         if not evt:
             self.cancel()
         else:
@@ -284,8 +284,6 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_fits(self, *fits):
-        if not fits:
-            fits = 'linear'
         self._automated_run_call('py_set_fits', fits)
 
     @verbose_skip
@@ -326,9 +324,9 @@ class MeasurementPyScript(ValvePyScript):
     #
     #===============================================================================
     def _automated_run_call(self, func, *args, **kw):
-    #         return True
-    #         if func not in ('py_activate_detectors',):
-    #             return True
+        #         return True
+        #         if func not in ('py_activate_detectors',):
+        #             return True
 
         if self.automated_run is None:
             return
@@ -396,9 +394,9 @@ class MeasurementPyScript(ValvePyScript):
                    action=None,
                    resume=False):
 
-    #        if self._syntax_checking:
-    #            if isinstance(action, str):
-    #                self.execute_snippet(action)
+        #        if self._syntax_checking:
+        #            if isinstance(action, str):
+        #                self.execute_snippet(action)
 
         self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,

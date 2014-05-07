@@ -170,17 +170,40 @@ class AutomatedRun(Loggable):
         else:
             self._activate_detectors(dets)
 
+    def _get_default_fits(self):
+        """
+            get name of default fits file from measurement docstr
+            return dict of iso:fit pairs
+        """
+        p = self._get_measurement_parameter('default_fits')
+        dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
+        if os.path.isfile(p):
+            with open(dfp, 'r') as fp:
+                yd = yaml.load(fp)
+                fd = {yi['name']: yi['fit'] for yi in yd}
+        else:
+            fd = {}
+            self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
+
+        return fd
+
     def py_set_fits(self, fits):
         isotopes = self.arar_age.isotopes
 
-        fits = dict([f.split(':') for f in fits])
+        if not fits:
+            fits = self._get_default_fits()
+        else:
+            fits = dict([f.split(':') for f in fits])
+
         for k, iso in isotopes.iteritems():
             if k in fits:
-                iso.set_fit_blocks(fits[k])
-                # print iso.fit_block
+                fi = fits[k]
             else:
+                fi = 'linear'
                 self.warning('Invalid fit "{}". '
                              'check the measurement script "{}"'.format(k, self.measurement_script.name))
+
+            iso.set_fit_blocks(fi)
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
@@ -871,6 +894,9 @@ class AutomatedRun(Loggable):
         if self.measurement_script:
             ms_name = self.measurement_script.name
             ms_blob = self.measurement_script.toblob()
+            dfp = self._get_measurement_parameter('default_fits')
+            if dfp:
+                self.persister.load_filter_outlier_dicts(dfp)
 
         ext_pos = []
         if self.extraction_script:
@@ -1679,15 +1705,13 @@ anaylsis_type={}
             obj = klass(
                 root=root,
                 name=file_name,
-                runner=self.runner
-            )
+                runner=self.runner)
 
             return obj
 
     def _make_script_name(self, name):
         name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
-        name = self._add_script_extension(name)
-        return name
+        return add_extension(name, '.py')
 
     def _setup_context(self, script):
         """
@@ -1711,9 +1735,6 @@ anaylsis_type={}
                              beam_diameter=spec.beam_diameter,
                              ramp_duration=spec.ramp_duration,
                              is_last=self.is_last)
-
-    def _add_script_extension(self, name, ext='.py'):
-        return name if name.endswith(ext) else name + ext
 
     def _get_yaml_parameter(self, script, key, default):
         if not script:

@@ -52,9 +52,9 @@ class ExperimentPreferences(BasePreferencesHelper):
     sniff_color = Color
     signal_color = Color
 
-    filter_outliers = Bool(False)
-    fo_iterations = Int(1)
-    fo_std_dev = Int(2)
+    # filter_outliers = Bool(False)
+    # fo_iterations = Int(1)
+    # fo_std_dev = Int(2)
 
     min_ms_pumptime = Int
 
@@ -125,12 +125,13 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('signal_color', label='Signal'),
                             label='Colors')
 
-        filter_grp = Group(Item('filter_outliers'),
-                           VGroup(Item('fo_iterations', label='N. Iterations'),
-                                  Item('fo_std_dev', label='N. standard deviations'),
-                                  enabled_when='filter_outliers',
-                                  show_border=True),
-                           label='Post Fit Filtering')
+        # filter_grp = Group(Item('filter_outliers'),
+        #                    VGroup(Item('fo_iterations', label='N. Iterations'),
+        #                           Item('fo_std_dev', label='N. standard deviations'),
+        #                           enabled_when='filter_outliers',
+        #                           show_border=True),
+        #                    label='Post Fit Filtering')
+
         overlap_grp = Group(Item('min_ms_pumptime', label='Min. Mass Spectrometer Pumptime (s)'),
                             label='Overlap')
         memory_grp = Group(Item('use_memory_check', label='Check Memory',
@@ -142,7 +143,8 @@ class ExperimentPreferencesPane(PreferencesPane):
 
         return View(color_group, notification_grp,
                     editor_grp, irradiation_grp,
-                    filter_grp, overlap_grp, memory_grp)
+                    # filter_grp,
+                    overlap_grp, memory_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

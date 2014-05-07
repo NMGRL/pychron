@@ -428,15 +428,7 @@ class Experimentor(IsotopeDatabaseManager):
 
         e = ExperimentFactory(db=self.db,
                               application=self.application,
-                              default_mass_spectrometer=dms
-                              #                              max_allowable_runs=self.max_allowable_runs,
-                              #                              can_edit_scripts=self.can_edit_scripts
-        )
-
-        #        from pychron.globals import globalv
-        #        if globalv.experiment_debug:
-        #            e.queue_factory.mass_spectrometer = 'Jan'
-        #            e.queue_factory.extract_device = 'Fusions Diode'
+                              default_mass_spectrometer=dms)
 
         return e
 

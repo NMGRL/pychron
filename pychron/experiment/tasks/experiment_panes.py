@@ -98,8 +98,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                    icon_button_editor(make_qf_name('edit_user'), 'database_edit'),
                    Spring(width=-5, springy=False),
                    QFItem('use_email_notifier', show_label=False),
-                   Item(make_qf_name('email'), enabled_when=make_qf_name('use_email_notifier')),
-            ),
+                   Item(make_qf_name('email'), enabled_when=make_qf_name('use_email_notifier'))),
             HGroup(
                 QFItem('mass_spectrometer',
                        show_label=False,
@@ -246,10 +245,14 @@ class ExperimentFactoryPane(TraitsDockPane):
             RFItem('post_equilibration_script', style='custom', show_label=False),
             RFItem('post_measurement_script', style='custom', show_label=False),
             RFItem('script_options', style='custom', show_label=False),
-            HGroup(spring, RFItem('load_defaults_button',
-                                  tooltip='load the default scripts for this analysis type',
-                                  show_label=False,
-                                  enabled_when=make_rf_name('labnumber'))),
+            HGroup(spring,
+                   RFItem('default_fits_button',
+                          show_label=False,
+                          label='Default Fits'),
+                   RFItem('load_defaults_button',
+                          tooltip='load the default scripts for this analysis type',
+                          show_label=False,
+                          enabled_when=make_rf_name('labnumber'))),
             show_border=True,
             label='Scripts')
         return script_grp

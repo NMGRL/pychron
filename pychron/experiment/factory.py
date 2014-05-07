@@ -81,6 +81,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
+        self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
+
     def _sync_queue_to_factory(self, eq, qf, a):
         v = getattr(eq, a)
         if isinstance(v, str):

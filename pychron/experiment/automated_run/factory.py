@@ -15,9 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, \
-    Button, \
-    Event, Enum
+from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
+    cached_property, on_trait_change, Bool, Button, Event, Enum
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 from traits.trait_errors import TraitError
@@ -25,6 +24,7 @@ import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
+from pychron.experiment.automated_run.analysis_fits_selector import MeasurementFitsSelector, MeasurementFitsSelectorView
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
@@ -112,6 +112,7 @@ class AutomatedRunFactory(Loggable):
     db = Any
     datahub=Instance(Datahub)
 
+    default_fits_button = Button
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
@@ -951,6 +952,12 @@ class AutomatedRunFactory(Loggable):
     def _load_defaults_button_fired(self):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
+
+    def _default_fits_button_fired(self):
+        m = MeasurementFitsSelector()
+        m.open(self.measurement_script.script_path())
+        f = MeasurementFitsSelectorView(model=m)
+        f.edit_traits()
 
     def _new_truncation_button_fired(self):
 

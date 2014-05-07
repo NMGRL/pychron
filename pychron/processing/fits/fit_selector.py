@@ -190,7 +190,7 @@ class FitSelector(HasTraits):
                 pf = self.fit_klass(name=ki)
 
             pf.fit = fit
-            pf.filter_outliers = fod.get('filter_outliers')
+            pf.filter_outliers = fod.get('filter_outliers', False)
 
             pf.filter_iterations = fod.get('iterations', 0)
             pf.filter_std_devs = fod.get('std_devs', 0)

@@ -87,10 +87,14 @@ class Script(Loggable):
     #
     #     return default
 
-    def _edit_fired(self):
-        p = os.path.join(paths.scripts_dir, self.label.lower(), '{}_{}.py'.format(self.mass_spectrometer,
+    def script_path(self):
+        p = os.path.join(paths.scripts_dir, self.label.lower(), '{}_{}.py'.format(self.mass_spectrometer.lower(),
                                                                                   self.name))
-        self.edit_event = (p, self.kind)
+        return p
+
+    def _edit_fired(self):
+
+        self.edit_event = (self.script_path(), self.kind)
 
     def traits_view(self):
         return View(HGroup(
@@ -126,6 +130,7 @@ class Script(Loggable):
         return p
 
     def _load_script_names(self):
+
         p = self._get_root()
         if os.path.isdir(p):
             return [s for s in os.listdir(p)
