@@ -276,5 +276,12 @@ class ExportAnalysesAction(Action):
         app.open_task('pychron.export')
 
 
+class ModifyK3739Action(FigureTaskAction):
+    name = 'Modify (37/39)K...'
+    method = 'modify_k3739'
+
+
+
+
 #============= EOF =============================================
 

@@ -38,6 +38,7 @@ from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
+from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
@@ -279,6 +280,17 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
+    def modify_k3739(self):
+        if self.has_active_editor():
+            ans = self.unknowns_pane.selected
+            m = K3739EditModel(analyses=ans)
+            v = K3739EditView(model=m)
+            info = v.edit_traits()
+            if info.result:
+                self.active_editor.clear_aux_plot_limits()
+                self.active_editor.rebuild()
+
+
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()

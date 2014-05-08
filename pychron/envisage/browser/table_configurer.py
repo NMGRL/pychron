@@ -168,7 +168,7 @@ class AnalysisTableConfigurer(TableConfigurer):
 
         tdy = datetime.today()
         if self.use_named_date_range:
-            if self.named_date_range in ( 'this month', 'today', 'this week'):
+            if self.named_date_range in ('this month', 'today', 'this week'):
                 hp = tdy
             elif self.named_date_range == 'yesterday':
                 hp = tdy - timedelta(days=1)
@@ -181,19 +181,21 @@ class AnalysisTableConfigurer(TableConfigurer):
 
     def _get_low_post(self):
         lp = None
-
+        tdy = datetime.today()
         if self.use_named_date_range:
-            d = datetime.today()
             if self.named_date_range == 'this month':
-                lp = d - timedelta(days=d.day, seconds=d.second, hours=d.hour, minutes=d.minute)
+                lp = tdy - timedelta(days=tdy.day,
+                                     seconds=tdy.second,
+                                     hours=tdy.hour,
+                                     minutes=tdy.minute)
             elif self.named_date_range == 'this week':
                 days = datetime.today().weekday()
-                lp = d - timedelta(days=days)
+                lp = tdy - timedelta(days=days)
 
         elif self.use_low_post:
             lp = self._low_post
             if not lp:
-                lp = datetime.today()
+                lp = tdy
 
         return lp
 

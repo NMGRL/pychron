@@ -37,7 +37,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
-    DeleteAnalysisGroupAction, XYScatterAction
+    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -149,7 +149,8 @@ Install to enable MS Excel export''')
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
                            ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
                            ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu'),
-                           ('make_tas', MakeTASAction, 'MenuBar/data.menu')]
+                           ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+                           ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu')]
 
         exts = [self._make_task_extension(default_actions)]
 
