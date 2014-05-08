@@ -28,6 +28,7 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
+
 #============= local library imports  ==========================
 
 def extract_isochron_xy(analyses):
@@ -132,8 +133,6 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
         else:
             plateau_errors = errors[sx]
             wm, we = calculate_weighted_mean(plateau_ages, plateau_errors)
-
-        we *= len(plateau_ages) ** 0.5
 
         return wm, we, pidx
 
