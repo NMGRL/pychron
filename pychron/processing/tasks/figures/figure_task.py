@@ -283,12 +283,15 @@ class FigureTask(AnalysisEditTask):
     def modify_k3739(self):
         if self.has_active_editor():
             ans = self.unknowns_pane.selected
-            m = K3739EditModel(analyses=ans)
-            v = K3739EditView(model=m)
-            info = v.edit_traits()
-            if info.result:
-                self.active_editor.clear_aux_plot_limits()
-                self.active_editor.rebuild()
+            if not ans:
+                self.information_dialog('Please select a set of analyses from the Unknowns.')
+            else:
+                m = K3739EditModel(analyses=ans)
+                v = K3739EditView(model=m)
+                info = v.edit_traits()
+                if info.result:
+                    self.active_editor.clear_aux_plot_limits()
+                    self.active_editor.rebuild()
 
 
     def refresh_active_editor(self):

@@ -15,6 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+import pickle
 
 from traits.api import HasTraits, on_trait_change, Instance, List, Event, Any, Enum, Button, Float
 from traitsui.api import View, Item, Controller, UItem
@@ -22,6 +24,7 @@ from traitsui.api import View, Item, Controller, UItem
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
+from pychron.paths import paths
 
 
 class K3739EditModel(HasTraits):
@@ -29,6 +32,10 @@ class K3739EditModel(HasTraits):
     k3739 = Float
     k3739_err = Float
     progress = Any
+
+    def __init__(self, *args, **kw):
+        super(K3739EditModel, self).__init__(*args, **kw)
+        self.load()
 
     def apply_modified(self):
         v = ufloat(self.k3739, self.k3739_err)
@@ -42,6 +49,31 @@ class K3739EditModel(HasTraits):
             ai.interference_corrections['k3739'] = v
             ai.calculate_age(force=True)
         pd.close()
+
+        self.dump()
+
+    #persistence
+    def load(self):
+        p = self._get_pickle_path()
+        if os.path.isfile(p):
+            try:
+                with open(p, 'rb') as fp:
+                    d = pickle.load(fp)
+                    self.trait_set(**d)
+            except BaseException:
+                pass
+
+    def dump(self):
+        p = self._get_pickle_path()
+        d = dict(k3739=self.k3739, k3739_err=self.k3739_err)
+        try:
+            with open(p, 'wb') as fp:
+                pickle.dump(d, fp)
+        except BaseException:
+            pass
+
+    def _get_pickle_path(self):
+        return os.path.join(paths.hidden_dir, 'modified_k3739')
 
 
 class K3739EditView(Controller):
