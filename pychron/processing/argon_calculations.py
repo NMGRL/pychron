@@ -29,6 +29,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 def extract_isochron_xy(analyses):
@@ -207,9 +208,30 @@ def abundance_sensitivity_correction(isos, abundance_sensitivity):
     return [n40, n39, n38, n37, n36]
 
 
+def apply_fixed_k3739(a39, pr, fixed_k3739):
+    """
+        x=ca37/k39
+        y=ca37/ca39
+        T=s39dec_cor
+
+        T=ca39+k39
+        T=ca37/y+ca37/x
+
+        ca37=(T*x*y)/(x+y)
+    """
+    x = fixed_k3739
+    y = 1 / pr.get('ca3937', 1)
+    ca37 = (a39 * x * y) / (x + y)
+    ca39 = pr.get('ca3937', 0) * ca37
+    k39 = a39 - ca39
+    k37 = x * k39
+    return ca37, ca39, k37, k39
+
+
 def interference_corrections(a40, a39, a38, a37, a36,
                              production_ratios,
-                             arar_constants=None):
+                             arar_constants=None,
+                             fixed_k3739=False):
     if production_ratios is None:
         production_ratios = {}
 
@@ -219,7 +241,7 @@ def interference_corrections(a40, a39, a38, a37, a36,
     pr = production_ratios
     k37 = ufloat(0, 1e-20)
 
-    if arar_constants.k3739_mode.lower() == 'normal':
+    if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
         # iteratively calculate 37, 39
         for _ in range(5):
             ca37 = a37 - k37
@@ -227,23 +249,10 @@ def interference_corrections(a40, a39, a38, a37, a36,
             k39 = a39 - ca39
             k37 = pr.get('k3739', 0) * k39
     else:
-        '''
-            x=ca37/k39
-            y=ca37/ca39
-            T=s39dec_cor
+        if not fixed_k3739:
+            fixed_k3739 = arar_constants.fixed_k3739
 
-            T=ca39+k39
-            T=ca37/y+ca37/x
-
-            ca37=(T*x*y)/(x+y)
-        '''
-        x = arar_constants.fixed_k3739
-        y = 1 / pr.get('ca3937', 1)
-
-        ca37 = (a39 * x * y) / (x + y)
-        ca39 = pr.get('ca3937', 0) * ca37
-        k39 = a39 - ca39
-        k37 = x * k39
+        ca37, ca39, k37, k39 = apply_fixed_k3739(a39, pr, fixed_k3739)
 
     k38 = pr.get('k3839', 0) * k39
     ca36 = pr.get('ca3637', 0) * ca37
@@ -283,7 +292,8 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time,
 def calculate_F(isotopes,
                 decay_time,
                 interferences=None,
-                arar_constants=None):
+                arar_constants=None,
+                fixed_k3739=False):
     """
         isotope values corrected for blank, baseline, (background)
         ic_factor, (discrimination), ar37 and ar39 decay
@@ -305,7 +315,7 @@ def calculate_F(isotopes,
     #for k,v in pr.iteritems():
     #    print k, v
     k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a40, a39, a38, a37, a36,
-                                                                     pr, arar_constants)
+                                                                     pr, arar_constants, fixed_k3739)
     atm36, cl36 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
                                         decay_time,
                                         pr,

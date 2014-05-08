@@ -28,6 +28,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -58,6 +59,8 @@ class ArArAge(Loggable):
     chron_dosages = List
     interference_corrections = Dict
     production_ratios = Dict
+
+    fixed_k3739 = None
 
     timestamp = Float
     decay_days = Property(depends_on='timestamp,irradiation_time')
@@ -413,7 +416,8 @@ class ArArAge(Loggable):
         f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
                                                                               decay_time=self.decay_days,
                                                                               interferences=self.interference_corrections,
-                                                                              arar_constants=self.arar_constants)
+                                                                              arar_constants=self.arar_constants,
+                                                                              fixed_k3739=self.fixed_k3739)
         # print 'c',interference_corrected['Ar36']
         self.non_ar_isotopes = non_ar
         self.computed = computed

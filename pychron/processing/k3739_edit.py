@@ -18,13 +18,15 @@
 import os
 import pickle
 
-from traits.api import HasTraits, on_trait_change, Instance, List, Event, Any, Enum, Button, Float
-from traitsui.api import View, Item, Controller, UItem
+from traits.api import HasTraits, Bool, List, Any, Float
+from traitsui.api import View, Item, Controller, VGroup, HGroup
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.paths import paths
+from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
 class K3739EditModel(HasTraits):
@@ -32,21 +34,24 @@ class K3739EditModel(HasTraits):
     k3739 = Float
     k3739_err = Float
     progress = Any
+    normal_k3739 = Bool
 
     def __init__(self, *args, **kw):
         super(K3739EditModel, self).__init__(*args, **kw)
         self.load()
 
     def apply_modified(self):
-        v = ufloat(self.k3739, self.k3739_err)
-
+        if self.normal_k3739:
+            v = None
+        else:
+            v = ufloat(self.k3739, self.k3739_err)
         ans = self.analyses
         pd = myProgressDialog(max=len(ans) - 1)
         pd.open()
 
         for ai in ans:
             pd.change_message('Modifying k3739 for {}'.format(ai.record_id))
-            ai.interference_corrections['k3739'] = v
+            ai.fixed_k3739 = v
             ai.calculate_age(force=True)
         pd.close()
 
@@ -84,11 +89,17 @@ class K3739EditView(Controller):
             self.model.apply_modified()
 
     def traits_view(self):
-        v = View(Item('k3739', label='(37/39)K'),
-                 UItem('k3739_err'),
-                 title='Edit (37/39)K',
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal')
+        v = View(
+            VGroup(
+                Item('normal_k3739', label='Normal (37/39)K'),
+                HGroup(
+                    Item('k3739', label='(37/39)K'),
+                    Item('k3739_err', label=PLUSMINUS_SIGMA),
+                    show_border=True,
+                    enabled_when='not normal_k3739')),
+            title='Edit (37/39)K',
+            buttons=['OK', 'Cancel'],
+            kind='livemodal')
         return v
 
 #============= EOF =============================================
