@@ -158,7 +158,7 @@ class BaseExperimentQueue(Loggable):
 
         tab(header)
 
-        def isNotNull(vi):
+        def is_not_null(vi):
             if vi and vi != NULL_STR:
                 try:
                     vi = float(vi)
@@ -170,7 +170,7 @@ class BaseExperimentQueue(Loggable):
 
         for arun in self.automated_runs:
             vs = arun.to_string_attrs(attrs)
-            vals = [v if isNotNull(v) else '' for v in vs]
+            vals = [v if is_not_null(v) else '' for v in vs]
             tab(vals, comment=arun.skip)
 
         return stream
@@ -344,7 +344,7 @@ load: {}
         else:
             return s
 
-    def isUpdateable(self):
+    def is_updateable(self):
         return not self._no_update
 
     #===============================================================================

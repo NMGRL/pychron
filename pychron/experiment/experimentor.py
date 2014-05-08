@@ -120,7 +120,7 @@ class Experimentor(IsotopeDatabaseManager):
         if queues is None:
             queues = self.experiment_queues
 
-        queues = [qi for qi in queues if qi.isUpdateable()]
+        queues = [qi for qi in queues if qi.is_updateable()]
         if not queues:
             return
 
