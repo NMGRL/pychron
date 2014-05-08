@@ -165,15 +165,17 @@ class AnalysisTableConfigurer(TableConfigurer):
 
     def _get_high_post(self):
         hp = None
+
+        tdy = datetime.today()
         if self.use_named_date_range:
             if self.named_date_range in ( 'this month', 'today', 'this week'):
-                hp = datetime.today()
+                hp = tdy
             elif self.named_date_range == 'yesterday':
-                hp = datetime.today() - timedelta(days=1)
+                hp = tdy - timedelta(days=1)
         elif self.use_high_post:
             hp = self._high_post
             if not hp:
-                hp = datetime.today()
+                hp = tdy
 
         return hp
 
