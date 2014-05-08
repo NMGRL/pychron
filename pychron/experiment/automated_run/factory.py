@@ -117,7 +117,7 @@ class AutomatedRunFactory(Loggable):
     db = Any
     datahub=Instance(Datahub)
     undoer = Any
-    edit_event = EditEvent
+    edit_event = Event
 
     default_fits_button = Button
     extraction_script = Instance(Script)
@@ -173,10 +173,11 @@ class AutomatedRunFactory(Loggable):
     #===========================================================================
     # extract
     #===========================================================================
-    extract_value = Property(
-        EKlass(Float),
-        depends_on='_extract_value')
-    _extract_value = Float
+    # extract_value = Property(
+    #     EKlass(Float),
+    #     depends_on='_extract_value')
+    # _extract_value = Float
+    extract_value = EKlass(Float)
     extract_units = Str(NULL_STR)
     extract_units_names = List(['', 'watts', 'temp', 'percent'])
     _default_extract_units = 'watts'
@@ -620,14 +621,12 @@ class AutomatedRunFactory(Loggable):
                 self._selected_runs and \
                 not self.suppress_update:
 
-            self.edit_event = dict(attribute=attr, value=v, runs=self._selected_runs,
+            self.edit_event = dict(attribute=attr, value=v,
                                    previous_state=[(ri, getattr(ri, attr)) for ri in self._selected_runs])
 
             for si in self._selected_runs:
                 setattr(si, attr, v)
-
-            self.changed = True
-            self.refresh_table_needed = True
+            self.refresh()
 
     def _save_flux(self):
         if self._flux is None and self._flux_error is None:
@@ -837,27 +836,32 @@ class AutomatedRunFactory(Loggable):
         if ok:
             return pos
 
-    def _validate_extract_value(self, d):
-        return self._validate_float(d)
+    # def _validate_extract_value(self, d):
+    #     return self._validate_float(d)
+    #
+    # def _validate_float(self, d):
+    #     try:
+    #         return float(d)
+    #     except ValueError:
+    #         pass
+    #
+    # def _get_extract_value(self):
+    #     return self._extract_value
+    #
+    # def _set_extract_value(self, t):
+    #     if t is not None:
+    #         self._extract_value = t
+    #         if not t:
+    #             self.extract_units = NULL_STR
+    #         elif self.extract_units == NULL_STR:
+    #             self.extract_units = self._default_extract_units
+    #     else:
+    #         self.extract_units = NULL_STR
 
-    def _validate_float(self, d):
-        try:
-            return float(d)
-        except ValueError:
-            pass
-
-    def _get_extract_value(self):
-        return self._extract_value
-
-    def _set_extract_value(self, t):
-        if t is not None:
-            self._extract_value = t
-            if not t:
-                self.extract_units = NULL_STR
-            elif self.extract_units == NULL_STR:
+    def _extract_value_changed(self, new):
+        if new:
+            if self.extract_units == NULL_STR:
                 self.extract_units = self._default_extract_units
-        else:
-            self.extract_units = NULL_STR
 
     def _get_edit_pattern_label(self):
         return 'Edit' if self._use_pattern() else 'New'
@@ -1017,6 +1021,10 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
+    def refresh(self):
+        self.changed = True
+        self.refresh_table_needed = True
+
     @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
 extract_units,
 pattern,
@@ -1042,8 +1050,8 @@ post_equilibration_script:name''')
                 for si in self._selected_runs:
                     name = '{}_script'.format(obj.label)
                     setattr(si, name, new)
-                self.changed = True
-                self.refresh_table_needed = True
+                self.refresh()
+
 
     @on_trait_change('script_options:name')
     def _edit_script_options_handler(self, new):

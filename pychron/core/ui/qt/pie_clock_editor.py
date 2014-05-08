@@ -134,19 +134,32 @@ class ClockThread(QThread):
         total = float(sum(s))
         period = self._period
         tc = 0
-        for si in s:
-            n = int(si)
-            for i in xrange(n + 1):
-                if control.continue_flag:
-                    control.continue_flag = False
-                    break
-                control.indicator = 360 / total * (i + tc)
-                control.update()
-                self.msleep(period)
-            tc += n
+        try:
+            for si in s:
+                n = int(si)
+                for i in xrange(n + 1):
+                    if control.continue_flag:
+                        control.continue_flag = False
+                        break
 
-        control.indicator = 360
-        control.update()
+                    try:
+                        control.indicator = 360 / total * (i + tc)
+                        control.update()
+                    except RuntimeError:
+                        break
+
+                    self.msleep(period)
+
+                control.continue_flag = False
+                tc += n
+        except RuntimeError:
+            return
+
+        try:
+            control.indicator = 360
+            control.update()
+        except RuntimeError:
+            pass
 
 
 class _PieClockEditor(Editor):

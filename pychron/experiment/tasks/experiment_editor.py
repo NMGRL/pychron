@@ -168,6 +168,9 @@ class ExperimentEditor(BaseTraitsEditor):
     #===============================================================================
     # property get/set
     #===============================================================================
+    def _get_tooltip(self):
+        return self.path
+
     def _get_name(self):
         if self.path:
             name = os.path.basename(self.path)

@@ -101,15 +101,18 @@ class BaseExperimentQueue(Loggable):
             if freq:
                 cnt = 0
                 n = len(aruns)
+                runs = []
                 for i, ai in enumerate(aruns[::-1]):
                     if cnt == freq:
                         run = runviews[0].clone_traits()
+                        runs.append(run)
                         run.frequency_added = True
                         aruns.insert(n - i, run)
                         cnt = 0
                     if ai.analysis_type in ('unknown', 'air', 'cocktail'):
                         cnt += 1
             else:
+                runs = runviews
                 if self.selected:
                     idx = aruns.index(self.selected[-1])
                     for ri in reversed(runviews):
@@ -117,10 +120,11 @@ class BaseExperimentQueue(Loggable):
                 else:
                     aruns.extend(runviews)
 
-                    #===============================================================================
-                    # persistence
-                    #===============================================================================
+            return runs
 
+    #===============================================================================
+    # persistence
+    #===============================================================================
     def load(self, txt):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses

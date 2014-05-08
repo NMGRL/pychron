@@ -123,20 +123,21 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = self.run_factory.new_runs(q, positions=positions,
                                                    auto_increment_position=self.auto_increment_position,
                                                    auto_increment_id=self.auto_increment_id)
-        #         if self.run_factory.check_run_addition(new_runs, load_name):
-        #if self.run_factory.check_run_addition(new_runs, load_name):
-        # q = self.queue
+
+        aruns = q.automated_runs
         if q.selected:
-            idx = q.automated_runs.index(q.selected[-1])
+            idx = aruns.index(q.selected[-1])
         else:
-            idx = len(q.automated_runs) - 1
+            idx = len(aruns) - 1
 
-        self.queue.add_runs(new_runs, freq)
+        runs = q.add_runs(new_runs, freq)
+        self.undoer.push('add runs', runs)
 
-        idx += len(new_runs)
+        idx += len(runs)
 
         with self.run_factory.update_selected_ctx():
-            self.queue.select_run_idx(idx)
+            q.select_run_idx(idx)
+
 
     #===============================================================================
     # handlers
@@ -165,6 +166,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 ai.end_after = False
 
         self.run_factory.set_end_after(new)
+
+    def _queue_changed(self, new):
+        self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
 extract_device, delay_+, tray, username, load_name, email]''')
@@ -254,7 +258,8 @@ extract_device, delay_+, tray, username, load_name, email]''')
     # defaults
     #===============================================================================
     def _undoer_default(self):
-        return ExperimentUndoer(run_factory=self.run_factory)
+        return ExperimentUndoer(run_factory=self.run_factory,
+                                queue=self.queue)
 
     def _run_factory_default(self):
         return self._run_factory_factory()

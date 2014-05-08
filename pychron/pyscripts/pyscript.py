@@ -778,6 +778,8 @@ class PyScript(Loggable):
                 self.cancel()
             elif wd.is_continued():
                 self.info('continuing script after {:0.3f} s'.format(time.time() - st))
+                if self.manager:
+                    self.manager.continued()
 
         else:
             while time.time() - st < timeout:

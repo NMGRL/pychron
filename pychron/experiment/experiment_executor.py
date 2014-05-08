@@ -793,6 +793,9 @@ class ExperimentExecutor(Loggable):
         self._wait(delay, msg)
         self.delaying_between_runs = False
 
+    def continued(self):
+        self.stats.continue_run()
+
     def _wait(self, delay, msg):
         wg = self.wait_group
         wc = self.get_wait_control()
@@ -800,6 +803,9 @@ class ExperimentExecutor(Loggable):
         wc.message = msg
         wc.start(wtime=delay)
         wg.pop(wc)
+
+        if wc.is_continued():
+            self.stats.continue_clock()
 
     def _set_extract_state(self, state, flash, color, period):
         if state:

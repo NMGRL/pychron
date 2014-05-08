@@ -27,6 +27,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
@@ -138,6 +139,9 @@ class ExperimentStats(Loggable):
     def finish_run(self):
         self.nruns_finished += 1
         self.clock.stop()
+
+    def continue_run(self):
+        self.clock.finish_slice()
 
     def setup_run_clock(self, run):
 
