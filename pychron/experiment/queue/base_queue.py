@@ -70,6 +70,8 @@ class BaseExperimentQueue(Loggable):
 
     load_name = Str
 
+    _frequency_added_counter = 0
+
     def _get_name(self):
         if self.path:
             return os.path.splitext(os.path.basename(self.path))[0]
@@ -85,7 +87,8 @@ class BaseExperimentQueue(Loggable):
 
     def clear_frequency_runs(self):
         self.automated_runs = [ri for ri in self.automated_runs
-                               if not ri.frequency_added]
+                               if not ri.frequency_added == self._frequency_added_counter]
+        self._frequency_added_counter -= 1
 
     def add_runs(self, runviews, freq=None):
         """
@@ -99,6 +102,9 @@ class BaseExperimentQueue(Loggable):
             aruns = self.automated_runs
             #        self._suppress_aliquot_update = True
             if freq:
+                self._frequency_added_counter += 1
+                fcnt = self._frequency_added_counter
+
                 cnt = 0
                 n = len(aruns)
                 runs = []
@@ -106,7 +112,7 @@ class BaseExperimentQueue(Loggable):
                     if cnt == freq:
                         run = runviews[0].clone_traits()
                         runs.append(run)
-                        run.frequency_added = True
+                        run.frequency_added = fcnt
                         aruns.insert(n - i, run)
                         cnt = 0
                     if ai.analysis_type in ('unknown', 'air', 'cocktail'):
@@ -289,12 +295,12 @@ class BaseExperimentQueue(Loggable):
                ('extraction', 'extraction_script'),
                ('t_o', 'collection_time_zero_offset'),
                ('measurement', 'measurement_script'),
-               ('truncate','truncate_condition'),
+               ('truncate', 'truncate_condition'),
                'syn_extraction',
                ('post_meas', 'post_measurement_script'),
                ('post_eq', 'post_equilibration_script'),
                ('s_opt', 'script_options'),
-               ('dis_btw_pos','disable_between_positons'),
+               ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
                'autocenter']
 

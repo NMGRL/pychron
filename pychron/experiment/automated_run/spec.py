@@ -120,7 +120,7 @@ class AutomatedRunSpec(Loggable):
     _executable = Bool(True)
     executable = Property(depends_on='identifier_error, _executable')
 
-    frequency_added = False
+    frequency_added = 0
 
     runid = Property
     _estimated_duration = 0
