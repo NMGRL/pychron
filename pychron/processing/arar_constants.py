@@ -15,11 +15,12 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import HasTraits, Property, Float, Enum, Str
+from traits.api import HasTraits, Property, Float, Enum, Str, Bool
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
+
 
 
 
@@ -99,6 +100,8 @@ class ArArConstants(HasTraits):
     lambda_Ar39_citation = Str  #'Min (2008)'
     lambda_Ar37_citation = Str  #'Min (2008)'
 
+    allow_negative_ca_correction = Bool
+
     def __init__(self, *args, **kw):
         #print 'init arar constants'
         try:
@@ -136,6 +139,8 @@ class ArArConstants(HasTraits):
             bind_preference(self, 'lambda_Cl36_citation', '{}.lambda_Cl36_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar37_citation', '{}.lambda_Ar37_citation'.format(prefid))
             bind_preference(self, 'lambda_Ar39_citation', '{}.lambda_Ar39_citation'.format(prefid))
+
+            bind_preference(self, 'allow_negative_ca_correction', '{}.allow_negative_ca_correction'.format(prefid))
 
         except AttributeError:
             pass

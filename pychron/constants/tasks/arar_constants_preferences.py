@@ -15,13 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Float, Enum, Str
+from traits.api import Float, Enum, Str, Bool
 from traitsui.api import View, Item, UItem, Spring, Label, spring, VGroup, HGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.pychron_constants import PLUSMINUS
-
 
 
 #============= standard library imports ========================
@@ -47,6 +46,7 @@ class ArArConstantsPreferences(BasePreferencesHelper):
     Ar37_Ar39_mode = Enum('Normal', 'Fixed')
     Ar37_Ar39 = Float(0.01)
     Ar37_Ar39_error = Float(0.01)
+    allow_negative_ca_correction = Bool
 
     #===========================================================================
     # spectrometer
@@ -78,22 +78,17 @@ class ArArConstantsPreferencesPane(PreferencesPane):
             ('Ar40K beta/yr', 'lambda_b', 'lambda_b_error'),
             ('Cl36/d', 'lambda_Cl36', 'lambda_Cl36_error'),
             ('Ar37/d', 'lambda_Ar37', 'lambda_Ar37_error'),
-            ('Ar39/d', 'lambda_Ar39', 'lambda_Ar39_error'),
-        ]
+            ('Ar39/d', 'lambda_Ar39', 'lambda_Ar39_error')]
         decay = VGroup(
-            *[
-                 HGroup(spring, Label('Value'),
-                        Spring(width=75, springy=False),
-                        Label(u'{}1s'.format(PLUSMINUS)),
-                        Spring(width=75, springy=False),
-                 )
-             ] + \
+            *[HGroup(spring, Label('Value'),
+                     Spring(width=75, springy=False),
+                     Label(u'{}1s'.format(PLUSMINUS)),
+                     Spring(width=75, springy=False))] + \
              [HGroup(Label(l), spring, UItem(v), UItem(e))
               for l, v, e in vs],
 
             show_border=True,
-            label='Decay'
-        )
+            label='Decay')
         return decay
 
     def traits_view(self):
@@ -106,8 +101,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
                    Label('Citation')),
             HGroup(Item('Ar40_Ar36_atm', label='(40Ar/36Ar)atm'),
                    Item('Ar40_Ar36_atm_error', show_label=False),
-                   Item('Ar40_Ar36_atm_citation', show_label=False)
-            ),
+                   Item('Ar40_Ar36_atm_citation', show_label=False)),
             HGroup(Item('Ar40_Ar38_atm', label='(40Ar/38Ar)atm'),
                    Item('Ar40_Ar38_atm_error', show_label=False),
                    Item('Ar40_Ar38_atm_citation', show_label=False)),
@@ -122,59 +116,15 @@ class ArArConstantsPreferencesPane(PreferencesPane):
         spectrometer = VGroup(
             Item('abundance_sensitivity'),
             Item('sensitivity',
-                 tooltip='Nominal spectrometer sensitivity saved with analysis'
-            ),
-            label='Spectrometer',
-            #show_border=True
-        )
+                 tooltip='Nominal spectrometer sensitivity saved with analysis'),
+            label='Spectrometer')
 
         general = VGroup(Item('age_units', label='Age Units'),
+                         Item('allow_negative_ca_correction',
+                              tooltip='If checked Ca36 can be negative when correcting Ar36 for Ca inteference',
+                              label='Allow Negative Ca Correction'),
                          label='General')
 
         v = View(general, decay, ratios, spectrometer)
         return v
-
         #============= EOF =============================================
-        #         decay = VGroup(
-        #                         HGroup(Spring(springy=False, width=125),
-        #                                Label('Value'), Spring(springy=False, width=55),
-        #                                Label(u'{}1s'.format(PLUSMINUS))),
-        #                         HGroup(
-        #                                spring,
-        #                                Label('Value'),
-        # #                                Spring(springy=False, width=55),
-        #                                Label(u'{}1s'.format(PLUSMINUS))),
-
-        #                         grp,
-        #                         HGroup(Label('Cl36/d')),
-        #                         HGroup(Label('Ar37/d')),
-        #                         HGroup(Label('Ar39/d')),
-        #                         HGroup(
-        #                                 VGroup(
-        # #                                        spring,
-        #                                        HGroup(spring, Label('Ar40K epsilon/yr')),
-        # #                                        spring,
-        #                                        HGroup(spring, Label('Ar40K beta/yr')),
-        # #                                        spring,
-        #                                        HGroup(spring, Label('Cl36/d')),
-        # #                                        spring,
-        #                                        HGroup(spring, Label('Ar37/d')),
-        # #                                        spring,
-        #                                        HGroup(spring, Label('Ar39/d')),
-        #                                        ),
-        #                                 VGroup(
-        #                                        HGroup(Item('lambda_e',),
-        #                                               Item('lambda_e_error'), show_labels=False),
-        #                                        HGroup(Item('lambda_b'),
-        #                                               Item('lambda_b_error'), show_labels=False),
-        #                                        HGroup(Item('lambda_Cl36'),
-        #                                               Item('lambda_Cl36_error'), show_labels=False),
-        #                                        HGroup(Item('lambda_Ar37'),
-        #                                               Item('lambda_Ar37_error'), show_labels=False),
-        #                                        HGroup(Item('lambda_Ar39'),
-        #                                               Item('lambda_Ar39_error'), show_labels=False)
-        #                                        )
-        #                                ),
-        #                         show_border=True,
-        #                         label='Decay'
-        #                         )

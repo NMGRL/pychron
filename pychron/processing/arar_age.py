@@ -29,6 +29,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -354,6 +355,7 @@ class ArArAge(Loggable):
         try:
             self.kca = k / ca * k_ca_pr
         except ZeroDivisionError:
+            self.kca = ufloat(0, 0)
             if not self._kca_warning:
                 self._kca_warning = True
                 self.debug("ca37 is zero. can't calculated k/ca")
@@ -373,6 +375,7 @@ class ArArAge(Loggable):
         try:
             self.kcl = k / cl * k_cl_pr
         except ZeroDivisionError:
+            self.kcl = ufloat(0, 0)
             if not self._kcl_warning:
                 self._kcl_warning = True
                 self.warning("cl36 is zero. can't calculated k/cl")

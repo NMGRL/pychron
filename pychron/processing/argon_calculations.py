@@ -30,6 +30,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 def extract_isochron_xy(analyses):
@@ -255,6 +256,11 @@ def interference_corrections(a40, a39, a38, a37, a36,
         ca37, ca39, k37, k39 = apply_fixed_k3739(a39, pr, fixed_k3739)
 
     k38 = pr.get('k3839', 0) * k39
+
+    if not arar_constants.allow_negative_ca_correction:
+        print ca37, max(ufloat(0, 0), ca37)
+        ca37 = max(ufloat(0, 0), ca37)
+
     ca36 = pr.get('ca3637', 0) * ca37
     ca38 = pr.get('ca3837', 0) * ca37
 
