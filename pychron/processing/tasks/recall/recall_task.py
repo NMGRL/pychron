@@ -18,22 +18,15 @@
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
 
+#============= standard library imports ========================
+#============= local library imports  ==========================
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
-from pychron.processing.tasks.recall.edit_analysis_view import AnalysisEditView
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 
-
-
-
-
-
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
 
 class DummyRecord():
     uuid = ''
@@ -147,6 +140,8 @@ class RecallTask(AnalysisEditTask):
         if hasattr(editor, 'edit_view') and editor.edit_view:
             editor.edit_view.show()
         else:
+            from pychron.processing.tasks.recall.edit_analysis_view import AnalysisEditView
+
             e = AnalysisEditView(editor)
 
             # e.load_isotopes()

@@ -102,14 +102,16 @@ class DBAnalysis(Analysis):
         return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
-        if det in self.ic_factors:
-            r = self.ic_factors[det]
+        iso = next((i for i in self.isotopes if i.detector == det), None)
+        if iso:
+            r = iso.ic_factor
         else:
-            r = ufloat(1, 1e-20)
-            #get the ic_factor from preferences if available otherwise 1.0
-            # storing ic_factor in preferences causing issues
-            # ic_factor stored in detectors.cfg
-            # r = ArArAge.get_ic_factor(self, det)
+            r = ufloat(1, 0)
+
+        # if det in self.ic_factors:
+        #     r = self.ic_factors[det]
+        # else:
+        #     r = ufloat(1, 1e-20)
 
         return r
 
@@ -371,10 +373,17 @@ class DBAnalysis(Analysis):
         #discrimination saved as 1amu disc not 4amu
         discriminations = self._get_discriminations(meas_analysis)
 
-        self.ic_factors = self._get_ic_factors(meas_analysis)
+        # self.ic_factors = self._get_ic_factors(meas_analysis)
+        ics = self._get_ic_factors(meas_analysis)
         for iso in self.isotopes.itervalues():
             det = iso.detector
-            iso.ic_factor = self.get_ic_factor(det)
+            try:
+                r = ics[det]
+            except KeyError:
+                r = ufloat(1, 0)
+
+            iso.ic_factor = r
+            # iso.ic_factor = self.get_ic_factor(det)
 
             idisc = ufloat(1, 1e-20)
             if iso.detector in discriminations:
