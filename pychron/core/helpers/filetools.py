@@ -61,8 +61,14 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
 
 def add_extension(p, ext='.txt'):
     if not p.endswith(ext):
-        p += ext
+        # p += ext
+        p = '{}{}'.format(p, ext)
     return p
+
+
+def remove_extension(p):
+    h, _ = os.path.splitext(p)
+    return h
 
 
 def unique_dir(root, base):

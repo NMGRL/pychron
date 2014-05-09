@@ -80,8 +80,8 @@ class ExtractionTabularAdapter(BaseTabularAdapter):
                ('Value', 'value'),
                ('Units', 'units')]
 
-    name_width = Int(80)
-    value_width = Int(90)
+    name_width = Int(100)
+    value_width = Int(200)
     units_width = Int(40)
 
 

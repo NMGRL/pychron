@@ -23,16 +23,16 @@ from traitsui.api import View, UItem
 from pychron.core.ui.text_editor import myTextEditor
 
 
-class ExperimentView(HasTraits):
-    name = 'Experiment'
+class TextView(HasTraits):
     text = Str
+    attribute = Str
 
     def __init__(self, analysis, *args, **kw):
-        super(ExperimentView, self).__init__(*args, **kw)
+        super(TextView, self).__init__(*args, **kw)
         self._load(analysis)
 
     def _load(self, an):
-        self.text = an.experiment_txt
+        self.text = getattr(an, self.attribute)  #an.experiment_txt
 
     def traits_view(self):
         editor = myTextEditor(bgcolor='#F7F6D0',
@@ -42,4 +42,33 @@ class ExperimentView(HasTraits):
         v = View(UItem('text', style='custom', editor=editor))
         return v
 
+
+class ExperimentView(TextView):
+    name = 'Experiment'
+    attribute = 'experiment_txt'
+
+
+class MeasurementView(TextView):
+    name = 'Measurement'
+    attribute = 'measurement_script_blob'
+
+
+class ExtractionView(TextView):
+    name = 'Extraction'
+    attribute = 'extraction_script_blob'
+    # def __init__(self, analysis, *args, **kw):
+    #     super(ExperimentView, self).__init__(*args, **kw)
+    #     self._load(analysis)
+    #
+    # def _load(self, an):
+    #     self.text = an.experiment_txt
+    #
+    # def traits_view(self):
+    #     editor = myTextEditor(bgcolor='#F7F6D0',
+    #                           fontsize=10,
+    #                           wrap=False,
+    #                           tab_width=15)
+    #     v = View(UItem('text', style='custom', editor=editor))
+    #     return v
+    #
     #============= EOF =============================================

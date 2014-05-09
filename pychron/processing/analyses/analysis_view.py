@@ -23,7 +23,7 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= local library imports  ==========================
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
 
-from pychron.processing.analyses.view.experiment_view import ExperimentView
+from pychron.processing.analyses.view.experiment_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
@@ -59,6 +59,8 @@ class AnalysisView(HasTraits):
     _experiment_view = None
     _history_view = None
     _interference_view = None
+    _measurement_view = None
+    _extraction_view = None
 
     def load(self, an):
         analysis_type = an.analysis_type
@@ -69,10 +71,22 @@ class AnalysisView(HasTraits):
         if history_view is None:
             history_view = HistoryView(an)
             self._history_view = history_view
+        
         experiment_view = self._experiment_view
         if experiment_view is None:
             experiment_view = ExperimentView(an)
             self._experiment_view = experiment_view
+
+        extraction_view = self._extraction_view
+        if extraction_view is None:
+            extraction_view = ExtractionView(an)
+            self._extraction_view = extraction_view
+
+        measurement_view = self._measurement_view
+        if measurement_view is None:
+            measurement_view = MeasurementView(an)
+            self._measurement_view = measurement_view
+            
         interference_view = self._interference_view
         if interference_view is None:
             interference_view = InterferencesView(an)
@@ -86,9 +100,12 @@ class AnalysisView(HasTraits):
             self.main_view.load(an, refresh=True)
 
         subviews = [main_view,
-                    experiment_view,
                     history_view,
-                    interference_view]
+                    interference_view,
+                    experiment_view,
+                    measurement_view,
+                    extraction_view,
+                    ]
 
         if analysis_type in ('unknown', 'cocktail'):
             subviews.append(ErrorComponentsView(an))

@@ -106,6 +106,10 @@ class MainView(HasTraits):
     def load_extraction(self, an):
 
         ev = [
+            ExtractionValue(name='Extract Script',
+                            value=an.extraction_script_name),
+            ExtractionValue(name='Meas. Script',
+                            value=an.measurement_script_name),
             ExtractionValue(name='Device',
                             value=an.extract_device),
             ExtractionValue(name='Position',
@@ -340,19 +344,20 @@ class MainView(HasTraits):
 
         return teditor, ieditor, ceditor, eeditor, meditor
 
-
     def traits_view(self):
         teditor, ieditor, ceditor, eeditor, meditor = self._get_editors()
 
         v = View(
             VSplit(
-                HGroup(
+                HSplit(
                     UItem('measurement_values',
                           editor=meditor,
-                          height=-200),
+                          height=-200,
+                          width=0.4),
                     UItem('extraction_values',
                           editor=eeditor,
-                          height=-200)),
+                          height=-200,
+                          width=0.6)),
                 UItem('isotopes',
                       editor=teditor,
                       height=0.25),

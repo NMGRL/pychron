@@ -25,6 +25,7 @@ import struct
 import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import add_extension, remove_extension
 
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
@@ -82,6 +83,11 @@ class DBAnalysis(Analysis):
 
     blank_changes = List
     fit_changes = List
+
+    extraction_script_name = Str
+    measurement_script_name = Str
+    extraction_script_blob = Str
+    measurement_script_blob = Str
 
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
@@ -216,13 +222,23 @@ class DBAnalysis(Analysis):
             self._sync_measurement(meas_analysis)
             self._sync_changes(meas_analysis)
             self._sync_experiment(meas_analysis)
+            self._sync_script_blobs(meas_analysis)
 
         self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
 
+    def _sync_script_blobs(self, meas_analysis):
+        meas = meas_analysis.measurement.script
+        self.measurement_script_blob = meas.blob
+
+        ext = meas_analysis.extraction.script
+        self.extraction_script_blob = ext.blob
+
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:
             meas = meas_analysis.measurement
+            self.measurement_script_name = remove_extension(meas.script.name)
+
             self.analysis_type = meas.analysis_type.name
             self.mass_spectrometer = meas.mass_spectrometer.name.lower()
             self.collection_time_zero_offset = meas.time_zero_offset or 0
@@ -256,6 +272,7 @@ class DBAnalysis(Analysis):
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
         exp = ext.experiment
+        self.debug('syncing experiment, {}'.format(exp))
         if exp:
             self.experiment_txt = exp.blob
 
@@ -330,6 +347,8 @@ class DBAnalysis(Analysis):
     def _sync_extraction(self, meas_analysis):
         extraction = meas_analysis.extraction
         if extraction:
+            self.extraction_script_name = remove_extension(extraction.script.name)
+
             #sensitivity
             shist = meas_analysis.selected_histories.selected_sensitivity
             if shist:
