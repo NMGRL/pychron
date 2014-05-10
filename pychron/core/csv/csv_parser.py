@@ -45,6 +45,19 @@ class BaseColumnParser(HasTraits):
         else:
             return key in self._header
 
+    def list_attributes(self):
+        return self._header
+
+    def get_values(self, keys=None):
+        from numpy import array
+
+        if keys is None:
+            keys = self._header
+
+        gv = self.get_value
+        data = array([[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float)
+        return data.T
+
     def itervalues(self, keys=None):
         """
             returns a row iterator
@@ -54,9 +67,8 @@ class BaseColumnParser(HasTraits):
         """
         if keys is None:
             keys = self._header
-
-        return (dict([(ki, self.get_value(ri, ki))
-                      for ki in keys])
+        gv = self.get_value
+        return ({ki: gv(ri, ki) for ki in keys}
                 for ri in self.iternrows())
 
     def iternrows(self):
@@ -77,7 +89,7 @@ class BaseColumnParser(HasTraits):
 
 class CSVParser(BaseColumnParser):
     def _load(self, p, header_idx):
-        with open(p, 'r') as fp:
+        with open(p, 'U') as fp:
             reader = csv.reader(fp)
             self._lines = list(reader)
             self._header = map(str.strip, self._lines[header_idx])

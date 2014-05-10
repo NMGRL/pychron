@@ -72,12 +72,42 @@ class XYScatterEditor(GraphEditor):
         return v
 
     def _rebuild_graph(self):
+
+        options = self.plotter_options_manager.plotter_options
+        if options.datasource == 'Database':
+            self._rebuild_database_graph(options)
+        else:
+            self._rebuild_file_graph(options)
+
+    def _rebuild_file_graph(self, options):
+        g = self.graph
+        g.new_plot()
+
+        i_attr = options.index_attr
+        v_attr = options.value_attr
+
+        parser = options.get_parser()
+        xs, ys = parser.get_values((i_attr, v_attr))
+        self.plot_series(g, options, xs, ys)
+
+
+    def plot_series(self, g, options, xs, ys):
+        kw = options.get_marker_dict()
+        fit = options.fit
+        fit = fit if fit != NULL_STR else False
+        args = g.new_series(x=xs, y=ys, fit=fit, type='scatter',
+                            add_inspector=False, **kw)
+        if fit:
+            plot, scatter, line = args
+        else:
+            scatter, plot = args
+        return scatter
+
+    def _rebuild_database_graph(self, options):
         ans = self.analyses
         if ans:
             g = self.graph
             g.new_plot()
-
-            options = self.plotter_options_manager.plotter_options
 
             i_attr = options.index_attr
             v_attr = options.value_attr
@@ -107,16 +137,7 @@ class XYScatterEditor(GraphEditor):
             ytitle = self._pretty(ytitle)
             xtitle = self._pretty(xtitle)
 
-            kw = options.get_marker_dict()
-            fit = options.fit
-            fit = fit if fit != NULL_STR else False
-
-            args = g.new_series(x=xs, y=ys, fit=fit, type='scatter',
-                                add_inspector=False, **kw)
-            if fit:
-                plot, scatter, line = args
-            else:
-                scatter, plot = args
+            scatter = self.plot_series(g, options, xs, ys)
 
             scatter.yerror = ArrayDataSource(eys)
             scatter.xerror = ArrayDataSource(exs)
