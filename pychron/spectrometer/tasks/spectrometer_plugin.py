@@ -27,8 +27,9 @@ from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
-    CoincidenceScanAction, SpectrometerParametersAction
+    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
+
 
 
 #============= standard library imports ========================
@@ -112,6 +113,9 @@ class SpectrometerPlugin(BaseTaskPlugin):
 
     def _my_task_extensions_default(self):
         return [
+            TaskExtension(actions=[SchemaAddition(id='mftable',
+                                                  factory=MagnetFieldTableAction,
+                                                  path='MenuBar/Edit')]),
             TaskExtension(
                 task_id='pychron.spectrometer',
                 actions=[
@@ -120,8 +124,7 @@ class SpectrometerPlugin(BaseTaskPlugin):
                                                          name='Measure'),
                                    path='MenuBar',
                                    before='Window',
-                                   after='Tools'
-                    ),
+                                   after='tools.menu'),
                     SchemaAddition(id='peak_center',
                                    factory=PeakCenterAction,
                                    path='MenuBar/Measure'),
@@ -130,8 +133,6 @@ class SpectrometerPlugin(BaseTaskPlugin):
                                    path='MenuBar/Measure'),
                     SchemaAddition(id='parameters',
                                    factory=SpectrometerParametersAction,
-                                   path='MenuBar/Edit'),
-                ])
-        ]
+                                   path='MenuBar/Edit')])]
 
         #============= EOF =============================================

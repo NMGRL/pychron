@@ -23,6 +23,7 @@ from pyface.action.api import Action
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.spectrometer_manager.SpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
@@ -32,6 +33,7 @@ def get_manager(event, protocol):
     app = event.task.window.application
     manager = app.get_service(protocol)
     return manager
+
 
 # class OpenIonOpticsAction(Action):
 #     def perform(self, event):
@@ -65,43 +67,24 @@ class SpectrometerParametersAction(Action):
 class PeakCenterAction(Action):
     description = 'Calculate peak center'
     name = 'Peak Center...'
-    #     def __init__(self, *args, **kw):
-    #         super(PeakCenterAction, self).__init__(*args, **kw)
-    #         man = self.window.workbench.application.get_service(ION_OPTICS_PROTOCOL)
-
-    #         man.on_trait_change(self._update_enabled, 'alive')
-    #         self.enabled = True
-
-    #     def _update_enabled(self, new):
-    #         self.enabled = not self.enabled
 
     def perform(self, event):
         man = get_manager(event, ION_OPTICS_PROTOCOL)
         if man.setup_peak_center():
             man.do_peak_center(confirm_save=True, warn=True)
 
-#        man.open_peak_center()
 
 class CoincidenceScanAction(Action):
     name = 'Coincidence...'
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
-        #        man.do_coincidence()
         man.coincidence_scan_task_factory()
 
-#        open_manager(event.window.application, obj)
 
 class RelativePositionsAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
-
-    #        obj = man.relative_detector_positions_task_factory()
-#        open_manager(event.window.application, obj)
-
-
-
-
 
 
 class CDDOperateVoltageAction(Action):
@@ -109,6 +92,18 @@ class CDDOperateVoltageAction(Action):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         man.cdd_operate_voltage_scan_task_factory()
 
-    #        open_manager(event.window.application, obj)
+
+class MagnetFieldTableAction(Action):
+    name = 'Edit MF Table...'
+
+    def perform(self, event):
+        man = get_manager(event, SPECTROMETER_PROTOCOL)
+        if man.spectrometer:
+            mft = man.spectrometer.magnet.mftable
+
+            from pychron.spectrometer.mftable import MagnetFieldTableView
+
+            mv = MagnetFieldTableView(model=mft)
+            mv.edit_traits()
 
 #============= EOF ====================================
