@@ -99,7 +99,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
     def _get_ic_factor(self, ref):
         # ic = (1, 0)
-        ic = ref.ic_factor
+        ic = ref.get_ic_factor('CDD')
         if ic is None:
             ic = 1, 0
 

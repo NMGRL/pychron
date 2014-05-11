@@ -74,12 +74,14 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
                                include_footnotes=include_footnotes)
         data.extend(meta)
 
+        units = self._get_signal_units(analyses)
+        scales = self._get_signal_scales(analyses)
+
         # make header
-        headers = self._make_header(style)
+        headers = self._make_header(style, signal_units=units)
         data.extend(headers)
 
         cnt = len(data)
-        scales = self._get_signal_scales(analyses)
 
         for i, ai in enumerate(analyses):
             r = self._make_analysis_row(ai, scales)
@@ -223,8 +225,8 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
 
         weighted_mean_row.add_blank_item(n=12)
         wa = mean.weighted_age
-        weighted_mean_row.add_item(value=self._value()(wa))
-        weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error()(wa)))
+        weighted_mean_row.add_item(value=self._value(n=2)(wa))
+        weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error(n=3)(wa)))
 
         #         for s, e in platrow.spans:
         #             style.add('SPAN', (s, idx), (e, idx))

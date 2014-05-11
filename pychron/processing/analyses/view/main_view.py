@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Event
-from traitsui.api import View, UItem, HGroup, HSplit, VSplit
+from traitsui.api import View, UItem, HSplit, VSplit
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -100,7 +100,10 @@ class MainView(HasTraits):
             MeasurementValue(name='Ar39Decay',
                              value=floatfmt(a39)),
             MeasurementValue(name='Ar37Decay',
-                             value=floatfmt(a37))]
+                             value=floatfmt(a37)),
+            MeasurementValue(name='Sens.',
+                             value=floatfmt(an.sensitivity))]
+
         self.measurement_values = ms
 
     def load_extraction(self, an):

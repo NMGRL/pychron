@@ -108,7 +108,7 @@ class DBAnalysis(Analysis):
         return self._get_isotope_dict(get)
 
     def get_ic_factor(self, det):
-        iso = next((i for i in self.isotopes if i.detector == det), None)
+        iso = next((i for i in self.isotopes.itervalues() if i.detector == det), None)
         if iso:
             r = iso.ic_factor
         else:

@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, VGroup, UItem, \
-    HGroup, TableEditor, ButtonEditor
+    HGroup, TableEditor, ButtonEditor, Item
 from traitsui.table_column import ObjectColumn
 from traitsui.extras.checkbox_column import CheckboxColumn
 from pyface.image_resource import ImageResource
 
 from pychron.paths import paths
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -54,7 +55,7 @@ class BatchEditPane(TraitsTaskPane):
             ObjectColumn(name='std_dev',
                          width=75,
                          label='Error'),
-            CheckboxColumn(name='use', label='Use')]
+            CheckboxColumn(name='use', label='Save')]
         grp = VGroup(UItem('blanks', editor=TableEditor(columns=cols,
                                                         sortable=False)),
                      label='Blanks')
@@ -68,6 +69,7 @@ class BatchEditPane(TraitsTaskPane):
 
         grp = VGroup(
             HGroup(
+                Item('save_sens', label='Save'),
                 UItem('sens_value', ),
                 UItem('db_sens_button',
                       style='custom',
