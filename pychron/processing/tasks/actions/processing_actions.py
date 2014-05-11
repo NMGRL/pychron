@@ -77,6 +77,7 @@ class GroupAction(FigureTaskAction):
 class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
+    image = icon('placeholder')
 
 
 class GraphGroupSelectedAction(GroupAction):
@@ -97,21 +98,25 @@ class GraphGroupbySampleAction(GroupAction):
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
     method = 'group_by_sample'
+    image = icon('placeholder')
 
 
 class GroupbyLabnumberAction(GroupAction):
     name = 'Group by Labnumber'
     method = 'group_by_labnumber'
+    image = icon('placeholder')
 
 
 class GroupbyAliquotAction(GroupAction):
     name = 'Group by Aliquot'
     method = 'group_by_aliquot'
+    image = icon('placeholder')
 
 
 class ClearGroupAction(GroupAction):
     name = 'Clear Grouping'
     method = 'clear_grouping'
+    image = icon('placeholder')
 
 
 class AnalysisAction(myTaskAction):
@@ -196,13 +201,13 @@ class InverseIsochronAction(FigureAction):
 
 
 class IdeogramFromFile(FigureAction):
-    name = 'Ideogram from File'
+    name = 'Ideogram'
     method = 'new_ideogram_from_file'
     accelerator = 'Ctrl+shift+j'
 
 
 class SpectrumFromFile(FigureAction):
-    name = 'Spectrum from File'
+    name = 'Spectrum'
     method = 'new_spectrum_from_file'
     # accelerator = 'Ctrl+shift+d'
 

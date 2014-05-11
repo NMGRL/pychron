@@ -34,6 +34,7 @@ class GeoPlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='export_strat_canvas',
                                                       factory=ExportStratCanvasAction,
+                                                      absolute_position='last',
                                                       path='MenuBar/data.menu')])]
 
     def _geo_task_factory(self):

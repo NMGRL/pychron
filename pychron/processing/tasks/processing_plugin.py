@@ -17,6 +17,7 @@
 #============= enthought library imports =======================
 from envisage.ui.tasks.task_factory import TaskFactory
 from envisage.ui.tasks.task_extension import TaskExtension
+from pyface.action.menu_manager import MenuManager
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pyface.action.group import Group
 from pyface.tasks.action.schema import SMenu
@@ -37,7 +38,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
-    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action
+    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -89,8 +90,10 @@ Install to enable MS Excel export''')
                 InverseIsochronAction(),
                 SeriesAction(),
                 XYScatterAction(),
-                IdeogramFromFile(),
-                SpectrumFromFile())
+                MenuManager(IdeogramFromFile(),
+                            SpectrumFromFile(),
+                            name='From File'),
+                name='Figures')
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
@@ -99,58 +102,76 @@ Install to enable MS Excel export''')
             return SMenu(id='vcs.menu', name='VCS')
 
         def grouping_group():
-            return Group(GroupSelectedAction(),
-                         GroupbyAliquotAction(),
+            return SMenu(Group(GroupSelectedAction(),
+                               GroupbyAliquotAction(),
                          GroupbyLabnumberAction(),
-                         ClearGroupAction(), )
-
-        def graph_grouping_group():
-            return Group(GraphGroupSelectedAction(),
-                         GraphGroupbySampleAction())
+                         GroupbySampleAction(),
+                         ClearGroupAction()),
+                         Group(GraphGroupSelectedAction(),
+                               GraphGroupbySampleAction()),
+                         name='Grouping')
 
         def reduction_group():
             return Group(IsotopeEvolutionAction(),
                          BlankEditAction(),
                          ICFactorAction(),
                          DiscriminationAction(),
-                         FluxAction())
+                         FluxAction(),
+                         name='Reduction')
 
         def interpreted_group():
-            return Group(SetInterpretedAgeAction(),
+            return SMenu(SetInterpretedAgeAction(),
                          OpenInterpretedAgeAction(),
                          OpenInterpretedAgeGroupAction(),
                          DeleteInterpretedAgeGroupAction(),
-                         MakeGroupFromFileAction())
+                         MakeGroupFromFileAction(),
+                         name='Interpreted Ages')
 
         def analysis_group():
-            return Group(MakeAnalysisGroupAction(),
-                         DeleteAnalysisGroupAction())
+            return SMenu(MakeAnalysisGroupAction(),
+                         DeleteAnalysisGroupAction(),
+                         name='Analysis Grouping')
 
         def recall_group():
-            return Group(RecallAction(), OpenAdvancedQueryAction())
+            return Group(RecallAction(),
+                         OpenAdvancedQueryAction())
+
+        def misc_group():
+            return Group(TagAction(),
+                         DatabaseSaveAction(),
+                         ClearAnalysisCacheAction(),
+                         MakeTASAction(),
+                         ModifyK3739Action(), name='misc')
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
-                           ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
+                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
 
+                           ('recall_group', recall_group, 'MenuBar/data.menu', {'absolute_position': 'first'}),
                            ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
+
+
                            ('reduction_group', reduction_group, 'MenuBar/data.menu'),
                            ('figure_group', figure_group, 'MenuBar/data.menu'),
                            ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
-
-                           ('tag', TagAction, 'MenuBar/data.menu'),
-                           ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
                            ('grouping_group', grouping_group, 'MenuBar/data.menu'),
-                           ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
-                           ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
-                           ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
-                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+
+                           ('misc_group', misc_group, 'MenuBar/data.menu'),
+                           # ('tag', TagAction, 'MenuBar/data.menu'),
+                           # ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
+
+                           # ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
+                           # ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('make_analysis_group', analysis_group, 'MenuBar/data.menu'),
-                           ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu'),
-                           ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
-                           ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu')]
+                           ('make_data_tables', MakeDataTablesAction, 'MenuBar/data.menu',
+                            {'absolute_position': 'last'}),
+                           # ('make_tas', MakeTASAction, 'MenuBar/data.menu'),
+                           # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
+
+                           ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+        ]
 
         exts = [self._make_task_extension(default_actions)]
 
