@@ -121,7 +121,7 @@ class MagnetFieldTableHistoryAction(Action):
             gh = GitArchiveHistory(archive_root, mft.mftable_path)
             gh.load_history(os.path.basename(mft.mftable_path))
             ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
-            ghv.edit_traits()
+            ghv.edit_traits(kind='livemodal')
 
 
 #============= EOF ====================================

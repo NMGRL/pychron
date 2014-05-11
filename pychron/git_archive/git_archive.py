@@ -85,6 +85,10 @@ class GitArchive(Loggable):
             if os.path.basename(bi.abspath) == p:
                 return bi.data_stream.read()
 
+    def diff(self, a, b):
+        repo = self._repo
+        return repo.git.diff(a, b, )
+
 
 if __name__ == '__main__':
     r = '/Users/ross/Sandbox/gitarchive'
