@@ -53,6 +53,9 @@ def least_squares(func, xs, ys, initial_guess):
 class FieldItem(HasTraits):
     isotope = Str
 
+    def to_csv(self, keys, fmt):
+        return [self.isotope] + [fmt(getattr(self, k)) for k in keys]
+
 
 class MagnetFieldTable(Loggable):
     items = List
@@ -67,7 +70,7 @@ class MagnetFieldTable(Loggable):
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         else:
-            self._load_mftable()
+            self.load_mftable()
 
     def update_field_table(self, det, isotope, dac):
         """
@@ -113,9 +116,14 @@ class MagnetFieldTable(Loggable):
     def save(self):
         detectors = self._detectors
         p = self.mftable_path
-        # with open(p, 'w') as f:
-        #     writer = csv.writer(f)
-        #     writer.writerow(['iso'] + detectors)
+        p = '{}.temp'.format(p)
+        fmt = lambda x: '{:0.5f}'.format(x)
+        with open(p, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['iso'] + detectors)
+            for fi in self.items:
+                writer.writerow(fi.to_csv(detectors, fmt))
+
         self._set_mftable_hash(p)
 
     def dump(self, isos, d):
@@ -139,7 +147,7 @@ class MagnetFieldTable(Loggable):
     def mftable_path(self):
         return os.path.join(paths.spectrometer_dir, 'mftable.csv')
 
-    def _load_mftable(self, load_items=False):
+    def load_mftable(self, load_items=False):
         """
             mftable format- first line is a header followed by
             Isotope, Dac_i, Dac_j,....
@@ -197,7 +205,7 @@ class MagnetFieldTable(Loggable):
 
     def _get_mftable(self):
         if not self._mftable or not self._check_mftable_hash():
-            self._load_mftable()
+            self.load_mftable()
 
         return self._mftable
 
@@ -226,7 +234,7 @@ class MagnetFieldTableView(Controller):
 
     def traits_view(self):
 
-        self.model._load_mftable(True)
+        self.model.load_mftable(True)
 
         cols = [ObjectColumn(name='isotope', editable=False)]
 

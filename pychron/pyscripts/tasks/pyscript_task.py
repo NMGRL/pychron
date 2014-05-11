@@ -20,6 +20,7 @@ from traits.api import String, List, Instance, Any, \
     on_trait_change, Bool, Int
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 #============= standard library imports ========================
+import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.core.helpers.filetools import add_extension
@@ -29,10 +30,7 @@ from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane
     CommandEditorPane, ControlPane, ScriptBrowserPane
 from pychron.paths import paths
 from pychron.core.ui.preference_binding import bind_preference
-from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-import os
 from pychron.execute_mixin import ExecuteMixin
-from pychron.pyscripts.laser_pyscript import LaserPyScript
 
 
 
@@ -111,8 +109,13 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         if isinstance(ae, ExtractionEditor):
             root, fn = os.path.split(ae.path)
             kind = self._extract_kind(ae.path)
+
+            from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
             klass = ExtractionPyScript
             if kind == 'Laser':
+                from pychron.pyscripts.laser_pyscript import LaserPyScript
+
                 klass = LaserPyScript
 
             script = klass(

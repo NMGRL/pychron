@@ -22,18 +22,11 @@ import re
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
-
-
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
 from pychron.core.helpers.fits import natural_name_fit
-from pychron.core.regression.mean_regressor import MeanRegressor
-from pychron.core.regression.ols_regressor import PolynomialRegressor
+
 import struct
 #============= local library imports  ==========================
 #logger = new_logger('isotopes')
@@ -287,6 +280,8 @@ class IsotopicMeasurement(BaseMeasurement):
             return self._error
 
     def _mean_regressor_factory(self):
+        from pychron.core.regression.mean_regressor import MeanRegressor
+
         xs = self.offset_xs
         reg = MeanRegressor(xs=xs, ys=self.ys,
                             filter_outliers_dict=self.filter_outliers_dict,
@@ -298,6 +293,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if 'average' in self.fit.lower():
             reg = self._mean_regressor_factory()
         else:
+            from pychron.core.regression.ols_regressor import PolynomialRegressor
 
             reg = PolynomialRegressor(tag=self.name,
                                       xs=self.offset_xs,

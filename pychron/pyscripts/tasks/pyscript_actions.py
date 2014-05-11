@@ -21,11 +21,12 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
-from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 
 class HopsEditorAction(Action):
     def perform(self, event):
+        from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
+
         application = event.task.window.application
         spec = application.get_service('pychron.spectrometer.spectrometer_manager.SpectrometerManager')
         dets = []
@@ -74,8 +75,7 @@ class OpenPyScriptAction(Action):
         else:
             application = event.task.window.application
             win = application.create_window(TaskWindowLayout('pychron.pyscript',
-                                                             size=(1200, 100)
-            ))
+                                                             size=(1200, 100)))
             task = win.active_task
             test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
             # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'

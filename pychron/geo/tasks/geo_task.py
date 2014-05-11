@@ -27,9 +27,7 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.geo.primitives import AgePoint
-from pychron.geo.shape_file_writer import ShapeFileWriter
 from pychron.geo.tasks.actions import ExportShapefileAction
-from pychron.geo.tasks.panes import BrowserPane, GeoPane
 from pychron.paths import paths
 
 
@@ -53,9 +51,13 @@ class GeoTask(BaseManagerTask, BrowserMixin):
         self.dump_browser_selection()
 
     def create_central_pane(self):
+        from pychron.geo.tasks.panes import GeoPane
+
         return GeoPane(model=self)
 
     def create_dock_panes(self):
+        from pychron.geo.tasks.panes import BrowserPane
+
         panes = [BrowserPane(model=self)]
         return panes
 
@@ -63,6 +65,8 @@ class GeoTask(BaseManagerTask, BrowserMixin):
         self.manager.make_strat_canvas_file()
 
     def export_shapefile(self):
+        from pychron.geo.shape_file_writer import ShapeFileWriter
+
         writer = ShapeFileWriter()
         p = os.path.join(paths.disseration, 'data', 'minnabluff', 'gis', 'test_points.shp')
         if writer.write_points(p, points=self.points,

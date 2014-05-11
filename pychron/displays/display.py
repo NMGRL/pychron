@@ -17,8 +17,10 @@
 #============= enthought library imports =======================
 from PySide.QtGui import QColor
 from traits.api import HasTraits, Int, Color, Str, Event, Bool
-from traitsui.api import View, UItem
+# from traitsui.api import View, UItem
 #from pychron.lasers.scanner import ApplicationController
+from traitsui.item import UItem
+from traitsui.view import View
 from pychron.application_controller import ApplicationController
 from pychron.core.ui.display_editor import DisplayEditor
 from pychron.core.ui.gui import invoke_in_main_thread

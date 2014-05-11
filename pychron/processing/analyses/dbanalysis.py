@@ -25,7 +25,7 @@ import struct
 import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension, remove_extension
+from pychron.core.helpers.filetools import remove_extension
 
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
@@ -229,15 +229,57 @@ class DBAnalysis(Analysis):
 
     def _sync_script_blobs(self, meas_analysis):
         meas = meas_analysis.measurement.script
-        self.measurement_script_blob = meas.blob
+        if meas:
+            self.measurement_script_blob = meas.blob
 
         ext = meas_analysis.extraction.script
-        self.extraction_script_blob = ext.blob
+        if ext:
+            self.extraction_script_blob = ext.blob
+
+    def _sync_extraction(self, meas_analysis):
+        extraction = meas_analysis.extraction
+        if extraction:
+            if extraction.script:
+                self.extraction_script_name = remove_extension(extraction.script.name)
+
+            #sensitivity
+            shist = meas_analysis.selected_histories.selected_sensitivity
+            if shist:
+                sm = extraction.sensitivity_multiplier or 1
+                s = shist.sensitivity.value
+                self.sensitivity = sm * s
+
+            self.extract_device = self._get_extraction_device(extraction)
+            self.extract_value = extraction.extract_value
+
+            # add extract units to meas_ExtractionTable
+            #             eu = extraction.extract_units or 'W'
+            #             self.extract_units = eu
+            self.extract_units = 'W'
+
+            self.cleanup = extraction.cleanup_duration
+            self.duration = extraction.extract_duration
+            self.position = self._get_position(extraction)
+
+            for attr in ('beam_diameter', 'pattern',
+                         'ramp_rate', 'ramp_duration'):
+                v = getattr(extraction, attr)
+                if v is None:
+                    v = ''
+                setattr(self, attr, v)
+
+            #uv
+            for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
+                v = getattr(extraction, attr)
+                if v is None:
+                    v = ''
+                setattr(self, attr, v)
 
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:
             meas = meas_analysis.measurement
-            self.measurement_script_name = remove_extension(meas.script.name)
+            if meas.script:
+                self.measurement_script_name = remove_extension(meas.script.name)
 
             self.analysis_type = meas.analysis_type.name
             self.mass_spectrometer = meas.mass_spectrometer.name.lower()
@@ -343,44 +385,6 @@ class DBAnalysis(Analysis):
             prs[pk.lower()] = ufloat(v, e, tag=pk)
 
         self.interference_corrections = prs
-
-    def _sync_extraction(self, meas_analysis):
-        extraction = meas_analysis.extraction
-        if extraction:
-            self.extraction_script_name = remove_extension(extraction.script.name)
-
-            #sensitivity
-            shist = meas_analysis.selected_histories.selected_sensitivity
-            if shist:
-                sm = extraction.sensitivity_multiplier or 1
-                s = shist.sensitivity.value
-                self.sensitivity = sm * s
-
-            self.extract_device = self._get_extraction_device(extraction)
-            self.extract_value = extraction.extract_value
-
-            # add extract units to meas_ExtractionTable
-            #             eu = extraction.extract_units or 'W'
-            #             self.extract_units = eu
-            self.extract_units = 'W'
-
-            self.cleanup = extraction.cleanup_duration
-            self.duration = extraction.extract_duration
-            self.position = self._get_position(extraction)
-
-            for attr in ('beam_diameter', 'pattern',
-                         'ramp_rate', 'ramp_duration'):
-                v = getattr(extraction, attr)
-                if v is None:
-                    v = ''
-                setattr(self, attr, v)
-
-            #uv
-            for attr in ('reprate', 'mask_position', 'mask_name', 'attenuator'):
-                v = getattr(extraction, attr)
-                if v is None:
-                    v = ''
-                setattr(self, attr, v)
 
     def _sync_view(self, av=None):
         if av is None:

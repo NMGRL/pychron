@@ -18,7 +18,7 @@
 
 #============= standard library imports ========================
 from numpy import asarray, average, vectorize
-from scipy.stats import chi2
+
 #============= local library imports  ==========================
 def _kronecker(ii, jj):
     return int(ii == jj)
@@ -79,6 +79,7 @@ def validate_mswd(mswd, n, k=1):
     dof = n - k
     # calculate the reduced chi2 95% interval for given dof
     # use scale parameter to calculate the chi2_reduced from chi2
+    from scipy.stats import chi2
 
     rv = chi2(dof, scale=1 / float(dof))
     low, high = rv.interval(0.95)

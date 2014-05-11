@@ -17,13 +17,9 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
-#============= local library imports  ==========================
 import os
 
-from chaco.pdf_graphics_context import PdfPlotGraphicsContext
-import yaml
-
-from pychron.canvas.canvas2D.strat_canvas import StratCanvas
+#============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -110,15 +106,21 @@ class GeoProcessor(IsotopeDatabaseManager):
                     yi['color'] = 'red'
 
         yd = dict(options={},
-                  items=items
-        )
+                  items=items)
+
+        import yaml
+
         with open(p, 'w') as fp:
             yaml.dump(yd, fp, default_flow_style=False)
+
+        from pychron.canvas.canvas2D.strat_canvas import StratCanvas
 
         s = StratCanvas()
         s.load_scene(yd)
 
         p, _ = unique_path(root, seqname, extension='.pdf')
+        from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+
         g = PdfPlotGraphicsContext(
             filename=p)
 

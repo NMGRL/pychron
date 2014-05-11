@@ -15,18 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import os
-import smtplib
-
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, List, Enum, Bool
 from traitsui.api import View
-
-
-
 #============= standard library imports ========================
+import os
+import smtplib
 #============= local library imports  ==========================
 from pychron.config_loadable import ConfigMixin
 from pychron.paths import paths
@@ -93,6 +87,9 @@ class Emailer(ConfigMixin):
                 if u.email_enabled and u.level <= level]
 
     def _message_factory(self, text, recipients, subject='!Pychron Alert!'):
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
         msg = MIMEMultipart()
         msg['From'] = self.sender  # 'nmgrl@gmail.com'
         msg['To'] = recipients
