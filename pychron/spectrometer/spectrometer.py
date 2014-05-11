@@ -15,22 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import random
-
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError
-
-
 #============= standard library imports ========================
 import os
-from numpy import array, argmin, abs
+from numpy import array, argmin
 #============= local library imports  ==========================
 from pychron.spectrometer.source import Source
 from pychron.spectrometer.magnet import Magnet
 from pychron.spectrometer.detector import Detector
 from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
-#from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
 
 debug = False
@@ -95,6 +90,9 @@ class Spectrometer(SpectrometerDevice):
 
     testcnt = 0
     send_config_on_startup = Bool
+
+    def test_connection(self):
+        return self.microcontroller.ask('GetIntegrationTime') is not None
 
     def get_integration_time(self, current=True):
         if current:
@@ -286,12 +284,10 @@ class Spectrometer(SpectrometerDevice):
                             signals = map(float, [data[i + 1] for i in range(0, len(data), 2)])
 
         if not keys:
-        #             signals = [(ns + self.testcnt * 0.1) + random.random()
-        #                         for ns in [1, 100, 3, 1, 1, 0]]
+            import random
+
             signals = [1, 100, 3, 0.01, 0.01, 0.01]
             signals = [si + random.random() for si in signals]
-            #             signals = [(i * 2 + self.testcnt * 0.1) + random.random() for i in range(6)]
-            #self.testcnt += 1
             if tagged:
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 
@@ -299,7 +295,6 @@ class Spectrometer(SpectrometerDevice):
             det=self.get_detector(k)
             det.set_intensity(v)
 
-        #self.intensity_dirty = dict(zip(keys, signals))
         return keys, signals
 
     def get_intensity(self, dkeys):

@@ -54,6 +54,12 @@ class BaseLaserManager(Manager):
     _requested_power = Float
     _calibrated_power = None
 
+    def test_connection(self):
+        if self.mode == 'client':
+            return self._test_connection()
+        else:
+            return True
+
     def initialize_video(self):
         if self.use_video:
             self.stage_manager.initialize_video()
@@ -116,7 +122,6 @@ class BaseLaserManager(Manager):
 #                               )
 #         if pm.load_pattern():
 #             self.open_view(pm)
-
     def execute_pattern(self, name=None, block=False):
         pm = self.pattern_executor
         if pm.load_pattern(name):

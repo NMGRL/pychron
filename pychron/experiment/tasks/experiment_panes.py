@@ -19,27 +19,24 @@ from traits.api import Color, Instance, DelegatesTo
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
     CheckListEditor, VSplit, TabularEditor
-# from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
+from traitsui.editors import TableEditor
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
+#============= standard library imports ========================
+#============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
-# from pychron.core.ui.tabular_editor import myTabularEditor
-# from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
     NOT_EXECUTABLE_COLOR, SKIP_COLOR, SUCCESS_COLOR, CANCELED_COLOR, \
     TRUNCATED_COLOR, FAILED_COLOR, END_AFTER_COLOR
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
-#============= standard library imports ========================
-#============= local library imports  ==========================
-
 #===============================================================================
 # editing
 #===============================================================================
-
-
 
 def spacer(w):
     return Spring(width=w, springy=False)
@@ -272,6 +269,20 @@ class WaitPane(TraitsDockPane):
         v = View(
             UItem('wait_group',
                   style='custom'))
+        return v
+
+
+class ConnectionStatusPane(TraitsDockPane):
+    id = 'pychron.experiment.connection_status'
+    name = 'Connection Status'
+
+    def traits_view(self):
+        cols = [ObjectColumn(name='name'),
+                CheckboxColumn(name='connected')]
+        v = View(UItem('connectables',
+                       editor=TableEditor(editable=False,
+                                          sortable=False,
+                                          cols=cols)))
         return v
 
 

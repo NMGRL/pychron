@@ -36,6 +36,9 @@ class SpectrometerManager(Manager):
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
+    def test_connection(self):
+        return self.spectrometer.test_connection()
+
     def _spectrometer_default(self):
         return Spectrometer(application=self.application)
 

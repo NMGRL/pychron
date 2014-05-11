@@ -32,6 +32,7 @@ import os
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
 from pychron.displays.display import DisplayController
+from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
@@ -63,7 +64,7 @@ class ExperimentExecutor(Loggable):
     experiment_queues = List
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
-
+    connectables = List
     #===========================================================================
     # control
     #===========================================================================
@@ -941,7 +942,7 @@ class ExperimentExecutor(Loggable):
             self._err_message = 'Not enough memory'
             return True
 
-        if not self._check_managers(n=3):
+        if not self._check_managers():
             self._err_message = 'Not all managers available'
             return True
 
@@ -1161,51 +1162,72 @@ If "No" select from database
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
                 return dbr
 
-    def _check_managers(self, inform=True, n=1):
+    def _check_managers(self, inform=True):
         self.debug('checking for managers')
         if globalv.experiment_debug:
             self.debug('********************** NOT DOING  managers check')
             return True
 
-        exp = self.experiment_queue
-        for i in range(n):
-            nonfound = self._check_for_managers(exp)
-            if not nonfound:
-                break
-        else:
-            self.info('experiment canceled because could connect to managers {} ntries={}'.format(nonfound, n))
+        # exp = self.experiment_queue
+        # for i in range(n):
+        #     nonfound = self._check_for_managers(exp)
+        #     if not nonfound:
+        #         break
+        nonfound = self._check_for_managers()
+        if nonfound:
+            self.info('experiment canceled because could connect to managers {}'.format(nonfound))
             if inform:
                 invoke_in_main_thread(self.warning_dialog,
-                                      'Canceled! Could not connect to managers {}. Check that these instances are running.'.format(
-                                          ','.join(nonfound)))
+                                      'Canceled! Could not connect to managers {}. '
+                                      'Check that these instances are running.'.format(','.join(nonfound)))
             return
 
         return True
 
-    def _check_for_managers(self, exp):
+    def _check_for_managers(self):
+        exp = self.experiment_queue
         nonfound = []
+        elm_connectable = Connectable(name='Extraction Line')
+        self.connectables = [elm_connectable]
+
         if self.extraction_line_manager is None:
             nonfound.append('extraction_line')
+        else:
+            if not self.extraction_line_manager.test_connection():
+                nonfound.append('extraction_line')
+            else:
+                elm_connectable.connected = True
 
         if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
             extract_device = convert_extract_device(exp.extract_device)
-            #extract_device = exp.extract_device.replace(' ', '_').lower()
+            ed_connectable = Connectable(name=exp.extract_device)
+            self.connectables.append(ed_connectable)
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
 
             if not man:
                 nonfound.append(extract_device)
-            elif man.mode == 'client':
+            else:
                 if not man.test_connection():
                     nonfound.append(extract_device)
+                else:
+                    ed_connectable.connected = True
 
         needs_spec_man = any([ai.measurement_script
                               for ai in exp.cleaned_automated_runs
                               if ai.state == 'not run'])
 
-        if self.spectrometer_manager is None and needs_spec_man:
-            nonfound.append('spectrometer')
+        if needs_spec_man:
+            s_connectable = Connectable(name='Spectrometer')
+            self.connectables.append(s_connectable)
+            if self.spectrometer_manager is None:
+                nonfound.append('spectrometer')
+            else:
+                if not self.spectrometer_manager.test_connection():
+                    nonfound.append('spectrometer')
+                else:
+                    s_connectable.connected = True
 
         return nonfound
 

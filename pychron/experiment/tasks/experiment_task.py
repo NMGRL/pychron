@@ -29,7 +29,7 @@ import xlrd
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, WaitPane, IsotopeEvolutionPane
+    ControlsPane, WaitPane, IsotopeEvolutionPane, ConnectionStatusPane
 
 from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
@@ -137,7 +137,7 @@ class ExperimentEditorTask(EditorTask):
                  ControlsPane(model=self.manager.executor),
                  ConsolePane(model=self.manager.executor),
                  #AnalysisHealthPane(model=self.analysis_health),
-
+                 ConnectionStatusPane(model=self.manager.executor),
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
                  self.wait_pane]
@@ -617,23 +617,16 @@ class ExperimentEditorTask(EditorTask):
                 PaneItem('pychron.experiment.wait', height=100),
                 Tabbed(
                     PaneItem('pychron.experiment.factory'),
-                    PaneItem('pychron.experiment.isotope_evolution'),
-                    #                                                PaneItem('pychron.experiment.summary'),
-                ),
-                orientation='vertical'
-            ),
+                    PaneItem('pychron.experiment.isotope_evolution')),
+                orientation='vertical'),
             right=Splitter(
                 Tabbed(
                     PaneItem('pychron.experiment.stats'),
                     PaneItem('pychron.console', height=425),
                     PaneItem('pychron.experiment.explanation', height=425),
-                ),
-                #                                          PaneItem('pychron.extraction_line.canvas_dock'),
-                #                                         PaneItem('pychron.experiment.wait'),
-                orientation='vertical'
-            ),
-            top=PaneItem('pychron.experiment.controls')
-        )
+                    PaneItem('pychron.experiment.connection_status')),
+                orientation='vertical'),
+            top=PaneItem('pychron.experiment.controls'))
         #============= EOF =============================================
         #         editor = self.active_editor
         #         if editor is None:
