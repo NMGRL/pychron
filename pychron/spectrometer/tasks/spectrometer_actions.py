@@ -106,4 +106,22 @@ class MagnetFieldTableAction(Action):
             mv = MagnetFieldTableView(model=mft)
             mv.edit_traits()
 
+
+class MagnetFieldTableHistoryAction(Action):
+    name = 'MF Table History...'
+
+    def perform(self, event):
+        man = get_manager(event, SPECTROMETER_PROTOCOL)
+        if man.spectrometer:
+            from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
+            import os
+
+            mft = man.spectrometer.magnet.mftable
+            archive_root = mft.mftable_archive_path
+            gh = GitArchiveHistory(archive_root, mft.mftable_path)
+            gh.load_history(os.path.basename(mft.mftable_path))
+            ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
+            ghv.edit_traits()
+
+
 #============= EOF ====================================

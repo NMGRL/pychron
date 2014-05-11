@@ -14,6 +14,7 @@
 # limitations under the License.
 #===============================================================================
 from pychron.core.ui import set_qt
+from pychron.git_archive.git_archive import GitArchive
 
 set_qt()
 
@@ -142,10 +143,15 @@ class MagnetFieldTable(Loggable):
                 writer.writerow(a)
 
         self._set_mftable_hash(p)
+        self._add_to_archive(p)
 
     @property
     def mftable_path(self):
         return os.path.join(paths.spectrometer_dir, 'mftable.csv')
+
+    @property
+    def mftable_archive_path(self):
+        return os.path.join(paths.spectrometer_dir, 'mftable_archive')
 
     def load_mftable(self, load_items=False):
         """
@@ -223,6 +229,11 @@ class MagnetFieldTable(Loggable):
 
     def _set_mftable_hash(self, p):
         self._mftable_hash = self._make_hash(p)
+
+    def _add_to_archive(self, p):
+        archive = GitArchive(self.mftable_archive_path)
+        archive.add(p)
+        archive.close()
 
 
 class MagnetFieldTableView(Controller):
