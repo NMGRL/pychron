@@ -33,7 +33,7 @@ from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 #spec_
-from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable
+from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 
 # med_
 from pychron.database.orms.isotope.med import med_ImageTable, med_SnapshotTable
@@ -233,6 +233,14 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # adders
     #===========================================================================
+    def add_mftable(self, specname, blob):
+        spec = self.get_mass_spectrometer(specname)
+        if spec is None:
+            self.warning('Invalid spectrometer: {}'.format(specname))
+
+        obj = spec_MFTableTable(blob=blob, spectrometer=spec)
+        self._add_item(obj)
+
     def add_analysis_group(self, name, **kw):
         obj = proc_AnalysisGroupTable(name=name, **kw)
         self._add_item(obj)

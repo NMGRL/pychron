@@ -108,7 +108,7 @@ class MagnetFieldTableAction(Action):
 
 
 class MagnetFieldTableHistoryAction(Action):
-    name = 'MF Table History...'
+    name = 'Local MFTable History...'
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
@@ -118,10 +118,13 @@ class MagnetFieldTableHistoryAction(Action):
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
-            gh = GitArchiveHistory(archive_root, mft.mftable_path)
-            gh.load_history(os.path.basename(mft.mftable_path))
-            ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
-            ghv.edit_traits(kind='livemodal')
+            if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
+                gh = GitArchiveHistory(archive_root, mft.mftable_path)
+                gh.load_history(os.path.basename(mft.mftable_path))
+                ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
+                ghv.edit_traits(kind='livemodal')
+            else:
+                man.warning_dialog('No MFTable History')
 
 
 #============= EOF ====================================

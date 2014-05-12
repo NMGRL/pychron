@@ -75,7 +75,7 @@ class Magnet(SpectrometerDevice):
     detector_protection_threshold=Float(0.1) #DAC units
     beam_blank_threshold=Float(0.1) #DAC units
 
-    mftable = Instance(MagnetFieldTable)
+    mftable = Instance(MagnetFieldTable, ())
 
     def update_field_table(self, det, isotope, dac):
         """
@@ -144,7 +144,9 @@ class Magnet(SpectrometerDevice):
             molweights = self.spectrometer.molecular_weights
         else:
             from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-        self.mftable = MagnetFieldTable(molweights=molweights)
+
+        # self.mftable.molweights = molweights
+        self.mftable.initialize(molweights, )
 
         d = self.read_dac()
         if d is not None:

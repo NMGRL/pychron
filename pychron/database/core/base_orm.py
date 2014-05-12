@@ -37,6 +37,9 @@ class AlembicVersionTable(Base):
 
 
 class BaseMixin(object):
+    def __init__(self, *args, **kw):
+        super(BaseMixin, self).__init__(*args, **kw)
+
     @declared_attr
     def __tablename__(self):
         return self.__name__

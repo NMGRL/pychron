@@ -69,20 +69,23 @@ class SpectrometerManager(Manager):
         return d
 
     def load(self, db_mol_weights=True):
+        spec = self.spectrometer
+        mftable = spec.magnet.mftable
+
         self.debug('******************************* LOAD Spec')
         if db_mol_weights:
             # get the molecular weights from the database
             dbm = IsotopeDatabaseManager(application=self.application,
                                          warn=False)
-            self.db = dbm
             if dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()
                 # convert to a dictionary
                 m = dict([(mi.name, mi.mass) for mi in mws])
-                self.spectrometer.molecular_weights = m
+                spec.molecular_weights = m
+                mftable.db = dbm
 
-        if not self.spectrometer.molecular_weights:
+        if not spec.molecular_weights:
             import csv
             # load the molecular weights dictionary
             p = os.path.join(paths.spectrometer_dir, 'molecular_weights.csv')
@@ -91,7 +94,7 @@ class SpectrometerManager(Manager):
                 with open(p, 'U') as f:
                     reader = csv.reader(f, delimiter='\t')
                     args = [[l[0], float(l[1])] for l in reader]
-                    self.spectrometer.molecular_weights = dict(args)
+                    spec.molecular_weights = dict(args)
             else:
                 self.info('writing a default "molecular_weights.csv" file')
                 # make a default molecular_weights.csv file
@@ -103,22 +106,10 @@ class SpectrometerManager(Manager):
                     data = sorted(data, key=lambda x: x[1])
                     for row in data:
                         writer.writerow(row)
-                self.spectrometer.molecular_weights = mw
+                spec.molecular_weights = mw
 
-        #config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
-        #for name in config.sections():
-        #    relative_position = self.config_get(config, name, 'relative_position', cast='float')
-        #    color = self.config_get(config, name, 'color', default='black')
-        #    default_state = self.config_get(config, name, 'default_state', default=True, cast='boolean')
-        #    isotope = self.config_get(config, name, 'isotope')
-        #    kind = self.config_get(config, name, 'kind', default='Faraday', optional=True)
-        #    self.spectrometer.add_detector(name=name,
-        #                                   relative_position=relative_position,
-        #                                   color=color,
-        #                                   active=default_state,
-        #                                   isotope=isotope,
-        #                                   kind=kind)
         self.spectrometer.load()
+        mftable.spectrometer_name = self.spectrometer.name
 
         return True
 

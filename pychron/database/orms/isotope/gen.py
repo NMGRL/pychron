@@ -91,6 +91,7 @@ class gen_MassSpectrometerTable(Base, NameMixin):
     #    experiments = relationship('ExperimentTable', backref='mass_spectrometer')
     measurements = relationship('meas_MeasurementTable', backref='mass_spectrometer')
     sensitivities = relationship('gen_SensitivityTable', backref='mass_spectrometer')
+    mftables = relationship('spec_MFTableTable', backref='mass_spectrometer')
 
 
 class gen_MaterialTable(Base, NameMixin):

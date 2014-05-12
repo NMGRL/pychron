@@ -206,6 +206,10 @@ class Spectrometer(SpectrometerDevice):
         p = os.path.join(paths.spectrometer_dir, 'config.cfg')
         config = self.get_configuration_writer(p)
         pd='Protection'
+
+        name = self.config_get(config, 'General', 'name')
+        self.name = name
+
         if config.has_section(pd):
 
             self.magnet.use_beam_blank=self.config_get(config, pd, 'use_beam_blank',
@@ -239,7 +243,6 @@ class Spectrometer(SpectrometerDevice):
             self._send_configuration()
 
     def load_detectors(self):
-        p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
         config = self.get_configuration(path=os.path.join(paths.spectrometer_dir, 'detectors.cfg'))
         for name in config.sections():
             #relative_position = self.config_get(config, name, 'relative_position', cast='float')

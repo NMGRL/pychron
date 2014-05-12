@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from apptools.preferences.preference_binding import bind_preference
+
 from pychron.core.ui import set_qt
-from pychron.git_archive.git_archive import GitArchive
+
 
 set_qt()
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, Dict, Float
+from traits.api import HasTraits, List, Str, Dict, Float, Bool
 from traitsui.api import View, Controller, TableEditor, UItem
 from traitsui.table_column import ObjectColumn
 
@@ -65,13 +67,35 @@ class MagnetFieldTable(Loggable):
     _mftable = None
     _detectors = None
 
+    db = None
+    spectrometer_name = Str
+    use_local_archive = Bool
+    use_db_archive = Bool
+
     def __init__(self, *args, **kw):
         super(MagnetFieldTable, self).__init__(*args, **kw)
+        # p = self.mftable_path
+        # if not os.path.isfile(p):
+        #     self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
+        # else:
+        #     self.load_mftable()
+
+        self.bind_preferences()
+
+    def initialize(self, molweights):
+        self.molweights = molweights
         p = self.mftable_path
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         else:
             self.load_mftable()
+
+    def bind_preferences(self):
+        prefid = 'pychron.spectrometer'
+        bind_preference(self, 'use_local_archive',
+                        '{}.use_local_mftable_archive'.format(prefid))
+        bind_preference(self, 'use_db_archive',
+                        '{}.use_db_mftable_archive'.format(prefid))
 
     def update_field_table(self, det, isotope, dac):
         """
@@ -126,6 +150,7 @@ class MagnetFieldTable(Loggable):
                 writer.writerow(fi.to_csv(detectors, fmt))
 
         self._set_mftable_hash(p)
+        self._add_to_archive(p)
 
     def dump(self, isos, d):
         detectors = self._detectors
@@ -151,7 +176,8 @@ class MagnetFieldTable(Loggable):
 
     @property
     def mftable_archive_path(self):
-        return os.path.join(paths.spectrometer_dir, 'mftable_archive')
+        return os.path.join(paths.spectrometer_dir,
+                            '{}_mftable_archive'.format(self.spectrometer_name))
 
     def load_mftable(self, load_items=False):
         """
@@ -231,9 +257,21 @@ class MagnetFieldTable(Loggable):
         self._mftable_hash = self._make_hash(p)
 
     def _add_to_archive(self, p):
-        archive = GitArchive(self.mftable_archive_path)
-        archive.add(p)
-        archive.close()
+        if self.use_db_archive:
+            if self.db:
+                self.info('db archiving mftable')
+                with open(p, 'r') as fp:
+                    self.db.add_mftable(self.spectrometer_name, fp.read())
+            else:
+                self.debug('no db instance available for archiving')
+
+        if self.use_local_archive:
+            from pychron.git_archive.git_archive import GitArchive
+
+            archive = GitArchive(self.mftable_archive_path)
+            archive.add(p)
+            archive.close()
+            self.info('locally archiving mftable')
 
 
 class MagnetFieldTableView(Controller):

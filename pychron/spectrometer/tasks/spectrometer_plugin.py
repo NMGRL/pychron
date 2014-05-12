@@ -27,8 +27,11 @@ from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
-    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction
+    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
+
+
+
 
 
 
@@ -84,7 +87,7 @@ class SpectrometerPlugin(BaseTaskPlugin):
     def _task_factory(self):
         sm = self.application.get_service(SpectrometerManager)
         #scm = self.application.get_service(ScanManager)
-        scm=self._factory_scan()
+        scm = self._factory_scan()
         t = SpectrometerTask(manager=sm,
                              scan_manager=scm)
         return t
@@ -113,26 +116,31 @@ class SpectrometerPlugin(BaseTaskPlugin):
 
     def _my_task_extensions_default(self):
         return [
-            TaskExtension(actions=[SchemaAddition(id='mftable',
-                                                  factory=MagnetFieldTableAction,
-                                                  path='MenuBar/Edit')]),
             TaskExtension(
-                task_id='pychron.spectrometer',
                 actions=[
-                    SchemaAddition(id='Measure',
-                                   factory=lambda: SMenu(id='Measure',
-                                                         name='Measure'),
+                    SchemaAddition(id='spectrometer.menu',
+                                   factory=lambda: SMenu(id='spectrometer.menu',
+                                                         name='Spectrometer'),
                                    path='MenuBar',
                                    before='Window',
                                    after='tools.menu'),
+                    SchemaAddition(id='mftable',
+                                   factory=MagnetFieldTableAction,
+                                   path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='mftable_history',
+                                   factory=MagnetFieldTableHistoryAction,
+                                   path='MenuBar/spectrometer.menu')]),
+            TaskExtension(
+                task_id='pychron.spectrometer',
+                actions=[
                     SchemaAddition(id='peak_center',
                                    factory=PeakCenterAction,
-                                   path='MenuBar/Measure'),
+                                   path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='coincidence',
                                    factory=CoincidenceScanAction,
-                                   path='MenuBar/Measure'),
+                                   path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='parameters',
                                    factory=SpectrometerParametersAction,
-                                   path='MenuBar/Edit')])]
+                                   path='MenuBar/spectrometer.menu')])]
 
         #============= EOF =============================================
