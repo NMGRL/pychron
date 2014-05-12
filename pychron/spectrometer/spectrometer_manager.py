@@ -83,7 +83,7 @@ class SpectrometerManager(Manager):
                 # convert to a dictionary
                 m = dict([(mi.name, mi.mass) for mi in mws])
                 spec.molecular_weights = m
-                mftable.db = dbm
+                mftable.db = dbm.db
 
         if not spec.molecular_weights:
             import csv

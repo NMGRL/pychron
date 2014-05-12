@@ -27,8 +27,10 @@ from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
-    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction
+    CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
+    DBMagnetFieldTableHistoryAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
+
 
 
 
@@ -129,6 +131,9 @@ class SpectrometerPlugin(BaseTaskPlugin):
                                    path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='mftable_history',
                                    factory=MagnetFieldTableHistoryAction,
+                                   path='MenuBar/spectrometer.menu'),
+                    SchemaAddition(id='db_mftable_history',
+                                   factory=DBMagnetFieldTableHistoryAction,
                                    path='MenuBar/spectrometer.menu')]),
             TaskExtension(
                 task_id='pychron.spectrometer',

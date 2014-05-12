@@ -939,6 +939,19 @@ class IsotopeAdapter(DatabaseAdapter):
         #             ms.sensitivities.append(si)
         return ms
 
+    #===========================================================================
+    # getters
+    #===========================================================================
+    def get_mftables(self, spec, **kw):
+        return self._retrieve_items(spec_MFTableTable,
+                                    joins=(gen_MassSpectrometerTable,),
+                                    filters=(gen_MassSpectrometerTable.name == spec,),
+                                    order=spec_MFTableTable.create_date.desc(),
+                                    **kw)
+
+    def get_mftable(self, value, key='id'):
+        return self._retrieve_item(spec_MFTableTable, value, key=key)
+
     def get_interpreted_age_group_history(self, gid):
         return self._retrieve_item(proc_InterpretedAgeGroupHistoryTable,
                                    gid, key='id')

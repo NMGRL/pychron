@@ -127,4 +127,19 @@ class MagnetFieldTableHistoryAction(Action):
                 man.warning_dialog('No MFTable History')
 
 
+class DBMagnetFieldTableHistoryAction(Action):
+    name = 'DB MFTable History...'
+
+    def perform(self, event):
+        man = get_manager(event, SPECTROMETER_PROTOCOL)
+        if man.spectrometer:
+            from pychron.spectrometer.mftable_history_view import MFTableHistory, MFTableHistoryView
+
+            mft = man.spectrometer.magnet.mftable
+            mfh = MFTableHistory(checkout_path=mft.mftable_path,
+                                 spectrometer=man.spectrometer.name)
+            mfh.load_history()
+            mv = MFTableHistoryView(model=mfh)
+            mv.edit_traits()
+
 #============= EOF ====================================
