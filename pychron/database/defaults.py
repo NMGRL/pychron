@@ -90,7 +90,8 @@ def load_isotopedb_defaults(db):
 
         mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
-            load_irradiation_map(db, p, name, overwrite_geometry=False)
+            og = False
+            load_irradiation_map(db, p, name, overwrite_geometry=og)
 
         mdir = paths.map_dir
         for p, name in iterdir(mdir):

@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.core.ui import set_qt
+
+set_qt()
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
@@ -41,16 +44,19 @@ class myDataLabel(DataLabel):
     label_position = 'center'
     border_visible = False
 
+
 class RotatingContainer(OverlayPlotContainer):
     rotation = Float(0)
 
     def _draw(self, gc, *args, **kw):
-        w2 = self.width / 2
-        h2 = self.height / 2
-        gc.translate_ctm(w2, h2)
-        gc.rotate_ctm(math.radians(self.rotation))
-        gc.translate_ctm(-w2, -h2)
-        super(RotatingContainer, self)._draw(gc, *args, **kw)
+        with gc:
+            w2 = self.width / 2
+            h2 = self.height / 2
+            # gc.translate_ctm(w2, h2)
+            # gc.rotate_ctm(math.radians(self.rotation))
+            # gc.translate_ctm(-w2, -h2)
+            super(RotatingContainer, self)._draw(gc, *args, **kw)
+
 
 class GraphicGeneratorController(Controller):
     def save(self, info):
@@ -59,29 +65,30 @@ class GraphicGeneratorController(Controller):
     def traits_view(self):
         w, h = 750, 750
         v = View(
-                 UItem('srcpath'),
-                 Item('rotation'),
-                 UItem('container', editor=ComponentEditor(), style='custom'),
-                 width=w + 2,
-                 height=h + 56,
-                 resizable=True,
-                 buttons=[Action(name='Save', action='save'), 'OK','Cancel']
-                 )
+            UItem('srcpath'),
+            Item('rotation'),
+            UItem('container', editor=ComponentEditor(), style='custom'),
+            width=w + 2,
+            height=h + 56,
+            resizable=True,
+            buttons=[Action(name='Save', action='save'), 'OK', 'Cancel'])
         return v
 
+
 class GraphicModel(HasTraits):
-    srcpath=File
-    xmlpath=File
+    srcpath = File
+    xmlpath = File
     container = Instance(OverlayPlotContainer)
-    name=Property
-    _name=Str
-    rotation=Float(enter_set=True, auto_set=False)
+    name = Property
+    _name = Str
+    rotation = Float(enter_set=True, auto_set=False)
+    initialized = False
 
     def _get_name(self):
         return os.path.splitext(self._name if self._name else os.path.basename(self.srcpath))[0]
 
     def save(self, path=None):
-#        print self.container.bounds
+        #        print self.container.bounds
 
         if path is None:
             dlg = FileDialog(action='save as', default_directory=paths.data_dir)
@@ -93,16 +100,16 @@ class GraphicModel(HasTraits):
             c = self.container
             if tail == '.pdf':
                 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
+
                 gc = PdfPlotGraphicsContext(filename=path,
-                                            pagesize='letter'
-                                            )
+                                            pagesize='letter')
 
             else:
                 if not tail in ('.png', '.jpg', '.tiff'):
                     path = '{}.png'.format(path)
 
                 gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
-    #            c.use_backbuffer = False
+                #            c.use_backbuffer = False
 
             for ci in c.components:
                 try:
@@ -113,9 +120,9 @@ class GraphicModel(HasTraits):
 
             c.use_backbuffer = False
             gc.render_component(c)
-#            c.use_backbuffer = True
+            #            c.use_backbuffer = True
             gc.save(path)
-            self._name=os.path.basename(path)
+            self._name = os.path.basename(path)
 
     def load(self, path):
         parser = ElementTree(file=open(path, 'r'))
@@ -124,7 +131,7 @@ class GraphicModel(HasTraits):
 
         bb = outline.find('bounding_box')
         bs = bb.find('width'), bb.find('height')
-        w, h = map(lambda b:float(b.text), bs)
+        w, h = map(lambda b: float(b.text), bs)
 
         use_label = parser.find('use_label')
         if use_label is not None:
@@ -143,8 +150,8 @@ class GraphicModel(HasTraits):
         p.x_axis.tick_label_font = font
         p.y_axis.title_font = font
         p.y_axis.tick_label_font = font
-#         p.x_axis_visible = False
-#         p.y_axis_visible = False
+        #         p.x_axis_visible = False
+        #         p.y_axis_visible = False
         p.index_range.low_setting = -w / 2
         p.index_range.high_setting = w / 2
 
@@ -165,7 +172,7 @@ class GraphicModel(HasTraits):
         for i, pp in enumerate(circles.findall('point')):
             x, y, l = pp.find('x').text, pp.find('y').text, pp.find('label').text
 
-#             print i, pp, x, y
+            #             print i, pp, x, y
             # load hole specific attrs
             r = pp.find('radius')
             if r is None:
@@ -188,16 +195,13 @@ class GraphicModel(HasTraits):
             data.set_data(yn, ys)
 
             plot = p.plot((xn, yn),
-                   face_color=fc,
-                   type='polygon',
-                   )[0]
+                          face_color=fc,
+                          type='polygon')[0]
             if use_label:
                 label = myDataLabel(component=plot,
-                                  data_point=(x, y),
-                                  label_text=l,
-                                  bgcolor='transparent',
-
-                                  )
+                                    data_point=(x, y),
+                                    label_text=l,
+                                    bgcolor='transparent')
                 plot.overlays.append(label)
 
         self.container.add(p)
@@ -218,20 +222,23 @@ class GraphicModel(HasTraits):
         self._reload()
 
     def _reload(self):
-        self.container=self._container_factory()
-        if os.path.isfile(self.srcpath):
-            p = make_xml(self.srcpath,
-                         default_bounds=(2.54, 2.54),
-                         default_radius=0.0175 * 2.54,
-                         rotate=self.rotation,
-                         convert_mm=True)
-            self.load(p)
+        if self.initialized:
+            self.container = self._container_factory()
+            print os.path.isfile(self.srcpath), self.srcpath
+            if os.path.isfile(self.srcpath):
+                p = make_xml(self.srcpath,
+                             default_bounds=(2.54, 2.54),
+                             default_radius=0.0175 * 2.54,
+                             rotate=self.rotation,
+                             convert_mm=True)
+                self.load(p)
 
     def _container_default(self):
         return self._container_factory()
 
     def _container_factory(self):
         return RotatingContainer(bgcolor='white')
+
 
 def make_xml(path, offset=100, default_bounds=(50, 50),
              default_radius=3, convert_mm=False,
@@ -280,7 +287,7 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
     off = 0
     reader = csv.reader(open(path, 'r'), delimiter=',')
     # writer = open(path + 'angles.txt', 'w')
-    nwriter=None
+    nwriter = None
     if rotate:
         nwriter = csv.writer(open(path + 'rotated_{}.txt'.format(rotate), 'w'))
 
@@ -298,23 +305,23 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
 
             xx, yy = float(row[0]), float(row[1])
             try:
-                r=float(row[2])
-                rr=Element('radius')
+                r = float(row[2])
+                rr = Element('radius')
                 if convert_mm:
-                    r*=2.54
+                    r *= 2.54
 
-                rr.text=str(r)
+                rr.text = str(r)
                 e.append(rr)
             except IndexError:
-                r=None
+                r = None
 
             px = math.cos(theta) * xx - math.sin(theta) * yy
             py = math.sin(theta) * xx + math.cos(theta) * yy
 
             xx, yy = px, py
             if nwriter:
-                data= ['{:0.4f}'.format(xx),
-                       '{:0.4f}'.format(yy)]
+                data = ['{:0.4f}'.format(xx),
+                        '{:0.4f}'.format(yy)]
                 if r is not None:
                     data.append('{:0.4f}'.format(r))
 
@@ -348,11 +355,12 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
                pretty_print=True)
     return out
 
+
 def open_txt(p, bounds, radius,
              use_label=True,
              convert_mm=False,
              make=True, rotate=None):
-    gm = GraphicModel()
+    gm = GraphicModel(srcpath=p, rotation=rotate or 0)
     p = make_xml(p,
                  default_radius=radius,
                  default_bounds=bounds,
@@ -361,52 +369,44 @@ def open_txt(p, bounds, radius,
                  make=make,
                  rotate=rotate)
 
-#    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
+    #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
     gm.load(p)
+    gm.initialized = True
     gcc = GraphicGeneratorController(model=gm)
 
     return gcc, gm
 
 
-
-
 if __name__ == '__main__':
     gm = GraphicModel()
-    p = '/Users/ross/Sandbox/2mmirrad.txt'
-    p = '/Users/ross/Sandbox/2mmirrad_ordered.txt'
-    p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
-    p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
-    p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_ordered1.txt'
-
-    #    p = '/Users/ross/Sandbox/graphic_gen.csv'
-#    gcc1 = open_txt(p)
-#    do_later(gcc1.edit_traits)
-
-    p = '/Users/ross/Sandbox/1_75mmirrad.txt'
-    p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/1_75mmirrad_continuous.txt'
-#    p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad.txt'
-
-#    p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_continuous.txt'
-    #    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/2mmirrad_continuous.txt'
-
-    #p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/40_no_spokes.txt'
-
-    #p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_spokes.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
-
+    # p = '/Users/ross/Sandbox/2mmirrad.txt'
+    # p = '/Users/ross/Sandbox/2mmirrad_ordered.txt'
+    # p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
+    # p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
+    # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_ordered1.txt'
+    # p = '/Users/ross/Sandbox/1_75mmirrad.txt'
+    # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/1_75mmirrad_continuous.txt'
+    # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad.txt'
+    # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_continuous.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/2mmirrad_continuous.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/40_no_spokes.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_spokes.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes.txt'
+    p = '/Users/ross/Desktop/72_spokes'
     gcc, gm = open_txt(p, (2.54, 2.54), 0.0175 * 2.54,
                        convert_mm=True, make=True,
-                       rotate=-28)
+                       rotate=0)
 
     #     p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_6-Hole.txt'
-#     gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
+    #     gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
 
     #p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_20-Hole.txt'
     #gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)
 
 
     #     gm2.container.bgcolor = 'transparent'
-#     gm2.container.add(gm.container)
+    #     gm2.container.add(gm.container)
 
     gcc.configure_traits()
 
