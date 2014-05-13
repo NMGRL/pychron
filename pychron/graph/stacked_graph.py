@@ -37,7 +37,7 @@ class StackedGraph(Graph):
     equi_stack = True
     panel_height = 100
     _has_title = False
-    padding_bottom = 50
+    padding_bottom = 40
 
     metadata_updated = Event
     vertical_resize = Bool(True)

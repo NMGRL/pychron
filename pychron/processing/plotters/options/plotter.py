@@ -18,7 +18,7 @@
 from itertools import groupby
 
 from kiva.fonttools import str_to_font
-from traits.api import Str, Bool, Property, Enum, Button, List
+from traits.api import Str, Property, Enum, Button, List
 from traitsui.api import View, Item, HGroup, VGroup, Group, \
     EnumEditor, TableEditor
 
@@ -95,11 +95,18 @@ class PlotterOptions(FigurePlotterOptions):
         attrs = self.title_attribute_keys
         ts = []
         rref, ctx = None, {}
+        material_map = {'Groundmass concentrate': 'GMC',
+                        'Kaersutite': 'Kaer',
+                        'Plagioclase': 'Plag'}
+
         for gid, ais in groupby(analyses, key=lambda x: x.group_id):
             ref = ais.next()
             d = {}
             for ai in attrs:
-                d[ai] = getattr(ref, ai)
+                v = getattr(ref, ai)
+                if ai == 'material':
+                    v = material_map[v]
+                d[ai] = v
 
             if not rref:
                 rref = ref

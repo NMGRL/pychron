@@ -122,7 +122,7 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
             ('tag', lambda x: '' if x == 'ok' else 'X'),
             ('aliquot_step_str', '{}',),
             ('extract_value', '{}'),
-            ('moles_Ar40', value(n=3, scale=1e-18)),
+            ('moles_Ar40', value(n=3, scale=1e-17)),
 
             #==============================================================
             # signals

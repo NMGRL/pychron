@@ -15,8 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.label import Label
 from chaco.plot_label import PlotLabel
 from enable.colors import color_table, convert_from_pyqt_color
+from enable.font_metrics_provider import font_metrics_provider
 from traits.api import Array, Int, Float, Str, Color, Event
 from chaco.abstract_overlay import AbstractOverlay
 #============= standard library imports ========================
@@ -329,18 +331,36 @@ class PlateauOverlay(BasePlateauOverlay):
                     label.overlay(component, gc)
 
     def _get_plateau_label(self, x1, x2, y):
+
         if self.layout_needed or not self.plateau_label:
             p=self.plateau_label
         else:
-            ox, oy= self.component.map_screen([(0, self.y + self.label_offset)])[0]
+            comp = self.component
+            ox, oy = comp.map_screen([(0, self.y + self.label_offset)])[0]
             # print self.label_offset, self.y, oy, y
             # ox,oy=self.component.map_screen([self.y+self.label_offset])[0]
             # print oy, self.label_offset, y,self.y
             # oy=10
 
+            x = x1 + (x2 - x1) * 0.5
+
+            dummy_gc = font_metrics_provider()
+            l = Label(text=self.info_txt)
+            w, h = l.get_bounding_box(dummy_gc)
+
+            xa = x + w / 2.
+            hjustify = 'center'
+            if xa > comp.x2:
+                d = xa - comp.x2
+                x -= d
+            elif x - w / 2. < comp.x:
+                x = comp.x + 5
+                hjustify = 'left'
+
             p=PlotLabel(text=self.info_txt,
                         font='modern {}'.format(self.label_font_size),
-                        x=x1+(x2-x1)*0.5,
+                        hjustify=hjustify,
+                        x=x,
                         y=oy+15)
             self.plateau_label=p
 

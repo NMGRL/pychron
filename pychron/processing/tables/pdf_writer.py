@@ -178,12 +178,13 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
 
         super_ar = lambda x: '{}Ar'.format(Superscript(x))
 
-        _1016moles = '(10{} mol)'.format(Superscript(-16))
         if signal_units == 'nA':
+            mol_scale = '(10{} mol)'.format(Superscript(-16))
             unit_scale_40 = ''
             unit_scale_39 = ''
             unit_scale_36err = ''
         else:
+            mol_scale = '(10{} mol)'.format(Superscript(-17))
             # = '(10{} {})'.format(Superscript(2), signal_units)
             unit_scale_40 = '(10{} {})'.format(Superscript(3), signal_units)
             unit_scale_39 = '(10{} {})'.format(Superscript(3), signal_units)
@@ -198,7 +199,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             ('', ''),
             ('N', ''),
             (self.extract_label, '({})'.format(self.extract_units)),
-            (super_ar(40), _1016moles),
+            (super_ar(40), mol_scale),
             (super_ar(40), unit_scale_40), (sigma, ''),
             (super_ar(39), unit_scale_39), (sigma, ''),
             (super_ar(38), ''), (sigma, ''),

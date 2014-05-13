@@ -57,6 +57,8 @@ class EasyFigures(BaseEasy):
         projects = doc['projects']
         identifiers = doc.get('identifiers')
         grouped_identifiers = doc.get('identifier_groups', None)
+
+        # grouped_identifiers = doc.get('identifier_groups', None)
         levels = doc.get('levels')
 
         db = self.db
@@ -78,9 +80,31 @@ class EasyFigures(BaseEasy):
                     self._make_level(doc, irrad, level, ids, ans)
             else:
                 if grouped_identifiers:
-                    for lns in grouped_identifiers:
-                        lis = [db.get_labnumber(li) for li in lns]
-                        self._make_multi_panel_labnumbers(doc, lis)
+                    groupby_aliquot = doc.get('groupby_aliquot', False)
+                    figures_per_page = doc.get('figures_per_page', 4)
+                    excludes = doc.get('excludes', None)
+                    cnt = 1
+                    gen = self._analysis_block_gen(grouped_identifiers,
+                                                   groupby_aliquot,
+                                                   excludes)
+                    while 1:
+
+                        ans = []
+                        for _ in range(figures_per_page):
+                            try:
+                                ans.extend(gen.next())
+                            except StopIteration:
+                                break
+
+                        if ans:
+                            self._make_multi_panel_labnumbers(doc, ans, cnt)
+                            cnt += 1
+                        else:
+                            break
+
+                            # for i,lns in enumerate(grouped_identifiers):
+                            #     lis = [db.get_labnumber(li) for li in lns]
+                            #     self._make_multi_panel_labnumbers(doc, lis, i+1)
 
                 else:
                     if identifiers:
@@ -90,6 +114,27 @@ class EasyFigures(BaseEasy):
                                for si in db.get_samples(project=proj)
                                for ln in si.labnumbers]
                     self._make_labnumbers(doc, lns)
+
+    def _analysis_block_gen(self, lns, groupby_aliquot, excludes):
+        db = self.db
+        if excludes is None:
+            excludes = []
+
+        def gen():
+            for li in lns:
+                ans = []
+                dbli = db.get_labnumber(li)
+                ans.extend([ai for ai in dbli.analyses if ai.tag != 'invalid'])
+                if groupby_aliquot:
+                    key = lambda x: x.aliquot
+                    for ali, ais in groupby(ans, key=key):
+                        if '{}-{:02n}'.format(li, ali) in excludes:
+                            continue
+                        yield ais
+                else:
+                    yield ans
+
+        return gen()
 
     def _make_level(self, doc, irrad, level, ids, ans):
         root = doc['root']
@@ -123,41 +168,42 @@ class EasyFigures(BaseEasy):
                               save_args)
         prog.close()
 
-    def _make_multi_panel_labnumbers(self, doc, lns):
+    def _make_multi_panel_labnumbers(self, doc, ans, cnt):
         root = doc['root']
         options = doc['options']
 
-        ans = [ai for li in lns for ai in li.analyses]
-        ans = filter(lambda x: not x.tag == 'invalid', ans)
+        # ans = [ai for li in lns for ai in li.analyses]
+        # ans = filter(lambda x: not x.tag == 'invalid', ans)
         # prog = self.open_progress(len(ans), close_at_end=False)
         # ans = self.make_analyses(ans,
         #                          progress=prog,
         #                          use_cache=False)
         # print lns
+        lns = list({ai.labnumber.identifier for ai in ans})
         prog = None
         pred = lambda x: bool(x.step)
 
-        ident = ','.join([li.identifier for li in lns])
+        ident = ','.join([li for li in lns])
         li = ident
 
+        ident = '{:03n}-{}'.format(cnt, ident)
         ln_root = os.path.join(root, ident)
         r_mkdir(ln_root)
-
         ans = sorted(ans, key=pred)
         stepheat, fusion = map(list, partition(ans, pred))
         project = 'Minna Bluff'
         if stepheat and options.has_key('step_heat'):
-            key = lambda x: x.aliquot
-            stepheat = sorted(stepheat, key=key)
-            for aliquot, ais in groupby(stepheat, key=key):
-                name = make_runid(li, aliquot, '')
-                self._make_editor(ais, 'step_heat', options, prog, False,
-                                  True,
-                                  (ln_root, name, name, project, (li,)))
+            # key = lambda x: x.aliquot
+            # stepheat = sorted(stepheat, key=key)
+            # for aliquot, ais in groupby(stepheat, key=key):
+            # name = make_runid(li, aliquot, '')
+            self._make_editor(ans, 'step_heat', options, prog, False,
+                              lambda x: '{}-{}'.format(x.identifier, x.aliquot),
+                              (ln_root, 'spec', li, project, (li,)))
 
         if fusion and options.has_key('fusion'):
             self._make_editor(fusion, 'fusion', options, prog, False,
-                              True,
+                              lambda x: x.identifier,
                               (ln_root, 'fig', li, project, (li,)))
 
     def _make_labnumbers(self, doc, lns):
@@ -228,20 +274,21 @@ class EasyFigures(BaseEasy):
             editor = klass(processor=self)
             editor.plotter_options_manager.set_plotter_options(options[editor_name])
 
-        # unks = self.make_analyses(ans, progress=prog, use_cache=False)
         editor.set_items(ans, progress=prog, update_graph=False, use_cache=False)
         if apply_grouping:
             group_analyses_by_key(editor, editor.analyses, apply_grouping)
 
         if apply_graph_grouping:
-            ts = []
             unks = editor.analyses
-            for i, (si, gi) in enumerate(groupby(unks, key=lambda x: x.sample)):
+
+            # key = lambda x: '{}-{}'.format(x.identifier, x.aliquot)
+            unks = sorted(unks, key=apply_graph_grouping)
+            editor.analyses = unks
+            for i, (si, gi) in enumerate(groupby(unks, key=apply_graph_grouping)):
                 idxs = [unks.index(ai) for ai in gi]
                 editor.set_graph_group(idxs, i)
-                ts.append(si)
-            editor.titles = ts
 
+        editor.show_caption = True
         editor.clear_aux_plot_limits()
         editor.rebuild()
 

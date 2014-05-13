@@ -164,7 +164,7 @@ class BasePDFWriter(Loggable):
                 v = getattr(v, key)
 
         if isinstance(v, (float, int)):
-            v = v / float(scale)
+            v /= float(scale)
 
         return floatfmt(v, n=n, max_width=10, **kw)
 

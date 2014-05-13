@@ -15,6 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
+from chaco.label import Label
+from chaco.plot_label import PlotLabel
 from traits.api import Instance
 
 #============= standard library imports ========================
@@ -25,16 +28,38 @@ from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.figure_container import FigureContainer
 
 
+class Caption(AbstractOverlay):
+    label = Instance(Label, ())
+
+    def __init__(self, text, *args, **kw):
+        super(Caption, self).__init__(*args, **kw)
+        self.label.text = text
+
+    def _draw_component(self, gc, view_bounds=None, mode="normal"):
+        print 'casdcasd'
+
+    def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
+        print 'asdfasdfasdf'
+
+    def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
+        print 'unasdf'
+
+    def draw(self, gc, view_bounds=None, mode="default"):
+        print 'dafasfasfd'
+        with gc:
+            self.label.draw()
+
+
 class IdeogramEditor(FigureEditor):
     plotter_options_manager = Instance(IdeogramOptionsManager, ())
     basename = 'ideo'
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
-            i=InterpretedAgeAnalysis(record_id='{} ({})'.format(a.sample,a.identifier),
-                                     sample=a.sample,
-                                     age=a.age,
-                                     age_err=a.age_err)
+            i = InterpretedAgeAnalysis(record_id='{} ({})'.format(a.sample, a.identifier),
+                                       sample=a.sample,
+                                       age=a.age,
+                                       age_err=a.age_err)
             return i
 
         po = self.plotter_options_manager.plotter_options
@@ -43,8 +68,8 @@ class IdeogramEditor(FigureEditor):
                 ap.use = False
                 ap.enabled = False
 
-        ans=[construct(ia) for ia in iages]
-        self.analyses=ans
+        ans = [construct(ia) for ia in iages]
+        self.analyses = ans
         self._update_analyses()
         self.dump_tool()
 
@@ -69,11 +94,29 @@ class IdeogramEditor(FigureEditor):
                         analyses=ans)
 
         iv = FigureContainer(model=model)
+        component = iv.component
+        if self.show_caption:
+            po = plotter_options
+            m = po.mean_calculation_kind
+            s = po.nsigma
+            es = po.error_bar_nsigma
+            ecm = po.error_calc_method
+            captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
+                      u'Error Type:{}. Analyses omitted from calculation \n' \
+                      u'indicated by open squares. Dashed line represents ' \
+                      u'cumulative probability for all analyses'.format(m, s, es, ecm)
+            cap = PlotLabel(text=captext,
+                            overlay_position='outside bottom',
+                            vjustify='top',
+                            hjustify='left',
+                            component=component)
+            component.overlays.append(cap)
+            component.padding_bottom = 30
 
         # if meta:
         #     model.load_metadata(meta)
 
-        return model, iv.component
+        return model, component
 
     def _get_items_from_file(self, parser):
         ans = []

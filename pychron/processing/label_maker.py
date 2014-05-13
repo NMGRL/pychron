@@ -119,21 +119,26 @@ class BaseMaker(HasTraits):
 
 
 class TitleMaker(BaseMaker):
-    attributes = List(['Project', 'Sample', 'Identifier', '<SPACE>'])
+    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material', '<SPACE>'])
 
     attribute_formats = {'sample': '',
                          'identifier': '',
-                         'project': ''}
+                         'project': '',
+                         'aliquot': '02n',
+                         'material': ''}
 
     example_context = {'sample': 'NM-001',
                        'identifier': '20001',
-                       'project': 'J-Curve'}
+                       'project': 'J-Curve',
+                       'aliquot': 1,
+                       'material': 'GMC'}
 
     view_title = 'Title Maker'
     predefined_labels = List(['Sample ( Identifier )',
+                              'Sample ( Identifier - Aliquot )',
+                              'Sample ( Identifier - Aliquot , Material )',
                               'Sample',
-                              'Project <SPACE> Sample ( Identifier )'
-    ])
+                              'Project <SPACE> Sample ( Identifier )'])
 
     delimiter = Str
     delimiters = Dict({',': 'Comma',

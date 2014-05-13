@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.plot_label import PlotLabel
 from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -46,8 +47,25 @@ class SpectrumEditor(FigureEditor):
         model = SpectrumModel(plot_options=plotter_options)
         model.analyses = ans
         iv = FigureContainer(model=model)
-        #self._model = model
-        return model, iv.component
+        component = iv.component
+
+        if self.show_caption:
+            po = plotter_options
+            s = po.nsigma
+
+            captext = u'Plateau age calculated as weighted mean of plateau steps. ' \
+                      u'Integrated age calculated as isotopic recombination of all steps.\n' \
+                      u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
+                      u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'.format(s)
+            cap = PlotLabel(text=captext,
+                            overlay_position='outside bottom',
+                            vjustify='top',
+                            hjustify='left',
+                            component=component)
+            component.overlays.append(cap)
+            component.padding_bottom = 40
+
+        return model, component
 
     def _check_for_necessary_attributes(self, d):
         ms = [k for k in ['age', 'age_err', 'k39']

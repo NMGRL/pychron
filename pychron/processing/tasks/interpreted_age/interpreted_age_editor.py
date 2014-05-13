@@ -137,10 +137,10 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if pdf:
             self.debug('saving pdf tables')
-            # step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            # fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            # self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
-            #                           auto_view=auto_view)
+            step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
+                                      auto_view=auto_view)
 
             step_heat_title = 'Table 1. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
             fusion_title = 'Table 2. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'

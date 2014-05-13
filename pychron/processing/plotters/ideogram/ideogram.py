@@ -149,15 +149,15 @@ class Ideogram(BaseArArFigure):
             return max([ai.nominal_value + ai.std_dev
                         for ai in self._unpack_attr(attr) if ai is not None])
         except (AttributeError, ValueError), e:
-            print 'max',e, 'attr={}'.format(attr)
+            print 'max', e, 'attr={}'.format(attr)
             return 0
 
     def min_x(self, attr):
         try:
             return min([ai.nominal_value - ai.std_dev
                         for ai in self._unpack_attr(attr) if ai is not None])
-        except (AttributeError, ValueError),e:
-            print 'min',e
+        except (AttributeError, ValueError), e:
+            print 'min', e
             return 0
 
     #===============================================================================
@@ -233,9 +233,9 @@ class Ideogram(BaseArArFigure):
         #     self._set_y_limits(0, my, pid=pid)
         # else:
         plot.value_range.tight_bounds = True
-        ly, uh = po.ylimits
-        if uh < my:
-            self._set_y_limits(0, my, pid=pid)
+        # ly, uh = po.ylimits
+        # if uh < my:
+        self._set_y_limits(0, my, min_=0, pid=pid)
 
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
@@ -257,14 +257,14 @@ class Ideogram(BaseArArFigure):
         gid = ogid + 1
         sgid = ogid * 2
         # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
-        plotkw=dict()
+        plotkw = dict()
         # if self.group_id==0:
-            # if self.options.use_filled_line:
+        # if self.options.use_filled_line:
         plotkw.update(**self.options.get_fill_dict(ogid))
-                # color= self.options.fill_color
-                # color.setAlphaF(self.options.fill_alpha*0.01)
-                # plotkw['fill_color']=self.options.fill_color
-                # plotkw['type']='filled_line'
+        # color= self.options.fill_color
+        # color.setAlphaF(self.options.fill_alpha*0.01)
+        # plotkw['fill_color']=self.options.fill_color
+        # plotkw['type']='filled_line'
         # else:
 
 
