@@ -137,25 +137,25 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if pdf:
             self.debug('saving pdf tables')
-            step_heat_title = 'Table 1. MAP Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            fusion_title = 'Table 2. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            step_heat_title = 'Table E.1. MAP Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table D.1. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
             self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
                                       auto_view=auto_view)
 
-            step_heat_title = 'Table 1. Argus Step heat <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
-            fusion_title = 'Table 2. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Analytical Data'
+            step_heat_title = 'Table G.1. Argus Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table F.1. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
             self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       auto_view=auto_view)
         if xls:
             self.debug('saving xls tables')
-            step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Analytical Data'
-            fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Analytical Data'
+            step_heat_title = 'Table 1. MAP Step heat 40Ar/39Ar Data'
+            fusion_title = 'Table 2. MAP Fusion 40Ar/39Ar Data'
             self._save_xls_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
                                       summary_sheet=xls_summary,
                                       auto_view=auto_view)
 
-            step_heat_title = 'Table 3. Argus Step heat 40Ar/39Ar Analytical Data'
-            fusion_title = 'Table 4. Argus Fusion 40Ar/39Ar Analytical Data'
+            step_heat_title = 'Table 3. Argus Step heat 40Ar/39Ar  Data'
+            fusion_title = 'Table 4. Argus Fusion 40Ar/39Ar Data'
             self._save_xls_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       summary_sheet=xls_summary,
                                       auto_view=auto_view)
@@ -195,7 +195,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
         ext = '.pdf'
         if shgroups:
             w = StepHeatPDFTableWriter()
-            name = '{}_{}_step_heat_data'.format(self.name, spectrometer)
+            # name = '{}_{}_step_heatdata'.format(self.name, spectrometer)
+            name = '{}stepheatdata'.format(spectrometer)
             p, _ = unique_path(root, name, extension=ext)
 
             iagroups, shgroups = zip(*shgroups)
@@ -205,7 +206,8 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if fgroups:
             w = FusionPDFTableWriter()
-            name = '{}_{}_fusion_data'.format(self.name, spectrometer)
+            # name = '{}_{}_fusion_data'.format(self.name, spectrometer)
+            name = '{}fusiondata'.format(spectrometer)
             p, _ = unique_path(root, name, extension=ext)
             iagroups, fgroups = zip(*fgroups)
             w.build(p, fgroups, title=fusion_title)
