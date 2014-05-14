@@ -36,7 +36,6 @@ def confirmation_dialog(msg, return_retval=False,
                         cancel=False, title='',
                         timeout=None, size=None,
                         timeout_ret=None):
-
     if size is None:
         size = (-1, -1)
     from pychron.core.ui.dialogs import myConfirmationDialog
@@ -48,8 +47,6 @@ def confirmation_dialog(msg, return_retval=False,
         title=title,
         style='modal',
         size=size)
-
-
 
     retval = dlg.open(timeout)
     if return_retval:
@@ -143,8 +140,8 @@ class Loggable(HasTraits):
         #         from threading import current_thread
         #         print current_thread()
         dialog.open()
-    
-    def confirmation_dialog(self,*args, **kw):
+
+    def confirmation_dialog(self, *args, **kw):
         return confirmation_dialog(*args, **kw)
 
     def information_dialog(self, msg, title='Information'):
@@ -180,9 +177,9 @@ class Loggable(HasTraits):
                 from pychron.displays.gdisplays import gWarningDisplay
 
                 if globalv.show_warnings:
-                #if not gWarningDisplay.opened and not gWarningDisplay.was_closed:
-                #invoke_in_main_thread(gWarningDisplay.edit_traits)
-                #gWarningDisplay.opened = True
+                    #if not gWarningDisplay.opened and not gWarningDisplay.was_closed:
+                    #invoke_in_main_thread(gWarningDisplay.edit_traits)
+                    #gWarningDisplay.opened = True
                     gWarningDisplay.add_text(
                         '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
 
@@ -199,8 +196,8 @@ class Loggable(HasTraits):
                 from pychron.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:
-                #                     if not gLoggerDisplay.opened and not gLoggerDisplay.was_closed:
-                #                         invoke_in_main_thread(gLoggerDisplay.edit_traits)
+                    #                     if not gLoggerDisplay.opened and not gLoggerDisplay.was_closed:
+                    #                         invoke_in_main_thread(gLoggerDisplay.edit_traits)
 
 
                     args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
@@ -247,9 +244,9 @@ class Loggable(HasTraits):
         func = getattr(self.logger, func)
 
         if isinstance(msg, (list, tuple)):
-            msg=','.join(map(str, msg))
+            msg = ','.join(map(str, msg))
 
-        msg=self._post_process_msg(msg)
+        msg = self._post_process_msg(msg)
         func(msg, extra=extras)
 
     def _post_process_msg(self, msg):

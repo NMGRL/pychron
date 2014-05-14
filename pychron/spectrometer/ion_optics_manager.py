@@ -131,7 +131,8 @@ class IonOpticsManager(Manager):
                         # if the pos is an isotope then update the detectors
                         spec.update_isotopes(pos, detector)
                     pos = self.get_mass(pos)
-                mag._mass = pos
+
+                mag.mass_change(pos)
 
             else:
                 #get nearst isotope

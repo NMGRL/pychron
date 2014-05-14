@@ -131,9 +131,16 @@ class SpectrometerManager(Manager):
 
         self.spectrometer.load_configurations()
 
-        bind_preference(self.spectrometer, 'send_config_on_startup',
-                        'pychron.spectrometer.send_config_on_startup')
+        self.bind_preferences()
         self.spectrometer.finish_loading()
+
+    def bind_preferences(self):
+        pref_id = 'pychron.spectrometer'
+        bind_preference(self.spectrometer, 'send_config_on_startup',
+                        '{}.send_config_on_startup'.format(pref_id))
+
+        bind_preference(self.spectrometer.magnet, 'confirmation_threshold_mass',
+                        '{}.confirmation_threshold_mass'.format(pref_id))
 
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)

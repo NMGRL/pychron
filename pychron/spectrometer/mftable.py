@@ -79,7 +79,6 @@ class MagnetFieldTable(Loggable):
         #     self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         # else:
         #     self.load_mftable()
-
         self.bind_preferences()
 
     def initialize(self, molweights):

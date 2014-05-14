@@ -17,7 +17,7 @@ from pychron.core.helpers.filetools import to_bool
 
 #============= enthought library imports =======================
 from scipy import optimize
-from traits.api import List, Any, Property, Float, Event, Bool, Instance
+from traits.api import List, Any, Property, Float, Event, Bool, Instance, Int
 from traitsui.api import View, Item, VGroup, HGroup, Spring, \
     RangeEditor
 
@@ -47,11 +47,10 @@ def get_float(func):
 
 
 class Magnet(SpectrometerDevice):
-    dac = Property(depends_on='_dac')
-    mass = Property(depends_on='_mass')
+    dac = Property(Float, depends_on='_dac')
+    mass = Float
 
     _dac = Float
-    _mass = Float
     dacmin = Float(0.0)
     dacmax = Float(10.0)
 
@@ -62,7 +61,7 @@ class Magnet(SpectrometerDevice):
 
     settling_time = 0.5
 
-    calibration_points = List  # Property(depends_on='mftable')
+    # calibration_points = List  # Property(depends_on='mftable')
     detector = Any
 
     dac_changed = Event
@@ -76,6 +75,9 @@ class Magnet(SpectrometerDevice):
     beam_blank_threshold=Float(0.1) #DAC units
 
     mftable = Instance(MagnetFieldTable, ())
+    confirmation_threshold_mass = Int
+
+    _suppress_mass_update = False
 
     def update_field_table(self, det, isotope, dac):
         """
@@ -193,19 +195,46 @@ class Magnet(SpectrometerDevice):
         molweights = self.spectrometer.molecular_weights
         return next((k for k, v in molweights.iteritems() if abs(v - m) < 0.001), None)
 
+    def mass_change(self, m):
+        self._suppress_mass_update = True
+        self.trait_set(mass=m)
+        self._suppress_mass_update = False
+
+    def _validate_mass_change(self, cm, m):
+        ct = self.confirmation_threshold_mass
+
+        move_ok = True
+        if abs(cm - m) > ct:
+            move_ok = False
+            self.info('Requested move greater than threshold. Current={}, Request={}, Threshold={}'.format(cm, m, ct))
+            if self.confirmation_dialog('Requested magnet move is greater than threshold.\n'
+                                        'Current Mass={}\n'
+                                        'Requested Mass={}\n'
+                                        'Threshold={}\n'
+                                        'Are you sure you want to continue?'.format(cm, m, ct)):
+                move_ok = True
+        return move_ok
+
+    def _mass_changed(self, old, new):
+        if self._suppress_mass_update:
+            return
+
+        if self._validate_mass_change(old, new):
+            self._set_mass(new)
+        else:
+            self.mass_change(old)
+
+    def _set_mass(self, m):
+        if self.detector:
+            self.debug('setting mass {}'.format(m))
+            dac = self.map_mass_to_dac(m, self.detector.name)
+            dac = self.spectrometer.correct_dac(self.detector, dac)
+            self.dac = dac
 
     #===============================================================================
     # property get/set
     #===============================================================================
-    def _get_mass(self):
-        return self._mass
 
-    def _set_mass(self, m):
-        if self.detector:
-            dac = self.map_mass_to_dac(m, self.detector.name)
-            dac = self.spectrometer.correct_dac(self.detector, dac)
-            self._mass = m
-            self.dac = dac
 
     def _validate_dac(self, d):
         return self._validate_float(d)

@@ -15,11 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Bool
+from traits.api import Bool, Int
 from traitsui.api import View, Item, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
+
 
 
 
@@ -36,6 +37,7 @@ class SpectrometerPreferences(BasePreferencesHelper):
     send_config_on_startup = Bool
     use_local_mftable_archive = Bool
     use_db_mftable_archive = Bool
+    confirmation_threshold_mass = Int
 
 
 class SpectrometerPreferencesPane(PreferencesPane):
@@ -43,15 +45,20 @@ class SpectrometerPreferencesPane(PreferencesPane):
     category = 'Spectrometer'
 
     def traits_view(self):
-        return View(VGroup(
-            Item('send_config_on_startup',
-                 tooltip='Load the spectrometer parameters on startup'),
-            VGroup(Item('use_local_mftable_archive',
-                        tooltip='Archive mftable to a local git repository',
-                        label='Local Archive'),
-                   Item('use_db_mftable_archive',
-                        tooltip='Archive mftable to central database',
-                        label='DB Archive'),
-                   label='MFTable')))
+        magnet_grp = VGroup(Item('confirmation_threshold_mass', label='Confirmation Threshold (amu)'),
+                            show_border=True,
+                            label='Magnet')
+        mf_grp = VGroup(Item('use_local_mftable_archive',
+                             tooltip='Archive mftable to a local git repository',
+                             label='Local Archive'),
+                        Item('use_db_mftable_archive',
+                             tooltip='Archive mftable to central database',
+                             label='DB Archive'),
+                        show_border=True,
+                        label='MFTable')
+        gen_grp = Item('send_config_on_startup',
+                       tooltip='Load the spectrometer parameters on startup')
+
+        return View(VGroup(gen_grp, mf_grp, magnet_grp))
 
 #============= EOF =============================================
