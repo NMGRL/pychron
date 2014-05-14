@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, Color, Range, Dict, List
+from traits.api import Enum, Float, Bool, String, Button, Property, Int, on_trait_change, List
 from traitsui.api import Item, HGroup, Group, VGroup, UItem, EnumEditor, InstanceEditor, spring
 
 #============= standard library imports ========================
@@ -64,6 +64,8 @@ class IdeogramOptions(AgeOptions):
     mean_indicator_fontname = Enum(*FONTS)
     mean_indicator_fontsize = Enum(*SIZES)
 
+    label_fontsize = Enum(*SIZES)
+
     mean_sig_figs = Int
     mean_error_sig_figs = Int
 
@@ -95,9 +97,9 @@ class IdeogramOptions(AgeOptions):
 
     def _edit_group_fill_color_button_fired(self):
         eg = FillGroupEditor(fill_groups=self.fill_groups)
-        info=eg.edit_traits()
+        info = eg.edit_traits()
         if info.result:
-            self.refresh_plot_needed=True
+            self.refresh_plot_needed = True
 
     @on_trait_change('use_static_limits, use_centered_range')
     def _handle_use_limits(self, new):
@@ -246,7 +248,7 @@ class IdeogramOptions(AgeOptions):
                           label='Info'),
                    VGroup(UItem('fill_group', style='custom',
                                 editor=InstanceEditor(view='simple_view')),
-                          HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'),spring),
+                          HGroup(icon_button_editor('edit_group_fill_color_button', 'cog'), spring),
                           show_border=True, label='Fill'),
                    # VGroup(HGroup(UItem('use_filled_line'),
                    #               Item('fill_color', enabled_when='use_filled_line')),
@@ -275,8 +277,14 @@ class IdeogramOptions(AgeOptions):
         label_grp = VGroup(self._get_x_axis_group(),
                            self._get_y_axis_group(),
                            self._get_indicator_font_group(),
+                           self._get_label_font_group(),
                            label='Fonts')
         return orgp, label_grp
+
+    def _get_label_font_group(self):
+        g = VGroup(UItem('label_fontsize'),
+                   label='Labels')
+        return g
 
     def _get_indicator_font_group(self):
         g = VGroup(HGroup(Item('mean_indicator_fontname', label='Mean Indicator'),
@@ -295,7 +303,7 @@ class IdeogramOptions(AgeOptions):
 
     def _fill_groups_default(self):
         return [Fill(group_id=i,
-                     color=colornames[i+1],
+                     color=colornames[i + 1],
                      alpha=100) for i in range(10)]
 
     def _get_dump_attrs(self):
@@ -316,7 +324,8 @@ class IdeogramOptions(AgeOptions):
             'mean_indicator_fontsize',
             'mean_sig_figs', 'mean_error_sig_figs',
             'display_inset', 'inset_location', 'inset_width', 'inset_height',
-            'fill_groups'
+            'fill_groups',
+            'label_fontsize'
             # 'use_filled_line', 'fill_color', 'fill_alpha'
         ]
 

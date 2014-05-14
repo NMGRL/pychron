@@ -111,6 +111,9 @@ class BaseArArFigure(HasTraits):
 
             if po:
                 pp.value_scale = po.scale
+                if not po.ytick_visible:
+                    pp.y_axis.tick_visible = False
+                    pp.y_axis.tick_label_formatter = lambda x: ''
 
             if self.use_sparse_ticks:
                 if pp.value_scale == 'log':
@@ -141,7 +144,13 @@ class BaseArArFigure(HasTraits):
             if i == 0:
                 kw['ytitle'] = self.ytitle
 
+            if not po.ytitle_visible:
+                kw['ytitle'] = ''
+
             p = graph.new_plot(**kw)
+
+            #set a tag for easy identification
+            p.y_axis.tag = po.name
             _setup_plot(p, po)
 
     def plot(self, *args, **kw):
@@ -306,7 +315,8 @@ class BaseArArFigure(HasTraits):
 
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
-                                label_box=self.options.label_box
+                                label_box=self.options.label_box,
+                                font='modern {}'.format(self.options.label_fontsize)
         )
         scatter.underlays.append(ov)
 

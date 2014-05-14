@@ -57,6 +57,8 @@ class FigureEditor(GraphEditor):
     update_graph_on_set_items = True
 
     show_caption = False
+    caption_path = None
+    caption_text = None
 
     def enable_aux_plots(self):
         po = self.plotter_options_manager.plotter_options

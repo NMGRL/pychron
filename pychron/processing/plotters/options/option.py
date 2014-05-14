@@ -36,6 +36,8 @@ class AuxPlotOptions(HasTraits):
     height = Int(100, enter_set=True, auto_set=False)
     x_error = Bool(False)
     y_error = Bool(False)
+    ytitle_visible = Bool(True)
+    ytick_visible = Bool(True)
     show_labels = Bool(False)
     filter_str = String(enter_set=True, auto_set=False)
 

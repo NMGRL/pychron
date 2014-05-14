@@ -169,7 +169,7 @@ class Ideogram(BaseArArFigure):
         omits = self._get_aux_plot_omits(po, ys)
 
         scatter = self._add_aux_plot(ys,
-                                     title, pid)
+                                     title, po, pid)
 
         nsigma = self.options.error_bar_nsigma
 
@@ -210,16 +210,19 @@ class Ideogram(BaseArArFigure):
         if stacked:
             name = 'Analysis #'
             for p in self.graph.plots:
-                if p.y_axis.title == name:
+
+                #if title is not visible title=='' so check tag instead
+                if p.y_axis.tag == 'Analysis Number Stacked':
                     for k, rend in p.plots.iteritems():
-                        if k.startswith(name):
+                        #if title is not visible k == e.g '-1' instead of 'Analysis #-1'
+                        if k.startswith(name) or k.startswith('-'):
                             startidx += rend[0].index.get_size()
+
         if self.options.analysis_number_sorting == 'Oldest @Top':
             ys = arange(startidx, startidx + n)
         else:
             ys = arange(startidx + n - 1, startidx - 1, -1)
-
-        scatter = self._add_aux_plot(ys, name, pid)
+        scatter = self._add_aux_plot(ys, name, po, pid)
 
         self._add_error_bars(scatter, self.xes, 'x', self.options.error_bar_nsigma,
                              end_caps=self.options.x_end_caps,
@@ -267,8 +270,8 @@ class Ideogram(BaseArArFigure):
         # plotkw['type']='filled_line'
         # else:
 
+        line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
 
-        line, _p = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
         # add the dashed original line
@@ -492,15 +495,13 @@ class Ideogram(BaseArArFigure):
         xs = array([ai for ai in self._unpack_attr(key)])
         return xs
 
-    def _add_aux_plot(self, ys, title, pid, **kw):
+    def _add_aux_plot(self, ys, title, po, pid, **kw):
         plot = self.graph.plots[pid]
         if plot.value_scale == 'log':
             ys = array(ys)
             ys[ys < 0] = 1e-20
 
         graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
 
         #print 'aux plot',title, self.group_id
         s, p = graph.new_series(
@@ -511,6 +512,12 @@ class Ideogram(BaseArArFigure):
             selection_marker_size=3,
             bind_id=self.group_id,
             plotid=pid, **kw)
+
+        if not po.ytitle_visible:
+            title = ''
+
+        graph.set_y_title(title,
+                          plotid=pid)
 
         graph.set_series_label('{}-{}'.format(title, self.group_id + 1),
                                plotid=pid)

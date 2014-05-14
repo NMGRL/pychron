@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
+
 from chaco.plot_label import PlotLabel
 from traits.api import Instance
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.file_analysis import SpectrumFileAnalysis
@@ -52,11 +55,24 @@ class SpectrumEditor(FigureEditor):
         if self.show_caption:
             po = plotter_options
             s = po.nsigma
+            captext = ''
+            if self.caption_path:
+                if os.path.isfile(self.caption_path):
+                    with open(self.caption_path, 'r') as fp:
+                        captext = fp.read()
 
-            captext = u'Plateau age calculated as weighted mean of plateau steps. ' \
-                      u'Integrated age calculated as isotopic recombination of all steps.\n' \
-                      u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
-                      u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'.format(s)
+            elif self.caption_text:
+                captext = self.caption_text
+
+            if captext:
+                if '{nsigma:}' in captext:
+                    captext = captext.format(nsigma=s)
+
+            if not captext:
+                captext = u'Plateau age calculated as weighted mean of plateau steps. ' \
+                          u'Integrated age calculated as isotopic recombination of all steps.\n' \
+                          u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
+                          u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'.format(s)
             cap = PlotLabel(text=captext,
                             overlay_position='outside bottom',
                             vjustify='top',

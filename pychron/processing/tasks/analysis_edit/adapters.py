@@ -17,10 +17,12 @@
 #============= enthought library imports =======================
 from traits.api import Int, Property
 from traitsui.tabular_adapter import TabularAdapter
+from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.records.isotope_record import IsotopeRecordView
+
 
 
 #============= standard library imports ========================
@@ -32,8 +34,7 @@ class UnknownsAdapter(TabularAdapter):
                ('Age', 'age'),
                (u'\u00b11\u03c3', 'error'),
                ('Tag', 'tag'),
-               ('GID', 'graph_id')
-    ]
+               ('GID', 'graph_id')]
 
     record_id_width = Int(80)
     sample_width = Int(80)
@@ -61,13 +62,13 @@ class UnknownsAdapter(TabularAdapter):
     def _get_age_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age, n=3)
+            r = floatfmt(nominal_value(self.item.uage), n=3)
         return r
 
     def _get_error_text(self):
         r = ''
         if not isinstance(self.item, IsotopeRecordView):
-            r = floatfmt(self.item.age_err_wo_j, n=4)
+            r = floatfmt(std_dev(self.item.uage_wo_j_err), n=4)
         return r
 
     def get_text_color(self, obj, trait, row, column=0):
@@ -98,8 +99,7 @@ class UnknownsAdapter(TabularAdapter):
 
 class ReferencesAdapter(TabularAdapter):
     columns = [
-        ('Run ID', 'record_id'),
-    ]
+        ('Run ID', 'record_id'), ]
     font = 'arial 10'
 
 #     font = 'modern 10'

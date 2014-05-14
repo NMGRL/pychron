@@ -48,18 +48,18 @@ class EasyFigures(BaseEasy):
     def _make(self, ep):
         #make a figure for each labnumber
 
-        doc = ep.doc('figures')
+        opt = ep.doc('figures')
+        self._config_options = opt
+        self._save_db_figure = opt['save_db_figure']
+        self._save_pdf_figure = opt['save_pdf_figure']
+        self._save_interpreted = opt['save_interpreted']
 
-        self._save_db_figure = doc['save_db_figure']
-        self._save_pdf_figure = doc['save_pdf_figure']
-        self._save_interpreted = doc['save_interpreted']
-
-        projects = doc['projects']
-        identifiers = doc.get('identifiers')
-        grouped_identifiers = doc.get('identifier_groups', None)
+        projects = opt['projects']
+        identifiers = opt.get('identifiers')
+        grouped_identifiers = opt.get('identifier_groups', None)
 
         # grouped_identifiers = doc.get('identifier_groups', None)
-        levels = doc.get('levels')
+        levels = opt.get('levels')
 
         db = self.db
         with db.session_ctx():
@@ -77,12 +77,12 @@ class EasyFigures(BaseEasy):
                            if ai.tag != 'invalid']
                     ids = [li.identifier for li in lns]
 
-                    self._make_level(doc, irrad, level, ids, ans)
+                    self._make_level(opt, irrad, level, ids, ans)
             else:
                 if grouped_identifiers:
-                    groupby_aliquot = doc.get('groupby_aliquot', False)
-                    figures_per_page = doc.get('figures_per_page', 4)
-                    excludes = doc.get('excludes', None)
+                    groupby_aliquot = opt.get('groupby_aliquot', False)
+                    figures_per_page = opt.get('figures_per_page', 4)
+                    excludes = opt.get('excludes', None)
                     cnt = 1
                     gen = self._analysis_block_gen(grouped_identifiers,
                                                    groupby_aliquot,
@@ -90,6 +90,7 @@ class EasyFigures(BaseEasy):
                     while 1:
 
                         ans = []
+
                         for _ in range(figures_per_page):
                             try:
                                 ans.extend(gen.next())
@@ -97,7 +98,7 @@ class EasyFigures(BaseEasy):
                                 break
 
                         if ans:
-                            self._make_multi_panel_labnumbers(doc, ans, cnt)
+                            self._make_multi_panel_labnumbers(ans, cnt)
                             cnt += 1
                         else:
                             break
@@ -113,7 +114,7 @@ class EasyFigures(BaseEasy):
                         lns = [ln for proj in projects
                                for si in db.get_samples(project=proj)
                                for ln in si.labnumbers]
-                    self._make_labnumbers(doc, lns)
+                    self._make_labnumbers(opt, lns)
 
     def _analysis_block_gen(self, lns, groupby_aliquot, excludes):
         db = self.db
@@ -168,9 +169,10 @@ class EasyFigures(BaseEasy):
                               save_args)
         prog.close()
 
-    def _make_multi_panel_labnumbers(self, doc, ans, cnt):
-        root = doc['root']
-        options = doc['options']
+    def _make_multi_panel_labnumbers(self, ans, cnt):
+
+        root = self._config_options['root']
+        options = self._config_options['options']
 
         # ans = [ai for li in lns for ai in li.analyses]
         # ans = filter(lambda x: not x.tag == 'invalid', ans)
@@ -281,14 +283,32 @@ class EasyFigures(BaseEasy):
         if apply_graph_grouping:
             unks = editor.analyses
 
-            # key = lambda x: '{}-{}'.format(x.identifier, x.aliquot)
             unks = sorted(unks, key=apply_graph_grouping)
             editor.analyses = unks
             for i, (si, gi) in enumerate(groupby(unks, key=apply_graph_grouping)):
                 idxs = [unks.index(ai) for ai in gi]
                 editor.set_graph_group(idxs, i)
 
-        editor.show_caption = True
+            # fill add placeholder graphs
+            #if n <= than 3 (should be ncols) repeat unks
+            ncol = 2
+            if i < ncol:
+                for j in range(ncol - i):
+                    uc = unks[0].clone_traits()
+                    uc.graph_id = i + j + 1
+                    # us=[uc]
+                    # for ui in tunks:
+                    #     uc=ui.clone_traits()
+                    #     uc.graph_id=i+j+1
+                    #     us.append(uc)
+
+                    unks.extend([uc])
+                editor.analyses = unks
+
+        editor.show_caption = self._config_options.get('show_caption', False)
+        editor.caption_path = self._config_options.get('caption_path', None)
+        editor.caption_text = self._config_options.get('caption_text', None)
+
         editor.clear_aux_plot_limits()
         editor.rebuild()
 

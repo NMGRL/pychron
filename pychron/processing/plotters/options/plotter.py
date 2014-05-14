@@ -266,6 +266,8 @@ class PlotterOptions(FigurePlotterOptions):
                 checkbox_column(name='show_labels', label='Labels'),
                 checkbox_column(name='x_error', label='X Err.'),
                 checkbox_column(name='y_error', label='Y Err.'),
+                checkbox_column(name='ytick_visible', label='Y Tick'),
+                checkbox_column(name='ytitle_visible', label='Y Title'),
                 object_column(name='filter_str', label='Filter')]
 
         aux_plots_grp = Item('aux_plots',

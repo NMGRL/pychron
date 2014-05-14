@@ -25,6 +25,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -252,12 +253,13 @@ class FigureTask(AnalysisEditTask):
                                 add_table=add_table)
 
     def new_ideogram_from_file(self):
-        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages6.txt'
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages7.txt'
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 
         self.new_ideogram(add_iso=False, add_table=False)
         self.active_editor.set_items_from_file(p)
+        self.active_editor.rebuild()
 
     def new_spectrum_from_file(self):
         p = '/Users/ross/Sandbox/spectrum_file.txt'
@@ -266,6 +268,7 @@ class FigureTask(AnalysisEditTask):
 
         self.new_spectrum(add_iso=False, add_table=False)
         self.active_editor.set_items_from_file(p)
+        self.active_editor.rebuild()
 
     #===============================================================================
     # actions

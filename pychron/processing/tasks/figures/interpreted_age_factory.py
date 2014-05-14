@@ -52,7 +52,7 @@ class InterpretedAgeFactory(Loggable):
               ObjectColumn(name='nanalyses',
                            label='N',
                            editable=False),
-              ObjectColumn(name='mswd',
+              ObjectColumn(name='preferred_mswd',
                            label='MSWD',
                            format='%0.3f',
                            editable=False),

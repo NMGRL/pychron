@@ -125,7 +125,8 @@ class IdeogramEditor(FigureEditor):
                 f = FileAnalysis(age=float(d['age']),
                                  age_err=float(d['age_err']),
                                  record_id=d['runid'],
-                                 sample=d['sample'])
+                                 sample=d['sample'],
+                                 group_id=int(d['group']))
                 ans.append(f)
 
                 # ans = [construct(args)
@@ -136,7 +137,8 @@ class IdeogramEditor(FigureEditor):
             if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number stacked'):
                 ap.use = False
                 ap.enabled = False
-
+            else:
+                ap.enabled = True
         return ans
 
 #============= EOF =============================================
