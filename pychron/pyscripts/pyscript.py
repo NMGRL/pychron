@@ -126,7 +126,7 @@ def count_verbose_skip(func):
                                                                                            args, kw))
             #        if obj._cancel:
         if obj.testing_syntax:
-            #             print func.func_name, obj._estimated_duration
+        #             print func.func_name, obj._estimated_duration
             func(obj, calc_time=True, *args, **kw)
             #             print func.func_name, obj._estimated_duration
             return
@@ -228,7 +228,7 @@ class PyScript(Loggable):
 
     def execute(self, new_thread=False, bootstrap=True,
                 trace=False,
-                finished_callback=None,
+                finished_callback=None, 
                 argv=None):
         if bootstrap:
             self.bootstrap()
@@ -314,7 +314,7 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-            #         sys.settrace(self._tracer)
+        #         sys.settrace(self._tracer)
             code_or_err = self.compile_snippet(snippet)
             if not isinstance(code_or_err, Exception):
                 try:
@@ -343,6 +343,7 @@ class PyScript(Loggable):
             return False
 
         return True
+        # return not self._syntax_error
 
     def check_for_modifications(self):
         old = self.toblob()

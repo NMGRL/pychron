@@ -94,6 +94,8 @@ class ArArAge(Loggable):
     ar39decayfactor = Float
     ar37decayfactor = Float
 
+    arar_constants = Instance(ArArConstants, ())
+    logger = logger
     Ar39_decay_corrected = Either(Variable, AffineScalarFunc)
     Ar37_decay_corrected = Either(Variable, AffineScalarFunc)
 
@@ -213,17 +215,32 @@ class ArArAge(Loggable):
     #def get_signal_value(self, k):
     #    return self._get_arar_result_attr(k)
     def append_data(self, iso, det, x, signal, kind):
-        for i in (iso, '{}{}'.format(iso, det)):
-            if i in self.isotopes:
-                ii = self.isotopes[i]
-                if kind in ('sniff', 'baseline'):
-                    ii = getattr(ii, kind)
-                ii.xs = hstack((ii.xs, (x,)))
-                ii.ys = hstack((ii.ys, (signal,)))
-                return True
+        """
+            if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
+        """
 
-                # else:
-                #     self.debug('failed appending data for {}. not a current isotope {}'.format(iso, self.isotope_keys))
+        def _append(isotope):
+            if kind in ('sniff', 'baseline'):
+                isotope = getattr(isotope, kind)
+            isotope.xs = hstack((isotope.xs, (x,)))
+            isotope.ys = hstack((isotope.ys, (signal,)))
+
+        isotopes = self.isotopes
+        if kind == 'baseline':
+            ret = False
+            #get the isotopes that match detector
+            for i in isotopes.itervalues():
+                if i.detector == det:
+                    _append(i)
+                    ret = True
+            return ret
+
+        else:
+            for i in (iso, '{}{}'.format(iso, det)):
+                if i in isotopes:
+                    ii = isotopes[i]
+                    _append(ii)
+                    return True
 
     def clear_baselines(self):
         for k in self.isotopes:
@@ -501,18 +518,22 @@ class ArArAge(Loggable):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
-                #===============================================================================
-                #
-                #===============================================================================
+#===============================================================================
+#
+#===============================================================================
 
-                #def __getattr__(self, attr):
-                #    if '/' in attr:
-                #        #treat as ratio
-                #        n, d = attr.split('/')
-                #        try:
-                #            return getattr(self, n) / getattr(self, d)
-                #        except ZeroDivisionError:
-                #            return ufloat(0, 1e-20)
+    # def _arar_constants_default(self):
+    #     """
+    #         use a global shared arar_constants
+    #     """
+    #
+    #     global arar_constants
+    #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+    #     #print 'asdf', arar_constants
+    #     if arar_constants is None:
+    #         arar_constants = ArArConstants()
+    #         #return ArArConstants()
+    #     return arar_constants
 
                 # def _arar_constants_default(self):
                 #     """

@@ -368,8 +368,8 @@ class AutomatedRun(Loggable):
 
         pb = self.get_previous_blanks()
         pbs = self.get_previous_baselines()
-        correct_for_blank =(not self.spec.analysis_type.startswith('blank') and
-                            not self.spec.analysis_type.startswith('background'))
+        correct_for_blank = (not self.spec.analysis_type.startswith('blank') and
+                             not self.spec.analysis_type.startswith('background'))
         for iso, dets in groupby(hops, key=key):
             dets = list(dets)
             #if is_baseline contiune
@@ -400,18 +400,18 @@ class AutomatedRun(Loggable):
                         pid = g.plots.index(plot)
                         g.new_series(kind='scatter', fit=None, plotid=pid)
 
-                    # if plot is not None:
-                    #     pid = g.plots.index(plot)
-                    #     n = len(plot.plots)
-                    # else:
-                    #     n = 1
-                    #     pid=len(g.plots)
-                    #
-                    # plot = self.plot_panel.new_plot(add=pid + 1)
-                    #
-                    # pid = g.plots.index(plot)
-                    # for i in range(n):
-                    #     g.new_series(kind='scatter', fit=None, plotid=pid)
+                        # if plot is not None:
+                        #     pid = g.plots.index(plot)
+                        #     n = len(plot.plots)
+                        # else:
+                        #     n = 1
+                        #     pid=len(g.plots)
+                        #
+                        # plot = self.plot_panel.new_plot(add=pid + 1)
+                        #
+                        # pid = g.plots.index(plot)
+                        # for i in range(n):
+                        #     g.new_series(kind='scatter', fit=None, plotid=pid)
 
                 if add_detector:
                     name = '{}{}'.format(name, di)
@@ -1225,7 +1225,7 @@ anaylsis_type={}
 
         cb = False
         if (not self.spec.analysis_type.startswith('blank') \
-                and not self.spec.analysis_type.startswith('background')):
+                    and not self.spec.analysis_type.startswith('background')):
 
             cb = True
             #blanks=None
@@ -1555,7 +1555,7 @@ anaylsis_type={}
             if idx is not None:
                 try:
                     graph.series[idx][series]
-                except IndexError,e:
+                except IndexError, e:
                     graph.new_series(marker='circle',
                                      color=color,
                                      type='scatter',

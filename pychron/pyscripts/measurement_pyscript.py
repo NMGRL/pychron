@@ -322,9 +322,9 @@ class MeasurementPyScript(ValvePyScript):
     #
     #===============================================================================
     def _automated_run_call(self, func, *args, **kw):
-        #         return True
-        #         if func not in ('py_activate_detectors',):
-        #             return True
+    #         return True
+    #         if func not in ('py_activate_detectors',):
+    #             return True
 
         if self.automated_run is None:
             return
@@ -392,9 +392,9 @@ class MeasurementPyScript(ValvePyScript):
                    action=None,
                    resume=False):
 
-        #        if self._syntax_checking:
-        #            if isinstance(action, str):
-        #                self.execute_snippet(action)
+    #        if self._syntax_checking:
+    #            if isinstance(action, str):
+    #                self.execute_snippet(action)
 
         self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,

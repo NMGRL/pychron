@@ -70,8 +70,7 @@ PACKAGE_DICT = dict(
     SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
     DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
     GeoPlugin='pychron.geo.tasks.geo_plugin',
-    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin'
-)
+    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin')
 
 
 def get_module_name(klass):

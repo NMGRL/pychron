@@ -17,7 +17,7 @@
 #=============enthought library imports=======================
 
 from traits.api import HasTraits, Str, Any, List, \
-    Bool, Enum, implements
+    Bool, Enum, provides
 
 # from pyface.timer.api import Timer
 #=============standard library imports ========================
@@ -87,13 +87,13 @@ class Alarm(HasTraits):
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
 
 
-# @provides(ICoreDevice)
+@provides(ICoreDevice)
 class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     """
     """
     #    graph_klass = TimeSeriesStreamGraph
 
-    implements(ICoreDevice)
+    # implements(ICoreDevice)
     # provides(ICoreDevice)
 
     name = Str
@@ -131,7 +131,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
     def load(self, *args, **kw):
         """
-            Load a configuration file.
+            Load a configuration file.  
             Get Communications info to make a new communicator
         """
         config = self.get_configuration()

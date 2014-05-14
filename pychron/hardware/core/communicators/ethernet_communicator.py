@@ -44,8 +44,8 @@ class TCPHandler(Handler):
     def open_socket(self, addr, timeout=1.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(timeout)
         self.sock.connect(addr)
+        self.sock.settimeout(timeout)
 
     def get_packet(self, cmd):
         try:
@@ -174,11 +174,9 @@ class EthernetCommunicator(Communicator):
 
         r = None
         with self._lock:
-            #            self._lock.acquire()
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
             handler = self.get_handler()
             if self.simulation:
-                #                self._lock.release()
                 return 'simulation'
 
             for _ in range(retries):
@@ -187,7 +185,6 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     self._reset_connection()
-                    #            self._lock.release()
 
         if r is not None:
             re = self.process_response(r)

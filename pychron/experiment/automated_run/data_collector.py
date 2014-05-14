@@ -218,18 +218,32 @@ class DataCollector(Loggable):
                 signal = signals[keys.index(dn.name)]
                 self._set_plot_data(cnt, iso, dn.name, x, signal)
 
-    def _set_plot_data(self, cnt, iso, det, x, signal):
-        try:
-            name=iso
-            iso=self.arar_age.isotopes[iso]
-        except KeyError:
-            name='{}{}'.format(iso, det)
-            iso=self.arar_age.isotopes[name]
-
+    def _get_fit(self, cnt, det, iso):
+        isotopes = self.arar_age.isotopes
         if self.is_baseline:
-            fit=iso.baseline.get_fit(cnt)
+            for i in isotopes.itervalues():
+                if i.detector == det:
+                    break
+            name = i.name
+            fit = i.baseline.get_fit(cnt)
         else:
-            fit=iso.get_fit(cnt)
+            try:
+                name = iso
+                iso = isotopes[iso]
+            except KeyError:
+                name = '{}{}'.format(iso, det)
+                iso = isotopes[name]
+            fit = iso.get_fit(cnt)
+
+        return fit, name
+
+    def _set_plot_data(self, cnt, iso, det, x, signal):
+        """
+            if is_baseline than use detector to get isotope
+        """
+
+        #get fit and name
+        fit, name = self._get_fit(cnt, det, iso)
 
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
