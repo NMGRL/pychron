@@ -19,7 +19,7 @@ Used to control and monitor a noble gas extraction line a.k.a prep system. Displ
 
 pyLaser
 ----------
-Configure for multiple types of lasers. Currently compatible with Photon machines Fusions CO2, 910 diode and ATLEX UV lasers. Watlow interface for PID control. 
+Configure for multiple types of lasers. Currently compatible with Photon machines Fusions CO2, 810 diode and ATLEX UV lasers. Watlow interface for PID control. 
 
 pyExperiment
 --------------
