@@ -35,18 +35,20 @@ NAME_WIDTH = 40
 def confirmation_dialog(msg, return_retval=False,
                         cancel=False, title='',
                         timeout=None, size=None,
-                        timeout_ret=None):
+                        timeout_ret=None, **kw):
     if size is None:
         size = (-1, -1)
     from pychron.core.ui.dialogs import myConfirmationDialog
 
     dlg = myConfirmationDialog(
-        timeout_return_code=timeout_ret,
         cancel=cancel,
         message=msg,
         title=title,
         style='modal',
-        size=size)
+        size=size, **kw)
+
+    if timeout_ret is not None:
+        dlg.timeout_return_code = timeout_ret
 
     retval = dlg.open(timeout)
     if return_retval:

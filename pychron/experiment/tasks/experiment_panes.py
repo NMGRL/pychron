@@ -282,7 +282,7 @@ class ConnectionStatusPane(TraitsDockPane):
         v = View(UItem('connectables',
                        editor=TableEditor(editable=False,
                                           sortable=False,
-                                          cols=cols)))
+                                          columns=cols)))
         return v
 
 

@@ -1031,15 +1031,15 @@ class ExperimentExecutor(Loggable):
         if not self._set_run_aliquot(arv):
             return
 
-        if globalv.experiment_debug:
-            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-            return True
+        # if globalv.experiment_debug:
+        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+        #     return True
 
-        if self._check_memory():
-            return
-
-        if not self._check_managers(inform=inform):
-            return
+        # if self._check_memory():
+        #     return
+        #
+        # if not self._check_managers(inform=inform):
+        #     return
 
         with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -1061,11 +1061,14 @@ class ExperimentExecutor(Loggable):
         return True
 
     def _get_preceding_blank_or_background(self, inform=True):
+        #         msg = '''First "{}" not preceded by a blank.
+        # If "Yes" use last "blank_{}"
+        # Last Run= {}
+        #
+        # If "No" select from database
+        # '''
         msg = '''First "{}" not preceded by a blank.
-If "Yes" use last "blank_{}" 
-Last Run= {}
-
-If "No" select from database
+Last "blank_{}"= {}
 '''
         exp = self.experiment_queue
 
@@ -1097,6 +1100,8 @@ If "No" select from database
                     retval = NO
                     if inform:
                         retval = self.confirmation_dialog(msg,
+                                                          no_label='Select From Database',
+                                                          yes_label='Use {}'.format(pdbr.record_id),
                                                           cancel=True,
                                                           return_retval=True)
 
