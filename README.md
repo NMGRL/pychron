@@ -3,6 +3,7 @@ Pychron
 
 [![Build Status](https://travis-ci.org/NMGRL/pychron.png?branch=develop)](https://travis-ci.org/NMGRL/pychron)
 [![Requirements Status](https://requires.io/github/NMGRL/pychron/requirements.png?branch=develop)](https://requires.io/github/NMGRL/pychron/requirements/?branch=develop)
+![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.9884.png)
 
 What is Pychron
 ===============
