@@ -119,24 +119,31 @@ class BaseMaker(HasTraits):
 
 
 class TitleMaker(BaseMaker):
-    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material', '<SPACE>'])
+    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Material',
+                       'AlphaCounter',
+                       'NumericCounter', '<SPACE>'])
 
     attribute_formats = {'sample': '',
                          'identifier': '',
                          'project': '',
                          'aliquot': '02n',
-                         'material': ''}
+                         'material': '',
+                         'numericcounter': '',
+                         'alphacounter': ''}
 
     example_context = {'sample': 'NM-001',
                        'identifier': '20001',
                        'project': 'J-Curve',
                        'aliquot': 1,
-                       'material': 'GMC'}
+                       'material': 'GMC',
+                       'numericcounter': 1,
+                       'alphacounter': 'A'}
 
     view_title = 'Title Maker'
     predefined_labels = List(['Sample ( Identifier )',
                               'Sample ( Identifier - Aliquot )',
                               'Sample ( Identifier - Aliquot , Material )',
+                              'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
                               'Sample',
                               'Project <SPACE> Sample ( Identifier )'])
 
@@ -166,6 +173,7 @@ class TitleMaker(BaseMaker):
         ts = []
         for _ in range(n):
             ts.append(f.format(**self.example_context))
+
         t = self.delimiter.join(ts)
         lt = self.leading_text
         if lt:

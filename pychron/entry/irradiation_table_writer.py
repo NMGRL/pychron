@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 #============= enthought library imports =======================
 import os
 
@@ -62,6 +64,8 @@ class IrradiationTableWriter(IsotopeDatabaseManager):
 
         outpath = os.path.join(root, 'irradiations.pdf')
         p = PDFWriter()
+        opt = p.options
+        opt.orientation = 'portrait'
         p.build(outpath, irrads)
         view_file(outpath)
 
@@ -73,7 +77,16 @@ class PDFWriter(BasePDFTableWriter):
 
         flowables.append(self._make_table_title())
         flowables.append(self._make_table(irradiations))
+        flowables.append(self._make_notes())
         return flowables, templates or None
+
+    def _make_notes(self):
+        t = """
+Texas A&amp;M=  1 MW TRIGA Reactor. Nuclear Science Center, Texas A&amp;M University, College Station, TX. http://nsc.tamu.edu/about-the-nsc/
+<br/>
+USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pubs.usgs.gov/fs/2012/3093/"""
+        p = self._new_paragraph(t, backColor='lightgrey', fontSize=6)
+        return p
 
     def _make_table(self, irrads):
         ts = self._new_style(header_line_idx=0, header_line_width=2)
@@ -81,9 +94,9 @@ class PDFWriter(BasePDFTableWriter):
         ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
 
         header = Row()
-        header.add_item(value='Irradiation')
-        header.add_item(value='Duration')
-        header.add_item(value='Reactor')
+        header.add_item(value='<b>Irradiation</b>')
+        header.add_item(value='<b>Duration (hr)</b>')
+        header.add_item(value='<b>Reactor</b>')
 
         rows = [header]
         for i in irrads:
@@ -97,8 +110,19 @@ class PDFWriter(BasePDFTableWriter):
         return t
 
     def _make_table_title(self):
-        t = 'Table X. Irradiations'
-        p = self._new_paragraph(t, s='Heading1')
+        t = '<b>Table X. Irradiations</b>'
+        # p = self._new_paragraph(t, s='Heading1')
+        p = self._new_paragraph(t)
         return p
 
-#============= EOF =============================================
+
+if __name__ == '__main__':
+    i = IrradiationTableWriter(bind=False, connect=False)
+    i.db.trait_set(name='pychrondata_minnabluff',
+                   kind='mysql',
+                   username='root',
+                   password='Argon')
+    i.connect()
+    i.make()
+
+    #============= EOF =============================================

@@ -283,11 +283,13 @@ class EasyFigures(BaseEasy):
         if apply_graph_grouping:
             unks = editor.analyses
 
-            unks = sorted(unks, key=apply_graph_grouping)
+            # unks = sorted(unks, key=apply_graph_grouping)
             editor.analyses = unks
             for i, (si, gi) in enumerate(groupby(unks, key=apply_graph_grouping)):
-                idxs = [unks.index(ai) for ai in gi]
-                editor.set_graph_group(idxs, i)
+                for ai in gi:
+                    ai.graph_id = i
+                    # idxs = [unks.index(ai) for ai in gi]
+                    # editor.set_graph_group(idxs, i)
 
             # fill add placeholder graphs
             #if n <= than 3 (should be ncols) repeat unks
@@ -296,12 +298,6 @@ class EasyFigures(BaseEasy):
                 for j in range(ncol - i):
                     uc = unks[0].clone_traits()
                     uc.graph_id = i + j + 1
-                    # us=[uc]
-                    # for ui in tunks:
-                    #     uc=ui.clone_traits()
-                    #     uc.graph_id=i+j+1
-                    #     us.append(uc)
-
                     unks.extend([uc])
                 editor.analyses = unks
 
