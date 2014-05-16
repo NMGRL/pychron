@@ -17,7 +17,6 @@
 #============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.label import Label
-from chaco.plot_label import PlotLabel
 from traits.api import Instance
 
 #============= standard library imports ========================
@@ -95,23 +94,18 @@ class IdeogramEditor(FigureEditor):
 
         iv = FigureContainer(model=model)
         component = iv.component
-        if self.show_caption:
-            po = plotter_options
-            m = po.mean_calculation_kind
-            s = po.nsigma
-            es = po.error_bar_nsigma
-            ecm = po.error_calc_method
-            captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
-                      u'Error Type:{}. Analyses omitted from calculation \n' \
-                      u'indicated by open squares. Dashed line represents ' \
-                      u'cumulative probability for all analyses'.format(m, s, es, ecm)
-            cap = PlotLabel(text=captext,
-                            overlay_position='outside bottom',
-                            vjustify='top',
-                            hjustify='left',
-                            component=component)
-            component.overlays.append(cap)
-            component.padding_bottom = 30
+
+        po = plotter_options
+        m = po.mean_calculation_kind
+        s = po.nsigma
+        es = po.error_bar_nsigma
+        ecm = po.error_calc_method
+        captext = u'Mean: {} +/-{}\u03c3 Data: +/-{}\u03c3. ' \
+                  u'Error Type:{}. Analyses omitted from calculation \n' \
+                  u'indicated by open squares. Dashed line represents ' \
+                  u'cumulative probability for all analyses'.format(m, s, es, ecm)
+
+        self._add_caption(component, plotter_options, default_captext=captext)
 
         # if meta:
         #     model.load_metadata(meta)

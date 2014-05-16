@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from chaco.base_plot_container import BasePlotContainer
+from chaco.plot_label import PlotLabel
 from numpy import isnan
 from traits.api import Any, on_trait_change, \
     List, Event, Int
@@ -82,9 +83,6 @@ class FigureEditor(GraphEditor):
                 self.analyses = self._get_items_from_file(par)
                 self._update_analyses()
                 self.dump_tool()
-
-    def _get_items_from_file(self, parser):
-        pass
 
     def save_figure(self, name, project, labnumbers):
         db = self.processor.db
@@ -173,9 +171,6 @@ class FigureEditor(GraphEditor):
 
         self.add_interpreted_ages(ias)
 
-    def _set_preferred_age_kind(self, ias):
-        pass
-
     def get_interpreted_ages(self):
         key = lambda x: x.group_id
         unks = sorted(self.analyses, key=key)
@@ -235,15 +230,6 @@ class FigureEditor(GraphEditor):
 
         self._set_group(idxs, gid, 'graph_id', **kw)
 
-    def _set_group(self, idxs, gid, attr, refresh=True):
-        ans = self.analyses
-        for i in idxs:
-            a = ans[i]
-            setattr(a, attr, gid)
-
-            # if refresh:
-            #     self.rebuild()
-
     def rebuild(self):
         # ans = self._gather_unknowns(refresh_data, compress_groups=compress_groups)
         ans = self.analyses
@@ -261,8 +247,50 @@ class FigureEditor(GraphEditor):
     def get_component(self, ans, po):
         pass
 
+    def _set_group(self, idxs, gid, attr, refresh=True):
+        ans = self.analyses
+        for i in idxs:
+            a = ans[i]
+            setattr(a, attr, gid)
+
+            # if refresh:
+            #     self.rebuild()
+
+    def _set_preferred_age_kind(self, ias):
+        pass
+
+    def _get_items_from_file(self, parser):
+        pass
+
     def _null_component(self):
         self.component = BasePlotContainer()
+
+    def _add_caption(self, component, plotter_options, default_captext):
+        if self.show_caption:
+            po = plotter_options
+            s = po.nsigma
+            captext = ''
+            if self.caption_path:
+                if os.path.isfile(self.caption_path):
+                    with open(self.caption_path, 'r') as fp:
+                        captext = fp.read()
+
+            elif self.caption_text:
+                captext = self.caption_text
+
+            if captext:
+                captext = captext.format(nsigma=s)
+
+            if not captext:
+                captext = default_captext.format(s)
+
+            cap = PlotLabel(text=captext,
+                            overlay_position='outside bottom',
+                            vjustify='top',
+                            hjustify='left',
+                            component=component)
+            component.overlays.append(cap)
+            component.padding_bottom = 40
 
     @on_trait_change('figure_model:panels:graph:[tag, save_db_figure, invalid]')
     def _handle_graph_event(self, name, new):

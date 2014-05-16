@@ -15,9 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
 
-from chaco.plot_label import PlotLabel
 from traits.api import Instance
 
 #============= standard library imports ========================
@@ -52,34 +50,12 @@ class SpectrumEditor(FigureEditor):
         iv = FigureContainer(model=model)
         component = iv.component
 
-        if self.show_caption:
-            po = plotter_options
-            s = po.nsigma
-            captext = ''
-            if self.caption_path:
-                if os.path.isfile(self.caption_path):
-                    with open(self.caption_path, 'r') as fp:
-                        captext = fp.read()
+        c = u'Plateau age calculated as weighted mean of plateau steps. ' \
+            u'Integrated age calculated as isotopic recombination of all steps.\n' \
+            u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
+            u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'
 
-            elif self.caption_text:
-                captext = self.caption_text
-
-            if captext:
-                if '{nsigma:}' in captext:
-                    captext = captext.format(nsigma=s)
-
-            if not captext:
-                captext = u'Plateau age calculated as weighted mean of plateau steps. ' \
-                          u'Integrated age calculated as isotopic recombination of all steps.\n' \
-                          u'Plateau and Integrated Age uncertainties \u00b1{}\u03c3.' \
-                          u'GMC=Groundmass Concentrate, Kaer=Kaersutite, Plag=Plagioclase'.format(s)
-            cap = PlotLabel(text=captext,
-                            overlay_position='outside bottom',
-                            vjustify='top',
-                            hjustify='left',
-                            component=component)
-            component.overlays.append(cap)
-            component.padding_bottom = 40
+        self._add_caption(component, plotter_options, default_captext=c)
 
         return model, component
 
