@@ -40,7 +40,8 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
-                       degas='dg')
+                       degas='dg',
+                       unknown='u')
 
 import os
 from pychron.paths import paths

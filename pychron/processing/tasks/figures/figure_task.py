@@ -26,6 +26,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -49,7 +50,6 @@ from .editors.spectrum_editor import SpectrumEditor
 from .editors.isochron_editor import InverseIsochronEditor
 from .editors.ideogram_editor import IdeogramEditor
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
-from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
@@ -232,6 +232,8 @@ class FigureTask(AnalysisEditTask):
                    add_iso=False,
                    add_table=False):
         if klass is None:
+            from pychron.processing.tasks.figures.editors.series_editor import SeriesEditor
+
             klass = SeriesEditor
 
         if tklass is None:
