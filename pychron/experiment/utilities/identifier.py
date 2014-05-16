@@ -45,18 +45,27 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
 from ConfigParser import ConfigParser
 import os
 from pychron.paths import paths
+import yaml
 
-cp = ConfigParser()
-p = os.path.join(paths.setup_dir, 'identifiers.cfg')
+p = os.path.join(paths.setup_dir, 'identifiers.yaml')
+differed = []
 if os.path.isfile(p):
-    cp.read(p)
-    for i, option in enumerate(cp.options('AnalysisNames')):
-        v = cp.get('AnalysisNames', option)
-        labnumber, kname = map(str.strip, v.split(','))
-        ANALYSIS_MAPPING[option] = kname
-        SPECIAL_NAMES.append(kname)
-        SPECIAL_MAPPING[kname.lower()] = option
-        ANALYSIS_MAPPING_INTS[kname] = i + 7
+    with open(p, 'r') as fp:
+        yd = yaml.load(fp)
+        for k, v in yd.items():
+            ANALYSIS_MAPPING[k] = v
+
+            #if : assume '01:Value' where 01 is used for preserving order
+            if ':' in v:
+                a, v = v.split(':')
+                differed.append((int(a), v))
+            else:
+                SPECIAL_NAMES.append(v)
+            SPECIAL_MAPPING[v.lower()] = k
+
+if differed:
+    ds = sorted(differed, key=lambda x: x[0])
+    SPECIAL_NAMES.extend([di[1] for di in ds])
 
 SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
@@ -104,7 +113,6 @@ def convert_identifier(identifier):
             return identifier
 
             #        identifier=identifier.split('-')[0]
-
 
             #    if identifier in ANALYSIS_MAPPING:
             #        sname = ANALYSIS_MAPPING[identifier]
