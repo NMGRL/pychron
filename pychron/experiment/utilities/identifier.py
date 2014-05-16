@@ -37,20 +37,45 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        pause='pa',
                        degas='dg')
 
-from ConfigParser import ConfigParser
+
+# from ConfigParser import ConfigParser
+# import os
+# from pychron.paths import paths
+#
+# p = os.path.join(paths.setup_dir, 'identifiers.cfg')
+# if os.path.isfile(p):
+#     cp = ConfigParser()
+#     cp.read(p)
+#     for option in cp.options('AnalysisNames'):
+#         v = cp.get('AnalysisNames', option)
+#         labnumber, kname = map(str.strip, v.split(','))
+#         ANALYSIS_MAPPING[option] = kname
+#         SPECIAL_NAMES.append(kname)
+#         SPECIAL_MAPPING[kname.lower()] = option
+
 import os
 from pychron.paths import paths
+import yaml
 
-cp = ConfigParser()
-p = os.path.join(paths.setup_dir, 'identifiers.cfg')
+p = os.path.join(paths.setup_dir, 'identifiers.yaml')
+differed = []
 if os.path.isfile(p):
-    cp.read(p)
-    for option in cp.options('AnalysisNames'):
-        v = cp.get('AnalysisNames', option)
-        labnumber, kname = map(str.strip, v.split(','))
-        ANALYSIS_MAPPING[option] = kname
-        SPECIAL_NAMES.append(kname)
-        SPECIAL_MAPPING[kname.lower()] = option
+    with open(p, 'r') as fp:
+        yd = yaml.load(fp)
+        for k, v in yd.items():
+            ANALYSIS_MAPPING[k] = v
+
+            #if : assume '01:Value' where 01 is used for preserving order
+            if ':' in v:
+                a, v = v.split(':')
+                differed.append((int(a), v))
+            else:
+                SPECIAL_NAMES.append(v)
+            SPECIAL_MAPPING[v.lower()] = k
+
+if differed:
+    ds = sorted(differed, key=lambda x: x[0])
+    SPECIAL_NAMES.extend([di[1] for di in ds])
 
 SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
@@ -239,6 +264,7 @@ def is_special(ln):
     if '-' in ln:
         special = ln.split('-')[0] in ANALYSIS_MAPPING
     return special
+
 
 #        return make_special_identifier(ln, ed, ms, aliquot=a)
 #===============================================================================
