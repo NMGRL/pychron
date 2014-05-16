@@ -20,6 +20,8 @@ from traits.api import Str, Property, Button, cached_property, \
 from traitsui.api import View, HGroup, Label, spring, EnumEditor, UItem
 #============= standard library imports ========================
 import os
+import yaml
+import ast
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.experiment.script.options_editor import OptionsEditor
@@ -69,31 +71,31 @@ class Script(Loggable):
     kind = 'ExtractionLine'
     shared_logger = True
 
-    # def get_parameter(self, key, default=None):
-    #     p = os.path.join(self._get_root(), '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as fp:
-    #             text = fp.read()
-    #             m = ast.parse(text)
-    #             docstr = ast.get_docstring(m)
-    #             if docstr is not None:
-    #                 params = yaml.load(docstr)
-    #                 try:
-    #                     return params[key]
-    #                 except KeyError:
-    #                     pass
-    #                 except TypeError:
-    #                     self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(self.name, key))
-    #
-    #     return default
+    def get_parameter(self, key, default=None):
+        # p = os.path.join(self._get_root(), '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
+        p = self.script_path()
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                text = fp.read()
+                m = ast.parse(text)
+            docstr = ast.get_docstring(m)
+            if docstr is not None:
+                params = yaml.load(docstr)
+                try:
+                    return params[key]
+                except KeyError:
+                    pass
+                except TypeError:
+                    self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(self.name, key))
+
+        return default
 
     def script_path(self):
-        p = os.path.join(paths.scripts_dir, self.label.lower(), '{}_{}.py'.format(self.mass_spectrometer.lower(),
-                                                                                  self.name))
+        p = os.path.join(self._get_root(),
+                         '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
         return p
 
     def _edit_fired(self):
-
         self.edit_event = (self.script_path(), self.kind)
 
     def traits_view(self):
