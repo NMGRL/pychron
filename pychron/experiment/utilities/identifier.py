@@ -42,7 +42,6 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        pause='pa',
                        degas='dg')
 
-from ConfigParser import ConfigParser
 import os
 from pychron.paths import paths
 import yaml
@@ -52,15 +51,18 @@ differed = []
 if os.path.isfile(p):
     with open(p, 'r') as fp:
         yd = yaml.load(fp)
-        for k, v in yd.items():
+        for i, (k, v) in enumerate(yd.items()):
             ANALYSIS_MAPPING[k] = v
 
             #if : assume '01:Value' where 01 is used for preserving order
             if ':' in v:
                 a, v = v.split(':')
-                differed.append((int(a), v))
+                c = int(a)
+                differed.append((c, v))
+                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + c
             else:
                 SPECIAL_NAMES.append(v)
+                ANALYSIS_MAPPING_INTS[v.lower()] = 7 + i
             SPECIAL_MAPPING[v.lower()] = k
 
 if differed:
@@ -252,6 +254,7 @@ def is_special(ln):
     if '-' in ln:
         special = ln.split('-')[0] in ANALYSIS_MAPPING
     return special
+
 
 #        return make_special_identifier(ln, ed, ms, aliquot=a)
 #===============================================================================
