@@ -29,7 +29,7 @@ ANALYSIS_MAPPING_INTS = dict(unknown=0, background=1, air=2, cocktail=3,
 
 
 # "labnumbers" where extract group is disabled
-NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail',
+NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                        bg='Background', c='Cocktail', a='Air')
 
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
@@ -40,13 +40,7 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
-                       degas='dg',
-                       unknown='u')
-#        sn = ['Blank_air', 'Blank_cocktail', 'Blank_unknown',
-#              'Background', 'Air', 'Cocktail']
-# SPECIAL_IDS = {1:'Blank Air', 2:'Blank Cocktail', 3:'Blank Unknown',
-#               4:'Background', 5:'Air', 6:'Cocktail'
-#               }
+                       degas='dg')
 
 from ConfigParser import ConfigParser
 import os
@@ -58,30 +52,30 @@ if os.path.isfile(p):
     cp.read(p)
     for i, option in enumerate(cp.options('AnalysisNames')):
         v = cp.get('AnalysisNames', option)
-        labnumber, kname = v.split(',')
+        labnumber, kname = map(str.strip, v.split(','))
         ANALYSIS_MAPPING[option] = kname
         SPECIAL_NAMES.append(kname)
-        SPECIAL_MAPPING[kname] = option
+        SPECIAL_MAPPING[kname.lower()] = option
         ANALYSIS_MAPPING_INTS[kname] = i + 7
 
-#        SPECIAL_IDS[int(labnumber)] = name
+SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
+
 
 def convert_special_name(name, output='shortname'):
-    '''
+    """
         input name output shortname
-        
+
         name='Background'
         returns:
-            
+
             if output=='shortname'
                 return 'bg'
             else
                 return 4 #identifier
-    '''
+    """
     if isinstance(name, str):
         name = name.lower()
         name = name.replace(' ', '_')
-
         if name in SPECIAL_MAPPING:
             sn = SPECIAL_MAPPING[name]
             if output == 'labnumber':
@@ -92,15 +86,15 @@ def convert_special_name(name, output='shortname'):
 
 
 def convert_identifier(identifier):
-    '''
+    """
         old:
             identifier=='bg, a, ...'
             return  1
-        
+
         identifier== bu-FD-J, 51234, 13212-01
         return bu-FD-J, 51234, 13212
-        
-    '''
+
+    """
     if '-' in identifier:
         ln = identifier.split('-')[0]
         try:
@@ -255,37 +249,37 @@ def is_special(ln):
 #===============================================================================
 # deprecated
 #===============================================================================
-SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
-               4: 'Background', 5: 'Air', 6: 'Cocktail'
-}
-# @deprecated
-def convert_labnumber(ln):
-    """
-        ln is a str  but only special labnumbers cannot be converted to int
-        convert number to name
-
-    """
-    try:
-        ln = int(ln)
-
-        if ln in SPECIAL_IDS:
-            ln = SPECIAL_IDS[ln]
-    except ValueError:
-        pass
-
-    return ln
-
-
-# @deprecated
-def convert_shortname(ln):
-    """
-        convert number to shortname (a for air, bg for background...)
-    """
-    name = convert_labnumber(ln)
-    if name is not None:
-        ln = next((k for k, v in ANALYSIS_MAPPING.iteritems()
-                   if v == name), ln)
-    return ln
+# SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
+#                4: 'Background', 5: 'Air', 6: 'Cocktail'
+# }
+# # @deprecated
+# def convert_labnumber(ln):
+#     """
+#         ln is a str  but only special labnumbers cannot be converted to int
+#         convert number to name
+#
+#     """
+#     try:
+#         ln = int(ln)
+#
+#         if ln in SPECIAL_IDS:
+#             ln = SPECIAL_IDS[ln]
+#     except ValueError:
+#         pass
+#
+#     return ln
+#
+#
+# # @deprecated
+# def convert_shortname(ln):
+#     """
+#         convert number to shortname (a for air, bg for background...)
+#     """
+#     name = convert_labnumber(ln)
+#     if name is not None:
+#         ln = next((k for k, v in ANALYSIS_MAPPING.iteritems()
+#                    if v == name), ln)
+#     return ln
 
 
 def convert_extract_device(name):
