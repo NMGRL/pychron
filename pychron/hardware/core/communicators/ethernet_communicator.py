@@ -174,11 +174,9 @@ class EthernetCommunicator(Communicator):
 
         r = None
         with self._lock:
-            #            self._lock.acquire()
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
             handler = self.get_handler()
             if self.simulation:
-                #                self._lock.release()
                 return 'simulation'
 
             for _ in range(retries):
@@ -187,7 +185,6 @@ class EthernetCommunicator(Communicator):
                     break
                 else:
                     self._reset_connection()
-                    #            self._lock.release()
 
         if r is not None:
             re = self.process_response(r)

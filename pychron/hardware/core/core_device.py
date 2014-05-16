@@ -124,6 +124,10 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
     def set(self, v):
         pass
 
+    def is_connected(self):
+        if self._communicator:
+            return not self._communicator.simulation
+
     #==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd

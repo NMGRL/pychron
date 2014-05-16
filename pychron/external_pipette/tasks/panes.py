@@ -15,17 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor
+from traitsui.api import View, UItem, VGroup, HGroup, spring, EnumEditor, Item
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
         command_entry = HGroup(UItem('test_command'),
-                               UItem('test_button', enabled_when='not testing'),
+                               UItem('test_button', enabled_when='test_enabled'),
                                UItem('test_command',
                                      editor=EnumEditor(values={'100': '01:List blanks',
                                                                '101': '02:List airs',
@@ -35,15 +36,19 @@ class ExternalPipettePane(TraitsTaskPane):
                                                                '105,': '06:Load blank',
                                                                '106,': '07:Load air',
                                                                '107': '08:Cancel',
-                                                               '108': '09:Set external pumping',
-                                     })))
+                                                               '108': '09:Set external pumping', })))
 
         response = VGroup(UItem('test_command_response', style='custom'),
-                          HGroup(UItem('test_script_button', enabled_when='not testing'), spring),
-                          HGroup(UItem('clear_test_response_button'),
+                          HGroup(UItem('test_script_button',
+                                       enabled_when='not testing'), spring),
+                          HGroup(icon_button_editor('clear_test_response_button',
+                                                    'edit-clear', tooltip='Clear console'),
+                                 Item('display_response_info', label='Display Debug Info.'),
                                  spring))
 
-        v = View(VGroup(command_entry,
+        connection_grp = Item('object.controller.connection_url', style='readonly', label='URL')
+        v = View(VGroup(connection_grp,
+                        command_entry,
                         response))
 
         # testing_grp = VGroup(HGroup(UItem('test_load_1', ),

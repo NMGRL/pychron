@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
+from traits.api import Property
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -38,6 +38,11 @@ STATUS_MAP = {'0': 'Idle',
 
 
 class ApisController(CoreDevice):
+    connection_url = Property
+
+    def _get_connection_url(self):
+        return '{}:{}'.format(self._communicator.host, self._communicator.port)
+
     def make_command(self, cmd):
         try:
             return CMD_MAP[cmd]

@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Button, Bool, Str, List, provides
+from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -37,14 +37,16 @@ class InvalidPipetteError(BaseException):
 
 @provides(IPipetteManager)
 class SimpleApisManager(Manager):
-    apis_controller = Instance(ApisController)
+    controller = Instance(ApisController)
 
-    test_command = Str(auto_set=False, enter_set=True)
+    test_command = Str
     test_command_response = Str
     clear_test_response_button = Button
     test_button = Button
     testing = Bool
     test_script_button = Button
+    display_response_info = Bool(True)
+    test_enabled = Property
 
     available_pipettes = List
     available_blanks = List
@@ -56,8 +58,8 @@ class SimpleApisManager(Manager):
         pass
 
     def finish_loading(self):
-        blanks = self.apis_controller.get_available_blanks()
-        airs = self.apis_controller.get_available_airs()
+        blanks = self.controller.get_available_blanks()
+        airs = self.controller.get_available_airs()
         if blanks:
             self.available_blanks = blanks.split(',')
         if airs:
@@ -68,19 +70,19 @@ class SimpleApisManager(Manager):
 
     def load_pipette(self, *args, **kw):
         func = 'load_pipette'
-        return self._load_pipette(func, *args, **kw)
+        return self._load_pipette(self.available_pipettes, func, *args, **kw)
 
     def load_blank(self, *args, **kw):
         func = 'load_blank'
-        return self._load_pipette(func, *args, **kw)
+        return self._load_pipette(self.available_blanks, func, *args, **kw)
 
     #private
-    def _load_pipette(self, func, name, timeout=10, period=1):
+    def _load_pipette(self, av, func, name, timeout=10, period=1):
         name = str(name)
-        if not name in self.available_pipettes:
+        if not name in av:
             raise InvalidPipetteError(name)
 
-        func = getattr(self.apis_controller, func)
+        func = getattr(self.controller, func)
         func(name)
 
         #wait for completion
@@ -90,7 +92,7 @@ class SimpleApisManager(Manager):
         if self._timeout_flag:
             return True
         else:
-            return self.apis_controller.blocking_poll('get_loading_complete', **kw)
+            return self.controller.blocking_poll('get_loading_complete', **kw)
 
     def _test_script_button_fired(self):
         self.testing = True
@@ -110,9 +112,18 @@ class SimpleApisManager(Manager):
     def _execute_test_command(self):
         cmd = self._assemble_command()
         if cmd:
-            r = self.apis_controller.ask(cmd)
-            r = r if r else 'No Response'
-            self.test_command_response = '{}\n{}>>{}'.format(self.test_command_response, cmd, r)
+            if self.controller.is_connected():
+                resp = self.controller.ask(cmd)
+                r = resp if resp else 'No Response'
+            else:
+                resp = ''
+                r = 'No Connection'
+
+            tcr = '{}\n{} >> {}'.format(self.test_command_response, cmd, r)
+            if self.display_response_info:
+                tcr = '{}\n\tresponse length={}'.format(tcr, len(resp))
+
+            self.test_command_response = tcr
 
     def _assemble_command(self):
         cmd = self.test_command
@@ -121,10 +132,12 @@ class SimpleApisManager(Manager):
 
         return cmd
 
-
-    def _apis_controller_default(self):
+    def _controller_default(self):
         v = ApisController(name='apis_controller')
         return v
+
+    def _get_test_enabled(self):
+        return self.test_command and not self.testing
 
         # class ApisManager(Manager):
         #     implements(IPipetteManager)
