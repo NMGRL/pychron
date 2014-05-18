@@ -1073,9 +1073,14 @@ If "No" select from database
     #===============================================================================
     # handlers
     #===============================================================================
+    def _current_run_changed(self):
+        if self.current_run:
+            self.current_run.is_last = self.end_at_run_completion
+
     def _end_at_run_completion_changed(self):
         if self.end_at_run_completion:
-            self.current_run.is_last = True
+            if self.current_run:
+                self.current_run.is_last = True
         else:
             self._update_automated_runs()
 

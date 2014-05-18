@@ -206,8 +206,7 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if comm is not None:
             if comm.scheduler:
                 r = comm.scheduler.schedule(comm.ask, args=(cmd,),
-                                            kwargs=kw
-                )
+                                            kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
             self._communicate_hook(cmd, r)
