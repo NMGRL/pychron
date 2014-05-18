@@ -134,10 +134,10 @@ class IonOpticsManager(Manager):
 
                 mag.mass_change(pos)
 
-            else:
-                #get nearst isotope
-                self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
-                spec.update_isotopes('  {:n}'.format(round(pos)), detector)
+            # else:
+            #     #get nearst isotope
+            #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
+            #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
             # pos is mass i.e 39.962
             dac = mag.map_mass_to_dac(pos, det.name)
