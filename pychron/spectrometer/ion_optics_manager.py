@@ -124,7 +124,6 @@ class IonOpticsManager(Manager):
                 # pos is isotope
                 pos = self.get_mass(pos)
                 mag._mass = pos
-
             #this is not necessary and potential a source of issues
             # else:
             #     #get nearst isotope
