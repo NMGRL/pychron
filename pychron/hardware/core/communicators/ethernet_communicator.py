@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 #============= standard library imports ========================
 import socket
@@ -33,7 +31,6 @@ class Handler(Loggable):
     def send_packet(self, p):
         pass
 
-
     def end(self):
         pass
 
@@ -44,8 +41,8 @@ class TCPHandler(Handler):
     def open_socket(self, addr, timeout=2.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(addr)
         self.sock.settimeout(timeout)
+        self.sock.connect(addr)
 
     def get_packet(self, cmd):
         try:
@@ -98,12 +95,16 @@ class UDPHandler(Handler):
 
 
 class EthernetCommunicator(Communicator):
-    '''
-    '''
+    """
+    """
     host = None
     port = None
     handler = None
     kind = 'UDP'
+    test_cmd = '***'
+
+    #should the handler disconnect at the end of an ask statement
+    use_end = True
 
     def load(self, config, path):
         """
@@ -113,7 +114,9 @@ class EthernetCommunicator(Communicator):
         self.port = self.config_get(config, 'Communications', 'port', cast='int')
 
         self.kind = self.config_get(config, 'Communications', 'kind', optional=True)
-
+        self.test_cmd = self.config_get(config, 'Communications', 'test_cmd', optional=True, default='***')
+        self.use_end = self.config_get(config, 'Communications', 'use_end', cast='boolean', optional=True,
+                                       default=False)
         if self.kind is None:
             self.kind = 'UDP'
 
@@ -125,7 +128,8 @@ class EthernetCommunicator(Communicator):
 
         handler = self.get_handler()
         # send a test command so see if wer have connection
-        cmd = '***'
+        cmd = self.test_cmd
+        self.debug('sending test command {}'.format(cmd))
         if handler:
             if handler.send_packet(cmd):
                 r = handler.get_packet(cmd)
@@ -146,13 +150,17 @@ class EthernetCommunicator(Communicator):
             else:
                 h = self.handler
         else:
-            h = TCPHandler()
-            try:
-                h.open_socket((self.host, self.port))
-            except socket.error:
-                h = None
+            if self.handler is None:
+                h = TCPHandler()
+                try:
+                    h.open_socket((self.host, self.port))
+                except socket.error, e:
+                    self.debug(str(e))
+                    h = None
 
-        self.handler = h
+                self.handler = h
+            else:
+                h = self.handler
         return h
 
     def _reset_connection(self):
@@ -189,7 +197,10 @@ class EthernetCommunicator(Communicator):
         if r is not None:
             re = self.process_response(r)
 
-        handler.end()
+        if self.use_end:
+            handler.end()
+            self._reset_connection()
+
         if verbose:
             self.log_response(cmd, re, info)
 
