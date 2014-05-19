@@ -287,7 +287,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier='', timeout=50):
+    def extract_pipette(self, identifier='', timeout=300):
 
         if identifier == '':
             identifier = self.extract_value
@@ -295,7 +295,8 @@ class ExtractionPyScript(ValvePyScript):
         cmd = 'load_blank' if self.analysis_type == 'blank' else 'load_pipette'
         try:
             rets = self._extraction_action([(cmd, (identifier,),
-                                             {'timeout': timeout})],
+                                             {'timeout': timeout,
+                                              'script': self})],
                                            name='externalpipette',
                                            protocol=IPipetteManager)
 

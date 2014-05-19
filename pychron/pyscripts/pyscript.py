@@ -278,6 +278,7 @@ class PyScript(Loggable):
         try:
             code = compile(snippet, '<string>', 'exec')
         except Exception, e:
+            self.debug(traceback.format_exc())
             return e
         else:
             return code
@@ -647,6 +648,9 @@ class PyScript(Loggable):
         except AttributeError, e:
             self.debug('m_info {}'.format(e))
 
+    def canceled(self):
+        return self._cancel
+
     def finished(self):
         #         self._ctx = None
         self._finished()
@@ -677,7 +681,7 @@ class PyScript(Loggable):
 
         error = self.execute_snippet(**kw)
         if error:
-            self.warning(str(error))
+            self.warning('_execute: {}'.format(str(error)))
             return error
 
         if self.testing_syntax:

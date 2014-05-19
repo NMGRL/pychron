@@ -102,9 +102,7 @@ class EthernetCommunicator(Communicator):
     handler = None
     kind = 'UDP'
     test_cmd = '***'
-
-    #should the handler disconnect at the end of an ask statement
-    use_end = True
+    use_end =True
 
     def load(self, config, path):
         """
@@ -123,7 +121,9 @@ class EthernetCommunicator(Communicator):
         return True
 
     def open(self, *args, **kw):
+        return self.test_connection()
 
+    def test_connection(self):
         self.simulation = False
 
         handler = self.get_handler()

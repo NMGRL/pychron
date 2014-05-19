@@ -57,9 +57,13 @@ class ApisController(CoreDevice):
         cmd = self.make_command('load_air')
         self.ask('{},{}'.format(cmd, name))
 
-    def get_loading_status(self):
+    def get_status(self):
         cmd = self.make_command('status')
         status = self.ask(cmd)
+        return status
+
+    def get_loading_status(self):
+        status = self.get_status()
         try:
             status = STATUS_MAP[status]
             return status
@@ -78,5 +82,8 @@ class ApisController(CoreDevice):
         cmd = self.make_command('list_airs')
         return self.ask(cmd)
 
+    def set_external_pumping(self):
+        cmd =self.make_command('set_external_pumping')
+        return self.ask(cmd)
 #============= EOF =============================================
 

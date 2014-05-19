@@ -34,6 +34,7 @@ import os
 from pychron.displays.display import DisplayController
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -1054,6 +1055,8 @@ If "No" select from database
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
+                if man is None:
+                    man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
             if not man:
                 nonfound.append(extract_device)
