@@ -656,11 +656,11 @@ class AutomatedRunFactory(Loggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = self._remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device != NULL_STR:
+                    if labnumber in ('u', 'bu') and \
+                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
-                            e = self.extract_device.split(' ')[1].lower()
                             if skey == 'extraction':
                                 new_script_name = e
                             elif skey == 'post_equilibration':
@@ -1027,6 +1027,7 @@ post_equilibration_script:name
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 ln = db.get_labnumber(labnumber)
+                print ln
                 if ln:
                     # set sample and irrad info
                     try:
