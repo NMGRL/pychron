@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 #============= standard library imports ========================
 import socket
@@ -33,7 +31,6 @@ class Handler(Loggable):
     def send_packet(self, p):
         pass
 
-
     def end(self):
         pass
 
@@ -44,8 +41,8 @@ class TCPHandler(Handler):
     def open_socket(self, addr, timeout=2.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(addr)
         self.sock.settimeout(timeout)
+        self.sock.connect(addr)
 
     def get_packet(self, cmd):
         try:
@@ -98,8 +95,8 @@ class UDPHandler(Handler):
 
 
 class EthernetCommunicator(Communicator):
-    '''
-    '''
+    """
+    """
     host = None
     port = None
     handler = None
