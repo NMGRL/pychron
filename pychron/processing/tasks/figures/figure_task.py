@@ -27,6 +27,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -256,6 +257,7 @@ class FigureTask(AnalysisEditTask):
 
     def new_ideogram_from_file(self):
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages7.txt'
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/dryvalleys_comp.txt'
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 

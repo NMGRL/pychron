@@ -25,6 +25,7 @@ import struct
 import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
+from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.helpers.filetools import remove_extension
 
 from pychron.processing.analyses.analysis import Analysis, Fit
@@ -209,15 +210,12 @@ class DBAnalysis(Analysis):
         self._sync_irradiation(lab)
 
         #this is the dominant time sink
-        self._sync_isotopes(meas_analysis, isos,
-                            unpack, load_peak_center=load_changes)
+        # self._sync_isotopes(meas_analysis, isos,
+        #                     unpack, load_peak_center=load_changes)
+        timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
+                 kwargs={'load_peak_center': load_changes})
+
         self._sync_detector_info(meas_analysis)
-
-        # timethis(self._sync_isotopes, args=(meas_analysis, unpack))
-        # timethis(self._sync_detector_info, args=(meas_analysis,))
-        # timethis(self._sync_irradiation, args=(meas_analysis.labnumber,))
-        # timethis(self._sync_meta, args=(meas_analysis,))
-
         if load_changes:
             self._sync_measurement(meas_analysis)
             self._sync_changes(meas_analysis)
@@ -424,10 +422,10 @@ class DBAnalysis(Analysis):
 
     def _sync_isotopes(self, meas_analysis, isos,
                        unpack, load_peak_center=False):
-        # self.isotopes=timethis(self._get_isotopes, args=(meas_analysis,), kwargs=dict(unpack=unpack))
-        # self.isotopes = self._get_isotopes(meas_analysis, isos,
-        #                                    selected_histories,
-        #                                    unpack=unpack)
+
+        # self.isotopes = timethis(self._get_isotopes, args=(meas_analysis, isos),
+        #                          kwargs=dict(unpack=unpack))
+
         self.isotopes = self._get_isotopes(meas_analysis, isos,
                                            unpack=unpack)
         self.isotope_fits = self._get_isotope_fits()
@@ -507,8 +505,8 @@ class DBAnalysis(Analysis):
                       unpack):
         isotopes = dict()
 
-        # timethis(self._get_signals, args=(isotopes, meas_analysis, unpack))
-        # timethis(self._get_baselines, args=(isotopes, meas_analysis, unpack))
+        # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
+        # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
 
         self._get_signals(isotopes, meas_analysis, dbisos, unpack)
@@ -529,9 +527,9 @@ class DBAnalysis(Analysis):
                         blank = isodict[isok].blank
                         blank.name = n = '{} bk'.format(isok)
                         blank.set_uvalue((ba.user_value,
-                                          ba.user_error))
+                                          ba.user_error), dirty=False)
                         blank.uvalue.tag = n
-                        blank.fit = ba.fit or ''
+                        blank.trait_setq(fit=ba.fit or '')
                         keys.remove(isok)
                         if not keys:
                             break
@@ -558,8 +556,10 @@ class DBAnalysis(Analysis):
                 continue
 
             det = iso.detector.name
+
             try:
                 result = iso.results[-1]
+                # result = timethis(lambda: iso.results[-1])
             except IndexError:
                 result = None
 
@@ -569,12 +569,7 @@ class DBAnalysis(Analysis):
                         name=name,
                         detector=det,
                         unpack=unpack)
-            # r = timethis(Isotope, msg='make_isotope', kwargs=dict(mass=iso.molecular_weight.mass,
-            #                               dbrecord=iso,
-            #                               dbresult=result,
-            #                               name=name,
-            #                               detector=det,
-            #                               unpack=unpack))
+
             if r.unpack_error:
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
                 self.temp_status = 1
@@ -589,7 +584,6 @@ class DBAnalysis(Analysis):
                               include_baseline_error=False,
                               time_zero_offset=0)
                 r.set_fit(fit, notify=False)
-                # timethis(r.set_fit, args=(fit,), kwargs=dict(notify=False))
                 isodict[name] = r
 
     def _get_baselines(self, isotopes, meas_analysis, dbisos, unpack):
