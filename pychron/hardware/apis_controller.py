@@ -53,12 +53,15 @@ class ApisController(CoreDevice):
     # use this for a more complex/flexible pattern i.e open/close multiple valves
     isolation_gosub = None
 
-
     def load_additional_args(self, config):
-        self.isolation_valve = self.config_get(config, 'Isolation', 'valve', optional=False, default='U')
+        v = self.config_get(config, 'Isolation', 'valve', optional=False, default='U')
         self.isolation_delay = self.config_get(config, 'Isolation', 'delay', optional=False, cast='int', default=25)
         self.isolation_info = self.config_get(config, 'Isolation', 'info', optional=True)
         self.isolation_gosub = self.config_get(config, 'Isolation', 'gosub', optional=True)
+
+        self.isolation_valve=v.replace('"','').replace("'",'')
+
+        return True
 
     def script_loading_block(self, script, **kw):
         """
@@ -77,7 +80,7 @@ class ApisController(CoreDevice):
             return True if completed successfully
         """
         script.info('waiting for pipette to load')
-        if not self.blocking_poll('loading_started', **kw):
+        if not self.blocking_poll('loading_started', script=script, **kw):
             return
         script.info('loading started')
 
@@ -94,7 +97,7 @@ class ApisController(CoreDevice):
             script.close(self.isolation_valve)
 
         script.info('wait for apis to complete expansion')
-        return self.blocking_poll('get_loading_complete', **kw)
+        return self.blocking_poll('get_loading_complete',script=script, **kw)
 
     def make_command(self, cmd):
         try:

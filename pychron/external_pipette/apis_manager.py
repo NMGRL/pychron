@@ -76,16 +76,25 @@ class SimpleApisManager(Manager):
 
     def load_pipette(self, *args, **kw):
         func = 'load_pipette'
+        # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_pipettes, func, *args, **kw)
+        # self.controller.set_external_pumping()
+
         return ret
 
     def load_blank(self, *args, **kw):
         func = 'load_blank'
+        # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_blanks, func, *args, **kw)
+        # self.controller.set_external_pumping()
         return ret
 
     #private
-    def _load_pipette(self, av, func, script, name, timeout=10, period=1):
+    def _load_pipette(self, av, func, name, script=None, timeout=10, period=1):
+        if script is None:
+            self.debug('Script is none. check ExtractionPyScript.extract_pipette')
+            raise NotImplementedError
+
         name = str(name)
         if not name in av:
             raise InvalidPipetteError(name, av)

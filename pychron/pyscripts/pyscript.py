@@ -701,11 +701,11 @@ class PyScript(Loggable):
             app = self.application
 
         if app is not None:
-            args = (protocol,)
+            app_args = (protocol,)
             if name is not None:
-                args = (protocol, 'name=="{}"'.format(name))
+                app_args = (protocol, 'name=="{}"'.format(name))
 
-            man = app.get_service(*args)
+            man = app.get_service(*app_args)
 
         if man is not None:
             if not isinstance(func, list):
