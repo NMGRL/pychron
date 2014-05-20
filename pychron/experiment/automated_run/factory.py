@@ -32,7 +32,7 @@ from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGE
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
 from pychron.experiment.automated_run.factory_view import FactoryView
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
-    make_special_identifier, make_standard_identifier
+    make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
@@ -1085,6 +1085,7 @@ post_equilibration_script:name''')
     def _special_labnumber_changed(self):
         if not self.special_labnumber in ('Special Labnumber', LINE_STR):
             ln = convert_special_name(self.special_labnumber)
+            self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
                 if ln in ('dg', 'pa'):
                     pass
@@ -1095,7 +1096,7 @@ post_equilibration_script:name''')
                     with db.session_ctx():
                         ms = db.get_mass_spectrometer(self.mass_spectrometer)
                         ed = db.get_extraction_device(self.extract_device)
-                        if ln in ('a', 'ba', 'c', 'bc', 'bg'):
+                        if ln in SPECIAL_KEYS:
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()

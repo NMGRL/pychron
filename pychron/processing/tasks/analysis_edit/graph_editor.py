@@ -25,8 +25,8 @@ import os
 from itertools import groupby
 import pickle
 #============= local library imports  ==========================
+from pychron.core.codetools.simple_timeit import timethis
 from pychron.paths import paths
-from pychron.processing.analyses.dbanalysis import DBAnalysis
 from pychron.processing.fits.fit_selector import FitSelector
 from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.editor import BaseUnknownsEditor
@@ -151,11 +151,19 @@ class GraphEditor(BaseUnknownsEditor):
         self.rebuild()
 
     def set_items(self, unks, is_append=False, update_graph=None, **kw):
-        ans = self.processor.make_analyses(unks,
-                                           calculate_age=self.calculate_age,
-                                           unpack=self.unpack_peaktime,
-                                           **kw)
+        # ans = self.processor.make_analyses(unks,
+        #                                    calculate_age=self.calculate_age,
+        #                                    unpack=self.unpack_peaktime,
+        #                                    **kw)
+        #
 
+        def func():
+            return self.processor.make_analyses(unks,
+                                                calculate_age=self.calculate_age,
+                                                unpack=self.unpack_peaktime,
+                                                **kw)
+
+        ans = timethis(func)
         # print 'pre', all(map(lambda x: isinstance(x, DBAnalysis), ans))
         if is_append:
             pans = self.analyses
@@ -165,7 +173,7 @@ class GraphEditor(BaseUnknownsEditor):
         # print 'post', all(map(lambda x: isinstance(x, DBAnalysis), ans))
 
         if update_graph is None:
-            update_graph=self.update_graph_on_set_items
+            update_graph = self.update_graph_on_set_items
 
         self.analyses = ans
         self._update_analyses(update_graph=update_graph)

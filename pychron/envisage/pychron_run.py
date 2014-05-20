@@ -211,6 +211,17 @@ def check_dependencies():
 def launch(klass):
     """
     """
+    # login protection
+    #
+    # moving app.run to a compiled object would be more robust
+    #
+    # from pychron.login.login import check_login
+    # from pychron.paths import paths
+    # import os
+    # with open(os.path.join(paths.hidden_dir, 'login_pwd'), 'r') as fp:
+    #     if not check_login(fp.read()):
+    #         logger.critical('Login failed')
+    #         return
 
     if not check_dependencies():
         return

@@ -26,6 +26,7 @@ from apptools.preferences.preference_binding import bind_preference
 import weakref
 #============= local library imports  ==========================
 from traits.has_traits import provides
+from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.i_datastore import IDatastore
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
@@ -41,6 +42,10 @@ from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 1000
+
+
+class CancelLoadingError(BaseException):
+    pass
 
 
 @provides(IDatastore)
@@ -281,35 +286,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 progress = self._open_progress(n + 2)
         return progress
 
-    def _construct_analyses(self, n, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
-        new_ans = []
-        #get all dbrecords with one call
-        uuids = [ri.uuid for ri in no_db_ans]
-        ms = self.db.get_analyses_uuid(uuids)
-        construct = self._construct_analysis
-        append = new_ans.append
-        add_to_cache = self._add_to_cache
-        key = lambda x: x[0]
-        dbrecords = groupby(ms, key=key)
-        for i, ai in enumerate(no_db_ans):
-            mi, gi = dbrecords.next()
-            if progress:
-                if progress.canceled:
-                    self.debug('canceling make analyses')
-                    db_ans = []
-                    new_ans = []
-                    break
-                elif progress.accepted:
-                    self.debug('accepting {}/{} analyses'.format(i, n))
-                    break
-
-            a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
-            if a:
-                if use_cache:
-                    add_to_cache(a)
-                append(a)
-        return db_ans, new_ans
-
     def make_analyses(self, ans,
                       progress=None,
                       use_progress=True,
@@ -370,7 +346,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         progress = self._setup_progress(n, progress, use_progress)
 
                         db_ans, new_ans = self._construct_analyses(n, no_db_ans, db_ans, progress,
-                                                          calculate_age, unpack, use_cache, **kw)
+                                                                   calculate_age, unpack, use_cache, **kw)
 
                         db_ans.extend(new_ans)
 
@@ -414,21 +390,37 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     #===============================================================================
     # private
     #===============================================================================
-    def _add_to_cache(self, rec):
-        if not rec.uuid in ANALYSIS_CACHE:
-            #self.debug('Adding {} to cache'.format(rec.record_id))
-            ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()
-            ANALYSIS_CACHE_COUNT[rec.uuid] = 1
-        else:
-            ANALYSIS_CACHE_COUNT[rec.uuid] += 1
+    def _construct_analyses(self, n, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
+        #get all dbrecords with one call
+        uuids = [ri.uuid for ri in no_db_ans]
+        ms = self.db.get_analyses_uuid(uuids)
 
-        #remove items from cached based on frequency of use
-        if len(ANALYSIS_CACHE) > CACHE_LIMIT:
-            s = sorted(ANALYSIS_CACHE_COUNT.iteritems(), key=lambda x: x[1])
-            k, v = s[0]
-            ANALYSIS_CACHE.pop(k)
-            ANALYSIS_CACHE_COUNT.pop(k)
-            self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
+        def _gen():
+            construct = self._construct_analysis
+            add_to_cache = self._add_to_cache
+
+            key = lambda x: x[0]
+            dbrecords = groupby(ms, key=key)
+            for i, ai in enumerate(no_db_ans):
+                if progress:
+                    if progress.canceled:
+                        self.debug('canceling make analyses')
+                        raise CancelLoadingError
+                    elif progress.accepted:
+                        self.debug('accepting {}/{} analyses'.format(i, n))
+                        break
+
+                mi, gi = dbrecords.next()
+                a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
+                if a:
+                    if use_cache:
+                        add_to_cache(a)
+                    yield a
+
+        try:
+            return db_ans, list(_gen())
+        except CancelLoadingError:
+            return [], []
 
     def _construct_analysis(self, rec, group, prog, calculate_age=True, unpack=False, load_changes=False):
         atype = None
@@ -458,31 +450,47 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             msg = 'loading {}. {}'.format(rid, m)
             prog.change_message(msg)
 
-        # meas_analysis = self.db.get_analysis_uuid(rec.uuid)
-
         klass = DBAnalysis if not self.use_vcs else VCSAnalysis
         ai = klass(group_id=group_id,
                    graph_id=graph_id)
 
         # if not self.use_vcs:
-        synced = False
+        # ai.sync(group, unpack=unpack, load_changes=load_changes)
+        timethis(ai.sync, args=(group,),
+                 kwargs=dict(unpack=unpack, load_changes=load_changes))
+
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
-                ai.sync(group, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age)
 
-                synced = True
+                # synced = True
 
-        if not synced:
-            ai.sync(group, unpack=unpack, load_changes=load_changes)
+        # if not synced:
+        #     ai.sync(group, unpack=unpack, load_changes=load_changes)
 
         return ai
+
+    def _add_to_cache(self, rec):
+        if not rec.uuid in ANALYSIS_CACHE:
+            #self.debug('Adding {} to cache'.format(rec.record_id))
+            ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()
+            ANALYSIS_CACHE_COUNT[rec.uuid] = 1
+        else:
+            ANALYSIS_CACHE_COUNT[rec.uuid] += 1
+
+        #remove items from cached based on frequency of use
+        if len(ANALYSIS_CACHE) > CACHE_LIMIT:
+            s = sorted(ANALYSIS_CACHE_COUNT.iteritems(), key=lambda x: x[1])
+            k, v = s[0]
+            ANALYSIS_CACHE.pop(k)
+            ANALYSIS_CACHE_COUNT.pop(k)
+            self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
 
     #===============================================================================
     # property get/set

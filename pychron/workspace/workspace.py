@@ -18,9 +18,7 @@ from pychron.core.ui import set_qt
 
 set_qt()
 #============= enthought library imports =======================
-from traitsui.handler import Controller
 from traits.api import Instance, Button
-from traitsui.api import View, Item
 import yaml
 #============= standard library imports ========================
 import os
@@ -171,15 +169,12 @@ class WorkspaceManager(Loggable):
 
         return attr_diff
 
-    def _test_fired(self):
-        print self.schema_diff('age')
-        # self.schema_diff('error')
-
-
-class TestController(Controller):
-    def traits_view(self):
-        v = View(Item('test'))
-        return v
+    def get_history(self):
+        p = 'record2.yaml'
+        repo = self._repo
+        hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
+        cs = [repo.rev_parse(c).message for c in hexshas]
+        return cs
 
 
 if __name__ == '__main__':
@@ -210,8 +205,7 @@ if __name__ == '__main__':
 
     wm.modify_record(mpath)
 
-    tc = TestController(model=wm)
-    tc.configure_traits()
+
     # print wm.schema_diff(('age', 'error'))
     # wm.commit_modification()
     # print wm.schema_diff(('age', 'error'))

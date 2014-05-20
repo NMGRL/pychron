@@ -22,6 +22,7 @@ import re
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import array, Inf
@@ -83,7 +84,6 @@ class BaseMeasurement(HasTraits):
         self.xs = array(xs)
         self.ys = array(ys)
 
-
     def _unpack_blob(self, blob, endianness=None):
         if endianness is None:
             endianness = self.endianness
@@ -140,11 +140,10 @@ class IsotopicMeasurement(BaseMeasurement):
     def __init__(self, dbresult=None, *args, **kw):
 
         if dbresult:
-
             self._value = dbresult.signal_
             self._error = dbresult.signal_err
-        else:
-            kw['unpack'] = True
+        # else:
+        #     kw['unpack'] = True
 
         super(IsotopicMeasurement, self).__init__(*args, **kw)
 
@@ -220,14 +219,14 @@ class IsotopicMeasurement(BaseMeasurement):
                            trait_change_notify=notify)
             self.include_baseline_error = fit.include_baseline_error or False
 
-    def set_uvalue(self, v):
+    def set_uvalue(self, v, dirty=True):
         if isinstance(v, tuple):
             self._value, self._error = v
         else:
             self._value = v.nominal_value
             self._error = v.std_dev
 
-        self.dirty = True
+        self.dirty = dirty
 
     def _revert_user_defined(self):
         self.user_defined_error = False

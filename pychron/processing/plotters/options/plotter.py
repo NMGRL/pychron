@@ -30,6 +30,7 @@ from traitsui.table_column import ObjectColumn
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.label_maker import TitleMaker
 from pychron.processing.plotters.options.base import FigurePlotterOptions
+from pychron.pychron_constants import ALPHAS
 
 FONTS = ['modern', 'arial']
 SIZES = [6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
@@ -91,7 +92,7 @@ class PlotterOptions(FigurePlotterOptions):
             self.title = tm.label
             self.title_delimiter = tm.delimiter
 
-    def generate_title(self, analyses):
+    def generate_title(self, analyses, n):
         attrs = self.title_attribute_keys
         ts = []
         rref, ctx = None, {}
@@ -103,9 +104,14 @@ class PlotterOptions(FigurePlotterOptions):
             ref = ais.next()
             d = {}
             for ai in attrs:
-                v = getattr(ref, ai)
-                if ai == 'material':
-                    v = material_map[v]
+                if ai == 'alphacounter':
+                    v = ALPHAS[n]
+                elif ai == 'numericcounter':
+                    v = n
+                else:
+                    v = getattr(ref, ai)
+                    if ai == 'material':
+                        v = material_map[v]
                 d[ai] = v
 
             if not rref:

@@ -392,8 +392,11 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/40_no_spokes.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_spokes.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes.txt'
-    p = '/Users/ross/Desktop/72_spokes'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes.txt'
+    # p = '/Users/ross/Desktop/72_spokes'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
     gcc, gm = open_txt(p, (2.54, 2.54), 0.0175 * 2.54,
                        convert_mm=True, make=True,
                        rotate=0)
