@@ -118,12 +118,23 @@ Ar36	6.0790579e-19'''
 
 
 if __name__ == '__main__':
-    import sys
-
-    sys.path.insert(0, '/Users/ross/Programming/git/pychron_dev')
+    import sys, os, socket
+#    root='/Users/ross/Programming/git/pychron_dev'
+ #   if not os.path.isdir(root):
+  #      root='/Users/argonlab
+    root=os.getcwd()
+    while 1:
+        args=root.split('/')
+        if args[-2]=='git' and args[-1].startswith('pychron'):
+            break
+        else:
+            root=os.path.dirname(root)
+            
+    sys.path.insert(0, root)
     from pychron.emulation_server import EmulationServer
     from pychron.external_pipette.apis_emulator import APISEmulator
 
-    e = EmulationServer('localhost', 1080, APISEmulator)
+    host=socket.gethostbyname(socket.gethostname())
+    e = EmulationServer(host, 1080, APISEmulator)
     e.start()
 
