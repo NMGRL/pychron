@@ -44,9 +44,10 @@ before_install:
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
   #- PKGS="${PKGS} matplotlib"; if [ ${MATPLOTLIB} ]; then PKGS="${PKGS}=${MATPLOTLIB}"; fi
+  - PKGS="${PKGS} pip traits enable chaco pyface traitsui enable chaco";
 
 install:
-  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL} pip
+  - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
   - pip install -r requirements.txt
   #- python setup.py test
