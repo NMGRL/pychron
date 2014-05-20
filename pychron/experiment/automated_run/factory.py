@@ -661,6 +661,7 @@ class AutomatedRunFactory(Loggable):
 
                         # the default value trumps pychron's
                         if self.extract_device:
+                            e = self.extract_device.split(' ')[1].lower()
                             if skey == 'extraction':
                                 new_script_name = e
                             elif skey == 'post_equilibration':
@@ -978,7 +979,7 @@ post_equilibration_script:name
                     with db.session_ctx():
                         ms = db.get_mass_spectrometer(self.mass_spectrometer)
                         ed = db.get_extraction_device(self.extract_device)
-                        if ln in SPECIAL_KEYS:
+                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()

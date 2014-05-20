@@ -143,7 +143,7 @@ def get_analysis_type(idn):
         return 'background'
     elif idn.startswith('ba'):
         return 'blank_air'
-    elif idn.startswith('bu') or idn.startswith('bac') or idn.startswith('bfc'):
+    elif idn.startswith('bu'):
         return 'blank_unknown'
     elif idn.startswith('bc'):
         return 'blank_cocktail'
