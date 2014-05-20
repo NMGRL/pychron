@@ -79,10 +79,10 @@ class ApisController(CoreDevice):
 
             return True if completed successfully
         """
-        script.info('waiting for pipette to load')
+        script.console_info('waiting for pipette to load')
         if not self.blocking_poll('loading_started', script=script, **kw):
             return
-        script.info('loading started')
+        script.console_info('loading started')
 
         if self.isolation_gosub:
             self.debug('executing isolation gosub= {}'.format(self.isolation_gosub))
@@ -93,10 +93,10 @@ class ApisController(CoreDevice):
             time.sleep(ws)
 
             if self.isolation_info:
-                script.info(self.isolation_info)
+                script.console_info(self.isolation_info)
             script.close(self.isolation_valve)
 
-        script.info('wait for apis to complete expansion')
+        script.console_info('wait for apis to complete expansion')
         return self.blocking_poll('get_loading_complete',script=script, **kw)
 
     def make_command(self, cmd):

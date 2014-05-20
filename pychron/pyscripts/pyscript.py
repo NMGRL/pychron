@@ -209,6 +209,9 @@ class PyScript(Loggable):
         super(PyScript, self).__init__(*args, **kw)
         self._block_lock = Lock()
 
+    def console_info(self, *args, **kw):
+        self._m_info(*args, **kw)
+
     def calculate_estimated_duration(self, force=False):
         if not self.syntax_checked or force:
             self.syntax_checked = False
