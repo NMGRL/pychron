@@ -12,7 +12,7 @@ env:
     - CYTHON=0.20
     - PATSY=0.2
     - PANDAS=0.12
-    - MATPLOTLIB=false
+    #- MATPLOTLIB=false
     - OPTIONAL=
     - COVERAGE=false
 
