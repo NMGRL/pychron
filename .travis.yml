@@ -15,7 +15,7 @@ env:
     #- MATPLOTLIB=false
     - OPTIONAL=
     - COVERAGE=false
-    - PYTHON = 2.7
+    - PYTHON=2.7
 
 before_install:
   # adapted from statsmodels travis file https://github.com/statsmodels/statsmodels/blob/master/.travis.yml
