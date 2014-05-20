@@ -15,7 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import time
+
 from traits.api import Property
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -40,8 +43,58 @@ STATUS_MAP = {'0': 'Idle',
 class ApisController(CoreDevice):
     connection_url = Property
 
-    def _get_connection_url(self):
-        return '{}:{}'.format(self._communicator.host, self._communicator.port)
+    # close `isolation_valve` `isolation_delay` seconds after loading of pipette started
+    isolation_delay = 25
+    # name of valve to make analytical section static
+    isolation_valve = 'U'
+    isolation_info = 'isolate microbone'
+
+    # instead of the simple wait/close sequence use the a gosub
+    # use this for a more complex/flexible pattern i.e open/close multiple valves
+    isolation_gosub = None
+
+
+    def load_additional_args(self, config):
+        self.isolation_valve = self.config_get(config, 'Isolation', 'valve', optional=False, default='U')
+        self.isolation_delay = self.config_get(config, 'Isolation', 'delay', optional=False, cast='int', default=25)
+        self.isolation_info = self.config_get(config, 'Isolation', 'info', optional=True)
+        self.isolation_gosub = self.config_get(config, 'Isolation', 'gosub', optional=True)
+
+    def script_loading_block(self, script, **kw):
+        """
+            wait for script loading to complete.
+
+            this process has three steps.
+            1. wait for loading to start. status changes from 1 to 2
+
+            2. if isolation_gosub
+                  do gosub
+               else
+                  wait `isolation_delay` seconds then close the `isolation valve`
+
+            3. wait for apis script to complete
+
+            return True if completed successfully
+        """
+        script.info('waiting for pipette to load')
+        if not self.blocking_poll('loading_started', **kw):
+            return
+        script.info('loading started')
+
+        if self.isolation_gosub:
+            self.debug('executing isolation gosub= {}'.format(self.isolation_gosub))
+            script.gosub(self.isolation_gosub)
+        else:
+            ws = self.isolation_delay
+            self.debug('wait {}s'.format(ws))
+            time.sleep(ws)
+
+            if self.isolation_info:
+                script.info(self.isolation_info)
+            script.close(self.isolation_valve)
+
+        script.info('wait for apis to complete expansion')
+        return self.blocking_poll('get_loading_complete', **kw)
 
     def make_command(self, cmd):
         try:
@@ -70,6 +123,10 @@ class ApisController(CoreDevice):
         except KeyError:
             pass
 
+    def loading_started(self):
+        status = self.get_loading_status()
+        return status == 'Loading pipette'
+
     def get_loading_complete(self):
         status = self.get_loading_status()
         return status == 'Expansion complete'
@@ -83,7 +140,11 @@ class ApisController(CoreDevice):
         return self.ask(cmd)
 
     def set_external_pumping(self):
-        cmd =self.make_command('set_external_pumping')
+        cmd = self.make_command('set_external_pumping')
         return self.ask(cmd)
+
+    def _get_connection_url(self):
+        return '{}:{}'.format(self._communicator.host, self._communicator.port)
+
 #============= EOF =============================================
 

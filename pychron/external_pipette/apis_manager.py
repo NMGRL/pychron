@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import time
 from traits.api import Instance, Button, Bool, Str, List, provides, Property
 
 #============= standard library imports ========================
@@ -54,6 +53,7 @@ class SimpleApisManager(Manager):
     available_blanks = List
 
     mode = 'client'
+
     #for unittesting
     _timeout_flag = False
 
@@ -76,21 +76,16 @@ class SimpleApisManager(Manager):
 
     def load_pipette(self, *args, **kw):
         func = 'load_pipette'
-        # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_pipettes, func, *args, **kw)
-        # self.controller.set_external_pumping()
         return ret
 
     def load_blank(self, *args, **kw):
         func = 'load_blank'
-        # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_blanks, func, *args, **kw)
-        # self.controller.set_external_pumping()
-
         return ret
 
     #private
-    def _load_pipette(self, av, func, name, timeout=10, period=1, script=None):
+    def _load_pipette(self, av, func, script, name, timeout=10, period=1):
         name = str(name)
         if not name in av:
             raise InvalidPipetteError(name, av)
@@ -99,36 +94,13 @@ class SimpleApisManager(Manager):
         func(name)
 
         #wait for completion
-        return self._loading_complete(timeout=timeout, period=period, script=script)
+        return self._loading_complete(script, timeout=timeout, period=period)
 
-    def _loading_complete(self, script=None, **kw):
+    def _loading_complete(self, script, **kw):
         if self._timeout_flag:
             return True
         else:
-            if script:
-                script.info('waiting for pipette to load')
-            period = kw.get('period', 1)
-            while 1:
-                if script and script.canceled():
-                    return
-                status = self.controller.get_status()
-                if status == '2':
-                    if script:
-                        script.info('loading started')
-                    break
-                time.sleep(period)
-
-            ws = 25
-            self.debug('wait {}s'.format(ws))
-            time.sleep(ws)
-
-            if script:
-                script.info('isolate microbone')
-                script.close('U')
-                script.info('wait for apis to complete expansion')
-            self.debug('wait for apis to complete expansion')
-
-            return self.controller.blocking_poll('get_loading_complete', **kw)
+            return self.controller.script_loading_block(script, **kw)
 
     def _test_script_button_fired(self):
         self.testing = True
