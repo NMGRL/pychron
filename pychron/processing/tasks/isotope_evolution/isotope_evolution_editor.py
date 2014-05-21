@@ -263,37 +263,62 @@ class IsotopeEvolutionEditor(GraphEditor):
         return xs
 
     def _plot_signal(self, add_tools, fd, fit, trunc, g, i, isok, unk):
-        if not isok in unk.isotopes:
-            return []
 
         display_sniff = True
-        iso = unk.isotopes[isok]
-        if display_sniff:
-            sniff = iso.sniff
-            offset = iso.time_zero_offset
+        if "/" in isok:
+            n,d=isok.split('/')
+            niso, diso = unk.isotopes[n], unk.isotopes[d]
+            nsniff, dsniff=niso.sniff, diso.sniff
+            if nsniff and dsniff:
+                offset = niso.time_zero_offset
+                nxs=nsniff.xs-offset
+                ys=nsniff.ys/dsniff.ys
 
-            if sniff:
-                g.new_series(sniff.xs - offset, sniff.ys,
+                g.new_series(nxs, ys,
                              plotid=i,
                              type='scatter',
                              fit=False)
 
-        iso.time_zero_offset = self.tool.time_zero_offset
+            xs = niso.offset_xs
+            ys = niso.ys/diso.ys
+            g.new_series(xs, ys,
+                         fit=(fit.fit, fit.error_type),
+                         filter_outliers_dict=fd,
+                         truncate=trunc,
+                         add_tools=add_tools,
+                         plotid=i)
 
-        iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
-        iso.filter_outlier_dict = fd
+            return xs
+        else:
+            if not isok in unk.isotopes:
+                return []
+            iso = unk.isotopes[isok]
+            if display_sniff:
+                sniff = iso.sniff
+                offset = iso.time_zero_offset
 
-        xs, ys = iso.offset_xs, iso.ys
-        g.new_series(xs, ys,
-                     fit=(fit.fit, fit.error_type),
-                     filter_outliers_dict=fd,
-                     truncate=trunc,
-                     add_tools=add_tools,
-                     plotid=i)
+                if sniff:
+                    g.new_series(sniff.xs - offset, sniff.ys,
+                                 plotid=i,
+                                 type='scatter',
+                                 fit=False)
 
-        # iso.set_fit(fit, notify=False)
-        iso.dirty = True
-        return xs
+            iso.time_zero_offset = self.tool.time_zero_offset
+
+            iso.trait_setq(fit=fit.fit, error_type=fit.error_type)
+            iso.filter_outlier_dict = fd
+
+            xs, ys = iso.offset_xs, iso.ys
+            g.new_series(xs, ys,
+                         fit=(fit.fit, fit.error_type),
+                         filter_outliers_dict=fd,
+                         truncate=trunc,
+                         add_tools=add_tools,
+                         plotid=i)
+
+            # iso.set_fit(fit, notify=False)
+            iso.dirty = True
+            return xs
 
     def _rebuild_graph(self):
         self.__rebuild_graph()
@@ -360,7 +385,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                               std_devs=fit.filter_std_devs,
                               filter_outliers=fit.filter_outliers)
                     trunc = fit.truncate
-
+                    print isok
                     if isok.endswith('bs'):
                         xs = self._plot_baselines(add_tools, fd, fit, trunc, g, i, isok, unk)
                     else:

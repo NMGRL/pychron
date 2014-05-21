@@ -30,8 +30,9 @@ class IsoEvoFitSelector(FilterFitSelector):
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
         # bfs = ['average' for fi in fits]
-
-        super(IsoEvoFitSelector, self).load_fits(keys + bs, fits)
+        vs= keys + bs + ['Ar40/Ar36']
+        fits = fits +[('linear','sem',{})]
+        super(IsoEvoFitSelector, self).load_fits(vs, fits)
 
     def traits_view(self):
         v = View(VGroup(
