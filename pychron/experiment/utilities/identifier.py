@@ -125,20 +125,19 @@ def convert_identifier(identifier):
 
 
 def get_analysis_type(idn):
+    """
+        idn: str like 'a-...' or '43513'
+    """
     idn = idn.lower()
 
-    #     if '-' in idn:
-    #         idn=idn.split('-')[0]
-    #
-    # check for Bg before B
     if idn.startswith('bg'):
         return 'background'
     elif idn.startswith('ba'):
         return 'blank_air'
-    elif idn.startswith('bu') or idn.startswith('bfc'):
-        return 'blank_unknown'
     elif idn.startswith('bc'):
         return 'blank_cocktail'
+    elif idn.startswith('b'):
+        return 'blank_unknown'
     elif idn.startswith('a'):
         return 'air'
     elif idn.startswith('c'):
