@@ -44,7 +44,7 @@ class IssueAction(WebAction):
         """
             goto issues page add an request or report bug
         """
-        url = 'https://github.com/jirhiker/pychron/issues/new'
+        url = 'https://github.com/NMGRL/pychron/issues/new'
         self._open_url(url)
 
 

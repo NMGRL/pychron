@@ -155,6 +155,7 @@ class LevelEditor(Loggable):
             if level.production:
                 self.selected_production = next((p for p in self.productions
                                                  if p.name == level.production.name), None)
+            original_tray = None
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
                 original_tray=self.selected_tray

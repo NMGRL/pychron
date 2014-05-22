@@ -259,12 +259,14 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def equilibrate(self, eqtime=20, inlet=None, outlet=None, do_post_equilibration=True, delay=3):
+    def equilibrate(self, eqtime=20, inlet=None, outlet=None,
+                    do_post_equilibration=True, close_inlet=True, delay=3):
 
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
+                                       close_inlet=close_inlet,
                                        delay=delay)
 
         if not evt:

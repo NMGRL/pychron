@@ -243,6 +243,7 @@ class AutomatedRun(Loggable):
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
+                         close_inlet=True,
                          delay=None):
         evt = TEvent()
         if not self._alive:
@@ -255,6 +256,7 @@ class AutomatedRun(Loggable):
                                inlet=inlet,
                                outlet=outlet,
                                delay=delay,
+                               close_inlet=close_inlet,
                                do_post_equilibration=do_post_equilibration))
         t.start()
 
@@ -1353,7 +1355,7 @@ anaylsis_type={}
 
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
-                     do_post_equilibration=True):
+                     do_post_equilibration=True, close_inlet=True):
 
         elm = self.extraction_line_manager
         if elm:
@@ -1374,7 +1376,7 @@ anaylsis_type={}
         time.sleep(eqtime)
         if self._alive:
             self.info('======== Equilibration Finished ========')
-            if elm and inlet:
+            if elm and inlet and close_inlet:
                 elm.close_valve(inlet)
 
             if do_post_equilibration:

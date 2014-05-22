@@ -287,15 +287,16 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier='', timeout=50):
+    def extract_pipette(self, identifier='', timeout=300):
 
         if identifier == '':
             identifier = self.extract_value
 
         cmd = 'load_blank' if self.analysis_type == 'blank' else 'load_pipette'
         try:
+            #bug _manager_action only with except tuple of len 1 for args
             rets = self._extraction_action([(cmd, (identifier,),
-                                             {'timeout': timeout})],
+                                             {'timeout': timeout, 'script':self})],
                                            name='externalpipette',
                                            protocol=IPipetteManager)
 

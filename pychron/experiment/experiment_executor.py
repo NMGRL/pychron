@@ -36,6 +36,7 @@ from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -1210,6 +1211,8 @@ Last "blank_{}"= {}
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
+                if man is None:
+                    man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
             if not man:
                 nonfound.append(extract_device)
