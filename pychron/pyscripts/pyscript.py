@@ -82,8 +82,8 @@ def verbose_skip(func):
         min_args = len(args1) - 1 - nd
         an = len(args) + len(kw)
         if an < min_args:
-            raise PyscriptError('invalid arguments count for {}, args={} kwargs={}'.format(fname,
-                                                                                           args, kw))
+            raise PyscriptError(obj.name, 'invalid arguments count for {}, args={} kwargs={}'.format(fname,
+                                                                                                     args, kw))
             #        if obj.testing_syntax or obj._cancel:
         #            return
         if obj.testing_syntax or obj._cancel or obj._truncate:
@@ -694,19 +694,27 @@ class PyScript(Loggable):
             self.info('{} completed successfully'.format(self.name))
             self._completed = True
 
+    def _get_application(self):
+        app = self.application
+        if app is None:
+            if self.manager:
+                app = self.manager.application
+        return app
+
     def _manager_action(self, func, name=None, protocol=None, *args, **kw):
         man = self.manager
-        if protocol is not None and man is not None:
-            app = man.application
-        else:
-            app = self.application
+        # if protocol is not None and man is not None:
+        #     app = man.application
+        # else:
+        #     app = self.application
+        if protocol:
+            app = self._get_application()
+            if app is not None:
+                app_args = (protocol,)
+                if name is not None:
+                    app_args = (protocol, 'name=="{}"'.format(name))
 
-        if app is not None:
-            app_args = (protocol,)
-            if name is not None:
-                app_args = (protocol, 'name=="{}"'.format(name))
-
-            man = app.get_service(*app_args)
+                man = app.get_service(*app_args)
 
         if man is not None:
             if not isinstance(func, list):

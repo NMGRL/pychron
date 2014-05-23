@@ -134,7 +134,7 @@ class SniffInspector(RawExporter):
                 p = g.new_plot()
                 p.value_range.tight_bounds = False
                 g.new_series(rxs, rs)
-                g.set_x_title('Exclude points')
+                g.set_x_title('Excluded points')
                 g.set_y_title('{}/{}'.format(n, d), plotid=i)
 
                 niso, diso = ai.get_isotope(n), ai.get_isotope(d)

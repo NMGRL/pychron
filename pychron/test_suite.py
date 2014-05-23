@@ -8,6 +8,7 @@ def suite():
     from pychron.processing.tests.plateau import PlateauTestCase
     from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
     from pychron.experiment.tests.position_regex_test import XYTestCase
+    from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -16,7 +17,9 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(PlateauTestCase))
     suite.addTest(loader.loadTestsFromTestCase(ExternalPipetteTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(WaitForTestCase))
     suite.addTest(loader.loadTestsFromTestCase(XYTestCase))
+
     return suite
 
 

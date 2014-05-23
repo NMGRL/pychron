@@ -3,7 +3,6 @@ import multiprocessing
 
 #prevent pycharm from remove multiprocessing during import optimization
 multiprocessing
-
 from setuptools import setup
 
 setup(name='pychron',
@@ -17,9 +16,12 @@ setup(name='pychron',
                 'pychron.core.stats',
                 'pychron.external_pipette',
                 'pychron.pyscripts',
+
+
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
                 'pychron.external_pipette.tests',
-                'pychron.experiment.tests'
+                'pychron.experiment.tests',
+                'pychron.pyscripts.tests',
       ],
       test_suite='pychron.test_suite.suite')
