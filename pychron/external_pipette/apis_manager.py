@@ -72,15 +72,17 @@ class SimpleApisManager(Manager):
             self.available_pipettes = airs.split('[13]')
 
         #setup linking
-        v = self.controller.isolation_valve
-        elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-        if elm:
-            elm.link_valve_actuation(v, self.isolation_valve_state_change)
-        else:
-            self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
+            # v = self.controller.isolation_valve
+            # elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+            # print elm
+            # print v
+            # if elm:
+            #     elm.link_valve_actuation(v, self.isolation_valve_state_change)
+            # else:
+            #     self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
 
-    def isolation_valve_state_change(self, name, action):
-        self.controller.set_external_pumping(action == 'open')
+    # def isolation_valve_state_change(self, name, action):
+    #     self.controller.set_external_pumping(action == 'open')
 
     def bind_preferences(self, prefid):
         pass

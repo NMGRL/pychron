@@ -97,11 +97,6 @@ class ExtractionLineManager(Manager):
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
 
-        bind_preference(self, 'display_volume', 'pychron.extraction_line.display_volume')
-        bind_preference(self, 'volume_key', 'pychron.extraction_line.volume_key')
-
-        bind_preference(self, 'use_status_monitor', 'pychron.extraction_line.use_status_monitor')
-
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
             try:
@@ -376,9 +371,9 @@ class ExtractionLineManager(Manager):
 
             self.explanation.selected = selected
 
-    #===============================================================================
-    # private
-    #===============================================================================
+        #===============================================================================
+        # private
+        #===============================================================================
     def _enable_valve(self, description, state):
         if self.valve_manager:
             valve = self.valve_manager.get_valve_by_description(description)
@@ -403,6 +398,8 @@ class ExtractionLineManager(Manager):
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
+                vm.actuate_children(name, action, mode)
+
                 ld = self.link_valve_actuation_dict
                 if ld:
                     try:

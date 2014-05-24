@@ -14,129 +14,47 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
-from traits.api import Str, Any, Bool, List, Float, Int, Property
+from traits.api import Str, Any, List, Float, Int, Property
 from traitsui.api import View, Item, VGroup
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from state_machine.valve_FSM_sm import Valve_sm
-from pychron.loggable import Loggable
+from pychron.hardware.switch import Switch
 
 
-class HardwareValve(Loggable):
-    '''
-    '''
-    name = Str
+class HardwareValve(Switch):
+    """
+    """
     display_name = Str
     display_state = Property(depends_on='state')
     display_software_lock = Property(depends_on='software_lock')
 
-    address = Str
-    actuator = Any
-
-    #    success = Bool(False)
+    #moved to switch
+    # address = Str
+    # actuator = Any
+    # state = Bool(False)
+    # actuator_name = Property(depends_on='actuator')
+    # query_state = Bool(True)
+    # description = Str
+    # software_lock = Bool(False)
+    # enabled = Bool(True)
     interlocks = List
-    state = Bool(False)
-    #    debug = False
-    #    error = None
-    software_lock = Bool(False)
 
     cycle_period = Float(1)
     cycle_n = Int(10)
     sample_period = Float(1)
 
-    actuator_name = Property(depends_on='actuator')
-    #    actuator_name = DelegatesTo('actuator', prefix='name')
-
-    #    canvas_valve = Any
-    #    position = Property
-    #    shaft_low = Property
-    #    shaft_high = Property
-
     evalve = Any
 
-    query_state = Bool(True)
-    description = Str
 
-    enabled = Bool(True)
 
     owner = Str
-
-    def __init__(self, name, *args, **kw):
-        """
-        """
-        self.display_name = name
-        kw['name'] = 'VALVE-{}'.format(name)
-
-        super(HardwareValve, self).__init__(*args, **kw)
-        self._fsm = Valve_sm(self)
+    prefix_name = 'VALVE'
 
     def is_name(self, name):
         if len(name) == 1:
             name = 'VALVE-{}'.format(name)
         return name == self.name
-
-    def get_lock_state(self):
-        if self.actuator:
-            return self.actuator.get_lock_state(self)
-
-    def set_state(self, state):
-        self.state = state
-
-    def get_hardware_state(self):
-        '''
-        '''
-        result = None
-        if self.actuator is not None:
-            result = self.actuator.get_channel_state(self)
-            if isinstance(result, bool):
-                self.set_state(result)
-            else:
-                result = False
-
-        return result
-
-    def set_open(self, mode='normal'):
-        self.info('open mode={}'.format(mode))
-        #        current_state = copy(self.state)
-        state_change = False
-        success = True
-        if self.software_lock:
-            self._software_locked()
-        else:
-            success = self._open_()
-            if success:
-                if self.state == False:
-                    state_change = True
-                self.state = True
-
-        return success, state_change
-
-    def set_closed(self, mode='normal'):
-        self.info('close mode={}'.format(mode))
-        #        current_state = copy(self.state)
-        state_change = False
-        success = True
-        if self.software_lock:
-            self._software_locked()
-        else:
-            #            print 'pre state', self.state, current_state
-            success = self._close_()
-            if success:
-                #                print 'self.state',self.state, current_state
-                if self.state == True:
-                    state_change = True
-                self.state = False
-
-        return success, state_change
-
-    def lock(self):
-        self.software_lock = True
-
-    def unlock(self):
-        self.software_lock = False
 
     def _state_changed(self):
         if self.evalve:
@@ -148,51 +66,6 @@ class HardwareValve(Loggable):
 
     def _software_locked(self):
         self.info('{}({}) software locked'.format(self.name, self.description))
-
-    def _open_(self, mode='normal'):
-        """
-        """
-        actuator = self.actuator
-        r = True
-        if mode == 'debug':
-            r = True
-        elif self.actuator is not None:
-            if mode.startswith('client'):
-                # always actuate if mode is client
-                r = True if actuator.open_channel(self) else False
-            else:
-                # dont actuate if already open
-                if self.state == True:
-                    r = True
-                else:
-                    r = True if actuator.open_channel(self) else False
-
-            if actuator.simulation:
-                r = True
-        return r
-
-    def _close_(self, mode='normal'):
-        '''
-        '''
-        r = True
-        actuator = self.actuator
-        if mode == 'debug':
-            r = True
-
-        elif actuator is not None:
-            if mode.startswith('client'):
-                print 'close', self.state
-                r = True if actuator.close_channel(self) else False
-            else:
-                # dont actuate if already closed
-                if self.state == False:
-                    r = True
-                else:
-                    r = True if actuator.close_channel(self) else False
-
-            if actuator.simulation:
-                r = True
-        return r
 
     #    def _get_shaft_low(self):
     #        if self.canvas_valve:
@@ -212,11 +85,11 @@ class HardwareValve(Loggable):
     def _get_display_software_lock(self):
         return 'Yes' if self.software_lock else 'No'
 
-    def _get_actuator_name(self):
-        name = ''
-        if self.actuator:
-            name = self.actuator.name
-        return name
+    # def _get_actuator_name(self):
+    #     name = ''
+    #     if self.actuator:
+    #         name = self.actuator.name
+    #     return name
 
     def traits_view(self):
         info = VGroup(
