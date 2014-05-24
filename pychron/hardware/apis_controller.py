@@ -142,8 +142,9 @@ class ApisController(CoreDevice):
         cmd = self.make_command('list_airs')
         return self.ask(cmd)
 
-    def set_external_pumping(self):
+    def set_external_pumping(self, state):
         cmd = self.make_command('set_external_pumping')
+        cmd = '{},{}'.format(cmd, 'true' if state else 'false')
         return self.ask(cmd)
 
     def _get_connection_url(self):

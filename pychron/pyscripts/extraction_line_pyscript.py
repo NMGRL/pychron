@@ -21,6 +21,7 @@ import re
 from traits.api import List
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -351,8 +352,37 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier='', timeout=300):
+    def load_pipette(self, identifier, timeout=300):
+        """
+            this is a non blocking command. it simply sends a command to apis to
+            start one of its runscripts.
 
+            it is the ExtractionPyScripts responsiblity to handle the waiting.
+            use the waitfor command to wait for signals from apis.
+        """
+        cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
+        try:
+            #bug _manager_action only with except tuple of len 1 for args
+            rets = self._extraction_action([(cmd, (identifier,),
+                                             # {'timeout': timeout, 'script': self})],
+                                             {'timeout': timeout, })],
+                                           name='externalpipette',
+                                           protocol=IPipetteManager)
+
+            return rets[0]
+        except InvalidPipetteError, e:
+            self.cancel(protocol=IPipetteManager)
+            e = str(e)
+            self.warning(e)
+            return e
+
+    @verbose_skip
+    @command_register
+    def extract_pipette(self, identifier='', timeout=300):
+        """
+            this is an atomic command. use the apis_controller config file to define
+            the isolation procedures.
+        """
         if identifier == '':
             identifier = self.extract_value
 

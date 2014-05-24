@@ -71,8 +71,34 @@ class SimpleApisManager(Manager):
         if airs:
             self.available_pipettes = airs.split('[13]')
 
+        #setup linking
+        v = self.controller.isolation_valve
+        elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        if elm:
+            elm.link_valve_actuation(v, self.isolation_valve_state_change)
+        else:
+            self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
+
+    def isolation_valve_state_change(self, name, action):
+        self.controller.set_external_pumping(action == 'open')
+
     def bind_preferences(self, prefid):
         pass
+
+    def load_pipette_non_blocking(self, *args, **kw):
+        func = 'load_pipette'
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_pipettes, func, block=False, *args, **kw)
+        # self.controller.set_external_pumping()
+
+        return ret
+
+    def load_blank_non_blocking(self, *args, **kw):
+        func = 'load_blank'
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_blanks, func, block=False, *args, **kw)
+        # self.controller.set_external_pumping()
+        return ret
 
     def load_pipette(self, *args, **kw):
         func = 'load_pipette'
@@ -90,7 +116,7 @@ class SimpleApisManager(Manager):
         return ret
 
     #private
-    def _load_pipette(self, av, func, name, script=None, timeout=10, period=1):
+    def _load_pipette(self, av, func, name, script=None, block=True, timeout=10, period=1):
         if script is None:
             self.debug('Script is none. check ExtractionPyScript.extract_pipette')
             raise NotImplementedError
@@ -102,8 +128,11 @@ class SimpleApisManager(Manager):
         func = getattr(self.controller, func)
         func(name)
 
-        #wait for completion
-        return self._loading_complete(script, timeout=timeout, period=period)
+        if block:
+            #wait for completion
+            return self._loading_complete(script, timeout=timeout, period=period)
+        else:
+            return True
 
     def _loading_complete(self, script, **kw):
         if self._timeout_flag:

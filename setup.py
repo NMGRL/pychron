@@ -1,3 +1,7 @@
+from traits.etsconfig.etsconfig import ETSConfig
+
+ETSConfig.toolkit = 'qt4'
+
 #required to fix atexit bug with travis ci
 import multiprocessing
 
@@ -17,11 +21,10 @@ setup(name='pychron',
                 'pychron.external_pipette',
                 'pychron.pyscripts',
 
-
+                #test packages
                 'pychron.core.regression.tests',
                 'pychron.processing.tests',
                 'pychron.external_pipette.tests',
                 'pychron.experiment.tests',
-                'pychron.pyscripts.tests',
-      ],
+                'pychron.pyscripts.tests', ],
       test_suite='pychron.test_suite.suite')
