@@ -40,6 +40,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     kinds = List(['Extraction', 'Measurement'])
     commands_pane = Instance(CommandsPane)
     script_browser_pane = Instance(ScriptBrowserPane)
+    command_editor_pane = Instance(CommandEditorPane)
 
     wildcard = '*.py'
     _default_extension= '.py'
@@ -218,6 +219,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                        auto_detab=self.auto_detab)
 
         super(PyScriptTask, self)._open_editor(editor)
+
+    @on_trait_change('command_editor_pane:insert_button')
+    def _insert_fired(self):
+        self.active_editor.insert_command(self.command_editor_pane.command_object)
 
     @on_trait_change('commands_pane:command_object')
     def _update_selected(self, new):

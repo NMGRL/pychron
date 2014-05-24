@@ -24,6 +24,7 @@ from pyface.tasks.api import Editor
 
 
 
+
 # from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -143,6 +144,9 @@ class PyScriptEditor(Editor):
         if cmd == 'gosub':
             return line[7:-2]
 
+    def insert_command(self, cmdobj):
+        self.control.insert_command(cmdobj)
+
     @on_trait_change('commands:command_objects:[+]')
     def handle_command_edit(self, obj, name, old, new):
         if old:
@@ -165,6 +169,8 @@ class PyScriptEditor(Editor):
             cmd = self._get_command(line)
             if cmd:
                 self.selected_command = line
+                self.control.highlight_line()
+                # self.control.highlight_line(line)
 
     def _on_dirty_changed(self, dirty):
         if dirty:
