@@ -43,6 +43,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
@@ -93,6 +94,7 @@ Install to enable MS Excel export''')
                 MenuManager(IdeogramFromFile(),
                             SpectrumFromFile(),
                             name='From File'),
+                RefreshActiveEditorAction(),
                 name='Figures')
 
         def data_menu():
