@@ -15,13 +15,21 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import inspect
+import re
+
 from traits.api import List
+
+
+
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
 from pychron.external_pipette.apis_manager import InvalidPipetteError
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.hardware.core.exceptions import TimeoutError
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.pyscripts.pyscript import verbose_skip, makeRegistry
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 # from pychron.lasers.laser_managers.extraction_device import ILaserManager
@@ -29,6 +37,8 @@ from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import EXTRACTION_COLOR
 
 ELPROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+
+COMPRE = re.compile(r'[A-Za-z]*')
 
 '''
     make a registry to hold all the commands exposed by ExtractionPyScript
@@ -151,7 +161,63 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # commands
     #===============================================================================
+    @verbose_skip
+    @command_register
+    def waitfor(self, func_or_tuple, start_message='', end_message='',
+                check_period=1, timeout=0):
+        """
+            func_or_tuple: callable or a tuple
 
+            tuple format: (device_name, get_..., comparison)
+                comparison: x<10
+                          : 10<x<20
+
+            callable can of form func() or func(ti) or func(ti, i)
+            where ti is the current relative time (relative to start of waitfor) and i is a counter
+        """
+        include_time = False
+        include_time_and_count = False
+        if isinstance(func_or_tuple, tuple):
+            func = self._make_waitfor_func(*func_or_tuple)
+        else:
+            func = func_or_tuple
+            args = inspect.getargspec(func).args
+            if len(args) == 1:
+                include_time = True
+            elif len(args) == 2:
+                include_time_and_count = True
+
+        if not func:
+            self.debug('no waitfor function')
+            self.cancel()
+
+        self.console_info('waitfor started. {}'.format(start_message))
+        st = time.time()
+        i = 0
+        while 1:
+            if self.canceled():
+                self.console_info('waitfor canceled')
+                return
+
+            ct = time.time() - st
+            if timeout and ct > timeout:
+                self.warning('waitfor timed out after {}s'.format(timeout))
+                self.cancel()
+                return
+
+            if include_time:
+                args = (ct,)
+            elif include_time_and_count:
+                args = (ct, i)
+                i += 1
+            else:
+                args = tuple()
+
+            if func(*args):
+                self.console_info('waitfor ended. {}'.format(end_message))
+                break
+
+            time.sleep(check_period)
 
     @verbose_skip
     @command_register
@@ -265,7 +331,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def execute_pattern(self, pattern='', block=False):
+    def execute_pattern(self, pattern='', block=True):
         if pattern == '':
             pattern = self.pattern
 
@@ -287,8 +353,37 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def extract_pipette(self, identifier='', timeout=300):
+    def load_pipette(self, identifier, timeout=300):
+        """
+            this is a non blocking command. it simply sends a command to apis to
+            start one of its runscripts.
 
+            it is the ExtractionPyScripts responsiblity to handle the waiting.
+            use the waitfor command to wait for signals from apis.
+        """
+        cmd = 'load_blank_non_blocking' if self.analysis_type == 'blank' else 'load_pipette_non_blocking'
+        try:
+            #bug _manager_action only with except tuple of len 1 for args
+            rets = self._extraction_action([(cmd, (identifier,),
+                                             # {'timeout': timeout, 'script': self})],
+                                             {'timeout': timeout, })],
+                                           name='externalpipette',
+                                           protocol=IPipetteManager)
+
+            return rets[0]
+        except InvalidPipetteError, e:
+            self.cancel(protocol=IPipetteManager)
+            e = str(e)
+            self.warning(e)
+            return e
+
+    @verbose_skip
+    @command_register
+    def extract_pipette(self, identifier='', timeout=300):
+        """
+            this is an atomic command. use the apis_controller config file to define
+            the isolation procedures.
+        """
         if identifier == '':
             identifier = self.extract_value
 
@@ -471,7 +566,6 @@ class ExtractionPyScript(ValvePyScript):
     def disable(self):
         return self._disable()
 
-
     @verbose_skip
     @command_register
     def prepare(self):
@@ -542,6 +636,30 @@ class ExtractionPyScript(ValvePyScript):
     #===============================================================================
     # private
     #===============================================================================
+    def _get_device(self, name):
+        app = self._get_application()
+        if app is not None:
+            return app.get_service_by_name(ICoreDevice, name)
+        else:
+            self.warning('_get_device - No application')
+
+    def _make_waitfor_func(self, name, funcname, comp):
+        dev = self._get_device(name)
+        if dev:
+            devfunc = getattr(dev, funcname)
+            m = COMPRE.findall(comp)
+            if m:
+                k = m[0]
+
+                def func(*args):
+                    return eval(comp, {k: devfunc()})
+
+                return func
+            else:
+                self.warning('invalid comparison. valid e.g.=x<10 comp={}'.format(comp))
+        else:
+            self.warning('no device available named "{}"'.format(name))
+
     def _extraction_action(self, *args, **kw):
         if not 'name' in kw:
             kw['name'] = self.extract_device

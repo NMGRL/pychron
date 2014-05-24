@@ -36,7 +36,7 @@ class ExternalPipetteTestCase(unittest.TestCase):
     def test_extract_pipette_explicit_invalid_name(self):
         e = self.script
         ret = e.extract_pipette('A4', timeout=1)
-        self.assertEqual(ret, 'Invalid Pipette name=A4')
+        self.assertEqual(ret, 'Invalid Pipette name=A4 av=A1\nA2')
 
     def test_extract_pipette_explicit(self):
         e = self.script
@@ -55,7 +55,7 @@ class ExternalPipetteTestCase(unittest.TestCase):
         e = self.script
         e.setup_context(extract_value='A1', )
         ret = e.extract_pipette(timeout=1)
-        self.assertEqual(ret, 'TimeoutError func=get_loading_complete, timeout=1')
+        self.assertEqual(ret, 'TimeoutError func=loading_started, timeout=1')
 
 
 if __name__ == '__main__':
