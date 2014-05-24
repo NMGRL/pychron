@@ -442,6 +442,8 @@ class ExtractionLineManager(Manager):
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
+                vm.actuate_children(name, action, mode)
+
                 ld = self.link_valve_actuation_dict
                 if ld:
                     try:

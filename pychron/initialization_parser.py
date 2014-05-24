@@ -61,6 +61,7 @@ class InitializationParser(XMLParser):
     def __init__(self, *args, **kw):
         ver = '_proc'
         ver = '_exp'
+        ver = '_apis'
         # ver = '_exp_uv'
         # ver= '_spec'
         # ver = '_diode'

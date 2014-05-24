@@ -1,5 +1,5 @@
 #===============================================================================
-# Copyright 2012 Jake Ross
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,34 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import Interface
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.xml.xml_parser import XMLParser
 
 
-class ValveParser(XMLParser):
-    def get_groups(self, element=True):
-        tree = self.get_root()
-#        tree = self._tree
-        return [g if element else g.text.strip()
-                for g in tree.findall('group')]
+class IActuator(Interface):
+    def close_channel(self, obj):
+        pass
 
-    def get_switches(self, group=None, element=True):
-        if group is None:
-            group = self.get_root()
-        return [v if element else v.text.strip()
-                for v in group.findall('switch')]
+    def open_channel(self, obj):
+        pass
 
-    def get_valves(self, group=None, element=True):
-        if group is None:
-            group = self.get_root()
-        return [v if element else v.text.strip()
-                for v in group.findall('valve')]
+    def get_channel_state(self, obj):
+        pass
 
-    def get_pipettes(self, group=None, element=True):
-        if group is None:
-            group = self.get_root()
-        return [v if element else v.text.strip()
-                    for v in group.findall('pipette')]
+    def get_lock_state(self, obj):
+        pass
+
 #============= EOF =============================================
 
