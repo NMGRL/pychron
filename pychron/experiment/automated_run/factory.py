@@ -119,13 +119,18 @@ class AutomatedRunFactory(Loggable):
     undoer = Any
     edit_event = Event
 
-    default_fits_button = Button
+    #============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+
     script_options = Instance(ScriptOptions, ())
-    load_defaults_button = Button('Defaults')
+    load_defaults_button = Button('Default')
+
+    default_fits_button = Button
+    default_fits_enabled = Property(depends_on='measurement_script.name')
+    #===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -749,6 +754,9 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # property get/set
     #===============================================================================
+    def _get_default_fits_enabled(self):
+        return self.measurement_script.name not in ('None', '')
+
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
 

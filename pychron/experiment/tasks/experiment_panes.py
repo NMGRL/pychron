@@ -240,6 +240,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             HGroup(spring,
                    run_factory_item('default_fits_button',
                                     show_label=False,
+                                    enabled_when=run_factory_name('default_fits_enabled'),
                                     label='Default Fits'),
                    run_factory_item('load_defaults_button',
                                     tooltip='load the default scripts for this analysis type',
