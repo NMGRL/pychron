@@ -180,7 +180,7 @@ class RoughValve(BaseValve, Bordered):
                 gc.line_to(w - o - cr - l, o + l - 3)
 
                 #upper center
-                w2 = w / 2.
+                w2 = w / 2. + 1
                 gc.move_to(w2, h)
                 gc.line_to(w2, h - l)
 

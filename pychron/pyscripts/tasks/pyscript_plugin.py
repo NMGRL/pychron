@@ -23,7 +23,6 @@ from pyface.tasks.action.schema import SMenu
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
@@ -67,9 +66,20 @@ class PyScriptPlugin(BaseTaskPlugin):
             name='PyScript',
             factory=self._task_factory,
             task_group='experiment',
-            image='script.png')]
+            image='script.png'),
+                TaskFactory(id='pychron.pyscript.visual_el_programmer',
+                            name='Visual Programmer',
+                            factory=self._visual_task_factory,
+                            task_group='experiment')]
+
+    def _visual_task_factory(self):
+        from pychron.pyscripts.tasks.visual_el_programmer.visual_el_programmer_task import VisualElProgrammerTask
+
+        return VisualElProgrammerTask()
 
     def _task_factory(self):
+        from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
+
         return PyScriptTask()
 
     def _preferences_panes_default(self):
