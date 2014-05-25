@@ -35,6 +35,7 @@ class Switch(Loggable):
     actuator_name = Property(depends_on='actuator')
     prefix_name = 'SWITCH'
     parent = Str
+    parent_inverted = Bool(False)
 
     def __init__(self, name, *args, **kw):
         """
