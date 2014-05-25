@@ -62,6 +62,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     display_volume = Bool
     volume_key = Str
+    confirm_open = Bool(True)
 
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
@@ -160,7 +161,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
             return
 
         state = item.state
-        if isinstance(item, RoughValve) and not state:
+
+        if self.confirm_open and isinstance(item, RoughValve) and not state:
             event.handled = True
 
             from pychron.core.ui.dialogs import myConfirmationDialog
