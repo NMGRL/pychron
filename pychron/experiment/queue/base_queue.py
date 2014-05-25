@@ -134,6 +134,7 @@ class BaseExperimentQueue(Loggable):
     def load(self, txt):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses
+        self.stats.delay_before_analyses = self.delay_before_analyses
         aruns = self._load_runs(txt)
         if aruns:
             with no_update(self):

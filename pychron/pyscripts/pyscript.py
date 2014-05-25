@@ -213,7 +213,7 @@ class PyScript(Loggable):
         self._m_info(*args, **kw)
 
     def calculate_estimated_duration(self, force=False):
-        if not self.syntax_checked or force:
+        if force or not self.syntax_checked:
             self.syntax_checked = False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()

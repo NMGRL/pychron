@@ -28,6 +28,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
@@ -81,10 +82,12 @@ class ExperimentStats(Loggable):
             script_ctx = dict()
             warned = []
             ni = len(runs)
-            dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
+            run_dur = sum([a.get_estimated_duration(script_ctx, warned, True) for a in runs])
 
             btw = self.delay_between_analyses * (ni - 1)
-            dur += btw + self.delay_before_analyses
+            dur = run_dur + btw + self.delay_before_analyses
+            self.debug('before={}, run_dur={}, btw={}'.format(self.delay_before_analyses,
+                                                              run_dur, btw))
 
         return dur
 

@@ -164,7 +164,8 @@ class AutomatedRunSpec(Loggable):
 
                 script, ok = script_context[name]
                 if si in ('measurement_script', 'extraction_script'):
-                    d = script.get_estimated_duration()
+                    script.setup_context(duration=self.duration, cleanup=self.cleanup)
+                    d = script.calculate_estimated_duration(force=True)
                     s += d
                 script_oks.append(ok)
             else:
