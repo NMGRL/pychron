@@ -180,10 +180,14 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
         change = False
         if self.manager is not None:
+            mode = 'normal'
+            if event.shift_down:
+                mode = 'shift_select'
+
             if state:
-                ok, change = self.manager.open_valve(item.name, mode='normal')
+                ok, change = self.manager.open_valve(item.name, mode=mode)
             else:
-                ok, change = self.manager.close_valve(item.name, mode='normal')
+                ok, change = self.manager.close_valve(item.name, mode=mode)
         else:
             ok = True
 

@@ -84,11 +84,11 @@ class ExtractionLineScriptWriter(Loggable):
     add_info_button = Button('Info')
     info_str = Str
 
-    script_text = Str
     selected = List
     refresh_needed = Event
 
-    docstring = Str
+    _script_text = Str
+    _docstring = Str
 
     def set_default_states(self):
         self.network.set_default_states(self.canvas)
@@ -102,23 +102,55 @@ class ExtractionLineScriptWriter(Loggable):
             self._open_file(p)
             return True
 
+    def new(self):
+        self._path = None
+        self._docstring = None
+        self.actions = []
+
+    def save_as(self):
+        dlg = FileDialog(action='save as',
+                         default_directory=paths.extraction_dir)
+        if dlg.open() == OK:
+            p = dlg.path
+            if p:
+                self._save(p)
+
+    def save(self):
+        if self._path:
+            self._save(self._path)
+        else:
+            self.save_as()
+
     #elm protocol
     def set_selected_explanation_item(self, obj):
         pass
 
-    def open_valve(self, valve, **kw):
-        if self.record_valve_actions:
+    def open_valve(self, valve, mode='normal', **kw):
+        """
+            use shift key to toggle state without recording
+        """
+
+        if self.record_valve_actions and mode == 'normal':
             self.actions.append(ValveAction(value=valve, name='open'))
         self._update_network(valve, True)
         return True, True
 
-    def close_valve(self, valve, **kw):
-        if self.record_valve_actions:
+    def close_valve(self, valve, mode='normal', **kw):
+        """
+            use shift key to toggle state without recording
+        """
+        if self.record_valve_actions and mode == 'normal':
             self.actions.append(ValveAction(value=valve, name='close'))
         self._update_network(valve, False)
         return True, True
 
     #private
+    def _save(self, p):
+        p = add_extension(p, ext='.py')
+        self.debug('saving script to path {}'.format(p))
+        with open(p, 'w') as fp:
+            fp.write(self._script_text)
+
     def _open_file(self, p):
 
         if not os.path.isfile(p):
@@ -128,24 +160,25 @@ class ExtractionLineScriptWriter(Loggable):
             self.debug('{} is not a valid pyscript file'.format(p))
             return
 
+        self._path = p
         valve_re = re.compile(r'''(?P<action>(open|close)+)\((name *= *)*['"]{1}(?P<name>[\w\d])+['"]{1}\,*[\w\s]*\)''')
         sleep_re = re.compile(r'''(?P<action>(sleep\())+((?P<value>(\d+.*\d*)))\)''')
         info_re = re.compile(r'''(info\()+['"]{1}(?P<value>[\w\s\d'"]*)['"]{1}\)''')
         actions = []
         with open(p, 'r') as fp:
-            docstring_started = False
-            has_docstring = False
+            _docstring_started = False
+            has__docstring = False
             ds = []
             for li in fileiter(fp):
-                if not has_docstring and (li.startswith('"""') or li.startswith("'''")):
-                    if docstring_started:
-                        has_docstring = True
-                        docstring_started = False
+                if not has__docstring and (li.startswith('"""') or li.startswith("'''")):
+                    if _docstring_started:
+                        has__docstring = True
+                        _docstring_started = False
                     else:
-                        docstring_started = True
+                        _docstring_started = True
                     continue
 
-                if docstring_started:
+                if _docstring_started:
                     ds.append(li)
                     continue
 
@@ -172,7 +205,7 @@ class ExtractionLineScriptWriter(Loggable):
 
                 actions.append(BaseAction(value=sli))
 
-        self.docstring = '\n'.join(ds)
+        self._docstring = '\n'.join(ds)
         self.actions = actions
 
     def _update_network(self, name, state):
@@ -180,9 +213,8 @@ class ExtractionLineScriptWriter(Loggable):
         self.network.set_canvas_states(self.canvas, name)
 
     def _generate_text(self):
-        print self.docstring
-        if self.docstring:
-            ds = self.docstring
+        if self._docstring:
+            ds = self._docstring
         else:
             ds = ''
 
@@ -191,7 +223,7 @@ def main():
 {}""".format(ds,
              '\n'.join([a.to_string() for a in self.actions]))
 
-        self.script_text = txt
+        self._script_text = txt
 
     def _refresh(self):
         self.refresh_needed = True
@@ -222,17 +254,6 @@ def main():
     @on_trait_change('actions[]')
     def _actions_changed(self):
         self._generate_text()
-
-    def save(self):
-        dlg = FileDialog(action='save as',
-                         default_directory=paths.extraction_dir)
-        if dlg.open() == OK:
-            p = dlg.path
-            if p:
-                p = add_extension(p, ext='.py')
-                self.debug('saving script to path {}'.format(p))
-                with open(p, 'w') as fp:
-                    fp.write(self.script_text)
 
     def _add_sleep_button_fired(self):
         if self.duration:
@@ -284,11 +305,14 @@ def main():
 #         self.model.save()
 #
 #     def traits_view(self):
-#         action_grp = VGroup(HGroup(UItem('add_sleep_button', width=-40),
+#         action_grp = VGroup(HGroup(UItem('add_sleep_button'),
 #                                    UItem('duration')),
-#                             HGroup(UItem('add_info_button', width=-40),
+#                             HGroup(UItem('add_info_button'),
 #                                    UItem('info_str')),
-#                             HGroup(Item('record_valve_actions', label='Record Actions')),
+#                             HGroup(Item('record_valve_actions',
+#                                         tooltip='Should valve actuations be added to the action list. '
+#                                                 'You can also hold down the "Shift" key to suppress addition',
+#                                         label='Record Actions')),
 #                             UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
 #                                                                   operations=['move', 'delete'],
 #                                                                   selected='selected',
@@ -300,7 +324,7 @@ def main():
 #                   editor=ComponentEditor()),
 #             label='Canvas')
 #
-#         script_group = VGroup(UItem('script_text',
+#         script_group = VGroup(UItem('_script_text',
 #                                     editor=PyScriptCodeEditor(),
 #                                     style='custom'),
 #                               label='script')

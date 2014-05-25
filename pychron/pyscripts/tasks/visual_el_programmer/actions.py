@@ -18,11 +18,15 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.actions import FileOpenAction
+from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
 
-class OpenVisualELScript(FileOpenAction):
+class OpenVisualELScriptAction(FileOpenAction):
     name = 'Open Visual PyScript...'
+    task_id = 'pychron.pyscript.visual_el_programmer'
+
+
+class NewVisualELScriptAction(NewAction):
     task_id = 'pychron.pyscript.visual_el_programmer'
 
 #============= EOF =============================================

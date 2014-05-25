@@ -177,6 +177,21 @@ class FileOpenAction(Action):
             if task.open(path=self.test_path):
                 win.open()
 
+
+class NewAction(Action):
+    task_id = ''
+
+    def perform(self, event):
+        if event.task.id == self.task_id:
+            task = event.task
+            task.new()
+        else:
+            application = event.task.window.application
+            win = application.create_window(TaskWindowLayout(self.task_id))
+            task = win.active_task
+            if task.new():
+                win.open()
+
 # class GenericReplaceAction(TaskAction):
 #    pass
 #        else:
