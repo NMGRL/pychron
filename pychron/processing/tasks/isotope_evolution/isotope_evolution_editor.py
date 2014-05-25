@@ -24,7 +24,6 @@ from numpy import Inf, polyfit
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.core.helpers.fits import convert_fit
-from pychron.processing.analyses.dbanalysis import DBAnalysis
 from pychron.processing.fits.iso_evo_fit_selector import IsoEvoFitSelector
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 #from pychron.core.ui.thread import Thread
@@ -133,12 +132,12 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save_fit(self, unk, meas_analysis):
 
-        tool_fits = [fi for fi in self.tool.fits if fi.save]
+        tool_fits = [fi for fi in self.tool.fits
+                     if fi.save and '/' not in fi.name]
+
         time_zero_offset = self.tool.time_zero_offset or 0
         if not tool_fits:
             return
-
-        # fit_hist = None
 
         def in_tool_fits(f):
             name = f.isotope.molecular_weight.name
@@ -266,13 +265,13 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         display_sniff = True
         if "/" in isok:
-            n,d=isok.split('/')
+            n, d = isok.split('/')
             niso, diso = unk.isotopes[n], unk.isotopes[d]
-            nsniff, dsniff=niso.sniff, diso.sniff
+            nsniff, dsniff = niso.sniff, diso.sniff
             if nsniff and dsniff:
                 offset = niso.time_zero_offset
-                nxs=nsniff.xs-offset
-                ys=nsniff.ys/dsniff.ys
+                nxs = nsniff.xs - offset
+                ys = nsniff.ys / dsniff.ys
 
                 g.new_series(nxs, ys,
                              plotid=i,
@@ -280,7 +279,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                              fit=False)
 
             xs = niso.offset_xs
-            ys = niso.ys/diso.ys
+            ys = niso.ys / diso.ys
             g.new_series(xs, ys,
                          fit=(fit.fit, fit.error_type),
                          filter_outliers_dict=fd,

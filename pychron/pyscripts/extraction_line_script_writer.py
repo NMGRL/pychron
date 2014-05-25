@@ -267,6 +267,7 @@ def main():
         else:
             self.information_dialog('Please set a message to add an info')
 
+    #defaults
     def _canvas_default(self):
         elc = ExtractionLineCanvas2D(manager=self,
                                      confirm_open=False)
