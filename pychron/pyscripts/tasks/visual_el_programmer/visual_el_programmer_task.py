@@ -34,6 +34,9 @@ class VisualElProgrammerTask(BaseTask):
     def activated(self):
         self.model.set_default_states()
 
+    def open(self, path=None):
+        return self.model.open_file(path)
+
     def save_as(self):
         self.model.save()
 

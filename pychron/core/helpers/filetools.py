@@ -232,7 +232,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#'):
+def fileiter(fp, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -242,5 +242,7 @@ def fileiter(fp, commentchar='#'):
 
     for line in fp:
         if test(line):
+            if strip:
+                line = line.strip()
             yield line
 

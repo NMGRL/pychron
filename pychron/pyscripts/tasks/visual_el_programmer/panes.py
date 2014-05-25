@@ -50,9 +50,9 @@ class ActionsAdapter(TabularAdapter):
 
     def get_bg_color(self, *args, **kw):
         color = 'white'
-        if self.item.value == 'open':
+        if self.item.name == 'open':
             color = 'lightgreen'
-        elif self.item.value == 'close':
+        elif self.item.name == 'close':
             color = 'lightcoral'
         return color
 

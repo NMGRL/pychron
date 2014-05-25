@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import on_trait_change, Any
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
@@ -158,6 +159,23 @@ class GenericFindAction(TaskAction):
         task = self.task
         if hasattr(task, 'find'):
             task.find()
+
+
+class FileOpenAction(Action):
+    task_id = ''
+    test_path = ''
+    image = icon('document-open')
+
+    def perform(self, event):
+        if event.task.id == self.task_id:
+            task = event.task
+            task.open()
+        else:
+            application = event.task.window.application
+            win = application.create_window(TaskWindowLayout(self.task_id))
+            task = win.active_task
+            if task.open(path=self.test_path):
+                win.open()
 
 # class GenericReplaceAction(TaskAction):
 #    pass

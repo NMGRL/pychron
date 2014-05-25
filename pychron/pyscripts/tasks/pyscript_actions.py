@@ -21,6 +21,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import FileOpenAction
 
 
 class HopsEditorAction(Action):
@@ -60,27 +61,15 @@ class NewHopsEditorAction(HopsEditorAction):
         m.new()
 
 
-class OpenPyScriptAction(Action):
+class OpenPyScriptAction(FileOpenAction):
     """
     """
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
-
-    def perform(self, event):
-        if event.task.id == 'pychron.pyscript':
-            task = event.task
-            task.open()
-        else:
-            application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.pyscript',
-                                                             size=(1200, 100)))
-            task = win.active_task
-            test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-            # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
-            if task.open(path=test_path):
-                win.open()
+    task_id = 'pychron.pyscript'
+    test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
 
 
 class NewPyScriptAction(Action):

@@ -26,6 +26,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.pyscripts.tasks.pyscript_actions import OpenPyScriptAction, \
     NewPyScriptAction, OpenHopsEditorAction, NewHopsEditorAction
 from pychron.pyscripts.tasks.pyscript_preferences import PyScriptPreferencesPane
+from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScript
 
 
 class PyScriptPlugin(BaseTaskPlugin):
@@ -57,7 +58,10 @@ class PyScriptPlugin(BaseTaskPlugin):
                                    factory=OpenPyScriptAction),
                     SchemaAddition(id='new_script',
                                    path='MenuBar/File/New',
-                                   factory=NewPyScriptAction)])]
+                                   factory=NewPyScriptAction),
+                    SchemaAddition(id='open_visual',
+                                   path='MenuBar/File/Open',
+                                   factory=OpenVisualELScript)])]
         return exts
 
     def _tasks_default(self):
@@ -79,7 +83,6 @@ class PyScriptPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
-
         return PyScriptTask()
 
     def _preferences_panes_default(self):
