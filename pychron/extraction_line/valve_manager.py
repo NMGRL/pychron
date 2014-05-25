@@ -27,6 +27,7 @@ import random
 from itertools import groupby
 from socket import gethostname, gethostbyname
 #=============local library imports  ==========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch
@@ -75,10 +76,14 @@ class ValveManager(Manager):
         """
             actuate all switches that have ``name`` defined as their parent
         """
-        func = self.open_by_name if action == 'open' else self.close_by_name
         for v in self.valves.values():
             if v.parent == name:
                 self.debug('actuating child, {}'.format(v.display_name))
+                if v.parent_inverted:
+                    func = self.open_by_name if action == 'close' else self.close_by_name
+                else:
+                    func = self.open_by_name if action == 'open' else self.close_by_name
+
                 func(v.display_name, mode)
 
     def show_valve_properties(self, name):
@@ -138,6 +143,14 @@ class ValveManager(Manager):
 
             pickle.dump(obj, f)
 
+    def set_child_state(self, name, state):
+        self.debug('set states for children of {}. state={}'.format(name, state))
+        elm = self.extraction_line_managers
+        for k, v in self.valves.iteritems():
+            if v.parent == name:
+                v.set_state(state)
+                elm.update_valve_state(k, state)
+
     def load_valve_states(self, refresh=True, force_network_change=False):
         elm = self.extraction_line_manager
         word = self.get_state_word()
@@ -145,13 +158,17 @@ class ValveManager(Manager):
         # self.debug('valve state word= {}'.format(word))
         if word is not None:
             for k, v in self.valves.iteritems():
-                if word.has_key(k):
+                try:
                     s = word[k]
                     if s != v.state or force_network_change:
                         changed = True
-
                         v.set_state(s)
                         elm.update_valve_state(k, s)
+                        self.set_child_state(k, s)
+
+                except KeyError:
+                    pass
+
         elif force_network_change:
             changed = True
             for k, v in self.valves.iteritems():
@@ -628,7 +645,6 @@ class ValveManager(Manager):
 
         for s in parser.get_switches():
             name, sw = self._switch_factory(s, klass=Switch)
-            print 'loading wisthasdf', name, sw
             self.valves[name] = sw
 
         ps = []
@@ -657,7 +673,7 @@ class ValveManager(Manager):
         address = v_elem.find('address')
         act_elem = v_elem.find('actuator')
         description = v_elem.find('description')
-        parent = v_elem.find('parent')
+
         interlocks = [i.text.strip() for i in v_elem.findall('interlock')]
         if description is not None:
             description = description.text.strip()
@@ -675,9 +691,20 @@ class ValveManager(Manager):
         if vqs:
             qs = vqs == 'true'
 
+        parent = v_elem.find('parent')
+
+        parent_name = ''
+        parent_inverted = False
+        if parent is not None:
+            parent_name = parent.text.strip()
+            inverted = parent.find('inverted')
+            if inverted is not None:
+                parent_inverted = to_bool(inverted.text.strip())
+
         hv = klass(name,
                    address=address.text.strip() if address is not None else '',
-                   parent=parent.text.strip() if parent is not None else '',
+                   parent=parent_name,
+                   parent_inverted=parent_inverted,
                    actuator=actuator,
                    description=description,
                    query_state=qs,
