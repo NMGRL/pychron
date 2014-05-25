@@ -29,6 +29,7 @@ from traitsui.mimedata import PyMimeData
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.consumer_mixin import ConsumerMixin
 
+
 class TabularKeyEvent(object):
     def __init__(self, event):
         self.text = event.text().strip()
@@ -37,17 +38,18 @@ class TabularKeyEvent(object):
 
 
 class _myTableView(_TableView, ConsumerMixin):
-    '''
+    """
         for drag and drop reference see
         https://github.com/enthought/traitsui/blob/master/traitsui/qt4/tree_editor.py
-        
-    '''
-    _copy_cache = None
-    _linked_copy_cache = None
+
+    """
     paste_func = None
     drop_factory = None
+    link_copyable = True
+    copyable = True
+    _copy_cache = None
+    _linked_copy_cache = None
     _dragging = None
-
     _cut_indices = None
 
     def __init__(self, *args, **kw):
@@ -57,7 +59,7 @@ class _myTableView(_TableView, ConsumerMixin):
         self.setup_consumer()
         editor = self._editor
 
-#        # reimplement row height
+        #        # reimplement row height
         vheader = self.verticalHeader()
         size = vheader.minimumSectionSize()
 
@@ -73,9 +75,9 @@ class _myTableView(_TableView, ConsumerMixin):
 
     def super_keyPressEvent(self, event):
         """ Reimplemented to support edit, insert, and delete by keyboard.
-        
+
             reimplmented to support no_update context manager.
-        
+
         """
         editor = self._editor
         factory = editor.factory
@@ -83,8 +85,8 @@ class _myTableView(_TableView, ConsumerMixin):
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
         if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-            self.state() != QAbstractItemView.EditingState and
-            factory.editable and 'edit' in factory.operations):
+                    self.state() != QAbstractItemView.EditingState and
+                factory.editable and 'edit' in factory.operations):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
                 row = rows[0] if len(rows) == 1 else -1
@@ -96,14 +98,14 @@ class _myTableView(_TableView, ConsumerMixin):
                 self.edit(editor.model.index(row, 0))
 
         elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-              factory.editable and 'delete' in factory.operations):
+                  factory.editable and 'delete' in factory.operations):
             event.accept()
             '''
                 sets _no_update and update_needed on the editor.object e.g
-            
+
                 editor.object== ExperimentQueue
                 editor is editing ExperimentQueue.automated_runs
-            
+
             '''
 
             with no_update(editor.object):
@@ -114,7 +116,7 @@ class _myTableView(_TableView, ConsumerMixin):
                     editor.model.removeRow(editor.selected_row)
 
         elif (event.key() == QtCore.Qt.Key_Insert and
-              factory.editable and 'insert' in factory.operations):
+                  factory.editable and 'insert' in factory.operations):
             event.accept()
 
             if factory.multi_select:
@@ -150,54 +152,55 @@ class _myTableView(_TableView, ConsumerMixin):
 
         if event.matches(QKeySequence.Copy):
             self._copy_cache = [self._editor.value[ci.row()] for ci in
-                                    self.selectionModel().selectedRows()]
+                                self.selectionModel().selectedRows()]
             self._editor.copy_cache = self._copy_cache
             self._cut_indices = None
         elif event.matches(QKeySequence.Cut):
-
             self._cut_indices = [ci.row() for ci in
                                  self.selectionModel().selectedRows()]
 
             self._copy_cache = [self._editor.value[ci] for ci in self._cut_indices]
-            #self._copy_cache = [self._editor.value[ci.row()] for ci in
-            #                        self.selectionModel().selectedRows()]
+
             self._editor.copy_cache = self._copy_cache
 
         elif event.matches(QKeySequence.Paste):
-            if self._cut_indices:
-                for ci in self._cut_indices:
-                    self._editor.model.removeRow(ci)
+            if self.pastable:
+                if self._cut_indices:
+                    for ci in self._cut_indices:
+                        self._editor.model.removeRow(ci)
 
-            self._cut_indices = None
+                self._cut_indices = None
 
-            items = self._copy_cache
-            if not items:
-                items = self._linked_copy_cache
+                items = None
+                if self.link_copyable:
+                    items = self._linked_copy_cache
 
-            if items:
-                self.add_consumable((self._add, items))
+                if not items:
+                    items = self._copy_cache
+
+                if items:
+                    self.add_consumable((self._add, items))
 
         else:
             self._editor.key_pressed = TabularKeyEvent(event)
 
             self.super_keyPressEvent(event)
-#            super(_myTableView, self).keyPressEvent(event)
 
     def startDrag(self, actions):
         if self._editor.factory.drag_external:
             idxs = self.selectedIndexes()
             rows = sorted(list(set([idx.row() for idx in idxs])))
             drag_object = [
-                           (ri, self._editor.value[ri])
-                            for ri in rows]
+                (ri, self._editor.value[ri])
+                for ri in rows]
 
             md = PyMimeData.coerce(drag_object)
 
             self._dragging = self.currentIndex()
             drag = QDrag(self)
             drag.setMimeData(md)
-    #        drag.setPixmap(pm)
-    #        drag.setHotSpot(hspos)
+            #        drag.setPixmap(pm)
+            #        drag.setHotSpot(hspos)
             drag.exec_(actions)
         else:
             super(_myTableView, self).startDrag(actions)
@@ -258,11 +261,11 @@ class _myTableView(_TableView, ConsumerMixin):
             super(_myTableView, self).dropEvent(e)
 
     def is_external(self):
-#        print 'is_external', self._editor.factory.drag_external and not self._dragging
+        #        print 'is_external', self._editor.factory.drag_external and not self._dragging
         return self._editor.factory.drag_external  # and not self._dragging
 
-class _TabularEditor(qtTabularEditor):
 
+class _TabularEditor(qtTabularEditor):
     widget_factory = _myTableView
     copy_cache = List
     col_widths = List
@@ -271,18 +274,21 @@ class _TabularEditor(qtTabularEditor):
     def init(self, parent):
         super(_TabularEditor, self).init(parent)
 
-#        self.sync_value(self.factory.rearranged, 'rearranged', 'to')
-        self.sync_value(self.factory.col_widths, 'col_widths', 'to')
-#        self.sync_value(self.factory.pasted, 'pasted', 'to')
-        self.sync_value(self.factory.copy_cache, 'copy_cache', 'both')
-        self.sync_value(self.factory.key_pressed, 'key_pressed', 'to')
-
-        if hasattr(self.object, self.factory.paste_function):
-            self.control.paste_func = getattr(self.object, self.factory.paste_function)
-        if hasattr(self.object, self.factory.drop_factory):
-            self.control.drop_func = getattr(self.object, self.factory.drop_factory)
+        #        self.sync_value(self.factory.rearranged, 'rearranged', 'to')
+        #        self.sync_value(self.factory.pasted, 'pasted', 'to')
+        factory = self.factory
+        self.sync_value(factory.col_widths, 'col_widths', 'to')
+        self.sync_value(factory.copy_cache, 'copy_cache', 'both')
+        self.sync_value(factory.key_pressed, 'key_pressed', 'to')
 
         control = self.control
+        if hasattr(self.object, factory.paste_function):
+            control.paste_func = getattr(self.object, factory.paste_function)
+        if hasattr(self.object, factory.drop_factory):
+            control.drop_func = getattr(self.object, factory.drop_factory)
+
+        control.link_copyable = factory.link_copyable
+        control.pastable = factory.pastable
         signal = QtCore.SIGNAL('sectionResized(int,int,int)')
 
         QtCore.QObject.connect(control.horizontalHeader(), signal,
@@ -296,12 +302,6 @@ class _TabularEditor(qtTabularEditor):
         if self.control:
             self.control._linked_copy_cache = self.copy_cache
 
-#     def _key_pressed_changed(self):
-#         print 'asdsfd'
-#     def _paste_function_changed(self):
-#         if self.control:
-#             self.control.paste_func = self.paste_function
-
     def refresh_editor(self):
         if self.control:
             super(_TabularEditor, self).refresh_editor()
@@ -313,7 +313,7 @@ class _TabularEditor(qtTabularEditor):
         self.col_widths = cs
 
     def _scroll_to_row_changed(self, row):
-        row=min(row, self.model.rowCount(None))-1
+        row = min(row, self.model.rowCount(None)) - 1
         qtTabularEditor._scroll_to_row_changed(self, 0)
         qtTabularEditor._scroll_to_row_changed(self, row)
 
@@ -323,16 +323,16 @@ class myTabularEditor(TabularEditor):
     rearranged = Str
     pasted = Str
     copy_cache = Str
+
+    link_copyable = Bool(True)
+    pastable = Bool(True)
+
     paste_function = Str
-    '''
-        extended trait name of function to use to create an object
-        when dropped onto this table
-    '''
     drop_factory = Str
-
     col_widths = Str
-
     drag_external = Bool(False)
+
     def _get_klass(self):
         return _TabularEditor
+
 #============= EOF =============================================
