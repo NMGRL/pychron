@@ -1417,13 +1417,17 @@ class IsotopeAdapter(DatabaseAdapter):
             q = sess.query(meas_AnalysisTable,
                            gen_LabTable,
                            meas_IsotopeTable,
+                           gen_MolecularWeightTable,
                            gen_SampleTable.name,
                            gen_ProjectTable.name,
-                           gen_MaterialTable)
+                           gen_MaterialTable,
+                           proc_SelectedHistoriesTable,
+
+            )
             q = q.join(meas_IsotopeTable)
             q = q.join(gen_LabTable)
-            q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
-
+            q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable, gen_MolecularWeightTable)
+            q = q.join(proc_SelectedHistoriesTable)
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             try:

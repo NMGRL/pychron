@@ -25,7 +25,6 @@ import struct
 import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.helpers.filetools import remove_extension
 
 from pychron.processing.analyses.analysis import Analysis, Fit
@@ -191,13 +190,13 @@ class DBAnalysis(Analysis):
             copy values from meas_AnalysisTable
             and other associated tables
         """
-
-        ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
+        ms, ls, isos, mws, samples, projects, materials, shs = izip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
         sample = samples[0]
         project = projects[0]
         material = materials[0]
+        sh = shs[0]
 
         if sample:
             self.sample = sample
@@ -206,14 +205,13 @@ class DBAnalysis(Analysis):
                 self.material = material.name
 
         self._sync_meas_analysis_attributes(meas_analysis)
-        # self._sync_analysis_info(meas_analysis)
         self._sync_irradiation(lab)
 
         #this is the dominant time sink
-        # self._sync_isotopes(meas_analysis, isos,
-        #                     unpack, load_peak_center=load_changes)
-        timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
-                 kwargs={'load_peak_center': load_changes})
+        self._sync_isotopes(meas_analysis, isos, mws, sh,
+                            unpack, load_peak_center=load_changes)
+        # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
+        #          kwargs={'load_peak_center': load_changes})
 
         self._sync_detector_info(meas_analysis)
         if load_changes:
@@ -420,15 +418,15 @@ class DBAnalysis(Analysis):
 
             iso.discrimination = idisc
 
-    def _sync_isotopes(self, meas_analysis, isos,
+    def _sync_isotopes(self, meas_analysis, isos, mws, shs,
                        unpack, load_peak_center=False):
 
         # self.isotopes = timethis(self._get_isotopes, args=(meas_analysis, isos),
         #                          kwargs=dict(unpack=unpack))
 
-        self.isotopes = self._get_isotopes(meas_analysis, isos,
-                                           unpack=unpack)
-        self.isotope_fits = self._get_isotope_fits()
+        self._make_isotopes(meas_analysis, isos, mws, shs, unpack=unpack)
+
+        # self.isotope_fits = self._get_isotope_fits()
         if load_peak_center:
             pc, data = self._get_peak_center(meas_analysis)
             self.peak_center = pc
@@ -480,7 +478,7 @@ class DBAnalysis(Analysis):
 
         return r
 
-    def _get_isotope_fits(self):
+    def get_isotope_fits(self):
         keys = self.isotope_keys
         isos = self.isotopes
         fs, bs = [], []
@@ -490,66 +488,31 @@ class DBAnalysis(Analysis):
             iso = iso.baseline
             bs.append((iso.fit, iso.error_type, iso.filter_outliers_dict))
 
-        # fs = [(isos[ki].fit,
-        #        isos[ki].error_type,
-        #        isos[ki].filter_outliers_dict)
-        #       for ki in keys]
-        # bs = [(isos[ki].baseline.fit,
-        #        isos[ki].baseline.error_type,
-        #        isos[ki].baseline.filter_outliers_dict)
-        #       for ki in keys]
-
         return fs + bs
 
-    def _get_isotopes(self, meas_analysis, dbisos,
-                      unpack):
-        isotopes = dict()
+    def _make_isotopes(self, meas_analysis, dbisos, dbmws, shs, unpack):
+        # isotopes = dict()
 
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
+        # signals=(iso for iso in dbisos if iso.kind=='signal')
+        # self._get_signals(meas_analysis, signals, unpack)
 
-        self._get_signals(isotopes, meas_analysis, dbisos, unpack)
-        self._get_baselines(isotopes, meas_analysis, dbisos, unpack)
-        self._get_blanks(isotopes, meas_analysis)
+        self._get_signals(meas_analysis, dbisos, dbmws, unpack)
+        self._get_baselines(meas_analysis, dbisos, dbmws, unpack)
+        self._get_blanks(shs)
 
-        return isotopes
-
-    def _get_blanks(self, isodict, meas_analysis):
-        selected_histories = meas_analysis.selected_histories
-        if selected_histories:
-            history = selected_histories.selected_blanks
-            keys = isodict.keys()
-            if history:
-                for ba in history.blanks:
-                    isok = ba.isotope
-                    if isok in keys:
-                        blank = isodict[isok].blank
-                        blank.name = n = '{} bk'.format(isok)
-                        blank.set_uvalue((ba.user_value,
-                                          ba.user_error), dirty=False)
-                        blank.uvalue.tag = n
-                        blank.trait_setq(fit=ba.fit or '')
-                        keys.remove(isok)
-                        if not keys:
-                            break
-
-            # set names for isotopes with no blank
-            for k in keys:
-                blank = isodict[k].blank
-                n = '{} bk'.format(k)
-                blank.uvalue.tag = n
-                blank.name = n
-
-    def _get_signals(self, isodict, meas_analysis, dbisos, unpack):
-
-        for iso in dbisos:
-            mw = iso.molecular_weight
+    def _get_signals(self, meas_analysis, dbisos, dbmws, unpack):
+        d = self.isotopes
+        default_fit = self._default_fit_factory('linear', 'SEM')
+        for iso, mw in izip(dbisos, dbmws):
+            # mw = iso.molecular_weight
             if not iso.kind == 'signal' or not mw:
                 continue
 
             name = mw.name
-            if name in isodict:
+            if name in d:
                 continue
 
             if not iso.detector:
@@ -559,7 +522,6 @@ class DBAnalysis(Analysis):
 
             try:
                 result = iso.results[-1]
-                # result = timethis(lambda: iso.results[-1])
             except IndexError:
                 result = None
 
@@ -569,37 +531,31 @@ class DBAnalysis(Analysis):
                         name=name,
                         detector=det,
                         unpack=unpack)
-
             if r.unpack_error:
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
                 self.temp_status = 1
             else:
                 fit = self.get_db_fit(meas_analysis, name, 'signal')
                 if fit is None:
-                    fit = Fit(fit='linear',
-                              error_type='SEM',
-                              filter_outliers=False,
-                              filter_outlier_iterations=1,
-                              filter_outlier_std_devs=2,
-                              include_baseline_error=False,
-                              time_zero_offset=0)
+                    fit = default_fit()
                 r.set_fit(fit, notify=False)
-                isodict[name] = r
+                d[name] = r
 
-    def _get_baselines(self, isotopes, meas_analysis, dbisos, unpack):
-
-        for dbiso in dbisos:
-            mw = dbiso.molecular_weight
+    def _get_baselines(self, meas_analysis, dbisos, dbmws, unpack):
+        isotopes = self.isotopes
+        default_fit = self._default_fit_factory('average', 'SEM')
+        for dbiso, mw in izip(dbisos, dbmws):
+            # mw = dbiso.molecular_weight
             if not mw:
                 continue
 
             name = mw.name
-            if not name in isotopes:
+            try:
+                iso = isotopes[name]
+            except KeyError:
                 continue
 
             det = dbiso.detector.name
-            iso = isotopes[name]
-
             kw = dict(dbrecord=dbiso,
                       name=name,
                       detector=det,
@@ -616,19 +572,54 @@ class DBAnalysis(Analysis):
                 r = Baseline(dbresult=result, **kw)
                 fit = self.get_db_fit(meas_analysis, name, 'baseline')
                 if fit is None:
-                    fit = Fit(fit='average',
-                              error_type='SEM',
-                              filter_outliers=False,
-                              filter_outlier_iterations=0,
-                              filter_outlier_std_devs=0,
-                              include_baseline_error=False,
-                              time_zero_offset=0)
+                    fit = default_fit()
 
                 r.set_fit(fit, notify=False)
                 iso.baseline = r
-            elif kind == 'sniff':
+            elif kind == 'sniff' and unpack:
                 r = Sniff(**kw)
                 iso.sniff = r
+
+    def _default_fit_factory(self, fit, error):
+        def factory():
+            return Fit(fit=fit,
+                       error_type=error,
+                       filter_outliers=False,
+                       filter_outlier_iterations=1,
+                       filter_outlier_std_devs=2,
+                       include_baseline_error=False,
+                       time_zero_offset=0)
+
+        return factory
+
+    def _get_blanks(self, selected_histories):
+        isotopes = self.isotopes
+        # selected_histories = meas_analysis.selected_histories
+        if selected_histories:
+            history = selected_histories.selected_blanks
+            keys = isotopes.keys()
+            if history:
+                for ba in history.blanks:
+                    isok = ba.isotope
+                    try:
+                        blank = isotopes[isok].blank
+                        blank.name = n = '{} bk'.format(isok)
+                        blank.set_uvalue((ba.user_value,
+                                          ba.user_error), dirty=False)
+                        blank.uvalue.tag = n
+                        blank.trait_setq(fit=ba.fit or '')
+                        keys.remove(isok)
+                        if not keys:
+                            break
+                    except KeyError:
+                        pass
+
+            # set names for isotopes with no blank
+            for k in keys:
+                blank = isotopes[k].blank
+                n = '{} bk'.format(k)
+                blank.uvalue.tag = n
+                blank.name = n
 
     def _get_peak_center(self, meas_analysis):
 

@@ -118,6 +118,7 @@ class DatabaseAdapter(Loggable):
     datasource_url = Property(depends_on='connection_parameters_changed')
 
     path = Str
+    echo = False
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -169,7 +170,7 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('connecting to database {}'.format(url))
-                    engine = create_engine(url, echo=False)
+                    engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=False)
