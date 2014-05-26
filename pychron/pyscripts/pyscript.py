@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Any, Bool, Property, Int
+import hashlib
+
+from traits.api import Str, Any, Bool, Property, Int, Dict
 from pyface.confirmation_dialog import confirm
+
 #============= standard library imports ========================
 import time
 import os
@@ -200,6 +203,7 @@ class PyScript(Loggable):
     _wait_control = None
 
     _estimated_duration = 0
+    _estimated_durations = Dict
     _graph_calc = False
 
     trace_line = Int
@@ -212,13 +216,33 @@ class PyScript(Loggable):
     def console_info(self, *args, **kw):
         self._m_info(*args, **kw)
 
-    def calculate_estimated_duration(self, force=False):
-        if force or not self.syntax_checked:
+    def calculate_estimated_duration(self, ctx=None, force=False):
+        """
+            maintain a dictionary of previous calculated durations.
+            key=hash(ctx), value=duration
+
+        """
+
+        def calc_dur():
+            self.setup_context(**ctx)
             self.syntax_checked = False
             self.debug('calculate_estimated duration. syntax requires testing')
             self.test()
+            self.debug('estimated duration= {}'.format(self._estimated_duration))
 
-        return self.get_estimated_duration()
+        h = hashlib.sha1(repr(sorted(ctx.items()))).hexdigest()
+        if force or not self.syntax_checked:
+            calc_dur()
+        else:
+            try:
+                d = self._estimated_durations[h]
+                self._estimated_duration = d
+            except KeyError:
+                calc_dur()
+
+        d = self.get_estimated_duration()
+        self._estimated_durations[h] = d
+        return d
 
     def traceit(self, frame, event, arg):
         if event == "line":

@@ -35,7 +35,6 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
-from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -43,7 +42,7 @@ from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import convert_identifier, \
-    make_runid, get_analysis_type, convert_extract_device
+    make_runid, get_analysis_type
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
@@ -801,7 +800,7 @@ class AutomatedRun(Loggable):
                                  save_as_peak_hop=False,
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
-                                 positions=self.get_position_list(),
+                                 positions=self.spec.get_position_list(),
                                  extraction_positions=ext_pos,
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,
@@ -814,8 +813,7 @@ class AutomatedRun(Loggable):
                                  runscript_name=script_name,
                                  runscript_blob=script_blob,
                                  signal_fods=sfods,
-                                 baseline_fods=bsfods
-        )
+                                 baseline_fods=bsfods)
 
     #===============================================================================
     # doers
@@ -1037,8 +1035,6 @@ anaylsis_type={}
             d[k] = iso.get_baseline_corrected_value()
         return d
 
-    def get_position_list(self):
-        return self._make_iterable(self.spec.position)
 
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
@@ -1293,23 +1289,6 @@ anaylsis_type={}
                     return
 
                 self.py_add_truncation(attr, c, int(start), freq, acr)
-
-
-    def _make_iterable(self, pos):
-        # if '(' in pos and ')' in pos and ',' in pos:
-        #     # interpret as (x,y)
-        #     pos = pos.strip()[1:-1]
-        #     ps = [map(float, pos.split(','))]
-        if XY_REGEX[0].match(pos):
-            ps = XY_REGEX[1](pos)
-
-        elif ',' in pos:
-            # interpert as list of holenumbers
-            ps = list(pos.split(','))
-        else:
-            ps = [pos]
-
-        return ps
 
     def _get_measurement_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.measurement_script, key, default)
@@ -1746,28 +1725,32 @@ anaylsis_type={}
         name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
+
     def _setup_context(self, script):
         """
             setup_context to expose variables to the pyscript
         """
-        spec = self.spec
-        hdn = convert_extract_device(spec.extract_device)
-        #hdn = spec.extract_device.replace(' ', '_').lower()
-        an = spec.analysis_type.split('_')[0]
-        script.setup_context(tray=spec.tray,
-                             position=self.get_position_list(),
-                             disable_between_positions=spec.disable_between_positions,
-                             duration=spec.duration,
-                             extract_value=spec.extract_value,
-                             extract_units=spec.extract_units,
-                             cleanup=spec.cleanup,
-                             extract_device=hdn,
-                             analysis_type=an,
-                             ramp_rate=spec.ramp_rate,
-                             pattern=spec.pattern,
-                             beam_diameter=spec.beam_diameter,
-                             ramp_duration=spec.ramp_duration,
-                             is_last=self.is_last)
+        ctx = self.spec.make_script_context()
+        script.setup_context(is_last=self.is_last, **ctx)
+
+        # spec = self.spec
+        # hdn = convert_extract_device(spec.extract_device)
+        # #hdn = spec.extract_device.replace(' ', '_').lower()
+        # an = spec.analysis_type.split('_')[0]
+        # script.setup_context(tray=spec.tray,
+        # position=self.get_position_list(),
+        #                      disable_between_positions=spec.disable_between_positions,
+        #                      duration=spec.duration,
+        #                      extract_value=spec.extract_value,
+        #                      extract_units=spec.extract_units,
+        #                      cleanup=spec.cleanup,
+        #                      extract_device=hdn,
+        #                      analysis_type=an,
+        #                      ramp_rate=spec.ramp_rate,
+        #                      pattern=spec.pattern,
+        #                      beam_diameter=spec.beam_diameter,
+        #                      ramp_duration=spec.ramp_duration,
+        #                      is_last=self.is_last)
 
     def _get_yaml_parameter(self, script, key, default):
         if not script:
