@@ -31,7 +31,7 @@ before_install:
   - PKGS="${PKGS} patsy"; if [ ${PATSY} ]; then PKGS="${PKGS}=${PATSY}"; fi
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
-  - PKGS="${PKGS} pip";
+  - PKGS="${PKGS} pip pyface traitsui traits chaco enable";
 
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
