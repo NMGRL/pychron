@@ -184,7 +184,8 @@ class AutomatedRunMixin(object):
     def get_menu(self, *args):
         return MenuManager(Action(name='Move to Start', action='move_to_start'),
                            Action(name='Move to End', action='move_to_end'),
-                           Action(name='Move to ...', action='move_to_row'))
+                           Action(name='Move to ...', action='move_to_row'),
+                           Action(name='Unselect', action='unselect'))
 
     def get_row_label(self, section, obj=None):
         return section + 1

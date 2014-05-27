@@ -49,6 +49,10 @@ class ExperimentQueue(BaseExperimentQueue):
     human_error_checker = Instance(HumanErrorChecker, ())
     execution_ratio = Property
 
+    def unselect(self):
+        self.selected=[]
+        self.refresh_table_needed=True
+
     def move_selected_to_row(self):
         e = MoveToRow()
         info = e.edit_traits()

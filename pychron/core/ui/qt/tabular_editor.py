@@ -537,13 +537,16 @@ class myTabularEditor(TabularEditor):
         return _TabularEditor
 
 class TabularEditorHandler(Handler):
-    def move_to_start(self, info, object):
-        object.move_selected_first()
+    def unselect(self, info, obj):
+        obj.unselect()
+        
+    def move_to_start(self, info, obj):
+        obj.move_selected_first()
 
-    def move_to_end(self, info, object):
-        object.move_selected_last()
+    def move_to_end(self, info, obj):
+        obj.move_selected_last()
 
-    def move_to_row(self, info, object):
-        object.move_selected_to_row()
+    def move_to_row(self, info, obj):
+        obj.move_selected_to_row()
 
 #============= EOF =============================================
