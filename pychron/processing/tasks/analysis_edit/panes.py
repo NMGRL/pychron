@@ -297,6 +297,7 @@ class UnknownsHandler(Handler):
     def unselect(self, info, obj):
         obj.unselect()
 
+
 class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
     name = 'Unknowns'

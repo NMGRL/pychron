@@ -384,7 +384,6 @@ class IsotopeEvolutionEditor(GraphEditor):
                               std_devs=fit.filter_std_devs,
                               filter_outliers=fit.filter_outliers)
                     trunc = fit.truncate
-                    print isok
                     if isok.endswith('bs'):
                         xs = self._plot_baselines(add_tools, fd, fit, trunc, g, i, isok, unk)
                     else:

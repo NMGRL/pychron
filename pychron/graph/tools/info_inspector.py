@@ -59,7 +59,7 @@ class InfoInspector(BaseTool):
         self.metadata_changed = True
 
     def assemble_lines(self):
-        return []
+        return
 
     def normal_mouse_leave(self, event):
         self.current_screen = None
@@ -68,21 +68,17 @@ class InfoInspector(BaseTool):
 
 
 class InfoOverlay(AbstractOverlay):
+    """
+        abstract class for displaying hover data
+    """
     tool = Instance(BaseTool)
     visible = False
 
-    '''
-        abstract class for displaying hover data
-        subclasses should implement _assemble_lines
-    '''
-
-    @on_trait_change('tool:metadata_changed')
-    def _update_(self, new):
+    def _update_(self):
         if self.tool.current_position is not None:
             self.visible = True
         else:
             self.visible = False
-
         self.request_redraw()
 
     def overlay(self, plot, gc, *args, **kw):
@@ -104,8 +100,6 @@ class InfoOverlay(AbstractOverlay):
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
-        # for mi in lines:
-        #     print gc.get_full_text_extent(mi)
 
         lw = max(lws) + 4
         lh = max(lhs) * len(lhs) + 2
@@ -137,8 +131,16 @@ class InfoOverlay(AbstractOverlay):
         gc.set_fill_color((0, 0, 0))
 
         gc.translate_ctm(x + 2, y + 2)
+
         for i, mi in enumerate(lines[::-1]):
             gc.set_text_position(0, h * i)
             gc.show_text(mi)
+
+    def _tool_changed(self, old, new):
+        if old:
+            old.on_trait_change(self._update_, 'metadata_changed', remove=True)
+
+        if new:
+            new.on_trait_change(self._update_, 'metadata_changed')
 
 #============= EOF =============================================
