@@ -55,6 +55,8 @@ class BaseMeasurement(HasTraits):
     time_zero_offset = Float
     offset_xs = Property
 
+    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor', 'time_zero_offset']
+
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
         if dbrecord and unpack:
@@ -136,6 +138,14 @@ class IsotopicMeasurement(BaseMeasurement):
 
     _oerror = None
     _ovalue = None
+
+    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor',
+                 '_fit', '_value', '_error', 'filter_outliers_dict',
+                 'include_baseline_error',
+                 '_ovalue', '_oerror',
+                 'include_baseline_error','use_static',
+                 'user_defined_value',
+                 'user_defined_error','time_zero_offset']
 
     def __init__(self, dbresult=None, *args, **kw):
 
@@ -413,6 +423,18 @@ class Isotope(BaseIsotope):
     discrimination = Either(Variable, AffineScalarFunc)
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
+
+    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor',
+                 '_fit', '_value', '_error',
+                 '_ovalue', '_oerror',
+                 'filter_outliers_dict',
+                 'include_baseline_error', 'interference_corrected_value',
+                 'discrimination', 'ic_factor',
+                 'sniff', 'blank', 'background', 'baseline',
+                 'age_error_component',
+                 'include_baseline_error','use_static',
+                 'user_defined_value',
+                 'user_defined_error','time_zero_offset']
 
     def revert_user_defined(self):
         self.blank._revert_user_defined()
