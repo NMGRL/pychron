@@ -23,6 +23,8 @@ from pyface.timer.do_later import do_later
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
@@ -47,6 +49,29 @@ class ExperimentQueue(BaseExperimentQueue):
     human_error_checker = Instance(HumanErrorChecker, ())
     execution_ratio = Property
 
+    def move_selected_to_row(self):
+        e = MoveToRow()
+        info = e.edit_traits()
+        if info.result:
+            self._move_selected(e.row - 1)
+
+    def move_selected_first(self):
+        self._move_selected(0)
+
+    def move_selected_last(self):
+        with no_update(self):
+            for si in self.selected:
+                self.automated_runs.remove(si)
+            self.automated_runs.extend(self.selected)
+
+    def _move_selected(self, idx):
+        with no_update(self):
+            for si in self.selected:
+                self.automated_runs.remove(si)
+
+            for si in reversed(self.selected):
+                self.automated_runs.insert(idx, si)
+
     def count_labnumber(self, ln):
         ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
         i = 0
@@ -54,16 +79,16 @@ class ExperimentQueue(BaseExperimentQueue):
             i += 1
         return i
 
-    def count_labnumber(self, ln):
-        ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
-        i = 0
-        for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
-            i += 1
-        return i
+    # def count_labnumber(self, ln):
+    # ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
+    #     i = 0
+    #     for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+    #         i += 1
+    #     return i
 
     def select_run_idx(self, idx):
         if self.automated_runs:
-                self.selected = self.automated_runs[idx:idx + 1]
+            self.selected = self.automated_runs[idx:idx + 1]
 
     def reset(self):
         """
