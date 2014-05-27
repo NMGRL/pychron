@@ -1,5 +1,10 @@
 statsmodels==0.5.0
 PyYAML
+traits
+traitsui
+chaco
+enable
+pyface
 
 #uncertainties
 #xlrd==0.7.1
