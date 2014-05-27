@@ -470,6 +470,15 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             self._recall_item(new.item)
 
+    @on_trait_change('analysis_table:[append_event,replace_event]')
+    def _analysis_table_append_replace(self, name, new):
+        if self.unknowns_pane:
+            if name=='replace_event':
+                self.unknowns_pane.items=new
+            else:
+                self.unknowns_pane.items.extend(new)
+
+
     def _recall_item(self, item):
         if not self.external_recall_window:
             self.recall(item)

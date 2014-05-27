@@ -31,7 +31,7 @@ from pychron.core.helpers.filetools import add_extension
 
 
 class ExperimentEditorHandler(TabularEditorHandler):
-    pass
+    refresh_name = 'refresh_table_needed'
 
 
 class ExperimentEditor(BaseTraitsEditor):

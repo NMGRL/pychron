@@ -25,6 +25,7 @@ import shelve
 import hashlib
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -287,15 +288,12 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             self.refresh_editor_needed = True
 
 
-class UnknownsHandler(Handler):
+class UnknownsHandler(UnselectTabularEditorHandler):
     def group_by_selected(self, info, obj):
         obj.group_by_selected()
 
     def clear_grouping(self, info, obj):
         obj.clear_grouping()
-
-    def unselect(self, info, obj):
-        obj.unselect()
 
 
 class UnknownsPane(HistoryTablePane):
@@ -321,10 +319,6 @@ class UnknownsPane(HistoryTablePane):
 
         self._clear_grouping(items)
         self.refresh()
-
-    def unselect(self):
-        self.selected=[]
-        self.refresh_needed=True
 
     def _clear_grouping(self, items):
         for si in items:

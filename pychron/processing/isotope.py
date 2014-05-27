@@ -139,13 +139,12 @@ class IsotopicMeasurement(BaseMeasurement):
     _oerror = None
     _ovalue = None
 
-    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor',
-                 '_fit', '_value', '_error', 'filter_outliers_dict',
+    __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
                  'include_baseline_error',
                  '_ovalue', '_oerror',
-                 'include_baseline_error','use_static',
+                 'include_baseline_error', 'use_static',
                  'user_defined_value',
-                 'user_defined_error','time_zero_offset']
+                 'user_defined_error', 'fit_blocks', 'error_type']
 
     def __init__(self, dbresult=None, *args, **kw):
 
@@ -364,7 +363,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
 
 class CorrectionIsotopicMeasurement(IsotopicMeasurement):
-    pass
 
     def __init__(self, dbrecord=None, *args, **kw):
         if dbrecord:
@@ -389,7 +387,7 @@ class Sniff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
-
+    __slots__ = ['baseline']
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
         if not self.include_baseline_error:
@@ -424,17 +422,10 @@ class Isotope(BaseIsotope):
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
 
-    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor',
-                 '_fit', '_value', '_error',
-                 '_ovalue', '_oerror',
-                 'filter_outliers_dict',
-                 'include_baseline_error', 'interference_corrected_value',
+    __slots__ = ['interference_corrected_value',
                  'discrimination', 'ic_factor',
-                 'sniff', 'blank', 'background', 'baseline',
-                 'age_error_component',
-                 'include_baseline_error','use_static',
-                 'user_defined_value',
-                 'user_defined_error','time_zero_offset']
+                 'sniff', 'blank', 'background'
+                 'age_error_component']
 
     def revert_user_defined(self):
         self.blank._revert_user_defined()

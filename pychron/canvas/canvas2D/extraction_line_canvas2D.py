@@ -143,9 +143,11 @@ class ExtractionLineCanvas2D(SceneCanvas):
         """
         """
         ctrl = event.window.control
-
-        tt = self.active_item.get_tooltip_text()
-        ctrl.setToolTip(tt)
+        try:
+            tt = self.active_item.get_tooltip_text()
+            ctrl.setToolTip(tt)
+        except AttributeError:
+            pass
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):

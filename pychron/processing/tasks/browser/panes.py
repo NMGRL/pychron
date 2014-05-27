@@ -15,16 +15,19 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Int, Str, Instance
+from pyface.action.menu_manager import MenuManager
+from traits.api import Int, Str, Instance, HasTraits, Any
 from traitsui.api import View, Item, UItem, VGroup, HGroup, Label, spring, \
-    VSplit, TabularEditor, EnumEditor, Heading, HSplit, Group
+    VSplit, TabularEditor, EnumEditor, Heading, HSplit, Group, Handler
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
 # from traitsui.list_str_adapter import ListStrAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -57,6 +60,11 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
+    def get_menu(self, object, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect'),
+                           Action(name='Replace', action='replace_items'),
+                           Action(name='Append', action='append_items'))
+
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
         if self.item.is_plateau_step:
@@ -65,7 +73,14 @@ class AnalysisAdapter(BrowserAdapter):
         return color
 
 
-from traits.api import HasTraits, Any
+class TablesHandler(UnselectTabularEditorHandler):
+    def replace_items(self, info, obj):
+        if obj.selected:
+            obj.replace_event = obj.selected
+
+    def append_items(self, info, obj):
+        if obj.selected:
+            obj.append_event = obj.selected
 
 
 class Tables(HasTraits):
@@ -124,7 +139,8 @@ class Tables(HasTraits):
                                 defined_when=self.pane.analyses_defined)
 
         v = View(HSplit(Group(sample_table, group_table,
-                              layout='tabbed'), analysis_table))
+                              layout='tabbed'), analysis_table),
+                 handler=TablesHandler())
         return v
 
 
@@ -200,10 +216,10 @@ class BrowserPane(TraitsDockPane):
                                       'cross',
                                       tooltip='Clear selected')),
             HGroup(VGroup(UItem('projects',
-                         editor=TabularEditor(editable=False,
-                                              selected='selected_projects',
-                                              adapter=ProjectAdapter(),
-                                              multi_select=True)),
+                                editor=TabularEditor(editable=False,
+                                                     selected='selected_projects',
+                                                     adapter=ProjectAdapter(),
+                                                     multi_select=True)),
                           label='Projects'),
                    irrad_grp))
 

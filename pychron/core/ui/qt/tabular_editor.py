@@ -536,10 +536,16 @@ class myTabularEditor(TabularEditor):
     def _get_klass(self):
         return _TabularEditor
 
-class TabularEditorHandler(Handler):
+
+class UnselectTabularEditorHandler(Handler):
+    refresh_name = 'refresh_needed'
     def unselect(self, info, obj):
-        obj.unselect()
-        
+        obj.selected=[]
+        setattr(obj, self.refresh_name, True)
+
+
+class TabularEditorHandler(UnselectTabularEditorHandler):
+
     def move_to_start(self, info, obj):
         obj.move_selected_first()
 

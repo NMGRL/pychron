@@ -92,7 +92,7 @@ class ExtractionLineScriptWriter(Loggable):
     _docstring = Str
     mode = 'elwriter'
 
-    def _set_default_state(self):
+    def _set_default_states(self):
         valves = [('C', True), ('V', True), ('O', True), ('P', True), ('Q', True)]
         for v, s in valves:
             ve = self.canvas.scene.get_item(v)
@@ -101,9 +101,10 @@ class ExtractionLineScriptWriter(Loggable):
                 self._update_network(v, s)
 
     def _default_state_button_fired(self):
-        self._set_default_state()
+        self._set_default_states()
 
     def set_default_states(self):
+        self._set_default_states()
         self.network.set_default_states(self.canvas)
 
     def open_file(self, p=''):
