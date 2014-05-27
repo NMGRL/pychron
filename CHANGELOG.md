@@ -8,5 +8,7 @@ CHANGELOG
 * record diode output (heat_power) and response (temp) for each analysis
 * when diode enabled scan pyrometer and display colormapped indicator for temperature
 * measure baselines between peak hops. can explicitly define a peak hop as a baseline.
-
+* added context menu actions to Experiment Editor. Move to End, Move to Start, Move to ...
+* APIS support
+* updated Experiment estimated duration. 
 

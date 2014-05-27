@@ -5,6 +5,8 @@ Pychron
 [![Requirements Status](https://requires.io/github/NMGRL/pychron/requirements.png?branch=develop)](https://requires.io/github/NMGRL/pychron/requirements/?branch=develop)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.9884.png)](https://zenodo.org/record/9884#.U3Tp8V4rjfM)
 
+[Changes](CHANGELOG.md)
+
 What is Pychron
 ===============
 
