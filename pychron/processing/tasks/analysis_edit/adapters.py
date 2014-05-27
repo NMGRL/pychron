@@ -15,7 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Property
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 
@@ -48,6 +50,10 @@ class UnknownsAdapter(TabularAdapter):
     #     tag_text_color = Property
     age_text = Property
     error_text = Property
+    def get_menu( self, object, trait, row, column ):
+        return MenuManager(Action(name='Group Selected', action='group_by_selected'),
+                           Action(name='Clear Grouping', action='clear_grouping'),
+                           Action(name='Unselect', action='unselect'))
 
     def get_bg_color(self, obj, trait, row, column=0):
         c = 'white'

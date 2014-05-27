@@ -46,7 +46,8 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Iso Fits', 'iso_fit_status'),
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
-                   ('Flux', 'flux_fit_status')]
+                   ('Flux', 'flux_fit_status'),
+                   ('Spec.', 'mass_spectrometer')]
 
     columns = [('Run ID', 'record_id'),
                ('Tag', 'tag')]
@@ -189,7 +190,8 @@ class BrowserPane(TraitsDockPane):
                                Item('include_unknowns', label='Unknowns')),
                            icon_button_editor('find_by_irradiation',
                                               'edit-find',
-                                              enabled_when='include_monitors or include_unknowns'))
+                                              enabled_when='include_monitors or include_unknowns'),
+                           label='Irradiations')
 
         project_grp = VGroup(
             HGroup(Label('Filter'),
@@ -197,11 +199,12 @@ class BrowserPane(TraitsDockPane):
                    icon_button_editor('clear_selection_button',
                                       'cross',
                                       tooltip='Clear selected')),
-            HGroup(UItem('projects',
+            HGroup(VGroup(UItem('projects',
                          editor=TabularEditor(editable=False,
                                               selected='selected_projects',
                                               adapter=ProjectAdapter(),
                                               multi_select=True)),
+                          label='Projects'),
                    irrad_grp))
 
         grp = VSplit(project_grp,
