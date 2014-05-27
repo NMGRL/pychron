@@ -63,11 +63,14 @@ class ControlPane(TraitsDockPane):
     closable = False
 
     def traits_view(self):
-        action_grp = VGroup(HGroup(UItem('add_sleep_button', width=-40),
+        action_grp = VGroup(HGroup(UItem('add_sleep_button', width=-60),
                                    UItem('duration')),
-                            HGroup(UItem('add_info_button', width=-40),
+                            HGroup(UItem('add_info_button', width=-60),
                                    UItem('info_str')),
-                            HGroup(Item('record_valve_actions', label='Record Actions')),
+                            HGroup(Item('record_valve_actions',
+                                        tooltip='Should valve actuations be added to the action list. '
+                                                    'You can also hold down the "Shift" key to suppress addition',
+                                        label='Record Actions')),
                             UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
                                                                   operations=['move', 'delete'],
                                                                   selected='selected',

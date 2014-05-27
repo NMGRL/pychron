@@ -103,13 +103,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
             valve.soft_lock = lockstate
             self.request_redraw()
 
-    def load_canvas_file(self, cname, setup_name='canvas'):
+    def load_canvas_file(self, cname, setup_name='canvas', valve_name='valves'):
 
         p = os.path.join(paths.canvas2D_dir, '{}.xml'.format(setup_name))
         p2 = os.path.join(paths.canvas2D_dir, cname)
-
+        p3 = os.path.join(paths.extraction_line_dir, '{}.xml'.format(valve_name))
         if os.path.isfile(p):
-            self.scene.load(p, p2, self)
+            self.scene.load(p, p2, p3, self)
 
     def _over_item(self, event):
         x, y = event.x, event.y

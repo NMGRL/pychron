@@ -26,6 +26,7 @@ class BaseValve(Connectable):
     soft_lock = False
     owned = False
     oactive_color = (0, 255, 0)
+    description = ''
 
     def is_in(self, x, y):
         mx, my = self.get_xy()
@@ -37,7 +38,7 @@ class BaseValve(Connectable):
         state = 'Open' if self.state else 'Closed'
         if self.soft_lock:
             state = '{}(Locked)'.format(state)
-        return 'Valve={}\nState={}'.format(self.name, state)
+        return 'Valve={}\nDesc={}\nState={}'.format(self.name, self.description, state)
 
 
 # class Valve(RoundedRectangle, BaseValve):

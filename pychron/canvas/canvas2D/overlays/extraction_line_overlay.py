@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, Str, Float, Bool
+from traits.api import Any, Str, Float, Bool, Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -68,7 +68,7 @@ class ExtractionLineInfoTool(InfoInspector):
 
 
 class ExtractionLineInfoOverlay(InfoOverlay):
-    tool = ExtractionLineInfoTool
+    tool = Instance(ExtractionLineInfoTool)
 
 #============= EOF =============================================
 

@@ -17,7 +17,6 @@ import os
 import re
 
 from pyface.constant import OK
-
 from pychron.core.ui import set_qt
 
 
@@ -77,19 +76,32 @@ class ExtractionLineScriptWriter(Loggable):
 
     actions = List
 
-    record_valve_actions = Bool(False)
+    record_valve_actions = Bool(True)
     add_sleep_button = Button('Sleep')
     duration = Float(1.0)
 
     add_info_button = Button('Info')
     info_str = Str
 
+    default_state_button = Button('Default State')
+
     selected = List
     refresh_needed = Event
 
-    _script_text = Str
+    script_text = Str
     _docstring = Str
     mode = 'elwriter'
+
+    def _set_default_state(self):
+        valves = [('C', True), ('V', True), ('O', True), ('P', True), ('Q', True)]
+        for v, s in valves:
+            ve = self.canvas.scene.get_item(v)
+            if ve:
+                ve.state = s
+                self._update_network(v, s)
+
+    def _default_state_button_fired(self):
+        self._set_default_state()
 
     def set_default_states(self):
         self.network.set_default_states(self.canvas)
@@ -104,8 +116,8 @@ class ExtractionLineScriptWriter(Loggable):
             return True
 
     def new(self):
-        self._path = None
-        self._docstring = None
+        self._path = ''
+        self._docstring = ''
         self.actions = []
 
     def save_as(self):
@@ -153,7 +165,7 @@ class ExtractionLineScriptWriter(Loggable):
         p = add_extension(p, ext='.py')
         self.debug('saving script to path {}'.format(p))
         with open(p, 'w') as fp:
-            fp.write(self._script_text)
+            fp.write(self.script_text)
 
     def _open_file(self, p):
 
@@ -227,7 +239,7 @@ def main():
 {}""".format(ds,
              '\n'.join([a.to_string() for a in self.actions]))
 
-        self._script_text = txt
+        self.script_text = txt
 
     def _refresh(self):
         self.refresh_needed = True
@@ -311,9 +323,12 @@ if __name__ == '__main__':
             self.model.save()
 
         def traits_view(self):
-            action_grp = VGroup(HGroup(UItem('add_sleep_button'),
+            default_state_grp = VGroup(UItem('default_state_button'))
+
+            action_grp = VGroup(default_state_grp,
+                                HGroup(UItem('add_sleep_button', width=-60),
                                        UItem('duration')),
-                                HGroup(UItem('add_info_button'),
+                                HGroup(UItem('add_info_button', width=-60),
                                        UItem('info_str')),
                                 HGroup(Item('record_valve_actions',
                                             tooltip='Should valve actuations be added to the action list. '
@@ -330,7 +345,7 @@ if __name__ == '__main__':
                       editor=ComponentEditor()),
                 label='Canvas')
 
-            script_group = VGroup(UItem('_script_text',
+            script_group = VGroup(UItem('script_text',
                                         editor=PyScriptCodeEditor(),
                                         style='custom'),
                                   label='script')
@@ -345,9 +360,10 @@ if __name__ == '__main__':
                 width=900, height=700)
             return v
 
+    paths.build('_view')
     ew = ExtractionLineScriptWriter()
-    p = os.path.join(paths.extraction_dir, 'foo.py')
-    ew.open_file(p)
+    # p = os.path.join(paths.extraction_dir, 'foo.py')
+    # ew.open_file(p)
     ew.set_default_states()
     e = ExtractionLineScriptWriterView(model=ew)
     e.configure_traits()

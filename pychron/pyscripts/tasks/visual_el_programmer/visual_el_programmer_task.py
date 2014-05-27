@@ -21,7 +21,7 @@ from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.actions import GenericSaveAction
+from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction
 from pychron.envisage.tasks.base_task import BaseTask
 from pychron.pyscripts.extraction_line_script_writer import ExtractionLineScriptWriter
 from pychron.pyscripts.tasks.visual_el_programmer.panes import CentralPane, ControlPane
@@ -29,7 +29,7 @@ from pychron.pyscripts.tasks.visual_el_programmer.panes import CentralPane, Cont
 
 class VisualElProgrammerTask(BaseTask):
     model = Instance(ExtractionLineScriptWriter, ())
-    tool_bars = [SToolBar(GenericSaveAction())]
+    tool_bars = [SToolBar(GenericSaveAction(), GenericSaveAsAction())]
 
     def activated(self):
         self.model.set_default_states()
