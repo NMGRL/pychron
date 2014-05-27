@@ -5,6 +5,12 @@ traitsui
 chaco
 enable
 pyface
+uncertainties
+PyMySQL
+Reportlab
+lxml
+xlrd
+xlwt
 
 #uncertainties
 #xlrd==0.7.1
