@@ -32,12 +32,10 @@ before_install:
   - PKGS="${PKGS} pandas"; if [ ${PANDAS} ]; then PKGS="${PKGS}=${PANDAS}"; fi
   - PKGS="${PKGS} Cython"; if [ ${CYTHON} ]; then PKGS="${PKGS}=${CYTHON}"; fi
   - PKGS="${PKGS} pip";
-  #- PKGS="${PKGS} pip pyface traitsui traits chaco enable";
 
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
   - conda install --yes --file requirements_tests.txt
-  #- pip install -r requirements_tests.txt
 
 script: python setup.py test

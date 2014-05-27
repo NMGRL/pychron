@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ class InitializationParser(XMLParser):
         ver = '_proc'
         # ver ='_apis'
         # ver = '_uv'
-        # ver = '_exp'
+        ver = '_exp'
         # ver = '_exp_uv'
         # ver= '_spec'
         # ver = '_diode'
