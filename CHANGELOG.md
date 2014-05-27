@@ -11,4 +11,5 @@ CHANGELOG
 * added context menu actions to Experiment Editor. Move to End, Move to Start, Move to ...
 * APIS support
 * updated Experiment estimated duration. 
-
+* added Visual ExtractionLine Script programmer
+* added Peak hop editor

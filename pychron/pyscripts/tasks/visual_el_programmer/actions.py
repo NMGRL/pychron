@@ -28,6 +28,7 @@ class OpenVisualELScriptAction(FileOpenAction):
 
 class NewVisualELScriptAction(NewAction):
     task_id = 'pychron.pyscript.visual_el_programmer'
+    name = 'New Visual PyScript'
 
 #============= EOF =============================================
 
