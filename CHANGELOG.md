@@ -13,3 +13,5 @@ CHANGELOG
 * updated Experiment estimated duration. 
 * added Visual ExtractionLine Script programmer
 * added Peak hop editor
+* added context menu actions to UnknownsPane(unselect, group selected, clear grouping) and AnalysisTable(unselect, replace, append)
+* added Open Additional Window action. use to open multiple windows of the same task type e.i two recall windows

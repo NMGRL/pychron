@@ -33,7 +33,7 @@ from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAc
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
-    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction
+    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
@@ -354,6 +354,7 @@ class BaseTask(Task, Loggable):
                 CloseAction(),
                 CloseOthersAction(),
                 id='Close'),
+            OpenAdditionalWindow(),
             Group(MinimizeAction(),
                   ResetLayoutAction(),
                   PositionAction()),

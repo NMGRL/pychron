@@ -109,6 +109,15 @@ class CloseOthersAction(TaskAction):
                 wi.close()
 
 
+class OpenAdditionalWindow(TaskAction):
+    name='Open Additional Window'
+    description = 'Open an additional window of the current active task'
+    def perform(self, event):
+        app=self.task.window.application
+        win=app.create_window(TaskWindowLayout(self.task.id))
+        win.open()
+
+
 class RaiseAction(TaskAction):
     window = Any
     style = 'toggle'
