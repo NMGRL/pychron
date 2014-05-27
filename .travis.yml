@@ -36,6 +36,6 @@ before_install:
 install:
   - conda create --yes --quiet -n pychron-test ${PKGS} ${OPTIONAL}
   - source activate pychron-test
-  - pip install -r test_requirements.txt
+  - pip install -r requirements_tests.txt
 
 script: python setup.py test
