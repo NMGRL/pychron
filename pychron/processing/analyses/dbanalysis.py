@@ -190,25 +190,25 @@ class DBAnalysis(Analysis):
             copy values from meas_AnalysisTable
             and other associated tables
         """
-        ms, ls, isos, mws, samples, projects, materials, shs = izip(*dbrecord_tuple)
+
+        ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
         sample = samples[0]
         project = projects[0]
         material = materials[0]
-        sh = shs[0]
 
         if sample:
             self.sample = sample
             self.project = project
             if material:
-                self.material = material.name
+                self.material = material
 
         self._sync_meas_analysis_attributes(meas_analysis)
         self._sync_irradiation(lab)
 
         #this is the dominant time sink
-        self._sync_isotopes(meas_analysis, isos, mws, sh,
+        self._sync_isotopes(meas_analysis, isos,
                             unpack, load_peak_center=load_changes)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
         #          kwargs={'load_peak_center': load_changes})
@@ -418,15 +418,13 @@ class DBAnalysis(Analysis):
 
             iso.discrimination = idisc
 
-    def _sync_isotopes(self, meas_analysis, isos, mws, shs,
+    def _sync_isotopes(self, meas_analysis, isos,
                        unpack, load_peak_center=False):
-
         # self.isotopes = timethis(self._get_isotopes, args=(meas_analysis, isos),
         #                          kwargs=dict(unpack=unpack))
 
-        self._make_isotopes(meas_analysis, isos, mws, shs, unpack=unpack)
+        self._make_isotopes(meas_analysis, isos, unpack=unpack)
 
-        # self.isotope_fits = self._get_isotope_fits()
         if load_peak_center:
             pc, data = self._get_peak_center(meas_analysis)
             self.peak_center = pc
@@ -490,24 +488,23 @@ class DBAnalysis(Analysis):
 
         return fs + bs
 
-    def _make_isotopes(self, meas_analysis, dbisos, dbmws, shs, unpack):
+    def _make_isotopes(self, meas_analysis, dbisos, unpack):
         # isotopes = dict()
 
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
-        # signals=(iso for iso in dbisos if iso.kind=='signal')
-        # self._get_signals(meas_analysis, signals, unpack)
 
-        self._get_signals(meas_analysis, dbisos, dbmws, unpack)
-        self._get_baselines(meas_analysis, dbisos, dbmws, unpack)
-        self._get_blanks(shs)
+        self._get_signals(meas_analysis, dbisos, unpack)
+        self._get_baselines(meas_analysis, dbisos, unpack)
 
-    def _get_signals(self, meas_analysis, dbisos, dbmws, unpack):
+        self._get_blanks(meas_analysis)
+
+    def _get_signals(self, meas_analysis, dbisos, unpack):
         d = self.isotopes
         default_fit = self._default_fit_factory('linear', 'SEM')
-        for iso, mw in izip(dbisos, dbmws):
-            # mw = iso.molecular_weight
+        for iso in dbisos:
+            mw = iso.molecular_weight
             if not iso.kind == 'signal' or not mw:
                 continue
 
@@ -541,11 +538,11 @@ class DBAnalysis(Analysis):
                 r.set_fit(fit, notify=False)
                 d[name] = r
 
-    def _get_baselines(self, meas_analysis, dbisos, dbmws, unpack):
+    def _get_baselines(self, meas_analysis, dbisos, unpack):
         isotopes = self.isotopes
         default_fit = self._default_fit_factory('average', 'SEM')
-        for dbiso, mw in izip(dbisos, dbmws):
-            # mw = dbiso.molecular_weight
+        for dbiso in dbisos:
+            mw = dbiso.molecular_weight
             if not mw:
                 continue
 
@@ -592,9 +589,10 @@ class DBAnalysis(Analysis):
 
         return factory
 
-    def _get_blanks(self, selected_histories):
+    # def _get_blanks(self, selected_histories):
+    def _get_blanks(self, meas_analysis):
         isotopes = self.isotopes
-        # selected_histories = meas_analysis.selected_histories
+        selected_histories = meas_analysis.selected_histories
         if selected_histories:
             history = selected_histories.selected_blanks
             keys = isotopes.keys()
