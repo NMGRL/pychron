@@ -89,6 +89,7 @@ class ExtractionLineScriptWriter(Loggable):
 
     _script_text = Str
     _docstring = Str
+    mode = 'elwriter'
 
     def set_default_states(self):
         self.network.set_default_states(self.canvas)
@@ -123,6 +124,9 @@ class ExtractionLineScriptWriter(Loggable):
 
     #elm protocol
     def set_selected_explanation_item(self, obj):
+        pass
+
+    def set_software_lock(self, obj, state):
         pass
 
     def open_valve(self, valve, mode='normal', **kw):
@@ -281,71 +285,71 @@ def main():
         return network
 
 
-# from traitsui.tabular_adapter import TabularAdapter
-# from traitsui.api import Controller, View, UItem, Group, HGroup, VGroup, Item, TabularEditor
-# from enable.component_editor import ComponentEditor
-# from traitsui.menu import Action
-# from pychron.core.ui.code_editor import PyScriptCodeEditor
-# class ActionsAdapter(TabularAdapter):
-#     columns = [('Name', 'name'),
-#                ('Value', 'value')]
-#
-#     def get_bg_color(self, *args, **kw):
-#         color = 'white'
-#         if self.item.name == 'open':
-#             color = 'lightgreen'
-#         elif self.item.name == 'close':
-#             color = 'lightcoral'
-#         return color
-#
-#
-# class ExtractionLineScriptWriterView(Controller):
-#     model = ExtractionLineScriptWriter
-#
-#     def save(self, info):
-#         self.model.save()
-#
-#     def traits_view(self):
-#         action_grp = VGroup(HGroup(UItem('add_sleep_button'),
-#                                    UItem('duration')),
-#                             HGroup(UItem('add_info_button'),
-#                                    UItem('info_str')),
-#                             HGroup(Item('record_valve_actions',
-#                                         tooltip='Should valve actuations be added to the action list. '
-#                                                 'You can also hold down the "Shift" key to suppress addition',
-#                                         label='Record Actions')),
-#                             UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
-#                                                                   operations=['move', 'delete'],
-#                                                                   selected='selected',
-#                                                                   refresh='refresh_needed',
-#                                                                   multi_select=True)))
-#
-#         canvas_group = HGroup(
-#             UItem('canvas', style='custom',
-#                   editor=ComponentEditor()),
-#             label='Canvas')
-#
-#         script_group = VGroup(UItem('_script_text',
-#                                     editor=PyScriptCodeEditor(),
-#                                     style='custom'),
-#                               label='script')
-#
-#         tgrp = Group(canvas_group, script_group, layout='tabbed')
-#
-#         v = View(
-#             # tgrp,
-#             HGroup(action_grp, tgrp),
-#             buttons=['OK', Action(action='save', name='Save')],
-#             resizable=True,
-#             width=900, height=700)
-#         return v
-#
-#
-# if __name__ == '__main__':
-#     ew = ExtractionLineScriptWriter()
-#     p=os.path.join(paths.extraction_dir, 'foo.py')
-#     ew.open_file(p)
-#     e = ExtractionLineScriptWriterView(model=ew)
-#     e.configure_traits()
+if __name__ == '__main__':
+    from traitsui.tabular_adapter import TabularAdapter
+    from traitsui.api import Controller, View, UItem, Group, HGroup, VGroup, Item, TabularEditor
+    from enable.component_editor import ComponentEditor
+    from traitsui.menu import Action
+    from pychron.core.ui.code_editor import PyScriptCodeEditor
+
+    class ActionsAdapter(TabularAdapter):
+        columns = [('Name', 'name'),
+                   ('Value', 'value')]
+
+        def get_bg_color(self, *args, **kw):
+            color = 'white'
+            if self.item.name == 'open':
+                color = 'lightgreen'
+            elif self.item.name == 'close':
+                color = 'lightcoral'
+            return color
+
+    class ExtractionLineScriptWriterView(Controller):
+        model = ExtractionLineScriptWriter
+
+        def save(self, info):
+            self.model.save()
+
+        def traits_view(self):
+            action_grp = VGroup(HGroup(UItem('add_sleep_button'),
+                                       UItem('duration')),
+                                HGroup(UItem('add_info_button'),
+                                       UItem('info_str')),
+                                HGroup(Item('record_valve_actions',
+                                            tooltip='Should valve actuations be added to the action list. '
+                                                    'You can also hold down the "Shift" key to suppress addition',
+                                            label='Record Actions')),
+                                UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
+                                                                      operations=['move', 'delete'],
+                                                                      selected='selected',
+                                                                      refresh='refresh_needed',
+                                                                      multi_select=True)))
+
+            canvas_group = HGroup(
+                UItem('canvas', style='custom',
+                      editor=ComponentEditor()),
+                label='Canvas')
+
+            script_group = VGroup(UItem('_script_text',
+                                        editor=PyScriptCodeEditor(),
+                                        style='custom'),
+                                  label='script')
+
+            tgrp = Group(canvas_group, script_group, layout='tabbed')
+
+            v = View(
+                # tgrp,
+                HGroup(action_grp, tgrp),
+                buttons=['OK', Action(action='save', name='Save')],
+                resizable=True,
+                width=900, height=700)
+            return v
+
+    ew = ExtractionLineScriptWriter()
+    p = os.path.join(paths.extraction_dir, 'foo.py')
+    ew.open_file(p)
+    ew.set_default_states()
+    e = ExtractionLineScriptWriterView(model=ew)
+    e.configure_traits()
 #============= EOF =============================================
 

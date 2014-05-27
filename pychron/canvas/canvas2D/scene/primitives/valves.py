@@ -33,8 +33,15 @@ class BaseValve(Connectable):
         if mx <= x <= (mx + w) and my <= y <= (my + h):
             return True
 
+    def get_tooltip_text(self):
+        state = 'Open' if self.state else 'Closed'
+        if self.soft_lock:
+            state = '{}(Locked)'.format(state)
+        return 'Valve={}\nState={}'.format(self.name, state)
 
-class Valve(RoundedRectangle, BaseValve):
+
+# class Valve(RoundedRectangle, BaseValve):
+class Valve(BaseValve, RoundedRectangle):
     width = 2
     height = 2
     corner_radius = 4

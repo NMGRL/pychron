@@ -18,6 +18,8 @@
 from traits.api import Any, Str, on_trait_change, Bool
 from pyface.action.menu_manager import MenuManager
 from traitsui.menu import Action
+from pyface.qt.QtGui import QToolTip
+
 #============= standard library imports ========================`
 import os
 #============= local library imports  ==========================
@@ -121,13 +123,16 @@ class ExtractionLineCanvas2D(SceneCanvas):
         item = self._over_item(event)
         if item is not None:
             self.event_state = 'select'
-            event.window.set_pointer(self.select_pointer)
             if item != self.active_item:
                 self.active_item = item
             if isinstance(item, BaseValve):
+                event.window.set_pointer(self.select_pointer)
                 if self.manager:
                     self.manager.set_selected_explanation_item(item)
         else:
+            event.window.control.setToolTip('')
+            QToolTip.hideText()
+
             self.active_item = None
             self.event_state = 'normal'
             event.window.set_pointer(self.normal_pointer)
@@ -137,6 +142,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def select_mouse_move(self, event):
         """
         """
+        ctrl = event.window.control
+
+        tt = self.active_item.get_tooltip_text()
+        ctrl.setToolTip(tt)
         self.normal_mouse_move(event)
 
     def select_right_down(self, event):
@@ -197,21 +206,21 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if change:
             self.request_redraw()
 
-    def OnLock(self):
+    def on_lock(self):
         item = self._active_item
         if item:
             item.soft_lock = lock = not item.soft_lock
             self.manager.set_software_lock(item.name, lock)
             self.request_redraw()
 
-    def OnSample(self):
-        pass
-
-    def OnCycle(self):
-        pass
-
-    def OnProperties(self, event):
-        self.manager.show_valve_properties(self.active_item.name)
+    # def OnSample(self):
+    # pass
+    #
+    # def OnCycle(self):
+    #     pass
+    #
+    # def OnProperties(self, event):
+    #     self.manager.show_valve_properties(self.active_item.name)
 
     def iter_valves(self):
         return (i for i in self.scene.valves.itervalues() if isinstance(i, BaseValve))
@@ -236,13 +245,13 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
-        if self.manager.mode != 'client':
+        if self.manager.mode == 'normal':
             if isinstance(self.active_item, BaseValve):
                 t = 'Lock'
                 if obj.soft_lock:
                     t = 'Unlock'
 
-                action = self._action_factory(t, 'OnLock')
+                action = self._action_factory(t, 'on_lock')
                 actions.append(action)
 
         if actions:

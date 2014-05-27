@@ -25,20 +25,8 @@ from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
 
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
-from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
+from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.extraction_line.graph.traverse import bft
-
-
-def get_volume(elem, tag='volume', default=0):
-    """
-        get volume tag from xml
-    """
-    vol = elem.find(tag)
-    if vol is not None:
-        vol = float(vol.text.strip())
-    else:
-        vol = default
-    return vol
 
 
 def split_graph(n):
