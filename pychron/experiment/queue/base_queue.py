@@ -109,8 +109,10 @@ class BaseExperimentQueue(Loggable):
             if freq:
                 if len(self.selected) > 1:
                     runblock = self.selected
+                    sidx = aruns.index(runblock[0])
                 else:
                     runblock = self.automated_runs
+                    sidx = 0
 
                 self._frequency_group_counter += 1
                 fcnt = self._frequency_group_counter
@@ -127,7 +129,7 @@ class BaseExperimentQueue(Loggable):
                     incrementable_types = ('unknown',)
 
                 for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
-                                                             freq_before, freq_after))):
+                                                             freq_before, freq_after, sidx=sidx))):
                     run = run.clone_traits()
                     run.frequency_group = fcnt
                     runs.append(run)

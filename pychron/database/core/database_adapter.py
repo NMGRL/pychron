@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,7 +126,6 @@ class DatabaseAdapter(Loggable):
         #
         # logging.basicConfig()
         # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
     def create_all(self, metadata):
         if self.kind == 'sqlite':

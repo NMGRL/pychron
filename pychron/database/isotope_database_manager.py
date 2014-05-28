@@ -127,6 +127,7 @@ class BaseIsotopeDatabaseManager(Loggable):
             bind_preference(self.db, 'password', '{}.password'.format(prefid))
 
         bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
+        bind_preference(self.db, 'save_username', '{}.save_username'.format(prefid))
 
     def open_progress(self, n=2, **kw):
         return self._open_progress(n, **kw)

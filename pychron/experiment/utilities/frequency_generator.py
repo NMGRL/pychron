@@ -19,7 +19,7 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-def frequency_index_gen(runs, freq, incrementable, before, after):
+def frequency_index_gen(runs, freq, incrementable, before, after, sidx=0):
     cnt = 0
     n = len(runs)
     for i, ai in enumerate(runs):
@@ -30,10 +30,13 @@ def frequency_index_gen(runs, freq, incrementable, before, after):
             cnt += 1
             continue
 
+        i += sidx
+        # print i
         if before and not after:
             yield i
         elif after and not before:
-            yield i + freq
+            if i + freq - sidx <= n:
+                yield i + freq
         elif not before and not after:
             if i + freq < n:
                 yield i + freq
