@@ -7,6 +7,8 @@ Pychron
 
 [Changes](CHANGELOG.md)
 
+[Website](http://nmgrl.github.io/pychron/)
+
 What is Pychron
 ===============
 
