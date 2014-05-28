@@ -53,6 +53,33 @@ class FrequencyTestCase(unittest.TestCase):
                                       'unknown', 'unknown', 'blank',
                                       'unknown', 'unknown', 'blank', ])
 
+    def test_not_before_or_after(self):
+        runs = self.runs
+        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown', ), False, False))):
+            r = Run()
+            r.analysis_type = 'blank'
+            runs.insert(i, r)
+
+        atypes = [ri.analysis_type for ri in runs]
+        self.assertListEqual(atypes, ['unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown'])
+
+    def test_not_before_or_after3(self):
+        runs = self.runs
+        for i in reversed(list(frequency_index_gen(runs, 3, ('unknown', ), False, False))):
+            r = Run()
+            r.analysis_type = 'blank'
+            runs.insert(i, r)
+
+        atypes = [ri.analysis_type for ri in runs]
+        self.assertListEqual(atypes, ['unknown', 'unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown', 'unknown', 'blank',
+                                      'unknown', 'unknown', 'unknown', 'blank',
+                                      'unknown'])
+
 
 if __name__ == '__main__':
     unittest.main()

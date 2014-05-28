@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,6 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 class ExperimentQueue(BaseExperimentQueue):
-    selected = Any
     executed_selected = Any
     dclicked = Any
     database_identifier = Int

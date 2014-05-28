@@ -21,6 +21,7 @@ import yaml
 import os
 import datetime
 #============= local library imports  ==========================
+from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.stats import ExperimentStats
@@ -43,6 +44,8 @@ def extract_meta(line_gen):
 
 
 class BaseExperimentQueue(Loggable):
+    selected = List
+
     automated_runs = List
     cleaned_automated_runs = Property(depends_on='automated_runs[]')
 
@@ -70,7 +73,7 @@ class BaseExperimentQueue(Loggable):
 
     load_name = Str
 
-    _frequency_added_counter = 0
+    _frequency_group_counter = 0
 
     def _get_name(self):
         if self.path:
@@ -86,45 +89,70 @@ class BaseExperimentQueue(Loggable):
         return True
 
     def clear_frequency_runs(self):
-        self.automated_runs = [ri for ri in self.automated_runs
-                               if not ri.frequency_added == self._frequency_added_counter]
-        self._frequency_added_counter -= 1
+        if self._frequency_group_counter:
+            self.automated_runs = [ri for ri in self.automated_runs
+                                   if not ri.frequency_group == self._frequency_group_counter]
+            self._frequency_group_counter -= 1
 
-    def add_runs(self, runviews, freq=None):
+    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False):
         """
-            runviews: list of runs
+            runspecs: list of runs
             freq: optional inter
+            freq_before_or_after: if true add before else add after
         """
-        if not runviews:
+        if not runspecs:
             return
 
         with no_update(self):
             aruns = self.automated_runs
             #        self._suppress_aliquot_update = True
             if freq:
-                self._frequency_added_counter += 1
-                fcnt = self._frequency_added_counter
+                if len(self.selected) > 1:
+                    runblock = self.selected
+                else:
+                    runblock = self.automated_runs
 
-                cnt = 0
-                n = len(aruns)
+                self._frequency_group_counter += 1
+                fcnt = self._frequency_group_counter
+
+                # cnt = 0
+                # n = len(runblock)+ (0 if freq_before_or_after else freq)
                 runs = []
-                for i, ai in enumerate(aruns[::-1]):
-                    if cnt == freq:
-                        run = runviews[0].clone_traits()
-                        runs.append(run)
-                        run.frequency_added = fcnt
-                        aruns.insert(n - i, run)
-                        cnt = 0
-                    if ai.analysis_type in ('unknown', 'air', 'cocktail'):
-                        cnt += 1
+
+                run = runspecs[0]
+                rtype = run.analysis_type
+                if rtype.startswith('blank'):
+                    incrementable_types = ('unknown', 'air', 'cocktail')
+                elif rtype.startswith('air') or rtype.startswith('cocktail'):
+                    incrementable_types = ('unknown',)
+
+                for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
+                                                             freq_before, freq_after))):
+                    run = run.clone_traits()
+                    run.frequency_group = fcnt
+                    runs.append(run)
+                    aruns.insert(idx, run)
+
+                    # for i, ai in enumerate(runblock):
+                    # if cnt == freq:
+                    #         run = run.clone_traits()
+                    #         runs.append(run)
+                    #         run.frequency_group = fcnt
+                    #         c = n-i -(freq if freq_before_or_after else 0)
+                    #         print 'inserting', c, n, i
+                    #         if c>-1:
+                    #             aruns.insert(c, run)
+                    #         cnt = 0
+                    #     if ai.analysis_type in incrementable_types:
+                    #         cnt += 1
             else:
-                runs = runviews
+                runs = runspecs
                 if self.selected:
                     idx = aruns.index(self.selected[-1])
-                    for ri in reversed(runviews):
+                    for ri in reversed(runspecs):
                         aruns.insert(idx + 1, ri)
                 else:
-                    aruns.extend(runviews)
+                    aruns.extend(runspecs)
 
             return runs
 
@@ -137,6 +165,9 @@ class BaseExperimentQueue(Loggable):
         self.stats.delay_before_analyses = self.delay_before_analyses
         aruns = self._load_runs(txt)
         if aruns:
+            # set frequency_added_counter
+            self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
+
             with no_update(self):
                 self.automated_runs = aruns
             self.initialized = True
@@ -303,7 +334,7 @@ class BaseExperimentQueue(Loggable):
                ('s_opt', 'script_options'),
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
-               'autocenter']
+               'autocenter', 'frequency_group']
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,7 +121,7 @@ class AutomatedRunSpec(Loggable):
     _executable = Bool(True)
     executable = Property(depends_on='identifier_error, _executable')
 
-    frequency_added = 0
+    frequency_group = 0
 
     runid = Property
     _estimated_duration = 0
@@ -315,17 +315,17 @@ class AutomatedRunSpec(Loggable):
 
         return [get_attr(ai) for ai in attrs]
 
-    def _get_run_attrs(self):
-        return ('labnumber', 'aliquot', 'step',
-                'extract_value', 'extract_units', 'ramp_duration',
-                'position', 'duration', 'cleanup', 'collection_time_zero_offset',
-                'pattern',
-                'beam_diameter',
-                'truncate_condition',
-                'syn_extraction',
-                'mass_spectrometer', 'extract_device',
-                'analysis_type',
-                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
+    # def _get_run_attrs(self):
+    #     return ('labnumber', 'aliquot', 'step',
+    #             'extract_value', 'extract_units', 'ramp_duration',
+    #             'position', 'duration', 'cleanup', 'collection_time_zero_offset',
+    #             'pattern',
+    #             'beam_diameter',
+    #             'truncate_condition',
+    #             'syn_extraction',
+    #             'mass_spectrometer', 'extract_device',
+    #             'analysis_type',
+    #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
     #===============================================================================
     # handlers

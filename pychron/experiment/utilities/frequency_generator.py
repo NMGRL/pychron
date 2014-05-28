@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@
 
 def frequency_index_gen(runs, freq, incrementable, before, after):
     cnt = 0
+    n = len(runs)
     for i, ai in enumerate(runs):
         if ai.analysis_type not in incrementable:
             continue
@@ -33,6 +34,9 @@ def frequency_index_gen(runs, freq, incrementable, before, after):
             yield i
         elif after and not before:
             yield i + freq
+        elif not before and not after:
+            if i + freq < n:
+                yield i + freq
         else:
             yield i
         cnt += 1

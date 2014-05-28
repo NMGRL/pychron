@@ -157,6 +157,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                                     show_label=False,
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
                    run_factory_item('frequency', width=50),
+                   run_factory_item('freq_before', label='Before'),
+                   run_factory_item('freq_after', label='After'),
                    spring),
             HGroup(run_factory_item('labnumber',
                                     tooltip='Enter a Labnumber',
