@@ -17,6 +17,7 @@ import os
 import re
 
 from pyface.constant import OK
+
 from pychron.core.ui import set_qt
 
 
@@ -45,13 +46,14 @@ class BaseAction(HasTraits):
         return '    {}'.format(self.value)
 
 
-class ValveAction(HasTraits):
+class ValveAction(BaseAction):
+    description = Str
     def to_string(self):
-        if self.name == 'close':
-            txt = "    close('{}')".format(self.value)
-        else:
-            txt = "    open('{}')".format(self.value)
+        args = ["name='{}'".format(self.value)]
+        if self.description:
+            args.append("description='{}'".format(self.description))
 
+        txt = "    {}({})".format(self.name, ', '.join(args))
         return txt
 
 
@@ -146,22 +148,26 @@ class ExtractionLineScriptWriter(Loggable):
         """
             use shift key to toggle state without recording
         """
-
-        if self.record_valve_actions and mode == 'normal':
-            self.actions.append(ValveAction(value=valve, name='open'))
-        self._update_network(valve, True)
-        return True, True
+        return self._actuate(valve, True, mode)
 
     def close_valve(self, valve, mode='normal', **kw):
         """
             use shift key to toggle state without recording
         """
+        return self._actuate(valve, False, mode)
+
+    # private
+    def _actuate(self, valve, state, mode):
+
         if self.record_valve_actions and mode == 'normal':
-            self.actions.append(ValveAction(value=valve, name='close'))
-        self._update_network(valve, False)
+            cmd = 'open' if state else 'close'
+            cvalve = self.canvas.scene.get_item(valve)
+            self.actions.append(ValveAction(value=valve,
+                                            name=cmd,
+                                            description=cvalve.description))
+        self._update_network(valve, state)
         return True, True
 
-    #private
     def _save(self, p):
         p = add_extension(p, ext='.py')
         self.debug('saving script to path {}'.format(p))
@@ -361,7 +367,7 @@ if __name__ == '__main__':
                 width=900, height=700)
             return v
 
-    paths.build('_view')
+    # paths.build('_dev')
     ew = ExtractionLineScriptWriter()
     # p = os.path.join(paths.extraction_dir, 'foo.py')
     # ew.open_file(p)

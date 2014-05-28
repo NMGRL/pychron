@@ -105,7 +105,7 @@ def increment_position(pos):
 
 
 def generate_positions(pos):
-    for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
+    for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
