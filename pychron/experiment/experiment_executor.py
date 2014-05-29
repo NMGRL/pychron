@@ -1091,39 +1091,41 @@ Last "blank_{}"= {}
                 nopreceding = aruns.index(ban) > anidx
 
             if anidx == 0 or nopreceding:
-                pdbr, inform = self._get_blank(an.analysis_type, exp.mass_spectrometer,
-                                               exp.extract_device, inform,
-                                               last=True)
+                pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
+                                                 exp.extract_device,
+                                                 last=True)
                 if pdbr:
-                    msg = msg.format(an.analysis_type,
-                                     an.analysis_type,
-                                     pdbr.record_id)
-
-                    retval = NO
-                    if inform:
-                        retval = self.confirmation_dialog(msg,
-                                                          no_label='Select From Database',
-                                                          yes_label='Use {}'.format(pdbr.record_id),
-                                                          cancel=True,
-                                                          return_retval=True)
-
-                    if retval == CANCEL:
-                        return
-                    elif retval == YES:
+                    if selected:
                         return pdbr
                     else:
-                        return self._get_blank(an.analysis_type, exp.mass_spectrometer,
-                                               exp.extract_device)
+                        msg = msg.format(an.analysis_type,
+                                         an.analysis_type,
+                                         pdbr.record_id)
+
+                        retval = NO
+                        if inform:
+                            retval = self.confirmation_dialog(msg,
+                                                              cancel=True,
+                                                              return_retval=True)
+
+                        if retval == CANCEL:
+                            return
+                        elif retval == YES:
+                            return pdbr
+                        else:
+                            pdbr, _ = self._get_blank(an.analysis_type, exp.mass_spectrometer,
+                                                      exp.extract_device)
+                            return pdbr
                 else:
                     self.warning_dialog('No blank for {} is in the database. Run a blank!!'.format(an.analysis_type))
                     return
 
         return True
 
-    def _get_blank(self, kind, ms, ed, inform, last=False):
+    def _get_blank(self, kind, ms, ed, last=False):
         mainstore = self.datahub.mainstore
         db = mainstore.db
-
+        selected = False
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
@@ -1153,7 +1155,7 @@ Last "blank_{}"= {}
 
                 if dbr is None:
                     dbr = self._select_blank(db, ms)
-                    inform = False
+                    selected = True
             else:
                 dbr = self._select_blank(db, ms)
                 dbs = q.limit(50).all()
@@ -1174,7 +1176,7 @@ Last "blank_{}"= {}
             if dbr:
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
 
-            return dbr, inform
+            return dbr, selected
 
     def _select_blank(self, db, ms):
         sel = db.selector_factory(style='single')
