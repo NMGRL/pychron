@@ -265,13 +265,18 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         display_sniff = True
         if "/" in isok:
+
+            #correct for baseline when plotting ratios
             n, d = isok.split('/')
             niso, diso = unk.isotopes[n], unk.isotopes[d]
             nsniff, dsniff = niso.sniff, diso.sniff
+
+            nbs,dbs = niso.baseline.value, diso.baseline.value
+
             if nsniff and dsniff:
                 offset = niso.time_zero_offset
                 nxs = nsniff.xs - offset
-                ys = nsniff.ys / dsniff.ys
+                ys = (nsniff.ys-nbs) / (dsniff.ys-dbs)
 
                 g.new_series(nxs, ys,
                              plotid=i,
@@ -279,7 +284,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                              fit=False)
 
             xs = niso.offset_xs
-            ys = niso.ys / diso.ys
+            ys = (niso.ys-nbs) / (diso.ys-dbs)
             g.new_series(xs, ys,
                          fit=(fit.fit, fit.error_type),
                          filter_outliers_dict=fd,
