@@ -31,6 +31,7 @@ import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
+from pychron.database.core.query import compile_query
 from pychron.displays.display import DisplayController
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.identifier import convert_extract_device
@@ -955,9 +956,9 @@ If "No" select from database
                 nopreceding = aruns.index(ban) > anidx
 
             if anidx == 0 or nopreceding:
-                pdbr = self._get_blank(an.analysis_type, exp.mass_spectrometer,
-                                       exp.extract_device,
-                                       last=True)
+                pdbr, inform = self._get_blank(an.analysis_type, exp.mass_spectrometer,
+                                               exp.extract_device, inform,
+                                               last=True)
                 if pdbr:
                     msg = msg.format(an.analysis_type,
                                      an.analysis_type,
@@ -982,10 +983,10 @@ If "No" select from database
 
         return True
 
-    def _get_blank(self, kind, ms, ed, last=False):
+    def _get_blank(self, kind, ms, ed, inform, last=False):
         mainstore = self.datahub.mainstore
         db = mainstore.db
-        sel = db.selector_factory(style='single')
+
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(meas_MeasurementTable)
@@ -1000,28 +1001,46 @@ If "No" select from database
                 q = q.join(gen_ExtractionDeviceTable)
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
 
-            dbr = None
             if last:
                 q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
                 q.limit(1)
                 try:
                     dbr = q.first()
                 except NoResultFound:
-                    pass
+                    dbr = self._select_blank(db, ms)
 
+                if dbr is None:
+                    dbr = self._select_blank(db, ms)
+                    inform = False
             else:
-                q = q.limit(100)
-                dbs = q.all()
-
-                sel.load_records(dbs, load=False)
-                sel.selected = sel.records[-1]
-                info = sel.edit_traits(kind='livemodal')
-                if info.result:
-                    dbr = sel.selected
+                dbr = self._select_blank(db, ms)
 
             if dbr:
                 dbr = mainstore.make_analysis(dbr)
-                return dbr
+
+            return dbr, inform
+
+    def _select_blank(self, db, ms):
+        sel = db.selector_factory(style='single')
+        with db.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable)
+            q = q.join(gen_AnalysisTypeTable)
+
+            q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            q = q.limit(100)
+            dbs = q.all()
+
+            sel.load_records(dbs[::-1], load=False)
+            sel.selected = sel.records[-1]
+            info = sel.edit_traits(kind='livemodal')
+            if info.result:
+                return sel.selected
 
     def _check_managers(self, inform=True, n=1):
         self.debug('checking for managers')
