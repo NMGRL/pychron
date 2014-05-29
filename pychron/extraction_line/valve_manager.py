@@ -78,7 +78,7 @@ class ValveManager(Manager):
         """
         for v in self.valves.values():
             if v.parent == name:
-                self.debug('actuating child, {}'.format(v.display_name))
+                self.debug('actuating child, {}, {}'.format(v.display_name, action))
                 if v.parent_inverted:
                     func = self.open_by_name if action == 'close' else self.close_by_name
                 else:
@@ -145,7 +145,7 @@ class ValveManager(Manager):
 
     def set_child_state(self, name, state):
         self.debug('set states for children of {}. state={}'.format(name, state))
-        elm = self.extraction_line_managers
+        elm = self.extraction_line_manager
         for k, v in self.valves.iteritems():
             if v.parent == name:
                 v.set_state(state)
