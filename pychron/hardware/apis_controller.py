@@ -68,9 +68,11 @@ class ApisController(CoreDevice):
     #iacuator protocol
     def close_channel(self, obj):
         self.set_external_pumping(False)
+        return True
 
     def open_channel(self, obj):
         self.set_external_pumping(True)
+        return True
 
     def get_channel_state(self, obj):
         pass
