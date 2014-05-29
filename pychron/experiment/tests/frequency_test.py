@@ -89,7 +89,6 @@ class FrequencyTestCase(unittest.TestCase):
             runs.insert(i, r)
 
         atypes = [ri.analysis_type for ri in runs]
-        print atypes
         self.assertListEqual(atypes, ['unknown', 'unknown', 'unknown', 'blank',
                                       'unknown', 'unknown', 'unknown', 'blank',
                                       'unknown', 'unknown', 'unknown',
@@ -102,9 +101,7 @@ class FrequencyTestCase(unittest.TestCase):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
-        print list(frequency_index_gen(runs[sidx:], 3, ('unknown', ), False, True, sidx=sidx))
         atypes = [ri.analysis_type for ri in runs]
-        print atypes
         self.assertListEqual(atypes, ['unknown', 'unknown', 'unknown',
                                       'unknown', 'unknown', 'unknown', 'blank',
                                       'unknown', 'unknown', 'unknown', 'blank',
