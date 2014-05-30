@@ -17,6 +17,7 @@ Welcome to Pychron's documentation!
    :maxdepth: 1
 
    intro
+   build
    userguide/index
 
 

@@ -191,17 +191,17 @@ def check_dependencies():
 
     try:
         mod = __import__('uncertainties',
-                         fromlist=['__version__'])
-        __version__ = mod.__version__
+                         fromlist=['ver'])
+        ver = mod.ver
     except ImportError:
         warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
         return
 
-    vargs = __version__.split('.')
+    vargs = ver.split('.')
     maj = vargs[0]
     if int(maj) < 2:
         warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           __version__,
+                                                                                           ver,
                                                                                            '2.1'))
         return
 

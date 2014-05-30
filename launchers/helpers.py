@@ -52,16 +52,10 @@ def build_version(ver=None, setup_ver=None, debug=False):
 
 def build_sys_path(ver, root):
     """
-    obsolete
+        need to launch from terminal
     """
-    pass
-    # merc = os.path.join(os.path.expanduser('~'),
-    #                     'Programming',
-    #                     'git')
-    # src = os.path.join(merc, 'pychron{}'.format(ver))
-    # print src
-    # print root
-    # sys.path.insert(0, src)
+
+    sys.path.insert(0, os.getcwd())
 
 
 def add_eggs(root):
@@ -73,8 +67,8 @@ def add_eggs(root):
             eggs = [ei for ei in eggs if ei]
 
             for egg_name in eggs:
-                sys.path.insert(0, os.path.join(root, egg_name))
-
+                # sys.path.insert(0, os.path.join(root, egg_name))
+                sys.path.append(os.path.join(root, egg_name))
 
 def build_globals(debug):
     from pychron.initialization_parser import InitializationParser
