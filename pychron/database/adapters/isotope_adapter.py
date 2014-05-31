@@ -1029,13 +1029,16 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
-    def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None):
+    def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None, analysis_types=None):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
             q = q.join(gen_SampleTable)
             q = q.join(gen_ProjectTable)
-            if filter_non_run or low_post or high_post:
+            if filter_non_run or low_post or high_post or analysis_types:
                 q = q.join(meas_AnalysisTable)
+
+            if analysis_types:
+                project_names.append('references')
 
             if filter_non_run:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
@@ -1048,6 +1051,15 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
             if high_post:
                 q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+
+            if analysis_types:
+                q = q.join(meas_MeasurementTable)
+                q = q.join(gen_AnalysisTypeTable)
+                f = gen_AnalysisTypeTable.name.in_(analysis_types)
+                if 'blank' in analysis_types:
+                    f = f | gen_AnalysisTypeTable.name.like('blank%')
+
+                q = q.filter(f)
 
             # print compile_query(q)
             try:

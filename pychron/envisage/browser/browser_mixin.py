@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,7 +74,7 @@ class BrowserMixin(ColumnSorterMixin):
     sample_filter = Str
 
     date_configure_button = Button
-    filter_by_date = Button
+    filter_by_button = Button
 
     selected_projects = Any
     selected_samples = Any
@@ -112,6 +112,10 @@ class BrowserMixin(ColumnSorterMixin):
     _low_post = Date
     _high_post = Date
 
+    use_analysis_type_filtering = Bool
+    analysis_include_types = Property(List)
+    _analysis_include_types = List(['Unknown'])
+    available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail'])
     # persistence
     def load_browser_date_bounds(self):
         obj = self._get_browser_persistence()
@@ -264,7 +268,8 @@ class BrowserMixin(ColumnSorterMixin):
             ls = db.get_project_labnumbers([p.name for p in sp],
                                            self.filter_non_run_samples,
                                            self.low_post,
-                                           self.high_post)
+                                           self.high_post,
+                                           self.analysis_include_types)
             prog = None
             n = len(ls)
             if n > 50:
@@ -373,9 +378,9 @@ class BrowserMixin(ColumnSorterMixin):
         ds = DateSelector(model=self)
         info = ds.edit_traits()
         if info.result:
-            self._filter_by_date_fired()
+            self._filter_by_button_fired()
 
-    def _filter_by_date_fired(self):
+    def _filter_by_button_fired(self):
         s = self._retrieve_samples()
         self.set_samples(s, [])
 
@@ -484,6 +489,11 @@ class BrowserMixin(ColumnSorterMixin):
     def _get_sample_filter_values(self):
         p = self._get_sample_filter_parameter()
         return list(set([getattr(si, p) for si in self.osamples]))
+
+    def _get_analysis_include_types(self):
+        if self.use_analysis_type_filtering:
+            ats = self._analysis_include_types
+            return map(str.lower, ats)
 
     #factories
     def _record_view_factory(self, ai, progress=None, **kw):

@@ -23,8 +23,9 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
 # from traitsui.list_str_adapter import ListStrAdapter
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.editors import CheckListEditor
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
@@ -221,18 +222,32 @@ class BrowserPane(TraitsDockPane):
                                                         multi_select=True)),
                              show_border=True,
                              label='Projects')
+        analysis_type_group = HGroup(
+            Item('use_analysis_type_filtering', label='Enabled'),
+            UItem('_analysis_include_types',
+                  enabled_when='use_analysis_type_filtering',
+                  style='custom',
+                  editor=CheckListEditor(cols=5,
+                                         name='available_analysis_types'),
+            ),
+            icon_button_editor('filter_by_button',
+                               'edit-find', ),
+            show_border=True,
+            label='Analysis Types')
+
         date_grp = HGroup(UItem('use_low_post'),
                           UItem('low_post', enabled_when='use_low_post'),
                           UItem('use_high_post'),
                           UItem('high_post', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          icon_button_editor('filter_by_date',
+                          icon_button_editor('filter_by_button',
                                              'edit-find', ),
                           icon_button_editor('date_configure_button', 'cog'),
                           label='Date',
                           show_border=True)
         top_level_filter_grp = VGroup(HGroup(project_grp, irrad_grp),
+                                      analysis_type_group,
                                       date_grp)
 
         grp = VSplit(top_level_filter_grp,
