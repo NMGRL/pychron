@@ -42,6 +42,7 @@ class TablePane(TraitsDockPane):
     append_button = Button
     replace_button = Button
     clear_button = Button
+    auto_group = Bool(True)
 
     items = List
 
@@ -237,6 +238,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                       tooltip=self._replace_tooltip),
                    icon_button_editor('clear_button', 'delete',
                                       tooltip=self._clear_tooltip),
+                   Item('auto_group'),
                    icon_button_editor('configure_filter_button', 'filter',
                                       tooltip='Configure/Apply a filter',
                                       enabled_when='items')),
@@ -268,6 +270,9 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         return v
 
     def _clear_button_fired(self):
+        for it in self.items:
+            it.group_id = 0
+            it.graph_id = 0
         self.items = []
 
     def _clear_history_button_fired(self):
@@ -303,6 +308,10 @@ class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
     name = 'Unknowns'
 
+    def _append_button_fired(self):
+        if self.auto_group:
+            self.group_appended()
+
     def refresh(self):
         self.refresh_editor_needed = True
         self.refresh_needed = True
@@ -324,6 +333,10 @@ class UnknownsPane(HistoryTablePane):
             si.group_id = max_gid
 
         self.refresh()
+
+    def group_appended(self):
+        print len(self.items)
+
 
     def clear_grouping(self, refresh_plot=True, idxs=None):
         if idxs is None:
