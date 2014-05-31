@@ -15,6 +15,7 @@
 #===============================================================================
 
 #========== standard library imports ==========
+import glob
 import os
 import subprocess
 
@@ -83,7 +84,28 @@ def unique_dir(root, base):
     return p
 
 
-def unique_path(root, base, extension='txt'):
+def unique_path2(root, base, extension='.txt'):
+    """
+        unique_path suffers from the fact that it starts at 001.
+        this is a problem for log files because the logs are periodically archived which means
+        low paths are removed.
+
+        unique_path2 solves this by finding the max path then incrementing by 1
+    """
+    # find the max path in the root directory
+    basename = '{}-*{}'.format(base, extension)
+    cnt = 0
+    for p in glob.iglob(os.path.join(root, basename)):
+        p = os.path.basename(p)
+        head, tail = os.path.splitext(p)
+        cnt = max(int(head.split('-')[1]), cnt)
+
+    cnt += 1
+    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    return p, cnt
+
+
+def unique_path(root, base, extension='.txt'):
     """
 
     """
