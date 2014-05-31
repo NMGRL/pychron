@@ -86,8 +86,7 @@ class Template(object):
 
         dest = os.path.join(root, 'launchers',
                             '{}.app'.format(self.bundle_name),
-                            'Contents'
-        )
+                            'Contents')
         ins = Maker()
         ins.root = root
         ins.dest = dest
@@ -181,17 +180,20 @@ class Maker(object):
         from setuptools import setup, find_packages
 
         pkgs = find_packages(self.root,
-                             exclude=('launchers', 'tests',
-                                      'app_utils')
-        )
+                             exclude=('launchers',
+                                      'tests',
+                                      'test',
+                                      'test.*',
+                                      'sandbox',
+                                      'sandbox.*',
+                                      '*.sandbox',
+                                      'app_utils'))
 
         setup(name='pychron',
               script_args=('bdist_egg',),
               #                           '-b','/Users/argonlab2/Sandbox'),
               version=self.version,
-              packages=pkgs
-
-        )
+              packages=pkgs)
 
         eggname = 'pychron-{}-py2.7.egg'.format(self.version)
         # make the .pth file
