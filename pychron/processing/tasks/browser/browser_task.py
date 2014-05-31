@@ -127,7 +127,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             if self.selected_samples:
                 iv = not self.analysis_table.omit_invalid
                 uuids = [x.uuid for x in unks] if unks else None
-                s = [ai for ai in self._get_sample_analyses(self.selected_samples,
+                s = [ai for ai in self._retrieve_sample_analyses(self.selected_samples,
                                                             exclude_uuids=uuids,
                                                             include_invalid=iv,
                                                             low_post=self.start_date,
@@ -203,7 +203,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # lp = self.low_post if self.use_low_post else None
             # hp = self.high_post if self.use_high_post else None
             # lim = at.limit
-            ans = self._get_sample_analyses(self.selected_samples,
+            ans = self._retrieve_sample_analyses(self.selected_samples,
                                             low_post=lp,
                                             high_post=hp,
                                             limit=lim,
