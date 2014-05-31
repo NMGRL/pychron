@@ -261,7 +261,15 @@ class AutomatedRun(Loggable):
 
         return evt
 
-    def py_sniff(self, ncounts, starttime, starttime_offset, series=0):
+    def py_sniff(self, ncounts, starttime, starttime_offset, series=0, block=True):
+        if block:
+            return self._sniff(ncounts, starttime, starttime_offset, series)
+        else:
+            t = Thread(target=self._sniff, args=(ncounts, starttime, starttime_offset, series))
+            t.start()
+            return True
+
+    def _sniff(self, ncounts, starttime, starttime_offset, series):
         self.debug('py_sniff')
 
         if not self._alive:

@@ -95,14 +95,14 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def sniff(self, ncounts=0, calc_time=False,
-              integration_time=1.04):
+              integration_time=1.04, block=True):
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
         self.ncounts = ncounts
         if not self._automated_run_call('py_sniff', ncounts,
                                         self._time_zero, self._time_zero_offset,
-                                        series=self._series_count):
+                                        series=self._series_count, block=block):
             self.cancel()
         self._series_count += 1
 
