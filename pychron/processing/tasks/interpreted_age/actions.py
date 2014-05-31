@@ -134,7 +134,7 @@ class DeleteInterpretedAgeGroupAction(TaskAction):
 
 class MakeTASAction(TasklessInterpretedAgeAction):
     name = 'Make TAS file'
-    accelerator = 'Ctrl+3'
+    accelerator = 'Ctrl+Shift+3'
 
     def perform(self, event):
         app = event.task.window.application
@@ -145,7 +145,7 @@ class MakeTASAction(TasklessInterpretedAgeAction):
 
 class MakeDataTablesAction(Action):
     name = 'Make Data Tables(test)'
-    accelerator = 'Ctrl+2'
+    accelerator = 'Ctrl+Shift+2'
 
     def perform(self, event):
         app = event.task.window.application

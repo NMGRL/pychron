@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import re
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date
 import apptools.sweet_pickle as pickle
+
 
 
 #============= standard library imports ========================
@@ -292,6 +293,7 @@ class BrowserMixin(ColumnSorterMixin):
         if new:
             self._recent_low_post = None
             names = [ni.name for ni in new]
+            self.debug('selected projects={}'.format(names))
             self._load_associated_samples(names)
             self._load_associated_groups(names)
 
@@ -370,10 +372,11 @@ class BrowserMixin(ColumnSorterMixin):
             if not hasattr(sp, '__iter__'):
                 sp = (sp,)
 
+            print self.low_post, self.high_post
             ls = db.get_project_labnumbers([p.name for p in sp],
                                            self.filter_non_run_samples,
                                            self.low_post,  # if self.use_low_post else None,
-                                           self.high_post,  # if self.use_high_post else None,
+                                           self.high_post,  # if self.use_high_post else None
             )
             prog = None
             n = len(ls)
@@ -467,6 +470,10 @@ class BrowserMixin(ColumnSorterMixin):
             #     return ans, tc
             # else:
             return ans
+
+    def _use_named_date_range_changed(self, new):
+        if new:
+            self.use_low_post, self.use_high_post = False, False
 
     def _date_configure_button_fired(self):
         ds = DateSelector(model=self)

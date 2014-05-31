@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import Int, Str, Instance, HasTraits, Any
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
@@ -223,9 +223,10 @@ class BrowserPane(TraitsDockPane):
                              label='Projects')
         date_grp = HGroup(UItem('use_low_post'),
                           UItem('low_post', enabled_when='use_low_post'),
-                          spring,
                           UItem('use_high_post'),
                           UItem('high_post', enabled_when='use_high_post'),
+                          UItem('use_named_date_range'),
+                          UItem('named_date_range'),
                           icon_button_editor('filter_by_date',
                                              'edit-find', ),
                           icon_button_editor('date_configure_button', 'cog'),

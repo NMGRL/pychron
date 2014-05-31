@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -350,6 +350,7 @@ class BaseTask(Task, Loggable):
 
     def _window_menu(self):
         window_menu = SMenu(
+            WindowGroup(),
             Group(
                 CloseAction(),
                 CloseOthersAction(),
@@ -358,8 +359,9 @@ class BaseTask(Task, Loggable):
             Group(MinimizeAction(),
                   ResetLayoutAction(),
                   PositionAction()),
-            WindowGroup(),
-            id='Window',
+
+            # SplitEditorAction(),
+            id='window.menu',
             name='Window')
 
         return window_menu

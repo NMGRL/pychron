@@ -59,6 +59,42 @@ class AnalysisEditTask(BaseBrowserTask):
     analysis_group_edit_klass = AnalysisGroupEntry
     auto_show_unknowns_pane = True
 
+    def split_editor_area_hor(self):
+        """
+            horizontal splitting not currently working
+        """
+        self.debug('spliting editor area')
+        self._split_editors(0, 1)
+
+    def split_editor_area_vert(self):
+
+        self.debug('spliting editor area')
+        self._split_editors(0, 1, 'v')
+
+    def _split_editors(self, aidx, bidx, orientation='h'):
+        """
+            if orientation is hor
+            0 | 1
+            if orientation is ver
+            0
+            -
+            1
+
+        """
+        from pyface.qt.QtCore import Qt
+
+        ea = self.editor_area
+        control = ea.control
+        widgets = control.get_dock_widgets()
+        if not len(widgets) > 1:
+            return
+
+        try:
+            a, b = widgets[aidx], widgets[bidx]
+            control.splitDockWidget(a, b, Qt.Horizontal if orientation == 'v' else Qt.Vertical)
+        except IndexError:
+            pass
+
     def add_iso_evo(self, name=None, rec=None):
         if rec is None:
             if self.active_editor is not None:

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -503,7 +503,7 @@ class ExperimentEditorTask(EditorTask):
 
     def _close_external_windows(self):
         """
-            close open spectrometer and extraction line windows
+            ask user if ok to close open spectrometer and extraction line windows
         """
         # ask user if ok to close windows
         windows = []
@@ -531,6 +531,7 @@ class ExperimentEditorTask(EditorTask):
     def _execute(self):
         if self.editor_area.editors:
             self._close_external_windows()
+
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 

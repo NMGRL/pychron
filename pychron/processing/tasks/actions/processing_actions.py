@@ -286,7 +286,17 @@ class ModifyK3739Action(FigureTaskAction):
     method = 'modify_k3739'
 
 
+class SplitEditorActionHor(myTaskAction):
+    name = 'Split Editor Horizontal'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_hor'
 
+
+class SplitEditorActionVert(myTaskAction):
+    name = 'Split Editor Vertical'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_vert'
+    image = icon('split_vertical')
 
 #============= EOF =============================================
 
