@@ -230,6 +230,10 @@ class PyScript(Loggable):
             self.test()
             self.debug('estimated duration= {}'.format(self._estimated_duration))
 
+        if not ctx:
+            calc_dur()
+            return self.get_estimated_duration()
+
         h = hashlib.sha1(repr(sorted(ctx.items()))).hexdigest()
         if force or not self.syntax_checked:
             calc_dur()

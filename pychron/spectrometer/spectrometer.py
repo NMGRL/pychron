@@ -322,7 +322,11 @@ class Spectrometer(SpectrometerDevice):
         if cur is None:
             cor = 1
         else:
-            cor = source.nominal_hv / cur
+            try:
+                cor = source.nominal_hv / cur
+            except ZeroDivisionError:
+                cor = 1
+
         return cor
 
     def correct_dac(self, det, dac, current=True):

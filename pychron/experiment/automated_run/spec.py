@@ -444,4 +444,15 @@ class AutomatedRunSpec(Loggable):
     def increment(self):
         return None if self._step < 0 else self._step
 
-        #============= EOF =============================================
+    @property
+    def extraction_script_name(self):
+        return self.extraction_script
+
+    @property
+    def measurement_script_name(self):
+        return self.measurement_script
+
+    @property
+    def sensitivity(self):
+        return 0
+        # ============= EOF =============================================

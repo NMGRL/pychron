@@ -31,7 +31,6 @@ import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
-from pychron.database.core.query import compile_query
 from pychron.displays.display import DisplayController
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
@@ -1033,15 +1032,15 @@ class ExperimentExecutor(Loggable):
         if not self._set_run_aliquot(arv):
             return
 
-        # if globalv.experiment_debug:
-        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-        #     return True
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
 
-        # if self._check_memory():
-        #     return
-        #
-        # if not self._check_managers(inform=inform):
-        #     return
+        if self._check_memory():
+            return
+
+        if not self._check_managers(inform=inform):
+            return
 
         with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -1070,7 +1069,7 @@ class ExperimentExecutor(Loggable):
         # If "No" select from database
         # '''
         msg = '''First "{}" not preceded by a blank.
-Last "blank_{}"= {}
+Use Last "blank_{}"= {}
 '''
         exp = self.experiment_queue
 
@@ -1105,6 +1104,7 @@ Last "blank_{}"= {}
                         retval = NO
                         if inform:
                             retval = self.confirmation_dialog(msg,
+                                                              no_label='Select From Database',
                                                               cancel=True,
                                                               return_retval=True)
 
@@ -1158,20 +1158,6 @@ Last "blank_{}"= {}
                     selected = True
             else:
                 dbr = self._select_blank(db, ms)
-                dbs = q.limit(50).all()
-                dbs = reversed(dbs)
-
-                sel = db.selector_factory(style='single')
-                sel.set_columns(exclude='irradiation_info',
-                                append=[('Measurement', 'meas_script_name', 120),
-                                        ('Extraction', 'extract_script_name', 90)])
-                sel.load_records(dbs, load=False)
-                sel.selected = sel.records[-1]
-                sel.window_width = 750
-                sel.title = 'Select Default Blank'
-                info = sel.edit_traits(kind='livemodal')
-                if info.result:
-                    dbr = sel.selected
 
             if dbr:
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
@@ -1180,6 +1166,9 @@ Last "blank_{}"= {}
 
     def _select_blank(self, db, ms):
         sel = db.selector_factory(style='single')
+        sel.set_columns(exclude='irradiation_info',
+                        append=[('Measurement', 'meas_script_name', 120),
+                                ('Extraction', 'extract_script_name', 90)])
         sel.window_width = 750
         sel.title = 'Select Default Blank'
         

@@ -29,6 +29,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR
@@ -147,9 +148,9 @@ class ExperimentStats(Loggable):
         self.clock.finish_slice()
 
     def setup_run_clock(self, run):
-
-        extraction_slice = run.extraction_script.calculate_estimated_duration()
-        measurement_slice = run.measurement_script.calculate_estimated_duration()
+        ctx = run.spec.make_script_context()
+        extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+        measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
 
         def convert_hexcolor_to_int(c):
             c = c[1:]
