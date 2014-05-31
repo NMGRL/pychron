@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import Button, List, Instance, Property, Any, Event, Int, \
     Str, on_trait_change, Bool
-from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor, Handler
+from traitsui.api import View, Item, UItem, HGroup, VGroup, spring, EnumEditor
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.processing.search.previous_selection import PreviousSelection
 import os
@@ -35,6 +35,7 @@ from pychron.paths import paths
 # from pychron.processing.analysis import Marker
 from pychron.processing.selection.previous_selection import PreviousSelection
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.processing.utils.grouping import group_analyses_by_key
 
 
 class TablePane(TraitsDockPane):
@@ -295,6 +296,8 @@ class UnknownsHandler(UnselectTabularEditorHandler):
     def clear_grouping(self, info, obj):
         obj.clear_grouping()
 
+    def group_by_labnumber(self, info, obj):
+        obj.group_by_labnumber()
 
 class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
@@ -302,6 +305,17 @@ class UnknownsPane(HistoryTablePane):
 
     def refresh(self):
         self.refresh_editor_needed = True
+        self.refresh_needed = True
+
+    def group_by_labnumber(self):
+        self.group_by(key=lambda x: x.labnumber)
+
+    def group_by_aliquot(self):
+        self.group_by(key=lambda x: x.labnumber)
+
+    def group_by(self, key):
+        group_analyses_by_key(self.items, key)
+        self.refresh()
 
     def group_by_selected(self):
         max_gid = max([si.group_id for si in self.selected]) + 1
@@ -311,14 +325,21 @@ class UnknownsPane(HistoryTablePane):
 
         self.refresh()
 
-    def clear_grouping(self):
-        if len(self.selected) > 1:
-            items = self.selected
+    def clear_grouping(self, refresh_plot=True, idxs=None):
+        if idxs is None:
+            if self.selected and len(self.selected) > 1:
+                items = self.selected
+            else:
+                items = self.items
         else:
-            items = self.items
+            items = (self.items[i] for i in idxs)
 
         self._clear_grouping(items)
-        self.refresh()
+
+        if refresh_plot:
+            self.refresh()
+        else:
+            self.refresh_needed = True
 
     def _clear_grouping(self, items):
         for si in items:

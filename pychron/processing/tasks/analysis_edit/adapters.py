@@ -27,6 +27,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -52,6 +53,8 @@ class UnknownsAdapter(TabularAdapter):
     error_text = Property
     def get_menu( self, object, trait, row, column ):
         return MenuManager(Action(name='Group Selected', action='group_by_selected'),
+                           Action(name='Group by Labnumber', action='group_by_labnumber'),
+                           Action(name='Group by Aliquot', action='group_by_aliquot'),
                            Action(name='Clear Grouping', action='clear_grouping'),
                            Action(name='Unselect', action='unselect'))
 
