@@ -15,13 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
-from traits.api import HasTraits, List, Any, Bool, Int, Property, Enum, Date
+from traits.api import HasTraits, List, Any, Bool, Int
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, Group, HGroup, Heading
+from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler
 import apptools.sweet_pickle as pickle
+
 
 
 
@@ -138,66 +139,66 @@ def str_to_time(lp):
 class AnalysisTableConfigurer(TableConfigurer):
     id = 'analysis.table'
     limit = Int
-    named_date_range = Enum('this month', 'this week', 'yesterday')
-    low_post = Property(Date, depends_on='_low_post')
-    high_post = Property(Date, depends_on='_high_post')
-    use_low_post = Bool
-    use_high_post = Bool
-    use_named_date_range = Bool
-    _low_post = Date
-    _high_post = Date
-
-    def _set_low_post(self, v):
-        self._low_post = v
-
-    # def _validate_low_post(self, v):
-    #     v = v.replace('/', '-')
-    #     if v.count('-') < 3:
-    #         map(int, v.split('-'))
-
-    def _set_high_post(self, v):
-        self._high_post = v
-
-    # def _validate_high_post(self,v):
-    #     v=v.replace('/','-')
-    #     if v.count('-')<3:
-    #         map(int, v.split('-'))
-
-    def _get_high_post(self):
-        hp = None
-
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range in ('this month', 'today', 'this week'):
-                hp = tdy
-            elif self.named_date_range == 'yesterday':
-                hp = tdy - timedelta(days=1)
-        elif self.use_high_post:
-            hp = self._high_post
-            if not hp:
-                hp = tdy
-
-        return hp
-
-    def _get_low_post(self):
-        lp = None
-        tdy = datetime.today()
-        if self.use_named_date_range:
-            if self.named_date_range == 'this month':
-                lp = tdy - timedelta(days=tdy.day,
-                                     seconds=tdy.second,
-                                     hours=tdy.hour,
-                                     minutes=tdy.minute)
-            elif self.named_date_range == 'this week':
-                days = datetime.today().weekday()
-                lp = tdy - timedelta(days=days)
-
-        elif self.use_low_post:
-            lp = self._low_post
-            if not lp:
-                lp = tdy
-
-        return lp
+    # named_date_range = Enum('this month', 'this week', 'yesterday')
+    # low_post = Property(Date, depends_on='_low_post')
+    # high_post = Property(Date, depends_on='_high_post')
+    # use_low_post = Bool
+    # use_high_post = Bool
+    # use_named_date_range = Bool
+    # _low_post = Date
+    # _high_post = Date
+    #
+    # def _set_low_post(self, v):
+    # self._low_post = v
+    #
+    # # def _validate_low_post(self, v):
+    # #     v = v.replace('/', '-')
+    # #     if v.count('-') < 3:
+    # #         map(int, v.split('-'))
+    #
+    # def _set_high_post(self, v):
+    #     self._high_post = v
+    #
+    # # def _validate_high_post(self,v):
+    # #     v=v.replace('/','-')
+    # #     if v.count('-')<3:
+    # #         map(int, v.split('-'))
+    #
+    # def _get_high_post(self):
+    #     hp = None
+    #
+    #     tdy = datetime.today()
+    #     if self.use_named_date_range:
+    #         if self.named_date_range in ('this month', 'today', 'this week'):
+    #             hp = tdy
+    #         elif self.named_date_range == 'yesterday':
+    #             hp = tdy - timedelta(days=1)
+    #     elif self.use_high_post:
+    #         hp = self._high_post
+    #         if not hp:
+    #             hp = tdy
+    #
+    #     return hp
+    #
+    # def _get_low_post(self):
+    #     lp = None
+    #     tdy = datetime.today()
+    #     if self.use_named_date_range:
+    #         if self.named_date_range == 'this month':
+    #             lp = tdy - timedelta(days=tdy.day,
+    #                                  seconds=tdy.second,
+    #                                  hours=tdy.hour,
+    #                                  minutes=tdy.minute)
+    #         elif self.named_date_range == 'this week':
+    #             days = datetime.today().weekday()
+    #             lp = tdy - timedelta(days=days)
+    #
+    #     elif self.use_low_post:
+    #         lp = self._low_post
+    #         if not lp:
+    #             lp = tdy
+    #
+    #     return lp
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
@@ -213,13 +214,13 @@ class AnalysisTableConfigurer(TableConfigurer):
                                      style='custom',
                                      editor=CheckListEditor(name='available_columns', cols=3)),
                                label='Columns', show_border=True),
-                        Group(
-                            VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
-                                   UItem('low_post', style='custom', enabled_when='use_low_post')),
-                            VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
-                                   UItem('high_post', style='custom', enabled_when='use_high_post')),
-                            VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
-                                   UItem('named_date_range', enabled_when='use_named_date_range'))),
+                        # Group(
+                        # VGroup(HGroup(Heading('Lower Bound'), UItem('use_low_post')),
+                        #            UItem('low_post', style='custom', enabled_when='use_low_post')),
+                        #     VGroup(HGroup(Heading('Upper Bound'), UItem('use_high_post')),
+                        #            UItem('high_post', style='custom', enabled_when='use_high_post')),
+                        #     VGroup(HGroup(Heading('Named Range'), UItem('use_named_date_range')),
+                        #            UItem('named_date_range', enabled_when='use_named_date_range'))),
                         Item('limit',
                              tooltip='Limit number of displayed analyses',
                              label='Limit'),

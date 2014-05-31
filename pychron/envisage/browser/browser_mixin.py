@@ -19,10 +19,8 @@ import os
 import re
 
 from traits.api import List, Str, Bool, Any, Enum, Button, \
-    Int, Property, cached_property, DelegatesTo
+    Int, Property, cached_property, DelegatesTo, Date
 import apptools.sweet_pickle as pickle
-
-
 
 
 #============= standard library imports ========================
@@ -31,6 +29,7 @@ from datetime import timedelta, datetime
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.browser.date_selector import DateSelector
 from pychron.envisage.browser.record_views import ProjectRecordView, LabnumberRecordView, AnalysisGroupRecordView
 from pychron.envisage.browser.table_configurer import SampleTableConfigurer
 from pychron.paths import paths
@@ -84,6 +83,9 @@ class BrowserMixin(ColumnSorterMixin):
     project_filter = Str
     sample_filter = Str
 
+    date_configure_button = Button
+    filter_by_date = Button
+
     selected_projects = Any
     selected_samples = Any
     selected_analysis_groups = Any
@@ -100,6 +102,10 @@ class BrowserMixin(ColumnSorterMixin):
     configure_sample_table = Button
     clear_selection_button = Button
 
+    find_by_irradiation = Button
+    include_monitors = Bool(True)
+    include_unknowns = Bool(False)
+
     filter_non_run_samples = DelegatesTo('table_configurer')
 
     sample_tabular_adapter = Any
@@ -108,6 +114,66 @@ class BrowserMixin(ColumnSorterMixin):
     #    recent_hours = Int#(48)
     search_criteria = Instance(SearchCriteria, ())
 
+    named_date_range = Enum('this month', 'this week', 'yesterday')
+    low_post = Property(Date, depends_on='_low_post')
+    high_post = Property(Date, depends_on='_high_post')
+    use_low_post = Bool
+    use_high_post = Bool
+    use_named_date_range = Bool
+    _low_post = Date
+    _high_post = Date
+
+    def _set_low_post(self, v):
+        self._low_post = v
+
+    # def _validate_low_post(self, v):
+    # v = v.replace('/', '-')
+    # if v.count('-') < 3:
+    #         map(int, v.split('-'))
+
+    def _set_high_post(self, v):
+        self._high_post = v
+
+    # def _validate_high_post(self,v):
+    #     v=v.replace('/','-')
+    #     if v.count('-')<3:
+    #         map(int, v.split('-'))
+
+    def _get_high_post(self):
+        hp = None
+
+        tdy = datetime.today()
+        if self.use_named_date_range:
+            if self.named_date_range in ('this month', 'today', 'this week'):
+                hp = tdy
+            elif self.named_date_range == 'yesterday':
+                hp = tdy - timedelta(days=1)
+        elif self.use_high_post:
+            hp = self._high_post
+            if not hp:
+                hp = tdy
+        return hp
+
+    def _get_low_post(self):
+        lp = None
+        tdy = datetime.today()
+        if self.use_named_date_range:
+            if self.named_date_range == 'this month':
+                lp = tdy - timedelta(days=tdy.day,
+                                     seconds=tdy.second,
+                                     hours=tdy.hour,
+                                     minutes=tdy.minute)
+            elif self.named_date_range == 'this week':
+                days = datetime.today().weekday()
+                lp = tdy - timedelta(days=days)
+
+        elif self.use_low_post:
+            lp = self._low_post
+            if not lp:
+                lp = tdy
+
+        return lp
+
     @cached_property
     def _get_sample_filter_parameters(self):
         if self.sample_tabular_adapter:
@@ -115,18 +181,30 @@ class BrowserMixin(ColumnSorterMixin):
         else:
             return {}
 
-    def load_browser_selection(self):
-        #self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
+    def _get_browser_persistence(self):
         p = os.path.join(paths.hidden_dir, 'browser_selection')
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as fp:
-                    sel = pickle.load(fp)
+                    return pickle.load(fp)
             except (pickle.PickleError, EOFError, OSError), e:
-                #self.debug('Failed loaded previous browser selection. {}'.format(e))
-                return
+                # self.debug('Failed loaded previous browser selection. {}'.format(e))
+                pass
 
-            self._load_browser_selection(sel)
+    def load_browser_date_bounds(self):
+        obj = self._get_browser_persistence()
+        if obj:
+            for attr in ('use_low_post', 'use_high_post', 'use_named_date_range', 'named_date_range',
+                         'low_post', 'high_post', ):
+                sd = obj.get(attr)
+                if sd:
+                    setattr(self, attr, sd)
+
+    def load_browser_selection(self):
+        # self.debug('$$$$$$$$$$$$$$$$$$$$$ Loading browser selection')
+        obj = self._get_browser_persistence()
+        if obj:
+            self._load_browser_selection(obj)
 
     def _load_browser_selection(self, selection):
         def load(attr, values):
@@ -157,7 +235,13 @@ class BrowserMixin(ColumnSorterMixin):
             ss = [p.identifier for p in self.selected_samples]
 
         obj = dict(projects=ps,
-                   samples=ss)
+                   samples=ss,
+                   use_low_post=self.use_low_post,
+                   use_high_post=self.use_high_post,
+                   use_named_date_range=self.use_named_date_range,
+                   named_date_range=self.named_date_range,
+                   low_post=self.low_post,
+                   high_post=self.high_post)
 
         p = os.path.join(paths.hidden_dir, 'browser_selection')
         try:
@@ -206,6 +290,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _selected_projects_changed(self, new):
         if new:
+            self._recent_low_post = None
             names = [ni.name for ni in new]
             self._load_associated_samples(names)
             self._load_associated_groups(names)
@@ -258,6 +343,7 @@ class BrowserMixin(ColumnSorterMixin):
 
             self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
             lns = db.get_recent_labnumbers(lpost, ms)
+            self._recent_low_post = lpost
 
             sams = [LabnumberRecordView(li, low_post=lpost)
                     for li in lns if li.sample]
@@ -276,7 +362,7 @@ class BrowserMixin(ColumnSorterMixin):
         #                           parent=self)
         # s.edit_traits()
 
-    def _set_samples(self):
+    def _set_samples(self, ):
         db = self.manager.db
 
         with db.session_ctx():
@@ -285,7 +371,10 @@ class BrowserMixin(ColumnSorterMixin):
                 sp = (sp,)
 
             ls = db.get_project_labnumbers([p.name for p in sp],
-                                           self.filter_non_run_samples)
+                                           self.filter_non_run_samples,
+                                           self.low_post,  # if self.use_low_post else None,
+                                           self.high_post,  # if self.use_high_post else None,
+            )
             prog = None
             n = len(ls)
             if n > 50:
@@ -298,38 +387,6 @@ class BrowserMixin(ColumnSorterMixin):
                 def ln_factory(ll):
                     return LabnumberRecordView(ll)
             sams = [ln_factory(li) for li in ls]
-
-            # for li in ls:
-            #     sams.append(LabnumberRecordView(li))
-
-            # for pp in sp:
-            #     if not pp:
-            #         continue
-
-            # ss = db.get_samples(project=pp.name)
-            # n = sum([1 if len(li.analyses) else 0 for si in ss for li in si.labnumbers])
-            # if n > 50:
-            #     prog = self.manager.open_progress(n=n)
-            #
-            # test=None
-            # if self.filter_non_run_samples:
-            #     test = lambda x: len(x.analyses)
-            #
-            # if prog:
-            #     for s in ss:
-            #         for li in s.labnumbers:
-            #             if test and test(li):
-            #                 prog.change_message('Loading Labnumber {}'.format(li.identifier))
-            #                 sams.append(LabnumberRecordView(li))
-            #     prog.close()
-            # else:
-            #     if test:
-            #         ll= [LabnumberRecordView(li) for s in ss
-            #          for li in s.labnumbers if test(li)]
-            #     else:
-            #         ll=[LabnumberRecordView(li) for s in ss
-            #             for li in s.labnumbers]
-            #     sams.extend(ll)
 
         return sams
 
@@ -410,6 +467,39 @@ class BrowserMixin(ColumnSorterMixin):
             #     return ans, tc
             # else:
             return ans
+
+    def _date_configure_button_fired(self):
+        ds = DateSelector(model=self)
+        info = ds.edit_traits()
+        if info.result:
+            self._filter_by_date_fired()
+
+    def _filter_by_date_fired(self):
+        s = self._set_samples()
+        self.set_samples(s, [])
+
+    def _find_by_irradiation_fired(self):
+        if not (self.level and self._activated):
+            return
+
+        man = self.manager
+        db = man.db
+        with db.session_ctx():
+            level = man.get_level(self.level)
+            if level:
+
+                refs, unks = man.group_level(level)
+                xs = []
+                if self.include_monitors:
+                    xs.extend(refs)
+
+                if self.include_unknowns:
+                    xs.extend(unks)
+
+                lns = [x.identifier for x in xs]
+                self.samples = [LabnumberRecordView(li)
+                                for li in db.get_labnumbers(lns)
+                                if li.sample]
 
     def _record_view_factory(self, ai, progress=None, **kw):
 

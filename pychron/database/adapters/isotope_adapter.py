@@ -15,15 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from sqlalchemy import Date
 from sqlalchemy.sql.functions import count
 
-from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool, Property
+from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
 
-from sqlalchemy.sql.expression import and_, func, not_
+from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
@@ -77,7 +78,7 @@ from pychron.pychron_constants import ALPHAS
 
 
 class InterpretedAge(HasTraits):
-    create_date = Date
+    create_date = TDate
     id = Long
 
     sample = Str
@@ -1028,19 +1029,27 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
-    def get_project_labnumbers(self, project_names, filter_non_run):
+    def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
             q = q.join(gen_SampleTable)
             q = q.join(gen_ProjectTable)
-            if filter_non_run:
+            if filter_non_run or low_post or high_post:
                 q = q.join(meas_AnalysisTable)
+
+            if filter_non_run:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
                 q = q.group_by(gen_LabTable)
                 q = q.having(count(meas_AnalysisTable.id) > 0)
             else:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
 
+            if low_post:
+                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            if high_post:
+                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+
+            # print compile_query(q)
             try:
                 return q.all()
             except NoResultFound:

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ from traits.api import List, Str, Bool, Any, String, \
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
-from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
@@ -55,10 +54,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     irradiation = DelegatesTo('manager')
     levels = DelegatesTo('manager')
     level = DelegatesTo('manager')
-    find_by_irradiation = Button
-
-    include_monitors = Bool(True)
-    include_unknowns = Bool(False)
 
     auto_select_analysis = Bool(False)
 
@@ -109,6 +104,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self._activated = False
 
     def activated(self):
+
+        self.load_browser_date_bounds()
         self.load_projects()
 
         db = self.manager.db
@@ -132,7 +129,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 uuids = [x.uuid for x in unks] if unks else None
                 s = [ai for ai in self._get_sample_analyses(self.selected_samples,
                                                             exclude_uuids=uuids,
-                                                            include_invalid=iv)]
+                                                            include_invalid=iv,
+                                                            low_post=self.start_date,
+                                                            high_post=self.end_date)]
         return s
 
     def _load_mass_spectrometers(self):
@@ -170,29 +169,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _level_changed(self):
         self._find_by_irradiation_fired()
 
-    def _find_by_irradiation_fired(self):
-        if not (self.level and self._activated):
-            return
-
-        man = self.manager
-        db = man.db
-        with db.session_ctx():
-            level = man.get_level(self.level)
-            if level:
-
-                refs, unks = man.group_level(level)
-                xs = []
-                if self.include_monitors:
-                    xs.extend(refs)
-
-                if self.include_unknowns:
-                    xs.extend(unks)
-
-                lns = [x.identifier for x in xs]
-                self.samples = [LabnumberRecordView(li)
-                                for li in db.get_labnumbers(lns)
-                                if li.sample]
-
     def _advanced_query_fired(self):
 
         app = self.window.application
@@ -219,7 +195,14 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _selected_samples_changed(self, new):
         if new:
             at = self.analysis_table
-            lp, hp, lim = at.low_post, at.high_post, at.limit
+            # lp, hp, lim = at.low_post, at.high_post, at.limit
+            lp, hp, lim = self.low_post, self.high_post, at.limit
+            if self._recent_low_post:
+                lp = self._recent_low_post
+                hp = None
+            # lp = self.low_post if self.use_low_post else None
+            # hp = self.high_post if self.use_high_post else None
+            # lim = at.limit
             ans = self._get_sample_analyses(self.selected_samples,
                                             low_post=lp,
                                             high_post=hp,
