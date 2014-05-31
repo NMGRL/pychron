@@ -501,9 +501,36 @@ class ExperimentEditorTask(EditorTask):
             self.info('{} - saving a backup copy to {}'.format(bp, pp))
             shutil.copyfile(p, pp)
 
+    def _close_external_windows(self):
+        """
+            close open spectrometer and extraction line windows
+        """
+        # ask user if ok to close windows
+        windows = []
+        names = []
+        for wi in self.application.windows:
+            wid = wi.active_task.id
+            if wid == 'pychron.spectrometer':
+                windows.append(wi)
+                names.append('Spectrometer')
+            elif wid == 'pychron.extraction_line':
+                windows.append(wi)
+                names.append('Extraction Line')
+
+        if windows:
+            is_are, them = 'is', 'it'
+            if len(windows) > 1:
+                is_are, them = 'are', 'them'
+            msg = '{} {} open. Is it ok to close {}?'.format(','.join(names), is_are, them)
+
+            if self.confirmation_dialog(msg):
+                for wi in windows:
+                    wi.close()
+
     @on_trait_change('manager:execute_event')
     def _execute(self):
         if self.editor_area.editors:
+            self._close_external_windows()
             for ei in self.editor_area.editors:
                 self._backup_editor(ei)
 
