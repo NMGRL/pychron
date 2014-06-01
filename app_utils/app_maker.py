@@ -142,6 +142,12 @@ class Template(object):
             m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
             ins.copy_resource(m)
 
+        # for anaconda builds
+        #copy qt.nib
+        p = '/anaconda/python.app/pythonapp/Contents/Resources/qt_menu.nib'
+        ins.copy_resource_dir(p)
+
+
         #=======================================================================
         # rename
         #=======================================================================
@@ -166,6 +172,15 @@ class Maker(object):
                             self._resource_path(name))
         else:
             print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
+    def copy_resource_dir(self, src, name=None):
+        if os.path.exists(src):
+            if name is None:
+                name = os.path.basename(src)
+            shutil.copytree(src, self._resource_path(name))
+        else:
+            print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
     def _resource_path(self, name):
         return os.path.join(self.dest, 'Resources', name)
 
@@ -204,8 +219,7 @@ class Maker(object):
 
         egg_root = os.path.join(self.root, 'dist', eggname)
         shutil.copyfile(egg_root,
-                        self._resource_path(eggname)
-        )
+                        self._resource_path(eggname))
 
         # remove build dir
         p = os.path.join(self.root, 'build')
