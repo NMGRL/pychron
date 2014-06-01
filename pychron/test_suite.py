@@ -10,9 +10,13 @@ def suite():
     from pychron.experiment.tests.position_regex_test import XYTestCase
     from pychron.experiment.tests.frequency_test import FrequencyTestCase
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
+    from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
+
+    suite.addTest(loader.loadTestsFromTestCase(InterpolationTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(DocstrContextTestCase))
     suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(MeanRegressionTest))
     suite.addTest(loader.loadTestsFromTestCase(FilterOLSRegressionTest))

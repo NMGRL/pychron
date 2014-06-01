@@ -180,7 +180,7 @@ class PyScript(Loggable):
     parent_script = Any
 
     root = Str
-    filename = Str
+    # filename = Str
     info_color = Str
 
     testing_syntax = Bool(False)
@@ -212,6 +212,12 @@ class PyScript(Loggable):
     def __init__(self, *args, **kw):
         super(PyScript, self).__init__(*args, **kw)
         self._block_lock = Lock()
+
+    def canceled(self):
+        return self._cancel
+
+    def finished(self):
+        self._finished()
 
     def console_info(self, *args, **kw):
         self._m_info(*args, **kw)
@@ -314,12 +320,6 @@ class PyScript(Loggable):
         else:
             return code
 
-    def _tracer(self, frame, event, arg):
-        if event == 'line':
-            print frame.f_code.co_filename, frame.f_lineno
-
-        return self._tracer
-
     def execute_snippet(self, snippet=None, trace=False, argv=None):
         safe_dict = self.get_context()
         if snippet is None:
@@ -407,6 +407,8 @@ class PyScript(Loggable):
         #for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
 
+        self._setup_docstr_context()
+
     def get_context(self):
         ctx = dict()
         for k in self.get_commands():
@@ -481,44 +483,9 @@ class PyScript(Loggable):
     #===============================================================================
     # interpolation
     #===============================================================================
-    def __getattr__(self, item):
-        v = self.interpolate(item)
-        if v is None:
-            raise AttributeError
-
-        return v
-
     def load_interpolation_context(self):
         ctx = self._get_interpolation_context()
         return ctx.keys()
-
-    def interpolate(self, attr):
-        ctx = self._get_interpolation_context()
-        return ctx.get(attr, None)
-
-    _interpolation_context = None
-
-    def _get_interpolation_context(self):
-        if self._interpolation_context is None:
-            self._interpolation_context = self._load_interpolation_file()
-        return self._interpolation_context
-
-    def _load_interpolation_file(self):
-        d = {}
-        if self.interpolation_path:
-            if os.path.isfile(self.interpolation_path):
-                try:
-                    with open(self.interpolation_path, 'r') as fp:
-                        d = yaml.load(fp)
-                except yaml.YAMLError, e:
-                    self.debug(e)
-            else:
-                self.debug('not a file. {}'.format(self.interpolation_path))
-        else:
-            self.debug('no interpolation path defined')
-
-        return d
-
     #==============================================================================
     # commands
     #==============================================================================
@@ -678,12 +645,6 @@ class PyScript(Loggable):
 
         except AttributeError, e:
             self.debug('m_info {}'.format(e))
-
-    def canceled(self):
-        return self._cancel
-
-    def finished(self):
-        self._finished()
 
     #===============================================================================
     # handlers
@@ -860,9 +821,48 @@ class PyScript(Loggable):
     def _set_text(self, t):
         self._text = t
 
+    def _setup_docstr_context(self):
+        pass
+
+    _interpolation_context = None
+
+    def _get_interpolation_context(self):
+        if self._interpolation_context is None:
+            self._interpolation_context = self._load_interpolation_file()
+        return self._interpolation_context
+
+    def _load_interpolation_file(self):
+        d = {}
+        if self.interpolation_path:
+            if os.path.isfile(self.interpolation_path):
+                try:
+                    with open(self.interpolation_path, 'r') as fp:
+                        d = yaml.load(fp)
+                except yaml.YAMLError, e:
+                    self.debug(e)
+            else:
+                self.debug('not a file. {}'.format(self.interpolation_path))
+        else:
+            self.debug('no interpolation path defined')
+
+        return d
+
+    def _tracer(self, frame, event, arg):
+        if event == 'line':
+            print frame.f_code.co_filename, frame.f_lineno
+
+        return self._tracer
+
     def __str__(self):
         return self.name
 
+    def __getattr__(self, item):
+        ctx = self._get_interpolation_context()
+        v = ctx.get(item, None)
+        if v is None:
+            raise AttributeError
+
+        return v
 
 if __name__ == '__main__':
     class DummyManager(Loggable):

@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+import ast
 import time
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.filetools import fileiter
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
-    makeRegistry
+    makeRegistry, CTXObject
 from pychron.paths import paths
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import MEASUREMENT_COLOR
@@ -323,27 +325,8 @@ class MeasurementPyScript(ValvePyScript):
     #===============================================================================
     #
     #===============================================================================
-    def _automated_run_call(self, func, *args, **kw):
-    #         return True
-    #         if func not in ('py_activate_detectors',):
-    #             return True
 
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
-
-    def _set_spectrometer_parameter(self, *args, **kw):
-        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
-
-    def _get_spectrometer_parameter(self, *args, **kw):
-        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
-
-        #===============================================================================
-
+    # ===============================================================================
     # set commands
     #===============================================================================
 
@@ -550,6 +533,45 @@ class MeasurementPyScript(ValvePyScript):
         config.read(p)
 
         return config
+
+    def _automated_run_call(self, func, *args, **kw):
+        # return True
+        # if func not in ('py_activate_detectors',):
+        # return True
+
+        if self.automated_run is None:
+            return
+
+        if isinstance(func, str):
+            func = getattr(self.automated_run, func)
+
+        return func(*args, **kw)
+
+    def _set_spectrometer_parameter(self, *args, **kw):
+        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
+
+    def _get_spectrometer_parameter(self, *args, **kw):
+        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
+
+    def _setup_docstr_context(self):
+        """
+        add a context object to the global script context
+        e.g access measurement configuration values such as counts using
+            mx.counts
+
+        """
+        m = ast.parse(self.text)
+        try:
+            yd = yaml.load(ast.get_docstring(m))
+            mx = CTXObject()
+            mx.update(yd)
+            self._ctx['mx'] = mx
+
+        except yaml.YAMLError, e:
+            self.debug('failed loading docstring context. {}'.format(e))
+
+
+
 
     @property
     def truncated(self):

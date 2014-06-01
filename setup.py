@@ -17,7 +17,7 @@ setup(name='pychron',
                   'pychron.core.ui.__init__',
                   'pychron.experiment.utilities.position_regex',
                   'pychron.experiment.utilities.frequency_generator'],
-
+      package_data={'pychron.pyscripts.tests': ['data/*.yaml', 'data/*.py']},
       packages=['pychron.core.regression',
                 'pychron.core.stats',
                 'pychron.external_pipette',
