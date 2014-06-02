@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -701,10 +701,22 @@ class ValveManager(Manager):
             if inverted is not None:
                 parent_inverted = to_bool(inverted.text.strip())
 
+        check_actuation_enabled = True
+        cae = v_elem.find('check_actuation_enabled')
+        if cae is not None:
+            check_actuation_enabled = to_bool(cae.text.strip())
+
+        check_actuation_delay = True
+        cad = v_elem.find('check_actuation_delay')
+        if cad is not None:
+            check_actuation_delay = to_bool(cad.text.strip())
+
         hv = klass(name,
                    address=address.text.strip() if address is not None else '',
                    parent=parent_name,
                    parent_inverted=parent_inverted,
+                   check_actuation_enabled=check_actuation_enabled,
+                   check_actuation_delay=check_actuation_delay,
                    actuator=actuator,
                    description=description,
                    query_state=qs,
