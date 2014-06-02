@@ -1,6 +1,8 @@
 language: python
 notifications:
-  email: False
+  email:
+    on_failure: change
+
 python:
   - "2.7"
 env:
