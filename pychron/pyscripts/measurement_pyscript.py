@@ -35,21 +35,14 @@ command_register = makeRegistry()
 
 
 class MeasurementCTXObject(object):
-    baseline = None
-    multicollect = None
-
     def create(self, yd):
-        bs = CTXObject()
-        bs.update(yd['baseline'])
-        self.baseline = bs
-
-        mc = CTXObject()
-        mc.update(yd['multicollect'])
-        self.multicollect = mc
-
-        pc = CTXObject()
-        pc.update(yd['peakcenter'])
-        self.peakcenter = pc
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration'):
+            try:
+                c = CTXObject()
+                c.update(yd[k])
+                setattr(self, k, c)
+            except KeyError:
+                pass
 
 
 class MeasurementPyScript(ValvePyScript):

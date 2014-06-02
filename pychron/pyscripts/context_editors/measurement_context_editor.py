@@ -72,11 +72,19 @@ class PeakCenter(YamlObject):
     detector = Str(enter_set=True, auto_set=False)
 
 
+class Equilibration(YamlObject):
+    name = 'equilibration'
+    inlet = Str(enter_set=True, auto_set=False)
+    outlet = Str(enter_set=True, auto_set=False)
+    inlet_delay = Int(enter_set=True, auto_set=False)
+
+
 class MeasurementContextEditor(ContextEditor):
-    #context values
+    # context values
     multicollect = Instance(Multicollect, ())
     baseline = Instance(Baseline, ())
     peakcenter = Instance(PeakCenter, ())
+    equilibration = Instance(Equilibration, ())
 
     # general
     default_fits = Str(enter_set=True, auto_set=False)
@@ -96,6 +104,7 @@ class MeasurementContextEditor(ContextEditor):
                 self.multicollect.load(ctx)
                 self.baseline.load(ctx)
                 self.peakcenter.load(ctx)
+                self.equilibration.load(ctx)
 
                 self.default_fits = ctx.get('default_fits', '')
 
@@ -103,7 +112,8 @@ class MeasurementContextEditor(ContextEditor):
         ctx = dict(default_fits=self.default_fits,
                    multicollect=self.multicollect.dump(),
                    baseline=self.baseline.dump(),
-                   peakcenter=self.peakcenter.dump())
+                   peakcenter=self.peakcenter.dump(),
+                   equilibration=self.equilibration.dump())
 
         return yaml.dump(ctx, default_flow_style=False)
 
@@ -121,7 +131,7 @@ class MeasurementContextEditor(ContextEditor):
         m = ast.parse(s)
         return ast.get_docstring(m)
 
-    @on_trait_change('multicollect:+, baseline:+, peakcenter:+, default_fits')
+    @on_trait_change('multicollect:+, baseline:+, peakcenter:+, equilibration:+, default_fits')
     def request_update(self):
         if self._no_update:
             return
@@ -153,12 +163,15 @@ class MeasurementContextEditor(ContextEditor):
                    Item('object.peakcenter.after')),
             show_border=True, label='PeakCenter')
 
+        eq_grp = VGroup(Item('object.equilibration.inlet'),
+                        Item('object.equilibration.outlet'),
+                        Item('object.equilibration.inlet_delay'))
         gen_grp = VGroup(Item('default_fits',
                               editor=EnumEditor(name='available_default_fits')),
                          show_border=True,
                          label='General')
 
-        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp))
+        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp))
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
