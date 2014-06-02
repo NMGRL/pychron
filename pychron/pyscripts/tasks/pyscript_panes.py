@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,10 +78,20 @@ class ExamplePane(TraitsDockPane):
         return v
 
 
-class EditorPane(TraitsDockPane):
-    name = 'Editor'
-    id = 'pychron.pyscript.editor'
-    editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+# class EditorPane(TraitsDockPane):
+# name = 'Editor'
+#     id = 'pychron.pyscript.editor'
+#     editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+#
+#     def traits_view(self):
+#         v = View(UItem('editor', style='custom'))
+#         return v
+
+
+class ContextEditorPane(TraitsDockPane):
+    name = 'Context'
+    id = 'pychron.pyscript.context_editor'
+    editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
 
     def traits_view(self):
         v = View(UItem('editor', style='custom'))
@@ -91,7 +101,6 @@ class EditorPane(TraitsDockPane):
 class CommandsAdapter(TabularAdapter):
     columns = [('Name', 'name')]
     name_text = Property
-    #
     def _get_name_text(self, *args, **kw):
         return self.item
 
@@ -107,8 +116,8 @@ class CommandEditorPane(TraitsDockPane):
             UItem('insert_button', enabled_when='command_object'),
             UItem('command_object',
                   width=-275,
-                       editor=InstanceEditor(),
-                       style='custom'))
+                  editor=InstanceEditor(),
+                  style='custom'))
         return v
 
 

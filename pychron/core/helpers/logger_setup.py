@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ def logging_setup(name, use_archiver=True, **kw):
         # lazy load Archive because of circulat dependency
         from pychron.core.helpers.archiver import Archiver
 
-        a = Archiver(archive_days=1,
+        a = Archiver(archive_days=30,
                      archive_months=6,
                      root=bdir)
         a.clean()
@@ -90,9 +90,6 @@ def logging_setup(name, use_archiver=True, **kw):
         hi.setLevel(gLEVEL)
         hi.setFormatter(logging.Formatter(gFORMAT))
         root.addHandler(hi)
-
-
-
 
 
 def new_logger(name):

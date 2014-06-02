@@ -1,5 +1,5 @@
-#===============================================================================
-# Copyright 2013 Jake Ross
+# ===============================================================================
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,21 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from traits.api import HasTraits, Event
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-class no_update(object):
-    model = None
-    def __init__(self, model):
-        self.model = model
-    def __enter__(self):
-        if self.model:
-            self.model._no_update = True
-
-    def __exit__(self, _type, value, _traceback):
-        if self.model:
-            self.model._no_update = False
-            if hasattr(self.model, 'update_needed'):
-                self.model.update_needed = True
+class ContextEditor(HasTraits):
+    update_event = Event
 
 #============= EOF =============================================
+

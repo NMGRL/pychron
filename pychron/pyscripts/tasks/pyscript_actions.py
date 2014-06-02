@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +68,8 @@ class OpenPyScriptAction(FileOpenAction):
     accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
     task_id = 'pychron.pyscript'
-    test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+    # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+    test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
 
 
 class NewPyScriptAction(NewAction):

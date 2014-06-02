@@ -33,6 +33,46 @@ def view_file(p, application='Preview', logger=None):
         subprocess.call(['open', p])
 
 
+def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
+    """
+        uses glob
+        root: directory to list
+        extension: only return files of this file type e.g .txt or txt
+                extension can be list, tuple or str
+
+        return iterator
+    """
+    if filtername is None:
+        filtername = ''
+
+    def gen(gf):
+        for p in glob.iglob(gf):
+            p = os.path.basename(p)
+            if remove_extension:
+                p, _ = os.path.splitext(p)
+            yield p
+
+    gfilter = root
+    if extension:
+        if not isinstance(extension, (list, tuple)):
+            extension = (extension, )
+
+        for ext in extension:
+            if not ext.startswith('.'):
+                ext = '.{}'.format(ext)
+            gfilter = '{}/{}*{}'.format(root, filtername, ext)
+            # print gfilter
+            for yi in gen(gfilter):
+                yield yi
+    else:
+        for yi in gen(gfilter):
+            yield yi
+
+
+def list_directory2(root, extension=None, filtername=None, remove_extension=False):
+    return list(ilist_directory2(root, extension, filtername, remove_extension))
+
+
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
     ds = []
     #if extension:
