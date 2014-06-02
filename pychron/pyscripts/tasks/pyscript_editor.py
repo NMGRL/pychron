@@ -263,7 +263,7 @@ class PyScriptEditor(Editor):
         if to[0].startswith('#!'):
             idx = 1
 
-        for i, di in enumerate(ds):
+        for di in ds:
             to.insert(idx, di)
 
         to = '\n'.join(to)

@@ -1,6 +1,9 @@
 # !Measurement
 """
-counts: 5
+multicollect:
+  counts: 5
+baseline:
+  counts: 3
 """
 # counts
 # MULTICOLLECT_COUNTS = 4

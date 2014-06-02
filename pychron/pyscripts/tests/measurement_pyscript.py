@@ -6,8 +6,7 @@ __author__ = 'ross'
 
 import unittest
 import os
-from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
-from pychron.pyscripts.pyscript import CTXObject
+from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, MeasurementCTXObject
 
 
 class DocstrContextTestCase(unittest.TestCase):
@@ -25,10 +24,13 @@ class DocstrContextTestCase(unittest.TestCase):
         cls.script.setup_context()
 
     def test_mx(self):
-        self.assertIsInstance(self.script._ctx['mx'], CTXObject)
+        self.assertIsInstance(self.script._ctx['mx'], MeasurementCTXObject)
 
-    def test_mx_counts(self):
-        self.assertEqual(self.script._ctx['mx'].counts, 5)
+    def test_mx_multicollect_counts(self):
+        self.assertEqual(self.script._ctx['mx'].multicollect.counts, 5)
+
+    def test_mx_baseline_counts(self):
+        self.assertEqual(self.script._ctx['mx'].baseline.counts, 3)
 
 
 class InterpolationTestCase(unittest.TestCase):

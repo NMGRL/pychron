@@ -34,6 +34,24 @@ ESTIMATED_DURATION_FF = 1.045
 command_register = makeRegistry()
 
 
+class MeasurementCTXObject(object):
+    baseline = None
+    multicollect = None
+
+    def create(self, yd):
+        bs = CTXObject()
+        bs.update(yd['baseline'])
+        self.baseline = bs
+
+        mc = CTXObject()
+        mc.update(yd['multicollect'])
+        self.multicollect = mc
+
+        pc = CTXObject()
+        pc.update(yd['peakcenter'])
+        self.peakcenter = pc
+
+
 class MeasurementPyScript(ValvePyScript):
     automated_run = None
     ncounts = 0
@@ -563,8 +581,8 @@ class MeasurementPyScript(ValvePyScript):
         m = ast.parse(self.text)
         try:
             yd = yaml.load(ast.get_docstring(m))
-            mx = CTXObject()
-            mx.update(yd)
+            mx = MeasurementCTXObject()
+            mx.create(yd)
             self._ctx['mx'] = mx
 
         except yaml.YAMLError, e:
