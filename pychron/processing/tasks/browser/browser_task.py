@@ -5,14 +5,14 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
@@ -22,6 +22,8 @@ from traits.api import List, Str, Bool, Any, String, \
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
@@ -128,10 +130,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 iv = not self.analysis_table.omit_invalid
                 uuids = [x.uuid for x in unks] if unks else None
                 s = [ai for ai in self._retrieve_sample_analyses(self.selected_samples,
-                                                            exclude_uuids=uuids,
-                                                            include_invalid=iv,
-                                                            low_post=self.start_date,
-                                                            high_post=self.end_date)]
+                                                                 exclude_uuids=uuids,
+                                                                 include_invalid=iv,
+                                                                 low_post=self.start_date,
+                                                                 high_post=self.end_date)]
         return s
 
     def _load_mass_spectrometers(self):
@@ -166,8 +168,66 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _set_selected_analysis(self, new):
         pass
 
+    def _graphical_filter_button_fired(self):
+        self.debug('doing graphical filter')
+        from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
+
+        sams = self.selected_samples
+        if not sams:
+            sams = self.samples
+
+        db = self.manager.db
+        with db.session_ctx():
+            ans = db.get_labnumber_analyses([si.identifier for si in sams])
+            ts = [ai.analysis_timestamp for ai in ans]
+            lpost, hpost = min(ts), max(ts)
+            associated = db.get_date_range_analyses(lpost, hpost)
+            ans = [IsotopeRecordView(ai) for ai in associated]
+
+        gm = GraphicalFilterModel(analyses=ans)
+        gv = GraphicalFilterView(model=gm)
+        info = gv.edit_traits()
+        if info.result:
+            ans = gm.get_selection()
+            self.analysis_table.analyses = ans
+
     def _level_changed(self):
         self._find_by_irradiation_fired()
+
+    def __analysis_include_types_changed(self, new):
+        if new:
+            self._find_by_irradiation_fired()
+        else:
+            self.samples = []
+
+    def _find_by_irradiation_fired(self):
+        if not (self.level and self._activated):
+            return
+        if not self.analysis_include_types:
+            self.information_dialog('Select analysis types to include')
+            return
+
+        sam = []
+        man = self.manager
+        db = man.db
+        with db.session_ctx():
+            level = man.get_level(self.level)
+            if level:
+                refs, unks = man.group_level(level)
+                xs = []
+                if 'monitors' in self.analysis_include_types:
+                    # if self.include_monitors:
+                    xs.extend(refs)
+                if 'unknown' in self.analysis_include_types:
+                    # if self.include_unknowns:
+                    xs.extend(unks)
+                if xs:
+                    lns = [x.identifier for x in xs]
+                    sam = [LabnumberRecordView(li)
+                           for li in db.get_labnumbers(lns, low_post=self.low_post,
+                                                       high_post=self.high_post)
+                           if li.sample]
+        self.set_samples(sam, [])
 
     def _advanced_query_fired(self):
 
@@ -204,10 +264,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # hp = self.high_post if self.use_high_post else None
             # lim = at.limit
             ans = self._retrieve_sample_analyses(self.selected_samples,
-                                            low_post=lp,
-                                            high_post=hp,
-                                            limit=lim,
-                                            include_invalid=not at.omit_invalid)
+                                                 low_post=lp,
+                                                 high_post=hp,
+                                                 limit=lim,
+                                                 include_invalid=not at.omit_invalid)
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)

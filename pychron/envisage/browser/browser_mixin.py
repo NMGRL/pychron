@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
@@ -75,6 +75,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     date_configure_button = Button
     filter_by_button = Button
+    graphical_filter_button = Button
 
     selected_projects = Any
     selected_samples = Any
@@ -85,7 +86,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     auto_select_analysis = Bool(False)
 
-    sample_filter_values = Property(List, depends_on='osamples')
+    sample_filter_values = Property(List, depends_on='osamples, sample_filter_parameter')
     sample_filter_parameter = Str('name')
     sample_filter_comparator = Enum('=', 'not =')
     sample_filter_parameters = Property(List, depends_on='sample_tabular_adapter.columns')
@@ -115,7 +116,7 @@ class BrowserMixin(ColumnSorterMixin):
     use_analysis_type_filtering = Bool
     analysis_include_types = Property(List)
     _analysis_include_types = List(['Unknown'])
-    available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail'])
+    available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail', 'Monitors'])
     # persistence
     def load_browser_date_bounds(self):
         obj = self._get_browser_persistence()
@@ -384,39 +385,42 @@ class BrowserMixin(ColumnSorterMixin):
         s = self._retrieve_samples()
         self.set_samples(s, [])
 
-    def _find_by_irradiation_fired(self):
-        if not (self.level and self._activated):
-            return
+        # @on_trait_change('level')
+        # def _find_by_irradiation(self):
+        #     if not (self.level and self._activated):
+        #         return
 
-        man = self.manager
-        db = man.db
-        with db.session_ctx():
-            level = man.get_level(self.level)
-            if level:
+        # man = self.manager
+        # db = man.db
+        # with db.session_ctx():
+        #     level = man.get_level(self.level)
+        #     if level:
+        #
+        #         refs, unks = man.group_level(level)
+        #         xs = []
+        #         if 'Monitors' in self.analysis_include_types:
+        #         # if self.include_monitors:
+        #             xs.extend(refs)
+        #         if 'Unknowns' in self.analysis_include_types:
+        #         # if self.include_unknowns:
+        #             xs.extend(unks)
+        #
+        #         lns = [x.identifier for x in xs]
+        #         self.samples = [LabnumberRecordView(li)
+        #                         for li in db.get_labnumbers(lns)
+        #                         if li.sample]
 
-                refs, unks = man.group_level(level)
-                xs = []
-                if self.include_monitors:
-                    xs.extend(refs)
+        # def _sample_filter_parameter_changed(self, new):
+        #     if new:
+        #         vs = []
+        #         p = self._get_sample_filter_parameter()
 
-                if self.include_unknowns:
-                    xs.extend(unks)
-
-                lns = [x.identifier for x in xs]
-                self.samples = [LabnumberRecordView(li)
-                                for li in db.get_labnumbers(lns)
-                                if li.sample]
-
-    def _sample_filter_parameter_changed(self, new):
-        if new:
-            vs = []
-            p = self._get_sample_filter_parameter()
-            for si in self.osamples:
-                v = getattr(si, p)
-                if not v in vs:
-                    vs.append(v)
-
-            self.sample_filter_values = vs
+        # for si in self.osamples:
+        #     v = getattr(si, p)
+        #     if not v in vs:
+        #         vs.append(v)
+        #
+        # self.sample_filter_values = vs
 
     def _project_filter_changed(self, new):
         self.projects = filter(filter_func(new, 'name'), self.oprojects)

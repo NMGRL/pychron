@@ -32,6 +32,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -420,7 +421,7 @@ class FigureTask(AnalysisEditTask):
             # if hasattr(self.active_editor, 'auto_group'):
             # if self.active_editor.auto_group:
             if self.unknowns_pane.auto_group and self.active_editor.auto_group:
-                    self.group_by_labnumber()
+                self.group_by_labnumber()
                     # for ai in self.active_editor.associated_editors:
                     # if isinstance(ai, FigureEditor):
                     #         ai.rebuild_graph()

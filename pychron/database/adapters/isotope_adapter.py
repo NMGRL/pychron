@@ -1148,7 +1148,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
 
             if atype:
-                q = q.filter(gen_AnalysisTypeTable.name == atype)
+                if isinstance(atype, (list, tuple)):
+                    q = q.filter(gen_AnalysisTypeTable.name.in_(atype))
+                else:
+                    q = q.filter(gen_AnalysisTypeTable.name == atype)
             if labnumber:
                 q = q.filter(gen_LabTable.identifier == labnumber)
             if spectrometer:
@@ -1747,13 +1750,33 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
-    def get_labnumbers(self, identifiers=None, **kw):
-        if identifiers:
+    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, **kw):
+        if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
             if 'filters' in kw:
                 kw['filters'].append(f)
             else:
                 kw['filters'] = [f]
+
+        if low_post or high_post:
+            kw['joins'] = [meas_AnalysisTable]
+
+        if low_post:
+            if 'filters' in kw:
+                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            else:
+                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post]
+
+        if high_post:
+            if 'filters' in kw:
+                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post)
+            else:
+                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
+
+        # if low_post:
+        # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+        # if high_post:
+        #     q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
 
         # print self.name, identifiers
         # with self.session_ctx() as sess:

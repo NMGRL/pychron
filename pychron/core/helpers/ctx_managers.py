@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,10 @@
 
 class no_update(object):
     model = None
+
     def __init__(self, model):
         self.model = model
+
     def __enter__(self):
         if self.model:
             self.model._no_update = True
@@ -29,7 +31,6 @@ class no_update(object):
     def __exit__(self, _type, value, _traceback):
         if self.model:
             self.model._no_update = False
-            if hasattr(self.model, 'update_needed'):
-                self.model.update_needed = True
+            self.model.update_needed = True
 
 #============= EOF =============================================
