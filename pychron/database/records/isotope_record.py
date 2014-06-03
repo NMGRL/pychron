@@ -24,6 +24,7 @@ from traits.api import HasTraits
 
 
 
+
 #============= standard library imports ========================
 # import re
 #============= local library imports  ==========================
@@ -38,6 +39,7 @@ class IsotopeRecordView(HasTraits):
     analysis_type = ''
     uuid = ''
     sample = ''
+    project = ''
 
     iso_fit_status = False
     blank_fit_status = False
@@ -86,10 +88,11 @@ class IsotopeRecordView(HasTraits):
             self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
             #            print self.record_id, self.uuid
 
-            if ln.sample:
-                self.sample = ln.sample.name
-            if dbrecord.labnumber.sample:
-                self.sample = dbrecord.labnumber.sample.name
+            sam = ln.sample
+            if sam:
+                self.sample = sam.name
+                if sam.project:
+                    self.project = sam.project.name.lower()
 
             irp = ln.irradiation_position
             if irp is not None:

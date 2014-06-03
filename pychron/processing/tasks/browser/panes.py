@@ -183,7 +183,7 @@ class TableTools(HasTraits):
         # width=-90,
         # editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
         # UItem(make_name('analysis_filter'),
-        #                               width=-90),
+        # width=-90),
         #                         UItem(make_name('analysis_filter'),
         #                               width=-25,
         #                               editor=EnumEditor(name=make_name('analysis_filter_values'))),
@@ -227,8 +227,8 @@ class BrowserPane(TraitsDockPane):
                            # Item('include_unknowns', label='Unknowns')),
                            icon_button_editor('find_by_irradiation',
                                               'edit-find',
-                                              tooltip='Filter Samples by Irradiation/Level',
-                                              enabled_when='include_monitors or include_unknowns'),
+                                              tooltip='Filter Samples by Irradiation/Level', ),
+                           enabled_when='not selected_projects',
                            show_border=True,
                            label='Irradiations')
 
@@ -238,6 +238,7 @@ class BrowserPane(TraitsDockPane):
                                                        tooltip='Clear selected')),
                              UItem('projects',
                                    editor=TabularEditor(editable=False,
+                                                        refresh='refresh_needed',
                                                         selected='selected_projects',
                                                         adapter=ProjectAdapter(),
                                                         multi_select=True)),
@@ -290,7 +291,8 @@ class BrowserPane(TraitsDockPane):
                        spring,
                        CustomLabel('datasource_url', color='maroon'),
                        spring),
-                main_grp))
+                main_grp),
+            handler=UnselectTabularEditorHandler(selected_name='selected_projects'))
 
         return v
 
@@ -305,7 +307,7 @@ class BrowserPane(TraitsDockPane):
         # def _get_browser_group(self):
         # project_grp = VGroup(
         # HGroup(Label('Filter'),
-        #                UItem('project_filter',
+        # UItem('project_filter',
         #                      width=75),
         #                icon_button_editor('clear_selection_button',
         #                                   'cross',

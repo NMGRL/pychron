@@ -184,19 +184,27 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             associated = db.get_date_range_analyses(lpost, hpost)
             ans = [IsotopeRecordView(ai) for ai in associated]
 
-        gm = GraphicalFilterModel(analyses=ans)
+        gm = GraphicalFilterModel(analyses=ans,
+                                  projects=[p.name for p in self.selected_projects])
         gv = GraphicalFilterView(model=gm)
         info = gv.edit_traits()
         if info.result:
             ans = gm.get_selection()
             self.analysis_table.analyses = ans
+            self._graphical_filter_hook(ans, gm.is_append)
+
+    def _graphical_filter_hook(self, ans):
+        pass
 
     def _level_changed(self):
         self._find_by_irradiation_fired()
 
     def __analysis_include_types_changed(self, new):
         if new:
-            self._find_by_irradiation_fired()
+            if self.selected_projects:
+                self._filter_by_button_fired()
+            else:
+                self._find_by_irradiation_fired()
         else:
             self.samples = []
 

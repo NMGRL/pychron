@@ -497,6 +497,9 @@ class AnalysisEditTask(BaseBrowserTask):
     def _set_tag_hook(self):
         pass
 
+    def _graphical_filter_hook(self, ans, is_append):
+        if self.active_editor:
+            self.active_editor.set_items(ans, is_append)
     #===============================================================================
     # handlers
     #===============================================================================

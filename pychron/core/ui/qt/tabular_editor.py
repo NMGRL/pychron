@@ -538,9 +538,10 @@ class myTabularEditor(TabularEditor):
 
 
 class UnselectTabularEditorHandler(Handler):
-    refresh_name = 'refresh_needed'
+    refresh_name = Str('refresh_needed')
+    selected_name = Str('selected')
     def unselect(self, info, obj):
-        obj.selected=[]
+        setattr(obj, self.selected_name, [])
         setattr(obj, self.refresh_name, True)
 
 

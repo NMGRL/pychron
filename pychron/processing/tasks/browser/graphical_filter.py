@@ -12,22 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 from pychron.core.ui import set_qt
 
 set_qt()
 
-
-
-#============= enthought library imports =======================
-from chaco.tools.broadcaster import BroadcasterTool
-from traits.api import HasTraits, Instance, List
-from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor
+# ============= enthought library imports =======================
+from traits.api import HasTraits, Instance, List, Int, Bool
+from traitsui.menu import Action
+from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item
 from chaco.tools.api import RangeSelection, RangeSelectionOverlay
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
-
-#============= standard library imports ========================
+from chaco.tools.broadcaster import BroadcasterTool
+# ============= standard library imports ========================
 from numpy import array
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -67,7 +65,8 @@ class SelectionGraph(Graph):
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
                                                  value_format=get_analysis_type,
-                                                 additional_info=lambda x: 'Time={}'.format(x.rundate))
+                                                 additional_info=lambda x: ('Time={}'.format(x.rundate),
+                                                                            'Project={}'.format(x.project)))
 
         pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                    tool=point_inspector)
@@ -81,7 +80,6 @@ class SelectionGraph(Graph):
 
         self.scatter = scatter
 
-
     def get_selection_mask(self):
         try:
             return self.scatter.index.metadata['selection_masks'][0]
@@ -94,11 +92,18 @@ class GraphicalFilterModel(HasTraits):
     analyses = List
     analysis_types = List(['Unknown'])
     available_analysis_types = List(ANALYSIS_NAMES)
+    exclusion_pad = Int(20)
+    use_project_exclusion = Bool
+    projects = List
+    is_append = True
 
     def setup(self):
         f = lambda x: ANALYSIS_MAPPING_INTS[x] if x in ANALYSIS_MAPPING_INTS else -1
-        x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in self.analyses])
-        self.graph.setup(x, y, self.analyses)
+
+        ans = self._filter_projects(self.analyses)
+
+        x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
+        self.graph.setup(x, y, ans)
 
     def get_selection(self):
         mask = self.graph.get_selection_mask()
@@ -111,21 +116,101 @@ class GraphicalFilterModel(HasTraits):
 
         return self._filter_analysis_types(ans)
 
+    def _filter_projects(self, ans):
+        if not self.projects or not self.use_project_exclusion:
+            return ans
+
+        def gen():
+            projects = self.projects
+
+            def test(a):
+                """
+                    is ai within X hours of an analysis from projects
+                """
+                at = a.analysis_timestamp
+                threshold = 3600. * self.exclusion_pad
+                idx = ans.index(a)
+                # search backwards
+                for i in xrange(idx - 1, -1, -1):
+                    ta = ans[i]
+                    if abs(ta.analysis_timestamp - at) > threshold:
+                        return
+                    elif ta.project in projects:
+                        return True
+                #search forwards
+                for i in xrange(idx, len(ans), 1):
+                    ta = ans[i]
+                    if abs(ta.analysis_timestamp - at) > threshold:
+                        return
+                    elif ta.project in projects:
+                        return True
+
+            for ai in ans:
+                if ai.project == ('references', 'j-curve'):
+                    if test(ai):
+                        yield ai
+                elif ai.project in projects:
+                    yield ai
+
+        return list(gen())
+
     def _filter_analysis_types(self, ans):
+        """
+            only use analyses with analysis_type in self.analyses_types
+        """
         ats = map(str.lower, self.analysis_types)
         f = lambda x: x.analysis_type.lower() in ats
         return filter(f, ans)
 
 
 class GraphicalFilterView(Controller):
+    def append_action(self):
+        self.info.ui.dispose(result=True)
+        self.info.object.is_append = True
+
+    def replace_action(self):
+        self.info.ui.dispose(result=True)
+        self.info.object.is_append = False
+
     def traits_view(self):
-        v = View(HGroup(UItem('analysis_types',
-                              style='custom',
-                              editor=CheckListEditor(cols=1,
-                                                     name='available_analysis_types')),
+        ctrl_grp = VGroup(HGroup(UItem('use_project_exclusion'),
+                                 Item('exclusion_pad',
+                                      enabled_when='use_project_exclusion')),
+                          UItem('analysis_types',
+                                style='custom',
+                                editor=CheckListEditor(cols=1,
+                                                       name='available_analysis_types')))
+
+        v = View(HGroup(ctrl_grp,
                         UItem('graph', style='custom')),
+                 buttons=['Cancel',
+                          Action(name='Replace', on_perform=self.replace_action),
+                          Action(name='Append', on_perform=self.append_action)],
+                 kind='livemodal',
                  resizable=True)
         return v
+
+
+from traits.api import Button
+
+
+class Demo(HasTraits):
+    test_button = Button
+
+    def traits_view(self):
+        return View('test_button')
+
+    def _test_button_fired(self):
+        g = GraphicalFilterModel(analyses=ans)
+        g.setup()
+        gv = GraphicalFilterView(model=g)
+
+        info = gv.edit_traits()
+        print info.result
+        if info.result:
+            s = g.get_selection()
+            for si in s:
+                print si, si.analysis_type
 
 
 if __name__ == '__main__':
@@ -152,13 +237,12 @@ if __name__ == '__main__':
         ans = [IsotopeRecordView(ai) for ai in ans]
         ans = sorted(ans, key=lambda x: x.timestamp)
 
-    g = GraphicalFilterModel(analyses=ans)
-    g.setup()
-    gv = GraphicalFilterView(model=g)
-
-    gv.configure_traits()
-    s = g.get_selection()
-    for si in s:
-        print si, si.analysis_type
+    d = Demo()
+    d.configure_traits()
+    # print info.result
+    # if info.result:
+    # s = g.get_selection()
+    #     for si in s:
+    #         print si, si.analysis_type
 #============= EOF =============================================
 
