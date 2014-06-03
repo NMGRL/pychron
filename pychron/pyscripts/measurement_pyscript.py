@@ -16,13 +16,15 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
+import ast
 import time
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.filetools import fileiter
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
-    makeRegistry
+    makeRegistry, CTXObject
 from pychron.paths import paths
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pychron_constants import MEASUREMENT_COLOR
@@ -30,6 +32,17 @@ from pychron.pychron_constants import MEASUREMENT_COLOR
 ESTIMATED_DURATION_FF = 1.045
 
 command_register = makeRegistry()
+
+
+class MeasurementCTXObject(object):
+    def create(self, yd):
+        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration'):
+            try:
+                c = CTXObject()
+                c.update(yd[k])
+                setattr(self, k, c)
+            except KeyError:
+                pass
 
 
 class MeasurementPyScript(ValvePyScript):
@@ -95,14 +108,14 @@ class MeasurementPyScript(ValvePyScript):
     @count_verbose_skip
     @command_register
     def sniff(self, ncounts=0, calc_time=False,
-              integration_time=1.04):
+              integration_time=1.04, block=True):
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
         self.ncounts = ncounts
         if not self._automated_run_call('py_sniff', ncounts,
                                         self._time_zero, self._time_zero_offset,
-                                        series=self._series_count):
+                                        series=self._series_count, block=block):
             self.cancel()
         self._series_count += 1
 
@@ -259,12 +272,14 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def equilibrate(self, eqtime=20, inlet=None, outlet=None, do_post_equilibration=True, delay=3):
+    def equilibrate(self, eqtime=20, inlet=None, outlet=None,
+                    do_post_equilibration=True, close_inlet=True, delay=3):
 
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
+                                       close_inlet=close_inlet,
                                        delay=delay)
 
         if not evt:
@@ -321,27 +336,8 @@ class MeasurementPyScript(ValvePyScript):
     #===============================================================================
     #
     #===============================================================================
-    def _automated_run_call(self, func, *args, **kw):
-    #         return True
-    #         if func not in ('py_activate_detectors',):
-    #             return True
 
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
-
-    def _set_spectrometer_parameter(self, *args, **kw):
-        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
-
-    def _get_spectrometer_parameter(self, *args, **kw):
-        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
-
-        #===============================================================================
-
+    # ===============================================================================
     # set commands
     #===============================================================================
 
@@ -548,6 +544,45 @@ class MeasurementPyScript(ValvePyScript):
         config.read(p)
 
         return config
+
+    def _automated_run_call(self, func, *args, **kw):
+        # return True
+        # if func not in ('py_activate_detectors',):
+        # return True
+
+        if self.automated_run is None:
+            return
+
+        if isinstance(func, str):
+            func = getattr(self.automated_run, func)
+
+        return func(*args, **kw)
+
+    def _set_spectrometer_parameter(self, *args, **kw):
+        self._automated_run_call('py_set_spectrometer_parameter', *args, **kw)
+
+    def _get_spectrometer_parameter(self, *args, **kw):
+        return self._automated_run_call('py_get_spectrometer_parameter', *args, **kw)
+
+    def _setup_docstr_context(self):
+        """
+        add a context object to the global script context
+        e.g access measurement configuration values such as counts using
+            mx.counts
+
+        """
+        m = ast.parse(self.text)
+        try:
+            yd = yaml.load(ast.get_docstring(m))
+            mx = MeasurementCTXObject()
+            mx.create(yd)
+            self._ctx['mx'] = mx
+
+        except yaml.YAMLError, e:
+            self.debug('failed loading docstring context. {}'.format(e))
+
+
+
 
     @property
     def truncated(self):

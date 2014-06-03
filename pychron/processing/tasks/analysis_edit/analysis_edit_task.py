@@ -59,6 +59,18 @@ class AnalysisEditTask(BaseBrowserTask):
     analysis_group_edit_klass = AnalysisGroupEntry
     auto_show_unknowns_pane = True
 
+    def split_editor_area_hor(self):
+        """
+            horizontal splitting not currently working
+        """
+        self.debug('spliting editor area')
+        self._split_editors(0, 1)
+
+    def split_editor_area_vert(self):
+
+        self.debug('spliting editor area')
+        self._split_editors(0, 1, 'v')
+
     def add_iso_evo(self, name=None, rec=None):
         if rec is None:
             if self.active_editor is not None:
@@ -125,15 +137,6 @@ class AnalysisEditTask(BaseBrowserTask):
 
                 self._load_associated_groups(self.selected_projects)
 
-    def _make_analysis_group(self, db, group, ans):
-        # db=self.manager.db
-        for ais, at in ans:
-            at = db.get_analysis_type(at)
-            self.debug('set analysis group for {} {}'.format(at, group))
-            for ai in ais:
-                ai = db.get_analysis_uuid(ai.uuid)
-                db.add_analysis_group_set(group, ai, analysis_type=at)
-
     def append_unknown_analyses(self, ans):
         pane = self.unknowns_pane
         if pane:
@@ -143,11 +146,6 @@ class AnalysisEditTask(BaseBrowserTask):
         pane = self.unknowns_pane
         if pane:
             pane.items = ans
-
-    def _get_editor_by_uuid(self, uuid):
-        return next((editor for editor in self.editor_area.editors
-                     if isinstance(editor, RecallEditor) and
-                        editor.model and editor.model.uuid == uuid), None)
 
     def recall(self, records):
         """
@@ -306,6 +304,45 @@ class AnalysisEditTask(BaseBrowserTask):
         up.load()
         return up
 
+    # private
+    def _split_editors(self, aidx, bidx, orientation='h'):
+        """
+            if orientation is hor
+            0 | 1
+            if orientation is ver
+            0
+            -
+            1
+
+        """
+        from pyface.qt.QtCore import Qt
+
+        ea = self.editor_area
+        control = ea.control
+        widgets = control.get_dock_widgets()
+        if not len(widgets) > 1:
+            return
+
+        try:
+            a, b = widgets[aidx], widgets[bidx]
+            control.splitDockWidget(a, b, Qt.Horizontal if orientation == 'v' else Qt.Vertical)
+        except IndexError:
+            pass
+
+    def _make_analysis_group(self, db, group, ans):
+        # db=self.manager.db
+        for ais, at in ans:
+            at = db.get_analysis_type(at)
+            self.debug('set analysis group for {} {}'.format(at, group))
+            for ai in ais:
+                ai = db.get_analysis_uuid(ai.uuid)
+                db.add_analysis_group_set(group, ai, analysis_type=at)
+
+    def _get_editor_by_uuid(self, uuid):
+        return next((editor for editor in self.editor_area.editors
+                     if isinstance(editor, RecallEditor) and
+                     editor.model and editor.model.uuid == uuid), None)
+
     def _get_tagname(self, items):
         from pychron.processing.tasks.analysis_edit.tags import TagTableView
 
@@ -363,7 +400,101 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
+
+    def _recall_item(self, item):
+        if not self.external_recall_window:
+            self.recall(item)
+        else:
+            self._open_external_recall_editor(item)
+
+    def _open_external_recall_editor(self, sel):
+        tid = 'pychron.recall'
+        app = self.window.application
+
+        win, task, is_open = app.get_open_task(tid)
+
+        if is_open:
+            win.activate()
+        else:
+            win.open()
+
+        task.recall(sel)
+
+        task.load_projects()
+
+        # print self.selected_project, 'ffff'
+        task.set_projects(self.oprojects, self.selected_projects)
+        task.set_samples(self.osamples, self.selected_samples)
+
+    def _append_replace_unknowns(self, is_append, items=None):
+        if self.active_editor:
+            if not isinstance(self.active_editor, RecallEditor):
+                self.active_editor.auto_find = True
+
+                if not items:
+                    unks = None
+                    if is_append:
+                        unks = self.active_editor.analyses
+                    items = self._get_selected_analyses(unks)
+
+                if items:
+                    self.active_editor.set_items(items, is_append)
+
+                    self._add_unknowns_hook()
+
+    def _do_easy(self, func):
+        ep = EasyParser()
+        db = self.manager.db
+
+        prog = self.manager.open_progress(n=10, close_at_end=False)
+        with db.session_ctx() as sess:
+            ok = func(db, ep, prog)
+            if not ok:
+                sess.rollback()
+
+        prog.close()
+        if ok:
+            self.db_save_info()
+
+    def _get_analyses_to_group(self):
+        items = None
+        if self.unknowns_pane:
+            items = self.unknowns_pane.selected
+
+        if not items:
+            if self.unknowns_pane:
+                items = self.unknowns_pane.items
+        if not items:
+            items = self.analysis_table.selected
+
+        if items:
+            return ((items, 'unknown'),)  # unknown analysis type
+
+    def _get_analyses_to_tag(self):
+        items = None
+
+        if self.unknowns_pane:
+            if not items:
+                items = self.unknowns_pane.selected
+
+            if not items:
+                items = [i for i in self.unknowns_pane.items
+                         if i.is_temp_omitted()]
+                self.debug('Temp omitted analyses {}'.format(len(items)))
+
+        if not items:
+            items = self.analysis_table.selected
+
+        return items
+
+    #hooks
     def _dclicked_analysis_group_hook(self, unks, b):
+        pass
+
+    def _add_unknowns_hook(self, *args, **kw):
+        pass
+
+    def _set_tag_hook(self):
         pass
 
     #===============================================================================
@@ -470,54 +601,22 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             self._recall_item(new.item)
 
-    def _recall_item(self, item):
-        if not self.external_recall_window:
-            self.recall(item)
-        else:
-            self._open_external_recall_editor(item)
+    @on_trait_change('analysis_table:[append_event,replace_event]')
+    def _analysis_table_append_replace(self, name, new):
+        self._append_replace_unknowns(name == 'append_event')
 
-    def _open_external_recall_editor(self, sel):
-        tid = 'pychron.recall'
-        app = self.window.application
-
-        win, task, is_open = app.get_open_task(tid)
-
-        if is_open:
-            win.activate()
-        else:
-            win.open()
-
-        task.recall(sel)
-
-        task.load_projects()
-
-        #print self.selected_project, 'ffff'
-        task.set_projects(self.oprojects, self.selected_projects)
-        task.set_samples(self.osamples, self.selected_samples)
+        # self.unknowns_pane.items=new
+        #     else:
+        #         self.unknowns_pane.items.extend(new)
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):
         self._set_previous_selection(obj, new)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
-    def _append_unknowns(self, obj, name, old, new):
+    def _handle_unknowns_events(self, obj, name, old, new):
         is_append = name == 'append_button'
-
-        if self.active_editor:
-            if not isinstance(self.active_editor, RecallEditor):
-                self.active_editor.auto_find = True
-                unks = None
-                if is_append:
-                    unks = self.active_editor.analyses
-
-                s = self._get_selected_analyses(unks)
-                if s:
-                    self.active_editor.set_items(s, is_append)
-
-                    self._add_unknowns_hook()
-
-    def _add_unknowns_hook(self, *args, **kw):
-        pass
+        self._append_replace_unknowns(is_append)
 
     @on_trait_change('active_editor:analyses')
     def _ac_unknowns_changed(self):
@@ -559,54 +658,6 @@ class AnalysisEditTask(BaseBrowserTask):
     #
     #def _handle_key_pressed(self, c):
     #    pass
-
-    def _do_easy(self, func):
-        ep = EasyParser()
-        db = self.manager.db
-
-        prog = self.manager.open_progress(n=10, close_at_end=False)
-        with db.session_ctx() as sess:
-            ok = func(db, ep, prog)
-            if not ok:
-                sess.rollback()
-
-        prog.close()
-        if ok:
-            self.db_save_info()
-
-    def _get_analyses_to_group(self):
-        items = None
-        if self.unknowns_pane:
-            items = self.unknowns_pane.selected
-
-        if not items:
-            if self.unknowns_pane:
-                items = self.unknowns_pane.items
-        if not items:
-            items = self.analysis_table.selected
-
-        if items:
-            return ((items, 'unknown'),)  #unknown analysis type
-
-    def _get_analyses_to_tag(self):
-        items = None
-
-        if self.unknowns_pane:
-            if not items:
-                items = self.unknowns_pane.selected
-
-            if not items:
-                items = [i for i in self.unknowns_pane.items
-                         if i.is_temp_omitted()]
-                self.debug('Temp omitted analyses {}'.format(len(items)))
-
-        if not items:
-            items = self.analysis_table.selected
-
-        return items
-
-    def _set_tag_hook(self):
-        pass
 
 #===============================================================================
 #

@@ -36,6 +36,7 @@ from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.initialization_parser import InitializationParser
 from pychron.loggable import Loggable
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -1031,15 +1032,15 @@ class ExperimentExecutor(Loggable):
         if not self._set_run_aliquot(arv):
             return
 
-        # if globalv.experiment_debug:
-        #     self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
-        #     return True
+        if globalv.experiment_debug:
+            self.debug('********************** NOT DOING PRE EXECUTE CHECK ')
+            return True
 
-        # if self._check_memory():
-        #     return
-        #
-        # if not self._check_managers(inform=inform):
-        #     return
+        if self._check_memory():
+            return
+
+        if not self._check_managers(inform=inform):
+            return
 
         with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
@@ -1068,7 +1069,7 @@ class ExperimentExecutor(Loggable):
         # If "No" select from database
         # '''
         msg = '''First "{}" not preceded by a blank.
-Last "blank_{}"= {}
+Use Last "blank_{}"= {}
 '''
         exp = self.experiment_queue
 
@@ -1089,29 +1090,32 @@ Last "blank_{}"= {}
                 nopreceding = aruns.index(ban) > anidx
 
             if anidx == 0 or nopreceding:
-                pdbr = self._get_blank(an.analysis_type, exp.mass_spectrometer,
-                                       exp.extract_device,
-                                       last=True)
+                pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
+                                                 exp.extract_device,
+                                                 last=True)
                 if pdbr:
-                    msg = msg.format(an.analysis_type,
-                                     an.analysis_type,
-                                     pdbr.record_id)
-
-                    retval = NO
-                    if inform:
-                        retval = self.confirmation_dialog(msg,
-                                                          no_label='Select From Database',
-                                                          yes_label='Use {}'.format(pdbr.record_id),
-                                                          cancel=True,
-                                                          return_retval=True)
-
-                    if retval == CANCEL:
-                        return
-                    elif retval == YES:
+                    if selected:
                         return pdbr
                     else:
-                        return self._get_blank(an.analysis_type, exp.mass_spectrometer,
-                                               exp.extract_device)
+                        msg = msg.format(an.analysis_type,
+                                         an.analysis_type,
+                                         pdbr.record_id)
+
+                        retval = NO
+                        if inform:
+                            retval = self.confirmation_dialog(msg,
+                                                              no_label='Select From Database',
+                                                              cancel=True,
+                                                              return_retval=True)
+
+                        if retval == CANCEL:
+                            return
+                        elif retval == YES:
+                            return pdbr
+                        else:
+                            pdbr, _ = self._get_blank(an.analysis_type, exp.mass_spectrometer,
+                                                      exp.extract_device)
+                            return pdbr
                 else:
                     self.warning_dialog('No blank for {} is in the database. Run a blank!!'.format(an.analysis_type))
                     return
@@ -1121,7 +1125,7 @@ Last "blank_{}"= {}
     def _get_blank(self, kind, ms, ed, last=False):
         mainstore = self.datahub.mainstore
         db = mainstore.db
-
+        selected = False
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
@@ -1146,27 +1150,48 @@ Last "blank_{}"= {}
                     dbr = q.first()
                 except NoResultFound, e:
                     self.debug('No result found {}'.format(e))
+                except NoResultFound:
+                    dbr = self._select_blank(db, ms)
 
+                if dbr is None:
+                    dbr = self._select_blank(db, ms)
+                    selected = True
             else:
-                dbs = q.limit(50).all()
-                dbs = reversed(dbs)
-
-                sel = db.selector_factory(style='single')
-                sel.set_columns(exclude='irradiation_info',
-                                append=[('Measurement', 'meas_script_name', 120),
-                                        ('Extraction', 'extract_script_name', 90)])
-                sel.load_records(dbs, load=False)
-                sel.selected = sel.records[-1]
-                sel.window_width = 750
-                sel.title = 'Select Default Blank'
-                info = sel.edit_traits(kind='livemodal')
-                if info.result:
-                    dbr = sel.selected
+                dbr = self._select_blank(db, ms)
 
             if dbr:
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
-                return dbr
 
+            return dbr, selected
+
+    def _select_blank(self, db, ms):
+        sel = db.selector_factory(style='single')
+        sel.set_columns(exclude='irradiation_info',
+                        append=[('Measurement', 'meas_script_name', 120),
+                                ('Extraction', 'extract_script_name', 90)])
+        sel.window_width = 750
+        sel.title = 'Select Default Blank'
+        
+        with db.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable)
+            q = q.join(gen_AnalysisTypeTable)
+
+            q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            q = q.limit(100)
+            dbs = q.all()
+
+            sel.load_records(dbs[::-1], load=False)
+            sel.selected = sel.records[-1]
+            info = sel.edit_traits(kind='livemodal')
+            if info.result:
+                return sel.selected
+                
     def _check_managers(self, inform=True):
         self.debug('checking for managers')
         if globalv.experiment_debug:
@@ -1210,6 +1235,8 @@ Last "blank_{}"= {}
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
+                if man is None:
+                    man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
             if not man:
                 nonfound.append(extract_device)

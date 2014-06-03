@@ -37,6 +37,7 @@ import csv
 import math
 #=============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
+from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 # from editors.plot_editor import PlotEditor
 from guide_overlay import GuideOverlay
@@ -51,6 +52,7 @@ from pychron.viewable import Viewable
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
 from chaco.array_data_source import ArrayDataSource
+
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
     #                'Helvetica',
@@ -317,13 +319,13 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._save_(path=path)
 
-    #     def export_raw_data(self, path=None, header=None, plotid=0):
-    #         '''
-    #         '''
-    #         if path is None:
-    #             path = self._path_factory()
-    #         if path is not None:
-    #             self._export_raw_data(path, header, plotid)
+    # def export_raw_data(self, path=None, header=None, plotid=0):
+    #     """
+    #     """
+    #     if path is None:
+    #         path = self._path_factory()
+    #     if path is not None:
+    #         self._export_raw_data(path, header, plotid)
 
     def export_data(self, path=None, plotid=None):
         """
@@ -332,6 +334,7 @@ class Graph(Viewable, ContextMenuMixin):
             path = self._path_factory()
 
         if path is not None:
+            path = add_extension(path, '.csv')
             self._export_data(path, plotid)
 
     def _path_factory(self):

@@ -165,6 +165,10 @@ class Sleep(Command):
             pass
 
 
+class Delay(Sleep):
+    example = 'delay(5)'
+
+
 class Gosub(Command):
     path = File
 

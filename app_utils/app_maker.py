@@ -86,8 +86,7 @@ class Template(object):
 
         dest = os.path.join(root, 'launchers',
                             '{}.app'.format(self.bundle_name),
-                            'Contents'
-        )
+                            'Contents')
         ins = Maker()
         ins.root = root
         ins.dest = dest
@@ -143,6 +142,12 @@ class Template(object):
             m = os.path.join(self.root, 'launchers', '{}.py'.format(a))
             ins.copy_resource(m)
 
+        # for anaconda builds
+        #copy qt.nib
+        p = '/anaconda/python.app/pythonapp/Contents/Resources/qt_menu.nib'
+        ins.copy_resource_dir(p)
+
+
         #=======================================================================
         # rename
         #=======================================================================
@@ -167,6 +172,15 @@ class Maker(object):
                             self._resource_path(name))
         else:
             print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
+    def copy_resource_dir(self, src, name=None):
+        if os.path.exists(src):
+            if name is None:
+                name = os.path.basename(src)
+            shutil.copytree(src, self._resource_path(name))
+        else:
+            print '++++++++++++++++++++++ Not a valid Resource {} +++++++++++++++++++++++'.format(src)
+
     def _resource_path(self, name):
         return os.path.join(self.dest, 'Resources', name)
 
@@ -181,17 +195,20 @@ class Maker(object):
         from setuptools import setup, find_packages
 
         pkgs = find_packages(self.root,
-                             exclude=('launchers', 'tests',
-                                      'app_utils')
-        )
+                             exclude=('launchers',
+                                      'tests',
+                                      'test',
+                                      'test.*',
+                                      'sandbox',
+                                      'sandbox.*',
+                                      '*.sandbox',
+                                      'app_utils'))
 
         setup(name='pychron',
               script_args=('bdist_egg',),
               #                           '-b','/Users/argonlab2/Sandbox'),
               version=self.version,
-              packages=pkgs
-
-        )
+              packages=pkgs)
 
         eggname = 'pychron-{}-py2.7.egg'.format(self.version)
         # make the .pth file
@@ -202,8 +219,7 @@ class Maker(object):
 
         egg_root = os.path.join(self.root, 'dist', eggname)
         shutil.copyfile(egg_root,
-                        self._resource_path(eggname)
-        )
+                        self._resource_path(eggname))
 
         # remove build dir
         p = os.path.join(self.root, 'build')

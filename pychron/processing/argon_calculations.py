@@ -28,7 +28,27 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
+
+
 #============= local library imports  ==========================
+
+
+def calculate_F_ratio(m4039, m3739, m3639, pr):
+    """
+    required ratios
+    (40/39)m
+    (36/39)m
+    (37/39)m
+
+
+    """
+
+    atm4036 = 295.5
+    n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
+    d = 1 - pr.get('ca3937') * m3739
+    F = n / d - pr.get('k4039')
+    return F
+
 
 def extract_isochron_xy(analyses):
     ans = [(ai.get_interference_corrected_value('Ar39'),

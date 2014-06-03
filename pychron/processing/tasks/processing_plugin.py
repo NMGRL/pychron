@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,11 +38,13 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
-    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction
+    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
+    SplitEditorActionVert
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
     BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
@@ -93,6 +95,7 @@ Install to enable MS Excel export''')
                 MenuManager(IdeogramFromFile(),
                             SpectrumFromFile(),
                             name='From File'),
+                RefreshActiveEditorAction(),
                 name='Figures')
 
         def data_menu():
@@ -104,9 +107,9 @@ Install to enable MS Excel export''')
         def grouping_group():
             return SMenu(Group(GroupSelectedAction(),
                                GroupbyAliquotAction(),
-                         GroupbyLabnumberAction(),
-                         GroupbySampleAction(),
-                         ClearGroupAction()),
+                               GroupbyLabnumberAction(),
+                               GroupbySampleAction(),
+                               ClearGroupAction()),
                          Group(GraphGroupSelectedAction(),
                                GraphGroupbySampleAction()),
                          name='Grouping')
@@ -171,6 +174,8 @@ Install to enable MS Excel export''')
                            # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
 
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                           # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')
         ]
 
         exts = [self._make_task_extension(default_actions)]

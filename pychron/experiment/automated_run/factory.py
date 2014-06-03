@@ -105,7 +105,7 @@ def increment_position(pos):
 
 
 def generate_positions(pos):
-    for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
+    for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
@@ -119,13 +119,18 @@ class AutomatedRunFactory(Loggable):
     undoer = Any
     edit_event = Event
 
-    default_fits_button = Button
+    #============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+
     script_options = Instance(ScriptOptions, ())
-    load_defaults_button = Button('Defaults')
+    load_defaults_button = Button('Default')
+
+    default_fits_button = Button
+    default_fits_enabled = Property(depends_on='measurement_script.name')
+    #===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -232,7 +237,8 @@ class AutomatedRunFactory(Loggable):
     # frequency
     #===========================================================================
     frequency = Int
-
+    freq_before = Bool(True)
+    freq_after = Bool(False)
     #===========================================================================
     # readonly
     #===========================================================================
@@ -713,7 +719,8 @@ class AutomatedRunFactory(Loggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = self._remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device != NULL_STR:
+                    if labnumber in ('u', 'bu') and \
+                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -748,6 +755,9 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # property get/set
     #===============================================================================
+    def _get_default_fits_enabled(self):
+        return self.measurement_script.name not in ('None', '')
+
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
 
@@ -1096,7 +1106,7 @@ post_equilibration_script:name''')
                     with db.session_ctx():
                         ms = db.get_mass_spectrometer(self.mass_spectrometer)
                         ed = db.get_extraction_device(self.extract_device)
-                        if ln in SPECIAL_KEYS:
+                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()
@@ -1145,6 +1155,7 @@ post_equilibration_script:name''')
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 ln = db.get_labnumber(labnumber)
+                print ln
                 if ln:
                     # set sample and irrad info
                     try:

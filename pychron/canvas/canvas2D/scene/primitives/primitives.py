@@ -230,13 +230,8 @@ class Primitive(HasTraits):
         g = VGroup(Item('name'), Item('klass_name', label='Type'),
                    Item('default_color'),
                    Item('active_color'),
-                   HGroup(Item('x', format_str='%0.3f',
-                               #            width=-50
-                   ),
-                          Item('y', format_str='%0.3f',
-                               #     width=-50
-                          ))
-        )
+                   HGroup(Item('x', format_str='%0.3f'),
+                          Item('y', format_str='%0.3f')))
         cg = self._get_group()
         if cg is not None:
             g = VGroup(g, cg)
@@ -266,7 +261,7 @@ class QPrimitive(Primitive):
 
 class Connectable(QPrimitive):
     connections = List
-
+    volume = Float
     @on_trait_change('x,y')
     def _update_xy(self):
         for t, c in self.connections:
@@ -332,8 +327,7 @@ class Rectangle(QPrimitive):
     def _render_border(self, gc, x, y, w, h):
         #        gc.set_stroke_color((0, 0, 0))
         gc.rect(x - self.line_width, y - self.line_width,
-                w + self.line_width, h + self.line_width
-        )
+                w + self.line_width, h + self.line_width)
         gc.stroke_path()
 
 
@@ -358,6 +352,9 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     corner_radius = 8.0
     display_name = None
     fill = True
+
+    def get_tooltip_text(self):
+        return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
     def _render_(self, gc):
         corner_radius = self.corner_radius

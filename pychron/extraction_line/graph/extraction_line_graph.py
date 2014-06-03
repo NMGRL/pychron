@@ -25,20 +25,8 @@ from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
 
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
-from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
+from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.extraction_line.graph.traverse import bft
-
-
-def get_volume(elem, tag='volume', default=0):
-    """
-        get volume tag from xml
-    """
-    vol = elem.find(tag)
-    if vol is not None:
-        vol = float(vol.text.strip())
-    else:
-        vol = default
-    return vol
 
 
 def split_graph(n):
@@ -122,13 +110,23 @@ class ExtractionLineGraph(HasTraits):
 
         self.nodes = nodes
 
+    def set_default_states(self, canvas):
+        for ni in self.nodes:
+            if isinstance(ni, ValveNode):
+                self.set_valve_state(ni, False)
+            self.set_canvas_states(canvas, ni)
+
     def set_valve_state(self, name, state, *args, **kw):
         if name in self.nodes:
             v_node = self.nodes[name]
             v_node.state = 'open' if state else 'closed'
 
     def set_canvas_states(self, canvas, name):
-        scene = canvas.canvas2D.scene
+        if hasattr(canvas, 'scene'):
+            scene = canvas.scene
+        else:
+            scene = canvas.canvas2D.scene
+
         if not self.suppress_changes:
             if name in self.nodes:
                 s_node = self.nodes[name]

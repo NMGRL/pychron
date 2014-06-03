@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ from envisage.ui.tasks.action.task_window_launch_group import TaskWindowLaunchAc
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
-    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction
+    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
@@ -350,15 +350,18 @@ class BaseTask(Task, Loggable):
 
     def _window_menu(self):
         window_menu = SMenu(
+            WindowGroup(),
             Group(
                 CloseAction(),
                 CloseOthersAction(),
                 id='Close'),
+            OpenAdditionalWindow(),
             Group(MinimizeAction(),
                   ResetLayoutAction(),
                   PositionAction()),
-            WindowGroup(),
-            id='Window',
+
+            # SplitEditorAction(),
+            id='window.menu',
             name='Window')
 
         return window_menu

@@ -73,6 +73,7 @@ class RefreshActiveEditorAction(TaskAction):
     name = 'Refresh Plot'
     method = 'refresh_active_editor'
     image = icon('refresh')
+    accelerator = 'Ctrl+Shift+R'
 
 #============= EOF =============================================
 # class AppendSpectrumAction(TaskAction):

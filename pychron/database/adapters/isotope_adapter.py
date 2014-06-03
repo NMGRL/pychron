@@ -15,15 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from sqlalchemy import Date
 from sqlalchemy.sql.functions import count
 
-from traits.api import Long, HasTraits, Date, Float, Str, Int, Bool, Property
+from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
 from traitsui.api import View, Item, HGroup
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
 
-from sqlalchemy.sql.expression import and_, func, not_
+from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
 
 #============= local library imports  ==========================
@@ -77,7 +78,7 @@ from pychron.pychron_constants import ALPHAS
 
 
 class InterpretedAge(HasTraits):
-    create_date = Date
+    create_date = TDate
     id = Long
 
     sample = Str
@@ -1028,19 +1029,39 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 pass
 
-    def get_project_labnumbers(self, project_names, filter_non_run):
+    def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None, analysis_types=None):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
             q = q.join(gen_SampleTable)
             q = q.join(gen_ProjectTable)
-            if filter_non_run:
+            if filter_non_run or low_post or high_post or analysis_types:
                 q = q.join(meas_AnalysisTable)
+
+            if analysis_types:
+                project_names.append('references')
+
+            if filter_non_run:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
                 q = q.group_by(gen_LabTable)
                 q = q.having(count(meas_AnalysisTable.id) > 0)
             else:
                 q = q.filter(gen_ProjectTable.name.in_(project_names))
 
+            if low_post:
+                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            if high_post:
+                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+
+            if analysis_types:
+                q = q.join(meas_MeasurementTable)
+                q = q.join(gen_AnalysisTypeTable)
+                f = gen_AnalysisTypeTable.name.in_(analysis_types)
+                if 'blank' in analysis_types:
+                    f = f | gen_AnalysisTypeTable.name.like('blank%')
+
+                q = q.filter(f)
+
+            # print compile_query(q)
             try:
                 return q.all()
             except NoResultFound:
@@ -1127,7 +1148,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
 
             if atype:
-                q = q.filter(gen_AnalysisTypeTable.name == atype)
+                if isinstance(atype, (list, tuple)):
+                    q = q.filter(gen_AnalysisTypeTable.name.in_(atype))
+                else:
+                    q = q.filter(gen_AnalysisTypeTable.name == atype)
             if labnumber:
                 q = q.filter(gen_LabTable.identifier == labnumber)
             if spectrometer:
@@ -1419,13 +1443,13 @@ class IsotopeAdapter(DatabaseAdapter):
                            meas_IsotopeTable,
                            gen_SampleTable.name,
                            gen_ProjectTable.name,
-                           gen_MaterialTable)
+                           gen_MaterialTable.name)
             q = q.join(meas_IsotopeTable)
             q = q.join(gen_LabTable)
             q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
-
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+
             try:
                 return q.all()
             except NoResultFound:
@@ -1726,13 +1750,33 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
-    def get_labnumbers(self, identifiers=None, **kw):
-        if identifiers:
+    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, **kw):
+        if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
             if 'filters' in kw:
                 kw['filters'].append(f)
             else:
                 kw['filters'] = [f]
+
+        if low_post or high_post:
+            kw['joins'] = [meas_AnalysisTable]
+
+        if low_post:
+            if 'filters' in kw:
+                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            else:
+                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post]
+
+        if high_post:
+            if 'filters' in kw:
+                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post)
+            else:
+                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
+
+        # if low_post:
+        # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+        # if high_post:
+        #     q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
 
         # print self.name, identifiers
         # with self.session_ctx() as sess:

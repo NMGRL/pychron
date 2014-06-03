@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,8 @@ import weakref
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid, is_special
+    make_runid, is_special, convert_extract_device
+from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 from pychron.loggable import Loggable
 
@@ -120,7 +121,7 @@ class AutomatedRunSpec(Loggable):
     _executable = Bool(True)
     executable = Property(depends_on='identifier_error, _executable')
 
-    frequency_added = 0
+    frequency_group = 0
 
     runid = Property
     _estimated_duration = 0
@@ -163,9 +164,16 @@ class AutomatedRunSpec(Loggable):
                     warned.append(name)
 
                 script, ok = script_context[name]
-                if si in ('measurement_script', 'extraction_script'):
-                    d = script.get_estimated_duration()
-                    s += d
+                if ok and duration:
+                    if si in ('measurement_script', 'extraction_script'):
+                        # ctx = dict(duration=self.duration,
+                        # cleanup=self.cleanup,
+                        #            analysis_type=self.analysis_type,
+                        #            position=self.position)
+                        # arun.setup_context(script)
+                        ctx = self.make_script_context()
+                        d = script.calculate_estimated_duration(ctx)
+                        s += d
                 script_oks.append(ok)
             else:
                 if arun is None:
@@ -174,15 +182,16 @@ class AutomatedRunSpec(Loggable):
                 # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
-                    if duration:
-                        arun.setup_context(script)
+                    # if duration:
+                    # arun.setup_context(script)
 
                     ok = script.syntax_ok()
                     script_oks.append(ok)
                     script_context[name] = script, ok
-                    if ok:
+                    if ok and duration:
                         if si in ('measurement_script', 'extraction_script'):
-                            d = script.calculate_estimated_duration()
+                            ctx = self.make_script_context()
+                            d = script.calculate_estimated_duration(ctx)
                             s += d
         if arun:
             arun.spec = None
@@ -190,6 +199,36 @@ class AutomatedRunSpec(Loggable):
 
         self._executable = all(script_oks)
         return s
+
+    def get_position_list(self):
+        pos = self.position
+        if XY_REGEX[0].match(pos):
+            ps = XY_REGEX[1](pos)
+        elif ',' in pos:
+            # interpert as list of holenumbers
+            ps = list(pos.split(','))
+        else:
+            ps = [pos]
+
+        return ps
+
+    def make_script_context(self):
+        hdn = convert_extract_device(self.extract_device)
+        an = self.analysis_type.split('_')[0]
+        ctx = dict(tray=self.tray,
+                   position=self.get_position_list(),
+                   disable_between_positions=self.disable_between_positions,
+                   duration=self.duration,
+                   extract_value=self.extract_value,
+                   extract_units=self.extract_units,
+                   cleanup=self.cleanup,
+                   extract_device=hdn,
+                   analysis_type=an,
+                   ramp_rate=self.ramp_rate,
+                   pattern=self.pattern,
+                   beam_diameter=self.beam_diameter,
+                   ramp_duration=self.ramp_duration)
+        return ctx
 
     def get_estimated_duration(self, script_context, warned, force=False):
         """
@@ -276,17 +315,17 @@ class AutomatedRunSpec(Loggable):
 
         return [get_attr(ai) for ai in attrs]
 
-    def _get_run_attrs(self):
-        return ('labnumber', 'aliquot', 'step',
-                'extract_value', 'extract_units', 'ramp_duration',
-                'position', 'duration', 'cleanup', 'collection_time_zero_offset',
-                'pattern',
-                'beam_diameter',
-                'truncate_condition',
-                'syn_extraction',
-                'mass_spectrometer', 'extract_device',
-                'analysis_type',
-                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
+    # def _get_run_attrs(self):
+    #     return ('labnumber', 'aliquot', 'step',
+    #             'extract_value', 'extract_units', 'ramp_duration',
+    #             'position', 'duration', 'cleanup', 'collection_time_zero_offset',
+    #             'pattern',
+    #             'beam_diameter',
+    #             'truncate_condition',
+    #             'syn_extraction',
+    #             'mass_spectrometer', 'extract_device',
+    #             'analysis_type',
+    #             'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
     #===============================================================================
     # handlers
@@ -405,4 +444,15 @@ class AutomatedRunSpec(Loggable):
     def increment(self):
         return None if self._step < 0 else self._step
 
-        #============= EOF =============================================
+    @property
+    def extraction_script_name(self):
+        return self.extraction_script
+
+    @property
+    def measurement_script_name(self):
+        return self.measurement_script
+
+    @property
+    def sensitivity(self):
+        return 0
+        # ============= EOF =============================================

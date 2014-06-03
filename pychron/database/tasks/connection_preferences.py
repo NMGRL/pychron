@@ -18,10 +18,11 @@
 from traits.api import Str, Password, Enum, Button, on_trait_change, Color
 from traitsui.api import View, Item, Group, VGroup, HGroup, ListStrEditor, spring, Label
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from pychron.database.core.database_adapter import DatabaseAdapter
 
+from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, \
     FavoritesPreferencesHelper, FavoritesAdapter
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -34,6 +35,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper):
     #id = 'pychron.database.preferences_page'
 
     #fav_name = Str
+    save_username = Str
     db_name = Str
     username = Str
     password = Password
@@ -104,8 +106,7 @@ class ConnectionPreferencesPane(PreferencesPane):
             Item('password', label='Password'),
             enabled_when='kind=="mysql"',
             show_border=True,
-            label='Authentication'
-        )
+            label='Authentication')
 
         fav_grp = VGroup(Item('fav_name',
                               show_label=False),
@@ -115,8 +116,7 @@ class ConnectionPreferencesPane(PreferencesPane):
                               editor=ListStrEditor(
                                   editable=False,
                                   adapter=FavoritesAdapter(),
-                                  selected='object.selected',
-                              )),
+                                  selected='object.selected')),
                          HGroup(
                              icon_button_editor('add_favorite', 'add',
                                                 tooltip='Add saved connection'),
@@ -133,8 +133,9 @@ class ConnectionPreferencesPane(PreferencesPane):
 
                              show_labels=False))
 
-        db_grp = Group(HGroup(Item('kind', show_label=False)),
-                       Item('db_name', label='Name'),
+        db_grp = Group(HGroup(Item('kind', show_label=False),
+                              Item('db_name', label='Name')),
+                       Item('save_username', label='User'),
                        HGroup(fav_grp, db_auth_grp),
                        label='Main DB')
 
@@ -161,10 +162,8 @@ class MassSpecConnectionPane(PreferencesPane):
                 Item('massspec_username', label='Name'),
                 Item('massspec_password', label='Password'),
                 show_border=True,
-                label='Authentication'
-            ),
-            label='MassSpec DB'
-        )
+                label='Authentication'),
+            label='MassSpec DB')
 
         return View(massspec_grp)
 

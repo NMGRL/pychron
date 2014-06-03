@@ -7,4 +7,6 @@
         $HOME/Library/Enthought/Canopy_64bit/User/Resources/Python.app/Contents/~Info.plist
         
         now the Info.plist at
-        <pychron_app>/Contents/Info.plist is used. 
+        <pychron_app>/Contents/Info.plist is used.
+
+# use pythonw instead of python

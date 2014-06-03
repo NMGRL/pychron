@@ -15,6 +15,7 @@
 #===============================================================================
 
 #========== standard library imports ==========
+import glob
 import os
 import subprocess
 
@@ -30,6 +31,46 @@ def view_file(p, application='Preview', logger=None):
         if logger:
             logger.debug('failed opening {} using {}'.format(p, app_path))
         subprocess.call(['open', p])
+
+
+def ilist_directory2(root, extension=None, filtername=None, remove_extension=False):
+    """
+        uses glob
+        root: directory to list
+        extension: only return files of this file type e.g .txt or txt
+                extension can be list, tuple or str
+
+        return iterator
+    """
+    if filtername is None:
+        filtername = ''
+
+    def gen(gf):
+        for p in glob.iglob(gf):
+            p = os.path.basename(p)
+            if remove_extension:
+                p, _ = os.path.splitext(p)
+            yield p
+
+    gfilter = root
+    if extension:
+        if not isinstance(extension, (list, tuple)):
+            extension = (extension, )
+
+        for ext in extension:
+            if not ext.startswith('.'):
+                ext = '.{}'.format(ext)
+            gfilter = '{}/{}*{}'.format(root, filtername, ext)
+            # print gfilter
+            for yi in gen(gfilter):
+                yield yi
+    else:
+        for yi in gen(gfilter):
+            yield yi
+
+
+def list_directory2(root, extension=None, filtername=None, remove_extension=False):
+    return list(ilist_directory2(root, extension, filtername, remove_extension))
 
 
 def list_directory(p, extension=None, filtername=None, remove_extension=False):
@@ -83,7 +124,28 @@ def unique_dir(root, base):
     return p
 
 
-def unique_path(root, base, extension='txt'):
+def unique_path2(root, base, extension='.txt'):
+    """
+        unique_path suffers from the fact that it starts at 001.
+        this is a problem for log files because the logs are periodically archived which means
+        low paths are removed.
+
+        unique_path2 solves this by finding the max path then incrementing by 1
+    """
+    # find the max path in the root directory
+    basename = '{}-*{}'.format(base, extension)
+    cnt = 0
+    for p in glob.iglob(os.path.join(root, basename)):
+        p = os.path.basename(p)
+        head, tail = os.path.splitext(p)
+        cnt = max(int(head.split('-')[1]), cnt)
+
+    cnt += 1
+    p = os.path.join(root, '{}-{:03n}{}'.format(base, cnt, extension))
+    return p, cnt
+
+
+def unique_path(root, base, extension='.txt'):
     """
 
     """
@@ -232,7 +294,7 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(fp, commentchar='#'):
+def fileiter(fp, commentchar='#', strip=False):
     def isNewLine(c):
         return c in ('\r', '\n')
 
@@ -242,5 +304,7 @@ def fileiter(fp, commentchar='#'):
 
     for line in fp:
         if test(line):
+            if strip:
+                line = line.strip()
             yield line
 

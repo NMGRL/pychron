@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -118,6 +118,7 @@ class DatabaseAdapter(Loggable):
     datasource_url = Property(depends_on='connection_parameters_changed')
 
     path = Str
+    echo = False
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -125,7 +126,6 @@ class DatabaseAdapter(Loggable):
         #
         # logging.basicConfig()
         # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
     def create_all(self, metadata):
         if self.kind == 'sqlite':
@@ -169,7 +169,7 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('connecting to database {}'.format(url))
-                    engine = create_engine(url, echo=False)
+                    engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=False)

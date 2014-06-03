@@ -38,6 +38,7 @@ class DummyRecord():
 
 class RecallTask(AnalysisEditTask):
     name = 'Recall'
+    id = 'pychron.recall'
 
     tool_bars = [
         SToolBar(AddIsoEvoAction(),

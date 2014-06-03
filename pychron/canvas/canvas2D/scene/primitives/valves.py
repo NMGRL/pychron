@@ -15,10 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import List, on_trait_change
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import rounded_rect, \
-    RoundedRectangle, QPrimitive, Bordered, Connectable
+    RoundedRectangle, Bordered, Connectable
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -27,6 +26,7 @@ class BaseValve(Connectable):
     soft_lock = False
     owned = False
     oactive_color = (0, 255, 0)
+    description = ''
 
     def is_in(self, x, y):
         mx, my = self.get_xy()
@@ -34,8 +34,15 @@ class BaseValve(Connectable):
         if mx <= x <= (mx + w) and my <= y <= (my + h):
             return True
 
+    def get_tooltip_text(self):
+        state = 'Open' if self.state else 'Closed'
+        if self.soft_lock:
+            state = '{}(Locked)'.format(state)
+        return 'Valve={}\nDesc={}\nState={}'.format(self.name, self.description, state)
 
-class Valve(RoundedRectangle, BaseValve):
+
+# class Valve(RoundedRectangle, BaseValve):
+class Valve(BaseValve, RoundedRectangle):
     width = 2
     height = 2
     corner_radius = 4
@@ -79,21 +86,28 @@ class Valve(RoundedRectangle, BaseValve):
     def _draw_state_indicator(self, gc, x, y, w, h):
         if not self.state:
             gc.set_stroke_color((0, 0, 0))
-            l = 7
+            l = 5
             o = 2
             gc.set_line_width(2)
-            gc.move_to(x + o, y + o)
-            gc.line_to(x + l, y + l)
+            with gc:
+                gc.translate_ctm(x, y)
 
-            gc.move_to(x + o, y - o + h)
-            gc.line_to(x + o + l, y - o + h - l)
+                #lower left
+                gc.move_to(o, o)
+                gc.line_to(o + l, o + l)
 
-            gc.move_to(x - o + w, y - o + h)
-            gc.line_to(x - o + w - l, y - o + h - l)
+                #upper left
+                gc.move_to(o, h - o)
+                gc.line_to(o + l, h - o - l)
 
-            gc.move_to(x - o + w, y + o)
-            gc.line_to(x - o + w - l, y + o + l)
-            gc.draw_path()
+                #lower right
+                gc.move_to(w - o, o)
+                gc.line_to(w - o - l, o + l)
+
+                #upper left
+                gc.move_to(w - o, h - o)
+                gc.line_to(w - o - l, h - o - l)
+                gc.draw_path()
 
 
 def rounded_triangle(gc, cx, cy, width, height, cr):
@@ -158,23 +172,26 @@ class RoughValve(BaseValve, Bordered):
 
         if not self.state:
             with gc:
+                gc.translate_ctm(x, y)
+                gc.set_line_width(2)
                 gc.set_stroke_color((0, 0, 0, 1))
 
                 l = 6
-                w2 = w / 2.
-                w3 = w / 3.
+                o = 2
 
-                gc.set_line_width(2)
-                gc.move_to(x + w2, y + h - 1)
-                gc.line_to(x + w2, y + h - l)
-                gc.draw_path()
+                #lower left
+                gc.move_to(o + cr, o)
+                gc.line_to(o + cr + l, o + l - 3)
 
-                gc.move_to(x + cr, y + cr / 2.)
-                gc.line_to(x + cr + w3, y + l)
-                gc.draw_path()
+                #lower right
+                gc.move_to(w - o - cr, o)
+                gc.line_to(w - o - cr - l, o + l - 3)
 
-                gc.move_to(x + w - cr, y + cr / 2.)
-                gc.line_to(x + w - cr - w3, y + l)
+                #upper center
+                w2 = w / 2. + 1
+                gc.move_to(w2, h)
+                gc.line_to(w2, h - l)
+
                 gc.draw_path()
 
 

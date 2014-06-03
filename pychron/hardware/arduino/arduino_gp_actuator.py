@@ -101,6 +101,12 @@ class ArduinoGPActuator(GPActuator):
             return err_msg
 
     def _check_actuation(self, obj, request):
+        if not obj.check_actuation_enabled:
+            return True
+
+        if obj.check_actuation_delay:
+            time.sleep(obj.check_actuation_delay)
+
         cmd = 'r'
         if request:
             # open pin

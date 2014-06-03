@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance, String, Property, Button, \
-    Bool, Event, on_trait_change, Str, Int, Any
+    Bool, Event, on_trait_change, Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
 #============= standard library imports ========================
@@ -234,8 +234,7 @@ class VideoStageManager(StageManager):
     def clean_video_archive(self):
         if self.use_video_archiver:
             self.info('Cleaning video directory')
-
-            self.video_archiver.clean(spawn_process=False)
+            self.video_archiver.clean()
 
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
@@ -343,8 +342,8 @@ class VideoStageManager(StageManager):
         if self.autocenter_manager.use_autocenter:
             time.sleep(0.75)
             for _t in range(max(1, ntries)):
-            # use machine vision to calculate positioning error
-            #                rpos = self.autocenter_manager.locate_target(
+                # use machine vision to calculate positioning error
+                #                rpos = self.autocenter_manager.locate_target(
                 rpos = self.autocenter_manager.locate_center(
                     self.stage_controller.x,
                     self.stage_controller.y,
@@ -429,8 +428,8 @@ class VideoStageManager(StageManager):
         self.snapshot()
 
     def _record_fired(self):
-    #            time.sleep(4)
-    #            self.stop_recording()
+        #            time.sleep(4)
+        #            self.stop_recording()
         if self.is_recording:
 
             self.stop_recording()

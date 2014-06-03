@@ -170,7 +170,33 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         layout.addWidget(self.replace)
 
         self.setLayout(layout)
+
+        self.edit_color = QtGui.QColor('blue').lighter(175)
         #=====================================
+
+    def insert_command(self, cmd):
+        cur = self.code.textCursor()
+        self._insert_command(cmd, cur)
+
+    def _insert_command(self, cmd, cur):
+        text = cmd.to_string()
+        if text:
+            # get the indent level of the line
+            # if line starts with a special keyword add indent
+
+            block = cur.block()
+            line = block.text()
+            indent = max(4, self.code._get_indent_position(line))
+            line = line.strip()
+            token = line.split(' ')[0]
+            token = token.strip()
+
+            if token in ('if', 'for', 'while', 'with', 'def', 'class'):
+                indent += 4
+
+            indent = ' ' * indent
+            cur.movePosition(QTextCursor.EndOfLine)
+            cur.insertText('\n{}{}'.format(indent, text))
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasFormat('traits-ui-tabular-editor'):
@@ -185,39 +211,27 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         #        cmd = ''
         cmd = self.commands.command_objects[idx]
         if cmd:
-            text = cmd.to_string()
-            if text:
-                cur = self.code.cursorForPosition(e.pos())
+            cur = self.code.cursorForPosition(e.pos())
+            self._insert_command(cmd, cur)
 
-                # get the indent level of the line
-                # if line starts with a special keyword add indent
+    def highlight_line(self, lineno=None):
+        if lineno is None:
+            color = self.edit_color
+        else:
+            color = self.code.line_highlight_color
 
-                block = cur.block()
-                line = block.text()
-                indent = max(4, self.code._get_indent_position(line))
-                line = line.strip()
-                token = line.split(' ')[0]
-                token = token.strip()
-
-                if token in ('if', 'for', 'while', 'with', 'def', 'class'):
-                    indent += 4
-
-                indent = ' ' * indent
-                cur.movePosition(QTextCursor.EndOfLine)
-                cur.insertText('\n{}{}'.format(indent, text))
-
-    def highlight_line(self, lineno):
         selection = QTextEdit.ExtraSelection()
-        selection.format.setBackground(self.code.line_highlight_color)
+        selection.format.setBackground(color)
         selection.format.setProperty(
             QTextFormat.FullWidthSelection, True)
 
-        doc = self.code.document()
-        block = doc.findBlockByLineNumber(lineno - 1)
-        pos = block.position()
         selection.cursor = self.code.textCursor()
-        selection.cursor.setPosition(pos)
-        selection.cursor.clearSelection()
+        if lineno is not None:
+            doc = self.code.document()
+            block = doc.findBlockByLineNumber(lineno - 1)
+            pos = block.position()
+            selection.cursor.setPosition(pos)
+            selection.cursor.clearSelection()
         self.code.setExtraSelections([selection])
 
 #============= EOF =============================================

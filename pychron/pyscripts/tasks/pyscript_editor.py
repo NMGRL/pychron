@@ -15,18 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import time
 
 from traits.api import HasTraits, Property, Bool, Event, \
     Unicode, List, String, Int, on_trait_change, Instance
 from pyface.tasks.api import Editor
-
-
-
-# from pyface.ui.qt4.python_editor import PythonEditorEventFilter
 #============= standard library imports ========================
+import os
+import time
 #============= local library imports  ==========================
+from pychron.core.helpers.ctx_managers import no_update
+from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
 from pychron.pyscripts.tasks.widgets import myAdvancedCodeWidget
 
 SCRIPT_PKGS = dict(Extraction='pychron.pyscripts.extraction_line_pyscript',
@@ -87,7 +85,10 @@ class PyScriptEditor(Editor):
     name = Property(Unicode, depends_on='path')
 
     tooltip = Property(Unicode, depends_on='path')
-    # editor = Any
+
+    # context_editor = Any#Instance('pychron.pyscripts.context_editor.ContextEditor')
+    context_editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
+
     suppress_change = False
     kind = String
     commands = Instance(Commands)
@@ -98,6 +99,7 @@ class PyScriptEditor(Editor):
     selected_gosub = String
     selected_command = String
     _cached_text = ''
+    _no_update = False
 
     def get_scroll(self):
         return self.control.code.verticalScrollBar().value()
@@ -143,6 +145,16 @@ class PyScriptEditor(Editor):
         if cmd == 'gosub':
             return line[7:-2]
 
+    def insert_command(self, cmdobj):
+        self.control.insert_command(cmdobj)
+
+    @on_trait_change('context_editor:update_event')
+    def handle_context_update(self):
+        with no_update(self):
+            docstr = self.context_editor.generate_docstr()
+            self._set_docstr(docstr)
+            self.dirty = True
+
     @on_trait_change('commands:command_objects:[+]')
     def handle_command_edit(self, obj, name, old, new):
         if old:
@@ -165,6 +177,8 @@ class PyScriptEditor(Editor):
             cmd = self._get_command(line)
             if cmd:
                 self.selected_command = line
+                self.control.highlight_line()
+                # self.control.highlight_line(line)
 
     def _on_dirty_changed(self, dirty):
         if dirty:
@@ -182,7 +196,10 @@ class PyScriptEditor(Editor):
             #     self.editor.parse(self.getText())
             self.changed = True
             self.dirty = True
-            self._cached_text = self.getText()
+            self._cached_text = txt = self.getText()
+            if not self._no_update:
+                if self.context_editor:
+                    self.context_editor.load(txt)
 
     def _show_line_numbers_changed(self):
         if self.control is not None:
@@ -220,8 +237,12 @@ class PyScriptEditor(Editor):
             self.save(path, text)
         self.control.code.setPlainText(text)
 
-        self.dirty = False
+        if self.context_editor:
+            self.context_editor.load(text)
+
         self._cached_text = text
+
+        self.dirty = False
 
     def dump(self, path, txt=None):
         if txt is None:
@@ -235,9 +256,41 @@ class PyScriptEditor(Editor):
     def _detab(self, txt):
         return txt.replace('\t', ' ' * 4)
 
+    def _set_docstr(self, ds):
+        to = list(self._remove_docstr())
+
+        idx = 0
+        if to[0].startswith('#!'):
+            idx = 1
+
+        for di in ds:
+            to.insert(idx, di)
+
+        to = '\n'.join(to)
+        self.setText(to)
+        self._cached_text = to
+
+    def _remove_docstr(self):
+        docstr_started = False
+        check_docstr = True
+        for i, t in enumerate(self.getText().split('\n')):
+            if check_docstr:
+                if not docstr_started and t in ('"""', "'''"):
+                    docstr_started = True
+                    continue
+                elif docstr_started:
+                    if t in ('"""', "'''"):
+                        check_docstr = False
+                    continue
+
+            yield t
+
 
 class MeasurementEditor(PyScriptEditor):
     kind = 'Measurement'
+
+    def _context_editor_default(self):
+        return MeasurementContextEditor()
 
     # def _editor_default(self):
     #     return MeasurementParameterEditor(editor=self)

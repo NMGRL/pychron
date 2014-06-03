@@ -55,6 +55,8 @@ class BaseMeasurement(HasTraits):
     time_zero_offset = Float
     offset_xs = Property
 
+    __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detecotor', 'time_zero_offset']
+
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
         if dbrecord and unpack:
@@ -136,6 +138,13 @@ class IsotopicMeasurement(BaseMeasurement):
 
     _oerror = None
     _ovalue = None
+
+    __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
+                 'include_baseline_error',
+                 '_ovalue', '_oerror',
+                 'include_baseline_error', 'use_static',
+                 'user_defined_value',
+                 'user_defined_error', 'fit_blocks', 'error_type']
 
     def __init__(self, dbresult=None, *args, **kw):
 
@@ -354,7 +363,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
 
 class CorrectionIsotopicMeasurement(IsotopicMeasurement):
-    pass
 
     def __init__(self, dbrecord=None, *args, **kw):
         if dbrecord:
@@ -379,7 +387,7 @@ class Sniff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
-
+    __slots__ = ['baseline']
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
         if not self.include_baseline_error:
@@ -413,6 +421,11 @@ class Isotope(BaseIsotope):
     discrimination = Either(Variable, AffineScalarFunc)
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
+
+    __slots__ = ['interference_corrected_value',
+                 'discrimination', 'ic_factor',
+                 'sniff', 'blank', 'background'
+                 'age_error_component']
 
     def revert_user_defined(self):
         self.blank._revert_user_defined()

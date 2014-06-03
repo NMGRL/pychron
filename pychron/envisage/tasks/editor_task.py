@@ -15,15 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-
-from enthought.pyface import confirmation_dialog
+from pyface import confirmation_dialog
 from pyface.constant import NO
 from traits.api import Property, Instance
 from pyface.tasks.api import IEditor, IEditorAreaPane
-
-
 #============= standard library imports ========================
+import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLineTask
 from pyface.tasks.advanced_editor_area_pane import AdvancedEditorAreaPane

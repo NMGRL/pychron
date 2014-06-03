@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports=======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 from pychron.experiment.utilities.identifier import make_aliquot_step
@@ -33,7 +35,7 @@ COLORS = {'success': SUCCESS_COLOR,
           'invalid': 'red'}
 
 
-class AutomatedRunSpecAdapter(TabularAdapter):
+class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     font = 'arial 10'
     #===========================================================================
     # widths
@@ -101,10 +103,6 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             if int(o):
                 return '{}'.format(o)
         return ''
-
-        # return '{},{}'.format
-
-    #     return self._get_number('overlap', fmt='{:n}')
 
     def _get_aliquot_text(self, trait, item):
         al = ''
@@ -178,10 +176,29 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         return cols
 
 
-class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
+class AutomatedRunMixin(object):
+    """
+        mixin for table of automated runs that have not yet been executed
+    """
+
+    def get_menu(self, *args):
+        return MenuManager(Action(name='Move to Start', action='move_to_start'),
+                           Action(name='Move to End', action='move_to_end'),
+                           Action(name='Move to ...', action='move_to_row'),
+                           Action(name='Unselect', action='unselect'))
+
+    def get_row_label(self, section, obj=None):
+        return section + 1
+
+
+class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):
+    pass
+
+
+class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     def _columns_factory(self):
         cols = [
-            #                ('', 'state'),
+            # ('', 'state'),
             ('Labnumber', 'labnumber'),
             ('Aliquot', 'aliquot'),
             ('Sample', 'sample'),
@@ -203,5 +220,9 @@ class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
         ]
 
         return cols
+
+
+class UVAutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedUVAutomatedRunSpecAdapter):
+    pass
 
 #============= EOF =============================================

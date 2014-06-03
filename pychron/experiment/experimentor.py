@@ -107,7 +107,7 @@ class Experimentor(IsotopeDatabaseManager):
 
         return [ai for ei in queues
                 for ai in ei.executed_runs + ei.automated_runs
-                if ai.executable]
+                if ai.executable and not ai.skip]
 
     def _get_all_automated_runs(self):
         return [ai for ei in self.experiment_queues

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from lxml.etree import Element
+# from lxml.etree import Element
+from lxml import etree
 from pyface.message_dialog import warning
 #============= standard library imports ========================
 import os
@@ -284,7 +285,7 @@ class InitializationParser(XMLParser):
         tree = root.find('plugins')
         s = lambda x: x.tag
 
-        cats = map(s, [c for c in tree.iter(Element)])
+        cats = map(s, [c for c in tree.iter(etree.Element)])
         return list(set(cats))
         #return map(s, set([c for c in tree.iter()]))
 

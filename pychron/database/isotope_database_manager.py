@@ -26,7 +26,6 @@ from apptools.preferences.preference_binding import bind_preference
 import weakref
 #============= local library imports  ==========================
 from traits.has_traits import provides
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.i_datastore import IDatastore
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
@@ -128,6 +127,7 @@ class BaseIsotopeDatabaseManager(Loggable):
             bind_preference(self.db, 'password', '{}.password'.format(prefid))
 
         bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
+        bind_preference(self.db, 'save_username', '{}.save_username'.format(prefid))
 
     def open_progress(self, n=2, **kw):
         return self._open_progress(n, **kw)
@@ -455,9 +455,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                    graph_id=graph_id)
 
         # if not self.use_vcs:
-        # ai.sync(group, unpack=unpack, load_changes=load_changes)
-        timethis(ai.sync, args=(group,),
-                 kwargs=dict(unpack=unpack, load_changes=load_changes))
+        ai.sync(group, unpack=unpack, load_changes=load_changes)
+        # timethis(ai.sync, args=(group,),
+        #          kwargs=dict(unpack=unpack, load_changes=load_changes))
 
         if atype in ('unknown', 'cocktail'):
             if calculate_age:

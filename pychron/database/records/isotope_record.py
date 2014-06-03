@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ import os
 import time
 
 from traits.api import HasTraits
+
 
 
 
@@ -53,6 +54,8 @@ class IsotopeRecordView(HasTraits):
 
     meas_script_name = ''
     extract_script_name = ''
+
+    status_text = ''
 
     def __init__(self, dbrecord=None, *args, **kw):
         super(IsotopeRecordView, self).__init__(*args, **kw)

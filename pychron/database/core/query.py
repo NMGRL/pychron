@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,6 +110,13 @@ class Query(HasTraits):
     #    date_str = 'rundate'
 
     def assemble_filter(self, query, attr):
+        """
+            query: sqlalchemy.Query object
+            attr: sqlalchemy.Table.Column object
+
+            modify the query object by chaining .filter calls
+
+        """
         comp = self.comparator
         if self.parameter == 'Run Date/Time':
             query = self.date_query(query, attr)
@@ -210,13 +217,13 @@ class Query(HasTraits):
     #    @cached_property
     def _get_parameters(self):
 
-    #        b = self.query_table
-    #        params = [str(fi.column).split('.')[0].replace('Table', '').lower() for fi in b.__table__.foreign_keys]
-    #
-    #        params += [str(col) for col in b.__table__.columns]
-    # #        f = lambda x:[str(col)
-    # #                           for col in x.__table__.columns]
-    # #        params = list(f(b))
+        #        b = self.query_table
+        #        params = [str(fi.column).split('.')[0].replace('Table', '').lower() for fi in b.__table__.foreign_keys]
+        #
+        #        params += [str(col) for col in b.__table__.columns]
+        # #        f = lambda x:[str(col)
+        # #                           for col in x.__table__.columns]
+        # #        params = list(f(b))
         params = self.__params__
         if not self.parameter:
             self.parameter = params[0]
