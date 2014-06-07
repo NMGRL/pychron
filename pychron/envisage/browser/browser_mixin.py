@@ -112,6 +112,7 @@ class BrowserMixin(ColumnSorterMixin):
     use_named_date_range = Bool
     _low_post = Date
     _high_post = Date
+    _recent_low_post = None
 
     use_analysis_type_filtering = Bool
     analysis_include_types = Property(List)
