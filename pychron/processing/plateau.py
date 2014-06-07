@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +23,14 @@ from numpy import argmax, array
 # from pychron.core.helpers.logger_setup import logging_setup, new_logger
 # logging_setup('plateau', use_archiver=False)
 # log = new_logger('foo')
+from pychron.core.stats.core import validate_mswd, calculate_mswd
 
 
 def memoize(function):
     cache = {}
 
     def closure(*args):
-        return function(*args)
+        # return function(*args)
         if args not in cache:
             cache[args] = function(*args)
         return cache[args]
@@ -45,6 +46,9 @@ class Plateau(HasTraits):
 
     nsteps = 3
     overlap_sigma = 2
+
+    use_overlap = True  # fleck criterion
+    use_mswd = False  #mahon criterion
 
     def find_plateaus(self):
 
@@ -84,10 +88,13 @@ class Plateau(HasTraits):
                 # log.debug('{} {} nsteps failed'.format(start, i))
                 continue
 
-            if not self.check_overlap(start, i, overlap_func):
+            if self.use_overlap and not self.check_overlap(start, i, overlap_func):
                 # log.debug('{} {} overlap failed'.format(start, i))
                 # potential_end=None
                 break
+
+            if self.use_mswd and not self.check_mswd(start, i):
+                continue
 
             if not self.check_percent_released(start, i):
                 # log.debug('{} {} percent failed'.format(start, i))
@@ -105,6 +112,15 @@ class Plateau(HasTraits):
         # log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
 
         return ss / self.total_signal >= 0.5
+
+    def check_mswd(self, start, end):
+        """
+            return False if not valid
+        """
+        ages = self.ages[start, end + 1]
+        errors = self.errors[start, end + 1]
+        mswd = calculate_mswd(ages, errors)
+        return validate_mswd(mswd, len(ages))
 
     def check_overlap(self, start, end, overlap_func):
         overlap_sigma = self.overlap_sigma
