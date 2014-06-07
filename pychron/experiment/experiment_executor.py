@@ -319,11 +319,15 @@ class ExperimentExecutor(Loggable):
         exp = self.experiment_queue
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
-
+        
         for i, exp in enumerate(self.experiment_queues):
             if self.isAlive():
                 self._execute_queue(i, exp)
+            else:
+                self.debug('No alive. not starting {},{}'.format(i, exp.name))
+
             if self.end_at_run_completion:
+                self.debug('Previous queue ended at completion. Not continuing to other opened experiments')
                 break
 
         self._alive = False
