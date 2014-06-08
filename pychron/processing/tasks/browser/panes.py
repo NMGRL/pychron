@@ -260,7 +260,7 @@ class BrowserPane(TraitsDockPane):
                           UItem('high_post', enabled_when='use_high_post'),
                           UItem('use_named_date_range'),
                           UItem('named_date_range'),
-                          icon_button_editor('date_configure_button', 'cog'),
+                          icon_button_editor('date_configure_button', 'view-calendar-month-2.png'),
                           label='Date',
                           show_border=True)
         top_level_filter_grp = VGroup(HGroup(project_grp, irrad_grp),
