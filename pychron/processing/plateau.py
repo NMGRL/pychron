@@ -50,7 +50,16 @@ class Plateau(HasTraits):
     use_overlap = True  # fleck criterion
     use_mswd = False  #mahon criterion
 
-    def find_plateaus(self):
+    def find_plateaus(self, method):
+        """
+            method: str either fleck 1977 or mahon 1996
+        """
+        if method.lower() == 'mahon 1996':
+            self.use_mswd = True
+            self.use_overlap = False
+        else:
+            self.use_mswd = False
+            self.use_overlap = True
 
         n = len(self.ages)
         exclude = self.exclude

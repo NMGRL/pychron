@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@ from pychron.core.ui import set_qt
 set_qt()
 
 #============= enthought library imports =======================
+from chaco.abstract_overlay import AbstractOverlay
+from enable.base import str_to_font
 from traits.api import HasTraits, Instance, Any, Float, File, Property, Str
 from traitsui.api import View, Controller, UItem, Item
 from chaco.api import OverlayPlotContainer
@@ -43,6 +45,16 @@ class myDataLabel(DataLabel):
     marker_visible = False
     label_position = 'center'
     border_visible = False
+
+
+class LabelsOverlay(AbstractOverlay):
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        with gc:
+            gc.set_font(str_to_font(None, None, '8'))
+            for x, y, l in self.labels:
+                x, y = other_component.map_screen([(x, y)])[0]
+                gc.set_text_position(x - 5, y - 5)
+                gc.show_text(l)
 
 
 class RotatingContainer(OverlayPlotContainer):
@@ -111,14 +123,15 @@ class GraphicModel(HasTraits):
                 gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
                 #            c.use_backbuffer = False
 
-            for ci in c.components:
-                try:
-                    ci.x_axis.visible = False
-                    ci.y_axis.visible = False
-                except Exception:
-                    pass
+            # for ci in c.components:
+            #     try:
+            #         ci.x_axis.visible = False
+            #         ci.y_axis.visible = False
+            #     except Exception:
+            #         pass
 
-            c.use_backbuffer = False
+            # c.use_backbuffer = False
+
             gc.render_component(c)
             #            c.use_backbuffer = True
             gc.save(path)
@@ -145,11 +158,11 @@ class GraphicModel(HasTraits):
         p.y_grid.visible = False
         p.x_axis.title = 'X cm'
         p.y_axis.title = 'Y cm'
-        font = 'modern 22'
-        p.x_axis.title_font = font
-        p.x_axis.tick_label_font = font
-        p.y_axis.title_font = font
-        p.y_axis.tick_label_font = font
+        # font = 'modern 22'
+        # p.x_axis.title_font = font
+        # p.x_axis.tick_label_font = font
+        # p.y_axis.title_font = font
+        # p.y_axis.tick_label_font = font
         #         p.x_axis_visible = False
         #         p.y_axis_visible = False
         p.index_range.low_setting = -w / 2
@@ -168,7 +181,7 @@ class GraphicModel(HasTraits):
             face_color = face_color.text
         else:
             face_color = 'white'
-
+        labels = []
         for i, pp in enumerate(circles.findall('point')):
             x, y, l = pp.find('x').text, pp.find('y').text, pp.find('label').text
 
@@ -197,12 +210,15 @@ class GraphicModel(HasTraits):
             plot = p.plot((xn, yn),
                           face_color=fc,
                           type='polygon')[0]
-            if use_label:
-                label = myDataLabel(component=plot,
-                                    data_point=(x, y),
-                                    label_text=l,
-                                    bgcolor='transparent')
-                plot.overlays.append(label)
+            labels.append((x, y, l))
+            # if use_label:
+            #     label = myDataLabel(component=plot,
+            #                         data_point=(x, y),
+            #                         label_text=l,
+            #                         bgcolor='transparent')
+            #     plot.overlays.append(label)
+        if use_label:
+            p.overlays.append(LabelsOverlay(component=plot, labels=labels))
 
         self.container.add(p)
         self.container.invalidate_and_redraw()
@@ -385,7 +401,7 @@ if __name__ == '__main__':
     # p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_ordered1.txt'
     # p = '/Users/ross/Sandbox/1_75mmirrad.txt'
-    # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/1_75mmirrad_continuous.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/1_75mmirrad_continuous.txt'
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad.txt'
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_continuous.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/2mmirrad_continuous.txt'
@@ -394,10 +410,10 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/26_no_spokes.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes.txt'
     # p = '/Users/ross/Desktop/72_spokes'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
-    gcc, gm = open_txt(p, (2.54, 2.54), 0.0175 * 2.54,
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
+    # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
+    gcc, gm = open_txt(p, (2.54, 2.54), 0.03 * 2.54,
                        convert_mm=True, make=True,
                        rotate=0)
 

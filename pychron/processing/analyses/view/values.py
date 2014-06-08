@@ -28,8 +28,7 @@ class ComputedValue(NamedValue):
     error = Either(Str, Float, Int)
     tag = Str
     display_value=Bool(True)
-    value_sig_figs = Int(5)
-    error_sig_figs = Int(5)
+    sig_figs = Int(5)
 
 
 class DetectorRatio(ComputedValue):

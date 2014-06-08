@@ -44,7 +44,6 @@ class SpectrumOptions(AgeOptions):
     display_plateau_info = Bool(True)
     display_integrated_info = Bool(True)
     plateau_sig_figs = Int
-    plateau_error_sig_figs = Int
 
     plateau_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
     integrated_font_size = Enum(6, 7, 8, 10, 11, 12, 14, 15, 18, 24, 28, 32)
@@ -54,7 +53,7 @@ class SpectrumOptions(AgeOptions):
     extend_plateau_end_caps = Bool(True)
     plateau_line_width = Float
     plateau_line_color = Color
-
+    plateau_method = Enum('Fleck 1977', 'Mahon 1996')
     error_calc_method = Property
 
     def _get_error_calc_method(self):
@@ -108,11 +107,13 @@ class SpectrumOptions(AgeOptions):
                         'include_j_error_in_plateau',
                         'plateau_age_error_kind',
                         'plateau_sig_figs',
-                        'plateau_error_sig_figs']
+                        # 'plateau_error_sig_figs',
+                        'plateau_method']
 
     def _get_groups(self):
 
         plat_grp = Group(
+            Item('plateau_method', label='Method'),
             Item('center_line_style'),
             Item('extend_plateau_end_caps'),
             Item('plateau_line_width'),
@@ -155,7 +156,7 @@ class SpectrumOptions(AgeOptions):
                                           Item('plateau_font_size', label='Size',
                                                enabled_when='display_plateau_info')),
                                    HGroup(Item('plateau_sig_figs', label='Age'),
-                                          Item('plateau_error_sig_figs', label='Error'),
+                                          # Item('plateau_error_sig_figs', label='Error'),
                                           show_border=True, label='SigFigs'),
                                    label='Plateau'),
                             HGroup(UItem('display_integrated_info',

@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,13 +88,11 @@ class StatsGraph(HasTraits):
     window_y = Int
     stats = Str
     sig_figs = Int(3)
-    esig_figs = Int(4)
 
     def _update_stats(self, new):
         self.stats = ''
         #        new = reversed(new)
-        ss = ['{}. {}'.format(i + 1, ni.tostring(sig_figs=self.sig_figs,
-                                                 error_sig_figs=self.esig_figs)) for i, ni in enumerate(new)]
+        ss = ['{}. {}'.format(i + 1, ni.tostring(sig_figs=self.sig_figs)) for i, ni in enumerate(new)]
         self.stats = '\n'.join(ss)
 
     def _graph_changed(self):
@@ -248,11 +246,11 @@ class CSVGrapher(Loggable):
                     break
                 lines.append(l)
             else:
-            #                print lines
-            #                for l in lines:
-            #                    print l
-            #                    print map(float, l)
-            #
+                #                print lines
+                #                for l in lines:
+                #                    print l
+                #                    print map(float, l)
+                #
                 data = np.array([map(float, l) for l in lines])
                 data = data.transpose()
                 groups.append(data)
@@ -267,7 +265,7 @@ class CSVGrapher(Loggable):
             groups = self._parse_data(reader)
             #            print groups
             for data in groups:
-            #                print data
+                #                print data
                 self._show_plot(data)
 
     def _show_plot(self, data):

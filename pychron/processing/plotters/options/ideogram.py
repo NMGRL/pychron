@@ -67,7 +67,6 @@ class IdeogramOptions(AgeOptions):
     label_fontsize = Enum(*SIZES)
 
     mean_sig_figs = Int
-    mean_error_sig_figs = Int
 
     refresh_asymptotic_button = Button
 
@@ -223,7 +222,6 @@ class IdeogramOptions(AgeOptions):
                                  Item('display_percent_error', label='%Error',
                                       enabled_when='display_mean_indicator')),
                           HGroup(Item('mean_sig_figs', label='Mean'),
-                                 Item('mean_error_sig_figs', label='Error'),
                                  show_border=True,
                                  label='SigFigs'),
                           show_border=True,
@@ -322,7 +320,7 @@ class IdeogramOptions(AgeOptions):
             'display_percent_error',
             'mean_indicator_fontname',
             'mean_indicator_fontsize',
-            'mean_sig_figs', 'mean_error_sig_figs',
+            'mean_sig_figs',
             'display_inset', 'inset_location', 'inset_width', 'inset_height',
             'fill_groups',
             'label_fontsize'
