@@ -84,7 +84,7 @@ class Spectrum(BaseArArFigure):
         self.xs = c39s
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
-        graph.set_y_title('Age ({})'.format(au))
+        graph.set_y_title('Apparent Age ({})'.format(au))
 
         spec = self._add_plot(xs, ys, es, pid, po)
         spec.line_style = self.options.center_line_style
