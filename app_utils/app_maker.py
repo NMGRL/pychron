@@ -144,9 +144,8 @@ class Template(object):
 
         # for anaconda builds
         #copy qt.nib
-        p = '/anaconda/python.app/pythonapp/Contents/Resources/qt_menu.nib'
+        p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
         ins.copy_resource_dir(p)
-
 
         #=======================================================================
         # rename
