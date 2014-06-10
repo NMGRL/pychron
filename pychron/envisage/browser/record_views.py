@@ -29,6 +29,33 @@ class RecordView(HasTraits):
         pass
 
 
+class SampleRecordView(RecordView):
+    name = Str
+    material = Str
+    project = Str
+    lat = Float
+    lon = Float
+    elevation = Float
+    lithology = Str
+
+    def _create(self, dbrecord):
+        if dbrecord.material:
+            self.material = dbrecord.material.name
+        if dbrecord.project:
+            self.project = dbrecord.project.name
+
+        for attr in ('name', 'lat', ('lon', 'long'),
+                     'elevation', 'lithology', 'location', 'igsn'):
+            if isinstance(attr, tuple):
+                attr, dbattr = attr
+            else:
+                dbattr = attr
+
+            v = getattr(dbrecord, dbattr)
+            if v is not None:
+                setattr(self, attr, v)
+
+
 class LabnumberRecordView(RecordView):
     name = Str
     material = Str
