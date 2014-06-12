@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ class SampleRecordView(RecordView):
     lon = Float
     elevation = Float
     lithology = Str
+    rock_type = Str
 
     def _create(self, dbrecord):
         if dbrecord.material:
@@ -45,7 +46,7 @@ class SampleRecordView(RecordView):
             self.project = dbrecord.project.name
 
         for attr in ('name', 'lat', ('lon', 'long'),
-                     'elevation', 'lithology', 'location', 'igsn'):
+                     'elevation', 'lithology', 'location', 'igsn', 'rock_type'):
             if isinstance(attr, tuple):
                 attr, dbattr = attr
             else:

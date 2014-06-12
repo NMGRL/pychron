@@ -22,10 +22,21 @@ from reportlab.lib import colors
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from reportlab.lib.units import inch
 import yaml
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
-from pychron.core.pdf.items import Row
+from pychron.core.pdf.items import Row, FooterRow
 
+rock_type_map = {'L': 'Lava',
+                 'LAg': 'Lava/Agglutinate',
+                 'L(gl)': 'Lava glassy',
+                 'B': 'Autobreccia',
+                 'B(gl)': 'Hyaloclastite Breccia',
+                 'D': 'Dike',
+                 'VZI': 'Vent zone intrusion',
+                 'T': 'Pyroclastic Tuff or Lapilli Tuff',
+                 'S': 'Polymict sediment',
+                 'T(gl)': 'Hydrovolcanic tuff'}
 
 class SamplePDFTableWriter(BasePDFTableWriter):
     yaml_options_path = None
@@ -36,9 +47,52 @@ class SamplePDFTableWriter(BasePDFTableWriter):
 
         """
         self._load_yaml_options()
-        flowables = [self._make_table_title(), self._make_sample_table(samples)]
+        self.col_widths = [0.75 * inch,
+                           0.75 * inch,
+                           0.95 * inch,
+                           0.75 * inch,
+                           0.75 * inch,
+                           0.75 * inch,
+                           0.95 * inch, ]
+
+        st = self._make_sample_table(samples)
+        # st._argW[0]=0.7*inch
+        # st._argW[1]=0.7*inch
+        # st._argW[2]=0.9*inch
+        # st._argW[3]=0.7*inch
+        # st._argW[4]=0.7*inch
+        # st._argW[5]=0.7*inch
+        # st._argW[6]=0.7*inch
+
+        flowables = [self._make_table_title(), st,
+                     self._vspacer(0.1),
+                     self._make_footnote_table()]
 
         return flowables, None
+
+    def _make_footnote_table(self):
+        style = self._new_style(debug_grid=False)
+        style.add('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey)
+
+        l = ', '.join(['{}= {}'.format(k, v) for k, v in rock_type_map.items()[:5]])
+        l2 = ', '.join(['{}= {}'.format(k, v) for k, v in rock_type_map.items()[5:9]])
+        l3 = ', '.join(['{}= {}'.format(k, v) for k, v in rock_type_map.items()[9:]])
+        r = FooterRow(fontsize=7)
+        r.add_item(value='Rock Types: {}'.format(l), span=7)
+
+        r2 = FooterRow(fontsize=7)
+        r2.add_blank_item(1)
+        r2.add_item(value=l2, span=6)
+
+        r3 = FooterRow(fontsize=7)
+        r3.add_blank_item(1)
+        r3.add_item(value=l3, span=6)
+
+        r4 = FooterRow(fontsize=7)
+        r4.add_item(value='Materials: GMC= Groundmass Concentrate', span=7)
+        fdata = [r, r2, r3, r4]
+        ft = self._new_table(style, fdata)
+        return ft
 
     def _make_sample_table(self, samples):
         ts = self._new_style(header_line_idx=0, header_line_width=2)
@@ -49,28 +103,40 @@ class SamplePDFTableWriter(BasePDFTableWriter):
         return t
 
     def _row_generator(self, samples):
-        attrs = ['name', 'material', 'lithology', ('lat', '{:0.5f}'), ('lon', '{:0.5f}'), 'elevation']
+        attrs = ['name', 'material', 'lithology', 'rock_type', ('lat', '{:0.5f}'), ('lon', '{:0.5f}'),
+                 ('elevation', '{}', 'm')]
         MATERIAL_MAP = {'Groundmass concentrate': 'GMC'}
 
         hr = Row()
         for ai in attrs:
-            if len(ai) == 2:
-                ai = ai[0]
-            hr.add_item(value=ai.capitalize())
+            if isinstance(ai, tuple):
+                if len(ai) == 2:
+                    ai = ai[0]
+                elif len(ai) == 3:
+                    ai = '{} ({})'.format(ai[0], ai[2])
+
+            h = ' '.join(map(str.capitalize, ai.split('_')))
+            hr.add_item(value=h)
+
         yield hr
 
         for si in samples:
             if si.name.startswith('MB'):
                 r = Row()
                 for ai in attrs:
-                    if len(ai) == 2:
-                        ai, fmt = ai
-                    else:
-                        fmt = '{}'
+                    fmt = '{}'
+                    if isinstance(ai, tuple):
+                        if len(ai) == 2:
+                            ai, fmt = ai
+
+                        elif len(ai) == 3:
+                            ai, fmt, u = ai
 
                     v = getattr(si, ai)
                     if ai == 'material':
                         v = MATERIAL_MAP.get(v, v)
+                    if ai == 'elevation':
+                        v = int(v)
 
                     if not v:
                         v = '-'

@@ -316,8 +316,7 @@ class BaseArArFigure(HasTraits):
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box,
-                                font='modern {}'.format(self.options.label_fontsize)
-        )
+                                font='modern {}'.format(self.options.label_fontsize))
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
