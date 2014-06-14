@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
@@ -178,7 +178,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         db = self.manager.db
         with db.session_ctx():
-            ans = db.get_labnumber_analyses([si.identifier for si in sams])
+            ans, _ = db.get_labnumber_analyses([si.identifier for si in sams])
             ts = [ai.analysis_timestamp for ai in ans]
             lpost, hpost = min(ts), max(ts)
             associated = db.get_date_range_analyses(lpost, hpost)
@@ -186,10 +186,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         gm = GraphicalFilterModel(analyses=ans,
                                   projects=[p.name for p in self.selected_projects])
+        gm.setup()
         gv = GraphicalFilterView(model=gm)
-        info = gv.edit_traits()
+        info = gv.edit_traits(kind='livemodal')
         if info.result:
             ans = gm.get_selection()
+            print 'afsf', ans
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 

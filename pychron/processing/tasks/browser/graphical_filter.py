@@ -27,7 +27,7 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
 # ============= standard library imports ========================
 from numpy import array
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.processing.plotters.series.ticks import tick_formatter, StaticTickGenerator, TICKS
 from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, ANALYSIS_MAPPING
@@ -102,7 +102,9 @@ class GraphicalFilterModel(HasTraits):
 
         ans = self._filter_projects(self.analyses)
 
-        x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
+        # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
+        #todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
+        x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
         self.graph.setup(x, y, ans)
 
     def get_selection(self):
@@ -146,7 +148,7 @@ class GraphicalFilterModel(HasTraits):
                         return True
 
             for ai in ans:
-                if ai.project == ('references', 'j-curve'):
+                if self.use_project_exclusion and ai.project == ('references', 'j-curve'):
                     if test(ai):
                         yield ai
                 elif ai.project in projects:
@@ -158,8 +160,9 @@ class GraphicalFilterModel(HasTraits):
         """
             only use analyses with analysis_type in self.analyses_types
         """
-        ats = map(str.lower, self.analysis_types)
+        ats = map(lambda x: x.replace(' ', '_'), map(str.lower, self.analysis_types))
         f = lambda x: x.analysis_type.lower() in ats
+
         return filter(f, ans)
 
 
@@ -206,7 +209,6 @@ class Demo(HasTraits):
         gv = GraphicalFilterView(model=g)
 
         info = gv.edit_traits()
-        print info.result
         if info.result:
             s = g.get_selection()
             for si in s:
@@ -219,7 +221,7 @@ if __name__ == '__main__':
 
     man = IsotopeDatabaseManager(bind=False, connect=False)
     db = man.db
-    db.trait_set(name='pychrondata_dev',
+    db.trait_set(name='pychrondata_minnabluff',
                  kind='mysql',
                  username='root',
                  password='Argon',
