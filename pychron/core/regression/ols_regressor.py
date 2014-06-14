@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
 from traits.api import Int, Property
 #============= standard library imports ========================
 from numpy import asarray, column_stack, ones, \
-    matrix, sqrt
+    matrix, sqrt, dot, linalg
 
 from statsmodels.api import OLS
 # try:
@@ -55,11 +55,24 @@ class OLSRegressor(BaseRegressor):
     def get_exog(self, x):
         return self._get_X(x)
 
-    def fast_predict(self, ys, exog):
+    def fast_predict(self, endog, exog):
         ols = self._ols
-        ols.wendog = ols.whiten(ys)
+        ols.wendog = ols.whiten(endog)
         result = ols.fit()
         return result.predict(exog)
+
+    def fast_predict2(self, endog, exog):
+        """
+        this function is less flexible than fast_predict but is 2x faster. it doesn't use RegressionResults class
+        simple does the lin algebra to predict values.
+
+        currently useful for monte_carlo_estimation
+        """
+        if not hasattr(self, 'pinv_wexog'):
+            self.pinv_wexog = linalg.pinv(self._ols.wexog)
+        beta = dot(self.pinv_wexog, endog)
+
+        return dot(exog, beta)
 
     def calculate(self, filtering=False):
         cxs = self.pre_clean_xs
