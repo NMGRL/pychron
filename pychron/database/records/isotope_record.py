@@ -25,6 +25,7 @@ from traits.api import HasTraits
 
 
 
+
 #============= standard library imports ========================
 # import re
 #============= local library imports  ==========================
@@ -83,10 +84,9 @@ class IsotopeRecordView(HasTraits):
             self.uuid = dbrecord.uuid
             self.tag = dbrecord.tag or ''
             self.rundate = dbrecord.analysis_timestamp
-            self.timestamp = time.mktime(self.rundate.timetuple())
 
+            self.timestamp = time.mktime(self.rundate.timetuple())
             self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
-            #            print self.record_id, self.uuid
 
             sam = ln.sample
             if sam:
