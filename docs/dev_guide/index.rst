@@ -1,25 +1,23 @@
-Welcome to Pychron's documentation!
+Pychron Develop Guide
 ===================================
 
-.. image:: images/NMGRL_logo.png
+.. image:: ../images/NMGRL_logo.png
 :scale: 33%
    :width: 50%
 
-.. image:: images/RossLabs_logo.png
+.. image:: ../images/RossLabs_logo.png
 :width: 33%
    :scale: 70%
 
-.. image:: images/NMT_logo.png
+.. image:: ../images/NMT_logo.png
 :width: 33%
 
 
 .. toctree::
 :maxdepth: 1
 
-   intro
-   build
-   user_guide/index
-   dev_guide/index
+
+
 
 Indices and tables
 ==================

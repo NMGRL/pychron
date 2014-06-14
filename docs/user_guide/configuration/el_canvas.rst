@@ -11,7 +11,7 @@ Two files are required to define an extraction line canvas.
    (Canvas displayed as a pane within a window). Useful for defining a smaller font when
    canvas displayed with Experiment or Spectrometer tasks.
    
-Lets construct an example canvas.xml file to see how it works.  
+Lets construct an example canvas.xml file to see how it works.
 
 The file starts with the standard ``<root>`` xml tag. All other elements will be children
 of ``root``. Various graphical elements can be easily added to the canvas. 
