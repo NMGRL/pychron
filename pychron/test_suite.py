@@ -11,10 +11,12 @@ def suite():
     from pychron.experiment.tests.frequency_test import FrequencyTestCase
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
+    from pychron.processing.tests.ratio import RatioTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
+    suite.addTest(loader.loadTestsFromTestCase(RatioTestCase))
     suite.addTest(loader.loadTestsFromTestCase(InterpolationTestCase))
     suite.addTest(loader.loadTestsFromTestCase(DocstrContextTestCase))
     suite.addTest(loader.loadTestsFromTestCase(OLSRegressionTest))
