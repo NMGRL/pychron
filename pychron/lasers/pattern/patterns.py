@@ -21,11 +21,11 @@ from traits.api import Bool, Float, Button, Instance, Range, Str, Property
 from traits.has_traits import HasTraits
 from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
 from chaco.api import AbstractOverlay
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from numpy import array, transpose
 #============= local library imports  ==========================
 from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
-    polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern
+    polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
 
 from pychron.graph.graph import Graph
 import os
@@ -461,11 +461,12 @@ class Pattern(HasTraits):
     def get_parameter_group(self):
         raise NotImplementedError
 
+
 class RubberbandPattern(Pattern):
     offset = Range(0.0, 5.0, mode='slider')
     rotation = Range(0.0, 360., mode='slider')
-    xbounds = (-5,25)
-    ybounds = (-5,25)
+    xbounds = (-5, 25)
+    ybounds = (-5, 25)
     endpoint1 = None
     endpoint2 = None
 
@@ -484,13 +485,25 @@ class RubberbandPattern(Pattern):
 
     @property
     def length(self):
-        l=15
+        l = 15
         if self.endpoint1 and self.endpoint2:
-            l = abs(self.endpoint2[0]-self.endpoint1[0])
+            l = abs(self.endpoint2[0] - self.endpoint1[0])
         return l
 
     def pattern_generator_factory(self, **kw):
         return rubberband_pattern(self.cx, self.cy, self.offset, self.length, self.rotation)
+
+
+class RasterRubberbandPattern(RubberbandPattern):
+    dx = Range(0.0, 5.0, 0.5, mode='slider')
+    single_pass = Bool(True)
+
+    def pattern_generator_factory(self, **kw):
+        return raster_rubberband_pattern(self.cx, self.cy, self.offset, self.length, self.dx, self.rotation, self.single_pass)
+
+    def get_parameter_group(self):
+        return Group(Item('rotation'), Item('offset'), Item('dx'), Item('single_pass', label='Single Pass'))
+
 
 class TroughPattern(Pattern):
     width = Range(0.0, 20., 10, mode='slider')

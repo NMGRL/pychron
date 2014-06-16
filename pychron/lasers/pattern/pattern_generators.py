@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import math
 import random
 
@@ -26,11 +26,34 @@ from numpy import linspace, cos, sin, hstack
 from pychron.core.geometry.affine import AffineTransform
 
 
+def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
+
+    a = AffineTransform()
+    a.translate(-cx, cy)
+    a.rotate(rotation)
+    a.translate(cx, cy)
+    # print offset, l
+    n = int((l + 2 * offset) / dx)
+    if n*dx<=l+2*offset:
+        n = n+1 if n%2 else n
+        dx = (l+2*offset)/float(n+1)
+        n = int((l + 2 * offset) / dx)
+
+    for i in xrange(0, n+1):
+        y = cy - offset if i % 2 else cy + offset
+        yield a.transform(cx - offset + dx * i, y)
+
+    if not single_pass:
+        for i in xrange(0, n+1):
+            y = cy - offset if i % 2 else cy + offset
+            yield a.transform(cx +l+offset - dx * i, y)
+        yield a.transform(cx-offset, cy+offset)
+
 def rubberband_pattern(cx, cy, offset, l, rotation):
-    p1 = cx-offset, cy+offset
-    p2 = cx+l+offset, cy+offset
-    p3 = cx+l+offset, cy-offset
-    p4 = cx-offset, cy-offset
+    p1 = cx - offset, cy + offset
+    p2 = cx + l + offset, cy + offset
+    p3 = cx + l + offset, cy - offset
+    p4 = cx - offset, cy - offset
 
     a = AffineTransform()
     a.translate(-cx, cy)

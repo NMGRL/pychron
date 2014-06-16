@@ -40,9 +40,9 @@ class PatternMakerView(Saveable, Patternable):
                          'LineSpiral',
                          'SquareSpiral',
                          'Random',
-                         'CircularContour', 'Trough', 'Rubberband'),
+                         'CircularContour', 'Trough', 'Rubberband', 'RasterRubberband'),
                     depends_on='_kind')
-    _kind = Str('Rubberband')
+    _kind = Str('RasterRubberband')
 
     def load_pattern(self, path=None):
         if path is None:
