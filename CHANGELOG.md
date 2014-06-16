@@ -19,3 +19,4 @@ CHANGELOG
 * updated grouping of unknowns. added auto_group toggle to UnknownsPane
 * added date querying to top-level filtering in Browser
 * updated frequency run addition
+* added trough and rubberband patterns. modified stage map to accommodate rubberband pattern

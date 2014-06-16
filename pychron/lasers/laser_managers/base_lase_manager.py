@@ -125,6 +125,7 @@ class BaseLaserManager(Manager):
     def execute_pattern(self, name=None, block=False):
         pm = self.pattern_executor
         if pm.load_pattern(name):
+            pm.set_stage_values(self.stage_manager)
             pm.execute(block)
 
     def stop_pattern(self):

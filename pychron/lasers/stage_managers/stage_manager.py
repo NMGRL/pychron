@@ -230,6 +230,13 @@ class StageManager(Manager):
     def accept_point(self):
         self.points_programmer.accept_point()
 
+    def get_stage_map(self):
+        """
+            return current StageMap object
+            different than self.stage_map. self.stage_map returns the "name" of the current stage map
+        """
+        return self._stage_map
+
     def set_stage_map(self, v):
         return self._set_stage_map(v)
 

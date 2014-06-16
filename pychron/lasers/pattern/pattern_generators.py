@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
 #============= standard library imports ========================
 import math
@@ -24,6 +24,22 @@ from numpy import linspace, cos, sin, hstack
 
 #============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
+
+
+def rubberband_pattern(cx, cy, offset, l, rotation):
+    p1 = cx-offset, cy+offset
+    p2 = cx+l+offset, cy+offset
+    p3 = cx+l+offset, cy-offset
+    p4 = cx-offset, cy-offset
+
+    a = AffineTransform()
+    a.translate(-cx, cy)
+    a.rotate(rotation)
+    a.translate(cx, cy)
+
+    ps = (p1, p2, p3, p4, p1)
+    for p in ps:
+        yield a.transform(*p)
 
 
 def trough_pattern(cx, cy, length, width, rotation, use_x):

@@ -51,6 +51,10 @@ class PatternExecutor(Patternable):
         self.close_pattern()
         self.pattern = None
 
+    def set_stage_values(self, sm):
+        if self.pattern:
+            self.pattern.set_stage_values(sm)
+
     def set_current_position(self, x, y, z):
         if self.isPatterning():
             graph = self.pattern.graph

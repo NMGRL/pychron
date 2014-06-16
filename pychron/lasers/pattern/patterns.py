@@ -25,7 +25,7 @@ from chaco.api import AbstractOverlay
 from numpy import array, transpose
 #============= local library imports  ==========================
 from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
-    polygon_pattern, arc_pattern, line_pattern, trough_pattern
+    polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern
 
 from pychron.graph.graph import Graph
 import os
@@ -286,6 +286,8 @@ class Pattern(HasTraits):
     # #            p.underlays.append(io)
     #
     #        graph.redraw()
+    def set_stage_values(self, sm):
+        pass
 
     def pattern_generator_factory(self, **kw):
         raise NotImplementedError
@@ -459,6 +461,36 @@ class Pattern(HasTraits):
     def get_parameter_group(self):
         raise NotImplementedError
 
+class RubberbandPattern(Pattern):
+    offset = Range(0.0, 5.0, mode='slider')
+    rotation = Range(0.0, 360., mode='slider')
+    xbounds = (-5,25)
+    ybounds = (-5,25)
+    endpoint1 = None
+    endpoint2 = None
+
+    def set_stage_values(self, sm):
+        self.rotation = sm.canvas.calibration_item.rotation
+
+        ck = sm.calibrated_position_entry
+        smap = sm.get_stage_map()
+        obj = smap.get_hole(ck)
+
+        self.endpoint1 = smap.get_hole_pos(ck)
+        self.endpoint2 = smap.get_hole_pos(obj.associated_hole)
+
+    def get_parameter_group(self):
+        return Group(Item('rotation'), Item('offset'), spring)
+
+    @property
+    def length(self):
+        l=15
+        if self.endpoint1 and self.endpoint2:
+            l = abs(self.endpoint2[0]-self.endpoint1[0])
+        return l
+
+    def pattern_generator_factory(self, **kw):
+        return rubberband_pattern(self.cx, self.cy, self.offset, self.length, self.rotation)
 
 class TroughPattern(Pattern):
     width = Range(0.0, 20., 10, mode='slider')
@@ -470,6 +502,9 @@ class TroughPattern(Pattern):
     ybounds = (-5, 25)
 
     show_direction = Bool(True)
+
+    def set_stage_values(self, sm):
+        self.rotation = sm.canvas.calibration_item.rotation
 
     def _get_path_length(self):
         if self.use_x:
@@ -485,7 +520,6 @@ class TroughPattern(Pattern):
             use_x=self.use_x,
             olength=self.length,
             owidth=self.width)
-
 
     def _graph_factory_hook(self, lp):
         self.dir_overlay = o = DirectionOverlay(component=lp,
@@ -568,9 +602,7 @@ class PolygonPattern(Pattern):
                      Item('nsides'),
                      Item('rotation', editor=RangeEditor(mode='slider',
                                                          low=0,
-                                                         high=360
-                     ))
-        )
+                                                         high=360)))
 
     def pattern_generator_factory(self, **kw):
         return polygon_pattern(self.cx, self.cy,
@@ -585,9 +617,7 @@ class ArcPattern(Pattern):
         return Group('radius',
                      Item('degrees', editor=RangeEditor(mode='slider',
                                                         low=0,
-                                                        high=360
-                     ))
-        )
+                                                        high=360)))
 
     def pattern_generator_factory(self, **kw):
         return arc_pattern(self.cx, self.cy, self.degrees, self.radius)
@@ -601,8 +631,7 @@ class CircularPattern(Pattern):
     def get_parameter_group(self):
         return Group('radius',
                      'nsteps',
-                     'percent_change',
-        )
+                     'percent_change')
 
 
 class SpiralPattern(CircularPattern):
@@ -628,7 +657,6 @@ class SpiralPattern(CircularPattern):
 #        self.graph.set_data(ys, axis=1, series=1)
 
 
-
 class LineSpiralPattern(SpiralPattern):
     step_scalar = Range(0, 20, 5)
 
@@ -642,8 +670,7 @@ class LineSpiralPattern(SpiralPattern):
                                    self.nsteps,
                                    self.percent_change,
                                    self.step_scalar,
-                                   **kw
-        )
+                                   **kw)
 
 
 class SquareSpiralPattern(SpiralPattern):
@@ -651,16 +678,14 @@ class SquareSpiralPattern(SpiralPattern):
         return square_spiral_pattern(self.cx, self.cy, self.radius,
                                      self.nsteps,
                                      self.percent_change,
-                                     **kw
-        )
+                                     **kw)
 
 
 class CircularContourPattern(CircularPattern):
     def pattern_generator_factory(self, **kw):
         return circular_contour_pattern(self.cx, self.cy, self.radius,
                                         self.nsteps,
-                                        self.percent_change
-        )
+                                        self.percent_change)
 
 
 if __name__ == '__main__':
