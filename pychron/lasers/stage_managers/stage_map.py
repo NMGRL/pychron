@@ -474,6 +474,7 @@ class StageMap(Loggable):
         hi = 0
         for line in lines[3:]:
             if not line.startswith('#'):
+                ah=''
                 args = line.split(',')
                 if len(args) == 2:
                     x, y = args

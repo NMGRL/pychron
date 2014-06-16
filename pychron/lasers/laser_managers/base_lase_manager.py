@@ -122,6 +122,7 @@ class BaseLaserManager(Manager):
 #                               )
 #         if pm.load_pattern():
 #             self.open_view(pm)
+
     def execute_pattern(self, name=None, block=False):
         pm = self.pattern_executor
         if pm.load_pattern(name):

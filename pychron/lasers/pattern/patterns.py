@@ -311,7 +311,8 @@ class Pattern(HasTraits):
 
     def points_factory(self):
         gen_out = self.pattern_generator_factory()
-        return [pt for pt in gen_out]
+        return list(gen_out)
+        # return [pt for pt in gen_out]
 
     def graph_view(self):
         v = View(Item('graph',
@@ -465,8 +466,8 @@ class Pattern(HasTraits):
 class RubberbandPattern(Pattern):
     offset = Range(0.0, 5.0, mode='slider')
     rotation = Range(0.0, 360., mode='slider')
-    xbounds = (-5, 25)
-    ybounds = (-5, 25)
+    xbounds = (-25, 25)
+    ybounds = (-25, 25)
     endpoint1 = None
     endpoint2 = None
 

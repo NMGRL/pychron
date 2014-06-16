@@ -21,7 +21,7 @@ from pyface.action.group import Group
 
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 from pychron.lasers.tasks.laser_actions import OpenScannerAction, \
-    OpenAutoTunerAction, PowerMapAction, PowerCalibrationAction, TestDegasAction, PyrometerCalibrationAction, PIDTuningAction
+    OpenAutoTunerAction, PowerMapAction, PowerCalibrationAction, TestDegasAction, PyrometerCalibrationAction, PIDTuningAction, ExecutePatternAction
 from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane
 from pychron.lasers.tasks.laser_task import FusionsDiodeTask
 
@@ -35,11 +35,11 @@ class FusionsDiodePlugin(FusionsPlugin):
     accelerator = 'Ctrl+Shift+['
 
     def _my_task_extensions_default(self):
-        def factory_scan():
-            return OpenScannerAction(self._get_manager())
-
-        def factory_tune():
-            return OpenAutoTunerAction(self._get_manager())
+        # def factory_scan():
+        #     return OpenScannerAction(self._get_manager())
+        #
+        # def factory_tune():
+        #     return OpenAutoTunerAction(self._get_manager())
 
         exts = super(FusionsDiodePlugin, self)._my_task_extensions_default()
 
@@ -69,22 +69,19 @@ class FusionsDiodePlugin(FusionsPlugin):
                                    PowerMapAction(),
                                    PowerCalibrationAction(),
                                    PyrometerCalibrationAction(),
-                                   PIDTuningAction()
-                               ),
-                               path='MenuBar/Laser'
-                ),
+                                   PIDTuningAction()),
+                               path='MenuBar/Laser'),
                 SchemaAddition(
                     factory=TestDegasAction,
-                    path='MenuBar/Laser'
-                )
-            ]
-        )
+                    path='MenuBar/Laser'),
+                SchemaAddition(
+                    factory=lambda: ExecutePatternAction(self._get_manager()),
+                    path='MenuBar/Laser')])
 
         return exts + [ext1]
 
     def _preferences_panes_default(self):
         return [FusionsDiodePreferencesPane]
-
 
     def _task_factory(self):
     #        print self._get_manager()

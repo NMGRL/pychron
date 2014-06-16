@@ -29,9 +29,9 @@ from pychron.core.geometry.affine import AffineTransform
 def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
 
     a = AffineTransform()
-    a.translate(-cx, cy)
-    a.rotate(rotation)
     a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
     # print offset, l
     n = int((l + 2 * offset) / dx)
     if n*dx<=l+2*offset:
@@ -56,9 +56,10 @@ def rubberband_pattern(cx, cy, offset, l, rotation):
     p4 = cx - offset, cy - offset
 
     a = AffineTransform()
-    a.translate(-cx, cy)
-    a.rotate(rotation)
+
     a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
 
     ps = (p1, p2, p3, p4, p1)
     for p in ps:
@@ -77,9 +78,9 @@ def trough_pattern(cx, cy, length, width, rotation, use_x):
     p4 = (cx, cy - width)
 
     a = AffineTransform()
-    a.translate(-cx, cy)
-    a.rotate(rotation)
     a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
 
     if use_x:
         ps = (p1, p2, p4, p3, p1)
@@ -96,9 +97,9 @@ def line_pattern(cx, cy, length, rotation, n):
 
     for i in xrange(n):
         a = AffineTransform()
-        a.translate(-cx, cy)
-        a.rotate(rotation)
         a.translate(cx, cy)
+        a.rotate(rotation)
+        a.translate(-cx, -cy)
         if i % 2 == 0:
             ps = (p1, p2)
 
