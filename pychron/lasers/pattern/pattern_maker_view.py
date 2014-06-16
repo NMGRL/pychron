@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 # ETSConfig.toolkit = 'qt4'
 
 from pychron.core.ui import set_qt
+
 set_qt()
 
 import os
@@ -39,9 +40,9 @@ class PatternMakerView(Saveable, Patternable):
                          'LineSpiral',
                          'SquareSpiral',
                          'Random',
-                         'CircularContour'),
+                         'CircularContour', 'Trough'),
                     depends_on='_kind')
-    _kind = Str('Polygon')
+    _kind = Str('Trough')
 
     def load_pattern(self, path=None):
         if path is None:
@@ -93,8 +94,7 @@ class PatternMakerView(Saveable, Patternable):
             handler=self.handler_klass,
             buttons=SaveableButtons,
             title='Pattern Editor',
-            resizable=True,
-        )
+            resizable=True)
         return v
 
     #===============================================================================

@@ -1,32 +1,31 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 
 
-#============= enthought library imports =======================
-from traits.api import Bool, Float, Button, Instance, Range, Str, Property, Int
+# ============= enthought library imports =======================
+from traits.api import Bool, Float, Button, Instance, Range, Str, Property
 from traits.has_traits import HasTraits
-from traits.trait_types import Tuple
 from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
 from chaco.api import AbstractOverlay
 #============= standard library imports ========================
 from numpy import array, transpose
 #============= local library imports  ==========================
 from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
-    polygon_pattern, arc_pattern, line_pattern
+    polygon_pattern, arc_pattern, line_pattern, trough_pattern
 
 from pychron.graph.graph import Graph
 import os
@@ -37,22 +36,100 @@ import math
 from pychron.lasers.pattern.pattern_generators import circular_contour_pattern
 
 
+class DirectionOverlay(AbstractOverlay):
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        with gc:
+            gc.clip_to_rect(other_component.x, other_component.y,
+                            other_component.width, other_component.height)
+            a, b = self.component.map_screen([(0, 0), (self.olength / 2.0, self.owidth)])
+            l, w = b[0] - a[0], b[1] - a[1]
+            ox, oy = self.component.map_screen([(0, 0)])[0]
+
+            gc.translate_ctm(ox, oy)
+            gc.rotate_ctm(self.rotation)
+            gc.translate_ctm(-ox, -oy)
+            gc.translate_ctm(ox + l, oy)
+
+            # draw 1-2
+            self._draw_indicator(gc, False)
+
+            if self.use_x:
+                theta = abs(math.atan(w / (2. * l)))
+                o = l * 0.5
+                #draw 2-3
+                with gc:
+                    gc.translate_ctm(o, 0)
+                    gc.translate_ctm(l - o, 0)
+                    gc.rotate_ctm(theta)
+                    gc.translate_ctm(-l + o, 0)
+                    self._draw_indicator(gc, True)
+
+                #draw 4-1
+                with gc:
+                    gc.translate_ctm(o, -w)
+
+                    gc.translate_ctm(l - o, 0)
+                    gc.rotate_ctm(-theta)
+                    gc.translate_ctm(-l + o, 0)
+                    self._draw_indicator(gc, True)
+
+                #draw 3-4
+                gc.translate_ctm(0, -w)
+                self._draw_indicator(gc, False)
+
+            else:
+                if w > 8:
+                    #draw verticals
+                    #draw 2-3
+                    with gc:
+                        gc.translate_ctm(l, -w / 2.)
+                        self._draw_indicator(gc, True, False)
+                    #draw 4-1
+                    with gc:
+                        gc.translate_ctm(-l, -w / 2.)
+                        self._draw_indicator(gc, False, False)
+
+                #draw 3-4
+                gc.translate_ctm(0, -w)
+                self._draw_indicator(gc, True)
+
+    def _draw_indicator(self, gc, left_or_down, horizontal=True):
+        if left_or_down:
+            if horizontal:
+                gc.move_to(4, 3)
+                gc.line_to(0, 0)
+                gc.line_to(4, -3)
+            else:
+                gc.move_to(-3, 4)
+                gc.line_to(0, 0)
+                gc.line_to(3, 4)
+        else:
+            if horizontal:
+                gc.move_to(-4, 3)
+                gc.line_to(0, 0)
+                gc.line_to(-4, -3)
+            else:
+                gc.move_to(-3, -4)
+                gc.line_to(0, 0)
+                gc.line_to(3, -4)
+
+        gc.stroke_path()
+
+
 class TargetOverlay(AbstractOverlay):
     target_radius = Float
     cx = Float
     cy = Float
 
     def overlay(self, component, gc, *args, **kw):
-        gc.save_state()
-        x, y = self.component.map_screen([(self.cx, self.cy)])[0]
-        pts = self.component.map_screen([(0, 0), (self.target_radius, 0)])
-        r = abs(pts[0][0] - pts[1][0])
+        with gc:
+            x, y = self.component.map_screen([(self.cx, self.cy)])[0]
+            pts = self.component.map_screen([(0, 0), (self.target_radius, 0)])
+            r = abs(pts[0][0] - pts[1][0])
 
-        gc.begin_path()
-        gc.arc(x + 1, y + 1, r, 0, 360)
-        gc.stroke_path()
-
-        gc.restore_state()
+            gc.begin_path()
+            gc.arc(x, y, r, 0, 360)
+            gc.stroke_path()
 
 
 class OverlapOverlay(AbstractOverlay):
@@ -226,6 +303,7 @@ class Pattern(HasTraits):
 
         self.graph.set_data(xs)
         self.graph.set_data(ys, axis=1)
+        self._plot_hook()
 
         return data_out[-1][0], data_out[-1][1]
 
@@ -235,11 +313,9 @@ class Pattern(HasTraits):
 
     def graph_view(self):
         v = View(Item('graph',
-                      style='custom', show_label=False,
-        ),
+                      style='custom', show_label=False),
                  handler=self.handler_klass,
-                 title=self.name
-        )
+                 title=self.name)
         return v
 
     #    def _get_crop_bounds(self):
@@ -274,9 +350,7 @@ class Pattern(HasTraits):
         g = Graph(
             window_height=250,
             window_width=300,
-            container_dict=dict(
-                padding=0
-            ))
+            container_dict=dict(padding=0))
         g.new_plot(
             bounds=[250, 250],
             resizable='',
@@ -316,13 +390,20 @@ class Pattern(HasTraits):
 
         lp.overlays.append(t)
         overlap_overlay = OverlapOverlay(component=lp,
-                                         visible=self.show_overlap
-        )
+                                         visible=self.show_overlap)
         lp.overlays.append(overlap_overlay)
+
+        self._graph_factory_hook(lp)
 
         g.new_series(type='scatter', marker='circle')
         g.new_series(type='line', color='red')
         return g
+
+    def _plot_hook(self):
+        pass
+
+    def _graph_factory_hook(self, lp):
+        pass
 
     def _graph_default(self):
         return self._graph_factory()
@@ -356,31 +437,73 @@ class Pattern(HasTraits):
             Item('beam_radius', enabled_when='show_overlap'),
 
             show_border=True,
-            label='Pattern'
-        )
+            label='Pattern')
 
     def maker_view(self):
         v = View(HGroup(
             self.maker_group(),
             Item('graph',
                  #                      resizable=False,
-                 show_label=False, style='custom'),
-        ),
+                 show_label=False, style='custom')),
                  #                  buttons=['OK', 'Cancel'],
-                 resizable=True
-        )
+                 resizable=True)
         return v
 
     def traits_view(self):
         v = View(self.maker_group(),
                  buttons=['OK', 'Cancel'],
                  title=self.name,
-                 resizable=True
-        )
+                 resizable=True)
         return v
 
     def get_parameter_group(self):
         raise NotImplementedError
+
+
+class TroughPattern(Pattern):
+    width = Range(0.0, 20., 10, mode='slider')
+    length = Range(0.0, 20., 10, mode='slider')
+    use_x = Bool(True)
+    rotation = Range(0.0, 360., mode='slider')
+
+    xbounds = (-5, 25)
+    ybounds = (-5, 25)
+
+    show_direction = Bool(True)
+
+    def _get_path_length(self):
+        if self.use_x:
+            d = (self.length ** 2 + self.width ** 2) ** 0.5
+            l = (self.length + d) * 2
+        else:
+            l = (self.length + self.width) * 2
+        return l
+
+    def _plot_hook(self):
+        self.dir_overlay.trait_set(
+            rotation=math.radians(self.rotation),
+            use_x=self.use_x,
+            olength=self.length,
+            owidth=self.width)
+
+
+    def _graph_factory_hook(self, lp):
+        self.dir_overlay = o = DirectionOverlay(component=lp,
+                                                visible=self.show_direction,
+                                                olength=self.length,
+                                                owidth=self.width,
+                                                use_x=self.use_x,
+                                                rotation=self.rotation)
+        lp.overlays.append(o)
+
+    def pattern_generator_factory(self, **kw):
+        return trough_pattern(self.cx, self.cy, self.length, self.width, self.rotation, self.use_x)
+
+    def get_parameter_group(self):
+        return Group(Item('length'),
+                     Item('width'),
+                     Item('rotation'),
+                     Item('use_x', label='Use X Pattern'), )
 
 
 class LinearPattern(Pattern):
@@ -417,8 +540,7 @@ class RandomPattern(Pattern):
         return Group('walk_x',
                      'walk_y',
                      'npoints',
-                     HGroup(spring, Item('regenerate', show_label=False))
-        )
+                     HGroup(spring, Item('regenerate', show_label=False)))
 
     def pattern_generator_factory(self, **kw):
         return random_pattern(self.cx, self.cy, self.walk_x,
