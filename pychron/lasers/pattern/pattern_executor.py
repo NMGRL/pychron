@@ -160,6 +160,7 @@ class PatternExecutor(Patternable):
         pat = self.pattern
         if pat:
             self.info('starting pattern {}'.format(pat.name))
+            st = time.time()
             pat.cx, pat.cy = self.controller._x_position, self.controller._y_position
             for ni in range(pat.niterations):
                 if not self.isPatterning():
@@ -173,7 +174,7 @@ class PatternExecutor(Patternable):
             # if self.pattern:
             #     self.pattern.close_ui()
             self.finish()
-            self.info('finished pattern')
+            self.info('finished pattern: transit time={:0.1f}s'.format(time.time()-st))
 
     def _execute_iteration(self):
         controller = self.controller

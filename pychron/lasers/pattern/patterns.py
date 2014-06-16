@@ -84,7 +84,7 @@ class DirectionOverlay(AbstractOverlay):
                     with gc:
                         gc.translate_ctm(l, -w / 2.)
                         self._draw_indicator(gc, True, False)
-                    #draw 4-1
+                        #draw 4-1
                     with gc:
                         gc.translate_ctm(-l, -w / 2.)
                         self._draw_indicator(gc, False, False)
@@ -149,7 +149,6 @@ class OverlapOverlay(AbstractOverlay):
         rad = abs(pts[0][0] - pts[1][0])
         i = 0
         for xi, yi in component.map_screen(zip(xs, ys)):
-            #            gc.set_alpha(0.5)
             gc.set_fill_color((0, 0, 1, 1.0 / (0.75 * i + 1) * 0.5))
             gc.begin_path()
             gc.arc(xi, yi, rad, 0, 360)
@@ -165,32 +164,20 @@ class Pattern(HasTraits):
     cy = Float(transient=True)
     target_radius = Range(0.0, 3.0, 1)
 
-    #    beam_radius = Float(1, enter_set=True, auto_set=False)
     show_overlap = Bool(False)
     beam_radius = Range(0.0, 3.0, 1)
 
     path = Str
     name = Property(depends_on='path')
 
-    #    image_width = 640
-    #    image_height = 480
-
     xbounds = (-3, 3)
     ybounds = (-3, 3)
-    #    pxpermm = None
 
     velocity = Float(1)
     calculated_transit_time = Float
 
     niterations = Range(1, 200)
 
-    # canceled = Event
-    #    def map_pt(self, x, y):
-    #
-    #        return self.pxpermm * x + self.image_width / 2, self.pxpermm * y + self.image_height / 2
-    #     def close(self, isok):
-    #         self.canceled = True
-    #         return True
 
     @property
     def kind(self):
@@ -209,23 +196,30 @@ class Pattern(HasTraits):
     def calculate_transit_time(self):
         n = self.niterations
 
-        c = -self._get_path_length()
-        b = self.velocity
+        self.calculated_transit_time = self.velocity*self._get_path_length()*n
 
-        acceleration = 1
-        a = 0.5 * acceleration
+        # c = -self._get_path_length()
+        # b = self.velocity
+
+        # acceleration = 1
+        # a = 0.5 * acceleration
         #         0 = -c+ b * t + 0.5 * a * t ** 2
 
-        t1 = -b + (b ** 2 - 4 * a * c) / (2.0 * a)
-        t2 = -b - (b ** 2 - 4 * a * c) / (2.0 * a)
+        # t1 = -b + (b ** 2 - 4 * a * c) / (2.0 * a)
+        # t2 = -b - (b ** 2 - 4 * a * c) / (2.0 * a)
 
-        self.calculated_transit_time = (max(t1, t2) + self._get_delay()) * n
-
-    #         self.calculated_transit_time = ((self._get_path_length() /
-    #                                         max(self.velocity, 0.001)) + self._get_delay()) * self.niterations
+        # self.calculated_transit_time = (max(t1, t2) + self._get_delay()) * n
 
     def _get_path_length(self):
-        return 0
+        pts=self.points_factory()
+        p1 = (self.cx, self.cy)
+        s = 0
+        for p in pts+[p1,]:
+            d = ((p1[0] - p[0]) ** 2 + (p1[1] - p[1]) ** 2) ** 0.5
+            s += d
+            p1 = p
+
+        return s
 
     def _get_delay(self):
         return 0
@@ -243,49 +237,6 @@ class Pattern(HasTraits):
     def _target_radius_changed(self):
         self.graph.plots[0].plots['plot0'][0].overlays[0].target_radius = self.target_radius
 
-    #    def set_mapping(self, px):
-    #        self.pxpermm = px / 10.0
-    #
-    #
-    #    def set_image(self, data, graph=None):
-    #        '''
-    #            px,py pixels per cm x and y
-    #        '''
-    #        if graph is None:
-    #            graph = self.graph
-    #
-    # #        p = graph.plots[0].plots['plot0'][0]
-    # #        for ui in p.underlays:
-    # #            if isinstance(ui, ImageUnderlay):
-    # #                ui.image.load(img)
-    # #                break
-    # #        else:
-    #        if isinstance(data, str):
-    #            image = Image()
-    #            image.load(data)
-    #            data = image.get_array()
-    #        else:
-    #            data = data.as_numpy_array()
-    #            data = data.copy()
-    #            data = flipud(data)
-    #
-    # #            mmx = px / 10.0 * (self.xbounds[1] - self.xbounds[0])
-    # #            mmy = py / 10.0 * (self.ybounds[1] - self.ybounds[0])
-    # #
-    # #            w = 640
-    # #            h = 480
-    # #            cb = [w / 2 - mmx, w / 2 + mmx, h / 2 - mmy, h / 2 + mmy]
-    # #            cb = [h / 2 - mmy, h / 2 + mmy, w / 2 - mmx, w / 2 + mmx ]
-    #
-    #
-    #        graph.plots[0].data.set_data('imagedata', data)
-    #        graph.plots[0].img_plot('imagedata')
-    #
-    # #            io = ImageUnderlay(component=p, image=image, crop_rect=(640 / 2, 480 / 2, mmx, mmy))
-    # #
-    # #            p.underlays.append(io)
-    #
-    #        graph.redraw()
     def set_stage_values(self, sm):
         pass
 
@@ -300,9 +251,6 @@ class Pattern(HasTraits):
         data_out = array([pt for pt in pgen_out])
         xs, ys = transpose(data_out)
 
-        #        if self.pxpermm is not None:
-        #            xs, ys = self.map_pt(xs, ys)
-
         self.graph.set_data(xs)
         self.graph.set_data(ys, axis=1)
         self._plot_hook()
@@ -312,7 +260,6 @@ class Pattern(HasTraits):
     def points_factory(self):
         gen_out = self.pattern_generator_factory()
         return list(gen_out)
-        # return [pt for pt in gen_out]
 
     def graph_view(self):
         v = View(Item('graph',
@@ -320,24 +267,6 @@ class Pattern(HasTraits):
                  handler=self.handler_klass,
                  title=self.name)
         return v
-
-    #    def _get_crop_bounds(self):
-    #        px = self.pxpermm
-    # #        mmx = px / 10.0 * 1 / (self.xbounds[1] - self.xbounds[0])
-    # #        mmy = py / 10.0 * 1 / (self.ybounds[1] - self.ybounds[0])
-    #        windx = (self.xbounds[1] - self.xbounds[0])
-    #        mmx = windx * px / 2
-    #
-    #        windy = (self.ybounds[1] - self.ybounds[0])
-    #        mmy = windy * px / 2
-    #
-    #        w = self.image_width
-    #        h = self.image_height
-    #
-    #        cbx = [w / 2 - mmx, w / 2 + mmx ]
-    #        cby = [h / 2 - mmy, h / 2 + mmy]
-    #
-    #        return cbx, cby
 
     def clear_graph(self):
         graph = self.graph
@@ -349,7 +278,7 @@ class Pattern(HasTraits):
     def reset_graph(self, **kw):
         self.graph = self._graph_factory(**kw)
 
-    def _graph_factory(self, with_image=False):
+    def _graph_factory(self, **kw):
         g = Graph(
             window_height=250,
             window_width=300,
@@ -364,23 +293,6 @@ class Pattern(HasTraits):
         cbx = self.xbounds
         cby = self.ybounds
         tr = self.target_radius
-
-        #        if with_image:
-        #            px = self.pxpermm  #px is in mm
-        #            cbx, cby = self._get_crop_bounds()
-        #            #g.set_axis_traits(tick_label_formatter=lambda x: '{:0.2f}'.format((x - w / 2) / px))
-        #            #g.set_axis_traits(tick_label_formatter=lambda x: '{:0.2f}'.format((x - h / 2) / px), axis='y')
-        #
-        #            bx, by = g.plots[0].bounds
-        #            g.plots[0].x_axis.mapper = LinearMapper(high_pos=bx,
-        #                                                    range=DataRange1D(low_setting=self.xbounds[0],
-        #                                                                      high_setting=self.xbounds[1]))
-        #            g.plots[0].y_axis.mapper = LinearMapper(high_pos=by,
-        #                                                    range=DataRange1D(low_setting=self.ybounds[0],
-        #                                                                      high_setting=self.ybounds[1]))
-        #            cx += self.image_width / 2
-        #            cy += self.image_height / 2
-        #            tr *= px
 
         g.set_x_limits(*cbx)
         g.set_y_limits(*cby)
@@ -410,21 +322,6 @@ class Pattern(HasTraits):
 
     def _graph_default(self):
         return self._graph_factory()
-
-    #        p = '/Users/ross/Desktop/foo2.tiff'
-    #
-    #        i = Image()#width=640, height=480)
-    #        i.load(p)
-    #
-    #        self.set_image(i, px, px, graph=g)
-    #        from chaco.image_data import ImageData
-    #        image = ImageData.fromfile(p)
-    # #        print image._data
-    #        crop(i.source_frame, 0, 0, 300, 300)
-    # self.pattern.graph.plots[0].plots['plot0'][0].overlays.append(ImageUnderlay(image=i))
-    # self.pattern.graph.plots[0].plots[0].underlays.append(ImageUnderlay(image=i))
-    #        io = ImageUnderlay(component=lp, image=i, visible=False)
-    #        lp.overlays.append(io)
 
     def maker_group(self):
         return Group(
@@ -463,7 +360,9 @@ class Pattern(HasTraits):
         raise NotImplementedError
 
 
+
 class RubberbandPattern(Pattern):
+    nominal_length = Range(0.0, 25.0, 15, mode='slider')
     offset = Range(0.0, 5.0, mode='slider')
     rotation = Range(0.0, 360., mode='slider')
     xbounds = (-25, 25)
@@ -482,11 +381,12 @@ class RubberbandPattern(Pattern):
         self.endpoint2 = smap.get_hole_pos(obj.associated_hole)
 
     def get_parameter_group(self):
-        return Group(Item('rotation'), Item('offset'), spring)
+        return Group(Item('nominal_length', label='Length'),
+                     Item('rotation'), Item('offset'), spring)
 
     @property
     def length(self):
-        l = 15
+        l = self.nominal_length
         if self.endpoint1 and self.endpoint2:
             l = abs(self.endpoint2[0] - self.endpoint1[0])
         return l
@@ -500,7 +400,8 @@ class RasterRubberbandPattern(RubberbandPattern):
     single_pass = Bool(True)
 
     def pattern_generator_factory(self, **kw):
-        return raster_rubberband_pattern(self.cx, self.cy, self.offset, self.length, self.dx, self.rotation, self.single_pass)
+        return raster_rubberband_pattern(self.cx, self.cy, self.offset, self.length, self.dx, self.rotation,
+                                         self.single_pass)
 
     def get_parameter_group(self):
         return Group(Item('rotation'), Item('offset'), Item('dx'), Item('single_pass', label='Single Pass'))
@@ -519,14 +420,6 @@ class TroughPattern(Pattern):
 
     def set_stage_values(self, sm):
         self.rotation = sm.canvas.calibration_item.rotation
-
-    def _get_path_length(self):
-        if self.use_x:
-            d = (self.length ** 2 + self.width ** 2) ** 0.5
-            l = (self.length + d) * 2
-        else:
-            l = (self.length + self.width) * 2
-        return l
 
     def _plot_hook(self):
         self.dir_overlay.trait_set(
@@ -604,9 +497,9 @@ class PolygonPattern(Pattern):
     radius = Range(0.0, 4.0, 0.5)
     rotation = Range(0.0, 360.0, 0.0)
 
-    def _get_path_length(self):
-        return (self.nsides * self.radius *
-                math.sin(math.radians(360 / self.nsides)) + 2 * self.radius)
+    # def _get_path_length(self):
+    #     return (self.nsides * self.radius *
+    #             math.sin(math.radians(360 / self.nsides)) + 2 * self.radius)
 
     #     def _get_delay(self):
     #         return 0.1 * self.nsides
@@ -659,8 +552,8 @@ class SpiralPattern(CircularPattern):
         return [pt for pt in gen_out] + [pt for pt in gen_in]
 
     def plot_in(self, ox, oy):
-        pgen_in = self.pattern_generator_factory(ox=ox,  # data_out[-1][0],
-                                                 oy=oy,  # data_out[-1][1],
+        pgen_in = self.pattern_generator_factory(ox=ox, # data_out[-1][0],
+                                                 oy=oy, # data_out[-1][1],
                                                  direction='in')
         data_in = array([pt for pt in pgen_in])
 
