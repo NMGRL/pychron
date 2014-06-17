@@ -208,7 +208,8 @@ class Spectrometer(SpectrometerDevice):
         pd='Protection'
 
         name = self.config_get(config, 'General', 'name')
-        self.name = name
+        if name:
+            self.name = name
 
         if config.has_section(pd):
 
