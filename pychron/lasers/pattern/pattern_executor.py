@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import  Any, Bool
+from traits.api import Any, Bool, Float
 #============= standard library imports ========================
 import os
 import cStringIO
@@ -28,14 +28,16 @@ from Queue import Queue
 
 
 class PatternExecutor(Patternable):
-    '''
+    """
          a pattern is only good for one execution.
          self.pattern needs to be reset after stop or finish using load_pattern(name_or_pickle)
-    '''
+    """
     controller = Any
     show_patterning = Bool(False)
     _alive = Bool(False)
     _next_point = None
+    cx = Float
+    cy = Float
 
     def start(self, show=False):
         self._alive = True
@@ -52,6 +54,7 @@ class PatternExecutor(Patternable):
         self.pattern = None
 
     def set_stage_values(self, sm):
+        self.cx, self.cy = sm.canvas.get_offset_stage_position()
         if self.pattern:
             self.pattern.set_stage_values(sm)
 
@@ -92,9 +95,9 @@ class PatternExecutor(Patternable):
         return pattern
 
     def is_local_pattern(self, name):
-#        pname = name
-#        if not name.endswith('.lp'):
-#            pname = name + '.lp'
+        # pname = name
+        #        if not name.endswith('.lp'):
+        #            pname = name + '.lp'
         def test_name(ni):
             path = os.path.join(paths.pattern_dir, ni)
             if os.path.isfile(path):
@@ -142,10 +145,10 @@ class PatternExecutor(Patternable):
         self.open_view(self.pattern, view='graph_view')
 
     def execute(self, block=False):
-        '''
+        """
             if block is true wait for patterning to finish
             before returning
-        '''
+        """
         self.start(show=self.show_patterning)
 
         t = Thread(target=self._execute)
@@ -161,20 +164,20 @@ class PatternExecutor(Patternable):
         if pat:
             self.info('starting pattern {}'.format(pat.name))
             st = time.time()
-            pat.cx, pat.cy = self.controller._x_position, self.controller._y_position
-            for ni in range(pat.niterations):
+            pat.cx, pat.cy = self.cx, self.cy  # self.controller._x_position, self.controller._y_position
+
+            for ni in xrange(pat.niterations):
                 if not self.isPatterning():
                     break
 
                 self.info('doing pattern iteration {}'.format(ni))
                 self._execute_iteration()
-#                time.sleep(0.1)
 
             self.controller.linear_move(pat.cx, pat.cy)
             # if self.pattern:
             #     self.pattern.close_ui()
             self.finish()
-            self.info('finished pattern: transit time={:0.1f}s'.format(time.time()-st))
+            self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
     def _execute_iteration(self):
         controller = self.controller
@@ -191,20 +194,21 @@ class PatternExecutor(Patternable):
                 self._execute_seek(controller, pattern)
             else:
                 self._execute_points(controller, pattern)
-#                multipoint = False
-#                if multipoint:
-#                    controller.multiple_point_move(pts)
-#                else:
-#                    if controller.simulation:
-#                        self._simulate_pattern(pattern)
-#                    else:
-#    #                    graph = pattern.graph
-#                        for x, y in pts:
-#    #                        graph.set_data([x], series=1, axis=0)
-#    #                        graph.set_data([y], series=1, axis=1)
-#    #                        graph.redraw()
-#                            controller.linear_move(x, y, block=True,
-#                                                   velocity=pattern.velocity)
+                # multipoint = False
+                #                if multipoint:
+                #                    controller.multiple_point_move(pts)
+                #                else:
+                #                    if controller.simulation:
+                #                        self._simulate_pattern(pattern)
+                #                    else:
+                #    #                    graph = pattern.graph
+                #                        for x, y in pts:
+                #    #                        graph.set_data([x], series=1, axis=0)
+                #    #                        graph.set_data([y], series=1, axis=1)
+                #    #                        graph.redraw()
+                #                            controller.linear_move(x, y, block=True,
+                #                                                   velocity=pattern.velocity)
+
     def _execute_points(self, controller, pattern, multipoint=False):
         pts = pattern.points_factory()
         if multipoint:
@@ -264,6 +268,7 @@ class PatternExecutor(Patternable):
             if paused and not already stopped, stop motion
             if not paused not but was paused move to newt_point
         '''
+
         def _control_motion(self, pevt, fevt, q):
             flag = False
             while not fevt.is_set() and self.isPatterning():
@@ -278,7 +283,7 @@ class PatternExecutor(Patternable):
                         try:
                             np = q.get_nowait()
                             controller.linear_move(*np, block=False,
-                                           velocity=pattern.velocity)
+                                                   velocity=pattern.velocity)
                         except:
                             self.debug('No next point avaliable')
                         flag = False
