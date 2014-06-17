@@ -101,7 +101,7 @@ class StageManager(Manager):
 
     move_thread = None
     temp_position = None
-    _temp_hole = None
+    temp_hole = None
     linear_move_history = List
 
     keyboard_focus = Event
@@ -813,7 +813,9 @@ class StageManager(Manager):
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
+        self.temp_hole = key
         self.temp_position = self._stage_map.get_hole_pos(key)
+
         pos = self._stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:

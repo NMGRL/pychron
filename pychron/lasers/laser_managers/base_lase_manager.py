@@ -124,7 +124,7 @@ class BaseLaserManager(Manager):
 #             self.open_view(pm)
 
     def execute_pattern(self, name=None, block=False):
-        if not self.stage_manager.calibrated_position_entry:
+        if not self.stage_manager.temp_hole:
             self.information_dialog('Need to specify a hole')
             return
 

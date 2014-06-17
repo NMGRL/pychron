@@ -371,7 +371,7 @@ class RubberbandPattern(Pattern):
     def set_stage_values(self, sm):
         self.rotation = sm.canvas.calibration_item.rotation
 
-        ck = sm.calibrated_position_entry
+        ck = sm.temp_hole
         smap = sm.get_stage_map()
         obj = smap.get_hole(ck)
 
