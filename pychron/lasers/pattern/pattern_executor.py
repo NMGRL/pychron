@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, Bool, Float
+from traits.api import Any, Bool
 #============= standard library imports ========================
 import os
 import cStringIO
@@ -33,6 +33,7 @@ class PatternExecutor(Patternable):
          self.pattern needs to be reset after stop or finish using load_pattern(name_or_pickle)
     """
     controller = Any
+    manager = Any
     show_patterning = Bool(False)
     _alive = Bool(False)
     _next_point = None
@@ -157,6 +158,9 @@ class PatternExecutor(Patternable):
                 self._execute_iteration()
 
             self.controller.linear_move(pat.cx, pat.cy)
+            if pat.disable_at_end:
+                self.manager.disable_device()
+
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 

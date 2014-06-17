@@ -146,7 +146,9 @@ class BaseLaserManager(Manager):
         if hasattr(self, 'stage_manager'):
             controller = self.stage_manager.stage_controller
 
-        pm = PatternExecutor(application=self.application, controller=controller)
+        pm = PatternExecutor(application=self.application,
+                             controller=controller,
+                             laser_manager=self)
         return pm
 
     def move_to_position(self, pos, *args, **kw):

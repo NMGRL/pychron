@@ -177,7 +177,7 @@ class Pattern(HasTraits):
     calculated_transit_time = Float
 
     niterations = Range(1, 200)
-
+    disable_at_end = Bool(True)
 
     @property
     def kind(self):
@@ -326,6 +326,7 @@ class Pattern(HasTraits):
     def maker_group(self):
         return Group(
             self.get_parameter_group(),
+            Item('disable_at_end', tooltip='Disable Laser at end of patterning'),
             Item('niterations'),
             HGroup(Item('velocity'),
                    Item('calculated_transit_time',
