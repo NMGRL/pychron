@@ -302,7 +302,7 @@ class FusionsLogicBoard(CoreDevice):
 
         return lock_bits
 
-    def _enable_laser(self):
+    def _enable_laser(self, **kw):
         '''
         '''
         interlocks = self.check_interlocks()

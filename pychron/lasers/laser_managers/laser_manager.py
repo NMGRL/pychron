@@ -73,9 +73,9 @@ class LaserManager(BaseLaserManager):
     def get_pattern_names(self):
         return list_directory(paths.pattern_dir, extension='.lp')
 
-    def enable_laser(self):
+    def enable_laser(self, **kw):
         self.info('enable laser')
-        enabled = self._enable_hook()
+        enabled = self._enable_hook(**kw)
 
         if self.simulation:
             self.enabled = True
@@ -236,7 +236,7 @@ class LaserManager(BaseLaserManager):
 #         self.disable_laser()
 #         self.pulse.dump()
 
-    def _enable_hook(self):
+    def _enable_hook(self, **kw):
         return True
 
     def _disable_hook(self):
