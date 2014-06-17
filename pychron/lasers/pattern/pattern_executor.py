@@ -24,7 +24,7 @@ from pychron.paths import paths
 from pychron.lasers.pattern.patternable import Patternable
 import time
 from threading import Thread, Event
-from Queue import Queue
+from Queue import Queue, Empty
 
 
 class PatternExecutor(Patternable):
@@ -36,8 +36,7 @@ class PatternExecutor(Patternable):
     show_patterning = Bool(False)
     _alive = Bool(False)
     _next_point = None
-    cx = Float
-    cy = Float
+    pattern = None
 
     def start(self, show=False):
         self._alive = True
@@ -54,7 +53,6 @@ class PatternExecutor(Patternable):
         self.pattern = None
 
     def set_stage_values(self, sm):
-        self.cx, self.cy = sm.canvas.get_offset_stage_position()
         if self.pattern:
             self.pattern.set_stage_values(sm)
 
@@ -75,7 +73,6 @@ class PatternExecutor(Patternable):
             if not found try interpreting name_or_pickle is a pickled name_or_pickle
 
         """
-        path = None
         if name_or_pickle is None:
             path = self.open_file_dialog()
             if path is None:
@@ -95,9 +92,7 @@ class PatternExecutor(Patternable):
         return pattern
 
     def is_local_pattern(self, name):
-        # pname = name
-        #        if not name.endswith('.lp'):
-        #            pname = name + '.lp'
+
         def test_name(ni):
             path = os.path.join(paths.pattern_dir, ni)
             if os.path.isfile(path):
@@ -107,15 +102,6 @@ class PatternExecutor(Patternable):
             p = test_name(ni)
             if p:
                 return p
-
-                #p = test_name(name)
-                #if p:
-                #    return p
-                #else:
-                #    pname = name
-                #    if not name.endswith('.lp'):
-                #        pname = name + '.lp'
-                #        return test_name(pname)
 
     def stop(self):
         self.info('User requested stop')
@@ -136,8 +122,6 @@ class PatternExecutor(Patternable):
 
     def close_pattern(self):
         pass
-        # if self.pattern:
-        #     self.pattern.close_ui()
 
     def show_pattern(self):
         self.pattern.window_x = 50
@@ -164,8 +148,7 @@ class PatternExecutor(Patternable):
         if pat:
             self.info('starting pattern {}'.format(pat.name))
             st = time.time()
-            pat.cx, pat.cy = self.cx, self.cy  # self.controller._x_position, self.controller._y_position
-
+            pat.cx, pat.cy = self.controller.x, self.controller.y
             for ni in xrange(pat.niterations):
                 if not self.isPatterning():
                     break
@@ -174,8 +157,6 @@ class PatternExecutor(Patternable):
                 self._execute_iteration()
 
             self.controller.linear_move(pat.cx, pat.cy)
-            # if self.pattern:
-            #     self.pattern.close_ui()
             self.finish()
             self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
 
@@ -194,20 +175,6 @@ class PatternExecutor(Patternable):
                 self._execute_seek(controller, pattern)
             else:
                 self._execute_points(controller, pattern)
-                # multipoint = False
-                #                if multipoint:
-                #                    controller.multiple_point_move(pts)
-                #                else:
-                #                    if controller.simulation:
-                #                        self._simulate_pattern(pattern)
-                #                    else:
-                #    #                    graph = pattern.graph
-                #                        for x, y in pts:
-                #    #                        graph.set_data([x], series=1, axis=0)
-                #    #                        graph.set_data([y], series=1, axis=1)
-                #    #                        graph.redraw()
-                #                            controller.linear_move(x, y, block=True,
-                #                                                   velocity=pattern.velocity)
 
     def _execute_points(self, controller, pattern, multipoint=False):
         pts = pattern.points_factory()
@@ -239,16 +206,15 @@ class PatternExecutor(Patternable):
 
     def _execute_seek(self, controller, pattern):
 
-
         #=======================================================================
         # monitor input
         #=======================================================================
         def _monitor_input(pevt, fevt, threshold=1, deadband=0.5, period=0.25):
-            '''
+            """
                 periodically get input value
                 if input value greater than threshold set pause event
                 if input value last than threshold-deadband and was paused, clear paused flag
-            '''
+            """
             get_value = lambda: 1
             flag = False
             while not fevt.is_set() and self.isPatterning():
@@ -264,10 +230,10 @@ class PatternExecutor(Patternable):
         #=======================================================================
         # control motion
         #=======================================================================
-        '''
+        """
             if paused and not already stopped, stop motion
             if not paused not but was paused move to newt_point
-        '''
+        """
 
         def _control_motion(self, pevt, fevt, q):
             flag = False
@@ -284,12 +250,11 @@ class PatternExecutor(Patternable):
                             np = q.get_nowait()
                             controller.linear_move(*np, block=False,
                                                    velocity=pattern.velocity)
-                        except:
+                        except Empty:
                             self.debug('No next point avaliable')
                         flag = False
 
                     time.sleep(0.1)
-
 
         finished = Event()
         paused = Event()
