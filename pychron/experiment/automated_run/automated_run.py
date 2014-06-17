@@ -1340,21 +1340,35 @@ anaylsis_type={}
 
         return plot_panel
 
+    def _convert_valve(self, valve):
+        if valve and not isinstance(valve, (tuple, list)):
+            if ',' in valve:
+                valve = map(str.strip, valve.split(','))
+            else:
+                valve = (valve, )
+        return valve
+
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
                      do_post_equilibration=True, close_inlet=True):
+
+        inlet = self._convert_valve(inlet)
+        outlet = self._convert_valve(outlet)
 
         elm = self.extraction_line_manager
         if elm:
             if outlet:
                 # close mass spec ion pump
-                elm.close_valve(outlet, mode='script')
+                for o in outlet:
+                    elm.close_valve(o, mode='script')
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
                 time.sleep(delay)
+
                 # open inlet
-                elm.open_valve(inlet, mode='script')
+                for i in inlet:
+                    elm.open_valve(i, mode='script')
 
         #set the passed in event
         evt.set()
@@ -1364,7 +1378,8 @@ anaylsis_type={}
         if self._alive:
             self.info('======== Equilibration Finished ========')
             if elm and inlet and close_inlet:
-                elm.close_valve(inlet)
+                for i in inlet:
+                    elm.close_valve(i, mode='script')
 
             if do_post_equilibration:
                 self.do_post_equilibration()

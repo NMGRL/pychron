@@ -23,7 +23,7 @@ from traitsui.api import View, Item, Group, HGroup, RangeEditor, spring
 from chaco.api import AbstractOverlay
 # ============= standard library imports ========================
 from numpy import array, transpose
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pattern_generators import square_spiral_pattern, line_spiral_pattern, random_pattern, \
     polygon_pattern, arc_pattern, line_pattern, trough_pattern, rubberband_pattern, raster_rubberband_pattern
 
@@ -196,7 +196,7 @@ class Pattern(HasTraits):
     def calculate_transit_time(self):
         n = self.niterations
 
-        self.calculated_transit_time = self.velocity*self._get_path_length()*n
+        self.calculated_transit_time = self.velocity * self._get_path_length() * n
 
         # c = -self._get_path_length()
         # b = self.velocity
@@ -211,10 +211,10 @@ class Pattern(HasTraits):
         # self.calculated_transit_time = (max(t1, t2) + self._get_delay()) * n
 
     def _get_path_length(self):
-        pts=self.points_factory()
+        pts = self.points_factory()
         p1 = (self.cx, self.cy)
         s = 0
-        for p in pts+[p1,]:
+        for p in pts + [p1, ]:
             d = ((p1[0] - p[0]) ** 2 + (p1[1] - p[1]) ** 2) ** 0.5
             s += d
             p1 = p
@@ -343,9 +343,7 @@ class Pattern(HasTraits):
         v = View(HGroup(
             self.maker_group(),
             Item('graph',
-                 #                      resizable=False,
                  show_label=False, style='custom')),
-                 #                  buttons=['OK', 'Cancel'],
                  resizable=True)
         return v
 
@@ -358,7 +356,6 @@ class Pattern(HasTraits):
 
     def get_parameter_group(self):
         raise NotImplementedError
-
 
 
 class RubberbandPattern(Pattern):
@@ -552,8 +549,8 @@ class SpiralPattern(CircularPattern):
         return [pt for pt in gen_out] + [pt for pt in gen_in]
 
     def plot_in(self, ox, oy):
-        pgen_in = self.pattern_generator_factory(ox=ox, # data_out[-1][0],
-                                                 oy=oy, # data_out[-1][1],
+        pgen_in = self.pattern_generator_factory(ox=ox,  # data_out[-1][0],
+                                                 oy=oy,  # data_out[-1][1],
                                                  direction='in')
         data_in = array([pt for pt in pgen_in])
 

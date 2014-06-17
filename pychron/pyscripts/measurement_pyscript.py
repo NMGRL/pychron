@@ -274,7 +274,12 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def equilibrate(self, eqtime=20, inlet=None, outlet=None,
                     do_post_equilibration=True, close_inlet=True, delay=3):
+        """
+            inlet: str, tuple, or list
+            outlet: str, tuple, or list
+            e.g. 'A', ('A','B'), ['A','B'], 'A,B'
 
+        """
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
