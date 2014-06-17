@@ -177,7 +177,7 @@ class Pattern(HasTraits):
     calculated_transit_time = Float
 
     niterations = Range(1, 200)
-    disable_at_end = Bool(True)
+    disable_at_end = Bool(False)
 
     @property
     def kind(self):
