@@ -311,7 +311,7 @@ class PychronLaserManager(BaseLaserManager):
 
         cnt = 0
         tries = 0
-        maxtries = int(50 / float(period))  # timeout after 50 s
+        maxtries = int(500 / float(period))  # timeout after 50 s
         nsuccess = 2
         self._cancel_blocking = False
         while tries < maxtries and cnt < nsuccess:
