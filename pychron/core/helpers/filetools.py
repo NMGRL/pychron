@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
 import glob
 import os
 import subprocess
+import time
+from datetime import datetime
 
 
 def view_file(p, application='Preview', logger=None):
@@ -121,6 +123,16 @@ def unique_dir(root, base):
 
     os.mkdir(p)
 
+    return p
+
+
+def unique_date_path(root, base, extension='.txt'):
+    """
+        make a unique path with the a timestamp appended
+        e.g foo_11-01-2012_12:00
+    """
+    base = '{}_{}'.format(base, datetime.strptime(time.time(), '%m-%d-Y_%H:%M'))
+    p, _ = unique_path2(root, base, extension)
     return p
 
 

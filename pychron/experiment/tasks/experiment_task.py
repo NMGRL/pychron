@@ -5,16 +5,16 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import on_trait_change, Bool, Instance, Event
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
@@ -37,7 +37,7 @@ from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.image.tasks.video_pane import VideoDockPane
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.paths import paths
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_date_path
 from pychron.messaging.notify.notifier import Notifier
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
@@ -495,9 +495,10 @@ class ExperimentEditorTask(EditorTask):
 
         if os.path.isfile(p):
             # make a backup copy of the original experiment file
-            bp = os.path.basename(p)
-            pp = os.path.join(paths.backup_experiment_dir,
-                              '{}.orig'.format(bp))
+            bp, _ = os.path.splitext(os.path.basename(p))
+
+            pp = unique_date_path(paths.backup_experiment_dir, bp)
+
             self.info('{} - saving a backup copy to {}'.format(bp, pp))
             shutil.copyfile(p, pp)
 
