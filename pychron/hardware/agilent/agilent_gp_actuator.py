@@ -36,6 +36,7 @@ class AgilentGPActuator(GPActuator):
         """
         self.debug('initializing')
 
+        self.debug('setting write_terminator to chr(10)')
         self._communicator.write_terminator = chr(10)
 
         # clear and record any accumulated errors
@@ -94,7 +95,6 @@ class AgilentGPActuator(GPActuator):
                     break
                 else:
                     yield error
-                    # errors.append(error)
 
         return list(gen_error())
 

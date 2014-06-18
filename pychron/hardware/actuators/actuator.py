@@ -65,6 +65,7 @@ class Actuator(AbstractDevice):
                 pass
             else:
                 factory = self.get_factory(PACKAGES[klass], klass)
+                self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
                 self._cdevice = factory(name=name,
                                         configuration_dir_name=self.configuration_dir_name)
                 return True
@@ -84,9 +85,9 @@ class Actuator(AbstractDevice):
             return True
 
     def close_channel(self, *args, **kw):
-        '''
-            
-        '''
+        """
+
+        """
         if self._cdevice is not None:
             r = self._cdevice.close_channel(*args, **kw)
             if self.simulation:
@@ -96,9 +97,9 @@ class Actuator(AbstractDevice):
             return True
 
     def get_channel_state(self, *args, **kw):
-        '''
-           
-        '''
+        """
+
+        """
 
         if self._cdevice is not None:
             r = self._cdevice.get_channel_state(*args, **kw)
