@@ -94,13 +94,13 @@ class BaseLaserManager(Manager):
     def get_output_blob(self):
         return ''
 
-    def enable_device(self):
-        return self.enable_laser()
+    def enable_device(self, **kw):
+        return self.enable_laser(**kw)
 
     def disable_device(self):
         self.disable_laser()
 
-    def enable_laser(self):
+    def enable_laser(self, **kw):
         pass
 
     def disable_laser(self):

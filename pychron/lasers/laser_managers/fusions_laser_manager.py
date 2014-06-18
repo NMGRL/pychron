@@ -299,8 +299,8 @@ class FusionsLaserManager(LaserManager):
         if self.stage_manager is not None:
             self.stage_manager.set_stage_map(mapname)
 
-    def _enable_hook(self):
-        resp = self.laser_controller._enable_laser()
+    def _enable_hook(self, **kw):
+        resp = self.laser_controller._enable_laser(**kw)
         if self.laser_controller.simulation:
             resp = True
 

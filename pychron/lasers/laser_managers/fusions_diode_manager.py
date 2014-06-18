@@ -147,13 +147,14 @@ class FusionsDiodeManager(FusionsLaserManager):
         func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
         func(power, set_pid=set_pid, **kw)
 
-    def _enable_hook(self):
+    def _enable_hook(self, clear_setpoint=True):
         if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
             if self.fiber_light.auto_onoff and self.fiber_light.state:
                 self.fiber_light.power_off()
 
-            #disable the temperature_controller unit a value is set
-            self.temperature_controller.disable()
+            if clear_setpoint:
+                #disable the temperature_controller unit a value is set
+                self.temperature_controller.disable()
 
             self.response_recorder.start()
             if self.pyrometer:
