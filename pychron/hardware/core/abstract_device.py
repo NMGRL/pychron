@@ -69,6 +69,10 @@ class AbstractDevice(ScanableDevice, RPCable, HasCommunicator):
         if self.auto_start:
             self.start_scan()
 
+    def initialize(self, *args, **kw):
+        if self._cdevice:
+            return self._cdevice.initialize(*args, **kw)
+
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:

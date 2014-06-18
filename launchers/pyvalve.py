@@ -22,20 +22,14 @@ ETSConfig.toolkit = "qt4"
 import os
 #============= local library imports  ==========================
 
-version_id = '_valve-2.1.0'
+setup_version_id = '_valve'
 from helpers import build_version
-'''
-    set_path=True inserts the pychron source directory into the PYTHONPATH
-    necessary if you are launching from commandline or eclipse(?). 
-    Use false (default) if your are launching from a standalone bundle. 
-'''
-DEBUG = False
-build_version(version_id, debug=DEBUG)
+build_version('', setup_version_id, debug=False)
 
 def main():
-    '''
+    """
         entry point
-    '''
+    """
 
     from pychron.envisage.pychron_run import launch
     from pychron.core.helpers.logger_setup import logging_setup
