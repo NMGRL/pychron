@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,33 +27,32 @@
 # from pychron.hardware.arduino.arduino_gp_actuator import ArduinoGPActuator
 # from argus_gp_actuator import ArgusGPActuator
 
-from pychron.hardware.core.abstract_device import AbstractDevice
 import time
 
+from pychron.hardware.core.abstract_device import AbstractDevice
+
+
 PACKAGES = dict(AgilentGPActuator='pychron.hardware.agilent.agilent_gp_actuator',
-              ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
-#              ObamaArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
-#              JanArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
-              ArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
-              PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator'
-              )
+                ArduinoGPActuator='pychron.hardware.arduino.arduino_gp_actuator',
+                ArgusGPActuator='pychron.hardware.actuators.argus_gp_actuator',
+                PychronGPActuator='pychron.hardware.actuators.pychron_gp_actuator')
 
 
 class Actuator(AbstractDevice):
-    '''
-    '''
+    """
+    """
     _type = None
 
     def load_additional_args(self, config):
-        '''
-       
-        '''
+        """
+
+        """
         # self._cdevice=None
-#        if config.has_option('General','subsystem'):
-#            # if a subsystem is specified than the physical actuator is part of a larger
-#            # subsystem. ex One arduino can have a actuator subsystem and a data logging system
-#            #if a subsystem is specified dont want to create our on instance of a GPActuator
-#            pass
+        # if config.has_option('General','subsystem'):
+        #            # if a subsystem is specified than the physical actuator is part of a larger
+        #            # subsystem. ex One arduino can have a actuator subsystem and a data logging system
+        #            #if a subsystem is specified dont want to create our on instance of a GPActuator
+        #            pass
 
         klass = name = self.config_get(config, 'General', 'type')
 
@@ -65,29 +64,15 @@ class Actuator(AbstractDevice):
             if 'subsystem' in klass:
                 pass
             else:
-
-#                try:
-#                    module = __import__(PACKAGES[klass], fromlist=[klass])
-#                except ImportError, e:
-#                    self.warning(e)
-#                    return False
-#
-#                factory = getattr(module, klass)
                 factory = self.get_factory(PACKAGES[klass], klass)
                 self._cdevice = factory(name=name,
-                                      configuration_dir_name=self.configuration_dir_name)
-#                gdict = globals()
-#                if class_type in gdict:
-#                    self._cdevice = gdict[class_type](name=class_type,
-#                                            configuration_dir_name=self.configuration_dir_name
-#                                    )
-                self._cdevice.load()
+                                        configuration_dir_name=self.configuration_dir_name)
                 return True
 
     def open_channel(self, *args, **kw):
-        '''
-        
-        '''
+        """
+
+        """
 
         if self._cdevice is not None:
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,22 @@
 
 #=============enthought library imports=======================
 from traits.api import HasTraits, Str, List, Float, Property, Tuple, Bool, Instance
-from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor, Group
+from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor
 #=============standard library imports ========================
 from numpy import polyval
 from pychron.hardware.agilent.agilent_unit import AgilentUnit
 #=============local library imports  ==========================
 # from pychron.hardware.adc.analog_digital_converter import AnalogDigitalConverter
 
-'''
-Agilent requires chr(10) as its communicator terminator
-'''
+
 class Equation(HasTraits):
     def get_value(self, v):
         return v
 
+
 class Polynomial(Equation):
     coefficients = Tuple
+
     def get_value(self, v):
         cf = self.coefficients
         if not cf:
@@ -39,9 +39,11 @@ class Polynomial(Equation):
 
         return polyval(cf, v)
 
+
 class Boolean(Equation):
     threshold = Float
     inverted_logic = Bool
+
     def get_value(self, v):
         o = v > self.threshold
         if self.inverted_logic:
@@ -56,15 +58,18 @@ class Channel(HasTraits):
     process_value = Property(depends_on='value')
     kind = Str('DC')
     equation = Instance(Equation, ())
+
     def traits_view(self):
         v = View(HGroup(Item('name', show_label=False, style='readonly', width=200),
-                      Item('address', show_label=False, style='readonly', width=75),
-                      Item('value', show_label=False, style='readonly', width=100),
-                      Item('process_value', show_label=False, style='readonly', width=100)))
+                        Item('address', show_label=False, style='readonly', width=75),
+                        Item('value', show_label=False, style='readonly', width=100),
+                        Item('process_value', show_label=False, style='readonly', width=100)))
         return v
 
     def _get_process_value(self):
         return self.equation.get_value(self.value)
+
+
 #        value = self.value
 #        if self.coefficients:
 #            value = polyval(self.coefficients, value)
@@ -74,8 +79,12 @@ class AgilentMultiplexer(AgilentUnit):
     channels = List
 
     scan_func = 'channel_scan'
+
     def load_additional_args(self, config):
-        super(AgilentMultiplexer, self).load_additional_args(config)
+        ret = super(AgilentMultiplexer, self).load_additional_args(config)
+        if not ret:
+            return
+
         # load channels
         self.channels = []
         for section in config.sections():
@@ -96,47 +105,43 @@ class AgilentMultiplexer(AgilentUnit):
                         cs = 1, 0
                     eq = Polynomial(coefficients=cs)
 
-
                 ch = Channel(address='{}{:02n}'.format(self.slot, int(section[7:])),
-                           kind=kind,
-                           name=name,
-                           equation=eq
-#                           coefficients=cs
-                           )
+                             kind=kind,
+                             name=name,
+                             equation=eq)
                 self.channels.append(ch)
 
-#        self._update_channels = True
+                # self._update_channels = True
         return True
 
     def initialize(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         super(AgilentMultiplexer, self).initialize(*args, **kw)
 
-#        cmds = (
-#              'FORM:READING:ALARM OFF',
-#              'FORM:READING:CHANNEL ON',
-#              'FORM:READING:TIME OFF',
-#              'FORM:READING:UNIT OFF',
-#              #'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
-#              'TRIG:COUNT {}'.format(self.trigger_count),
-#              'TRIG:SOURCE TIMER',
-#              'TRIG:TIMER 0',
-#              'ROUT:SCAN {}'.format(self.make_scan_list()),
-#             )
-#        for c in cmds:
-#            self.tell(c)
+        # cmds = (
+        #              'FORM:READING:ALARM OFF',
+        #              'FORM:READING:CHANNEL ON',
+        #              'FORM:READING:TIME OFF',
+        #              'FORM:READING:UNIT OFF',
+        #              #'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
+        #              'TRIG:COUNT {}'.format(self.trigger_count),
+        #              'TRIG:SOURCE TIMER',
+        #              'TRIG:TIMER 0',
+        #              'ROUT:SCAN {}'.format(self.make_scan_list()),
+        #             )
+        #        for c in cmds:
+        #            self.tell(c)
 
         # configure channels
         # configure volt changes
-#        chs = self._get_dc_channels()
-#        c = 'CONF:VOLT:DC {}'.format(self.make_scan_list(chs))
-#        self.tell(c)
+        #        chs = self._get_dc_channels()
+        # c = 'CONF:VOLT:DC {}'.format(self.make_scan_list(chs))
+        #        self.tell(c)
 
         # configure channels
         for tag, chs in (('VOLT:DC', self._get_dc_channels()),
-                          ('TEMP:TC', self._get_tc_channels()),
-                          ):
+                         ('TEMP:TC', self._get_tc_channels())):
             if chs:
                 self.tell('CONF:{} {}'.format(tag, self.make_scan_list(chs)))
 
@@ -182,9 +187,10 @@ class AgilentMultiplexer(AgilentUnit):
             channels = self.channels
 
         return '(@{})'.format(','.join([ci.address for ci in channels]))
-#===============================================================================
-# view
-#===============================================================================
+
+    #===============================================================================
+    # view
+    # ===============================================================================
     def traits_view(self):
         v = View(Item('channels', show_label=False,
                       height=400,
@@ -192,9 +198,9 @@ class AgilentMultiplexer(AgilentUnit):
                                         editor=InstanceEditor(), style='custom')))
         return v
 
-#===============================================================================
-# private
-#===============================================================================
+    #===============================================================================
+    # private
+    # ===============================================================================
     def _get_dc_channels(self):
         return [ci for ci in self.channels if ci.kind == 'DC']
 
@@ -203,8 +209,9 @@ class AgilentMultiplexer(AgilentUnit):
 
     def _get_channel(self, name):
         return next((chan for chan in self.channels
-                            if chan.name == name or \
-                                 chan.address[1:] == name), None)
+                     if chan.name == name or \
+                     chan.address[1:] == name), None)
+
 
 #    def _get_channels(self):
 # #        print 'asdfasdfasdfsadfsda', len(self._channels)
@@ -214,9 +221,9 @@ class AgilentMultiplexer(AgilentUnit):
 class AgilentSingleADC(AgilentUnit):
     '''
     '''
-#    def __init__(self, *args, **kw):
-#        super(AgilentADC, self).__init__(*args, **kw)
-#    address = None
+    #    def __init__(self, *args, **kw):
+    # super(AgilentADC, self).__init__(*args, **kw)
+    #    address = None
 
     def load_additional_args(self, config):
         '''
@@ -235,16 +242,16 @@ class AgilentSingleADC(AgilentUnit):
         super(AgilentSingleADC, self).initialize(*args, **kw)
 
         cmds = [
-              'CONF:VOLT:DC {}'.format(self.make_scan_list()),
-#              'FORM:READING:ALARM OFF',
-#              'FORM:READING:CHANNEL ON',
-#              'FORM:READING:TIME OFF',
-#              'FORM:READING:UNIT OFF',
-#              'TRIG:SOURCE TIMER',
-#              'TRIG:TIMER 0',
-#              'TRIG:COUNT {}'.format(self.trigger_count),
-#              'ROUT:SCAN (@{})'.format(self.address)
-             ]
+            'CONF:VOLT:DC {}'.format(self.make_scan_list()),
+            # 'FORM:READING:ALARM OFF',
+            #              'FORM:READING:CHANNEL ON',
+            #              'FORM:READING:TIME OFF',
+            #              'FORM:READING:UNIT OFF',
+            #              'TRIG:SOURCE TIMER',
+            #              'TRIG:TIMER 0',
+            #              'TRIG:COUNT {}'.format(self.trigger_count),
+            #              'ROUT:SCAN (@{})'.format(self.address)
+        ]
 
         for c in cmds:
             self.tell(c)
@@ -264,17 +271,17 @@ class AgilentSingleADC(AgilentUnit):
             resp = self._parse_response(resp)
             return resp
 
-#        resp = self.ask('DATA:POINTS?')
-#        if resp is not None:
-#            n = float(resp)
-#            resp = 0
-#            if n > 0:
-#                resp = self.ask('DATA:REMOVE? {}'.format(float(n)))
-#                resp = self._parse_response_(resp)
+        #        resp = self.ask('DATA:POINTS?')
+            # if resp is not None:
+            #            n = float(resp)
+            #            resp = 0
+            #            if n > 0:
+            #                resp = self.ask('DATA:REMOVE? {}'.format(float(n)))
+            #                resp = self._parse_response_(resp)
 
             # self.current_value = resp
-#            self.read_voltage = resp
-#        return resp
+            #            self.read_voltage = resp
+            # return resp
 
     def _parse_response_(self, r):
         '''
@@ -284,6 +291,7 @@ class AgilentSingleADC(AgilentUnit):
             return r
 
         return float(r)
+
 #        args = r.split(',')
 #        data = args[:-1]
 
