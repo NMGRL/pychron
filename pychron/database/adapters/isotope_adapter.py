@@ -1132,7 +1132,8 @@ class IsotopeAdapter(DatabaseAdapter):
                                 spectrometer=None,
                                 extract_device=None,
                                 limit=None,
-                                exclude_uuids=None):
+                                exclude_uuids=None,
+                                ordering='desc'):
 
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
@@ -1164,7 +1165,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if exclude_uuids:
                 q = q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            q = q.order_by(getattr(meas_AnalysisTable.analysis_timestamp, ordering)())
             if limit:
                 q = q.limit(limit)
 
@@ -1178,9 +1179,12 @@ class IsotopeAdapter(DatabaseAdapter):
             get analyses that have labnunmbers in lns.
             low_post and high_post used to filter a date range.
             posts are inclusive
+
+            returns (list, int)
+            list: list of analyses
+            int: number of analyses
+
         """
-        # if not hasattr(lns, '__iter__'):
-        #     lns = (lns, )
 
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)

@@ -23,7 +23,7 @@ set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance, List, Int, Bool
 from traitsui.menu import Action
-from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item
+from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item, HSplit
 from chaco.tools.api import RangeSelection, RangeSelectionOverlay
 from chaco.scales.api import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
@@ -222,38 +222,37 @@ class GraphicalFilterView(Controller):
                                 editor=CheckListEditor(cols=1,
                                                        name='available_analysis_types')))
 
-        v = View(HGroup(ctrl_grp,
-                        UItem('graph', style='custom')),
+        v = View(HSplit(ctrl_grp,
+                        UItem('graph', style='custom', width=0.80)),
                  buttons=['Cancel',
                           Action(name='Replace', on_perform=self.replace_action),
                           Action(name='Append', on_perform=self.append_action)],
+                 title='Graphical Filter',
                  kind='livemodal',
                  resizable=True)
         return v
 
 
-from traits.api import Button
-
-
-class Demo(HasTraits):
-    test_button = Button
-
-    def traits_view(self):
-        return View('test_button')
-
-    def _test_button_fired(self):
-        g = GraphicalFilterModel(analyses=self.analyses)
-        g.setup()
-        gv = GraphicalFilterView(model=g)
-
-        info = gv.edit_traits()
-        if info.result:
-            s = g.get_selection()
-            for si in s:
-                print si, si.analysis_type
-
-
 if __name__ == '__main__':
+    from traits.api import Button
+
+    class Demo(HasTraits):
+        test_button = Button
+
+        def traits_view(self):
+            return View('test_button')
+
+        def _test_button_fired(self):
+            g = GraphicalFilterModel(analyses=self.analyses)
+            g.setup()
+            gv = GraphicalFilterView(model=g)
+
+            info = gv.edit_traits()
+            if info.result:
+                s = g.get_selection()
+                for si in s:
+                    print si, si.analysis_type
+
     from pychron.database.isotope_database_manager import IsotopeDatabaseManager
     from pychron.database.records.isotope_record import IsotopeRecordView
 
@@ -273,9 +272,9 @@ if __name__ == '__main__':
         ])
         ts = [x.analysis_timestamp for x in _ans]
         lpost, hpost = min(ts), max(ts)
-        _ans = db.get_date_range_analyses(lpost, hpost)
+        _ans = db.get_date_range_analyses(lpost, hpost, ordering='asc')
         _ans = [IsotopeRecordView(x) for x in _ans]
-        _ans = sorted(_ans, key=lambda x: x.timestamp)
+        # _ans = sorted(_ans, key=lambda x: x.timestamp)
 
     d = Demo(analyses=_ans)
     d.configure_traits()

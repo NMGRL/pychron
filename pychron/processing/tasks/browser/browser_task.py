@@ -19,7 +19,7 @@ from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -28,6 +28,7 @@ from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
+from pychron.processing.tasks.browser.date_range_selector import DateRangeSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
 
 '''
@@ -181,7 +182,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ans, _ = db.get_labnumber_analyses([si.identifier for si in sams])
             ts = [ai.analysis_timestamp for ai in ans]
             lpost, hpost = min(ts), max(ts)
-            associated = db.get_date_range_analyses(lpost, hpost)
+
+            # if date range > X days make user fine tune range
+            if (hpost - lpost).total_seconds > 3600 * 24 * 10:
+                d = DateRangeSelector(lpost=lpost, hpost=hpost)
+                info = d.edit_traits(kind='livemodal')
+                if info.result:
+                    lpost, hpost = d.lpost, d.hpost
+                else:
+                    return
+
+            associated = db.get_date_range_analyses(lpost, hpost, ordering='asc')
             ans = [IsotopeRecordView(ai) for ai in associated]
 
         gm = GraphicalFilterModel(analyses=ans,
@@ -191,7 +202,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         info = gv.edit_traits(kind='livemodal')
         if info.result:
             ans = gm.get_selection()
-            print 'afsf', ans
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 
