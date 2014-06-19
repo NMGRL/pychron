@@ -290,6 +290,8 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
+            self.setup_context()
+
             self.debug('testing...')
             self._estimated_duration = 0
             self.syntax_checked = True
@@ -406,7 +408,6 @@ class PyScript(Loggable):
 
         #for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
-
         self._setup_docstr_context()
 
     def get_context(self):

@@ -72,7 +72,7 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
-                                                            'move'],
+                                                            'move', 'edit'],
                                                 editable=True,
                                                 show_row_titles=True,
                                                 dclicked='dclicked',

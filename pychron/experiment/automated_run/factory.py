@@ -268,6 +268,7 @@ class AutomatedRunFactory(Loggable):
     extract_device = Str
 
     _default_attrs = ('collection_time_zero_offset',)
+    _no_clear_labnumber = False
 
     def activate(self):
         self.load_truncations()
@@ -441,9 +442,12 @@ class AutomatedRunFactory(Loggable):
             self.irrad_hole = str(hole)
             self.irrad_level = str(level.name)
 
+            self._no_clear_labnumber = True
             self.selected_level = self.irrad_level
             self.selected_irradiation = irrad.name
+            self._no_clear_labnumber = False
 
+            # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
             il = '{} {}:{}'.format(irrad.name, level.name, hole)
         return il
 
@@ -507,7 +511,7 @@ class AutomatedRunFactory(Loggable):
             setattr(arv, name, s.name)
 
     def _clone_run(self, run, excludes=None, set_labnumber=True, set_position=True):
-        self.debug('cloning run {}'.format(run))
+        self.debug('cloning run {}. set_labnumber={}, set_position={}'.format(run.runid, set_labnumber, set_position))
         if excludes is None:
             excludes = []
 
@@ -525,8 +529,12 @@ class AutomatedRunFactory(Loggable):
 
             if attr in excludes:
                 continue
-
-            setattr(self, attr, getattr(run, attr))
+            try:
+                v = getattr(run, attr)
+                # self.debug('setting {}={}'.format(attr, v))
+                setattr(self, attr, v)
+            except TraitError, e:
+                self.debug(e)
 
         if run.user_defined_aliquot:
             self.aliquot = int(run.aliquot)
@@ -603,8 +611,9 @@ class AutomatedRunFactory(Loggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
-        self.labnumber = ''
-        self._labnumber = NULL_STR
+        if not self._no_clear_labnumber:
+            self.labnumber = ''
+            self._labnumber = NULL_STR
 
     def _template_closed(self):
         invoke_in_main_thread(self.load_templates)
@@ -1127,14 +1136,14 @@ post_equilibration_script:name''')
             self._frequency_enabled = False
 
     def _labnumber_changed(self, old, labnumber):
-
+        self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
         if not labnumber or labnumber == NULL_STR:
             return
 
         db = self.db
         if not db:
             return
-        self.update_labnumber = labnumber
+        # self.update_labnumber = labnumber
 
         special = False
         try:
@@ -1155,7 +1164,6 @@ post_equilibration_script:name''')
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 ln = db.get_labnumber(labnumber)
-                print ln
                 if ln:
                     # set sample and irrad info
                     try:
