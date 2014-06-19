@@ -205,8 +205,6 @@ class ExtractionLineScene(Scene):
 
     def _new_image(self, image):
         path = image.text.strip()
-        #         sp = ''
-        #         name = path
         if not os.path.isfile(path):
             for di in (paths.app_resources, paths.icons, paths.resources):
                 if di:
@@ -217,13 +215,11 @@ class ExtractionLineScene(Scene):
 
         if os.path.isfile(path):
             x, y = self._get_floats(image, 'translation')
-            scale = 1, 1
+            scale = None
             if image.find('scale') is not None:
                 scale = self._get_floats(image, 'scale')
 
-            im = Image(x, y,
-                       path=path,
-                       scale=scale)
+            im = Image(x, y, path=path, scale=scale)
             self.add_item(im, 0)
 
     def _load_valves(self, cp, origin, vpath):
