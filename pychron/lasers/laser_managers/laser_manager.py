@@ -121,10 +121,10 @@ class LaserManager(BaseLaserManager):
         return enabled
 
     def set_laser_output(self, *args, **kw):
-        '''
+        """
             by default set_laser_output simply uses set_laser_power
             but subclasses can override for different units
-        '''
+        """
         self.set_laser_power(*args, **kw)
 
 
@@ -132,8 +132,8 @@ class LaserManager(BaseLaserManager):
                         verbose=True,
                         units=None,
                          *args, **kw):
-        '''
-        '''
+        """
+        """
 
         if units == 'percent':
             p = power
@@ -158,27 +158,29 @@ class LaserManager(BaseLaserManager):
         return super(LaserManager, self).close(ok)
 
     def set_laser_monitor_duration(self, d):
-        '''
+        """
             duration in minutes
-        '''
+        """
         self.monitor.max_duration = d
         self.monitor.reset_start_time()
 
     def reset_laser_monitor(self):
-        '''
-        '''
+        """
+        """
         self.monitor.reset_start_time()
 
     def emergency_shutoff(self, reason):
-        ''' 
-        '''
+        """
+        """
         self.disable_laser()
 
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
-            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
+
             from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
             self.error_code = LaserMonitorErrorCode(reason)
+
+            self.warning_dialog(reason, sound='alarm1', title='AUTOMATIC LASER SHUTOFF')
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -218,8 +220,8 @@ class LaserManager(BaseLaserManager):
 #            self.status_text = 'x = {:n} ({:0.4f} mm), y = {:n} ({:0.4f} mm)'.format(*new)
 
     def _enable_fired(self):
-        '''
-        '''
+        """
+        """
         if not self.enabled:
             self.enable_laser()
         else:

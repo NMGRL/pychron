@@ -55,7 +55,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.core.helpers.filetools import add_extension, to_bool
+from pychron.core.helpers.filetools import add_extension
 from pychron.globals import globalv
 from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
@@ -496,6 +496,11 @@ class ExperimentExecutor(Loggable):
                      '_post_measurement'):
 
             if not self.isAlive():
+                break
+
+            if self.monitor.has_fatal_error():
+                run.cancel()
+                run.state = 'failed'
                 break
 
             f = getattr(self, step)
@@ -1046,6 +1051,14 @@ class ExperimentExecutor(Loggable):
         if not self._check_managers(inform=inform):
             return
 
+        if self.monitor:
+            self.monitor.set_additional_connections(self.connectables)
+            self.monitor.clear_errors()
+            if not self.monitor.check():
+                self.warning_dialog('Automated Run Monitor Failed')
+                return
+
+
         with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
@@ -1248,6 +1261,7 @@ Use Last "blank_{}"= {}
                 if not man.test_connection():
                     nonfound.append(extract_device)
                 else:
+                    ed_connectable.set_connection_parameters(man)
                     ed_connectable.connected = True
 
         needs_spec_man = any([ai.measurement_script
@@ -1348,28 +1362,30 @@ Use Last "blank_{}"= {}
         return runner
 
     def _monitor_factory(self):
-        mon = None
-        isok = True
+        # mon = None
+        # isok = True
         self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
-            ip = InitializationParser()
-            exp = ip.get_plugin('Experiment', category='general')
-            monitor = exp.find('monitor')
-            if monitor is not None:
-                if to_bool(monitor.get('enabled')):
-                    host, port, kind = None, None, None
-                    comms = monitor.find('communications')
-                    host = comms.find('host')
-                    port = comms.find('port')
-                    kind = comms.find('kind')
-
-                    if host is not None:
-                        host = host.text  # if host else 'localhost'
-                    if port is not None:
-                        port = int(port.text)  # if port else 1061
-                    if kind is not None:
-                        kind = kind.text
-                    mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
+            self._check_for_managers()
+            mon = RemoteAutomatedRunMonitor()
+            # ip = InitializationParser()
+            # exp = ip.get_plugin('Experiment', category='general')
+            # monitor = exp.find('monitor')
+            # if monitor is not None:
+            # if to_bool(monitor.get('enabled')):
+            #         host, port, kind = None, None, None
+            #         comms = monitor.find('communications')
+            #         host = comms.find('host')
+            #         port = comms.find('port')
+            #         kind = comms.find('kind')
+            #
+            #         if host is not None:
+            #             host = host.text  # if host else 'localhost'
+            #         if port is not None:
+            #             port = int(port.text)  # if port else 1061
+            #         if kind is not None:
+            #             kind = kind.text
+            #         mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
         else:
             mon = AutomatedRunMonitor()
 

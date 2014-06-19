@@ -40,9 +40,9 @@ class PychronLaserManager(BaseLaserManager):
     pychron remotely.
 
     Common laser functions such as enable_laser are converted to
-    the RemoteHardwareServer equivalent and sent by the _communicator
+    the RemoteHardwareServer equivalent and sent by the communicator
 
-    e.g enable_laser ==> self._communicator.ask('Enable')
+    e.g enable_laser ==> self.communicator.ask('Enable')
 
     The communicators connection arguments are set in initialization.xml
 
@@ -56,7 +56,7 @@ class PychronLaserManager(BaseLaserManager):
         </communications>
     </plugin>
     """
-
+    communicator = None
     port = CInt
     host = Str
 
@@ -89,11 +89,11 @@ class PychronLaserManager(BaseLaserManager):
             self.opened(None)
 
     def shutdown(self):
-        if self._communicator:
-            self._communicator.close()
+        if self.communicator:
+            self.communicator.close()
 
     def _test_connection(self):
-        self.connected = self._communicator.open()
+        self.connected = self.communicator.open()
         self.debug('test connection. connected= {}'.format(self.connected))
         return self.connected
 
@@ -107,7 +107,7 @@ class PychronLaserManager(BaseLaserManager):
         host = self.host
         port = self.port
 
-        self._communicator = ec = EthernetCommunicator(host=host,
+        self.communicator = ec = EthernetCommunicator(host=host,
                                                        port=port)
         r = ec.open()
         if r:
@@ -288,7 +288,7 @@ class PychronLaserManager(BaseLaserManager):
                 print 'pychron laser manager get_position', e
                 return 0, 0, 0
 
-        if self._communicator.simulation:
+        if self.communicator.simulation:
             return 0, 0, 0
             #===============================================================================
             # pyscript private
@@ -327,7 +327,7 @@ class PychronLaserManager(BaseLaserManager):
             time.sleep(period)
             resp = ask(cmd)
 
-            if self._communicator.simulation:
+            if self.communicator.simulation:
                 resp = 'False'
 
             if resp is not None:
@@ -338,7 +338,7 @@ class PychronLaserManager(BaseLaserManager):
                     cnt = 0
 
                 if position_callback:
-                    if self._communicator.simulation:
+                    if self.communicator.simulation:
                         x, y, z = cnt / 3., cnt / 3., 0
                         position_callback(x, y, z)
                     else:
@@ -361,8 +361,8 @@ class PychronLaserManager(BaseLaserManager):
         return state
 
     def _ask(self, cmd, **kw):
-        self._communicator.get_handler()
-        return self._communicator.ask(cmd, **kw)
+        self.communicator.get_handler()
+        return self.communicator.ask(cmd, **kw)
 
     def _enable_fired(self):
         if self.enabled:

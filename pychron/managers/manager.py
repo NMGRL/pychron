@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,8 +84,8 @@ class SaveableManagerHandler(SaveableHandler, ManagerHandler):
 
 
 class Manager(Viewable, RPCable):
-    '''
-    '''
+    """
+    """
 
     test = Button
 
@@ -115,21 +115,10 @@ class Manager(Viewable, RPCable):
 
     error_code = None
 
-
-    #    def __init__(self, *args, **kw):
-    #        '''
-    #
-    #        '''
-    #        super(Manager, self).__init__(*args, **kw)
-    #
-    #        if self.name is None:
-    #            self.name = self.__class__.__name__
-
     def finish_loading(self):
-        '''
-        '''
+        """
+        """
         pass
-
 
     def opened(self, ui):
         def _loop():
@@ -168,7 +157,6 @@ class Manager(Viewable, RPCable):
     #
     #        do_after(1, _open_)
 
-
     #    def close_ui(self):
     #        if self.ui is not None:
     #            #disposes 50 ms from now
@@ -186,9 +174,9 @@ class Manager(Viewable, RPCable):
         pass
 
     def kill(self, **kw):
-        '''
+        """
 
-        '''
+        """
 
         if not self._killed:
             self.info('killing')
@@ -201,21 +189,21 @@ class Manager(Viewable, RPCable):
                     if hasattr(man, 'kill'):
                         man.kill()
 
-                    #        return not self._killed
+                        #        return not self._killed
 
-                    #    def warning_dialog(self, msg):
-                    #        '''
-                    #        '''
-                    #        warning(None, msg)
+                        #    def warning_dialog(self, msg):
+                        #        '''
+                        #        '''
+                        #        warning(None, msg)
 
     def open_file_dialog(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._file_dialog_('open', **kw)
 
     def save_file_dialog(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._file_dialog_('save as', **kw)
 
     def open_directory_dialog(self, **kw):
@@ -234,23 +222,15 @@ class Manager(Viewable, RPCable):
         self.error_code = None
         return str(e)
 
-    #     def _set_error_code(self, e):
-    #         self.error_code = e
-    #
-    #     def _get_error_code(self):
-    #         return self.error_code
-    #
-
-
     def get_managers(self):
 
         return [(ma, getattr(self, ma)) for ma in self.traits()
                 if ma.endswith('_manager')
-            and getattr(self, ma) is not None]
+                and getattr(self, ma) is not None]
 
     def get_device(self, device_name):
-        '''
-        '''
+        """
+        """
         dev = None
         if hasattr(self, device_name):
             dev = getattr(self, device_name)
@@ -337,9 +317,9 @@ class Manager(Viewable, RPCable):
             return MassSpecParam(v)
         except Exception:
             pass
-        #        return
+            #        return
 
-        #        return next((f for f in self.flags if f.name == name), None)
+            #        return next((f for f in self.flags if f.name == name), None)
 
     def get_flag(self, name):
         return next((f for f in self.flags if f.name == name), None)
@@ -355,24 +335,24 @@ class Manager(Viewable, RPCable):
         if flag is not None:
             flag.set(val)
             return True
-        #    def get_flag_state(self, name):
-        #        return self._flag(name, 'get')
-        #
-        #    def set_flag(self, name):
-        #        self._flag(name, 'set')
-        #
-        #    def clear_flag(self, name):
-        #        self._flag(name, 'clear')
+            #    def get_flag_state(self, name):
+            #        return self._flag(name, 'get')
+            #
+            #    def set_flag(self, name):
+            #        self._flag(name, 'set')
+            #
+            #    def clear_flag(self, name):
+            #        self._flag(name, 'clear')
 
-        #    def _flag(self, name, func):
-        #        f = next(([f for f in self.flags if f == name]), None)
-        #        if f is not None:
-        #            getattr(f, func)()
-        #        else:
-        #            self.warning('Invalid flag {}'.format(name))
-        #===============================================================================
-        #
-        #===============================================================================
+            #    def _flag(self, name, func):
+            #        f = next(([f for f in self.flags if f == name]), None)
+            #        if f is not None:
+            #            getattr(f, func)()
+            #        else:
+            #            self.warning('Invalid flag {}'.format(name))
+            #===============================================================================
+            #
+            #===============================================================================
 
     def create_manager(self, manager, **kw):
 

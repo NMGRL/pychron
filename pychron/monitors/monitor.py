@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,10 @@ from pyface.message_dialog import warning
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
 
+
 class Monitor(ConfigLoadable):
-    '''
-    '''
+    """
+    """
     sample_delay = Float(5)
     manager = None
     _monitoring = False
@@ -53,32 +54,31 @@ class Monitor(ConfigLoadable):
         return True
 
     def stop(self):
-        '''
-        '''
+        """
+        """
         if self._stop_signal:
             self._stop_signal.set()
-    #        self.kill = True
+            #        self.kill = True
             self.info('Stop monitor')
             self._monitoring = False
 
     def warning(self, msg):
-        '''
+        """
             override loggable warning to issue a warning dialog
-        '''
+        """
         super(Monitor, self).warning(msg)
         invoke_in_main_thread(warning, None, msg)
 
     def monitor(self):
-        '''
-        '''
+        """
+        """
         if not self._monitoring:
             self._monitoring = True
             self.info('Starting monitor')
             self._stop_signal = Event()
 
             if self.load():
-                t = Thread(name='Thread-{}'.format(self.name),
-                           target=self._monitor_)
+                t = Thread(target=self._monitor_)
                 t.setDaemon(1)
                 t.start()
 
@@ -87,8 +87,8 @@ class Monitor(ConfigLoadable):
             return True
 
     def reset_start_time(self):
-        '''
-        '''
+        """
+        """
         self.start_time = time.time()
 
     def check(self):
@@ -96,11 +96,11 @@ class Monitor(ConfigLoadable):
 
     def _get_checks(self):
         return [getattr(self, h) for h in dir(self)
-                     if '_fcheck' in h and h not in self._invalid_checks]
+                if '_fcheck' in h and h not in self._invalid_checks]
 
     def _monitor_(self):
-        '''
-        '''
+        """
+        """
         # load before every monitor call so that changes to the config file
         # are incorpoated
         if self.manager is not None:
@@ -109,8 +109,8 @@ class Monitor(ConfigLoadable):
 
         self.gntries = 0
         self.reset_start_time()
-#             funcs = [getattr(self, h) for h in dir(self)
-#                      if '_fcheck' in h and h not in self._invalid_checks]
+        #             funcs = [getattr(self, h) for h in dir(self)
+        #                      if '_fcheck' in h and h not in self._invalid_checks]
         stop_signal = self._stop_signal
         while not stop_signal.isSet():
             for fi in self._get_checks():
@@ -120,6 +120,7 @@ class Monitor(ConfigLoadable):
 
             # sleep before running monitor again
             time.sleep(self.sample_delay)
+
 #============= EOF ====================================
 #    def _monitor_(self, stop_signal):
 #        '''
