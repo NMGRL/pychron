@@ -137,7 +137,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             VGroup(
                 queue_grp,
                 button_bar,
-                CustomLabel(run_factory_name('info_label')),
+                CustomLabel(run_factory_name('info_label'), size=14, color='green'),
                 edit_grp,
                 lower_button_bar),
             width=225)
