@@ -43,15 +43,15 @@ from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
 
-class save_ctx(object):
-    def __init__(self, p):
-        self._p = p
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._p.information_dialog('Changes saved to database')
+# class save_ctx(object):
+# def __init__(self, p):
+#         self._p = p
+#
+#     def __enter__(self):
+#         pass
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self._p.information_dialog('Changes saved to database')
 
 
 class dirty_ctx(object):
@@ -120,9 +120,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     #    self.populate_default_tables()
     def save_tray_to_db(self, p, name):
-        with save_ctx(self):
-            with self.db.session_ctx():
-                load_irradiation_map(self.db, p, name, overwrite_geometry=True)
+        with self.db.session_ctx():
+            load_irradiation_map(self.db, p, name, overwrite_geometry=True)
+        self._inform_save()
 
     def set_selected_sample(self, new):
         self.selected_sample = new
@@ -171,8 +171,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
                 w.build(out, irrad)
 
     def save(self):
-        with save_ctx(self):
+        if self._validate_save():
             self._save_to_db()
+            self._inform_save()
+            return True
 
     def generate_labnumbers(self):
         ok = True
@@ -246,10 +248,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
             self.irradiated_positions = [IrradiatedPosition(hole=ni + 1)
                                          for ni in range(int(nholes))]
 
-    def _save_to_db(self):
-        db = self.db
-
-        # validate positions. ensure sample has material and project
+    def _validate_save(self):
+        """
+            validate positions. ensure sample has material and project
+        """
         no = []
         for irs in self.irradiated_positions:
             if irs.labnumber:
@@ -262,12 +264,18 @@ class LabnumberEntry(IsotopeDatabaseManager):
                     n.append('No material')
 
                 if n:
-                    no.append('{}.'.format(irs.labnumber,
-                                           ','.join(n)))
+                    no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.labnumber, ', '.join(n)))
         if no:
             self.information_dialog('Missing Information\n{}'.format('\n'.join(no)))
             return
+        else:
+            return True
 
+    def _inform_save(self):
+        self.information_dialog('Changes saved to Database')
+
+    def _save_to_db(self):
+        db = self.db
 
         with db.session_ctx():
             n = len(self.irradiated_positions)
