@@ -212,8 +212,8 @@ class Initializer(Loggable):
             self.load_timed_flags(manager, timed_flags)
 
         if valve_flags:
-            self.info('loading valve flags - {}'.format(','.join(timed_flags)))
-            self.load_timed_flags(manager, valve_flags_attrs)
+            self.info('loading valve flags - {}'.format(','.join(valve_flags_attrs)))
+            self.load_valve_flags(manager, valve_flags_attrs)
 
         if manager is not None:
             self.info('finish {} loading'.format(name))
