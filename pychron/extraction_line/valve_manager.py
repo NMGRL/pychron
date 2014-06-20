@@ -335,8 +335,8 @@ class ValveManager(Manager):
                     D,E owned by 150
                     F free
         """
-        self.valves['C'].owner = '129.138.12.135'
-        self.valves['X'].owner = '129.138.12.135'
+        #self.valves['C'].owner = '129.138.12.135'
+        #self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.valves.itervalues()]
         key = lambda x: x[1]

@@ -55,9 +55,9 @@ def main():
 # set if you want to execute tests after startup
 # explicitly set the flag here once. mode is a readonly property
 #===============================================================================
-    from pychron.globals import globalv
-    globalv._test = False
-    globalv.debug = DEBUG
+    # from pychron.globals import globalv
+    # globalv._test = False
+    # globalv.debug = DEBUG
 
     launch(app)
     os._exit(0)

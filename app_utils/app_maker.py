@@ -145,6 +145,10 @@ class Template(object):
         # for anaconda builds
         #copy qt.nib
         p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
+        if not os.path.isfile(p):
+            p='{}/{}'.format(os.path.expanduser('~'),
+                           '/anaconda/python.app/Contents/Resources/qt_menu.nib')
+
         ins.copy_resource_dir(p)
 
         #=======================================================================
