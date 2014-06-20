@@ -26,6 +26,7 @@ from pyface.image_resource import ImageResource
 import os
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
@@ -99,6 +100,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     dirty = Bool
     suppress_dirty = Bool
+    _no_update = Bool
 
     #labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
@@ -229,8 +231,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
         geom = holder.geometry
         with dirty_ctx(self):
             if geom:
-                self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
-                                             for c, (x, y, r) in iter_geom(geom)]
+                with no_update(self):
+                    self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
+                                                 for c, (x, y, r) in iter_geom(geom)]
             elif holder.name:
                 self._load_holder_positons_from_file(holder.name)
 
@@ -245,6 +248,26 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     def _save_to_db(self):
         db = self.db
+
+        # validate positions. ensure sample has material and project
+        no = []
+        for irs in self.irradiated_positions:
+            if irs.labnumber:
+                n = []
+                if not irs.sample:
+                    n.append('No sample')
+                if not irs.project:
+                    n.append('No project')
+                if not irs.material:
+                    n.append('No material')
+
+                if n:
+                    no.append('{}.'.format(irs.labnumber,
+                                           ','.join(n)))
+        if no:
+            self.information_dialog('Missing Information\n{}'.format('\n'.join(no)))
+            return
+
 
         with db.session_ctx():
             n = len(self.irradiated_positions)
@@ -364,9 +387,28 @@ class LabnumberEntry(IsotopeDatabaseManager):
             return name
 
 
-            #===============================================================================
-            # handlers
-            #===============================================================================
+    # ===============================================================================
+    # handlers
+    #===============================================================================
+    @on_trait_change('irradiated_positions:sample')
+    def _handle_entry(self, obj, name, old, new):
+        if not self._no_update:
+            if not new:
+                obj.material = ''
+                obj.project = ''
+            else:
+                db = self.db
+                with db.session_ctx():
+                    dbsam = db.get_sample(new)
+                    if dbsam:
+                        if not obj.material:
+                            if dbsam.material:
+                                obj.material = dbsam.material.name
+
+                        if not obj.project:
+                            if dbsam.project:
+                                obj.project = dbsam.project.name
+
 
     @on_trait_change('canvas:selected')
     def _handle_canvas_selected(self, new):
@@ -497,13 +539,14 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
     # @simple_timer()
     def _make_positions(self, n, positions):
-        for pi in positions:
-            hi = pi.position - 1
-            if hi < n:
-                ir = self.irradiated_positions[hi]
-                self._sync_position(pi, ir)
-            else:
-                self.debug('extra irradiation position for this tray {}'.format(hi))
+        with no_update(self):
+            for pi in positions:
+                hi = pi.position - 1
+                if hi < n:
+                    ir = self.irradiated_positions[hi]
+                    self._sync_position(pi, ir)
+                else:
+                    self.debug('extra irradiation position for this tray {}'.format(hi))
 
     def _sync_position(self, dbpos, ir):
         ln = dbpos.labnumber
