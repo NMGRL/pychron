@@ -46,6 +46,7 @@ class Gauge(HasTraits):
                              width=self.width,
                              editor=BarGaugeEditor(low=self.low,
                                                    high=self.high,
+                                                   scale='power',
                                                    color_scalar=self.color_scalar,
                                                    width=self.width))))
         return v
@@ -236,7 +237,7 @@ class MicroIonController(CoreDevice):
             from numpy.random import normal
 
             if name == 'IG':
-                loc, scale = 1e-9, 5e-10
+                loc, scale = 1e-9, 5e-9
             else:
                 loc, scale = 1e-2, 5e-3
             return abs(normal(loc, scale))
