@@ -386,12 +386,14 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             #                time.sleep(0.25)
 
     def load_progress(self, n):
-        '''
-        '''
+        """
+        """
         pd = myProgressDialog(max=n, message='Welcome',
                               size=(500, 50))
         self.pd = pd
         self.pd.open()
+        self.pd.position = 100, 100
+
 
 
 # ========================= EOF ===================================
