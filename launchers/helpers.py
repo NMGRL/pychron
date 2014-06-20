@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,32 @@
 import os
 import sys
 #============= local library imports  ==========================
+def entry_point(modname, klass, setup_version_id='', debug=False):
+    """
+        entry point
+    """
+    from traits.etsconfig.api import ETSConfig
+
+    ETSConfig.toolkit = "qt4"
+
+    build_version('',
+                  setup_version_id, debug=debug)
+
+    from pychron.core.helpers.logger_setup import logging_setup
+    from pychron.paths import build_directories, paths
+
+    # build directories
+    build_directories(paths)
+
+    # setup logging. set a basename for log files and logging level
+    logging_setup('pychron', level='DEBUG')
+
+    #import app klass and pass to launch function
+    mod = __import__('pychron.applications.{}'.format(modname), fromlist=[klass])
+    from pychron.envisage.pychron_run import launch
+
+    launch(getattr(mod, klass))
+
 
 def build_version(ver=None, setup_ver=None, debug=False):
     """
@@ -69,6 +95,7 @@ def add_eggs(root):
             for egg_name in eggs:
                 # sys.path.insert(0, os.path.join(root, egg_name))
                 sys.path.append(os.path.join(root, egg_name))
+
 
 def build_globals(debug):
     from pychron.initialization_parser import InitializationParser

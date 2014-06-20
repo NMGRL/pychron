@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -145,9 +145,9 @@ class Template(object):
         # for anaconda builds
         #copy qt.nib
         p = '/anaconda/python.app/Contents/Resources/qt_menu.nib'
-        if not os.path.isfile(p):
-            p='{}/{}'.format(os.path.expanduser('~'),
-                           '/anaconda/python.app/Contents/Resources/qt_menu.nib')
+        if not os.path.isdir(p):
+            p = '{}/{}'.format(os.path.expanduser('~'),
+                               'anaconda/python.app/Contents/Resources/qt_menu.nib')
 
         ins.copy_resource_dir(p)
 

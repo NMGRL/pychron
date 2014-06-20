@@ -1,6 +1,5 @@
-
-#===============================================================================
-# Copyright 2012 Jake Ross
+# ===============================================================================
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,43 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.etsconfig.api import ETSConfig
-ETSConfig.toolkit = "qt4"
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from helpers import entry_point
 
-from helpers import build_version
-build_version(setup_ver='_diode')
-
-
-def main():
-    """
-        entry point
-    """
-    from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.paths import build_directories, paths
-
-
-    # build directories
-    build_directories(paths)
-
-    logging_setup('pychron', level='DEBUG')
-
-    #===============================================================================
-    # test flag
-    # set if you want to execute tests after startup
-    # explicitly set the flag here once. mode is a readonly property
-    #===============================================================================
-    from pychron.globals import globalv
-    globalv._test = False
-
-
-    from pychron.envisage.pychron_run import launch
-
-    # import application
-    from pychron.applications.pydiode import PyDiode as app
-    launch(app)
-
-if __name__ == '__main__':
-    main()
+entry_point('pydiode', 'PyDiode', '_diode')
 #============= EOF =============================================

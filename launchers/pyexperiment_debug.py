@@ -1,5 +1,5 @@
-#===============================================================================
-# Copyright 2012 Jake Ross
+# ===============================================================================
+# Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,63 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.etsconfig.api import ETSConfig
-ETSConfig.toolkit = "qt4"
 
-# import gc
-# print gc.get_threshold()
-# gc.set_debug(gc.DEBUG_LEAK| gc.DEBUG_STATS)
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from launchers.helpers import entry_point
 
-source_version_id = ''
-setup_version_id='_dev'
-from helpers import build_version
-build_version(source_version_id,
-              setup_version_id, debug=True)
-def setup():
-    """
-        entry point
-    """
-    
-    from pychron.core.helpers.logger_setup import logging_setup
-    from pychron.paths import build_directories, paths
+entry_point('pyexperiment', 'PyExperiment', '_dev', debug=True)
 
-    # import application
-#    from pychron.applications.pydiode import PyDiode as app
-    from pychron.applications.pyexperiment import PyExperiment as app
-
-
-    # build directories
-    build_directories(paths)
-
-    #
-
-#    from pychron.core.helpers.paths import hidden_dir
-#    path = os.path.join(hidden_dir, 'version_info')
-#    a = VersionInfoDisplay(local_path=path,
-#                           src_path=os.path.join(SRC_DIR,
-#                           'version_info.txt'))
-#    a.check()
-    logging_setup('pychron', level='DEBUG')
-
-# #===============================================================================
-# # test flag
-# # set if you want to execute tests after startup
-# # explicitly set the flag here once. mode is a readonly property
-# #===============================================================================
-#     from pychron.globals import globalv
-#     globalv._test = False
-#     globalv.debug = DEBUG
-    return app
-
-
-def main():
-    from pychron.envisage.pychron_run import launch
-    app=setup()
-    launch(app)
-
-if __name__ == '__main__':
-    
-    main()
 #============= EOF =============================================
