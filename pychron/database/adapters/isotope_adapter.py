@@ -1131,6 +1131,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 atype=None,
                                 spectrometer=None,
                                 extract_device=None,
+                                projects = None,
                                 limit=None,
                                 exclude_uuids=None,
                                 ordering='desc'):
@@ -1147,6 +1148,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_MassSpectrometerTable)
             if extract_device:
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+            if projects:
+                q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
 
             if atype:
                 if isinstance(atype, (list, tuple)):
@@ -1159,6 +1162,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
             if extract_device:
                 q = q.filter(gen_ExtractionDeviceTable.name == extract_device)
+            if projects:
+                q = q.filter(gen_ProjectTable.name.in_(projects))
 
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp <= end,
                               meas_AnalysisTable.analysis_timestamp >= start))
