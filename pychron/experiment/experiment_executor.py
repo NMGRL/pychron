@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,7 +138,10 @@ class ExperimentExecutor(Loggable):
     _alive = Bool(False)
     _canceled = False
     _state_thread = None
+
     _end_flag = None
+    _complete_flag = None
+
     _prev_blanks = Dict
     _prev_baselines = Dict
     _err_message = String
@@ -319,7 +322,7 @@ class ExperimentExecutor(Loggable):
         exp = self.experiment_queue
         delay = exp.delay_before_analyses
         self._delay(delay, message='before')
-        
+
         for i, exp in enumerate(self.experiment_queues):
             if self.isAlive():
                 self._execute_queue(i, exp)
@@ -818,64 +821,66 @@ class ExperimentExecutor(Loggable):
         if wc.is_continued():
             self.stats.continue_clock()
 
-    def _set_extract_state(self, state, flash, color, period):
+    def _set_extract_state(self, state, *args):
+        """
+            state: str
+        """
         if state:
-            label = state.upper()
-            wait = False
-            if flash:
-                if self._end_flag:
-                    self._end_flag.set()
-                    wait = True
-                    # time.sleep(0.25)
-                    # self._end_flag.clear()
-                else:
-                    self._end_flag = Flag()
-
-                def loop():
-                    """
-                        freq== percent label is shown e.g 0.75 means display label 75% of the iterations
-                        iperiod== iterations per second (inverse period == rate)
-
-                    """
-                    # freq = flash
-                    # iperiod = 5
-                    # threshold = freq ** 2 * iperiod  # mod * freq
-
-                    #wait until previous loop finished.
-                    if wait:
-                        while self._end_flag.set():
-                            time.sleep(0.01)
-
-                    pattern = ((flash * period, True), ((1 - flash) * period, False))
-
-                    def pattern_gen(p):
-                        def f():
-                            i = 0
-                            while 1:
-                                try:
-                                    yield p[i]
-                                    i += 1
-                                except IndexError:
-                                    yield p[0]
-                                    i = 1
-
-                        return f()
-
-                    gen = pattern_gen(pattern)
-                    self._extraction_state_iter(gen, label, color, self._end_flag)
-
-                invoke_in_main_thread(loop)
-            else:
-                invoke_in_main_thread(self.trait_set, extraction_state_label=label,
-                                      extraction_state_color=color)
+            self._extraction_state_on(state, *args)
 
         else:
+            self._extraction_state_off()
+
+    def _extraction_state_on(self, state, flash, color, period, end):
+        """
+            flash: float (0.0 - 1.0) percent of period to be on. e.g if flash=0.75 and period=4,
+                    state displayed for 3 secs, then off for 1 sec
+            color: str
+            period: float
+        """
+        label = state.upper()
+        if flash:
             if self._end_flag:
                 self._end_flag.set()
-            else:
-                invoke_in_main_thread(self.trait_set, extraction_state_label='')
 
-    def _extraction_state_iter(self, gen, label, color, end_flag):
+                # wait until previous loop finished.
+                cf = self._complete_flag
+                while not cf.is_set():
+                    time.sleep(0.05)
+
+            else:
+                self._end_flag = Flag()
+                self._complete_flag = Flag()
+
+            def pattern_gen():
+                """
+                    infinite generator
+                """
+                pattern = ((flash * period, True), ((1 - flash) * period, False))
+                i = 0
+                while 1:
+                    try:
+                        yield pattern[i]
+                        i += 1
+                    except IndexError:
+                        yield pattern[0]
+                        i = 1
+
+            self._end_flag.clear()
+            self._complete_flag.clear()
+
+            invoke_in_main_thread(self._extraction_state_iter, pattern_gen(), label, color)
+        else:
+            invoke_in_main_thread(self.trait_set, extraction_state_label=label,
+                                  extraction_state_color=color)
+
+    def _extraction_state_off(self):
+        if self._end_flag:
+            self._end_flag.set()
+
+        invoke_in_main_thread(self.trait_set, extraction_state_label='')
+
+    def _extraction_state_iter(self, gen, label, color):
         t, state = gen.next()
         if state:
             self.trait_set(extraction_state_label=label,
@@ -883,11 +888,11 @@ class ExperimentExecutor(Loggable):
         else:
             self.trait_set(extraction_state_label='')
 
-        if not end_flag.isSet():
-            do_after(t * 1000, self._extraction_state_iter, gen, label, color, end_flag)
+        if not self._end_flag.is_set():
+            do_after(t * 1000, self._extraction_state_iter, gen, label, color)
         else:
+            self._complete_flag.set()
             self.trait_set(extraction_state_label='')
-            end_flag.clear()
 
     def _add_backup(self, uuid_str):
         with open(paths.backup_recovery_file, 'a') as fp:
@@ -900,10 +905,10 @@ class ExperimentExecutor(Loggable):
         r = r.replace('{}\n'.format(uuid_str), '')
         with open(paths.backup_recovery_file, 'w') as fp:
             fp.write(r)
-            #===============================================================================
-            # checks
-            #===============================================================================
 
+    #===============================================================================
+    # checks
+    #===============================================================================
     def _check_run_at_end(self, run):
         """
             check to see if an action should be taken
@@ -1058,7 +1063,6 @@ class ExperimentExecutor(Loggable):
                 self.warning_dialog('Automated Run Monitor Failed')
                 return
 
-
         with self.datahub.mainstore.db.session_ctx():
             dbr = self._get_preceding_blank_or_background(inform=inform)
             if not dbr is True:
@@ -1188,7 +1192,7 @@ Use Last "blank_{}"= {}
                                 ('Extraction', 'extract_script_name', 90)])
         sel.window_width = 750
         sel.title = 'Select Default Blank'
-        
+
         with db.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
             q = q.join(meas_MeasurementTable)
@@ -1208,7 +1212,7 @@ Use Last "blank_{}"= {}
             info = sel.edit_traits(kind='livemodal')
             if info.result:
                 return sel.selected
-                
+
     def _check_managers(self, inform=True):
         self.debug('checking for managers')
         if globalv.experiment_debug:
