@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,10 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
     ga = norm().rvs((ntrials, n))
     yp = zeros(n)
     res = zeros((ntrials, len(pts)))
+
+    pred = reg.fast_predict2
     for i in xrange(ntrials):
-        devs = perturb(reg, exog, nominal_ys, yes, ga[i], yp)
-        res[i] = devs
+        res[i] = perturb(pred, exog, nominal_ys, yes, ga[i], yp)
 
     res = res.T
     ret = zeros(len(pts))
@@ -45,13 +46,12 @@ def monte_carlo_error_estimation(reg, nominal_ys, pts, ntrials=100):
     return ret
 
 
-def perturb(reg, exog, nominal_ys, y_es, ga, yp):
+def perturb(pred, exog, nominal_ys, y_es, ga, yp):
     for i, (y, e) in enumerate(y_es):
         yp[i] = y + e * ga[i]
 
-    pys = reg.fast_predict(yp, exog)
+    pys = pred(yp, exog)
     return nominal_ys - pys
-
 
 
 if __name__ == '__main__':
@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     j = array(j)
 
-    for ni in (10, 100, 1000, 10000):
+    for ni in (10, 100, 1000, 10000, 20000):
         # for n in (10, 20, 100, 1000):
         r = PlaneFluxRegressor(xs=xy, ys=j, yserr=je, error_calc_type='SD')
         r.calculate(filtering=True)

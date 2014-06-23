@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,7 @@ class Initializer(Loggable):
         pd = self.pd
         if pd is not None:
 
-        #            offset = pd.progress_bar.control.GetValue()
+            # offset = pd.progress_bar.control.GetValue()
             offset = pd.get_value()
 
             if offset == pd.max - 1:
@@ -212,8 +212,8 @@ class Initializer(Loggable):
             self.load_timed_flags(manager, timed_flags)
 
         if valve_flags:
-            self.info('loading valve flags - {}'.format(','.join(timed_flags)))
-            self.load_timed_flags(manager, valve_flags_attrs)
+            self.info('loading valve flags - {}'.format(','.join(valve_flags_attrs)))
+            self.load_valve_flags(manager, valve_flags_attrs)
 
         if manager is not None:
             self.info('finish {} loading'.format(name))
@@ -303,15 +303,9 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
 
         return True
 
-    def load_devices(
-            self,
-            manager,
-            name,
-            devices,
-            plugin_name,
-    ):
-        '''
-        '''
+    def load_devices(self, manager, name, devices, plugin_name, ):
+        """
+        """
 
         opened = []
         devs = []
@@ -323,9 +317,7 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             if device == '':
                 continue
 
-            dev = None
-            pdev = self.parser.get_device(name, device, plugin_name,
-                                          element=True)
+            pdev = self.parser.get_device(name, device, plugin_name, element=True)
 
             dev_class = pdev.find('klass')
             if dev_class is not None:
@@ -355,7 +347,6 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             if dev.load():
 
                 # register the device
-
                 if self.application is not None:
                     # display with the HardwareManager
 
@@ -395,12 +386,14 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             #                time.sleep(0.25)
 
     def load_progress(self, n):
-        '''
-        '''
+        """
+        """
         pd = myProgressDialog(max=n, message='Welcome',
                               size=(500, 50))
         self.pd = pd
         self.pd.open()
+        self.pd.position = 100, 100
+
 
 
 # ========================= EOF ===================================

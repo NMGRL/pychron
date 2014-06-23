@@ -23,6 +23,19 @@ class Connectable(HasTraits):
     name = Str
     host = Str
     port = Int
+    kind = Str
     connected = Bool
+
+    # can this connection be used by the AutomatedRunMonitor
+    monitorable = False
+
+    def set_connection_parameters(self, obj):
+        if hasattr(obj, 'communicator'):
+            com = obj.communicator
+            self.host = com.host
+            self.port = com.port
+            self.kind = com.kind
+            self.monitorable = True
+
 
 #============= EOF =============================================

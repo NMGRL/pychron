@@ -1,29 +1,94 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
+# ============= enthought library imports =======================
 
-
-#============= enthought library imports =======================
-
-#============= standard library imports ========================
-from numpy import linspace, cos, sin, hstack
+# ============= standard library imports ========================
 import math
 import random
+
+from numpy import linspace, cos, sin, hstack
+
 #============= local library imports  ==========================
 from pychron.core.geometry.affine import AffineTransform
+
+
+def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
+
+    a = AffineTransform()
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+    # print offset, l
+    n = int((l + 2 * offset) / dx)
+    if n*dx<=l+2*offset:
+        n = n+1 if n%2 else n
+        dx = (l+2*offset)/float(n+1)
+        n = int((l + 2 * offset) / dx)
+
+    for i in xrange(0, n+1):
+        y = cy - offset if i % 2 else cy + offset
+        yield a.transform(cx - offset + dx * i, y)
+
+    if not single_pass:
+        for i in xrange(0, n+1):
+            y = cy - offset if i % 2 else cy + offset
+            yield a.transform(cx +l+offset - dx * i, y)
+        yield a.transform(cx-offset, cy+offset)
+
+def rubberband_pattern(cx, cy, offset, l, rotation):
+    p1 = cx - offset, cy + offset
+    p2 = cx + l + offset, cy + offset
+    p3 = cx + l + offset, cy - offset
+    p4 = cx - offset, cy - offset
+
+    a = AffineTransform()
+
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+
+    ps = (p1, p2, p3, p4, p1)
+    for p in ps:
+        yield a.transform(*p)
+
+
+def trough_pattern(cx, cy, length, width, rotation, use_x):
+    """
+    1 -------------- 2
+    |                |
+    4 -------------- 3
+    """
+    p1 = (cx, cy)
+    p2 = (cx + length, cy)
+    p3 = (cx + length, cy - width)
+    p4 = (cx, cy - width)
+
+    a = AffineTransform()
+    a.translate(cx, cy)
+    a.rotate(rotation)
+    a.translate(-cx, -cy)
+
+    if use_x:
+        ps = (p1, p2, p4, p3, p1)
+    else:
+        ps = (p1, p2, p3, p4, p1)
+
+    for p in ps:
+        yield a.transform(*p)
 
 
 def line_pattern(cx, cy, length, rotation, n):
@@ -32,9 +97,9 @@ def line_pattern(cx, cy, length, rotation, n):
 
     for i in xrange(n):
         a = AffineTransform()
-        a.translate(cx, 0)
+        a.translate(cx, cy)
         a.rotate(rotation)
-        a.translate(-cx, 0)
+        a.translate(-cx, -cy)
         if i % 2 == 0:
             ps = (p1, p2)
 

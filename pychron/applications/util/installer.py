@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ import plistlib
 import shutil
 import subprocess
 import imp
-import time
 
 DEFAULT_INIT = '''<root>
   <globals>
@@ -69,6 +68,7 @@ def install(name, setup_version='_install'):
     #setup application directory
     root = os.path.join(os.path.expanduser('~'), 'Pychrondata{}'.format(setup_version))
     wd = os.path.join(root, '.hidden', 'updates')
+
     #clone src code
     repo_name = 'pychron'
     url = 'https://github.com/NMGRL/{}.git'.format(repo_name)
@@ -155,8 +155,8 @@ def build_app(filename):
 
 #===========================================================
 class Builder(object):
-    root = None #path to working directory
-    dest = None #path to pychron.app/Contents
+    root = None  #path to working directory
+    dest = None  #path to pychron.app/Contents
     version = None
     icon_name = None
     launcher_name = None

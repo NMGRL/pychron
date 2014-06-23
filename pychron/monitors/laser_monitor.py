@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,8 @@ from monitor import Monitor
 # NFAILURES = 3
 # NTRIES = 3
 class LaserMonitor(Monitor):
-    '''
-    '''
+    """
+    """
     max_duration = Float(60)  # in minutes
     gntries = 0
 
@@ -35,8 +35,8 @@ class LaserMonitor(Monitor):
     _md_cnt = 0
 
     def _load_hook(self, config):
-        '''
-        '''
+        """
+        """
 
         self.set_attribute(config, 'max_duration',
                            'General', 'max_duration', cast='float', optional=True)
@@ -47,8 +47,8 @@ class LaserMonitor(Monitor):
         return True
 
     def _fcheck_duration(self):
-        '''
-        '''
+        """
+        """
         if self._md_cnt % self.max_duration_period == 0:
             self._check_duration()
 
@@ -57,8 +57,8 @@ class LaserMonitor(Monitor):
             self._md_cnt = 1
 
     def _check_duration(self, verbose=True):
-        '''
-        '''
+        """
+        """
         # check max duration
         manager = self.manager
         if verbose:
@@ -66,8 +66,9 @@ class LaserMonitor(Monitor):
 
         # max duration in mins convert to secs for comparison
         if time.time() - self.start_time > self.max_duration * 60.0:
-            self.warning('Max duration {} (min) exceeded'.format(self.max_duration))
-            manager.emergency_shutoff(reason='Max duration exceeded')
+            msg = 'Max duration {} (min) exceeded'.format(self.max_duration)
+            self.warning(msg)
+            manager.emergency_shutoff(reason=msg)
 
 
 #============= EOF ====================================

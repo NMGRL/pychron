@@ -120,8 +120,10 @@ class AnalysisGroup(HasTraits):
             v, e = self._calculate_weighted_mean('uage_wo_j_err', self.weighted_age_error_kind)
 
         e = self._modify_error(v, e, self.weighted_age_error_kind)
-
-        return ufloat(v, e)
+        try:
+            return ufloat(v, e)
+        except AttributeError:
+            return ufloat(0,0)
 
     def _modify_error(self, v, e, kind, mswd=None, include_j_error=None):
 

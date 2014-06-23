@@ -130,6 +130,7 @@ class gen_SampleTable(Base, NameMixin):
     alt_name = stringcolumn(80)
     lithology = stringcolumn(80)
     environment = stringcolumn(140)
+    rock_type = stringcolumn(80)
 
     sio2 = Column(Float(32))
     na2o = Column(Float(32))

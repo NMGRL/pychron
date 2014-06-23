@@ -1131,8 +1131,10 @@ class IsotopeAdapter(DatabaseAdapter):
                                 atype=None,
                                 spectrometer=None,
                                 extract_device=None,
+                                projects = None,
                                 limit=None,
-                                exclude_uuids=None):
+                                exclude_uuids=None,
+                                ordering='desc'):
 
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)
@@ -1146,6 +1148,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_MassSpectrometerTable)
             if extract_device:
                 q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+            if projects:
+                q = q.join(gen_LabTable, gen_SampleTable, gen_ProjectTable)
 
             if atype:
                 if isinstance(atype, (list, tuple)):
@@ -1158,13 +1162,15 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
             if extract_device:
                 q = q.filter(gen_ExtractionDeviceTable.name == extract_device)
+            if projects:
+                q = q.filter(gen_ProjectTable.name.in_(projects))
 
             q = q.filter(and_(meas_AnalysisTable.analysis_timestamp <= end,
                               meas_AnalysisTable.analysis_timestamp >= start))
             if exclude_uuids:
                 q = q.filter(not_(meas_AnalysisTable.uuid.in_(exclude_uuids)))
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            q = q.order_by(getattr(meas_AnalysisTable.analysis_timestamp, ordering)())
             if limit:
                 q = q.limit(limit)
 
@@ -1178,9 +1184,12 @@ class IsotopeAdapter(DatabaseAdapter):
             get analyses that have labnunmbers in lns.
             low_post and high_post used to filter a date range.
             posts are inclusive
+
+            returns (list, int)
+            list: list of analyses
+            int: number of analyses
+
         """
-        # if not hasattr(lns, '__iter__'):
-        #     lns = (lns, )
 
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable)

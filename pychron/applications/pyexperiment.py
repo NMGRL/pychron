@@ -21,16 +21,9 @@ from pychron.applications.pychron_application import PychronApplication
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+
 class PyExperiment(PychronApplication):
     id = 'pychron.experiment.application'
     name = 'pyExperiment'
 
-#     default_layout = [
-#                      TaskWindowLayout('tasks.hardware',),
-# #                     TaskWindowLayout('pychron.experiment',),
-# #                       TaskWindowLayout('pychron.spectrometer',),
-#                       ]
-#     def _default_layout_default(self):
-#         pass
-#         self.get_
 #============= EOF =============================================

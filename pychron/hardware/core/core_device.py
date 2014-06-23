@@ -175,6 +175,8 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
     def load_additional_args(self, config):
         """
+            remember to return a boolean in any subclass that overrides this method.
+            if True bootstraping of this device will continue. otherwise device will not fully initialize
         """
         return True
 

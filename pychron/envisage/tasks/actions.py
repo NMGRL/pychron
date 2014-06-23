@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,8 +49,21 @@ class IssueAction(WebAction):
         self._open_url(url)
 
 
+class NoteAction(WebAction):
+    name = 'Add Laboratory Note'
+    image = icon('insert-comment.png')
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        url = 'https://github.com/NMGRL/Laboratory/issues/new'
+        self._open_url(url)
+
+
 class AboutAction(Action):
-    name='About Pychron'
+    name = 'About Pychron'
+
     def perform(self, event):
         app = event.task.window.application
         app.about()
@@ -110,11 +123,12 @@ class CloseOthersAction(TaskAction):
 
 
 class OpenAdditionalWindow(TaskAction):
-    name='Open Additional Window'
+    name = 'Open Additional Window'
     description = 'Open an additional window of the current active task'
+
     def perform(self, event):
-        app=self.task.window.application
-        win=app.create_window(TaskWindowLayout(self.task.id))
+        app = self.task.window.application
+        win = app.create_window(TaskWindowLayout(self.task.id))
         win.open()
 
 

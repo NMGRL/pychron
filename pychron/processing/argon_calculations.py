@@ -30,6 +30,8 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
+
 #============= local library imports  ==========================
 
 
@@ -119,7 +121,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -138,8 +140,9 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
     from pychron.processing.plateau import Plateau
 
     p = Plateau(ages=ages,
-                errors=errors, signals=k39)
-    pidx = p.find_plateaus()
+                errors=errors,
+                signals=k39)
+    pidx = p.find_plateaus(method)
     # pidx = find_plateaus(ages, errors, k39,
     #                      overlap_sigma=2)
     if pidx:

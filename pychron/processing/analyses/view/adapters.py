@@ -103,7 +103,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         item = self.item
         if item.display_value:
             v = item.value
-            n = item.value_sig_figs
+            n = item.sig_figs
             return floatfmt(v, n=n, s=n)
         else:
             return ''
@@ -111,7 +111,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
     def _get_error_text(self):
         item = self.item
         v = item.error
-        n = item.error_sig_figs
+        n = item.sig_figs
         return floatfmt(v, n)
 
     def _get_percent_error_text(self):

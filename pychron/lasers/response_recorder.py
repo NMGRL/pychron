@@ -90,7 +90,8 @@ class ResponseRecorder(HasTraits):
 
     def stop(self):
         self._alive = False
-        self.data_manager.close_file()
+        if self.data_manager:
+            self.data_manager.close_file()
 
     def get_response_blob(self):
         if len(self.response_data):

@@ -1,20 +1,20 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Any, Array, Bool, Float
 #============= standard library imports ========================
 from numpy import vstack, array
@@ -58,6 +58,23 @@ class AutomatedRunMonitor(Monitor):
     ctemp = Float
     humidity = Float
 
+    _fatal_errors = List
+
+    def monitor(self):
+        self.clear_errors()
+        return super(AutomatedRunMonitor, self).monitor()
+
+    def clear_errors(self):
+        self._fatal_errors = []
+
+    def has_fatal_error(self):
+        """
+            return True if any of the checks yielded a fatal error
+        """
+        if self._fatal_errors:
+            self.warning('fatal errors: {}'.format('\n'.join(self._fatal_errors)))
+            return True
+
     def _load_hook(self, config):
         self.checks = []
         ok = True
@@ -67,7 +84,8 @@ class AutomatedRunMonitor(Monitor):
 
                 if 'Pressure' in pa and not ',' in pa:
                     self.warning_dialog(
-                        'Invalid Pressure Parameter in AutomatedRunMonitor, need to specify controller and name, e.g. Pressure, <controller>,<gauge_name>')
+                        'Invalid Pressure Parameter in AutomatedRunMonitor, '
+                        'need to specify controller and name, e.g. Pressure, <controller>,<gauge_name>')
                     ok = False
                     continue
 
@@ -98,15 +116,31 @@ class AutomatedRunMonitor(Monitor):
                     self.trait_set(**{ci.name.lower(): v})
 
             if ci.check_condition(v):
-                if self.automated_run:
-                    if self.automated_run.isAlive():
-                        self.automated_run.cancel()
-                        self.warning_dialog(ci.message)
+                self._fatal_errors.append(ci.message)
+                # if self.automated_run:
+                # if self.automated_run.isAlive():
+                #         self.automated_run.cancel()
+                #         self.warning_dialog(ci.message)
 
                 ok = False
                 break
 
+            if self.get_error():
+                ok = False
+                break
+
         return ok
+
+    def get_error(self):
+        pass
+
+    def get_pressure(self, controller, name):
+        elm = self.automated_run.extraction_line_manager
+        p = elm.get_pressure(controller, name)
+        return p
+
+    def set_additional_connections(self, cons):
+        pass
 
     def _get_value(self, q):
         elm = self.automated_run.extraction_line_manager
@@ -114,30 +148,55 @@ class AutomatedRunMonitor(Monitor):
         if dev:
             return dev.get()
 
-    def get_pressure(self, controller, name):
-        elm = self.automated_run.extraction_line_manager
-        p = elm.get_pressure(controller, name)
-        return p
-
 
 class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
     handle = None
+    handles = List
+    # def __init__(self, host, port, kind, *args, **kw):
+    # super(RemoteAutomatedRunMonitor, self).__init__(*args, **kw)
+    #     self.handle = EthernetCommunicator()
+    #     self.handle.host = host
+    #     self.handle.port = port
+    #     self.handle.kind = kind
 
-    def __init__(self, host, port, kind, *args, **kw):
-        super(RemoteAutomatedRunMonitor, self).__init__(*args, **kw)
-        self.handle = EthernetCommunicator()
-        self.handle.host = host
-        self.handle.port = port
-        self.handle.kind = kind
+    def load_additional_args(self, config, *args, **kw):
+        sec = 'Communications'
+        if sec in config.sections:
+            h = self.config_get(config, sec, 'host')
+            p = self.config_get(config, sec, 'port')
+            k = self.config_get(config, sec, 'kind')
+            self.handle = self._handle_factory(h, p, k)
+            self.handles.append(self.handle)
 
-    def _get_value(self, name):
-        p = self.handle.ask('Read {}'.format(name))
-        return self._float(p)
+    def _handle_factory(self, h, p, k):
+        ec = EthernetCommunicator()
+        ec.trait_set(host=h, port=p, kind=k)
+        return ec
+
+    def set_additional_connections(self, cons):
+        for c in cons:
+            if c.monitorable:
+                h = self._handle_factory(c.host, c.port, c.kind)
+                self.handles.append(h)
+
+    def get_error(self):
+        error = False
+        for h in self.handles:
+            e = h.ask('GetError')
+            if e:
+                self._fatal_errors.append(e)
+                error = True
+
+        return error
 
     def get_pressure(self, controller, name):
         cmd = 'GetPressure {}, {}'.format(controller, name)
         p = self.handle.ask(cmd)
         return self._float(p, default=1.0)
+
+    def _get_value(self, name):
+        p = self.handle.ask('Read {}'.format(name))
+        return self._float(p)
 
     def _float(self, p, default=0.0):
         try:

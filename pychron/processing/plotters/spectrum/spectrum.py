@@ -84,7 +84,7 @@ class Spectrum(BaseArArFigure):
         self.xs = c39s
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
-        graph.set_y_title('Age ({})'.format(au))
+        graph.set_y_title('Apparent Age ({})'.format(au))
 
         spec = self._add_plot(xs, ys, es, pid, po)
         spec.line_style = self.options.center_line_style
@@ -106,8 +106,7 @@ class Spectrum(BaseArArFigure):
             e = plateau_age.std_dev * self.options.nsigma
             info_txt = self._build_label_text(plateau_age.nominal_value, e,
                                               plateau_mswd, valid_mswd, nsteps,
-                                              value_sig_figs=self.options.plateau_sig_figs,
-                                              error_sig_figs=self.options.plateau_error_sig_figs)
+                                              sig_figs=self.options.plateau_sig_figs)
 
             overlay = self._add_plateau_overlay(spec, platbounds, plateau_age,
                                                 ys[::2], es[::2],
@@ -359,7 +358,7 @@ class Spectrum(BaseArArFigure):
         age, error = tga.nominal_value, tga.std_dev
         error *= self.options.nsigma
 
-        txt = self._build_label_text(age, error, *args, value_sig_figs=2, error_sig_figs=3)
+        txt = self._build_label_text(age, error, *args, sig_figs=2)
         return 'Integrated Age= {}'.format(txt)
         #============= EOF =============================================
         # def _get_plateau(self, analyses, exclude=None):

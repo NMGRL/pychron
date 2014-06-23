@@ -110,6 +110,11 @@ class BasePDFWriter(Loggable):
             doc.build(flowables)
 
     def _build(self, *args, **kw):
+        """
+            return a tuple of reportlab flowables and templates.
+            templates are optional but you must at least return None
+            e.g [f1,f2],[]
+        """
         raise NotImplementedError
 
     def _new_paragraph(self, t, s='Normal', **skw):

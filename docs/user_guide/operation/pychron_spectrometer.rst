@@ -2,9 +2,9 @@ Pychron and the Spectrometer
 =============================
 
 .. toctree::
-   :maxdepth: 2
+:maxdepth: 2
 
-   measurement_script
+       measurement_script
 
 Source Parameters
 -----------------------------
@@ -64,7 +64,7 @@ Pyscript Commands
     set_source_parameters()
     
     # ExtractionLens, YSymmetry, ZSymmetry, ZFocus
-    set_source_optics()   
+    set_source_optics()
 
 Config file Example
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -390,11 +390,17 @@ class ExtractionLineManager(Manager):
                           description=None, address=None, mode='remote', **kw):
         vm = self.valve_manager
         if vm is not None:
+            oname = name
             if address:
                 name = vm.get_name_by_address(address)
 
             if description and description != '---':
                 name = vm.get_name_by_description(description)
+
+            #check if specified valve is in the valves.xml file
+            if not name:
+                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                return False
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
@@ -435,16 +441,18 @@ class ExtractionLineManager(Manager):
             set check_master_owner=True
             
         """
+        ret = True
         if self.mode == 'client' or self.check_master_owner:
             if requestor is None:
                 requestor = gethostbyname(gethostname())
 
             self.debug('checking ownership. requestor={}'.format(requestor))
-            if name in self.valve_manager.valves:
+            try:
                 v = self.valve_manager.valves[name]
-                return not (v.owner and v.owner != requestor)
-
-        return True
+                ret = not (v.owner and v.owner != requestor)
+            except KeyError:
+                pass
+        return ret
 
     def _set_pipette_counts(self, name, value):
         for c in self._canvases:

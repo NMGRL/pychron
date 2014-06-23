@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ from traits.api import HasTraits, List, Dict
 #============= standard library imports ========================
 import csv
 from pychron.loggable import Loggable
-from pychron.pychron_constants import ARGON_KEYS, IRRADIATION_KEYS, DECAY_KEYS
+from pychron.pychron_constants import IRRADIATION_KEYS, DECAY_KEYS
 #============= local library imports  ==========================
 # from pychron.core.stats import calculate_mswd, calculate_weighted_mean
 # from pychron.data_processing.argon_calculations import calculate_arar_age, find_plateaus
@@ -97,7 +97,7 @@ class AutoupdateParser(Loggable):
                 try:
                     params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
                 except ZeroDivisionError:
-                    params['k_ca']=0
+                    params['k_ca'] = 0
 
                 params['k_ca_err'] = get_value('Ca_Over_K_Er')
 
@@ -111,7 +111,10 @@ class AutoupdateParser(Loggable):
                 params['Isoch_39_40err'] = get_value('Pct_i39_Over_40_Er')
                 params['Isoch_36_40err'] = get_value('Pct_i36_Over_40_Er')
 
-                for si in ARGON_KEYS:
+                fts = get_value('Fit_Type', cast=str)
+
+                #mass spec measures 36 before 37
+                for i, si in enumerate(('Ar40', 'Ar39', 'Ar38', 'Ar36', 'Ar37')):
                     params[si] = get_value('{}_'.format(si))
                     bs_only = '{}_BslnCorOnly'.format(si)
                     bs_only_err = '{}_Er_BslnCorOnly'.format(si)
@@ -129,6 +132,7 @@ class AutoupdateParser(Loggable):
                     cetag = '{}_DecayCor'.format(si)
                     params[ctag] = get_value(ctag)
                     params[cetag] = get_value(cetag)
+                    params['{}_fit'.format(si)] = fts[i]
 
                 for attr, key in DECAY_KEYS:
                     params[attr] = float(get_value(key))
@@ -148,7 +152,7 @@ class AutoupdateParser(Loggable):
                 try:
                     v = cast(v)
                 except ValueError:
-                    v=0
+                    v = 0
         except IndexError:
             v = default
 

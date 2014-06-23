@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -262,6 +262,7 @@ class QPrimitive(Primitive):
 class Connectable(QPrimitive):
     connections = List
     volume = Float
+
     @on_trait_change('x,y')
     def _update_xy(self):
         for t, c in self.connections:
@@ -1054,10 +1055,9 @@ class Polygon(QPrimitive):
 
 
 class Image(QPrimitive):
-    search_path = Str
     _cached_image = None
     _image_cache_valid = False
-    scale = (1, 1)
+    scale = None
 
     def _render_(self, gc):
         if not self._image_cache_valid:
@@ -1066,11 +1066,10 @@ class Image(QPrimitive):
         if self._cached_image:
             x, y = self.get_xy()
             gc.translate_ctm(x, y)
-            gc.scale_ctm(*self.scale)
-            gc.draw_image(self._cached_image,
-                          #                           rect=(other_component.x, other_component.y,
-                          #                                 other_component.width, other_component.height)
-            )
+            if self.scale:
+                gc.scale_ctm(*self.scale)
+
+            gc.draw_image(self._cached_image, rect=(0, 0, self.canvas.width, self.canvas.height))
 
     def _compute_cached_image(self):
         pic = PImage.open(self.path)
@@ -1079,12 +1078,11 @@ class Image(QPrimitive):
             data = data.copy()
 
         if data.shape[2] == 3:
-            kiva_depth = "rgb24"
+            kiva_depth = 'rgb24'
         elif data.shape[2] == 4:
-            kiva_depth = "rgba32"
+            kiva_depth = 'rgba32'
         else:
-            raise RuntimeError, "Unknown colormap depth value: %i" \
-                                % data.value_depth
+            raise RuntimeError('Unknown colormap depth value: {}'.format(data.value_depth))
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True

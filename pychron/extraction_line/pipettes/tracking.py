@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,14 +91,16 @@ class PipetteTracker(Loggable):
     def _dump(self):
         d = dict(
             counts=self.counts,
-            last_shot_time=generate_datetimestamp()
-        )
+            last_shot_time=generate_datetimestamp())
 
         return d
 
     def _get_path_id(self):
-        return os.path.join(paths.hidden_dir, '{}_{}-{}'.format(self.name,
-                                                                self.inner,
-                                                                self.outer))
+        #handle legacy format
+        p = os.path.join(paths.hidden_dir, 'pipette-{}_{}'.format(self.inner, self.outer))
+        if not os.path.isfile(p):
+            p = os.path.join(paths.hidden_dir, '{}_{}-{}'.format(self.name, self.inner, self.outer))
+
+        return p
 
 #============= EOF =============================================

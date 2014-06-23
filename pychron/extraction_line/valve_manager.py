@@ -335,8 +335,8 @@ class ValveManager(Manager):
                     D,E owned by 150
                     F free
         """
-        self.valves['C'].owner = '129.138.12.135'
-        self.valves['X'].owner = '129.138.12.135'
+        #self.valves['C'].owner = '129.138.12.135'
+        #self.valves['X'].owner = '129.138.12.135'
 
         vs = [(v.name.split('-')[1], v.owner) for v in self.valves.itervalues()]
         key = lambda x: x[1]
@@ -475,6 +475,7 @@ class ValveManager(Manager):
         return state
 
     def get_actuator_by_name(self, name):
+        act = None
         if self.actuators:
             act = next((a for a in self.actuators
                         if a.name == name), None)
@@ -706,10 +707,10 @@ class ValveManager(Manager):
         if cae is not None:
             check_actuation_enabled = to_bool(cae.text.strip())
 
-        check_actuation_delay = True
+        check_actuation_delay = 0
         cad = v_elem.find('check_actuation_delay')
         if cad is not None:
-            check_actuation_delay = to_bool(cad.text.strip())
+            check_actuation_delay = float(cad.text.strip())
 
         hv = klass(name,
                    address=address.text.strip() if address is not None else '',

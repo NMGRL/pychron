@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,10 +101,46 @@ class SampleLoader(Loggable):
                     print 'no sample in db for {}'.format(sample)
         progress.close()
 
+    def _import_rock_type(self, manager, p):
+        xp = XLSParser()
+        xp.load(p)
+        db = manager.db
+        rock_type_map = {'L': 'Lava',
+                         'LAg': 'Lava/Agglutinate',
+                         'L(gl)': 'Lava glassy',
+                         'B': 'Autobreccia',
+                         'B(gl)': 'Hyaloclastite Breccia',
+                         'D': 'Dike',
+                         'VZI': 'Vent zone intrusion',
+                         'T': 'Pyroclastic Tuff or Lapilli Tuff',
+                         'S': 'Polymict sediment',
+                         'T(gl)': 'Hydrovolcanic tuff  aka hyalotuff'}
+
+        with db.session_ctx():
+            progress = manager.open_progress(xp.nrows)
+            for args in xp.itervalues(keys=['ID', 'MapCode']):
+                sample = args['ID']
+                sample = '{}-{}'.format(sample[:4], sample[4:])
+                progress.change_message('Setting sample {}'.format(sample))
+
+                dbsample = db.get_sample(sample, project='Minna Bluff', verbose=False)
+                if dbsample:
+                    # rock_type = rock_type_map[args['MapCode']]
+                    rock_type = args['MapCode'].strip()
+                    if rock_type in rock_type_map:
+                        dbsample.rock_type = rock_type
+                    else:
+                        dbsample.rock_type = ''
+                        # print sample, rock_type
+                else:
+                    print 'no sample in db for {}'.format(sample)
+        progress.close()
+
     def do_import(self, manager, p):
         # self._import_lithologies(manager,p)
         # self._import_tas(manager, p)
-        self._import_environment(manager, p)
+        # self._import_environment(manager, p)
+        self._import_rock_type(manager, p)
         return
 
         xp = XLSParser()

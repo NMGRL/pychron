@@ -23,7 +23,6 @@ import re
 import math
 from numpy import where, delete
 #============= local library imports  ==========================
-from pychron.core.codetools.inspection import caller_stack
 from tinv import tinv
 from pychron.core.stats.core import calculate_mswd, validate_mswd
 from pychron.pychron_constants import ALPHAS
@@ -212,7 +211,7 @@ class BaseRegressor(HasTraits):
 
         return ((x - xm) ** 2).sum()
 
-    def tostring(self, sig_figs=5, error_sig_figs=5):
+    def tostring(self, sig_figs=5):
 
         cs = self.coefficients[::-1]
         ce = self.coefficient_errors[::-1]
@@ -223,8 +222,8 @@ class BaseRegressor(HasTraits):
             fmt = '{{:0.{}e}}' if abs(ci) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
             ci = fmt.format(sig_figs).format(ci)
 
-            fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -error_sig_figs) else '{{:0.{}f}}'
-            ei = fmt.format(error_sig_figs).format(ei)
+            fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
+            ei = fmt.format(sig_figs).format(ei)
 
             vfmt = u'{}= {} +/- {} {}'
             coeffs.append(vfmt.format(a, ci, ei, pp))

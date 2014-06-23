@@ -240,6 +240,9 @@ class Experimentor(IsotopeDatabaseManager):
     def execute_queues(self, queues):
         self.debug('setup executor')
 
+        names = ','.join([e.name for e in queues])
+        self.debug('queues: n={}, names={}'.format(len(queues), names))
+
         self.executor.trait_set(
             experiment_queues=queues,
             experiment_queue=queues[0],

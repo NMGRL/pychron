@@ -15,12 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import List, Property, Int
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 #============= EOF =============================================
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 
@@ -35,6 +37,9 @@ class BrowserAdapter(TabularAdapter):
 
 class ProjectAdapter(BrowserAdapter):
     columns = [('Name', 'name')]
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect'))
 
 
 class SampleAdapter(BrowserAdapter):
@@ -53,3 +58,6 @@ class SampleAdapter(BrowserAdapter):
     name_width = Int(125)
     labnumber_width = Int(60)
     material_width = Int(75)
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Unselect', action='unselect'))

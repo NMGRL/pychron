@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,8 +63,9 @@ class Bar(QFrame):
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
         vs = self.cmap(nv)[:3]
-        self.value = map(lambda x:x * 255, vs)
+        self.value = map(lambda x: x * 255, vs)
         self.update()
+
 
 class _BarGaugeEditor(Editor):
     def init(self, parent):
@@ -80,12 +81,14 @@ class _BarGaugeEditor(Editor):
         if self.control:
             self.control.set_value(self.value)
 
+
 class BarGaugeEditor(BasicEditorFactory):
     klass = _BarGaugeEditor
     low = Float
     high = Float
     color_scalar = Int(1)
-    scale = Str
+    scale = Str('power')
     colormap = Str('jet')
     width = Int(100)
+
 #============= EOF =============================================

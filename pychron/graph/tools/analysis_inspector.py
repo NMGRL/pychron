@@ -120,7 +120,11 @@ class AnalysisPointInspector(PointInspector):
                              '{}= {}'.format(name, y)])
 
                     if self.additional_info is not None:
-                        lines.append(self.additional_info(analysis))
+                        ad = self.additional_info(analysis)
+                        if isinstance(ad, (list, tuple)):
+                            lines.extend(ad)
+                        else:
+                            lines.append(ad)
 
                     if i < n - 1:
                         lines.append('--------')

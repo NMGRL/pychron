@@ -26,6 +26,7 @@ from pychron.viewable import Viewable
 class FlagManager(Viewable):
     flags = List(Flag)
     timed_flags = List(TimedFlag)
+    valve_flags = List(Flag)
 
     def add_flag(self, f):
         self.flags.append(f)
@@ -41,15 +42,11 @@ class FlagManager(Viewable):
                  VGroup(
                      self._flag_item_factory('flags', 'Flags'),
                      self._flag_item_factory('timed_flags', 'Timed Flags'),
-                     self._flag_item_factory('valve_flags', 'Valve Flags'),
-                     ),
-
+                     self._flag_item_factory('valve_flags', 'Valve Flags')),
                  title='Flag Manager',
                  width=300,
                  handler=self.handler_klass,
-#                 height=300
-                 resizable=True
-                 )
+                 resizable=True)
         return v
 
     def _flag_item_factory(self, name, label):
@@ -57,13 +54,9 @@ class FlagManager(Viewable):
                       style='readonly',
                       editor=ListEditor(editor=InstanceEditor(editable=True),
                                         style='custom',
-                                        )
-                      ),
-#                     visible_when=name,
-#                     defined_when=name,
+                      )),
                      show_border=True,
-                     label=label
-                     )
+                     label=label)
 
 
 from traits.api import Button

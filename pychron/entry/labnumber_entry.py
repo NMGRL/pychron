@@ -26,6 +26,7 @@ from pyface.image_resource import ImageResource
 import os
 #============= local library imports  ==========================
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
+from pychron.core.helpers.ctx_managers import no_update
 from pychron.database.defaults import load_irradiation_map
 from pychron.entry.editors.irradiation_editor import IrradiationEditor
 from pychron.entry.editors.level_editor import LevelEditor, load_holder_canvas, iter_geom
@@ -42,15 +43,15 @@ from pychron.entry.irradiated_position import IrradiatedPosition
 from pychron.database.orms.isotope.gen import gen_ProjectTable, gen_SampleTable
 
 
-class save_ctx(object):
-    def __init__(self, p):
-        self._p = p
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._p.information_dialog('Changes saved to database')
+# class save_ctx(object):
+# def __init__(self, p):
+#         self._p = p
+#
+#     def __enter__(self):
+#         pass
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self._p.information_dialog('Changes saved to database')
 
 
 class dirty_ctx(object):
@@ -99,6 +100,7 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     dirty = Bool
     suppress_dirty = Bool
+    _no_update = Bool
 
     #labnumber_generator = Instance(LabnumberGenerator)
     monitor_name = Str
@@ -118,9 +120,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
 
     #    self.populate_default_tables()
     def save_tray_to_db(self, p, name):
-        with save_ctx(self):
-            with self.db.session_ctx():
-                load_irradiation_map(self.db, p, name, overwrite_geometry=True)
+        with self.db.session_ctx():
+            load_irradiation_map(self.db, p, name, overwrite_geometry=True)
+        self._inform_save()
 
     def set_selected_sample(self, new):
         self.selected_sample = new
@@ -169,8 +171,10 @@ class LabnumberEntry(IsotopeDatabaseManager):
                 w.build(out, irrad)
 
     def save(self):
-        with save_ctx(self):
+        if self._validate_save():
             self._save_to_db()
+            self._inform_save()
+            return True
 
     def generate_labnumbers(self):
         ok = True
@@ -229,8 +233,9 @@ class LabnumberEntry(IsotopeDatabaseManager):
         geom = holder.geometry
         with dirty_ctx(self):
             if geom:
-                self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
-                                             for c, (x, y, r) in iter_geom(geom)]
+                with no_update(self):
+                    self.irradiated_positions = [IrradiatedPosition(hole=c + 1, pos=(x, y))
+                                                 for c, (x, y, r) in iter_geom(geom)]
             elif holder.name:
                 self._load_holder_positons_from_file(holder.name)
 
@@ -242,6 +247,32 @@ class LabnumberEntry(IsotopeDatabaseManager):
             nholes, _diam = line.split(',')
             self.irradiated_positions = [IrradiatedPosition(hole=ni + 1)
                                          for ni in range(int(nholes))]
+
+    def _validate_save(self):
+        """
+            validate positions. ensure sample has material and project
+        """
+        no = []
+        for irs in self.irradiated_positions:
+            if irs.labnumber:
+                n = []
+                if not irs.sample:
+                    n.append('No sample')
+                if not irs.project:
+                    n.append('No project')
+                if not irs.material:
+                    n.append('No material')
+
+                if n:
+                    no.append('Position={} L#={}\n    {}'.format(irs.hole, irs.labnumber, ', '.join(n)))
+        if no:
+            self.information_dialog('Missing Information\n{}'.format('\n'.join(no)))
+            return
+        else:
+            return True
+
+    def _inform_save(self):
+        self.information_dialog('Changes saved to Database')
 
     def _save_to_db(self):
         db = self.db
@@ -364,9 +395,28 @@ class LabnumberEntry(IsotopeDatabaseManager):
             return name
 
 
-            #===============================================================================
-            # handlers
-            #===============================================================================
+    # ===============================================================================
+    # handlers
+    #===============================================================================
+    @on_trait_change('irradiated_positions:sample')
+    def _handle_entry(self, obj, name, old, new):
+        if not self._no_update:
+            if not new:
+                obj.material = ''
+                obj.project = ''
+            else:
+                db = self.db
+                with db.session_ctx():
+                    dbsam = db.get_sample(new)
+                    if dbsam:
+                        if not obj.material:
+                            if dbsam.material:
+                                obj.material = dbsam.material.name
+
+                        if not obj.project:
+                            if dbsam.project:
+                                obj.project = dbsam.project.name
+
 
     @on_trait_change('canvas:selected')
     def _handle_canvas_selected(self, new):
@@ -497,13 +547,14 @@ available holder positions {}'.format(n, len(self.irradiated_positions)))
 
     # @simple_timer()
     def _make_positions(self, n, positions):
-        for pi in positions:
-            hi = pi.position - 1
-            if hi < n:
-                ir = self.irradiated_positions[hi]
-                self._sync_position(pi, ir)
-            else:
-                self.debug('extra irradiation position for this tray {}'.format(hi))
+        with no_update(self):
+            for pi in positions:
+                hi = pi.position - 1
+                if hi < n:
+                    ir = self.irradiated_positions[hi]
+                    self._sync_position(pi, ir)
+                else:
+                    self.debug('extra irradiation position for this tray {}'.format(hi))
 
     def _sync_position(self, dbpos, ir):
         ln = dbpos.labnumber

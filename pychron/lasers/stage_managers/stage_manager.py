@@ -101,7 +101,7 @@ class StageManager(Manager):
 
     move_thread = None
     temp_position = None
-    _temp_hole = None
+    temp_hole = None
     linear_move_history = List
 
     keyboard_focus = Event
@@ -147,15 +147,13 @@ class StageManager(Manager):
         bind_preference(self.canvas, 'show_laser_position', '{}.show_laser_position'.format(pref_id))
         bind_preference(self.canvas, 'show_desired_position', '{}.show_laser_position'.format(pref_id))
         bind_preference(self.canvas, 'desired_position_color', '{}.desired_position_color'.format(pref_id),
-                        factory=ColorPreferenceBinding
-        )
+                        factory=ColorPreferenceBinding)
         #        bind_preference(self.canvas, 'render_map', '{}.render_map'.format(pref_id))
         #
         bind_preference(self.canvas, 'crosshairs_kind', '{}.crosshairs_kind'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_color',
                         '{}.crosshairs_color'.format(pref_id),
-                        factory=ColorPreferenceBinding
-        )
+                        factory=ColorPreferenceBinding)
         bind_preference(self.canvas, 'crosshairs_radius', '{}.crosshairs_radius'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsetx', '{}.crosshairs_offsetx'.format(pref_id))
         bind_preference(self.canvas, 'crosshairs_offsety', '{}.crosshairs_offsety'.format(pref_id))
@@ -229,6 +227,13 @@ class StageManager(Manager):
 
     def accept_point(self):
         self.points_programmer.accept_point()
+
+    def get_stage_map(self):
+        """
+            return current StageMap object
+            different than self.stage_map. self.stage_map returns the "name" of the current stage map
+        """
+        return self._stage_map
 
     def set_stage_map(self, v):
         return self._set_stage_map(v)
@@ -808,7 +813,9 @@ class StageManager(Manager):
 
     def _move_to_hole(self, key, correct_position=True):
         self.info('Move to hole {} type={}'.format(key, str(type(key))))
+        self.temp_hole = key
         self.temp_position = self._stage_map.get_hole_pos(key)
+
         pos = self._stage_map.get_corrected_hole_pos(key)
         self.info('position {}'.format(pos))
         if pos is not None:
