@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -185,23 +185,40 @@ class MainView(HasTraits):
 
         return cv
 
-    def _get_non_corrected_ratio(self, nd):
-        n, d = nd.split('/')
-        niso, diso = self._get_isotope(n), self._get_isotope(d)
+    def _get_non_corrected_ratio(self, niso, diso):
+        """
+            niso: Isotope
+            diso: Isotope
+            return ufloat
+
+            calculate non_corrected ratio as
+            r = (Intensity_A-baseline_A-blank_A)/(Intensity_B-baseline_B-blank_B)
+
+        """
+
         if niso and diso:
             try:
-                return niso / diso
+                return niso.get_corrected_value() / diso.get_corrected_value()
             except ZeroDivisionError:
                 pass
 
         return ufloat(0, 1e-20)
 
-    def _get_corrected_ratio(self, nd):
-        n, d = nd.split('/')
-        niso, diso = self._get_isotope(n), self._get_isotope(d)
+    def _get_corrected_ratio(self, niso, diso):
+        """
+            niso: Isotope
+            diso: Isotope
+            return ufloat, ufloat
+
+            calculate corrected ratio as
+            r = IC_A*(Intensity_A-baseline_A-blank_A)/(IC_B*(Intensity_B-baseline_B-blank_B))
+            rr = IC_B/IC_A
+        """
+
         if niso and diso:
             try:
-                return niso.get_ic_corrected_value() / diso.get_ic_corrected_value(), diso.ic_factor / niso.ic_factor
+                return (niso.get_ic_corrected_value() / diso.get_ic_corrected_value(),
+                        diso.ic_factor / niso.ic_factor)
             except (ZeroDivisionError, TypeError):
                 pass
         return ufloat(0, 1e-20), 1
@@ -209,13 +226,16 @@ class MainView(HasTraits):
     def _update_ratios(self, an):
         for ci in self.computed_values:
             nd = ci.detectors
-            r = self._get_non_corrected_ratio(nd)
-            rr, ic = self._get_corrected_ratio(nd)
+            n, d = nd.split('/')
+            niso, diso = self._get_isotope(n), self._get_isotope(d)
 
-            ci.trait_set(value=floatfmt(rr.nominal_value),
-                         error=floatfmt(rr.std_dev),
-                         noncorrected_value=r.nominal_value,
-                         noncorrected_error=r.std_dev,
+            noncorrected = self._get_non_corrected_ratio(niso, diso)
+            corrected, ic = self._get_corrected_ratio(niso, diso)
+
+            ci.trait_set(value=floatfmt(nominal_value(corrected)),
+                         error=floatfmt(std_dev(corrected)),
+                         noncorrected_value=nominal_value(noncorrected),
+                         noncorrected_error=std_dev(noncorrected),
                          ic_factor=nominal_value(ic))
 
     def _load_air_computed(self, an, new_list):
