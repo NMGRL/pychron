@@ -1106,9 +1106,12 @@ Use Last "blank_{}"= {}
             #if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
-
             if ban:
                 nopreceding = aruns.index(ban) > anidx
+            else:
+                #if first run is a blank_... just use it
+                if aruns[0].analysis_type.startswith('blank'):
+                    return True
 
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
