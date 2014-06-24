@@ -61,7 +61,7 @@ class ApisController(CoreDevice):
         self.isolation_info = self.config_get(config, 'Isolation', 'info', optional=True)
         self.isolation_gosub = self.config_get(config, 'Isolation', 'gosub', optional=True)
 
-        self.isolation_valve=v.replace('"','').replace("'",'')
+        self.isolation_valve = v.replace('"', '').replace("'", '')
 
         return True
 
@@ -111,10 +111,15 @@ class ApisController(CoreDevice):
 
             if self.isolation_info:
                 script.console_info(self.isolation_info)
-            script.close(self.isolation_valve)
+
+            iv = self.isolation_valve
+            iv=iv.split(',')
+
+            for v in iv:
+                script.close(v.strip())
 
         script.console_info('wait for apis to complete expansion')
-        return self.blocking_poll('get_loading_complete',script=script, **kw)
+        return self.blocking_poll('get_loading_complete', script=script, **kw)
 
     def make_command(self, cmd):
         try:
