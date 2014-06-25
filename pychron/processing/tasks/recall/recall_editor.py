@@ -28,6 +28,8 @@ class RecallEditor(BaseTraitsEditor):
     #analysis_summary = Any
 
     name = Property(depends_on='analysis_view.analysis_id')
+    basename = Property(depends_on='analysis_view.analysis_id')
+    instance_id = 0
 
     def set_items(self, items):
         self.model = items[0]
@@ -41,6 +43,15 @@ class RecallEditor(BaseTraitsEditor):
 
     def _get_name(self):
         #if self.model and self.model.analysis_view:
+        if self.analysis_view:
+            r = self.analysis_view.analysis_id
+            if self.instance_id:
+                r='{} #{}'.format(r,self.instance_id+1)
+            return r
+        else:
+            return 'None'
+
+    def _get_basename(self):
         if self.analysis_view:
             return self.analysis_view.analysis_id
         else:

@@ -29,8 +29,9 @@ class AnalysisTable(HasTraits):
     selected = Any
     dclicked = Any
 
-    replace_event = Event
-    append_event = Event
+    # replace_event = Event
+    # append_event = Event
+    context_menu_event = Event
 
     analysis_filter = Str
     analysis_filter_values = List

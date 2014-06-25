@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -147,10 +147,12 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
-    def recall(self, records):
+    def recall(self, records, open_copy=False):
         """
             if analysis is already open activate the editor
             otherwise open a new editor
+
+            if open_copy is True, allow multiple instances of the same analysis
         """
         self.debug('recalling records {}'.format(records))
 
@@ -159,16 +161,20 @@ class AnalysisEditTask(BaseBrowserTask):
         elif isinstance(records, tuple):
             records = list(records)
 
-        editor = None
-        #check if record already is open
-        for r in records:
-            editor = self._get_editor_by_uuid(r.uuid)
-            if editor:
-                records.remove(r)
+        existing = None
+        if not open_copy:
+            editor = None
+            #check if record already is open
+            for r in records:
+                editor = self._get_editor_by_uuid(r.uuid)
+                if editor:
+                    records.remove(r)
 
-        #activate editor if open
-        if editor:
-            self.activate_editor(editor)
+            #activate editor if open
+            if editor:
+                self.activate_editor(editor)
+        else:
+            existing = [e.basename for e in self.editor_area.editors]
 
         if records:
             ans = self.manager.make_analyses(records,
@@ -180,6 +186,9 @@ class AnalysisEditTask(BaseBrowserTask):
                 for rec in ans:
                     editor = RecallEditor(analysis_view=rec.analysis_view,
                                           model=rec)
+                    if existing and editor.basename in existing:
+                        editor.instance_id =existing.count(editor.basename)
+
                     self.editor_area.add_editor(editor)
 
                 ed = self.editor_area.editors[-1]
@@ -401,13 +410,13 @@ class AnalysisEditTask(BaseBrowserTask):
             return True
 
 
-    def _recall_item(self, item):
+    def _recall_item(self, item, open_copy=False):
         if not self.external_recall_window:
-            self.recall(item)
+            self.recall(item, open_copy=open_copy)
         else:
-            self._open_external_recall_editor(item)
+            self._open_external_recall_editor(item, open_copy=open_copy)
 
-    def _open_external_recall_editor(self, sel):
+    def _open_external_recall_editor(self, sel, open_copy=False):
         tid = 'pychron.recall'
         app = self.window.application
 
@@ -500,6 +509,7 @@ class AnalysisEditTask(BaseBrowserTask):
     def _graphical_filter_hook(self, ans, is_append):
         if self.active_editor:
             self.active_editor.set_items(ans, is_append)
+
     #===============================================================================
     # handlers
     #===============================================================================
@@ -604,13 +614,23 @@ class AnalysisEditTask(BaseBrowserTask):
         if new:
             self._recall_item(new.item)
 
-    @on_trait_change('analysis_table:[append_event,replace_event]')
-    def _analysis_table_append_replace(self, name, new):
-        self._append_replace_unknowns(name == 'append_event')
+    # @on_trait_change('analysis_table:[append_event,replace_event]')
+    @on_trait_change('analysis_table:context_menu_event')
+    def _handle_analysis_table_context_menu(self, new):
+        print new
+        if new:
+            action, modifiers = new
+            if action in ('append', 'replace'):
+                self._append_replace_unknowns(action == 'append_event')
+            elif action == 'open':
+                if self.analysis_table.selected:
+                    open_copy = False
+                    if modifiers:
+                        open_copy = modifiers.get('open_copy')
 
-        # self.unknowns_pane.items=new
-        #     else:
-        #         self.unknowns_pane.items.extend(new)
+                    for it in self.analysis_table.selected:
+                        self._recall_item(it, open_copy=open_copy)
+
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):
@@ -641,26 +661,26 @@ class AnalysisEditTask(BaseBrowserTask):
         self.set_tag(tag=Tag(name='invalid'),
                      items=new)
 
-    #@on_trait_change('data_selector:selector:key_pressed')
-    #def _key_press(self, obj, name, old, new):
-    #    '''
-    #        use 'u' to add selected analyses to unknowns pane
-    #    '''
-    #
-    #    if new:
-    #        s = self._get_selected_analyses()
-    #        if s:
-    #
-    #            c = new.text
-    #            if c == 'u':
-    #                self.active_editor.unknowns.extend(s)
-    #            elif c == 'U':
-    #                self.active_editor.unknowns = s
-    #            else:
-    #                self._handle_key_pressed(c)
-    #
-    #def _handle_key_pressed(self, c):
-    #    pass
+        #@on_trait_change('data_selector:selector:key_pressed')
+        #def _key_press(self, obj, name, old, new):
+        #    '''
+        #        use 'u' to add selected analyses to unknowns pane
+        #    '''
+        #
+        #    if new:
+        #        s = self._get_selected_analyses()
+        #        if s:
+        #
+        #            c = new.text
+        #            if c == 'u':
+        #                self.active_editor.unknowns.extend(s)
+        #            elif c == 'U':
+        #                self.active_editor.unknowns = s
+        #            else:
+        #                self._handle_key_pressed(c)
+        #
+        #def _handle_key_pressed(self, c):
+        #    pass
 
 #===============================================================================
 #

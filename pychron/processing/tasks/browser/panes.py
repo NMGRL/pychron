@@ -64,9 +64,11 @@ class AnalysisAdapter(BrowserAdapter):
     def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Unselect', action='unselect'),
                            Action(name='Replace', action='replace_items'),
-                           Action(name='Append', action='append_items'))
+                           Action(name='Append', action='append_items'),
+                           Action(name='Open', action='recall_items'),
+                           Action(name='Open Copy', action='recall_copies'))
 
-    def get_bg_color(self, object, trait, row, column=0):
+    def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
         if self.item.is_plateau_step:
             color = 'lightgreen'
@@ -75,13 +77,24 @@ class AnalysisAdapter(BrowserAdapter):
 
 
 class TablesHandler(UnselectTabularEditorHandler):
+
     def replace_items(self, info, obj):
         if obj.selected:
-            obj.replace_event = obj.selected
+            obj.context_menu_event = ('replace', None)
+            # obj.replace_event = obj.selected
 
     def append_items(self, info, obj):
         if obj.selected:
-            obj.append_event = obj.selected
+            obj.context_menu_event = ('append', None)
+            # obj.append_event = obj.selected
+
+    def recall_items(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': False})
+
+    def recall_copies(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': True})
 
 
 class Tables(HasTraits):
