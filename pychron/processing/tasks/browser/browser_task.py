@@ -21,7 +21,7 @@ from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
 # ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
@@ -280,6 +280,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             if self._recent_low_post:
                 lp = self._recent_low_post
                 hp = None
+
             # lp = self.low_post if self.use_low_post else None
             # hp = self.high_post if self.use_high_post else None
             # lim = at.limit
@@ -287,7 +288,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                  low_post=lp,
                                                  high_post=hp,
                                                  limit=lim,
-                                                 include_invalid=not at.omit_invalid)
+                                                 include_invalid=not at.omit_invalid,
+                                                 mass_spectrometers=self._recent_mass_spectrometers)
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)

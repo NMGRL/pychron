@@ -61,6 +61,13 @@ class SearchCriteria(HasTraits):
     recent_hours = Int
 
 
+def extract_mass_spectrometer_name(name):
+    if 'RECENT' in name:
+        args = name.split(' ')
+        ms = ' '.join(args[1:]).lower()
+        return ms
+
+
 class BrowserMixin(ColumnSorterMixin):
     projects = List
     oprojects = List
@@ -113,6 +120,7 @@ class BrowserMixin(ColumnSorterMixin):
     _low_post = Date
     _high_post = Date
     _recent_low_post = None
+    _recent_mass_spectrometers = None
 
     use_analysis_type_filtering = Bool
     analysis_include_types = Property(List)
@@ -226,10 +234,19 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.manager.db
         sams = []
         with db.session_ctx():
+            self._recent_mass_spectrometers = []
+            warned = False
+
             for name in names:
                 # load associated samples
                 if name.startswith('RECENT'):
-                    sams.extend(self._retrieve_recent_samples(name))
+                    if not self.search_criteria.recent_hours:
+                        if not warned:
+                            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
+                                                '"Recent Hours" is located in the "Processing" category')
+                            warned = True
+                    else:
+                        sams.extend(self._retrieve_recent_samples(name))
                 else:
                     sams.extend(self._retrieve_samples())
 
@@ -237,41 +254,50 @@ class BrowserMixin(ColumnSorterMixin):
         self.osamples = sams
 
     def _retrieve_recent_samples(self, recent_name):
-
-        if not self.search_criteria.recent_hours:
-            self.warning_dialog('Set "Recent Hours" in Preferences.\n'
-                                '"Recent Hours" is located in the "Processing" category')
-            return []
-
-        args = recent_name.split(' ')
-        ms = ' '.join(args[1:])
+        ms = extract_mass_spectrometer_name(recent_name)
 
         db = self.manager.db
         with db.session_ctx():
-            lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+            hpost = datetime.now()
+            lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
 
-            self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
-            lns = db.get_recent_labnumbers(lpost, ms)
+            # self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
+            # lns = db.get_recent_labnumbers(lpost, ms)
             self._recent_low_post = lpost
+            self._recent_mass_spectrometers.append(ms)
 
-            sams = [LabnumberRecordView(li, low_post=lpost)
-                    for li in lns if li.sample]
+            # sams = [LabnumberRecordView(li, low_post=lpost)
+            # for li in lns if li.sample]
 
+            self.use_high_post = True
+            self.use_low_post = True
+
+            self._low_post = lpost.date()
+            self._high_post = hpost.date()
+
+            sams = self._retrieve_samples()
+            print sams
         return sams
 
-    def _retrieve_samples(self, ):
+    def _retrieve_samples(self):
         db = self.manager.db
+        # dont query if analysis_types enabled but not analysis type specified
+        if self.use_analysis_type_filtering and not self.analysis_include_types:
+            self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
+            return []
 
         with db.session_ctx():
-            sp = self.selected_projects
-            if not hasattr(sp, '__iter__'):
-                sp = (sp,)
+            projects = self.selected_projects
 
-            ls = db.get_project_labnumbers([p.name for p in sp],
+            mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
+            mass_spectrometers = [ms for ms in mass_spectrometers if ms]
+
+            ls = db.get_project_labnumbers([p.name for p in projects if not p.name.startswith('RECENT')],
                                            self.filter_non_run_samples,
                                            self.low_post,
                                            self.high_post,
-                                           self.analysis_include_types)
+                                           self.analysis_include_types,
+                                           mass_spectrometers=mass_spectrometers)
             prog = None
             n = len(ls)
             if n > 50:
@@ -292,7 +318,7 @@ class BrowserMixin(ColumnSorterMixin):
                                   low_post=None,
                                   high_post=None,
                                   exclude_uuids=None,
-                                  include_invalid=False):
+                                  include_invalid=False, mass_spectrometers=None):
         db = self.manager.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
@@ -305,7 +331,8 @@ class BrowserMixin(ColumnSorterMixin):
                                                 high_post=high_post,
                                                 limit=limit,
                                                 exclude_uuids=exclude_uuids,
-                                                include_invalid=include_invalid)
+                                                include_invalid=include_invalid,
+                                                mass_spectrometers=mass_spectrometers)
             prog = None
 
             if tc > 25 or len(lns) > 2:
@@ -353,9 +380,15 @@ class BrowserMixin(ColumnSorterMixin):
         load('samples', self.samples)
 
     # handlers
-    def _selected_projects_changed(self, new):
+    def _selected_projects_changed(self, old, new):
         if new:
             self._recent_low_post = None
+            self._recent_mass_spectrometers = None
+            if old:
+                if any(['RECENT' in x.name for x in old]) and not any(['RECENT' in x.name for x in new]):
+                    self.use_high_post = False
+                    self.use_low_post = False
+
             names = [ni.name for ni in new]
             self.debug('selected projects={}'.format(names))
             self._load_associated_samples(names)
