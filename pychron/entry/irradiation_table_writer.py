@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ set_qt()
 import os
 
 from reportlab.lib import colors
-from traits.api import HasTraits, Str, Date, Float
+from traits.api import HasTraits, Str, Float
 
 
 #============= standard library imports ========================
@@ -35,7 +35,7 @@ from pychron.paths import paths
 
 class Irradiation(HasTraits):
     name = Str
-    date = Date
+    date = Str
     duration = Float
     reactor = Str
 
@@ -43,7 +43,7 @@ class Irradiation(HasTraits):
         super(Irradiation, self).__init__(*args, **kw)
         self.name = dbrecord.name
 
-        #calculate duration
+        self.date = dbrecord.chronology.start_date
         self.duration = dbrecord.chronology.duration
         self.reactor = dbrecord.reactor.name.replace('&', '&amp;')
 
@@ -95,6 +95,7 @@ USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pu
 
         header = Row()
         header.add_item(value='<b>Irradiation</b>')
+        header.add_item(value='<b>Date</b>')
         header.add_item(value='<b>Duration (hr)</b>')
         header.add_item(value='<b>Reactor</b>')
 
@@ -102,6 +103,7 @@ USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pu
         for i in irrads:
             r = Row()
             r.add_item(value=i.name)
+            r.add_item(value=i.date)
             r.add_item(value='{:0.1f}'.format(i.duration))
             r.add_item(value=i.reactor)
             rows.append(r)

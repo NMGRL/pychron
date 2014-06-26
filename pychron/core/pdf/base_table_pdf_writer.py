@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,10 +51,11 @@ class BasePDFTableWriter(BasePDFWriter):
         wcols = []
         for ri in rows:
             for i, ci in enumerate(ri.items):
-                try:
-                    wcols[i] = max(wcols[i], get_width(ci.render()))
-                except IndexError:
-                    wcols.append(get_width(ci.render()))
+                if ci.include_width_calc:
+                    try:
+                        wcols[i] = max(wcols[i], get_width(ci.render()))
+                    except IndexError:
+                        wcols.append(get_width(ci.render()))
 
         self.col_widths = wcols
 

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,14 +93,14 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
                     style.add('BACKGROUND', (0, idx), (-1, idx),
                               colors.lightgrey)
 
-        auto_col_widths = True
-        if auto_col_widths:
-            self._calculate_col_widths(data[2:])
-
         idx = len(data) - 1
         self._new_line(style, idx)
         s = self._make_summary_rows(group, idx + 1, style)
         data.extend(s)
+
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(data[2:])
 
         t = self._new_table(style, data, repeatRows=1)
 
@@ -220,13 +220,13 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
         #===============================================================================
 
     def _make_summary_rows(self, mean, idx, style):
-        weighted_mean_row = Row(fontsize=7, height=0.15)
-        weighted_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=5)
+        weighted_mean_row = Row(fontsize=6, height=0.15)
+        weighted_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=5, include_width_calc=False)
 
         weighted_mean_row.add_blank_item(n=12)
         wa = mean.weighted_age
         weighted_mean_row.add_item(value=self._value(n=2)(wa))
-        weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error(n=3)(wa)))
+        weighted_mean_row.add_item(value=u'\u00b1{}'.format(self._error(n=2)(wa)))
 
         #         for s, e in platrow.spans:
         #             style.add('SPAN', (s, idx), (e, idx))
@@ -242,7 +242,7 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
     #===============================================================================
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
-
+        height = self.footnote_height
         blanks = self._get_average_blanks()
         if blanks:
             co2_blanks, furnace_blanks = blanks
@@ -252,12 +252,12 @@ class FusionPDFTableWriter(IsotopePDFTableWriter):
                                  'for Ar<super>40</super>, Ar<super>39</super>, ' \
                                  'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
                                  'respectively'.format(**co2_blanks)
-            crow = FooterRow(fontsize=6)
+            crow = FooterRow(fontsize=6, height=height)
             crow.add_item(span=-1, value=self._new_paragraph(average_co2_blanks))
             data.append(crow)
 
         def factory(f):
-            r = FootNoteRow(fontsize=6)
+            r = FootNoteRow(fontsize=6, height=height)
             r.add_item(value=f)
             return r
 

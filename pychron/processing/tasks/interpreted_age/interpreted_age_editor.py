@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -92,11 +92,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                                        auto_view=True)
 
     def save_tables(self, t):
-        pdf = t.use_pdf_summary
+        pdf_sum = t.use_pdf_summary
         xls_sum = t.use_xls_summary
-        if pdf:
+        if pdf_sum:
             self.save_summary_table(t.root,
-                                     auto_view=t.auto_view)
+                                    auto_view=t.auto_view)
 
         pdf = t.use_pdf_data
         xls = t.use_xls_data
@@ -137,13 +137,13 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if pdf:
             self.debug('saving pdf tables')
-            step_heat_title = 'Table E.1. MAP Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            fusion_title = 'Table D.1. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
-                                      auto_view=auto_view)
+            step_heat_title = 'Table E.1 MAP Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table D.1 MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            # self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
+            #                           auto_view=auto_view)
 
-            step_heat_title = 'Table G.1. Argus Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            fusion_title = 'Table F.1. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            step_heat_title = 'Table G.1 Argus Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table F.1 Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
             self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       auto_view=auto_view)
         if xls:
