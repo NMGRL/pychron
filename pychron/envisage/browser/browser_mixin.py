@@ -276,7 +276,7 @@ class BrowserMixin(ColumnSorterMixin):
             self._high_post = hpost.date()
 
             sams = self._retrieve_samples()
-            print sams
+
         return sams
 
     def _retrieve_samples(self):

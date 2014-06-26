@@ -224,19 +224,38 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if not ai.has_raw_data:
             db = self.db
             with db.session_ctx():
-                dbisos = db.get_analysis_isotopes(ai.uuid)
-                isos = ai.isotopes
-                for dban, dbiso, dbmw in dbisos:
-                    name = dbmw.name
-                    if name in isos:
+                dban = db.get_analysis_uuid(ai.uuid)
+                for dbiso in dban.isotopes:
+                    name = dbiso.molecular_weight.name
+                    try:
+                        iso = ai.isotopes[name]
                         blob = dbiso.signal.data
-                        iso = isos[name]
                         if dbiso.kind == 'signal':
                             iso.unpack_data(blob)
                         elif dbiso.kind == 'baseline':
                             iso.baseline.unpack_data(blob)
                         elif dbiso.kind == 'sniff':
                             iso.sniff.unpack_data(blob)
+                    except KeyError:
+                        self.debug('load_raw_data: no matching isotope for {}, {}'.format(name,
+                                                                                          ','.join(ai.isotope_keys)))
+
+                # !!using db.get_analysis_isotopes is extremely slow!! why is unknown
+
+                # dbisos = db.get_analysis_isotopes(ai.uuid)
+                # isos = ai.isotopes
+                # for dban, dbiso, dbmw in dbisos:
+                # name = dbmw.name
+                #     if name in isos:
+                #         blob = dbiso.signal.data
+                #         iso = isos[name]
+                #         if dbiso.kind == 'signal':
+                #             iso.unpack_data(blob)
+                #         elif dbiso.kind == 'baseline':
+                #             iso.baseline.unpack_data(blob)
+                #         elif dbiso.kind == 'sniff':
+                #             iso.sniff.unpack_data(blob)
+
                 ai.has_raw_data = True
 
     def make_analysis(self, ai, **kw):

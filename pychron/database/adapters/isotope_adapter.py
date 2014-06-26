@@ -31,6 +31,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
+from pychron.database.core.query import compile_query
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 #spec_
@@ -1483,13 +1484,34 @@ class IsotopeAdapter(DatabaseAdapter):
                 return []
 
     def get_analysis_isotopes(self, uuid):
+        """
+            this function is extremely slow and should not be used
+        """
         with self.session_ctx() as sess:
             q = sess.query(meas_AnalysisTable, meas_IsotopeTable, gen_MolecularWeightTable)
             q = q.join(meas_IsotopeTable)
             q = q.join(gen_MolecularWeightTable)
             q = q.filter(meas_AnalysisTable.uuid == uuid)
+            print compile_query(q)
             try:
                 return q.all()
+            except NoResultFound:
+                return []
+
+    def get_analysis_isotope(self, uuid, iso, kind):
+        """
+            this function is extremely slow and should not be used
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(meas_IsotopeTable)
+            q = q.join(meas_AnalysisTable)
+            q = q.join(gen_MolecularWeightTable)
+            q = q.filter(meas_IsotopeTable.kind == kind)
+            q = q.filter(gen_MolecularWeightTable.name == iso)
+            q = q.filter(meas_AnalysisTable.uuid == uuid)
+            print compile_query(q)
+            try:
+                return q.first()
             except NoResultFound:
                 return []
 
