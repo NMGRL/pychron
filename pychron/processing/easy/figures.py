@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -283,7 +283,7 @@ class EasyFigures(BaseEasy):
         if apply_graph_grouping:
             unks = editor.analyses
 
-            # unks = sorted(unks, key=apply_graph_grouping)
+            unks = sorted(unks, key=apply_graph_grouping)
             editor.analyses = unks
             for i, (si, gi) in enumerate(groupby(unks, key=apply_graph_grouping)):
                 for ai in gi:

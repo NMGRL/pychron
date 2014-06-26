@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import re
 
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
+
 
 
 #============= standard library imports ========================
@@ -363,7 +364,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
 
 class CorrectionIsotopicMeasurement(IsotopicMeasurement):
-
     def __init__(self, dbrecord=None, *args, **kw):
         if dbrecord:
             self._value = dbrecord.user_value if dbrecord.user_value is not None else 0
@@ -388,6 +388,7 @@ class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
     __slots__ = ['baseline']
+
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
         if not self.include_baseline_error:
@@ -417,6 +418,7 @@ class Isotope(BaseIsotope):
 
     age_error_component = Float(0.0)
     temporary_ic_factor = None
+    decay_corrected = None
 
     discrimination = Either(Variable, AffineScalarFunc)
 
@@ -425,12 +427,21 @@ class Isotope(BaseIsotope):
     __slots__ = ['interference_corrected_value',
                  'discrimination', 'ic_factor',
                  'sniff', 'blank', 'background'
-                 'age_error_component']
+                                   'age_error_component']
+
+    def get_filtered_data(self):
+        return self.regressor.calculate_filtered_data()
 
     def revert_user_defined(self):
         self.blank._revert_user_defined()
         self.baseline._revert_user_defined()
         self._revert_user_defined()
+
+    def get_decay_corrected_value(self):
+        if self.decay_corrected is not None:
+            return self.decay_corrected
+        else:
+            return self.get_interference_corrected_value()
 
     def get_interference_corrected_value(self):
         if self.interference_corrected_value is not None:
