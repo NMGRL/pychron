@@ -85,6 +85,8 @@ class AutomatedRunSpec(Loggable):
     extract_value = Float
     extract_units = Str
     position = Str
+    xyz_position = Str
+
     duration = Float
     cleanup = Float
     pattern = Str

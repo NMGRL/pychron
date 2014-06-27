@@ -117,6 +117,8 @@ class MainView(HasTraits):
                             value=an.extract_device),
             ExtractionValue(name='Position',
                             value=an.position, ),
+            ExtractionValue(name='XYZ',
+                            value=an.xyz_position),
             ExtractionValue(name='Extract Value',
                             value=an.extract_value,
                             units=an.extract_units, ),

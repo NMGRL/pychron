@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,29 @@ from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
 
+def get_xyz_position(extraction):
+    def g():
+        for pp in extraction.positions:
+            x, y, z = pp.x, pp.y, pp.z
+            if x is not None and y is not None:
+                if z is not None:
+                    rr = '{:0.3f},{:0.3f},{:0.3f}'.format(x, y, z)
+                else:
+                    rr = '{:0.3f},{:0.3f}'.format(x, y)
+                yield rr
+
+    return ';'.join(list(g()))
+
+
+def get_position(extraction):
+    def g():
+        for pi in extraction.positions:
+            pii = pi.position
+            if pii:
+                yield str(pii)
+    return ','.join(list(g()))
+
+
 class DBAnalysis(Analysis):
     #analysis_summary_klass = DBAnalysisSummary
     analysis_view_klass = DBAnalysisView
@@ -55,6 +78,8 @@ class DBAnalysis(Analysis):
     #extraction
     extract_device = Str
     position = Str
+    xyz_position = Str
+
     extract_value = Float
     extract_units = Str
     cleanup_duration = Float
@@ -128,7 +153,7 @@ class DBAnalysis(Analysis):
             fits = sel_fithist.fits
             return next((fi for fi in fits
                          if fi.isotope.kind == kind and \
-                            fi.isotope.molecular_weight.name == name
+                         fi.isotope.molecular_weight.name == name
                         ), None)
 
         except AttributeError, e:
@@ -255,7 +280,8 @@ class DBAnalysis(Analysis):
 
             self.cleanup = extraction.cleanup_duration
             self.duration = extraction.extract_duration
-            self.position = self._get_position(extraction)
+            self.position = get_position(extraction)
+            self.xyz_position = get_xyz_position(extraction)
 
             for attr in ('beam_diameter', 'pattern',
                          'ramp_rate', 'ramp_duration'):
@@ -448,33 +474,6 @@ class DBAnalysis(Analysis):
                                                     tag='{} IC'.format(ic.detector.name))
 
         return icfs
-
-    def _get_position(self, extraction):
-        r = ''
-        pos = extraction.positions
-
-        pp = []
-        for pi in pos:
-            pii = pi.position
-
-            if pii:
-                pp.append(pii)
-            else:
-                ppp = []
-                x, y, z = pi.x, pi.y, pi.z
-                if x is not None and y is not None:
-                    ppp.append(x)
-                    ppp.append(y)
-                if z is not None:
-                    ppp.append(z)
-
-                if ppp:
-                    pp.append('({})'.format(','.join(ppp)))
-
-        if pp:
-            r = ','.join(map(str, pp))
-
-        return r
 
     def get_isotope_fits(self):
         keys = self.isotope_keys

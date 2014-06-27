@@ -200,6 +200,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 lns = [si.identifier for si in sams]
                 lpost, hpost = db.get_min_max_analysis_timestamp(lns)
                 ams = ms = db.get_analysis_mass_spectrometers(lns)
+                force = False
             else:
                 force = True
                 lpost = datetime.now()-timedelta(hours=self.search_criteria.recent_hours)
