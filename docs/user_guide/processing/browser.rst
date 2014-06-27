@@ -22,14 +22,21 @@ The **Projects** table lists all projects currently in the database.
     will select all samples that have been run within the last *X* hours. To set *X* go to Preferences/Processing/Recent
 
 
-Use the Irradiations drop-downs to first select an irradiation then an irraidation level.
+Use the Irradiations drop-downs to first select an irradiation then an irradiation level.
 
 .. note:: Use the *Binoculars* button to force a refresh using the current filtering criteria.
 
 
 Graphical Filtering
 ~~~~~~~~~~~~~~~~~~~
+The Graphical Filtering view provides a way to view and select a series of analyses. You can narrow that date range to display in a number of ways
 
+    1. Hit the Graphical Filtering button and select a date range manually
+    2. Select a set of projects and pychron automatically selects the start and end dates
+    3. Select a set of projects then fine tune your selection of samples
+
+.. note:: If the date range is greater than *X* days you are asked to fine tune your selection by modifying the start and/or end dates. To set *X* go to Preferences/Processing/Graphical Filtering
+.. note:: If the samples you have selected were run on multiple mass spectrometers you are given the option of filtering the selection by mass spectrometer.
 
 Advanced Filtering
 ~~~~~~~~~~~~~~~~~~
