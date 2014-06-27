@@ -21,7 +21,7 @@ from pychron.core.ui import set_qt
 set_qt()
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Instance, List, Int, Bool
+from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change
 from traitsui.menu import Action
 from traitsui.api import View, Controller, UItem, HGroup, CheckListEditor, VGroup, Item, HSplit
 from chaco.tools.api import RangeSelection, RangeSelectionOverlay
@@ -42,7 +42,6 @@ REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_
 
 
 def get_analysis_type(x):
-    # return '{},{}'.format(REVERSE_ANALYSIS_MAPPING[math.floor(x)], x)
     return REVERSE_ANALYSIS_MAPPING[math.floor(x)]
 
 
@@ -78,16 +77,23 @@ def analysis_type_func(analyses, offset=True):
     return f
 
 
-ANALYSIS_NAMES = [(a.split(':')[1] if ':' in a else a) for a in ANALYSIS_MAPPING.values()]
+# ANALYSIS_NAMES = [(a.split(':')[1] if ':' in a else a) for a in ANALYSIS_MAPPING.values()]
 
 
 class SelectionGraph(Graph):
+    scatter = None
+
     def setup(self, x, y, ans):
         p = self.new_plot()
         p.padding_left = 60
         p.y_axis.tick_label_formatter = tick_formatter
         p.y_axis.tick_generator = StaticTickGenerator()
         p.y_axis.title = 'Analysis Type'
+
+        # p.y_grid.line_style='solid'
+        # p.y_grid.line_color='green'
+        # p.y_grid.line_weight = 1.5
+
         self.set_y_limits(min_=-1, max_=len(TICKS))
 
         p.index_range.tight_bounds = False
@@ -96,7 +102,8 @@ class SelectionGraph(Graph):
         p.x_axis.title = 'Time'
         # p.y_axis.tick_label_rotate_angle = 45
 
-        scatter, _ = self.new_series(x, y, type='scatter', marker_size=1.5)
+        scatter, _ = self.new_series(x, y, type='scatter', marker_size=1.5,
+                                     selection_marker='circle', selection_marker_size=2.5)
 
         broadcaster = BroadcasterTool()
         scatter.tools.append(broadcaster)
@@ -130,27 +137,62 @@ class GraphicalFilterModel(HasTraits):
     graph = Instance(SelectionGraph, ())
     analyses = List
     analysis_types = List(['Unknown'])
-    available_analysis_types = List(ANALYSIS_NAMES)
+    available_analysis_types = List
+    toggle_analysis_types = Bool
+
     exclusion_pad = Int(20)
     use_project_exclusion = Bool
+    use_offset_analyses = Bool(True)
     projects = List
     is_append = True
+    use_all = False
 
-    def setup(self):
-        f = analysis_type_func(self.analyses)
+    def _toggle_analysis_types_changed(self):
+        if self.toggle_analysis_types:
+            val = self.available_analysis_types
+        else:
+            val = []
+
+        self.trait_set(analysis_types=val)
+
+    @on_trait_change('use_offset_analyses, analysis_types[]')
+    def handle_analysis_types(self):
+        self.setup(set_atypes=False)
+
+    def setup(self, set_atypes=True):
+        self.graph.clear()
+
+        f = analysis_type_func(self.analyses, offset=self.use_offset_analyses)
         ans = self._filter_projects(self.analyses)
 
-        # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
-        x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
-        # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
+        if set_atypes:
+            def ff(at):
+                at = at.replace('_', ' ')
+                return at.capitalize()
+
+            self.available_analysis_types = list({ff(ai.analysis_type) for ai in ans})
+            if 'Unknown' in self.available_analysis_types:
+                self.analysis_types = ['Unknown']
+            else:
+                self.analysis_types = self.analysis_types[:1]
+
+        ans = self._filter_analysis_types(ans)
+        if ans:
+            # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
+            x, y = zip(*[(ai.timestamp + 3600, f(ai.analysis_type)) for ai in ans])
+            # x, y = zip(*[(ai.timestamp, f(ai.analysis_type)) for ai in ans])
+        else:
+            x, y, ans = [], [], []
+
         self.graph.setup(x, y, ans)
 
     def get_selection(self):
-        mask = self.graph.get_selection_mask()
+        mask = None
+        if not self.use_all:
+            mask = self.graph.get_selection_mask()
 
         if mask is not None:
-            a = array(self.analyses)
-            ans = a[mask]
+            ans = array(self.analyses)[mask]
         else:
             ans = self.analyses
 
@@ -163,13 +205,13 @@ class GraphicalFilterModel(HasTraits):
         def gen():
             projects = self.projects
 
-            def test(a):
+            def test(aa):
                 """
                     is ai within X hours of an analysis from projects
                 """
-                at = a.analysis_timestamp
+                at = aa.analysis_timestamp
                 threshold = 3600. * self.exclusion_pad
-                idx = ans.index(a)
+                idx = ans.index(aa)
                 # search backwards
                 for i in xrange(idx - 1, -1, -1):
                     ta = ans[i]
@@ -208,25 +250,43 @@ class GraphicalFilterView(Controller):
     def append_action(self):
         self.info.ui.dispose(result=True)
         self.info.object.is_append = True
+        self.info.object.use_all = False
 
     def replace_action(self):
         self.info.ui.dispose(result=True)
         self.info.object.is_append = False
+        self.info.object.use_all = False
+
+    def append_all_action(self):
+        self.info.ui.dispose(result=True)
+        self.info.object.is_append = True
+        self.info.object.use_all = True
+
+    def replace_all_action(self):
+        self.info.ui.dispose(result=True)
+        self.info.object.is_append = False
+        self.info.object.use_all = True
 
     def traits_view(self):
         ctrl_grp = VGroup(HGroup(UItem('use_project_exclusion'),
                                  Item('exclusion_pad',
                                       enabled_when='use_project_exclusion')),
+                          HGroup(Item('use_offset_analyses', label='Use Offset')),
+                          VGroup(HGroup(Item('toggle_analysis_types', label='Toggle')),
                           UItem('analysis_types',
                                 style='custom',
                                 editor=CheckListEditor(cols=1,
-                                                       name='available_analysis_types')))
+                                                       name='available_analysis_types')),
+                          label='Analysis Types',
+                          show_border=True))
 
         v = View(HSplit(ctrl_grp,
                         UItem('graph', style='custom', width=0.80)),
                  buttons=['Cancel',
                           Action(name='Replace', on_perform=self.replace_action),
-                          Action(name='Append', on_perform=self.append_action)],
+                          Action(name='Append', on_perform=self.append_action),
+                          Action(name='Replace All', on_perform=self.replace_all_action),
+                          Action(name='Append All', on_perform=self.append_all_action)],
                  title='Graphical Filter',
                  kind='livemodal',
                  resizable=True)
@@ -258,22 +318,24 @@ if __name__ == '__main__':
 
     man = IsotopeDatabaseManager(bind=False, connect=False)
     db = man.db
-    db.trait_set(name='pychrondata_minnabluff',
+    db.trait_set(name='pychrondata',
                  kind='mysql',
+                 host='129.138.12.160',
                  username='root',
-                 password='Argon',
+                 password='DBArgon',
                  echo=False)
     db.connect()
 
     with db.session_ctx():
         # for si in sams:
         _ans, n = db.get_labnumber_analyses([
-            '57493',
+            # '57493',
+            '62118'
         ])
-        ts = [x.analysis_timestamp for x in _ans]
+        ts = [xi.analysis_timestamp for xi in _ans]
         lpost, hpost = min(ts), max(ts)
         _ans = db.get_date_range_analyses(lpost, hpost, ordering='asc')
-        _ans = [IsotopeRecordView(x) for x in _ans]
+        _ans = [IsotopeRecordView(xi) for xi in _ans]
         # _ans = sorted(_ans, key=lambda x: x.timestamp)
 
     d = Demo(analyses=_ans)

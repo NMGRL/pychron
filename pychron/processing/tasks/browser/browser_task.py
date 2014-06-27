@@ -226,7 +226,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 
-    def _graphical_filter_hook(self, ans):
+    def _graphical_filter_hook(self, ans, is_append):
         pass
 
     def _level_changed(self):

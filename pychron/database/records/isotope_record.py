@@ -28,7 +28,7 @@ from pychron.experiment.utilities.identifier import make_runid
 
 class GraphicalRecordView(object):
     __slots__ = ['uuid', 'rundate', 'timestamp', 'record_id', 'analysis_type',
-                 'tag', 'project', 'sample', 'is_plateau_step']
+                 'tag', 'project', 'sample', 'is_plateau_step','mass_spectrometer']
 
     def __init__(self, dbrecord):
         self.uuid = dbrecord.uuid
@@ -44,8 +44,11 @@ class GraphicalRecordView(object):
         self.is_plateau_step = False
 
         meas = dbrecord.measurement
-        if meas is not None and meas.analysis_type:
-            self.analysis_type = meas.analysis_type.name
+        if meas is not None:
+            if meas.analysis_type:
+                self.analysis_type = meas.analysis_type.name
+            if meas.mass_spectrometer:
+                self.mass_spectrometer=meas.mass_spectrometer.name
 
         sam = ln.sample
         if sam:
