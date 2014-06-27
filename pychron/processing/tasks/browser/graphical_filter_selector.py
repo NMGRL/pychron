@@ -15,21 +15,32 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Date
+from traits.api import HasTraits, Date, List
 from traitsui.api import View, UItem, HGroup, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.editors import CheckListEditor
 
-class DateRangeSelector(HasTraits):
+
+class GraphicalFilterSelector(HasTraits):
     lpost = Date
     hpost = Date
+    mass_spectrometers = List
+    available_mass_spectrometers = List
 
     def traits_view(self):
         l = VGroup(UItem('lpost', style='custom'), label='Low', show_border=True)
         h = VGroup(UItem('hpost', style='custom'), label='High', show_border=True)
-        v = View(HGroup(l, h),
-                 title='Select Date Range',
+
+        spec_grp = HGroup(
+            UItem('mass_spectrometers', style='custom',
+                  editor=CheckListEditor(name='available_mass_spectrometers')),
+            label='Mass Spectrometers', show_border=True)
+
+        v = View(VGroup(HGroup(l, h),
+                        spec_grp),
+                 title='Select Date Range/Mass Spectrometers',
                  buttons=['OK', 'Cancel'])
         return v
 

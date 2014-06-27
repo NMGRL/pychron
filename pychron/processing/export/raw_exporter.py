@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,11 @@ from pychron.core.ui import set_qt
 set_qt()
 
 #============= enthought library imports =======================
-from traitsui.api import View
-from traits.api import Button
 #============= standard library imports ========================
 import csv
 import os
 import yaml
-from numpy import polyfit
 #============= local library imports  ==========================
-from pychron.graph.stacked_graph import StackedGraph
 from pychron.core.helpers.filetools import unique_path
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
@@ -96,86 +92,6 @@ class RawExporter(IsotopeDatabaseManager):
                     yield ai
 
         return gen()
-
-
-class SniffInspector(RawExporter):
-    test = Button
-
-    def traits_view(self):
-        v = View('test')
-        return v
-
-    def _test_fired(self):
-        self.do()
-
-    def do(self):
-        ans = self._get_analyses('ratio')
-        ans = self.make_analyses(ans, unpack=True)
-        g = StackedGraph()
-
-        for ai in ans:
-            g.clear()
-            for i, (n, d) in enumerate([('Ar40', 'Ar36'), ('Ar40', 'Ar39')]):
-                #iterate sniff
-                nbs, dbs = ai.get_isotope(n, kind='baseline').ys.mean(), \
-                           ai.get_isotope(d, kind='baseline').ys.mean()
-                niso, diso = ai.get_isotope(n, kind='sniff'), ai.get_isotope(d, kind='sniff')
-
-                yns, yds = niso.ys - nbs, diso.ys - nbs
-                xs = niso.xs
-                rs = []
-                nn = niso.n
-                rxs = []
-                for ri in xrange(nn - 1):
-                    r = self._calculate_ratio(ri, xs, yns, yds)
-                    rxs.append(ri)
-                    rs.append(r)
-
-                p = g.new_plot()
-                p.value_range.tight_bounds = False
-                g.new_series(rxs, rs)
-                g.set_x_title('Excluded points')
-                g.set_y_title('{}/{}'.format(n, d), plotid=i)
-
-                niso, diso = ai.get_isotope(n), ai.get_isotope(d)
-                nys, dys = niso.ys - nbs, diso.ys - dbs
-                signal_ratio = self._calculate_ratio(0, niso.xs, nys, dys, fit=2)
-                ymi, yma = g.get_y_limits(plotid=i)
-                if signal_ratio > yma:
-                    g.set_y_limits(ymi, signal_ratio * 1.1, plotid=i)
-                elif signal_ratio < ymi:
-                    g.set_y_limits(signal_ratio * 0.9, yma, plotid=i)
-
-                g.add_horizontal_rule(signal_ratio, plotid=i)
-            g.set_title('{} {}'.format(ai.record_id, ai.sample))
-            g.plotcontainer.padding_top = 50
-            # g.edit_traits()
-            g.plotcontainer.do_layout(size=(600, 900), force=True)
-            p, _ = unique_path(os.path.join(paths.data_dir, 'apis'), 'ratio_evo_{}'.format(ai.record_id),
-                               extension='.pdf')
-            g.save_pdf(p)
-
-    def _calculate_ratio(self, i, xs, yns, yds, fit=1):
-        #truncate data
-        xs, yns, yds = xs[i:], yns[i:], yds[i:]
-
-        #fit data
-        nintercept = polyfit(xs, yns, fit)[-1]
-        dintercept = polyfit(xs, yds, fit)[-1]
-        return nintercept / dintercept
-
-
-if __name__ == '__main__':
-    e = SniffInspector(bind=False, connect=False)
-    e.db.trait_set(name='pychrondata',
-                   kind='mysql',
-                   username='root',
-                   password='DBArgon',
-                   host='129.138.12.160')
-    e.connect()
-    e.configure_traits()
-    # e.do()
-
 
 
 #============= EOF =============================================

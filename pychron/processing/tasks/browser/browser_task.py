@@ -22,13 +22,13 @@ from traits.api import List, Str, Bool, Any, String, \
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
-from pychron.database.records.isotope_record import IsotopeRecordView
+from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
-from pychron.processing.tasks.browser.date_range_selector import DateRangeSelector
+from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
 
 '''
@@ -75,10 +75,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     hours_pad = Int(18)
 
     datasource_url = String
-    #clear_selection_button = Button
+    # clear_selection_button = Button
 
     browser_pane = Any
     advanced_query = Button
+
+    graphical_filter_button = Button
+    graphical_filtering_max_days = Int
 
     _activated = False
 
@@ -120,6 +123,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.datasource_url = db.datasource_url
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
+        bind_preference(self, 'graphical_filtering_max_days', 'pychron.processing.graphical_filtering_max_days')
         self.load_browser_selection()
         self.load_browser_options()
         self._activated = True
@@ -169,6 +173,18 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _set_selected_analysis(self, new):
         pass
 
+    def _load_graphical_record_views(self, ans):
+        n = len(ans)
+        prog = None
+        if n > 10:
+            prog = self.manager.open_progress(n)
+
+        for i, ai in enumerate(ans):
+            ir = GraphicalRecordView(ai)
+            if prog:
+                prog.change_message('Loading {}-{}. {}'.format(i, n, ir.record_id))
+            yield ir
+
     def _graphical_filter_button_fired(self):
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -179,21 +195,26 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         db = self.manager.db
         with db.session_ctx():
-            ans, _ = db.get_labnumber_analyses([si.identifier for si in sams])
-            ts = [ai.analysis_timestamp for ai in ans]
-            lpost, hpost = min(ts), max(ts)
+            lns = [si.identifier for si in sams]
+            lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+            ms = db.get_analysis_mass_spectrometers(lns)
 
             # if date range > X days make user fine tune range
-            if (hpost - lpost).total_seconds > 3600 * 24 * 10:
-                d = DateRangeSelector(lpost=lpost, hpost=hpost)
+            if (hpost - lpost).total_seconds() > 3600 * 24 * max(1, self.graphical_filtering_max_days) or len(ms) > 1:
+                d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+                                            available_mass_spectrometers=ms,
+                                            mass_spectrometers=ms)
                 info = d.edit_traits(kind='livemodal')
                 if info.result:
-                    lpost, hpost = d.lpost, d.hpost
+                    lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+                    if not ms:
+                        self.warning_dialog('Please select at least one Mass Spectrometer')
+                        return
                 else:
                     return
 
-            associated = db.get_date_range_analyses(lpost, hpost, ordering='asc')
-            ans = [IsotopeRecordView(ai) for ai in associated]
+            associated = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+            ans = list(self._load_graphical_record_views(associated))
 
         gm = GraphicalFilterModel(analyses=ans,
                                   projects=[p.name for p in self.selected_projects])
@@ -298,5 +319,5 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         at = AnalysisTable(db=self.manager.db)
         return at
 
-#============= EOF =============================================
+# ============= EOF =============================================
 

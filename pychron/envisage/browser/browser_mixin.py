@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits
 import apptools.sweet_pickle as pickle
@@ -82,7 +82,6 @@ class BrowserMixin(ColumnSorterMixin):
 
     date_configure_button = Button
     filter_by_button = Button
-    graphical_filter_button = Button
 
     selected_projects = Any
     selected_samples = Any

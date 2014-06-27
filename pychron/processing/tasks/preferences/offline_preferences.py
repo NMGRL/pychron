@@ -21,6 +21,7 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -38,7 +39,7 @@ class OfflinePreferencesPane(PreferencesPane):
     def traits_view(self):
         a=Group(Item('use_offline_database'),
                 Item('database_path', editor=FileEditor()),
-                label='Offline')
+                label='Offline', show_border=True)
         return View(a)
 
 

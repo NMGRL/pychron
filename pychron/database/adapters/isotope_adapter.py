@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from sqlalchemy import Date
+from sqlalchemy import Date, distinct
 from sqlalchemy.sql.functions import count
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
@@ -1144,7 +1144,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 atype=None,
                                 spectrometer=None,
                                 extract_device=None,
-                                projects = None,
+                                projects=None,
                                 limit=None,
                                 exclude_uuids=None,
                                 ordering='desc'):
@@ -1171,8 +1171,13 @@ class IsotopeAdapter(DatabaseAdapter):
                     q = q.filter(gen_AnalysisTypeTable.name == atype)
             if labnumber:
                 q = q.filter(gen_LabTable.identifier == labnumber)
+
             if spectrometer:
-                q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
+                if hasattr(spectrometer, '__iter__'):
+                    q = q.filter(gen_MassSpectrometerTable.name.in_(spectrometer))
+                else:
+                    q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
+
             if extract_device:
                 q = q.filter(gen_ExtractionDeviceTable.name == extract_device)
             if projects:
@@ -1191,6 +1196,42 @@ class IsotopeAdapter(DatabaseAdapter):
 
     #def count_sample_analyses(self, *args, **kw):
     #    return self._get_sample_analyses('count', *args, **kw)
+    def get_analysis_mass_spectrometers(self, lns):
+        """
+            lns: list of labnumbers/identifiers
+            return: list of str
+
+            returns all mass spectrometer used to analyze labnumbers in lns
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(gen_MassSpectrometerTable.name))
+            q = q.join(meas_MeasurementTable)
+            q = q.join(meas_AnalysisTable)
+
+            q = q.join(gen_LabTable)
+            q = q.filter(gen_LabTable.identifier.in_(lns))
+
+            return [r for r, in q.all()]
+
+    def get_min_max_analysis_timestamp(self, lns):
+        """
+            lns: list of labnumbers/identifiers
+            return: datetime, datetime
+
+            get the min and max analysis_timestamps for all analyses with labnumbers in lns
+        """
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable.analysis_timestamp)
+            q = q.join(gen_LabTable)
+            q = q.filter(gen_LabTable.identifier.in_(lns))
+            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            hpost = qry.first()
+            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            lpost = qry.first()
+
+            return lpost[0], hpost[0]
+
+
     def get_labnumber_analyses(self, lns, low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None, mass_spectrometers=None, **kw):
         """
