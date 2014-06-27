@@ -27,6 +27,10 @@ Use the Irradiations drop-downs to first select an irradiation then an irraidati
 .. note:: Use the *Binoculars* button to force a refresh using the current filtering criteria.
 
 
+Graphical Filtering
+~~~~~~~~~~~~~~~~~~~
+
+
 Advanced Filtering
 ~~~~~~~~~~~~~~~~~~
 
