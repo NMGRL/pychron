@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
 from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
@@ -195,14 +196,23 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         db = self.manager.db
         with db.session_ctx():
-            lns = [si.identifier for si in sams]
-            lpost, hpost = db.get_min_max_analysis_timestamp(lns)
-            ms = db.get_analysis_mass_spectrometers(lns)
+            if sams:
+                lns = [si.identifier for si in sams]
+                lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+                ams = ms = db.get_analysis_mass_spectrometers(lns)
+            else:
+                force = True
+                lpost = datetime.now()-timedelta(hours=self.search_criteria.recent_hours)
+                hpost = datetime.now()
+                ams = [mi.name for mi in db.get_mass_spectrometers()]
+                ms = ams[:1]
 
             # if date range > X days make user fine tune range
-            if (hpost - lpost).total_seconds() > 3600 * 24 * max(1, self.graphical_filtering_max_days) or len(ms) > 1:
+            tdays = 3600 * 24 * max(1, self.graphical_filtering_max_days)
+
+            if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
                 d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
-                                            available_mass_spectrometers=ms,
+                                            available_mass_spectrometers=ams,
                                             mass_spectrometers=ms)
                 info = d.edit_traits(kind='livemodal')
                 if info.result:

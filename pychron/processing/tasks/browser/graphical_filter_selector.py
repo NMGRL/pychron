@@ -35,7 +35,7 @@ class GraphicalFilterSelector(HasTraits):
 
         spec_grp = HGroup(
             UItem('mass_spectrometers', style='custom',
-                  editor=CheckListEditor(name='available_mass_spectrometers')),
+                  editor=CheckListEditor(name='available_mass_spectrometers', cols=5)),
             label='Mass Spectrometers', show_border=True)
 
         v = View(VGroup(HGroup(l, h),

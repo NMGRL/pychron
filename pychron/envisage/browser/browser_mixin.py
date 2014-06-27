@@ -97,6 +97,7 @@ class BrowserMixin(ColumnSorterMixin):
     sample_filter_comparator = Enum('=', 'not =')
     sample_filter_parameters = Property(List, depends_on='sample_tabular_adapter.columns')
     configure_sample_table = Button
+    clear_sample_table = Button
     clear_selection_button = Button
 
     find_by_irradiation = Button
@@ -393,6 +394,10 @@ class BrowserMixin(ColumnSorterMixin):
             self._load_associated_samples(names)
             self._load_associated_groups(names)
 
+    def _clear_sample_table_fired(self):
+        self.samples = []
+        self.osamples = []
+
     def _configure_sample_table_fired(self):
         self.table_configurer.edit_traits()
 
@@ -403,6 +408,8 @@ class BrowserMixin(ColumnSorterMixin):
     def _clear_selection_button_fired(self):
         self.selected_projects = []
         self.selected_samples = []
+        self.samples = []
+        self.os
 
     def _use_named_date_range_changed(self, new):
         if new:

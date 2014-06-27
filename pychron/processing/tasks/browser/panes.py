@@ -185,7 +185,11 @@ class TableTools(HasTraits):
                           width=-90, editor=EnumEditor(name='sample_filter_parameters')),
                     icon_button_editor('configure_sample_table',
                                        'cog',
-                                       tooltip='Configure Sample Table'))
+                                       tooltip='Configure Sample Table'),
+                    icon_button_editor('clear_sample_table',
+                                       'edit-clear',
+                                       tooltip='Clear Sample Table')
+                    )
         g2 = HGroup(UItem('sample_filter',
                           width=-125),
                     UItem('sample_filter',
@@ -299,7 +303,7 @@ class BrowserPane(TraitsDockPane):
                                           tooltip='Filter analyses using defined criteria'),
                        icon_button_editor('graphical_filter_button',
                                           'chart_curve_go',
-                                          enabled_when='samples',
+                                          # enabled_when='samples',
                                           tooltip='Filter analyses graphically'),
                        spring,
                        CustomLabel('datasource_url', color='maroon'),
