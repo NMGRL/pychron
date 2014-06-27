@@ -39,13 +39,13 @@ class RepositoryTask(AnalysisEditTask):
 
     tool_bars = List
 
-    def _selected_projects_changed(self, new):
+    def _selected_projects_changed(self, old, new):
         project = ''
         if new:
             project = new[0].name
 
         self.igsn.project = project
-        BaseBrowserTask._selected_projects_changed(self, new)
+        BaseBrowserTask._selected_projects_changed(self, old, new)
 
     def _selected_samples_changed(self, new):
         sample = ''

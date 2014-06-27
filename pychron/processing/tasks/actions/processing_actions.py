@@ -281,9 +281,10 @@ class ExportAnalysesAction(Action):
         app.open_task('pychron.export')
 
 
-class ModifyK3739Action(FigureTaskAction):
+class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
     method = 'modify_k3739'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall','pychron.processing.isotope_evolution'])
 
 
 class SplitEditorActionHor(myTaskAction):

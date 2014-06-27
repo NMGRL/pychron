@@ -24,6 +24,7 @@ import binascii
 #============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
+from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
@@ -278,6 +279,39 @@ class AnalysisEditTask(BaseBrowserTask):
                 if self.unknowns_pane:
                     self.unknowns_pane.refresh_needed = True
                 self._set_tag_hook()
+
+    def modify_k3739(self):
+        if self.active_editor:
+            ans = self.unknowns_pane.selected
+            apply_new_value = True
+        else:
+            apply_new_value = False
+            ans = self.analysis_table.selected
+
+        if not ans:
+            self.information_dialog('Please select a set of analyses from the Unknowns.')
+        else:
+            m = K3739EditModel(analyses=ans)
+            v = K3739EditView(model=m)
+            info = v.edit_traits()
+            if info.result and m.analyses:
+                if m.save_to_db:
+                    db = self.manager.db
+                    prog = self.manager.open_progress(n=len(m.analyses))
+                    with db.session_ctx():
+                        for ai in m.analyses:
+                            dban = db.get_analysis_uuid(ai.uuid)
+
+                            msg = 'setting {} for {}'.format(m.value_str, ai.record_id)
+                            self.debug(msg)
+                            prog.change_message(msg)
+
+                if apply_new_value:
+                    m.apply_modified()
+
+                if self.active_editor:
+                    self.active_editor.clear_aux_plot_limits()
+                    self.active_editor.rebuild()
 
     def prepare_destroy(self):
         if self.unknowns_pane:
