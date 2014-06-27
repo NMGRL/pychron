@@ -2,19 +2,19 @@ Pychron Develop Guide
 ===================================
 
 .. image:: ../images/NMGRL_logo.png
-:scale: 33%
-   :width: 50%
+  :scale: 33%
+  :width: 50%
 
 .. image:: ../images/RossLabs_logo.png
-:width: 33%
-   :scale: 70%
+  :width: 33%
+  :scale: 70%
 
 .. image:: ../images/NMT_logo.png
-:width: 33%
+  :width: 33%
 
 
 .. toctree::
-:maxdepth: 1
+  :maxdepth: 1
 
 
 
