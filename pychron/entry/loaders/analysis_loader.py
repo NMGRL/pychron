@@ -44,7 +44,8 @@ class XLSAnalysisLoader(BaseAnalysisLoader):
         return True
 
     def get_identifier(self, idx):
-        return self._get_value(idx, 'identifier', '{:n}')
+        v = self._get_value(idx, 'identifier', '{:n}')
+        return v.replace(',', '')
 
     def get_analysis_time(self, idx):
         v = self._get_value(idx, 'analysis_time')
