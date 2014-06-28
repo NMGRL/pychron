@@ -18,7 +18,14 @@
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from functools import partial
+from datetime import datetime
+
+import xlrd
+
 import yaml
+
+from pychron.core.xls.xls_parser import XLSParser
 
 from pychron.loggable import Loggable
 
@@ -28,7 +35,35 @@ class BaseAnalysisLoader(Loggable):
 
 
 class XLSAnalysisLoader(BaseAnalysisLoader):
-    pass
+    def load_analyses(self, p, header_idx=0):
+        parser = XLSParser()
+        parser.load(p, header_idx)
+        self.header_offset = header_idx + 1
+        self.parser = parser
+        return True
+
+    def get_identifier(self, idx):
+        return self._get_value(idx, 'identifier', '{:n}')
+
+    def get_analysis_time(self, idx):
+        v = self._get_value(idx, 'analysis_time')
+        v = xlrd.xldate_as_tuple(v, self.parser.workbook.datemode)
+        return datetime(*v)
+
+    def __getattr__(self, item):
+        if item.startswith('get_'):
+            attr = item.replace('get_', '')
+            return partial(self._get_value, attr=attr)
+
+    def _get_value(self, idx, attr, fmt=None):
+        try:
+            v = self.parser.get_value(idx + self.header_offset, attr)
+            if fmt:
+                v = fmt.format(v)
+            return v
+
+        except ValueError:
+            pass
 
 
 class YAMLAnalysisLoader(BaseAnalysisLoader):

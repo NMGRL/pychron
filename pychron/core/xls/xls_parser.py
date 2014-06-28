@@ -43,6 +43,7 @@ class XLSParser(BaseColumnParser):
         else:
             sheet = wb.sheet_by_name(sheet)
 
+        self.workbook = wb
         self._sheet = sheet
         self._header = map(str.strip, map(str, sheet.row_values(header_idx)))
 
