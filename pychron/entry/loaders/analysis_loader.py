@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import xlrd
 import yaml
 
 from pychron.core.xls.xls_parser import XLSParser
+from pychron.experiment.utilities.identifier import make_runid
 
 from pychron.loggable import Loggable
 
@@ -35,7 +36,7 @@ class BaseAnalysisLoader(Loggable):
 
 
 class XLSAnalysisLoader(BaseAnalysisLoader):
-    def load_analyses(self, p, header_idx=0):
+    def load_analyses(self, p, header_idx=1):
         parser = XLSParser()
         parser.load(p, header_idx)
         self.header_offset = header_idx + 1
@@ -49,6 +50,33 @@ class XLSAnalysisLoader(BaseAnalysisLoader):
         v = self._get_value(idx, 'analysis_time')
         v = xlrd.xldate_as_tuple(v, self.parser.workbook.datemode)
         return datetime(*v)
+
+    def get_isotope(self, idx, k):
+        return self._get_value(idx, k)
+
+    def get_isotope_data(self, idx, k):
+        v = self.get_isotope(idx, k)
+        i = self.get_identifier(idx)
+        a = self.get_aliquot(idx)
+        s = self.get_step(idx)
+        rid = make_runid(i, a, s)
+
+        if isinstance(v, float):
+            return [], []
+        else:
+            parser = self.parser
+            sh = parser.sheet
+
+            def g():
+                parser.set_sheet(v, header_idx=0)
+                cx, cy = parser.get_index('{}_xs'.format(k)), parser.get_index('{}_ys'.format(k))
+                for row in parser.iterblock(0, rid):
+                    yield row[cx].value, row[cy].value
+
+            data = list(g())
+
+            self.parser.set_sheet(sh)
+            return map(list, zip(*data))
 
     def __getattr__(self, item):
         if item.startswith('get_'):
