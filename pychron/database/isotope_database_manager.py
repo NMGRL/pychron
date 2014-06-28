@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,12 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+import time
 
 from traits.api import String, Property, Event, \
     cached_property, Any, Bool, Int
 from apptools.preferences.preference_binding import bind_preference
+
 
 
 #============= standard library imports ========================
@@ -205,6 +207,27 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
             if not self.vcs:
                 self.vcs = IsotopeVCSManager()
+
+    def progress_loader(self, xs, func, threshold=50):
+        def gen():
+            n = len(xs)
+            if n > threshold:
+                prog = self.open_progress(n)
+                for i, x in enumerate(xs):
+                    time.sleep(1)
+                    if prog.canceled:
+                        raise CancelLoadingError
+                    elif prog.accepted:
+                        break
+                    yield func(x, prog, i, n)
+            else:
+                for x in xs:
+                    yield func(x, None, 0, 0)
+
+        try:
+            return list(gen())
+        except CancelLoadingError:
+            return []
 
     def update_vcs_analysis(self, an, msg):
         if self.use_vcs:

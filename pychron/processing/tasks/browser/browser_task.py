@@ -16,10 +16,12 @@
 
 # ============= enthought library imports =======================
 from datetime import datetime, timedelta
+
 from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
+
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
@@ -174,18 +176,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _set_selected_analysis(self, new):
         pass
 
-    def _load_graphical_record_views(self, ans):
-        n = len(ans)
-        prog = None
-        if n > 10:
-            prog = self.manager.open_progress(n)
-
-        for i, ai in enumerate(ans):
-            ir = GraphicalRecordView(ai)
-            if prog:
-                prog.change_message('Loading {}-{}. {}'.format(i, n, ir.record_id))
-            yield ir
-
     def _graphical_filter_button_fired(self):
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -203,7 +193,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 force = False
             else:
                 force = True
-                lpost = datetime.now()-timedelta(hours=self.search_criteria.recent_hours)
+                lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
                 hpost = datetime.now()
                 ams = [mi.name for mi in db.get_mass_spectrometers()]
                 ms = ams[:1]
@@ -224,8 +214,16 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 else:
                     return
 
-            associated = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
-            ans = list(self._load_graphical_record_views(associated))
+            ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+
+            def func(xi, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+                return GraphicalRecordView(xi)
+
+            ans = self.manager.progress_loader(ans, func, threshold=50)
+            if not ans:
+                return
 
         gm = GraphicalFilterModel(analyses=ans,
                                   projects=[p.name for p in self.selected_projects])

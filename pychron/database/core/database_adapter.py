@@ -243,9 +243,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 return
 
             if password is not None:
-                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=3'.format(driver, user, password, host, name)
+                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=5'.format(driver, user, password, host, name)
             else:
-                url = 'mysql+{}://{}@{}/{}?connect_timeout=3'.format(driver, user, host, name)
+                url = 'mysql+{}://{}@{}/{}?connect_timeout=5'.format(driver, user, host, name)
         else:
             url = 'sqlite:///{}'.format(self.path)
 

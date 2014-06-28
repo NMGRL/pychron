@@ -298,19 +298,30 @@ class BrowserMixin(ColumnSorterMixin):
                                            self.high_post,
                                            self.analysis_include_types,
                                            mass_spectrometers=mass_spectrometers)
-            prog = None
-            n = len(ls)
-            if n > 50:
-                prog = self.manager.open_progress(n=n)
-            if prog:
-                def ln_factory(ll):
-                    prog.change_message('Loading Labnumber {}'.format(ll.identifier))
-                    return LabnumberRecordView(ll)
-            else:
-                def ln_factory(ll):
-                    return LabnumberRecordView(ll)
-            sams = [ln_factory(li) for li in ls]
+            # prog = None
+            # n = len(ls)
+            # if n > 50:
+            # prog = self.manager.open_progress(n=n)
+            # if prog:
+            #     def ln_factory(ll):
+            #         prog.change_message('Loading Labnumber {}'.format(ll.identifier))
+            #         return LabnumberRecordView(ll)
+            # else:
+            #     def ln_factory(ll):
+            #         return LabnumberRecordView(ll)
 
+            # sams = [ln_factory(li) for li in ls]
+            # try:
+            # sams=list(self._make_labnumber_records(ls))
+            # except CancelLoadingError:
+            #     sams=[]
+
+            def func(li, prog, i, n):
+                if prog:
+                    prog.change_message('Loading Labnumber {}'.format(li.identifier))
+                return LabnumberRecordView(li)
+
+            sams = self.manager.progress_loader(ls, func)
         return sams
 
     def _retrieve_sample_analyses(self, samples,
@@ -333,16 +344,13 @@ class BrowserMixin(ColumnSorterMixin):
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers)
-            prog = None
 
-            if tc > 25 or len(lns) > 2:
-                prog = self.manager.open_progress(tc)
+            def func(xi, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}'.format(xi.record_id))
+                return IsotopeRecordView(xi)
 
-            record_view_factory = self._record_view_factory
-            ans = [record_view_factory(a, progress=prog) for a in ans]
-            if prog:
-                prog.close()
-            return ans
+            return self.manager.progress_loader(ans, func, threshold=25)
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter
@@ -409,7 +417,7 @@ class BrowserMixin(ColumnSorterMixin):
         self.selected_projects = []
         self.selected_samples = []
         self.samples = []
-        self.os
+        self.osamples = []
 
     def _use_named_date_range_changed(self, new):
         if new:
@@ -540,14 +548,16 @@ class BrowserMixin(ColumnSorterMixin):
             return map(str.lower, ats)
 
     #factories
-    def _record_view_factory(self, ai, progress=None, **kw):
+    # def _record_view_factory(self, ai, progress=None, **kw):
+    #
+    # iso = IsotopeRecordView(**kw)
+    #     iso.create(ai)
+    #     if progress:
+    #         progress.change_message('Loading {}'.format(iso.record_id))
+    #
+    #     return iso
 
-        iso = IsotopeRecordView(**kw)
-        iso.create(ai)
-        if progress:
-            progress.change_message('Loading {}'.format(iso.record_id))
 
-        return iso
 
     # defaults
     def _table_configurer_default(self):

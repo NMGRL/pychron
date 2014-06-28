@@ -1224,8 +1224,10 @@ class IsotopeAdapter(DatabaseAdapter):
             q = sess.query(meas_AnalysisTable.analysis_timestamp)
             q = q.join(gen_LabTable)
             q = q.filter(gen_LabTable.identifier.in_(lns))
+
             qry = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             hpost = qry.first()
+
             qry = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
             lpost = qry.first()
 
