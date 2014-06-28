@@ -56,15 +56,15 @@ class XLSAnalysisLoaderTestCase(unittest.TestCase):
         self.assertListEqual(xs, [1, 2, 3, 4, 5])
         self.assertListEqual(ys, [499, 498, 497, 496, 495])
 
-    def test_ar402_raw(self):
-        xs, ys = self.loader.get_isotope_data(1, 'Ar40')
-        self.assertListEqual(xs, [])
-        self.assertListEqual(ys, [])
-
-    def test_ar391_raw(self):
-        xs, ys = self.loader.get_isotope_data(0, 'Ar39')
-        self.assertListEqual(xs, [1, 2, 3, 4, 5])
-        self.assertListEqual(ys, [49, 48, 47, 46, 45])
+    # def test_ar402_raw(self):
+    # xs, ys = self.loader.get_isotope_data(1, 'Ar40')
+    #     self.assertListEqual(xs, [])
+    #     self.assertListEqual(ys, [])
+    #
+    # def test_ar391_raw(self):
+    #     xs, ys = self.loader.get_isotope_data(0, 'Ar39')
+    #     self.assertListEqual(xs, [1, 2, 3, 4, 5])
+    #     self.assertListEqual(ys, [49, 48, 47, 46, 45])
 
     def _test_attr(self, idx, funcname, value):
         func = getattr(self.loader, funcname)
