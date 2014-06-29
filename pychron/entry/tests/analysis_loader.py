@@ -58,7 +58,7 @@ class XLSAnalysisLoaderTestCase(unittest.TestCase):
 
     def test_ar402(self):
         v = self.loader.get_isotope(3, 'Ar40')
-        self.assertEqual(v, 10)
+        self.assertEqual(v, 1000)
 
     def test_ar402_err(self):
         v = self.loader.get_isotope_error(3, 'Ar40')
