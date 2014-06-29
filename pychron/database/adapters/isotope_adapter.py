@@ -75,7 +75,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable
 
-from pychron.pychron_constants import ALPHAS
+from pychron.pychron_constants import ALPHAS, alpha_to_int
 
 
 class InterpretedAge(HasTraits):
@@ -673,28 +673,19 @@ class IsotopeAdapter(DatabaseAdapter):
             self.info('no irradiation to add to as this level. irradiation={}'.format(irradiation))
 
     def add_isotope(self, analysis, molweight, det, **kw):
-        iso = meas_IsotopeTable(**kw)
         analysis = self.get_analysis(analysis)
-        iso.analysis = analysis
-        det = self.get_detector(det, )
-        iso.detector = det
-        molweight = self.get_molecular_weight(molweight)
+        det = self.get_detector(det)
+
+        if isinstance(molweight, float):
+            molweight = self.get_molecular_weight(molweight)
+        else:
+            molweight = self.get_molecular_weight_name(molweight)
+
+        iso = meas_IsotopeTable(**kw)
+
         iso.molecular_weight = molweight
-
-        #if analysis:
-        #    iso.analysis=analysis
-        #iso.analysis_id = analysis.id
-        #            analysis.isotopes.append(iso)
-
-        #if det is not None:
-        #iso.detector=det
-        #iso.detector_id = det.id
-        #            det.isotopes.append(iso)
-
-
-        #if molweight is not None:
-        #iso.molecular_weight_id = molweight.id
-        #            molweight.isotopes.append(iso)
+        iso.analysis = analysis
+        iso.detector = det
 
         self._add_item(iso)
         return iso
@@ -1074,7 +1065,7 @@ class IsotopeAdapter(DatabaseAdapter):
             else:
                 if project_names:
                     q = q.filter(gen_ProjectTable.name.in_(project_names))
-            # print compile_query(q)
+
             try:
                 return q.all()
             except NoResultFound:
@@ -1485,22 +1476,28 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_unique_analysis(self, ln, ai, step=None):
         #         sess = self.get_session()
         with self.session_ctx() as sess:
-            ln = self.get_labnumber(ln)
-            if not ln:
+            dbln = self.get_labnumber(ln)
+            if not dbln:
+                self.debug('get_unique_analysis, no labnumber {}'.format(ln))
                 return
 
             q = sess.query(meas_AnalysisTable)
             q = q.join(gen_LabTable)
-            q = q.filter(getattr(meas_AnalysisTable, 'labnumber') == ln)
+            q = q.filter(meas_AnalysisTable.labnumber == dbln)
 
             try:
                 ai = int(ai)
-            except ValueError:
+            except ValueError, e:
+                self.debug('get_unique_analysis aliquot={}.  {}'.format(ai, e))
                 return
 
             q = q.filter(meas_AnalysisTable.aliquot == int(ai))
             if step:
-                q = q.filter(meas_AnalysisTable.step == step)
+                if not isinstance(step, int):
+                    step = alpha_to_int(step)
+
+                q = q.filter(meas_AnalysisTable.increment == step)
+
             q = q.limit(1)
             try:
                 return q.one()
@@ -1692,6 +1689,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_molecular_weight(self, value):
         return self._retrieve_item(gen_MolecularWeightTable, value)
+
+    def get_molecular_weight_name(self, name):
+        return self._retrieve_item(gen_MolecularWeightTable, name, key='name')
 
     def get_user(self, value):
         return self._retrieve_item(gen_UserTable, value, )

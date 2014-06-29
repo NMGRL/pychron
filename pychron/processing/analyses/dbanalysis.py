@@ -249,13 +249,17 @@ class DBAnalysis(Analysis):
         self._sync_measurement(meas_analysis)
 
     def _sync_script_blobs(self, meas_analysis):
-        meas = meas_analysis.measurement.script
+        meas = meas_analysis.measurement
         if meas:
-            self.measurement_script_blob = meas.blob
+            script = meas.script
+            if script:
+                self.measurement_script_blob = script.blob
 
-        ext = meas_analysis.extraction.script
+        ext = meas_analysis.extraction
         if ext:
-            self.extraction_script_blob = ext.blob
+            script = ext.script
+            if script:
+                self.extraction_script_blob = script.blob
 
     def _sync_extraction(self, meas_analysis):
         extraction = meas_analysis.extraction
@@ -300,12 +304,13 @@ class DBAnalysis(Analysis):
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:
             meas = meas_analysis.measurement
-            if meas.script:
-                self.measurement_script_name = remove_extension(meas.script.name)
+            if meas:
+                if meas.script:
+                    self.measurement_script_name = remove_extension(meas.script.name)
 
-            self.analysis_type = meas.analysis_type.name
-            self.mass_spectrometer = meas.mass_spectrometer.name.lower()
-            self.collection_time_zero_offset = meas.time_zero_offset or 0
+                self.analysis_type = meas.analysis_type.name
+                self.mass_spectrometer = meas.mass_spectrometer.name.lower()
+                self.collection_time_zero_offset = meas.time_zero_offset or 0
 
     def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
@@ -335,10 +340,11 @@ class DBAnalysis(Analysis):
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
-        exp = ext.experiment
-        self.debug('syncing experiment, {}'.format(exp))
-        if exp:
-            self.experiment_txt = exp.blob
+        if ext:
+            exp = ext.experiment
+            self.debug('syncing experiment, {}'.format(exp))
+            if exp:
+                self.experiment_txt = exp.blob
 
     def _sync_irradiation(self, ln):
         """
@@ -648,15 +654,16 @@ class DBAnalysis(Analysis):
         """
             discriminations should be saved as 1amu not 4amu
         """
-        selected_hist = meas_analysis.selected_histories.selected_detector_param
         d = dict()
-        if selected_hist:
-            for dp in selected_hist.detector_params:
-                self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
-                d[dp.detector.name] = (disc, dp.refmass)
-                #d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
-                #dp=selected_hist.detector_param
-                #return ufloat(dp.disc, dp.disc_error)
+        if meas_analysis.selected_histories:
+            selected_hist = meas_analysis.selected_histories.selected_detector_param
+            if selected_hist:
+                for dp in selected_hist.detector_params:
+                    self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
+                    d[dp.detector.name] = (disc, dp.refmass)
+                    # d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
+                    #dp=selected_hist.detector_param
+                    #return ufloat(dp.disc, dp.disc_error)
         return d
 
     def _get_sample(self, meas_analysis):

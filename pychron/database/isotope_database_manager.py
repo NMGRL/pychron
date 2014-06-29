@@ -16,7 +16,6 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
-import time
 
 from traits.api import String, Property, Event, \
     cached_property, Any, Bool, Int
@@ -214,7 +213,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if n > threshold:
                 prog = self.open_progress(n)
                 for i, x in enumerate(xs):
-                    time.sleep(1)
                     if prog.canceled:
                         raise CancelLoadingError
                     elif prog.accepted:
@@ -286,6 +284,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     def _calculate_cached_ages(self, ans, calculate_age):
         if calculate_age:
+            self.debug('calculated cached analysis ages')
             for ca in ans:
                 ca.calculate_age()
 
@@ -344,73 +343,72 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ans = self.filter_analysis_tag(ans, exclude)
 
         if not ans:
+            self.debug('no analyses to load')
             return []
 
         db = self.db
         with db.session_ctx():
-            if ans:
-                #partition into DBAnalysis vs IsotopeRecordView
-                db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
-                self._calculate_cached_ages(db_ans, calculate_age)
+            # partition into DBAnalysis vs IsotopeRecordView
+            db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
+            self._calculate_cached_ages(db_ans, calculate_age)
 
+            if unpack:
+                for di in db_ans:
+                    if not di.has_raw_data:
+                        no_db_ans.append(di)
+                        db_ans.remove(di)
+
+            if no_db_ans:
+                # partition into cached and non cached analyses
+                cached_ans, no_db_ans = partition(no_db_ans,
+                                                  lambda x: x.uuid in ANALYSIS_CACHE)
+                cached_ans = list(cached_ans)
+                no_db_ans = list(no_db_ans)
+
+                cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
+                # if unpack is true make sure cached analyses have raw data
                 if unpack:
-                    for di in db_ans:
-                        if not di.has_raw_data:
-                            no_db_ans.append(di)
-                            db_ans.remove(di)
+                    a, b = self._unpack_cached_analyses(cns, calculate_age)
+                    db_ans.extend(a)
+                    no_db_ans.extend(b)
+                else:
+                    self._calculate_cached_ages(cns, calculate_age)
+                    #add analyses from cache to db_ans
+                    db_ans.extend(cns)
 
-                if no_db_ans:
-                    #partition into cached and non cached analyses
-                    cached_ans, no_db_ans = partition(no_db_ans,
-                                                      lambda x: x.uuid in ANALYSIS_CACHE)
-                    cached_ans = list(cached_ans)
-                    no_db_ans = list(no_db_ans)
+                # increment value in cache_count
+                self._increment_cache(cached_ans, use_cache)
 
-                    cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
-                    #if unpack is true make sure cached analyses have raw data
-                    if unpack:
-                        a, b = self._unpack_cached_analyses(cns, calculate_age)
-                        db_ans.extend(a)
-                        no_db_ans.extend(b)
-                    else:
-                        self._calculate_cached_ages(cns, calculate_age)
-                        #add analyses from cache to db_ans
-                        db_ans.extend(cns)
+                # load remaining analyses
+                n = len(no_db_ans)
+                if n:
+                    self._clone_vcs_repos(no_db_ans)
 
-                    #increment value in cache_count
-                    self._increment_cache(cached_ans, use_cache)
+                    progress = self._setup_progress(n, progress, use_progress)
 
-                    #load remaining analyses
-                    n = len(no_db_ans)
-                    if n:
-                        self._clone_vcs_repos(no_db_ans)
+                    db_ans, new_ans = self._construct_analyses(n, no_db_ans, db_ans, progress,
+                                                               calculate_age, unpack, use_cache, **kw)
+                    db_ans.extend(new_ans)
 
-                        progress = self._setup_progress(n, progress, use_progress)
+                    # self.debug('use vcs {}'.format(self.use_vcs))
+                    # if self.use_vcs:
+                    # if progress:
+                    #         progress.increase_max(len(new_ans)+1)
+                    #         progress.change_message('Adding analyses to vcs')
+                    #
+                    #     self.vcs.add_analyses(new_ans, progress=progress)
 
-                        db_ans, new_ans = self._construct_analyses(n, no_db_ans, db_ans, progress,
-                                                                   calculate_age, unpack, use_cache, **kw)
+                    self.debug('use offline database {}'.format(self.use_offline_database))
+                    if self.use_offline_database:
+                        if progress:
+                            progress.increase_max(len(new_ans) + 1)
+                            progress.change_message('Transfering analyses for offline usage')
+                        self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
-                        db_ans.extend(new_ans)
+            if progress:
+                progress.soft_close()
 
-                        # self.debug('use vcs {}'.format(self.use_vcs))
-                        # if self.use_vcs:
-                        #     if progress:
-                        #         progress.increase_max(len(new_ans)+1)
-                        #         progress.change_message('Adding analyses to vcs')
-                        #
-                        #     self.vcs.add_analyses(new_ans, progress=progress)
-
-                        self.debug('use offline database {}'.format(self.use_offline_database))
-                        if self.use_offline_database:
-                            if progress:
-                                progress.increase_max(len(new_ans) + 1)
-                                progress.change_message('Transfering analyses for offline usage')
-                            self.offline_bridge.add_analyses(db, new_ans, progress=progress)
-
-                if progress:
-                    progress.soft_close()
-
-                return db_ans
+            return db_ans
 
     def get_level(self, level, irradiation=None):
         if irradiation is None:
@@ -436,7 +434,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         #get all dbrecords with one call
         uuids = [ri.uuid for ri in no_db_ans]
         ms = self.db.get_analyses_uuid(uuids)
-
         def _gen():
             construct = self._construct_analysis
             add_to_cache = self._add_to_cache

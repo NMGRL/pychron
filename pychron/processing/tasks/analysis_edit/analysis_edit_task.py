@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -188,12 +188,14 @@ class AnalysisEditTask(BaseBrowserTask):
                     editor = RecallEditor(analysis_view=rec.analysis_view,
                                           model=rec)
                     if existing and editor.basename in existing:
-                        editor.instance_id =existing.count(editor.basename)
+                        editor.instance_id = existing.count(editor.basename)
 
                     self.editor_area.add_editor(editor)
 
                 ed = self.editor_area.editors[-1]
                 self.editor_area.activate_editor(ed)
+            else:
+                self.warning('could not load records')
 
     def new_ic_factor(self):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \
