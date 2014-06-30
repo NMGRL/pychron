@@ -104,6 +104,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     notes = relationship('proc_NotesTable', backref='analysis')
     group_sets = relationship('proc_AnalysisGroupSetTable', backref='analysis')
     monitors = relationship('meas_MonitorTable', backref='analysis')
+    dr_sets = relationship('proc_DataReductionTagSetTable', backref='analysis')
 
     @property
     def timestamp(self):

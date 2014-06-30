@@ -45,6 +45,21 @@ class HistoryMixin(BaseMixin, History):
     pass
 
 
+class proc_DataReductionTagTable(Base, BaseMixin):
+    name = stringcolumn(140)
+    create_date = Column(TIMESTAMP, default=func.now())
+    comment = Column(BLOB)
+    user_id = foreignkey('gen_UserTable')
+
+    analyses = relationship('proc_DataReductionTagSetTable', backref='tag')
+
+
+class proc_DataReductionTagSetTable(Base, BaseMixin):
+    tag_id = foreignkey('proc_DataReductionTagTable')
+    analysis_id = foreignkey('meas_AnalysisTable')
+    selected_histories_id= foreignkey('proc_SelectedHistoriesTable')
+
+
 class proc_AnalysisGroupTable(Base, NameMixin):
     create_date = Column(TIMESTAMP, default=func.now())
     last_modified = Column(TIMESTAMP)

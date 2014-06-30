@@ -322,6 +322,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             sess.add(obj)
             try:
                 sess.flush()
+                return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()

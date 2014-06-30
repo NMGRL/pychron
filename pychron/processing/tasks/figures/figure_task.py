@@ -24,16 +24,16 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction, \
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.tags import Tag
+from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import Tag
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane

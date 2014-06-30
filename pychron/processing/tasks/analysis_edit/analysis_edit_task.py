@@ -29,7 +29,7 @@ from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
 from pychron.processing.tasks.analysis_edit.panes import UnknownsPane, ControlsPane, \
     TablePane
-from pychron.processing.tasks.analysis_edit.tags import Tag
+
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.adapters import UnknownsAdapter
@@ -237,6 +237,25 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc.render_component(comp, valign='center')
                 gc.save()
 
+    def select_data_reduction_tag(self):
+        pass
+
+    def set_data_reduction_tag(self):
+        items = self._get_analyses_to_tag()
+        if items:
+            a = self._get_dr_tagname(items)
+            if a is not None:
+                tag, items= a
+                print tag, items
+                if tag and items:
+                    db=self.manager.db
+                    with db.session_ctx():
+                        dbtag = db.add_data_reduction_tag(tag)
+
+                        for it in items:
+                            dban = db.get_analysis_uuid(it.uuid)
+                            db.add_data_reduction_tag_set(dbtag, dban, dban.selected_histories.id)
+
     def set_tag(self, tag=None, items=None, use_filter=True):
         """
             set tag for either
@@ -248,9 +267,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if items is None:
             items = self._get_analyses_to_tag()
 
-        if not items:
-            self.warning_dialog('No analyses selected to Tag')
-        else:
+        if items:
             db = self.manager.db
             name = None
             if tag is None:
@@ -271,11 +288,12 @@ class AnalysisEditTask(BaseBrowserTask):
                         ma.tag = name
                         it.set_tag(tag)
 
-                if not isinstance(self.active_editor, RecallEditor):
-                    if use_filter:
-                        self.active_editor.filter_invalid_analyses()
-                    else:
-                        self.active_editor.rebuild()
+                if self.active_editor:
+                    if not isinstance(self.active_editor, RecallEditor):
+                        if use_filter:
+                            self.active_editor.filter_invalid_analyses()
+                        else:
+                            self.active_editor.rebuild()
 
                 self.analysis_table.refresh_needed = True
                 if self.unknowns_pane:
@@ -389,24 +407,34 @@ class AnalysisEditTask(BaseBrowserTask):
                      editor.model and editor.model.uuid == uuid), None)
 
     def _get_tagname(self, items):
-        from pychron.processing.tasks.analysis_edit.tags import TagTableView
+        from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import AnalysisTagModel
+        from pychron.processing.tasks.analysis_edit.tagging.views import AnalysisTagView
 
         tv = self._tag_table_view
         if not tv:
-            tv = TagTableView()
+            tv = AnalysisTagView(model=AnalysisTagModel())
 
         db = self.manager.db
         with db.session_ctx():
-            tv.items = items
             # tv = TagTableView(items=items)
-            tv.table.db = db
-            tv.table.load()
+            tv.model.db = db
+            tv.model.items = items
+            tv.model.load()
 
         info = tv.edit_traits()
         if info.result:
-            tag = tv.selected
+            tag = tv.model.selected
             self._tag_table_view = tv
-            return tag, tv.items, tv.use_filter
+            return tag, tv.model.items, tv.model.use_filter
+
+    def _get_dr_tagname(self, items):
+        from pychron.processing.tasks.analysis_edit.tagging.data_reduction_tags import DataReductionTagModel
+        from pychron.processing.tasks.analysis_edit.tagging.views import DataReductionTagView
+
+        tv = DataReductionTagView(model=DataReductionTagModel(items=items))
+        info = tv.edit_traits()
+        if info.result:
+            return tv.model.tag, tv.model.items
 
     def _open_ideogram_editor(self, ans, name, task=None):
         _id = 'pychron.processing.figures'
@@ -529,6 +557,9 @@ class AnalysisEditTask(BaseBrowserTask):
 
         if not items:
             items = self.analysis_table.selected
+
+        if not items:
+            self.warning_dialog('No analyses selected to Tag')
 
         return items
 
@@ -694,6 +725,8 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:invalid_event')
     def _handle_invalid(self, new):
+        from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import Tag
+
         self.set_tag(tag=Tag(name='invalid'),
                      items=new)
 

@@ -73,7 +73,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
-    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
@@ -235,6 +235,19 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # adders
     #===========================================================================
+    def add_data_reduction_tag(self, name, comment, user=None):
+        if user:
+            user = self.get_user(self.save_username)
+
+        obj = proc_DataReductionTagTable(name=name, comment=comment, user=user)
+        return self._add_item(obj)
+
+    def add_data_reduction_tag_set(self, dbtag, an, sh_id):
+        obj = proc_DataReductionTagSetTable()
+        obj.tag = dbtag
+        obj.analysis = an
+        obj.selected_histories_id = sh_id
+
     def add_mftable(self, specname, blob):
         spec = self.get_mass_spectrometer(specname)
         if spec is None:
