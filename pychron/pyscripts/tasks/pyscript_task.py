@@ -33,7 +33,6 @@ from pychron.core.ui.preference_binding import bind_preference
 from pychron.execute_mixin import ExecuteMixin
 
 
-
 class PyScriptTask(EditorTask, ExecuteMixin):
     name = 'PyScript'
     kind = String

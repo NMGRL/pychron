@@ -510,9 +510,17 @@ class PyScript(Loggable):
 
             root = self.root
 
-        p = os.path.join(root, name)
-        if not os.path.isfile(p):
-            raise GosubError(p)
+        # p = os.path.join(root, name)
+        # if not os.path.isfile(p):
+        #     while root!=paths.scripts_dir:
+        #         root=os.path.dirname(root)
+        #         p = os.path.join(root, name)
+        #         if os.path.isfile(p):
+        #             break
+        #     else:
+        #         raise GosubError(p)
+
+        root = self._find_root(root, name)
 
         if klass is None:
             klass = self.__class__
@@ -650,6 +658,28 @@ class PyScript(Loggable):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _find_root(self, root, name):
+        p = os.path.join(root, name)
+        if not os.path.isfile(p):
+            while root != paths.scripts_dir:
+                root = os.path.dirname(root)
+                p = os.path.join(root, name)
+                if os.path.isfile(p):
+                    break
+
+                for d in os.listdir(root):
+                    d = os.path.join(root, d)
+                    if os.path.isdir(d):
+                        p = os.path.join(d, name)
+                        if os.path.isfile(p):
+                            break
+
+                if os.path.isfile(p):
+                    break
+            else:
+                raise GosubError(name)
+        return os.path.dirname(p)
+
     def _cancel_flag_changed(self, v):
         if v:
             result = confirm(None,
@@ -879,9 +909,9 @@ if __name__ == '__main__':
     #    execute_script(t)
     from pychron.paths import paths
 
-    p = PyScript(root=os.path.join(paths.scripts_dir, 'pyscripts'),
+    ps = PyScript(root=os.path.join(paths.scripts_dir, 'pyscripts'),
                  path='test.py',
                  _manager=DummyManager())
 
-    p.execute()
+    ps.execute()
 #============= EOF =============================================

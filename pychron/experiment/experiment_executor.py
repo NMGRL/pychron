@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -1373,8 +1373,8 @@ Use Last "blank_{}"= {}
         # isok = True
         self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
-            self._check_for_managers()
-            mon = RemoteAutomatedRunMonitor()
+            # self._check_for_managers()
+            mon = RemoteAutomatedRunMonitor(name='automated_run_monitor')
             # ip = InitializationParser()
             # exp = ip.get_plugin('Experiment', category='general')
             # monitor = exp.find('monitor')

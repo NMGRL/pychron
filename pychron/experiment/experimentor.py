@@ -429,9 +429,9 @@ class Experimentor(IsotopeDatabaseManager):
             if spec:
                 dms = spec.name.capitalize()
 
-        e = ExperimentFactory(db=self.db,
-                              application=self.application,
-                              default_mass_spectrometer=dms)
+        e = ExperimentFactory(application=self.application,
+                              db=self.db)
+        e.default_mass_spectrometer=dms
 
         return e
 
