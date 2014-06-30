@@ -6,4 +6,4 @@ Pychron User Guide
   configuration/index
   operation/index
   processing/index
-        entry/index
+  entry/index
