@@ -377,6 +377,11 @@ class Experimentor(IsotopeDatabaseManager):
                 self.stats.calculate_at(a)
                 self.stats.calculate()
 
+    @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
+    def handle_delay_between_analyses(self, new):
+        if self.executor.isAlive():
+            self.executor.experiment_queue.delay_between_analyses=new
+
     def _set_factory_runs(self, new):
         ef = self.experiment_factory
         rf = ef.run_factory

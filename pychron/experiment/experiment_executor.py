@@ -348,7 +348,6 @@ class ExperimentExecutor(Loggable):
         # scroll to the first run
         exp.automated_runs_scroll_to_row = 0
 
-        delay = exp.delay_between_analyses
         last_runid = None
 
         rgen, nruns = exp.new_runs_generator()
@@ -378,7 +377,7 @@ class ExperimentExecutor(Loggable):
                 if not overlapping:
                     if self.isAlive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
-                        self._delay(delay)
+                        self._delay(exp.delay_between_analyses)
                     else:
                         self.debug('not delaying between runs isAlive={}, '
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.isAlive(),
