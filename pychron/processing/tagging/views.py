@@ -12,11 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits
-from traits.trait_types import Instance
+from traits.api import HasTraits, Instance, List, Any
 from traitsui.api import View, Item, UItem, VGroup, HGroup
 from traitsui.editors import TableEditor, TabularEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -31,8 +30,33 @@ from traitsui.tabular_adapter import TabularAdapter
 
 #============= EOF =============================================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import AnalysisTagModel
-from pychron.processing.tasks.analysis_edit.tagging.data_reduction_tags import DataReductionTagModel
+from pychron.processing.tagging.analysis_tags import AnalysisTagModel
+from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel, SelectDataReductionTagModel
+
+
+class DataReductionItemAdapter(TabularAdapter):
+    columns = [('Name', 'name'),
+               ('Date', 'create_date'),
+               ('User','user'),
+               ('Comment', 'comment')]
+
+
+class SelectDataReductionTagView(Controller):
+    model = Instance(SelectDataReductionTagModel)
+
+    def traits_view(self):
+        v = View(HGroup(Item('name_filter', label='Name'),
+                        Item('user_filter', label='User')),
+                 UItem('tags',
+                       editor=TabularEditor(adapter=DataReductionItemAdapter(),
+                                            editable=False,
+                                            selected='selected')),
+                 buttons=['OK','Cancel'],
+                 width=500,
+                 kind='livemodal',
+                 resizable=True,
+                 title='Select Data Reduction Tag')
+        return v
 
 
 class ItemAdapter(TabularAdapter):
@@ -101,6 +125,7 @@ class AnalysisTagView(Controller):
 
         return v
 
-if __name__=='__main__':
-    drv =DataReductionTagView(model=DataReductionTagModel())
+
+if __name__ == '__main__':
+    drv = DataReductionTagView(model=DataReductionTagModel())
     drv.configure_traits()

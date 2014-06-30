@@ -43,7 +43,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
-    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction
+    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction, \
+    SelectDataReductionTagAction
 from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
@@ -142,6 +143,7 @@ Install to enable MS Excel export''')
         def misc_group():
             return Group(TagAction(),
                          DataReductionTagAction(),
+                         SelectDataReductionTagAction(),
                          DatabaseSaveAction(),
                          ClearAnalysisCacheAction(),
                          MakeTASAction(),

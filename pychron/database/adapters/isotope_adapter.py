@@ -948,6 +948,7 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # getters
     #===========================================================================
+
     def get_mftables(self, spec, **kw):
         return self._retrieve_items(spec_MFTableTable,
                                     joins=(gen_MassSpectrometerTable,),
@@ -1756,6 +1757,18 @@ class IsotopeAdapter(DatabaseAdapter):
         new style using _retrieve_items, _get_items is deprecated. 
         rewrite functionality if required
     '''
+
+    def get_data_reduction_tags(self, uuids=None):
+        with self.session_ctx() as sess:
+            q = sess.query(proc_DataReductionTagTable)
+            if uuids:
+                q = q.join(proc_DataReductionTagSetTable)
+                q = q.join(meas_AnalysisTable)
+                q= q.filter(meas_AnalysisTable.uuid.in_(uuids))
+
+            q = q.order_by(proc_DataReductionTagTable.create_date.desc())
+            return q.all()
+
 
     def get_irradiation_holders(self, **kw):
         return self._retrieve_items(irrad_HolderTable, **kw)

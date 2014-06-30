@@ -226,8 +226,7 @@ class AnalysisEditTask(BaseBrowserTask):
             p = self.save_file_dialog(ext='.pdf')
             if p:
                 gc = PdfPlotGraphicsContext(filename=p,
-                                            dest_box=(1.5, 1, 6, 9)
-                )
+                                            dest_box=(1.5, 1, 6, 9))
 
                 #pc.do_layout(force=True)
                 # pc.use_backbuffer=False
@@ -238,7 +237,22 @@ class AnalysisEditTask(BaseBrowserTask):
                 gc.save()
 
     def select_data_reduction_tag(self):
-        pass
+        from pychron.processing.tagging.data_reduction_tags import SelectDataReductionTagModel
+        from pychron.processing.tagging.views import SelectDataReductionTagView
+
+        model = SelectDataReductionTagModel()
+        db=self.manager.db
+        with db.session_ctx():
+            items = self._get_selection()
+            uuids = [it.uuid for it in items] if items else None
+            tags = db.get_data_reduction_tags(uuids=uuids)
+            model.load_tags(tags)
+
+        v=SelectDataReductionTagView(model=model)
+        info =v.edit_traits()
+        if info.result:
+            stag = model.selected
+            self.debug('setting data reduction tag {}'.format(stag.name))
 
     def set_data_reduction_tag(self):
         items = self._get_analyses_to_tag()
@@ -407,8 +421,8 @@ class AnalysisEditTask(BaseBrowserTask):
                      editor.model and editor.model.uuid == uuid), None)
 
     def _get_tagname(self, items):
-        from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import AnalysisTagModel
-        from pychron.processing.tasks.analysis_edit.tagging.views import AnalysisTagView
+        from pychron.processing.tagging.analysis_tags import AnalysisTagModel
+        from pychron.processing.tagging.views import AnalysisTagView
 
         tv = self._tag_table_view
         if not tv:
@@ -428,8 +442,8 @@ class AnalysisEditTask(BaseBrowserTask):
             return tag, tv.model.items, tv.model.use_filter
 
     def _get_dr_tagname(self, items):
-        from pychron.processing.tasks.analysis_edit.tagging.data_reduction_tags import DataReductionTagModel
-        from pychron.processing.tasks.analysis_edit.tagging.views import DataReductionTagView
+        from pychron.processing.tagging.data_reduction_tags import DataReductionTagModel
+        from pychron.processing.tagging.views import DataReductionTagView
 
         tv = DataReductionTagView(model=DataReductionTagModel(items=items))
         info = tv.edit_traits()
@@ -543,7 +557,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if items:
             return ((items, 'unknown'),)  # unknown analysis type
 
-    def _get_analyses_to_tag(self):
+    def _get_selection(self):
         items = None
 
         if self.unknowns_pane:
@@ -557,7 +571,10 @@ class AnalysisEditTask(BaseBrowserTask):
 
         if not items:
             items = self.analysis_table.selected
+        return items
 
+    def _get_analyses_to_tag(self):
+        items = self._get_selection()
         if not items:
             self.warning_dialog('No analyses selected to Tag')
 
@@ -725,7 +742,7 @@ class AnalysisEditTask(BaseBrowserTask):
 
     @on_trait_change('active_editor:invalid_event')
     def _handle_invalid(self, new):
-        from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import Tag
+        from pychron.processing.tagging.analysis_tags import Tag
 
         self.set_tag(tag=Tag(name='invalid'),
                      items=new)

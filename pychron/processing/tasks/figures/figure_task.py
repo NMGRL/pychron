@@ -25,6 +25,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -33,7 +34,7 @@ from pychron.processing.tasks.actions.edit_actions import TagAction
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction, \
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.tagging.analysis_tags import Tag
+from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
