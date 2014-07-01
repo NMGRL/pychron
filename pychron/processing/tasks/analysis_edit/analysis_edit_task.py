@@ -262,18 +262,16 @@ class AnalysisEditTask(BaseBrowserTask):
     def set_data_reduction_tag(self):
         items = self._get_analyses_to_tag()
         if items:
-            a = self._get_dr_tagname(items)
-            if a is not None:
-                tag, items= a
-                print tag, items
-                if tag and items:
-                    db=self.manager.db
-                    with db.session_ctx():
-                        dbtag = db.add_data_reduction_tag(tag)
-
-                        for it in items:
-                            dban = db.get_analysis_uuid(it.uuid)
-                            db.add_data_reduction_tag_set(dbtag, dban, dban.selected_histories.id)
+            model = self._get_dr_tagname(items)
+            if model is not None:
+                db=self.manager.db
+                with db.session_ctx():
+                    dbtag = db.add_data_reduction_tag(model.tagname, model.comment)
+                    self.debug('added data reduction tag: {}'.format(model.tagname))
+                    for it in model.items:
+                        dban = db.get_analysis_uuid(it.uuid)
+                        db.add_data_reduction_tag_set(dbtag, dban, dban.selected_histories.id)
+                        dban.data_reduction_tag = dbtag
 
     def set_tag(self, tag=None, items=None, use_filter=True):
         """
@@ -453,7 +451,7 @@ class AnalysisEditTask(BaseBrowserTask):
         tv = DataReductionTagView(model=DataReductionTagModel(items=items))
         info = tv.edit_traits()
         if info.result:
-            return tv.model.tag, tv.model.items
+            return tv.model
 
     def _open_ideogram_editor(self, ans, name, task=None):
         _id = 'pychron.processing.figures'

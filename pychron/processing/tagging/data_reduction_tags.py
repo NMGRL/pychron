@@ -56,7 +56,7 @@ class SelectDataReductionTagModel(HasTraits):
                                      id = di.id,
                                      create_date=di.create_date.strftime('%m-%d-%Y'),
                                      user=di.user.name,
-                                     comment=di.comment)
+                                     comment=di.comment or '')
                 yield d
         self.otags = self.tags = list(g())
 
