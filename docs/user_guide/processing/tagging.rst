@@ -8,7 +8,7 @@ There are two types if tagging in Pychron
 
 
 Analysis Tagging
------------------
+~~~~~~~~~~~~~~~~
 Analysis tagging is used to tag individual analyses and specify how pychron should handle the analysis when processing and plotting.
 There are two generic tags, **OK** and **Invalid**. **OK** is the default tag for an analysis. It indicates that the analysis is acceptable a should be included in
 all processes. **Invalid** indicates that the analysis is *bad* and should not be hidden from the browser and plotting routines
@@ -29,7 +29,7 @@ used in the calculation of the mean age.
 
 
 Data Reduction Tagging
------------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 Data reduction tagging is used to preserve the state of a set of analyses. This slightly analogous to the branching data model used in software development, namely Git.
 For example, say you would like to reduce a set of data with all parabolic fits and then compare it to all linear fits. Data reduction tagging allows the user
