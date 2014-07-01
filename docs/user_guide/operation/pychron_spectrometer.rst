@@ -5,6 +5,7 @@ Pychron and the Spectrometer
   :maxdepth: 2
 
   measurement_script
+  hops
 
 Source Parameters
 -----------------------------
