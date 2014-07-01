@@ -27,6 +27,9 @@ def upgrade():
                     sa.Column('tag_id', sa.INTEGER, sa.ForeignKey('proc_DataReductionTagTable.id')),
                     sa.Column('analysis_id', sa.INTEGER, sa.ForeignKey('meas_AnalysisTable.id')),
                     sa.Column('selected_histories_id', sa.INTEGER, sa.ForeignKey('proc_SelectedHistoriesTable.id')))
+    op.add_column('meas_AnalysisTable', sa.Column('data_reduction_tag_id',
+                                                  sa.INTEGER,
+                                                  sa.ForeignKey('proc_DataReductionTagTable.id')))
 
 
 def downgrade():
@@ -45,6 +48,10 @@ def downgrade():
     op.drop_constraint('proc_datareductiontagsettable_ibfk_3',
                        'proc_datareductiontagsettable',
                        'foreignkey')
+    op.drop_constraint('meas_analysistable_ibfk_8',
+                       'meas_analysistable',
+                       'foreignkey')
+    op.drop_column('meas_analysistable', 'data_reduction_tag_id')
 
     op.drop_table('proc_DataReductionTagTable')
     op.drop_table('proc_DataReductionTagSetTable')

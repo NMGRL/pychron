@@ -253,6 +253,11 @@ class AnalysisEditTask(BaseBrowserTask):
         if info.result:
             stag = model.selected
             self.debug('setting data reduction tag {}'.format(stag.name))
+            with db.session_ctx():
+                dbtag = db.get_data_reduction_tag(stag.id)
+                for ai in dbtag.analyses:
+                    dban=ai.analysis
+                    dban.data_reduction_tag = dbtag
 
     def set_data_reduction_tag(self):
         items = self._get_analyses_to_tag()

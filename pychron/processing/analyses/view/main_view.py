@@ -78,6 +78,8 @@ class MainView(HasTraits):
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
         ms = [
+            MeasurementValue(name='Version',
+                             value=an.data_reduction_tag),
             MeasurementValue(name='AnalysisID',
                              value=self.analysis_id),
             MeasurementValue(name='Spectrometer',

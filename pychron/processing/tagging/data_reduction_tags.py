@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Str, Button, HasTraits, List
+from traits.api import Str, Button, HasTraits, List, Long
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -28,7 +28,7 @@ class DataReductionTag(HasTraits):
     create_date = Str
     comment = Str
     analyses = List
-
+    id = Long
 
 class SelectDataReductionTagModel(HasTraits):
     tags = List
@@ -53,6 +53,7 @@ class SelectDataReductionTagModel(HasTraits):
         def g():
             for di in dbtags:
                 d = DataReductionTag(name=di.name,
+                                     id = di.id,
                                      create_date=di.create_date.strftime('%m-%d-%Y'),
                                      user=di.user.name,
                                      comment=di.comment)

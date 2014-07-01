@@ -146,15 +146,16 @@ class DBAnalysis(Analysis):
 
         return r
 
-    def get_db_fit(self, meas_analysis, name, kind):
+    def get_db_fit(self, meas_analysis, name, kind, selected_histories):
         try:
-            sel_hist = meas_analysis.selected_histories
-            sel_fithist = sel_hist.selected_fits
+            if selected_histories is None:
+                selected_histories = meas_analysis.selected_histories
+
+            sel_fithist = selected_histories.selected_fits
             fits = sel_fithist.fits
             return next((fi for fi in fits
                          if fi.isotope.kind == kind and \
-                         fi.isotope.molecular_weight.name == name
-                        ), None)
+                         fi.isotope.molecular_weight.name == name), None)
 
         except AttributeError, e:
             print e
@@ -232,9 +233,12 @@ class DBAnalysis(Analysis):
         self._sync_meas_analysis_attributes(meas_analysis)
         self._sync_irradiation(lab)
 
+        #sync the dr tag first so we can set selected_histories
+        sh = self._sync_data_reduction_tag(meas_analysis)
+
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
-                            unpack, load_peak_center=load_changes)
+                            unpack, load_peak_center=load_changes, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
         #          kwargs={'load_peak_center': load_changes})
 
@@ -245,8 +249,21 @@ class DBAnalysis(Analysis):
             self._sync_experiment(meas_analysis)
             self._sync_script_blobs(meas_analysis)
 
+
         self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
+
+
+
+    def _sync_data_reduction_tag(self, meas_analysis):
+        tag = meas_analysis.data_reduction_tag
+        if tag:
+            self.data_reduction_tag = tag.name
+
+            #get the data_reduction_tag_set entry associated with this analysis
+            drentry = next((ai for ai in tag.analyses if ai.analysis_id==meas_analysis.id),None)
+            print drentry.selected_histories
+            # return drentry.selected_histories
 
     def _sync_script_blobs(self, meas_analysis):
         meas = meas_analysis.measurement
@@ -451,11 +468,11 @@ class DBAnalysis(Analysis):
             iso.discrimination = idisc
 
     def _sync_isotopes(self, meas_analysis, isos,
-                       unpack, load_peak_center=False):
+                       unpack, load_peak_center=False, selected_histories=None):
         # self.isotopes = timethis(self._get_isotopes, args=(meas_analysis, isos),
         #                          kwargs=dict(unpack=unpack))
 
-        self._make_isotopes(meas_analysis, isos, unpack=unpack)
+        self._make_isotopes(meas_analysis, isos, unpack, selected_histories)
 
         if load_peak_center:
             pc, data = self._get_peak_center(meas_analysis)
@@ -493,19 +510,19 @@ class DBAnalysis(Analysis):
 
         return fs + bs
 
-    def _make_isotopes(self, meas_analysis, dbisos, unpack):
+    def _make_isotopes(self, meas_analysis, dbisos, unpack, selected_histories):
         # isotopes = dict()
 
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
 
-        self._get_signals(meas_analysis, dbisos, unpack)
-        self._get_baselines(meas_analysis, dbisos, unpack)
+        self._get_signals(meas_analysis, dbisos, unpack, selected_histories)
+        self._get_baselines(meas_analysis, dbisos, unpack, selected_histories)
 
-        self._get_blanks(meas_analysis)
+        self._get_blanks(meas_analysis, selected_histories)
 
-    def _get_signals(self, meas_analysis, dbisos, unpack):
+    def _get_signals(self, meas_analysis, dbisos, unpack, selected_histories):
         d = self.isotopes
         default_fit = self._default_fit_factory('linear', 'SEM')
         for iso in dbisos:
@@ -522,10 +539,14 @@ class DBAnalysis(Analysis):
 
             det = iso.detector.name
 
-            try:
-                result = iso.results[-1]
-            except IndexError:
-                result = None
+            # todo: this needs to be fixed to handle data_reduction_tag
+            # if analysis has a dr tag then get its associated select_histories entry
+            # the get the select_fits then the associated results
+            if selected_histories is None:
+                try:
+                    result = iso.results[-1]
+                except IndexError:
+                    result = None
 
             r = Isotope(mass=mw.mass,
                         dbrecord=iso,
@@ -537,13 +558,13 @@ class DBAnalysis(Analysis):
                 self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
                 self.temp_status = 1
             else:
-                fit = self.get_db_fit(meas_analysis, name, 'signal')
+                fit = self.get_db_fit(meas_analysis, name, 'signal', selected_histories)
                 if fit is None:
                     fit = default_fit()
                 r.set_fit(fit, notify=False)
                 d[name] = r
 
-    def _get_baselines(self, meas_analysis, dbisos, unpack):
+    def _get_baselines(self, meas_analysis, dbisos, unpack, selected_histories):
         isotopes = self.isotopes
         default_fit = self._default_fit_factory('average', 'SEM')
         for dbiso in dbisos:
@@ -565,14 +586,16 @@ class DBAnalysis(Analysis):
 
             kind = dbiso.kind
             if kind == 'baseline':
-                try:
-                    result = dbiso.results[-1]
-                except IndexError:
-                    result = None
+                if selected_histories is None:
+                    # todo: this needs to be fixed to handle data_reduction_tag
+                    try:
+                        result = dbiso.results[-1]
+                    except IndexError:
+                        result = None
 
                 kw['name'] = '{} bs'.format(name)
                 r = Baseline(dbresult=result, **kw)
-                fit = self.get_db_fit(meas_analysis, name, 'baseline')
+                fit = self.get_db_fit(meas_analysis, name, 'baseline', selected_histories)
                 if fit is None:
                     fit = default_fit()
 
@@ -595,9 +618,12 @@ class DBAnalysis(Analysis):
         return factory
 
     # def _get_blanks(self, selected_histories):
-    def _get_blanks(self, meas_analysis):
+    def _get_blanks(self, meas_analysis, selected_histories):
         isotopes = self.isotopes
-        selected_histories = meas_analysis.selected_histories
+
+        if selected_histories is None:
+            selected_histories = meas_analysis.selected_histories
+
         if selected_histories:
             history = selected_histories.selected_blanks
             keys = isotopes.keys()

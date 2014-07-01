@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,14 +50,15 @@ class proc_DataReductionTagTable(Base, BaseMixin):
     create_date = Column(TIMESTAMP, default=func.now())
     comment = Column(BLOB)
     user_id = foreignkey('gen_UserTable')
-
     analyses = relationship('proc_DataReductionTagSetTable', backref='tag')
+
+    analysis = relationship('meas_AnalysisTable', backref='data_reduction_tag')
 
 
 class proc_DataReductionTagSetTable(Base, BaseMixin):
     tag_id = foreignkey('proc_DataReductionTagTable')
     analysis_id = foreignkey('meas_AnalysisTable')
-    selected_histories_id= foreignkey('proc_SelectedHistoriesTable')
+    selected_histories_id = foreignkey('proc_SelectedHistoriesTable')
 
 
 class proc_AnalysisGroupTable(Base, NameMixin):
@@ -383,6 +384,7 @@ class proc_SelectedHistoriesTable(Base, BaseMixin):
     selected_det_param_id = foreignkey('proc_DetectorParamHistoryTable')
     selected_sensitivity_id = foreignkey('proc_SensitivityHistoryTable')
 
+    dr_sets = relationship('proc_DataReductionTagSetTable', backref='selected_histories')
 
 class proc_IsotopeResultsTable(Base, BaseMixin):
     signal_ = Column(Float(32))
