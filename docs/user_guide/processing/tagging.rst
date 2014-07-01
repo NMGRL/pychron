@@ -27,6 +27,17 @@ These options indicate whether the analysis should be excluded from the plot. Ex
 given a special marker indicating it is not used in the calculations. For example omitted analyses in an ideogram are displayed as red open squares and are not
 used in the calculation of the mean age.
 
+To add an analysis tag to one or more analyses
+
+    1. Select a set of analyses using one of the following steps
+        a. select analyses from browser
+        b. select analyses from Unknowns
+        c. graphically select analyses on figure
+    2. Go to `Data/Tag`
+    3. Select existing tag or make a new one
+    4. (optional) fine-tune analysis select
+    5. Click `OK` to apply of `Cancel` to cancel
+
 
 Data Reduction Tagging
 ~~~~~~~~~~~~~~~~~~~~~~
