@@ -162,40 +162,43 @@ class AnalysisEditTask(BaseBrowserTask):
         elif isinstance(records, tuple):
             records = list(records)
 
-        existing = None
         if not open_copy:
-            editor = None
-            #check if record already is open
-            for r in records:
-                editor = self._get_editor_by_uuid(r.uuid)
-                if editor:
-                    records.remove(r)
-
-            #activate editor if open
-            if editor:
-                self.activate_editor(editor)
+            records = self._open_existing_recall_editors(records)
+            if records:
+                ans = self.manager.make_analyses(records, calculate_age=True, load_changes=True)
+                self._open_recall_editors(ans)
         else:
-            existing = [e.basename for e in self.editor_area.editors]
+            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_changes=True)
+            self._open_recall_editors(ans)
 
-        if records:
-            ans = self.manager.make_analyses(records,
-                                             # unpack=True,
-                                             calculate_age=True,
-                                             load_changes=True)
+    def _open_existing_recall_editors(self, records):
+        editor = None
+        #check if record already is open
+        for r in records:
+            editor = self._get_editor_by_uuid(r.uuid)
+            if editor:
+                records.remove(r)
 
-            if ans:
-                for rec in ans:
-                    editor = RecallEditor(analysis_view=rec.analysis_view,
-                                          model=rec)
-                    if existing and editor.basename in existing:
-                        editor.instance_id = existing.count(editor.basename)
+        #activate editor if open
+        if editor:
+            self.activate_editor(editor)
+        return records
 
-                    self.editor_area.add_editor(editor)
+    def _open_recall_editors(self, ans):
+        existing = [e.basename for e in self.editor_area.editors]
+        if ans:
+            for rec in ans:
+                editor = RecallEditor(analysis_view=rec.analysis_view,
+                                      model=rec)
+                if existing and editor.basename in existing:
+                    editor.instance_id = existing.count(editor.basename)
 
-                ed = self.editor_area.editors[-1]
-                self.editor_area.activate_editor(ed)
-            else:
-                self.warning('could not load records')
+                self.editor_area.add_editor(editor)
+
+            ed = self.editor_area.editors[-1]
+            self.editor_area.activate_editor(ed)
+        else:
+            self.warning('could not load records')
 
     def new_ic_factor(self):
         from pychron.processing.tasks.detector_calibration.intercalibration_factor_editor import \

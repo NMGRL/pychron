@@ -42,14 +42,14 @@ To add an analysis tag to one or more analyses
 Data Reduction Tagging
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Data reduction tagging is used to preserve the state of a set of analyses. This slightly analogous to the branching data model used in software development, namely Git.
+Data reduction tagging is used to preserve the state of a set of analyses. This feature is slightly analogous to the branching data model used in software development, namely Git.
 For example, say you would like to reduce a set of data with all parabolic fits and then compare it to all linear fits. Data reduction tagging allows the user
 to save each data reduction session, one for parabolic fits and one for linear, and easily toggle between the two sets.
 
 To add a data reduction tag
 
-    1. Perform the desire data reduction
-    2. Selected a set of analyses in the browser
+    1. Perform the desired data reduction
+    2. Selected a set of analyses in the browser or Unknowns pane
     3. Go to `Data/Data Reduction Tag`
     4. Give the tag a name
     5. Click `OK` to apply of `Cancel` to cancel

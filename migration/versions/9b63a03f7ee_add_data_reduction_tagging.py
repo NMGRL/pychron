@@ -20,13 +20,15 @@ def upgrade():
                     sa.Column('name', sa.String(140)),
                     sa.Column('create_date', sa.DateTime),
                     sa.Column('comment', sa.BLOB),
-                    sa.Column('user_id', sa.INTEGER, sa.ForeignKey('gen_UserTable.id')))
+                    sa.Column('user_id', sa.INTEGER, sa.ForeignKey('gen_UserTable.id')),
+                    mysql_engine='InnoDB')
 
     op.create_table('proc_DataReductionTagSetTable',
                     sa.Column('id', sa.INTEGER, primary_key=True),
                     sa.Column('tag_id', sa.INTEGER, sa.ForeignKey('proc_DataReductionTagTable.id')),
                     sa.Column('analysis_id', sa.INTEGER, sa.ForeignKey('meas_AnalysisTable.id')),
-                    sa.Column('selected_histories_id', sa.INTEGER, sa.ForeignKey('proc_SelectedHistoriesTable.id')))
+                    sa.Column('selected_histories_id', sa.INTEGER, sa.ForeignKey('proc_SelectedHistoriesTable.id')),
+                    mysql_engine='InnoDB')
     op.add_column('meas_AnalysisTable', sa.Column('data_reduction_tag_id',
                                                   sa.INTEGER,
                                                   sa.ForeignKey('proc_DataReductionTagTable.id')))

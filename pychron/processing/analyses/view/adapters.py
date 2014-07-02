@@ -32,8 +32,8 @@ from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
 
-vwidth = Int(60)
-ewidth = Int(50)
+vwidth = Int(70)
+ewidth = Int(60)
 pwidth = Int(40)
 
 
@@ -329,7 +329,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
         else:
             v, e = nominal_value(ic), std_dev(ic)
 
-        return '{}+/-{}'.format(floatfmt(v, n=4), floatfmt(e))
+        return '{}+/-{}'.format(floatfmt(v, n=4), floatfmt(e, n=4))
 
     def _get_value_text(self, *args, **kw):
         v = self.item.get_intensity()
