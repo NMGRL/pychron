@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Instance, on_trait_change
@@ -25,7 +25,7 @@ import binascii
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
 from pychron.envisage.browser.table_configurer import RecallTableConfigurer
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
@@ -63,11 +63,8 @@ class AnalysisEditTask(BaseBrowserTask):
     auto_show_unknowns_pane = True
 
     isotope_adapter = Instance(IsotopeTabularAdapter, ())
-    isotope_table_configurer = Instance(RecallTableConfigurer)
-
-    def _isotope_table_configurer_default(self):
-        tc = RecallTableConfigurer(adapter=self.isotope_adapter)
-        return tc
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    recall_configurer = Instance(RecallTableConfigurer)
 
     def split_editor_area_hor(self):
         """
@@ -157,8 +154,8 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
-    def configure_table(self):
-        tc = self.isotope_table_configurer
+    def configure_recall(self):
+        tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
             for e in self.editor_area.editors[:]:
@@ -207,8 +204,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if ans:
             for rec in ans:
                 av = rec.analysis_view
-                av.main_view.isotope_adapter = self.isotope_adapter
-                av.main_view.show_intermediate = self.isotope_table_configurer.show_intermediate
+                mv = av.main_view
+                mv.isotope_adapter = self.isotope_adapter
+                mv.intermediate_adapter = self.intermediate_adapter
+                mv.show_intermediate = self.recall_configurer.show_intermediate
 
                 editor = RecallEditor(analysis_view=av,
                                       model=rec)
@@ -266,22 +265,22 @@ class AnalysisEditTask(BaseBrowserTask):
         from pychron.processing.tagging.views import SelectDataReductionTagView
 
         model = SelectDataReductionTagModel()
-        db=self.manager.db
+        db = self.manager.db
         with db.session_ctx():
             items = self._get_selection()
             uuids = [it.uuid for it in items] if items else None
             tags = db.get_data_reduction_tags(uuids=uuids)
             model.load_tags(tags)
 
-        v=SelectDataReductionTagView(model=model)
-        info =v.edit_traits()
+        v = SelectDataReductionTagView(model=model)
+        info = v.edit_traits()
         if info.result:
             stag = model.selected
             self.debug('setting data reduction tag {}'.format(stag.name))
             with db.session_ctx():
                 dbtag = db.get_data_reduction_tag(stag.id)
                 for ai in dbtag.analyses:
-                    dban=ai.analysis
+                    dban = ai.analysis
                     dban.data_reduction_tag = dbtag
 
     def set_data_reduction_tag(self):
@@ -289,7 +288,7 @@ class AnalysisEditTask(BaseBrowserTask):
         if items:
             model = self._get_dr_tagname(items)
             if model is not None:
-                db=self.manager.db
+                db = self.manager.db
                 with db.session_ctx():
                     dbtag = db.add_data_reduction_tag(model.tagname, model.comment)
                     self.debug('added data reduction tag: {}'.format(model.tagname))
@@ -774,6 +773,13 @@ class AnalysisEditTask(BaseBrowserTask):
 
         self.set_tag(tag=Tag(name='invalid'),
                      items=new)
+
+    def _recall_configurer_default(self):
+        rc = RecallTableConfigurer()
+        rc.intermediate_table_configurer.adapter = self.intermediate_adapter
+        rc.isotope_table_configurer.adapter = self.isotope_adapter
+        rc.load()
+        return rc
 
         #@on_trait_change('data_selector:selector:key_pressed')
         #def _key_press(self, obj, name, old, new):

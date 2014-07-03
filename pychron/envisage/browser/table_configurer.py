@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 
-from traits.api import HasTraits, List, Any, Bool, Int
+from traits.api import HasTraits, List, Any, Bool, Int, Instance
 from traits.trait_errors import TraitError
 from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup
 import apptools.sweet_pickle as pickle
@@ -205,26 +205,58 @@ class SampleTableConfigurer(TableConfigurer):
         return v
 
 
-class RecallTableConfigurer(TableConfigurer):
+class IsotopeTableConfigurer(TableConfigurer):
     id = 'recall.isotopes'
-    show_intermediate = Bool
-
-    def _get_dump(self):
-        obj = super(RecallTableConfigurer, self)._get_dump()
-        obj['show_intermediate'] = self.show_intermediate
-
-        return obj
-
-    def _load_hook(self, obj):
-        self.show_intermediate = obj.get('show_intermediate', True)
 
     def traits_view(self):
         v = View(VGroup(UItem('columns',
                               style='custom',
                               editor=CheckListEditor(name='available_columns', cols=3)),
-                        HGroup(Item('show_intermediate', label='Show Intermediate Table')),
-                        label='Columns', show_border=True),
+                        show_border=True,
+                        label='Isotopes'))
+        return v
 
+
+class IntermediateTableConfigurer(TableConfigurer):
+    id = 'recall.intermediate'
+
+    def traits_view(self):
+        v = View(VGroup(UItem('columns',
+                              style='custom',
+                              editor=CheckListEditor(name='available_columns', cols=3)),
+                        show_border=True,
+                        label='Intermediate'))
+        return v
+
+
+class RecallTableConfigurer(TableConfigurer):
+    isotope_table_configurer = Instance(IsotopeTableConfigurer, ())
+    intermediate_table_configurer = Instance(IntermediateTableConfigurer, ())
+    show_intermediate = Bool
+
+    def _get_dump(self):
+        obj = super(RecallTableConfigurer, self)._get_dump()
+        obj['show_intermediate'] = self.show_intermediate
+        return obj
+
+    def _load_hook(self, obj):
+        self.show_intermediate = obj.get('show_intermediate', True)
+        self.isotope_table_configurer.load()
+        self.intermediate_table_configurer.load()
+
+    def dump(self):
+        super(RecallTableConfigurer, self).dump()
+        self.intermediate_table_configurer.dump()
+        self.isotope_table_configurer.dump()
+
+    def set_columns(self):
+        self.isotope_table_configurer.set_columns()
+        self.intermediate_table_configurer.set_columns()
+
+    def traits_view(self):
+        v = View(VGroup(UItem('isotope_table_configurer', style='custom'),
+                        HGroup(Item('show_intermediate', label='Show Intermediate Table')),
+                        UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate')),
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='modal',
                  title='Configure Table',
@@ -234,65 +266,65 @@ class RecallTableConfigurer(TableConfigurer):
         return v
 
 
-#============= EOF =============================================
+        #============= EOF =============================================
 
-# named_date_range = Enum('this month', 'this week', 'yesterday')
-    # low_post = Property(Date, depends_on='_low_post')
-    # high_post = Property(Date, depends_on='_high_post')
-    # use_low_post = Bool
-    # use_high_post = Bool
-    # use_named_date_range = Bool
-    # _low_post = Date
-    # _high_post = Date
-    #
-    # def _set_low_post(self, v):
-    # self._low_post = v
-    #
-    # # def _validate_low_post(self, v):
-    # #     v = v.replace('/', '-')
-    # #     if v.count('-') < 3:
-    # #         map(int, v.split('-'))
-    #
-    # def _set_high_post(self, v):
-    #     self._high_post = v
-    #
-    # # def _validate_high_post(self,v):
-    # #     v=v.replace('/','-')
-    # #     if v.count('-')<3:
-    # #         map(int, v.split('-'))
-    #
-    # def _get_high_post(self):
-    #     hp = None
-    #
-    #     tdy = datetime.today()
-    #     if self.use_named_date_range:
-    #         if self.named_date_range in ('this month', 'today', 'this week'):
-    #             hp = tdy
-    #         elif self.named_date_range == 'yesterday':
-    #             hp = tdy - timedelta(days=1)
-    #     elif self.use_high_post:
-    #         hp = self._high_post
-    #         if not hp:
-    #             hp = tdy
-    #
-    #     return hp
-    #
-    # def _get_low_post(self):
-    #     lp = None
-    #     tdy = datetime.today()
-    #     if self.use_named_date_range:
-    #         if self.named_date_range == 'this month':
-    #             lp = tdy - timedelta(days=tdy.day,
-    #                                  seconds=tdy.second,
-    #                                  hours=tdy.hour,
-    #                                  minutes=tdy.minute)
-    #         elif self.named_date_range == 'this week':
-    #             days = datetime.today().weekday()
-    #             lp = tdy - timedelta(days=days)
-    #
-    #     elif self.use_low_post:
-    #         lp = self._low_post
-    #         if not lp:
-    #             lp = tdy
-    #
-    #     return lp
+        # named_date_range = Enum('this month', 'this week', 'yesterday')
+        # low_post = Property(Date, depends_on='_low_post')
+        # high_post = Property(Date, depends_on='_high_post')
+        # use_low_post = Bool
+        # use_high_post = Bool
+        # use_named_date_range = Bool
+        # _low_post = Date
+        # _high_post = Date
+        #
+        # def _set_low_post(self, v):
+        # self._low_post = v
+        #
+        # # def _validate_low_post(self, v):
+        # #     v = v.replace('/', '-')
+        # #     if v.count('-') < 3:
+        # #         map(int, v.split('-'))
+        #
+        # def _set_high_post(self, v):
+        #     self._high_post = v
+        #
+        # # def _validate_high_post(self,v):
+        # #     v=v.replace('/','-')
+        # #     if v.count('-')<3:
+        # #         map(int, v.split('-'))
+        #
+        # def _get_high_post(self):
+        #     hp = None
+        #
+        #     tdy = datetime.today()
+        #     if self.use_named_date_range:
+        #         if self.named_date_range in ('this month', 'today', 'this week'):
+        #             hp = tdy
+        #         elif self.named_date_range == 'yesterday':
+        #             hp = tdy - timedelta(days=1)
+        #     elif self.use_high_post:
+        #         hp = self._high_post
+        #         if not hp:
+        #             hp = tdy
+        #
+        #     return hp
+        #
+        # def _get_low_post(self):
+        #     lp = None
+        #     tdy = datetime.today()
+        #     if self.use_named_date_range:
+        #         if self.named_date_range == 'this month':
+        #             lp = tdy - timedelta(days=tdy.day,
+        #                                  seconds=tdy.second,
+        #                                  hours=tdy.hour,
+        #                                  minutes=tdy.minute)
+        #         elif self.named_date_range == 'this week':
+        #             days = datetime.today().weekday()
+        #             lp = tdy - timedelta(days=days)
+        #
+        #     elif self.use_low_post:
+        #         lp = self._low_post
+        #         if not lp:
+        #             lp = tdy
+        #
+        #     return lp

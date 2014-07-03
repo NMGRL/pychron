@@ -224,9 +224,9 @@ class RecallAction(Action):
         task = app.get_task('pychron.recall')
 
 
-class ConfigureTableAction(myTaskAction):
-    name = 'Configure Table'
-    method = 'configure_table'
+class ConfigureRecallAction(myTaskAction):
+    name = 'Configure Recall'
+    method = 'configure_recall'
     image = icon('cog.png')
     task_ids = List(['pychron.recall','pychron.processing.figures',
                      'pychron.processing.blanks',

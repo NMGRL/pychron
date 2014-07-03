@@ -39,7 +39,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
-    SplitEditorActionVert, ConfigureTableAction
+    SplitEditorActionVert, ConfigureRecallAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -139,7 +139,7 @@ Install to enable MS Excel export''')
         def recall_group():
             return Group(RecallAction(),
                          OpenAdvancedQueryAction(),
-                         ConfigureTableAction())
+                         ConfigureRecallAction())
 
         def misc_group():
             return Group(TagAction(),

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Str, List, Event, Button, Instance, Bool
 from traitsui.api import View, UItem, HSplit, VSplit
 
@@ -46,6 +46,7 @@ class MainView(HasTraits):
     _corrected_enabled = True
 
     isotope_adapter = Instance(IsotopeTabularAdapter)
+    intermediate_adapter = Instance(IntermediateTabularAdapter)
     show_intermediate = Bool(True)
 
     def __init__(self, analysis=None, *args, **kw):
@@ -365,8 +366,9 @@ class MainView(HasTraits):
                                   editable=False,
                                   refresh='refresh_needed')
 
-        ieditor = myTabularEditor(adapter=IntermediateTabularAdapter(),
+        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
                                   editable=False,
+                                  stretch_last_section=False,
                                   refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
@@ -395,7 +397,6 @@ class MainView(HasTraits):
                       height=0.25),
                 UItem('isotopes',
                       editor=ieditor,
-                      # visible_when='show_intermediate',
                       defined_when='show_intermediate',
                       height=0.25),
                 HSplit(UItem('computed_values',
