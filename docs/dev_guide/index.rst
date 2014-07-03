@@ -16,6 +16,7 @@ Pychron Develop Guide
 .. toctree::
   :maxdepth: 1
 
+  running_pychron
   hardware
 
 
