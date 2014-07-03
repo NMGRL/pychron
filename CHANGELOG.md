@@ -20,3 +20,6 @@ CHANGELOG
 * added date querying to top-level filtering in Browser
 * updated frequency run addition
 * added trough and rubberband patterns. modified stage map to accommodate rubberband pattern
+* added graphical filtering to Browser
+* added data reduction tagging
+* added ability to configure recall view
