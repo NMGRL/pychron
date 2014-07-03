@@ -65,6 +65,7 @@ class AnalysisView(HasTraits):
     def load(self, an):
         analysis_type = an.analysis_type
         analysis_id = an.record_id
+
         self.analysis_id = analysis_id
 
         history_view = self._history_view

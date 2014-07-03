@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event
+from traits.api import HasTraits, Str, List, Event, Button, Instance, Bool
 from traitsui.api import View, UItem, HSplit, VSplit
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
+from pychron.envisage.browser.table_configurer import RecallTableConfigurer
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
@@ -43,6 +44,9 @@ class MainView(HasTraits):
     measurement_values = List
 
     _corrected_enabled = True
+
+    isotope_adapter = Instance(IsotopeTabularAdapter)
+    show_intermediate = Bool(True)
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -347,7 +351,8 @@ class MainView(HasTraits):
                         ci.error = std_dev(v)
 
     def _get_editors(self):
-        teditor = myTabularEditor(adapter=IsotopeTabularAdapter(),
+        teditor = myTabularEditor(adapter=self.isotope_adapter,
+                                  stretch_last_section=False,
                                   editable=False,
                                   refresh='refresh_needed')
 
@@ -379,23 +384,25 @@ class MainView(HasTraits):
                 HSplit(
                     UItem('measurement_values',
                           editor=meditor,
-                          height=-200,
+                          height=300,
                           width=0.4),
                     UItem('extraction_values',
                           editor=eeditor,
-                          height=-200,
+                          height=300,
                           width=0.6)),
                 UItem('isotopes',
                       editor=teditor,
                       height=0.25),
                 UItem('isotopes',
                       editor=ieditor,
+                      # visible_when='show_intermediate',
+                      defined_when='show_intermediate',
                       height=0.25),
                 HSplit(UItem('computed_values',
                              editor=ceditor,
-                             height=-200),
+                             height=200),
                        UItem('corrected_values',
-                             height=-200,
+                             height=200,
                              editor=ceditor))))
         return v
 

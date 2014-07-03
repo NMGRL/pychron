@@ -28,6 +28,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import format_percent_error
 from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.envisage.browser.adapters import ConfigurableAdapterMixin
 
 SIGMA_1 = u'\u00b11\u03c3'
 TABLE_FONT = 'arial 11'
@@ -36,6 +37,8 @@ vwidth = Int(70)
 ewidth = Int(60)
 pwidth = Int(40)
 
+def sigmaf(s):
+    return u'{}({})'.format(SIGMA_1, s)
 
 class BaseTabularAdapter(TabularAdapter):
     default_bg_color = '#F7F6D0'
@@ -51,8 +54,7 @@ class DetectorRatioTabularAdapter(BaseTabularAdapter):
                ('Ref. Ratio', 'ref_ratio'),
 
                ('Non IC Corrected', 'noncorrected_value'),
-               (SIGMA_1, 'noncorrected_error'),
-    ]
+               (SIGMA_1, 'noncorrected_error')]
     calc_ic_text = Property
 
     noncorrected_value_text = Property
@@ -119,6 +121,7 @@ class ComputedValueTabularAdapter(BaseTabularAdapter):
         v = self.item.value
 
         return format_percent_error(v,e)
+
 
 class IntermediateTabularAdapter(BaseTabularAdapter):
     columns = [('Iso.', 'name'),
@@ -256,8 +259,8 @@ class IntermediateTabularAdapter(BaseTabularAdapter):
         return calc_percent_error(v.nominal_value, v.std_dev)
 
 
-class IsotopeTabularAdapter(BaseTabularAdapter):
-    columns = [('Iso.', 'name'),
+class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
+    all_columns = [('Iso.', 'name'),
                ('Det.', 'detector'),
                ('Fit', 'fit_abbreviation'),
 
@@ -265,16 +268,17 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
                (SIGMA_1, 'error'),
                ('%', 'value_percent_error'),
                ('I. BsEr', 'include_baseline_error'),
-               ('Fit', 'baseline_fit_abbreviation'),
-               ('Base.', 'base_value'),
-               (SIGMA_1, 'base_error'),
-               ('%', 'baseline_percent_error'),
-               ('Blank', 'blank_value'),
-               (SIGMA_1, 'blank_error'),
-               ('%', 'blank_percent_error'),
+               ('Fit(Bs)', 'baseline_fit_abbreviation'),
+               ('Bs', 'base_value'),
+               (sigmaf('Bs'), 'base_error'),
+               ('%(Bs)', 'baseline_percent_error'),
+               ('Bk', 'blank_value'),
+               (sigmaf('Bk'), 'blank_error'),
+               ('%(Bk)', 'blank_percent_error'),
                ('IC', 'ic_factor'),
                ('Disc', 'discrimination'),
                ('Error Comp.', 'age_error_component')]
+    columns = [('Iso.', 'name')]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -295,7 +299,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter):
     name_width = Int(40)
     fit_abbreviation_width = Int(25)
     include_baseline_error_width = Int(40)
-    baseline_fit_abbreviation_width = Int(25)
+    baseline_fit_abbreviation_width = Int(40)
     detector_width = Int(40)
 
     value_width = vwidth

@@ -20,6 +20,7 @@ from pyface.tasks.action.schema import SToolBar
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.actions.processing_actions import ConfigureTableAction
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
@@ -44,6 +45,7 @@ class RecallTask(AnalysisEditTask):
         SToolBar(AddIsoEvoAction(),
                  AddDiffAction(),
                  EditDataAction(),
+                 ConfigureTableAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
 

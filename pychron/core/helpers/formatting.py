@@ -61,7 +61,7 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
     if f is None:
         return default
 
-    if abs(f) < 1e-20:
+    if abs(f) <= 1e-20:
         v = '0.0'
     else:
 

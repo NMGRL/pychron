@@ -24,6 +24,8 @@ import binascii
 #============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
 from pychron.easy_parser import EasyParser
+from pychron.envisage.browser.table_configurer import RecallTableConfigurer
+from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
 from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.tasks.actions.edit_actions import DatabaseSaveAction
 from pychron.processing.tasks.analysis_edit.named_analysis_grouping import AnalysisGroupEntry, AnalysisGroupDelete
@@ -59,6 +61,13 @@ class AnalysisEditTask(BaseBrowserTask):
 
     analysis_group_edit_klass = AnalysisGroupEntry
     auto_show_unknowns_pane = True
+
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    isotope_table_configurer = Instance(RecallTableConfigurer)
+
+    def _isotope_table_configurer_default(self):
+        tc = RecallTableConfigurer(adapter=self.isotope_adapter)
+        return tc
 
     def split_editor_area_hor(self):
         """
@@ -148,6 +157,15 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
+    def configure_table(self):
+        tc = self.isotope_table_configurer
+        info = tc.edit_traits()
+        if info.result:
+            for e in self.editor_area.editors[:]:
+                if tc.show_intermediate != e.analysis_view.main_view.show_intermediate:
+                    e.close()
+                    self.recall(e.model)
+
     def recall(self, records, open_copy=False):
         """
             if analysis is already open activate the editor
@@ -188,7 +206,11 @@ class AnalysisEditTask(BaseBrowserTask):
         existing = [e.basename for e in self.editor_area.editors]
         if ans:
             for rec in ans:
-                editor = RecallEditor(analysis_view=rec.analysis_view,
+                av = rec.analysis_view
+                av.main_view.isotope_adapter = self.isotope_adapter
+                av.main_view.show_intermediate = self.isotope_table_configurer.show_intermediate
+
+                editor = RecallEditor(analysis_view=av,
                                       model=rec)
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
