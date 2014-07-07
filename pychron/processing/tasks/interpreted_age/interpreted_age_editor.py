@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
-from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
@@ -245,7 +245,13 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
 
             shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in step_heat]
-            fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
+            # shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in list(step_heat)[:3]]
+            # shgroups =[]
+
+            # fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
+            # fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in list(fusion)[:3]]
+            fgroups = []
+
             prog.close()
 
         return shgroups, fgroups

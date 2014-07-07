@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -173,7 +173,6 @@ class EasyFigures(BaseEasy):
 
         root = self._config_options['root']
         options = self._config_options['options']
-
         # ans = [ai for li in lns for ai in li.analyses]
         # ans = filter(lambda x: not x.tag == 'invalid', ans)
         # prog = self.open_progress(len(ans), close_at_end=False)
@@ -182,6 +181,7 @@ class EasyFigures(BaseEasy):
         #                          use_cache=False)
         # print lns
         lns = list({ai.labnumber.identifier for ai in ans})
+        print len(lns)
         prog = None
         pred = lambda x: bool(x.step)
 

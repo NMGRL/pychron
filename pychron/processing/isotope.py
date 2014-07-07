@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import re
 
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
+
 
 
 
@@ -428,6 +429,9 @@ class Isotope(BaseIsotope):
                  'discrimination', 'ic_factor',
                  'sniff', 'blank', 'background'
                                    'age_error_component']
+
+    def get_filtered_data(self):
+        return self.regressor.calculate_filtered_data()
 
     def get_filtered_data(self):
         return self.regressor.calculate_filtered_data()
