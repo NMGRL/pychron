@@ -11,18 +11,18 @@ The first step when using the **Browser** is to select a top-level filtering cri
   1. Projects
   2. Irradiation/Level
 
-.. note:: Irradiation/Level is open enabled when no Projects are selected. To select, Right-click/Unselect or use the **X** button
+.. note:: Irradiation/Level is only enabled when no Projects are selected. To clear the project selection, Right-click/Unselect or use the **X** button
 
 The **Projects** table lists all projects currently in the database.
 
 .. note:: For faster/easier searching of the **Project** table use the **Filter** textbox to limit the displayed projects to projects that begin with the filtering string.
-   e.g filter='abc' projects='abc', 'abcd', 'abcd12' but not '1abc'
+   e.g. filter='abc' projects='abc', 'abcd', 'abcd12' but not '1abc'
 
-.. note:: There are a few special projects listed in the Projects table. These are the **RECENT ...** entries, one for each mass spectrometer in the database. Selected a **RECENT** entry
+.. note:: There are a few special projects listed in the **Projects** table. These are the **RECENT ...** entries, one for each mass spectrometer in the database. Selecting a **RECENT** entry
     will select all samples that have been run within the last *X* hours. To set *X* go to Preferences/Processing/Recent
 
 
-Use the Irradiations drop-downs to first select an irradiation then an irradiation level.
+Use the Irradiations drop-downs to filter the available samples by irradiation and irradiation level.
 
 .. note:: Use the *Binoculars* button to force a refresh using the current filtering criteria.
 
