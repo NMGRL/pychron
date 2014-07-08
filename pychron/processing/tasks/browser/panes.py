@@ -51,7 +51,10 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
                    ('Flux', 'flux_fit_status'),
-                   ('Spec.', 'mass_spectrometer')]
+                   ('Spec.', 'mass_spectrometer'),
+                   ('Meas.', 'meas_script_name'),
+                   ('Ext.', 'extract_script_name'),
+                   ('Device', 'extract_device')]
 
     columns = [('Run ID', 'record_id'),
                ('Tag', 'tag')]
@@ -77,7 +80,6 @@ class AnalysisAdapter(BrowserAdapter):
 
 
 class TablesHandler(UnselectTabularEditorHandler):
-
     def replace_items(self, info, obj):
         if obj.selected:
             obj.context_menu_event = ('replace', None)
@@ -189,7 +191,7 @@ class TableTools(HasTraits):
                     icon_button_editor('clear_sample_table',
                                        'edit-clear',
                                        tooltip='Clear Sample Table')
-                    )
+        )
         g2 = HGroup(UItem('sample_filter',
                           width=-125),
                     UItem('sample_filter',
@@ -201,8 +203,8 @@ class TableTools(HasTraits):
         # editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
         # UItem(make_name('analysis_filter'),
         # width=-90),
-        #                         UItem(make_name('analysis_filter'),
-        #                               width=-25,
+        # UItem(make_name('analysis_filter'),
+        # width=-25,
         #                               editor=EnumEditor(name=make_name('analysis_filter_values'))),
         #                         # icon_button_editor(make_name('configure_analysis_table'), 'cog',
         #                         #                    tooltip='Configure analysis table'),
@@ -325,8 +327,8 @@ class BrowserPane(TraitsDockPane):
         # project_grp = VGroup(
         # HGroup(Label('Filter'),
         # UItem('project_filter',
-        #                      width=75),
-        #                icon_button_editor('clear_selection_button',
+        # width=75),
+        # icon_button_editor('clear_selection_button',
         #                                   'cross',
         #                                   tooltip='Clear selected')),
         #         UItem('projects',

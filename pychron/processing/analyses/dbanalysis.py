@@ -434,7 +434,11 @@ class DBAnalysis(Analysis):
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
-        av.load(self)
+        try:
+            av.load(self)
+        except BaseException, e:
+            print 'sync view {}'.format(e)
+
         # av.load(weakref.ref(self)())
 
     def _sync_detector_info(self, meas_analysis, **kw):
