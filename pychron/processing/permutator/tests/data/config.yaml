@@ -1,0 +1,11 @@
+input:
+ analyses:
+
+permutations:
+    fits:
+        - linear
+        - parabolic
+
+output:
+ ideogram:
+    pdf: False

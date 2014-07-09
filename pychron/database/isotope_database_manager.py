@@ -443,7 +443,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         #get all dbrecords with one call
         ms = self.db.get_analyses_uuid(uuids)
-
         construct = self._construct_analysis
         add_to_cache = self._add_to_cache
 

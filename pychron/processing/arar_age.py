@@ -444,7 +444,7 @@ class ArArAge(Loggable):
         self.isotopes['Ar37'].decay_corrected = self.Ar37_decay_corrected
         self.isotopes['Ar39'].decay_corrected = self.Ar39_decay_corrected
 
-        self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
+        # self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
         # print isos[4]
         # print 'ifc',self.interference_corrections
         f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
@@ -472,7 +472,6 @@ class ArArAge(Loggable):
 
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
-
         self.uage = age
 
         self.age = float(age.nominal_value)

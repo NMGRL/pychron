@@ -221,15 +221,18 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
-            self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                                             iterations=int(fit.filter_outlier_iterations or 0),
-                                             std_devs=int(fit.filter_outlier_std_devs or 0))
-            # self.error_type=fit.error_type or 'SEM'
-            self.trait_set(fit=fit.fit,
-                           time_zero_offset=fit.time_zero_offset or 0,
-                           error_type=fit.error_type or 'SEM',
-                           trait_change_notify=notify)
-            self.include_baseline_error = fit.include_baseline_error or False
+            if isinstance(fit, (int, str)):
+                self.trait_set(fit=fit, trait_change_notify=notify)
+            else:
+                self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
+                                                 iterations=int(fit.filter_outlier_iterations or 0),
+                                                 std_devs=int(fit.filter_outlier_std_devs or 0))
+                # self.error_type=fit.error_type or 'SEM'
+                self.trait_set(fit=fit.fit,
+                               time_zero_offset=fit.time_zero_offset or 0,
+                               error_type=fit.error_type or 'SEM',
+                               trait_change_notify=notify)
+                self.include_baseline_error = fit.include_baseline_error or False
 
     def set_uvalue(self, v, dirty=True):
         if isinstance(v, tuple):
