@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,7 @@ import weakref
 #============= local library imports  ==========================
 from traits.has_traits import provides
 from pychron.core.i_datastore import IDatastore
+from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
@@ -42,10 +43,6 @@ from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 1000
-
-
-class CancelLoadingError(BaseException):
-    pass
 
 
 @provides(IDatastore)
@@ -207,31 +204,35 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if not self.vcs:
                 self.vcs = IsotopeVCSManager()
 
-    def progress_loader(self, xs, func, threshold=50, progress=None, reraise_cancel=False):
+                # def progress_loader(self, xs, func, threshold=50, progress=None, reraise_cancel=False):
+                # def progress_iterator(self, *args, **kw):
+                #     progress_iterator(*args, **kw)
 
-        def gen(prog):
-            n = len(xs)
-            if n > threshold or prog:
-                if not prog:
-                    prog = self.open_progress(n)
-
-                for i, x in enumerate(xs):
-                    if prog.canceled:
-                        raise CancelLoadingError
-                    elif prog.accepted:
-                        break
-                    yield func(x, prog, i, n)
-            else:
-                for x in xs:
-                    yield func(x, None, 0, 0)
-
-        try:
-            return list(gen(progress))
-        except CancelLoadingError:
-            if reraise_cancel:
-                raise CancelLoadingError
-            else:
-                return []
+                # def progress_loader(self, *args, **kw):
+                #     return progress_loader(*args, **kw)
+                # def gen(prog):
+                #     n = len(xs)
+                #     if n > threshold or prog:
+                #         if not prog:
+                #             prog = self.open_progress(n)
+                #
+                #         for i, x in enumerate(xs):
+                #             if prog.canceled:
+                #                 raise CancelLoadingError
+                #             elif prog.accepted:
+                #                 break
+                #             yield func(x, prog, i, n)
+                #     else:
+                #         for x in xs:
+                #             yield func(x, None, 0, 0)
+                #
+                # try:
+                #     return list(gen(progress))
+                # except CancelLoadingError:
+                #     if reraise_cancel:
+                #         raise CancelLoadingError
+                #     else:
+                #         return []
 
     def update_vcs_analysis(self, an, msg):
         if self.use_vcs:
@@ -457,7 +458,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             return a
 
         try:
-            return db_ans, self.progress_loader(no_db_ans, func, progress=progress, reraise_cancel=True)
+            return db_ans, progress_loader(no_db_ans, func, progress=progress, reraise_cancel=True)
         except CancelLoadingError:
             return [], []
 

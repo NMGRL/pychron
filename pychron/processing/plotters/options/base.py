@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,9 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR
 
+
 class BasePlotterOptions(HasTraits):
-    aux_plots  = List
+    aux_plots = List
     name = Str
     initialized = True
     refresh_plot_needed = Event
@@ -37,6 +38,12 @@ class BasePlotterOptions(HasTraits):
         super(BasePlotterOptions, self).__init__(*args, **kw)
         if not clean:
             self._load(root)
+
+    def set_aux_plot_height(self, name, height):
+        plot = next((ai for ai in self.aux_plots
+                     if ai.name == name), None)
+        if plot:
+            plot.height = height
 
     def dump(self, root):
         self._dump(root)
@@ -87,7 +94,6 @@ class BasePlotterOptions(HasTraits):
 
 
 class FigurePlotterOptions(BasePlotterOptions):
-
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
 
@@ -235,7 +241,6 @@ class FigurePlotterOptions(BasePlotterOptions):
                 self.aux_plots.append(po)
 
         self.initialize()
-
 
 
 #============= EOF =============================================

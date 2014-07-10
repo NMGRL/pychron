@@ -23,6 +23,7 @@ from pyface.qt.QtGui import QTabBar
 import binascii
 #============= local library imports  ==========================
 from pychron.core.helpers.iterfuncs import partition
+from pychron.core.progress import progress_iterator
 from pychron.easy_parser import EasyParser
 from pychron.envisage.browser.table_configurer import RecallTableConfigurer
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
@@ -279,9 +280,19 @@ class AnalysisEditTask(BaseBrowserTask):
             self.debug('setting data reduction tag {}'.format(stag.name))
             with db.session_ctx():
                 dbtag = db.get_data_reduction_tag(stag.id)
-                for ai in dbtag.analyses:
+
+                def func(ai, prog, i, n):
+                    if prog:
+                        prog.change_message('setting data reduction tag for {}'.format(ai.record_id))
+
                     dban = ai.analysis
                     dban.data_reduction_tag = dbtag
+
+                progress_iterator(dbtag.analyses, func)
+
+                # for ai in dbtag.analyses:
+                # dban = ai.analysis
+                #     dban.data_reduction_tag = dbtag
 
     def set_data_reduction_tag(self):
         items = self._get_analyses_to_tag()
@@ -292,10 +303,16 @@ class AnalysisEditTask(BaseBrowserTask):
                 with db.session_ctx():
                     dbtag = db.add_data_reduction_tag(model.tagname, model.comment)
                     self.debug('added data reduction tag: {}'.format(model.tagname))
-                    for it in model.items:
-                        dban = db.get_analysis_uuid(it.uuid)
+
+                    def func(ai, prog, i, n):
+                        dban = db.get_analysis_uuid(ai.uuid)
                         db.add_data_reduction_tag_set(dbtag, dban, dban.selected_histories.id)
                         dban.data_reduction_tag = dbtag
+                        if prog:
+                            prog.change_message(
+                                'Applying data reduction tag "{}" to {}'.format(model.tagname, ai.record_id))
+
+                    progress_iterator(model.items, func)
 
     def set_tag(self, tag=None, items=None, use_filter=True):
         """

@@ -25,6 +25,7 @@ from traits.api import List, Str, Bool, Any, String, \
 # ============= standard library imports ========================
 import os
 # ============= local library imports  ==========================
+from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
@@ -221,7 +222,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
                 return GraphicalRecordView(xi)
 
-            ans = self.manager.progress_loader(ans, func, threshold=50)
+            ans = progress_loader(ans, func)
             if not ans:
                 return
 

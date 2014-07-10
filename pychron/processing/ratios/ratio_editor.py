@@ -33,6 +33,7 @@ from pychron.processing.isotope import Isotope
 def gen_data(b, m):
     xs = linspace(15, 100)
     ys = m * xs + b + normal(size=50)
+    ys[6] = ys[6] + 10
     return xs, ys
 
 
@@ -59,7 +60,8 @@ class RatioEditor(HasTraits):
 
     def setup_graph(self):
         self.d = generate_test_data()
-        cd = dict(padding=5, stack_order='top_to_bottom')
+        cd = dict(padding=20,
+                  stack_order='top_to_bottom')
         g = StackedRegressionGraph(container_dict=cd)
         self.graph = g
         self.refresh_plot()
@@ -70,34 +72,43 @@ class RatioEditor(HasTraits):
 
         g.clear()
 
-        g.new_plot()
+        for ni, di in [('Ar40', 'Ar39')]:
+            niso, diso = d[ni], d[di]
+            self.plot_ratio(g, niso, diso)
 
-        g.set_x_limits(min_=0, max_=100)
-        # g.set_y_limits(max_=505, min_=40)
+            self.intercept_ratio = nominal_value(niso.uvalue / diso.uvalue)
 
-        niso, diso = d['Ar40'], d['Ar39']
+    def plot_ratio(self, g, niso, diso):
         niso.time_zero_offset = self.time_zero_offset
         diso.time_zero_offset = self.time_zero_offset
-        niso.dirty = True
-        diso.dirty = True
 
-        g.new_series(niso.offset_xs, niso.ys)
+        fd = {'filter_outliers': True, 'std_devs': 2, 'iterations': 1}
+
+        niso.filter_outliers_dict = fd
+        diso.filter_outliers_dict = fd
+        # niso.dirty = True
+        # diso.dirty = True
 
         g.new_plot()
-        g.new_series(diso.offset_xs, diso.ys)
+        g.set_x_limits(min_=0, max_=100)
+        g.set_y_title(niso.name)
+        g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=fd)
+
+        g.new_plot()
+        g.set_y_title(diso.name)
+        g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=fd)
 
         xs = linspace(0, 100)
         rys = niso.regressor.predict(xs) / diso.regressor.predict(xs)
         g.new_plot()
+        g.set_y_title('{}/{}'.format(niso.name, diso.name))
+        g.set_x_title('Time (s)')
         g.new_series(xs, rys, fit=None, add_tools=False)
-
-        self.intercept_ratio = nominal_value(niso.uvalue / diso.uvalue)
 
     def traits_view(self):
         v = View(UItem('graph', style='custom'),
                  HGroup(Item('time_zero_offset'),
-                        Item('intercept_ratio', style='readonly')),
-        )
+                        Item('intercept_ratio', style='readonly')))
         return v
 
 

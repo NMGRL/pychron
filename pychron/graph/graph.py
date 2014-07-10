@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -711,21 +711,21 @@ class Graph(Viewable, ContextMenuMixin):
         self.redraw()
 
     def get_x_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('y_axis', plotid)
 
     def get_y_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('x_axis', plotid)
 
-    def set_x_title(self, title, plotid=0, **font):
-        '''
-        '''
+    def set_x_title(self, title, plotid=None, **font):
+        """
+        """
         self._set_title('x_axis', title, plotid, **font)
 
-    def set_y_title(self, title, plotid=0, **font):
+    def set_y_title(self, title, plotid=None, **font):
         """
         """
         self._set_title('y_axis', title, plotid, **font)
@@ -748,8 +748,8 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def add_data_label(self, x, y, plotid=0):
-        '''
-        '''
+        """
+        """
         # print self.plots, plotid
         plot = self.plots[plotid]
         label = DataLabel(component=plot, data_point=(x, y),
@@ -1519,14 +1519,17 @@ class Graph(Viewable, ContextMenuMixin):
     #            wx.TheClipboard.Close()
 
     def _get_title(self, axis, plotid):
-        '''
-        '''
+        """
+        """
         axis = getattr(self.plots[plotid], axis)
         return axis.title
 
     def _set_title(self, axis, title, plotid, font=None, size=None):
-        '''
-        '''
+        """
+        """
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
         axis = getattr(self.plots[plotid], axis)
         params = dict(title=title)
         if font is not None or size is not None:

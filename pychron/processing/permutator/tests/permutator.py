@@ -1,6 +1,8 @@
 import os
 import unittest
+
 from pychron.processing.permutator.permutator import Permutator
+
 
 __author__ = 'argonlab2'
 
@@ -21,10 +23,11 @@ class Configuration(unittest.TestCase):
 
     def test_fits(self):
         fits = self.perm.get_fits()
-        self.assertEqual(fits, ['linear', 'parabolic'])
+        self.assertEqual(fits['fits'], ['linear', 'parabolic'])
 
 
-
+if __name__ == '__main__':
+    unittest.main()
 
 
 

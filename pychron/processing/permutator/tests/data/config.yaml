@@ -2,9 +2,18 @@ input:
  analyses:
 
 permutations:
-    fits:
-        - linear
-        - parabolic
+    fit:
+        fits:
+          - linear
+          - parabolic
+          - cubic
+        skips:
+          - Ar40
+          - Ar38
+          - Ar37
+          - Ar36
+
+
 
 output:
  ideogram:

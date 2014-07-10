@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -319,7 +319,8 @@ class FigureEditor(GraphEditor):
         v = View(UItem('component',
                        style='custom',
                        width=650,
-                       editor=EnableComponentEditor()))
+                       editor=EnableComponentEditor()),
+                 resizable=True)
         return v
 
     def _rebuild_graph(self):

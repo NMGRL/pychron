@@ -23,3 +23,4 @@ CHANGELOG
 * added graphical filtering to Browser
 * added data reduction tagging
 * added ability to configure recall view
+* started permutator. use to generate all permutations of a dataset

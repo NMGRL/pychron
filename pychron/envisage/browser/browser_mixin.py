@@ -18,12 +18,13 @@
 from traits.api import List, Str, Bool, Any, Enum, Button, \
     Int, Property, cached_property, DelegatesTo, Date, Instance, HasTraits
 import apptools.sweet_pickle as pickle
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import timedelta, datetime
 import os
 import re
 #============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.progress import progress_loader
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.browser.date_selector import DateSelector
@@ -321,7 +322,7 @@ class BrowserMixin(ColumnSorterMixin):
                     prog.change_message('Loading Labnumber {}'.format(li.identifier))
                 return LabnumberRecordView(li)
 
-            sams = self.manager.progress_loader(ls, func)
+            sams = progress_loader(ls, func)
         return sams
 
     def _retrieve_sample_analyses(self, samples,
@@ -350,7 +351,7 @@ class BrowserMixin(ColumnSorterMixin):
                     prog.change_message('Loading {}'.format(xi.record_id))
                 return IsotopeRecordView(xi)
 
-            return self.manager.progress_loader(ans, func, threshold=25)
+            return progress_loader(ans, func, threshold=25)
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter
