@@ -353,6 +353,7 @@ class MainView(HasTraits):
 
     def _get_editors(self):
         teditor = myTabularEditor(adapter=self.isotope_adapter,
+                                  drag_enabled=False,
                                   stretch_last_section=False,
                                   editable=False,
                                   refresh='refresh_needed')
@@ -364,16 +365,20 @@ class MainView(HasTraits):
             adapter = DetectorRatioTabularAdapter
         ceditor = myTabularEditor(adapter=adapter(),
                                   editable=False,
+                                  drag_enabled=False,
                                   refresh='refresh_needed')
 
         ieditor = myTabularEditor(adapter=self.intermediate_adapter,
                                   editable=False,
+                                  drag_enabled=False,
                                   stretch_last_section=False,
                                   refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
+                                  drag_enabled=False,
                                   editable=False, )
         meditor = myTabularEditor(adapter=MeasurementTabularAdapter(),
+                                  drag_enabled=False,
                                   editable=False)
 
         return teditor, ieditor, ceditor, eeditor, meditor
