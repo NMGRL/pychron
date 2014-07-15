@@ -12,4 +12,5 @@ Processing
   ..series
   ..flux
   tagging
+  permutator
 

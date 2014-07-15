@@ -1,6 +1,7 @@
 import itertools
 
-from traits.api import Property, cached_property
+from traits.api import Property, cached_property, Button, HasTraits
+from traitsui.api import View
 
 from uncertainties import nominal_value, std_dev
 import yaml
@@ -14,7 +15,7 @@ from pychron.processing.analyses.file_analysis import FileAnalysis
 
 # class PermutationResults(object):
 # def __init__(self):
-#         self.permutations = []
+# self.permutations = []
 #
 #     def add(self, r):
 #         self.permutations.append(r)
@@ -33,7 +34,6 @@ class PermutationRecord(object):
 
 
 class FitPermutator(Loggable):
-
     def permutate(self, ai):
         func = lambda x, prog, i, n: self._permutate(ai, x, prog, i, n)
 
@@ -90,6 +90,7 @@ class FitPermutator(Loggable):
 class Permutator(Loggable):
     configuration_dict = Property
 
+
     @cached_property
     def _get_configuration_dict(self):
         try:
@@ -104,27 +105,50 @@ class Permutator(Loggable):
     def fits_permutation(self):
         fp = FitPermutator()
         fp.fits = self.get_fits()
-        for ai in self.oanalyses:
+
+        editor = IdeogramEditor()
+        po = editor.plotter_options_manager.plotter_options
+        po.set_aux_plot_height('Analysis Number Stacked', 300)
+        editor.disable_aux_plots()
+
+        ans = []
+        gid, ggid = 0, 0
+        group = True
+        graph = False
+        for i, ai in enumerate(self.oanalyses):
             wm, records = fp.permutate(ai)
-            ans = self._make_analyses(records)
+            if group:
+                gid = i
+            elif graph:
+                ggid = i
 
-            editor = IdeogramEditor()
-            po = editor.plotter_options_manager.plotter_options
-            editor.analyses = ans
-            editor.disable_aux_plots()
-            po.set_aux_plot_height('Analysis Number Stacked', 300)
+            ans.extend(self._make_analyses(records, gid, ggid))
 
-            editor.rebuild()
-            editor.configure_traits()
+        editor.analyses = ans
+        editor.rebuild()
+        editor.edit_traits()
 
-    def _make_analyses(self, records):
+    def _make_analyses(self, records, gid, ggid):
+
         return [FileAnalysis(age=nominal_value(ai.age),
                              age_err=std_dev(ai.age),
-                             record_id=ai.info_str)
+                             record_id=ai.info_str,
+                             group_id=gid,
+                             graph_id=ggid)
                 for ai in records]
 
 
 if __name__ == '__main__':
+    class PermutatorView(HasTraits):
+        test = Button
+
+        def _test_fired(self):
+            self.permutator.fits_permutation()
+
+        def traits_view(self):
+            v = View('test')
+            return v
+
     p = Permutator()
     p.path = './tests/data/config.yaml'
     logging_setup('perm')
@@ -150,7 +174,8 @@ if __name__ == '__main__':
                             use_cache=False, unpack=True)
     # a.j = ufloat(1e-4, 1e-7)
 
-    p.oanalyses = ans[:1]
+    p.oanalyses = ans
 
-    p.fits_permutation()
-
+    # p.fits_permutation()
+    v = PermutatorView(permutator=p)
+    v.configure_traits()
