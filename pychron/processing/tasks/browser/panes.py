@@ -51,7 +51,10 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Blank', 'blank_fit_status'),
                    ('IC', 'ic_fit_status'),
                    ('Flux', 'flux_fit_status'),
-                   ('Spec.', 'mass_spectrometer')]
+                   ('Spec.', 'mass_spectrometer'),
+                   ('Meas.', 'meas_script_name'),
+                   ('Ext.', 'extract_script_name'),
+                   ('Device', 'extract_device')]
 
     columns = [('Run ID', 'record_id'),
                ('Tag', 'tag')]
@@ -64,9 +67,11 @@ class AnalysisAdapter(BrowserAdapter):
     def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Unselect', action='unselect'),
                            Action(name='Replace', action='replace_items'),
-                           Action(name='Append', action='append_items'))
+                           Action(name='Append', action='append_items'),
+                           Action(name='Open', action='recall_items'),
+                           Action(name='Open Copy', action='recall_copies'))
 
-    def get_bg_color(self, object, trait, row, column=0):
+    def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
         if self.item.is_plateau_step:
             color = 'lightgreen'
@@ -77,11 +82,21 @@ class AnalysisAdapter(BrowserAdapter):
 class TablesHandler(UnselectTabularEditorHandler):
     def replace_items(self, info, obj):
         if obj.selected:
-            obj.replace_event = obj.selected
+            obj.context_menu_event = ('replace', None)
+            # obj.replace_event = obj.selected
 
     def append_items(self, info, obj):
         if obj.selected:
-            obj.append_event = obj.selected
+            obj.context_menu_event = ('append', None)
+            # obj.append_event = obj.selected
+
+    def recall_items(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': False})
+
+    def recall_copies(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': True})
 
 
 class Tables(HasTraits):
@@ -172,7 +187,11 @@ class TableTools(HasTraits):
                           width=-90, editor=EnumEditor(name='sample_filter_parameters')),
                     icon_button_editor('configure_sample_table',
                                        'cog',
-                                       tooltip='Configure Sample Table'))
+                                       tooltip='Configure Sample Table'),
+                    icon_button_editor('clear_sample_table',
+                                       'edit-clear',
+                                       tooltip='Clear Sample Table')
+        )
         g2 = HGroup(UItem('sample_filter',
                           width=-125),
                     UItem('sample_filter',
@@ -184,8 +203,8 @@ class TableTools(HasTraits):
         # editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
         # UItem(make_name('analysis_filter'),
         # width=-90),
-        #                         UItem(make_name('analysis_filter'),
-        #                               width=-25,
+        # UItem(make_name('analysis_filter'),
+        # width=-25,
         #                               editor=EnumEditor(name=make_name('analysis_filter_values'))),
         #                         # icon_button_editor(make_name('configure_analysis_table'), 'cog',
         #                         #                    tooltip='Configure analysis table'),
@@ -286,7 +305,7 @@ class BrowserPane(TraitsDockPane):
                                           tooltip='Filter analyses using defined criteria'),
                        icon_button_editor('graphical_filter_button',
                                           'chart_curve_go',
-                                          enabled_when='samples',
+                                          # enabled_when='samples',
                                           tooltip='Filter analyses graphically'),
                        spring,
                        CustomLabel('datasource_url', color='maroon'),
@@ -308,8 +327,8 @@ class BrowserPane(TraitsDockPane):
         # project_grp = VGroup(
         # HGroup(Label('Filter'),
         # UItem('project_filter',
-        #                      width=75),
-        #                icon_button_editor('clear_selection_button',
+        # width=75),
+        # icon_button_editor('clear_selection_button',
         #                                   'cross',
         #                                   tooltip='Clear selected')),
         #         UItem('projects',

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import List, Property, Int
+from traits.api import List, Property, Int, HasTraits
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -26,13 +26,16 @@ from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 
-class BrowserAdapter(TabularAdapter):
-    font = 'arial 10'
+class ConfigurableAdapterMixin(HasTraits):
     all_columns = List
     all_columns_dict = Property
 
     def _get_all_columns_dict(self):
         return dict(self.all_columns)
+
+
+class BrowserAdapter(TabularAdapter, ConfigurableAdapterMixin):
+    font = 'arial 10'
 
 
 class ProjectAdapter(BrowserAdapter):

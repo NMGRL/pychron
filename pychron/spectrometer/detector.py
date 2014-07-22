@@ -66,11 +66,13 @@ class Detector(SpectrometerDevice):
         # load deflection correction table
         p = os.path.join(paths.spectrometer_dir,
                          'deflections', self.name)
-
-        x, y = loadtxt(p, delimiter=',', unpack=True)
-        y -= y[0]
-        coeffs = polyfit(x, y, 1)
-        self._deflection_correction_factors = coeffs
+        if os.path.isfile(p):
+            x, y = loadtxt(p, delimiter=',', unpack=True)
+            y -= y[0]
+            coeffs = polyfit(x, y, 1)
+            self._deflection_correction_factors = coeffs
+        else:
+            self.warning('no deflection data for {}'.format(self.name))
 
     def read_deflection(self):
         r = self.ask('GetDeflection {}'.format(self.name))

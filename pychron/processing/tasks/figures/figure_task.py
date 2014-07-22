@@ -24,16 +24,17 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
 from pyface.tasks.action.schema import SToolBar
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction, \
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.tags import Tag
+from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
@@ -258,18 +259,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
-    def modify_k3739(self):
-        if self.has_active_editor():
-            ans = self.unknowns_pane.selected
-            if not ans:
-                self.information_dialog('Please select a set of analyses from the Unknowns.')
-            else:
-                m = K3739EditModel(analyses=ans)
-                v = K3739EditView(model=m)
-                info = v.edit_traits()
-                if info.result:
-                    self.active_editor.clear_aux_plot_limits()
-                    self.active_editor.rebuild()
 
 
     def refresh_active_editor(self):
@@ -582,9 +571,9 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # handlers
     #===============================================================================
-    def _selected_projects_changed(self, new):
-        # self._load_project_figures(new)
-        super(FigureTask, self)._selected_projects_changed(new)
+    # def _selected_projects_changed(self, old, new):
+    #     # self._load_project_figures(new)
+    #     super(FigureTask, self)._selected_projects_changed(new)
 
     def _selected_samples_changed(self, new):
         self._load_sample_figures(new)

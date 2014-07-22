@@ -30,6 +30,7 @@ class BaseColumnParser(HasTraits):
     _header_offset = 1
 
     def load(self, p, header_idx=0, **kw):
+        self._header_idx = header_idx
         self._header_offset = header_idx + 1
         self._load(p, header_idx, **kw)
 
@@ -74,7 +75,12 @@ class BaseColumnParser(HasTraits):
     def iternrows(self):
         return xrange(self._header_offset, self.nrows, 1)
 
+    def get_index(self, ks):
+        return self._get_index(ks)
+
     def _get_index(self, ks):
+        if isinstance(ks, int):
+            return ks
 
         if not isinstance(ks, (list, tuple)):
             ks = (ks,)

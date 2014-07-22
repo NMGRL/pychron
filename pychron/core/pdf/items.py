@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +100,7 @@ class BaseItem(HasTraits):
 
 
 class RowItem(BaseItem):
-    pass
+    include_width_calc = True
 
 
 def Superscript(v):

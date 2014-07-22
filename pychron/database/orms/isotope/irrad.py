@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,6 +97,18 @@ class irrad_IrradiationTable(Base, NameMixin):
 class irrad_ChronologyTable(Base, BaseMixin):
     chronology = Column(BLOB)
     irradiation = relationship('irrad_IrradiationTable', backref='chronology')
+
+    @property
+    def start_date(self):
+        """
+            return date component of dose.
+            dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
+
+        """
+        doses = self.get_doses(tofloat=False)
+        d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
+        return d.strftime('%m-%d-%Y')
+
 
     @property
     def duration(self):

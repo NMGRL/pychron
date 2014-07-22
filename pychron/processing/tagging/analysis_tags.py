@@ -14,27 +14,13 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
-from traitsui.extras.checkbox_column import CheckboxColumn
-from traitsui.table_column import ObjectColumn
-from traits.api import HasTraits, Str, List, Instance, Any, Button, Date, Bool
-from traitsui.api import View, Item, UItem, HGroup, TableEditor, \
-    Handler, VGroup, TabularEditor
+from traits.api import HasTraits, Str, List, Any, Button, Date, Bool
+from traitsui.api import View, Item, HGroup, VGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.loggable import Loggable
-
-
-class ItemAdapter(TabularAdapter):
-    columns = [('Run ID', 'record_id'),
-               ('Sample', 'sample'),
-               ('Tag', 'tag')]
-    font = 'arial 10'
+from pychron.processing.tagging.base_tags import BaseTagModel
 
 
 class Tag(HasTraits):
@@ -47,9 +33,15 @@ class Tag(HasTraits):
     omit_series = Bool
 
 
-class TagTable(HasTraits):
+class AnalysisTagModel(BaseTagModel):
     tags = List
     db = Any
+    selected = Any
+    items = List
+    use_filter = Bool(True)
+    add_tag_button = Button
+    delete_tag_button = Button
+    save_button = Button
 
     def load(self):
         db = self.db
@@ -120,30 +112,6 @@ class TagTable(HasTraits):
                     a = 'omit_{}'.format(a)
                     setattr(dbtag, a, getattr(ti, a))
 
-
-#class TagAdapter(TabularAdapter):
-#    columns = [('Name', 'name'), ('User', 'user'),
-#               ('Date', 'date')
-#               ]
-class TagTableViewHandler(Handler):
-    def closed(self, info, isok):
-        if isok:
-            info.object.save()
-
-
-class TagTableView(Loggable):
-    table = Instance(TagTable, ())
-    add_tag_button = Button
-    delete_tag_button = Button
-    save_button = Button
-
-    selected = Any
-    items = List
-    use_filter = Bool(True)
-
-    def save(self):
-        self.table.save()
-
     def _save_button_fired(self):
         self.save()
         self.information_dialog('Changes saved to database')
@@ -153,7 +121,7 @@ class TagTableView(Loggable):
         tag_view = View(
             VGroup(
                 HGroup(Item('name'),
-                       #Label('optional'),
+                       # Label('optional'),
                        Item('user')),
                 HGroup(
                     Item('omit_ideo',
@@ -165,15 +133,12 @@ class TagTableView(Loggable):
                     Item('omit_series',
                          label='Series'),
                     show_border=True,
-                    label='Omit'
-                ),
-            ),
+                    label='Omit')),
             buttons=['OK', 'Cancel'],
-            title='Add Tag'
-        )
+            title='Add Tag')
         info = n.edit_traits(kind='livemodal', view=tag_view)
         if info.result:
-            self.table.add_tag(n)
+            self.add_tag(n)
 
     def _delete_tag_button_fired(self):
         s = self.selected
@@ -181,46 +146,12 @@ class TagTableView(Loggable):
             if not isinstance(s, list):
                 s = (s,)
             for si in s:
-                self.table.delete_tag(si)
-
-    def traits_view(self):
-        cols = [ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='user', editable=False),
-                CheckboxColumn(name='omit_ideo'),
-                CheckboxColumn(name='omit_spec'),
-                CheckboxColumn(name='omit_iso'),
-                CheckboxColumn(name='omit_series')]
-
-        editor = TableEditor(columns=cols,
-                             selected='selected',
-                             sortable=False,
-        )
-
-        v = View(UItem('object.table.tags',
-                       editor=editor),
-                 HGroup(
-                     icon_button_editor('add_tag_button', 'add', tooltip='Add a tag'),
-                     icon_button_editor('delete_tag_button', 'delete', tooltip='Delete selected tags'),
-                     icon_button_editor('save_button', 'database_save',
-                                        tooltip='Save changes from the "Tag" table to the database')),
-                 UItem('items', editor=TabularEditor(adapter=ItemAdapter(),
-                                                     multi_select=True,
-                                                     operations=['delete'])),
-                 HGroup(Item('use_filter', label='Remove "Invalid" analyses from figure')),
-
-                 resizable=True,
-                 width=500,
-                 height=400,
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 handler=TagTableViewHandler,
-                 title='Tags')
-
-        return v
+                self.delete_tag(si)
 
 
-if __name__ == '__main__':
-    t = TagTableView()
-    t.table.tags = [Tag(name='foo') for i in range(10)]
-    t.configure_traits()
+# if __name__ == '__main__':
+#     t = AnalysisTagView(model=AnalysisTagModel())
+#     t.model.tags = [Tag(name='foo') for i in range(10)]
+#     t.configure_traits()
+
 #============= EOF =============================================

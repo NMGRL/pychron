@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ from traits.api import Dict, Property, Instance, Float, Str, List, Either, cache
 from pychron.core.helpers.logger_setup import new_logger
 from pychron.paths import paths
 from pychron.pychron_constants import ARGON_KEYS
+
 
 
 
@@ -440,6 +441,10 @@ class ArArAge(Loggable):
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 
+        self.isotopes['Ar37'].decay_corrected = self.Ar37_decay_corrected
+        self.isotopes['Ar39'].decay_corrected = self.Ar39_decay_corrected
+
+        # self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
         # print isos[4]
         # print 'ifc',self.interference_corrections
         f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
@@ -467,7 +472,6 @@ class ArArAge(Loggable):
 
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=self.arar_constants)
-
         self.uage = age
 
         self.age = float(age.nominal_value)
@@ -527,34 +531,34 @@ class ArArAge(Loggable):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
-#===============================================================================
-#
-#===============================================================================
+            #===============================================================================
+            #
+            #===============================================================================
 
-    # def _arar_constants_default(self):
-    #     """
-    #         use a global shared arar_constants
-    #     """
-    #
-    #     global arar_constants
-    #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-    #     #print 'asdf', arar_constants
-    #     if arar_constants is None:
-    #         arar_constants = ArArConstants()
-    #         #return ArArConstants()
-    #     return arar_constants
+            # def _arar_constants_default(self):
+            #     """
+            #         use a global shared arar_constants
+            #     """
+            #
+            #     global arar_constants
+            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+            #     #print 'asdf', arar_constants
+            #     if arar_constants is None:
+            #         arar_constants = ArArConstants()
+            #         #return ArArConstants()
+            #     return arar_constants
 
-                # def _arar_constants_default(self):
-                #     """
-                #         use a global shared arar_constants
-                #     """
-                #
-                #     global arar_constants
-                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-                #     #print 'asdf', arar_constants
-                #     if arar_constants is None:
-                #         arar_constants = ArArConstants()
-                #         #return ArArConstants()
-                #     return arar_constants
+            # def _arar_constants_default(self):
+            #     """
+            #         use a global shared arar_constants
+            #     """
+            #
+            #     global arar_constants
+            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+            #     #print 'asdf', arar_constants
+            #     if arar_constants is None:
+            #         arar_constants = ArArConstants()
+            #         #return ArArConstants()
+            #     return arar_constants
 
-                #============= EOF =============================================
+            #============= EOF =============================================

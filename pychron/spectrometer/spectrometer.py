@@ -96,15 +96,16 @@ class Spectrometer(SpectrometerDevice):
 
     def get_integration_time(self, current=True):
         if current:
-            resp=self.microcontroller.ask('GetIntegrationTime')
-            if resp:
-                try:
-                    self.integration_time=float(resp)
-                    self.info('Integration Time {}'.format(self.integration_time))
+            if self.microcontroller:
+                resp=self.microcontroller.ask('GetIntegrationTime')
+                if resp:
+                    try:
+                        self.integration_time=float(resp)
+                        self.info('Integration Time {}'.format(self.integration_time))
 
-                except (TypeError, ValueError, TraitError):
-                    self.warning('Invalid integration time. resp={}'.format(resp))
-                    self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
+                    except (TypeError, ValueError, TraitError):
+                        self.warning('Invalid integration time. resp={}'.format(resp))
+                        self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
         return self.integration_time
 
     def set_integration_time(self, it, force=False):

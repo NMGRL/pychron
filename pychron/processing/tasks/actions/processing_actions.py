@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -224,6 +224,17 @@ class RecallAction(Action):
         task = app.get_task('pychron.recall')
 
 
+class ConfigureRecallAction(myTaskAction):
+    name = 'Configure Recall'
+    method = 'configure_recall'
+    image = icon('cog.png')
+    task_ids = List(['pychron.recall','pychron.processing.figures',
+                     'pychron.processing.blanks',
+                     'pychron.processing.isotope_evolution',
+                     'pychron.processing.ic_factor',
+                     'pychron.processing.discrimination'])
+
+
 class OpenInterpretedAgeAction(Action):
     name = 'Browse Interpreted Ages'
 
@@ -281,9 +292,10 @@ class ExportAnalysesAction(Action):
         app.open_task('pychron.export')
 
 
-class ModifyK3739Action(FigureTaskAction):
+class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
     method = 'modify_k3739'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution'])
 
 
 class SplitEditorActionHor(myTaskAction):

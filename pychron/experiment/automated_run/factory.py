@@ -972,13 +972,14 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # handlers
     #===============================================================================
-    @on_trait_change('[measurement_script, post_measurement_script, post_equilibration_script, extraction]:edit_event')
+    @on_trait_change('[measurement_script, post_measurement_script, '
+                     'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
         app = self.application
         task = app.open_task('pychron.pyscript')
         path, kind = new
         task.kind = kind
-        task.open(path=new)
+        task.open(path=path)
 
     def _load_defaults_button_fired(self):
         if self.labnumber:

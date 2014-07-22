@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,12 +68,11 @@ class PyScriptPlugin(BaseTaskPlugin):
         return exts
 
     def _tasks_default(self):
-        return [TaskFactory(
-            id='pychron.pyscript',
-            name='PyScript',
-            factory=self._task_factory,
-            task_group='experiment',
-            image='script.png'),
+        return [TaskFactory(id='pychron.pyscript',
+                            name='PyScript',
+                            factory=self._task_factory,
+                            task_group='experiment',
+                            image='script.png'),
                 TaskFactory(id='pychron.pyscript.visual_el_programmer',
                             name='Visual Programmer',
                             factory=self._visual_task_factory,
@@ -86,6 +85,7 @@ class PyScriptPlugin(BaseTaskPlugin):
 
     def _task_factory(self):
         from pychron.pyscripts.tasks.pyscript_task import PyScriptTask
+
         return PyScriptTask()
 
     def _preferences_panes_default(self):

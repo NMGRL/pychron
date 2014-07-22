@@ -77,10 +77,11 @@ class _myTableView(_TableView, ConsumerMixin):
     _dragging = None
     _cut_indices = None
     option_select = False
+    drag_enabled = True
 
     def __init__(self, *args, **kw):
         super(_myTableView, self).__init__(*args, **kw)
-        self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+
 
         self.setup_consumer()
         editor = self._editor
@@ -100,6 +101,11 @@ class _myTableView(_TableView, ConsumerMixin):
             #hheader.setStretchLastSection(editor.factory.stretch_last_section)
             vheader.setFont(fnt)
             hheader.setFont(fnt)
+
+    def set_drag_enabled(self, d):
+        if d:
+            self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
+            self.setDragEnabled(True)
 
     def super_keyPressEvent(self, event):
         """ Reimplemented to support edit, insert, and delete by keyboard.
@@ -396,6 +402,8 @@ class _TabularEditor(qtTabularEditor):
         # Create the control
         control = self.control = self.widget_factory(self)
 
+        control.set_drag_enabled(factory.drag_enabled)
+
         # Set up the selection listener
         if factory.multi_select:
             self.sync_value(factory.selected, 'multi_selected', 'both',
@@ -532,6 +540,7 @@ class myTabularEditor(TabularEditor):
     drop_factory = Str
     col_widths = Str
     drag_external = Bool(False)
+    drag_enabled = Bool(True)
 
     def _get_klass(self):
         return _TabularEditor

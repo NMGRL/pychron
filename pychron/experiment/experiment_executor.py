@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -348,7 +348,6 @@ class ExperimentExecutor(Loggable):
         # scroll to the first run
         exp.automated_runs_scroll_to_row = 0
 
-        delay = exp.delay_between_analyses
         last_runid = None
 
         rgen, nruns = exp.new_runs_generator()
@@ -378,7 +377,7 @@ class ExperimentExecutor(Loggable):
                 if not overlapping:
                     if self.isAlive() and cnt < nruns and not is_first_analysis:
                         # delay between runs
-                        self._delay(delay)
+                        self._delay(exp.delay_between_analyses)
                     else:
                         self.debug('not delaying between runs isAlive={}, '
                                    'cnts<nruns={}, is_first_analysis={}'.format(self.isAlive(),
@@ -1106,9 +1105,12 @@ Use Last "blank_{}"= {}
             #if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
-
             if ban:
                 nopreceding = aruns.index(ban) > anidx
+            else:
+                #if first run is a blank_... just use it
+                if aruns[0].analysis_type.startswith('blank'):
+                    return True
 
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
@@ -1370,8 +1372,8 @@ Use Last "blank_{}"= {}
         # isok = True
         self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
-            self._check_for_managers()
-            mon = RemoteAutomatedRunMonitor()
+            # self._check_for_managers()
+            mon = RemoteAutomatedRunMonitor(name='automated_run_monitor')
             # ip = InitializationParser()
             # exp = ip.get_plugin('Experiment', category='general')
             # monitor = exp.find('monitor')

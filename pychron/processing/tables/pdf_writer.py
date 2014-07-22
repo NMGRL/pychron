@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     extract_label = Str
     extract_units = Str
     default_row_height = 0.15  #inches
+    footnote_height = 0.12
 
     def _get_signal_units(self, analyses):
         ref = analyses[0]
@@ -79,7 +80,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                 flowables.append(self._vspacer(0.1))
 
             if i < n:
-                flowables.append(self._vspacer(0.25))
+                flowables.append(self._vspacer(0.05))
 
         return flowables, templates
 
@@ -95,7 +96,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     #
     def _get_disc(self, ref):
         disc = ref.discrimination
-        return u'{:0.3f} \u00b1{:0.4f}'.format(disc.nominal_value, disc.std_dev)
+        return u'{:0.3f} \u00b1{:0.3f}'.format(disc.nominal_value, disc.std_dev)
 
     def _get_ic_factor(self, ref):
         # ic = (1, 0)
@@ -106,7 +107,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         if not isinstance(ic, tuple):
             ic = ic.nominal_value, ic.std_dev
 
-        return u'{:0.3f} \u00b1{:0.4f}'.format(ic[0], ic[1])
+        return u'{:0.3f} \u00b1{:0.3f}'.format(ic[0], ic[1])
 
     def _make_meta(self, analyses, style, include_footnotes=False):
         ref = analyses[0]
@@ -270,8 +271,9 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
     def _make_footer_rows(self, data, style):
         rows = []
         df = 6
+        height = self.footnote_height
         for v in ('<b>Constants used</b>', '<b>Atmospheric argon ratios</b>'):
-            row = FooterRow(fontsize=df, height=0.15)
+            row = FooterRow(fontsize=df, height=height)
             row.add_item(value=v, span=-1)
             rows.append(row)
             for i in range(18):
@@ -281,7 +283,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
         arar_constants = ref.arar_constants
         for n, d, key in ((40, 36, 'atm4036'),
                           (40, 38, 'atm4038')):
-            row = FooterRow(fontsize=df, height=0.15)
+            row = FooterRow(fontsize=df, height=height)
             row.add_item(value='({}Ar/{}Ar){}'.format(
                 Superscript(n),
                 Superscript(d),
@@ -299,7 +301,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
             row.add_item(value=r, span=-1)
             rows.append(row)
 
-        row = FooterRow(fontsize=df)
+        row = FooterRow(fontsize=df, height=height)
         row.add_item(value='<b>Interferring isotope production ratios</b>', span=-1)
         rows.append(row)
 
@@ -310,7 +312,7 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                 (39, 37, 'Ca', 'ca3937'),
                 (38, 37, 'Ca', 'ca3837'),
                 (36, 37, 'Ca', 'ca3637')):
-            row = FooterRow(fontsize=df, height=0.15)
+            row = FooterRow(fontsize=df, height=height)
             row.add_item(value='({}Ar/{}Ar){}'.format(
                 Superscript(n),
                 Superscript(d),
@@ -318,12 +320,12 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                          span=3)
 
             vv = ref.interference_corrections[key]
-            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+            v, e = floatfmt(vv.nominal_value, use_scientific=True), floatfmt(vv.std_dev, use_scientific=True)
             row.add_item(value=u'{} \u00b1{}'.format(v, e),
                          span=2)
             rows.append(row)
 
-        row = FooterRow(fontsize=df)
+        row = FooterRow(fontsize=df, height=height)
         row.add_item(value='<b>Decay constants</b>', span=-1)
         rows.append(row)
 
@@ -333,12 +335,12 @@ class IsotopePDFTableWriter(BasePDFTableWriter):
                 (39, 'Ar', '', 'lambda_Ar39'),
                 (37, 'Ar', '', 'lambda_Ar37')):
             vv = getattr(arar_constants, key)
-            v, e = floatfmt(vv.nominal_value), floatfmt(vv.std_dev)
+            v, e = floatfmt(vv.nominal_value, use_scientific=True), floatfmt(vv.std_dev, use_scientific=True)
 
             cite_key = '{}_citation'.format(key)
             r = getattr(arar_constants, cite_key)
 
-            row = FooterRow(fontsize=df, height=0.15)
+            row = FooterRow(fontsize=df, height=height)
             row.add_item(value=u'{}{} {}'.format(Superscript(i), E, dl), span=3)
             row.add_item(value=u'{} \u00b1{} a{}'.format(v, e, Superscript(-1)), span=3)
             row.add_item(value=r, span=-1)

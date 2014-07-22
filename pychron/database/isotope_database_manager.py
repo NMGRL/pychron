@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,11 +22,13 @@ from traits.api import String, Property, Event, \
 from apptools.preferences.preference_binding import bind_preference
 
 
+
 #============= standard library imports ========================
 import weakref
 #============= local library imports  ==========================
 from traits.has_traits import provides
 from pychron.core.i_datastore import IDatastore
+from pychron.core.progress import progress_loader, CancelLoadingError
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
@@ -41,10 +43,6 @@ from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 ANALYSIS_CACHE = {}
 ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 1000
-
-
-class CancelLoadingError(BaseException):
-    pass
 
 
 @provides(IDatastore)
@@ -206,6 +204,36 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if not self.vcs:
                 self.vcs = IsotopeVCSManager()
 
+                # def progress_loader(self, xs, func, threshold=50, progress=None, reraise_cancel=False):
+                # def progress_iterator(self, *args, **kw):
+                #     progress_iterator(*args, **kw)
+
+                # def progress_loader(self, *args, **kw):
+                #     return progress_loader(*args, **kw)
+                # def gen(prog):
+                #     n = len(xs)
+                #     if n > threshold or prog:
+                #         if not prog:
+                #             prog = self.open_progress(n)
+                #
+                #         for i, x in enumerate(xs):
+                #             if prog.canceled:
+                #                 raise CancelLoadingError
+                #             elif prog.accepted:
+                #                 break
+                #             yield func(x, prog, i, n)
+                #     else:
+                #         for x in xs:
+                #             yield func(x, None, 0, 0)
+                #
+                # try:
+                #     return list(gen(progress))
+                # except CancelLoadingError:
+                #     if reraise_cancel:
+                #         raise CancelLoadingError
+                #     else:
+                #         return []
+
     def update_vcs_analysis(self, an, msg):
         if self.use_vcs:
             self.vcs.update_analysis(an, msg)
@@ -224,26 +252,46 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         if not ai.has_raw_data:
             db = self.db
             with db.session_ctx():
-                dbisos = db.get_analysis_isotopes(ai.uuid)
-                isos = ai.isotopes
-                for dban, dbiso, dbmw in dbisos:
-                    name = dbmw.name
-                    if name in isos:
+                dban = db.get_analysis_uuid(ai.uuid)
+                for dbiso in dban.isotopes:
+                    name = dbiso.molecular_weight.name
+                    try:
+                        iso = ai.isotopes[name]
                         blob = dbiso.signal.data
-                        iso = isos[name]
                         if dbiso.kind == 'signal':
                             iso.unpack_data(blob)
                         elif dbiso.kind == 'baseline':
                             iso.baseline.unpack_data(blob)
                         elif dbiso.kind == 'sniff':
                             iso.sniff.unpack_data(blob)
+                    except KeyError:
+                        self.debug('load_raw_data: no matching isotope for {}, {}'.format(name,
+                                                                                          ','.join(ai.isotope_keys)))
+
+                # !!using db.get_analysis_isotopes is extremely slow!! why is unknown
+
+                # dbisos = db.get_analysis_isotopes(ai.uuid)
+                # isos = ai.isotopes
+                # for dban, dbiso, dbmw in dbisos:
+                # name = dbmw.name
+                #     if name in isos:
+                #         blob = dbiso.signal.data
+                #         iso = isos[name]
+                #         if dbiso.kind == 'signal':
+                #             iso.unpack_data(blob)
+                #         elif dbiso.kind == 'baseline':
+                #             iso.baseline.unpack_data(blob)
+                #         elif dbiso.kind == 'sniff':
+                #             iso.sniff.unpack_data(blob)
+
                 ai.has_raw_data = True
 
     def make_analysis(self, ai, **kw):
         return self.make_analyses((ai,), **kw)[0]
 
     def _calculate_cached_ages(self, ans, calculate_age):
-        if calculate_age:
+        if calculate_age and ans:
+            self.debug('calculated cached analysis ages')
             for ca in ans:
                 ca.calculate_age()
 
@@ -302,30 +350,32 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ans = self.filter_analysis_tag(ans, exclude)
 
         if not ans:
+            self.debug('no analyses to load')
             return []
 
         db = self.db
         with db.session_ctx():
-            if ans:
-                #partition into DBAnalysis vs IsotopeRecordView
-                db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
-                self._calculate_cached_ages(db_ans, calculate_age)
+            # partition into DBAnalysis vs IsotopeRecordView
+            db_ans, no_db_ans = map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
+            self._calculate_cached_ages(db_ans, calculate_age)
 
-                if unpack:
-                    for di in db_ans:
-                        if not di.has_raw_data:
-                            no_db_ans.append(di)
-                            db_ans.remove(di)
+            if unpack:
+                for di in db_ans:
+                    if not di.has_raw_data:
+                        no_db_ans.append(di)
+                        db_ans.remove(di)
 
-                if no_db_ans:
-                    #partition into cached and non cached analyses
+            if no_db_ans:
+                if use_cache:
+                    # partition into cached and non cached analyses
                     cached_ans, no_db_ans = partition(no_db_ans,
                                                       lambda x: x.uuid in ANALYSIS_CACHE)
                     cached_ans = list(cached_ans)
                     no_db_ans = list(no_db_ans)
 
                     cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
-                    #if unpack is true make sure cached analyses have raw data
+
+                    # if unpack is true make sure cached analyses have raw data
                     if unpack:
                         a, b = self._unpack_cached_analyses(cns, calculate_age)
                         db_ans.extend(a)
@@ -335,40 +385,39 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         #add analyses from cache to db_ans
                         db_ans.extend(cns)
 
-                    #increment value in cache_count
+                    # increment value in cache_count
                     self._increment_cache(cached_ans, use_cache)
 
-                    #load remaining analyses
-                    n = len(no_db_ans)
-                    if n:
-                        self._clone_vcs_repos(no_db_ans)
+                # load remaining analyses
+                n = len(no_db_ans)
+                if n:
+                    self._clone_vcs_repos(no_db_ans)
 
-                        progress = self._setup_progress(n, progress, use_progress)
+                    progress = self._setup_progress(n, progress, use_progress)
 
-                        db_ans, new_ans = self._construct_analyses(n, no_db_ans, db_ans, progress,
-                                                                   calculate_age, unpack, use_cache, **kw)
+                    db_ans, new_ans = self._construct_analyses(no_db_ans, db_ans, progress,
+                                                               calculate_age, unpack, use_cache, **kw)
+                    db_ans.extend(new_ans)
 
-                        db_ans.extend(new_ans)
+                    # self.debug('use vcs {}'.format(self.use_vcs))
+                    # if self.use_vcs:
+                    # if progress:
+                    #         progress.increase_max(len(new_ans)+1)
+                    #         progress.change_message('Adding analyses to vcs')
+                    #
+                    #     self.vcs.add_analyses(new_ans, progress=progress)
 
-                        # self.debug('use vcs {}'.format(self.use_vcs))
-                        # if self.use_vcs:
-                        #     if progress:
-                        #         progress.increase_max(len(new_ans)+1)
-                        #         progress.change_message('Adding analyses to vcs')
-                        #
-                        #     self.vcs.add_analyses(new_ans, progress=progress)
+                    self.debug('use offline database {}'.format(self.use_offline_database))
+                    if self.use_offline_database:
+                        if progress:
+                            progress.increase_max(len(new_ans) + 1)
+                            progress.change_message('Transfering analyses for offline usage')
+                        self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
-                        self.debug('use offline database {}'.format(self.use_offline_database))
-                        if self.use_offline_database:
-                            if progress:
-                                progress.increase_max(len(new_ans) + 1)
-                                progress.change_message('Transfering analyses for offline usage')
-                            self.offline_bridge.add_analyses(db, new_ans, progress=progress)
+            if progress:
+                progress.soft_close()
 
-                if progress:
-                    progress.soft_close()
-
-                return db_ans
+            return db_ans
 
     def get_level(self, level, irradiation=None):
         if irradiation is None:
@@ -390,35 +439,26 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     #===============================================================================
     # private
     #===============================================================================
-    def _construct_analyses(self, n, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
-        #get all dbrecords with one call
+    def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
         uuids = [ri.uuid for ri in no_db_ans]
+
+        #get all dbrecords with one call
         ms = self.db.get_analyses_uuid(uuids)
+        construct = self._construct_analysis
+        add_to_cache = self._add_to_cache
 
-        def _gen():
-            construct = self._construct_analysis
-            add_to_cache = self._add_to_cache
+        key = lambda x: x[0]
+        dbrecords = groupby(ms, key=key)
 
-            key = lambda x: x[0]
-            dbrecords = groupby(ms, key=key)
-            for i, ai in enumerate(no_db_ans):
-                if progress:
-                    if progress.canceled:
-                        self.debug('canceling make analyses')
-                        raise CancelLoadingError
-                    elif progress.accepted:
-                        self.debug('accepting {}/{} analyses'.format(i, n))
-                        break
-
-                mi, gi = dbrecords.next()
-                a = construct(ai, gi, progress, unpack=unpack, calculate_age=calculate_age, **kw)
-                if a:
-                    if use_cache:
-                        add_to_cache(a)
-                    yield a
+        def func(x, prog, i, n):
+            _, gi = dbrecords.next()
+            a = construct(x, gi, prog, unpack=unpack, calculate_age=calculate_age, **kw)
+            if use_cache:
+                add_to_cache(a)
+            return a
 
         try:
-            return db_ans, list(_gen())
+            return db_ans, progress_loader(no_db_ans, func, progress=progress, reraise_cancel=True)
         except CancelLoadingError:
             return [], []
 
@@ -477,6 +517,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         return ai
 
     def _add_to_cache(self, rec):
+        if rec is None:
+            self.debug('cannot add None to cache')
+
         if not rec.uuid in ANALYSIS_CACHE:
             #self.debug('Adding {} to cache'.format(rec.record_id))
             ANALYSIS_CACHE[rec.uuid] = weakref.ref(rec)()

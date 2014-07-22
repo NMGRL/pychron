@@ -37,7 +37,15 @@ def split_graph(n):
 
     if len(n.edges) == 2:
         e1, e2 = n.edges
-        return e1.get_node(n), e2.get_node(n)
+
+        n1, n2 = e1.get_node(n), e2.get_node(n)
+
+        # ensure first node is a Valve node otherwise states not set correctly
+        #see issue #335
+        if not isinstance(n1, ValveNode):
+            return n2, n1
+        else:
+            return n1, n2
     else:
         if n.edges:
             return n.edges[0].get_node(n),
@@ -145,21 +153,22 @@ class ExtractionLineGraph(HasTraits):
                 # new variant
                 # recursively split tree if node is closed
 
-                self._set_state(scene, s_node)
+                self._set_state(s_node, scene)
                 self._clear_visited()
 
-    def _set_state(self, scene, n):
+    def _set_state(self, n, scene=None):
         if n:
             if n.state == 'closed' and not n.visited:
                 n.visited = True
+                # print 'splitting on {}'.format(n.name)
+                #print ','.join([x.name for x in split_graph(n)])
                 for ni in split_graph(n):
-                    self._set_state(scene, ni)
+                    self._set_state(ni, scene)
             else:
                 state, term = self._find_max_state(n)
-                self._clear_fvisited()
+                # print n, n.name, state, term
                 self.fill(scene, n, state, term)
-
-            self._clear_fvisited()
+                self._clear_fvisited()
 
     def calculate_volumes(self, node):
         if isinstance(node, str):
@@ -304,9 +313,13 @@ class ExtractionLineGraph(HasTraits):
 if __name__ == '__main__':
     elg = ExtractionLineGraph()
     elg.load('/Users/ross/Pychrondata_dev/setupfiles/canvas2D/canvas.xml')
-    elg.set_valve_state('H', True)
+    elg.set_valve_state('C', True)
+    elg.set_valve_state('D', True)
 
-    print elg.calculate_volumes('Obama')
+    elg.set_valve_state('D', False)
+    elg._set_state(elg.nodes['D'])
+    # elg.set_canvas_states('D')
+    # print elg.calculate_volumes('Obama')
     #print elg.calculate_volumes('Bone')
     #state, root = elg.set_valve_state('H', True)
     #state, root = elg.set_valve_state('H', False)

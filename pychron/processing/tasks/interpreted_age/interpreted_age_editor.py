@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.pdf.options import PDFTableOptions
-from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup, AnalysisGroup
+from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.tables.fusion.pdf_writer import FusionPDFTableWriter
 from pychron.processing.tables.fusion.xls_writer import FusionTableXLSWriter
 from pychron.processing.tables.step_heat.pdf_writer import StepHeatPDFTableWriter
@@ -92,11 +92,11 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
                                        auto_view=True)
 
     def save_tables(self, t):
-        pdf = t.use_pdf_summary
+        pdf_sum = t.use_pdf_summary
         xls_sum = t.use_xls_summary
-        if pdf:
+        if pdf_sum:
             self.save_summary_table(t.root,
-                                     auto_view=t.auto_view)
+                                    auto_view=t.auto_view)
 
         pdf = t.use_pdf_data
         xls = t.use_xls_data
@@ -137,13 +137,13 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         if pdf:
             self.debug('saving pdf tables')
-            step_heat_title = 'Table E.1. MAP Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            fusion_title = 'Table D.1. MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
-                                      auto_view=auto_view)
+            step_heat_title = 'Table E.1 MAP Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table D.1 MAP Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            # self._save_pdf_data_table(root, map_spec, step_heat_title, fusion_title, 'map',
+            #                           auto_view=auto_view)
 
-            step_heat_title = 'Table G.1. Argus Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
-            fusion_title = 'Table F.1. Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            step_heat_title = 'Table G.1 Argus Step Heat <sup>40</sup>Ar/<sup>39</sup>Ar Data'
+            fusion_title = 'Table F.1 Argus Fusion <sup>40</sup>Ar/<sup>39</sup>Ar Data'
             self._save_pdf_data_table(root, argus, step_heat_title, fusion_title, 'argus',
                                       auto_view=auto_view)
         if xls:
@@ -245,7 +245,13 @@ class InterpretedAgeEditor(BaseTraitsEditor, ColumnSorterMixin):
             fusion, step_heat = partition(ias, lambda x: x.age_kind == 'Weighted Mean')
 
             shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in step_heat]
-            fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
+            # shgroups = [(ia, gfactory(StepHeatAnalysisGroup, ia)) for ia in list(step_heat)[:3]]
+            # shgroups =[]
+
+            # fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in fusion]
+            # fgroups = [(ia, gfactory(AnalysisGroup, ia)) for ia in list(fusion)[:3]]
+            fgroups = []
+
             prog.close()
 
         return shgroups, fgroups

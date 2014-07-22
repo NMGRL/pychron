@@ -15,7 +15,10 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('gen_SampleTable', sa.Column('rock_type', sa.String(80)))
+    try:
+        op.add_column('gen_SampleTable', sa.Column('rock_type', sa.String(80)))
+    except sa.exc.InternalError:
+        pass
 
 
 def downgrade():

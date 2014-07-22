@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,10 +231,10 @@ class BaseArArFigure(HasTraits):
                 #     f = lambda x: x.get_intensity()
 
                 for ai in self.sorted_analyses:
-                    v= ai.get_value(attr)
+                    v = ai.get_value(attr)
                     if v is not None:
                         yield v
-                    # yield f(ai.get_value(attr))
+                        # yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -243,13 +243,13 @@ class BaseArArFigure(HasTraits):
         mi, ma = self.graph.get_y_limits(plotid=pid)
 
         # print pid, self.group_id, mi, ma, a, b
-        mi = min(mi, a)
-        ma = max(ma, b)
+        # mi = min(mi, a)
+        # ma = max(ma, b)
 
-        if min_ is not None:
-            mi = min_
-        if max_ is not None:
-            ma = max_
+        mi = min_ if min_ is not None else min(mi, a)
+
+        ma = max_ if max_ is not None else max(ma, b)
+
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
 
     def update_options_limits(self, pid):

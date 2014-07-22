@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.pychron_constants import AGE_SCALARS
+
 
 
 
@@ -59,7 +60,7 @@ class ArArConstants(HasTraits):
 
     lambda_k = Property
     lambda_Cl36 = Property(depends_on='lambda_Cl36_v, lambda_Cl36_e')
-    lambda_Cl36_v = Float(6.3e-9)
+    lambda_Cl36_v = Float(6.308e-9)
     lambda_Cl36_e = Float(0)
     lambda_Ar37 = Property(depends_on='lambda_Ar37_v, lambda_Ar37_e')
     lambda_Ar37_v = Float(0.01975)
@@ -100,7 +101,7 @@ class ArArConstants(HasTraits):
     lambda_Ar39_citation = Str  #'Min (2008)'
     lambda_Ar37_citation = Str  #'Min (2008)'
 
-    allow_negative_ca_correction = Bool
+    allow_negative_ca_correction = Bool(True)
 
     def __init__(self, *args, **kw):
         #print 'init arar constants'

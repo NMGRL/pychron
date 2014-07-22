@@ -149,6 +149,7 @@ class gen_SensitivityTable(Base, BaseMixin):
 
 class gen_UserTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='user')
+    dr_tags = relationship('proc_DataReductionTagTable', backref='user')
     #    project_id = foreignkey('gen_ProjectTable')
     projects = relationship('gen_ProjectTable', secondary=association_table)
 

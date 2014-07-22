@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +65,7 @@ class ScanManager(Manager):
     graph = Instance(TimeSeriesStreamGraph)
     readout_view = Instance(ReadoutView)
 
-    integration_time = DelegatesTo('spectrometer')#Enum(QTEGRA_INTEGRATION_TIMES)
+    integration_time = DelegatesTo('spectrometer')  #Enum(QTEGRA_INTEGRATION_TIMES)
 
     detectors = DelegatesTo('spectrometer')
     detector = Instance(Detector)
@@ -84,7 +84,7 @@ class ScanManager(Manager):
     graph_ymax = Property(Float, depends_on='_graph_ymax')
     _graph_ymin = Float
     _graph_ymax = Float
-    graph_scan_width = Int  # in minutes
+    graph_scan_width = Float  # in minutes
 
     # record_button = Event
     record_button = ToggleButton(image_on=icon('media-record'),
@@ -115,9 +115,9 @@ class ScanManager(Manager):
 
     def _update_magnet(self, obj, name, old, new):
         if new:
-        # covnert dac into a mass
-        # convert mass to isotope
-        #            d = self.magnet.dac
+            # covnert dac into a mass
+            # convert mass to isotope
+            #            d = self.magnet.dac
             iso = self.magnet.map_dac_to_isotope(current=False)
             if not iso in self.isotopes:
                 iso = NULL_STR
@@ -213,7 +213,6 @@ class ScanManager(Manager):
                 'graph_y_auto',
                 'graph_scan_width']
 
-
     def _update(self, data):
         keys, signals = data
         if signals:
@@ -221,15 +220,15 @@ class ScanManager(Manager):
                                            track_y=False)
 
             if self.graph_y_auto:
-                mi,ma=Inf,-Inf
-                for k,plot in self.graph.plots[0].plots.iteritems():
-                    plot=plot[0]
+                mi, ma = Inf, -Inf
+                for k, plot in self.graph.plots[0].plots.iteritems():
+                    plot = plot[0]
                     if plot.visible:
-                        ys=plot.value.get_data()
-                        ma=max(ma, max(ys))
-                        mi=min(mi, min(ys))
+                        ys = plot.value.get_data()
+                        ma = max(ma, max(ys))
+                        mi = min(mi, min(ys))
 
-                self.graph.set_y_limits(min_=mi,max_=ma, pad='0.1')
+                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1')
 
             if self._recording and self.queue:
                 self.queue.put((x, keys, signals))
@@ -250,7 +249,7 @@ class ScanManager(Manager):
         self.timer.Stop()
 
     def _start_recording(self):
-    #        self._first_recording = True
+        #        self._first_recording = True
         self.queue = Queue()
         self.record_data_manager = dm = CSVDataManager()
         self.consumer = Thread(target=self._consume, args=(dm,))
@@ -258,7 +257,6 @@ class ScanManager(Manager):
         # #        root = paths.spectrometer_scans_dir
         # #        p, _c = unique_path(root, 'scan')
         dm.new_frame(directory=paths.spectrometer_scans_dir)
-
 
     def _stop_recording(self):
         self._consuming = False
@@ -269,7 +267,7 @@ class ScanManager(Manager):
     #===============================================================================
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR \
-            and self.detector:
+                and self.detector:
             self.info('set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
@@ -319,11 +317,10 @@ class ScanManager(Manager):
         if not new:
             #p.value_range.low_setting = 'auto'
             #p.value_range.high_setting = 'auto'
-        #else:
+            #else:
             p.value_range.low_setting = self.graph_ymin
             p.value_range.high_setting = self.graph_ymax
         self.graph.redraw()
-
 
     #    def _graph_ymin_auto_changed(self, new):
     #        p = self.graph.plots[0]
@@ -352,7 +349,8 @@ class ScanManager(Manager):
         n = max(n, 1 / 60.)
         mins = n * 60
         g.data_limits[0] = 1.8 * mins
-        g.set_x_tracking(mins)
+        g.scan_widths[0] = mins
+        # g.set_x_tracking(mins)
 
     def _record_button_fired(self):
         if self._recording:
@@ -368,12 +366,10 @@ class ScanManager(Manager):
         self.record_data_manager.write_to_frame(tuple(' '))
         self.graph.add_vertical_rule(xs[-1])
 
-
     def _integration_time_changed(self):
         if self.integration_time:
             self.spectrometer.set_integration_time(self.integration_time)
             self.reset_scan_timer()
-
 
     def _consume(self, dm):
         self._consuming = True
@@ -424,7 +420,7 @@ class ScanManager(Manager):
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
-        #            if not det.active:
+            #            if not det.active:
             g.new_series(visible=det.active,
                          #                         use_downsampling=False,
                          color=det.color)
@@ -444,10 +440,10 @@ class ScanManager(Manager):
             plot.overlays.append(dto)
 
             #        self.graph_ymax_auto = True
-        #        self.graph_ymin_auto = True
-        #        p.value_range.low_setting = 'auto'
-        #        p.value_range.high_setting = 'auto'
-        #        p.value_range.tight_bounds = False
+            #        self.graph_ymin_auto = True
+            #        p.value_range.low_setting = 'auto'
+            #        p.value_range.high_setting = 'auto'
+            #        p.value_range.tight_bounds = False
 
             n = self.graph_scan_width
             n = max(n, 1 / 60.)
@@ -522,10 +518,13 @@ class ScanManager(Manager):
     def _readout_view_default(self):
         rd = ReadoutView(spectrometer=self.spectrometer)
         p = os.path.join(paths.spectrometer_dir, 'readout.cfg')
-        config = self.get_configuration(path=p)
-        rd.load(config)
-
+        if os.path.isfile(p):
+            config = self.get_configuration(path=p)
+            rd.load(config)
+        else:
+            self.warning('no readout configuration file. add one at {}'.format(p))
         return rd
+
 
 if __name__ == '__main__':
     from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS

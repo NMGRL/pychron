@@ -274,6 +274,9 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.queue_factory.db = self.db
         self.run_factory.db = self.db
 
+    def _application_changed(self):
+        self.run_factory.application=self.application
+
     def _default_mass_spectrometer_changed(self):
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer

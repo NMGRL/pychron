@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -238,8 +238,8 @@ class Ideogram(BaseArArFigure):
         plot.value_range.tight_bounds = True
         # ly, uh = po.ylimits
         # if uh < my:
-        self._set_y_limits(0, my, min_=0, pid=pid)
-
+        self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+        print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
 

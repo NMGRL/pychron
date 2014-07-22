@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -243,9 +243,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 return
 
             if password is not None:
-                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=3'.format(driver, user, password, host, name)
+                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=5'.format(driver, user, password, host, name)
             else:
-                url = 'mysql+{}://{}@{}/{}?connect_timeout=3'.format(driver, user, host, name)
+                url = 'mysql+{}://{}@{}/{}?connect_timeout=5'.format(driver, user, host, name)
         else:
             url = 'sqlite:///{}'.format(self.path)
 
@@ -322,6 +322,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             sess.add(obj)
             try:
                 sess.flush()
+                return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()

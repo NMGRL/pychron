@@ -114,7 +114,9 @@ class FusionsLogicBoard(CoreDevice):
         if self._communicator.handle is None or resp is not True:
             if not globalv.ignore_initialization_warnings:
             #                    warning(None, 'Laser not connected. Power cycle USB hub.')
-                result = self.confirmation_dialog('Laser not connected. Power cycle USB hub.', title='Quit Pychron')
+                result = self.confirmation_dialog('Laser not connected. To reconnect select "Yes", '
+                                                  'power cycle USB hub, and restart program.'
+                                                  '\nYes=Quit Pychron.\nNo=Continue', title='Quit Pychron')
                 if result:
                     os._exit(0)
 

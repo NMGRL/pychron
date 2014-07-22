@@ -411,11 +411,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                    add_tools=True,
                    add_inspector=True,
                    convert_index=None,
-                   plotid=0, *args,
+                   plotid=None, *args,
                    **kw):
 
         kw['marker'] = marker
         kw['marker_size'] = marker_size
+
+        if plotid is None:
+            plotid = len(self.plots) - 1
 
         if not fit:
             s, p = super(RegressionGraph, self).new_series(x, y,

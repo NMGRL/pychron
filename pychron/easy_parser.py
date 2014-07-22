@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,12 +50,14 @@ class EasyParser(Loggable):
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'ideo_j_grouped.yaml')
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'ideo_unknowns.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'ideo_unknowns_grouped.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'spec_unknowns_grouped.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'spec_unknowns_grouped.yaml')
             path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'integrated_unknowns_grouped.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'gee_unknowns_grouped.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_spec_unknowns_grouped.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_ideo_unknowns_grouped.yaml')
-            path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_spec_plag_unknowns_grouped.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'gee_unknowns_grouped.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'gee_ideo.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_spec_unknowns_grouped.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_ideo_unknowns_grouped.yaml')
+            # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'results_spec_plag_unknowns_grouped.yaml')
+
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'compare_iso_spec.yaml')
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'isochron_unknowns.yaml')
             # path = os.path.join(paths.dissertation, 'data', 'minnabluff', 'disc_j.yaml')

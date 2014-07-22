@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,24 +33,25 @@ from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 
 logger = new_logger('UpdatePlugin')
 
+
 def gen_commits(log):
     def _gen():
-        lines=iter(log.split('\n'))
-        commit=None
+        lines = iter(log.split('\n'))
+        commit = None
         while 1:
             try:
                 if not commit:
-                    commit=lines.next()
+                    commit = lines.next()
 
-                author=lines.next()
-                date=lines.next()
-                message=[]
+                author = lines.next()
+                date = lines.next()
+                message = []
                 while 1:
-                    line=lines.next()
+                    line = lines.next()
 
                     if line.startswith('commit '):
-                        commit=line
-                        yield date,author, '\n'.join(message)
+                        commit = line
+                        yield date, author, '\n'.join(message)
                         break
                     else:
                         if line.strip():
@@ -58,7 +59,7 @@ def gen_commits(log):
 
             except StopIteration:
 
-                yield date,author, '\n'.join(message)
+                yield date, author, '\n'.join(message)
                 break
 
     return _gen()
@@ -79,12 +80,12 @@ class UpdatePlugin(Plugin):
 
     def start(self):
         logger.debug('starting update plugin')
-        pref=self.application.preferences
+        pref = self.application.preferences
         # print pref.get('pychron.update.check_on_startup')
         if to_bool(pref.get('pychron.update.check_on_startup')):
-            url=pref.get('pychron.update.update_url')
+            url = pref.get('pychron.update.update_url')
             if to_bool(pref.get('pychron.update.use_development')):
-                url=pref.get('pychron.update.update_url')
+                url = pref.get('pychron.update.update_url')
 
             if url:
                 self._check_for_updates(url)
@@ -94,11 +95,11 @@ class UpdatePlugin(Plugin):
             self._load_local_revision()
 
     def _load_local_revision(self):
-        repo=self._get_local_repo()
+        repo = self._get_local_repo()
         try:
-            commit=repo.head.commit
+            commit = repo.head.commit
         except ValueError:
-            commit=None
+            commit = None
 
         self.application.set_revisions(commit,
                                        'No info. available')
@@ -135,7 +136,7 @@ class UpdatePlugin(Plugin):
                             logger.debug('Restarting')
 
     def _load_available_changes(self, repo):
-        log=repo.git.log('HEAD..FETCH_HEAD')
+        log = repo.git.log('HEAD..FETCH_HEAD')
         self.application.set_changes(list(gen_commits(log)))
         # for line in log.split('\n'):
         #     if
@@ -147,10 +148,10 @@ class UpdatePlugin(Plugin):
             dest = self._build_update()
             if dest:
                 #get executable
-                mos=os.path.join(dest, 'MacOS')
+                mos = os.path.join(dest, 'MacOS')
                 for p in os.listdir(mos):
-                    if p !='python':
-                        pp=os.path.join(mos, p)
+                    if p != 'python':
+                        pp = os.path.join(mos, p)
                         if stat.S_IXUSR & os.stat(pp)[stat.ST_MODE]:
                             os.execl(pp)
 
@@ -162,17 +163,17 @@ class UpdatePlugin(Plugin):
         """
         # get the destination by walking up from __file__ until we hit pychron.app/Contents
         # dont build if can't find dest
-        dest=self._get_destination()
+        dest = self._get_destination()
         if dest:
-            ver=version.__version__
+            ver = version.__version__
             logger.info('Building {} egg for application'.format(ver))
 
-            builder=Builder()
+            builder = Builder()
 
-            builder.launcher_name='pyexperiment'
-            builder.root=self._get_working_directory()
-            builder.dest=dest
-            builder.version=ver
+            builder.launcher_name = 'pyexperiment'
+            builder.root = self._get_working_directory()
+            builder.dest = dest
+            builder.version = ver
 
             logger.debug('dest={}'.format(builder.dest))
             logger.debug('root={}'.format(builder.root))
@@ -185,12 +186,12 @@ class UpdatePlugin(Plugin):
             return True
 
     def _setup_repo(self, url, remote='origin'):
-        repo=self._get_local_repo()
-        _remote=repo.remote(remote)
+        repo = self._get_local_repo()
+        _remote = repo.remote(remote)
         if _remote is None:
             repo.create_remote(remote, url)
         elif _remote.url != url:
-            _remote.url=url
+            _remote.url = url
 
         return repo
 
@@ -211,22 +212,23 @@ class UpdatePlugin(Plugin):
             return .../name.app/Contents or None
         """
 
-        p=__file__
+        p = __file__
         while p:
             if p.endswith('.app'):
-                d=os.path.join(p, 'Contents')
+                d = os.path.join(p, 'Contents')
                 if os.path.isdir(d):
                     return d
-            p=os.path.dirname(p)
+            p = os.path.dirname(p)
 
     def _get_working_directory(self):
         p = '/Users/ross/Sandbox/updater_test/user_repo'
         if not os.path.isdir(p):
-            p=os.path.join(paths.hidden_dir, 'updates', 'pychron')
+            p = os.path.join(paths.hidden_dir, 'updates', 'pychron')
 
         return p
 
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
+
 #============= EOF =============================================
 

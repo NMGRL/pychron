@@ -1,0 +1,20 @@
+input:
+ analyses:
+
+permutations:
+    fit:
+        fits:
+          - linear
+          - parabolic
+          - cubic
+        skips:
+          - Ar40
+          - Ar38
+          - Ar37
+          - Ar36
+
+
+
+output:
+ ideogram:
+    pdf: False

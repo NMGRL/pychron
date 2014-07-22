@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -93,6 +93,19 @@ class AutoupdateParser(Loggable):
 
                 params['j'] = get_value('J')
                 params['j_err'] = get_value('J_Er')
+                params['lambda_b_v'] = get_value('Lambda_40K_Beta')
+                params['lambda_b_e'] = get_value('Lambda_40K_epsilon')
+                params['ar39decayfactor'] = get_value('39_Decay')
+                params['ar37decayfactor'] = get_value('37_Decay')
+
+                params['ca3937'] = get_value('Ca_39_Over_37')
+                params['ca3837'] = get_value('Ca_38_Over_37')
+                params['ca3637'] = get_value('Ca_36_Over_37')
+
+                params['k3839'] = get_value('K_38_Over_39')
+                params['k3739'] = get_value('K_37_Over_39')
+                params['k4039'] = get_value('K_40_Over_39')
+                params['cl3638'] = get_value('P36Cl_Over_38Cl')
 
                 try:
                     params['k_ca'] = 1 / float(get_value('Ca_Over_K'))

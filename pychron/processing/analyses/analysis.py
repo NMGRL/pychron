@@ -59,6 +59,7 @@ class Analysis(ArArAge):
     value_filter_omit = Bool
     table_filter_omit = Bool
     tag = Str
+    data_reduction_tag = Str
 
     record_id = Property(depends_on='labnumber,aliquot, step')
     status_text = Property

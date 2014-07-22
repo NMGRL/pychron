@@ -19,13 +19,14 @@ import os
 import pickle
 
 from traits.api import HasTraits, Bool, List, Any, Float
-from traitsui.api import View, Item, Controller, VGroup, HGroup
+from traitsui.api import View, Item,UItem, Controller, VGroup, HGroup, TabularEditor
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.paths import paths
+from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.pychron_constants import PLUSMINUS_SIGMA
 
 
@@ -35,6 +36,7 @@ class K3739EditModel(HasTraits):
     k3739_err = Float
     progress = Any
     normal_k3739 = Bool
+    save_to_db = Bool
 
     def __init__(self, *args, **kw):
         super(K3739EditModel, self).__init__(*args, **kw)
@@ -59,7 +61,7 @@ class K3739EditModel(HasTraits):
 
     #persistence
     def load(self):
-        p = self._get_pickle_path()
+        p = self.pickle_path
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as fp:
@@ -69,24 +71,31 @@ class K3739EditModel(HasTraits):
                 pass
 
     def dump(self):
-        p = self._get_pickle_path()
         d = dict(k3739=self.k3739, k3739_err=self.k3739_err)
         try:
-            with open(p, 'wb') as fp:
+            with open(self.pickle_path, 'wb') as fp:
                 pickle.dump(d, fp)
         except BaseException:
             pass
 
-    def _get_pickle_path(self):
+    @property
+    def pickle_path(self):
         return os.path.join(paths.hidden_dir, 'modified_k3739')
+
+    @property
+    def value_str(self):
+        if self.normal_k3739:
+            return 'normal'
+        else:
+            return 'fixed ({}+/-{})'.format(self.k3739, self.k3739_err)
 
 
 class K3739EditView(Controller):
     model = K3739EditModel
 
-    def closed(self, info, is_ok):
-        if is_ok:
-            self.model.apply_modified()
+    # def closed(self, info, is_ok):
+    #     if is_ok:
+    #         self.model.apply_modified()
 
     def traits_view(self):
         v = View(
@@ -97,6 +106,8 @@ class K3739EditView(Controller):
                     Item('k3739_err', label=PLUSMINUS_SIGMA),
                     show_border=True,
                     enabled_when='not normal_k3739')),
+            UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),
+            HGroup(Item('save_to_db', label='Save to Database')),
             title='Edit (37/39)K',
             buttons=['OK', 'Cancel'],
             kind='livemodal')

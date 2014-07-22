@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,6 +37,7 @@ rock_type_map = {'L': 'Lava',
                  'T': 'Pyroclastic Tuff or Lapilli Tuff',
                  'S': 'Polymict sediment',
                  'T(gl)': 'Hydrovolcanic tuff'}
+
 
 class SamplePDFTableWriter(BasePDFTableWriter):
     yaml_options_path = None
@@ -115,7 +116,11 @@ class SamplePDFTableWriter(BasePDFTableWriter):
                 elif len(ai) == 3:
                     ai = '{} ({})'.format(ai[0], ai[2])
 
+            if ai == 'lithology':
+                ai = 'composition'
+
             h = ' '.join(map(str.capitalize, ai.split('_')))
+
             hr.add_item(value=h)
 
         yield hr
@@ -147,7 +152,7 @@ class SamplePDFTableWriter(BasePDFTableWriter):
                 yield r
 
     def _make_table_title(self):
-        title = 'Sample Table'
+        title = 'Table X. Minna Bluff Sample Metadata'
         if self._yaml_options:
             title = self._yaml_options.get('title', title)
 

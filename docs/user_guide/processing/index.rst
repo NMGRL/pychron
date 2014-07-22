@@ -1,13 +1,16 @@
 Processing
 =========================
 .. toctree::
-:maxdepth: 1
+  :maxdepth: 1
 
-        easy
-        ideogram
-        isochron
-        spectrum
-        blanks
-        series
-        flux
+  browser
+  ..easy
+  ..ideogram
+  ..isochron
+  ..spectrum
+  ..blanks
+  ..series
+  ..flux
+  tagging
+  permutator
 

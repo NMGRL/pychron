@@ -2,20 +2,21 @@ __author__ = 'ross'
 import unittest
 
 
-
 def suite():
+    from pychron.entry.tests.analysis_loader import XLSAnalysisLoaderTestCase
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
-    from pychron.processing.tests.plateau import PlateauTestCase
-    from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
-    from pychron.experiment.tests.position_regex_test import XYTestCase
     from pychron.experiment.tests.frequency_test import FrequencyTestCase
+    from pychron.experiment.tests.position_regex_test import XYTestCase
+    from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
+    from pychron.processing.tests.plateau import PlateauTestCase
+    from pychron.processing.tests.ratio import RatioTestCase
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
-    from pychron.processing.tests.ratio import RatioTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
+    suite.addTest(loader.loadTestsFromTestCase(XLSAnalysisLoaderTestCase))
     suite.addTest(loader.loadTestsFromTestCase(RatioTestCase))
     suite.addTest(loader.loadTestsFromTestCase(InterpolationTestCase))
     suite.addTest(loader.loadTestsFromTestCase(DocstrContextTestCase))

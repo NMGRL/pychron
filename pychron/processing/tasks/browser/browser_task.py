@@ -15,20 +15,24 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from apptools.preferences.preference_binding import bind_preference
 import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
+
 # ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
-from pychron.database.records.isotope_record import IsotopeRecordView
+# ============= local library imports  ==========================
+from pychron.core.progress import progress_loader
+from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.paths import paths
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
-from pychron.processing.tasks.browser.date_range_selector import DateRangeSelector
+from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
 
 '''
@@ -75,10 +79,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     hours_pad = Int(18)
 
     datasource_url = String
-    #clear_selection_button = Button
+    # clear_selection_button = Button
 
     browser_pane = Any
     advanced_query = Button
+
+    graphical_filter_button = Button
+    graphical_filtering_max_days = Int
 
     _activated = False
 
@@ -120,6 +127,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.datasource_url = db.datasource_url
 
         bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
+        bind_preference(self, 'graphical_filtering_max_days', 'pychron.processing.graphical_filtering_max_days')
         self.load_browser_selection()
         self.load_browser_options()
         self._activated = True
@@ -179,21 +187,44 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         db = self.manager.db
         with db.session_ctx():
-            ans, _ = db.get_labnumber_analyses([si.identifier for si in sams])
-            ts = [ai.analysis_timestamp for ai in ans]
-            lpost, hpost = min(ts), max(ts)
+            if sams:
+                lns = [si.identifier for si in sams]
+                lpost, hpost = db.get_min_max_analysis_timestamp(lns)
+                ams = ms = db.get_analysis_mass_spectrometers(lns)
+                force = False
+            else:
+                force = True
+                lpost = datetime.now() - timedelta(hours=self.search_criteria.recent_hours)
+                hpost = datetime.now()
+                ams = [mi.name for mi in db.get_mass_spectrometers()]
+                ms = ams[:1]
 
             # if date range > X days make user fine tune range
-            if (hpost - lpost).total_seconds > 3600 * 24 * 10:
-                d = DateRangeSelector(lpost=lpost, hpost=hpost)
+            tdays = 3600 * 24 * max(1, self.graphical_filtering_max_days)
+
+            if force or (hpost - lpost).total_seconds() > tdays or len(ms) > 1:
+                d = GraphicalFilterSelector(lpost=lpost, hpost=hpost,
+                                            available_mass_spectrometers=ams,
+                                            mass_spectrometers=ms)
                 info = d.edit_traits(kind='livemodal')
                 if info.result:
-                    lpost, hpost = d.lpost, d.hpost
+                    lpost, hpost, ms = d.lpost, d.hpost, d.mass_spectrometers
+                    if not ms:
+                        self.warning_dialog('Please select at least one Mass Spectrometer')
+                        return
                 else:
                     return
 
-            associated = db.get_date_range_analyses(lpost, hpost, ordering='asc')
-            ans = [IsotopeRecordView(ai) for ai in associated]
+            ans = db.get_date_range_analyses(lpost, hpost, ordering='asc', spectrometer=ms)
+
+            def func(xi, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}-{}. {}'.format(i, n, xi.record_id))
+                return GraphicalRecordView(xi)
+
+            ans = progress_loader(ans, func)
+            if not ans:
+                return
 
         gm = GraphicalFilterModel(analyses=ans,
                                   projects=[p.name for p in self.selected_projects])
@@ -205,7 +236,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 
-    def _graphical_filter_hook(self, ans):
+    def _graphical_filter_hook(self, ans, is_append):
         pass
 
     def _level_changed(self):
@@ -280,6 +311,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             if self._recent_low_post:
                 lp = self._recent_low_post
                 hp = None
+
             # lp = self.low_post if self.use_low_post else None
             # hp = self.high_post if self.use_high_post else None
             # lim = at.limit
@@ -287,7 +319,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                  low_post=lp,
                                                  high_post=hp,
                                                  limit=lim,
-                                                 include_invalid=not at.omit_invalid)
+                                                 include_invalid=not at.omit_invalid,
+                                                 mass_spectrometers=self._recent_mass_spectrometers)
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)
@@ -296,5 +329,5 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         at = AnalysisTable(db=self.manager.db)
         return at
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
