@@ -33,6 +33,7 @@ from pychron.pychron_constants import ARGON_KEYS
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
@@ -281,6 +282,11 @@ class ArArAge(Loggable):
             return self.isotopes[iso].get_baseline_corrected_value()
         else:
             return ufloat(0, 0, tag=iso)
+
+    def get_isotopes(self, det):
+        for iso in self.isotopes.itervalues():
+            if iso.detector == det:
+                yield iso
 
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
