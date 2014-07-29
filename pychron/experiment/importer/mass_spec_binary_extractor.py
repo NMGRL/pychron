@@ -24,21 +24,32 @@ from pychron.experiment.importer.extractor import Extractor
 
 
 class MassSpecBinaryExtractor(Extractor):
+    # def _get_next_str(self, fp):
+    #     def _gen():
+    #         while 1:
+    #             t = ''
+    #             while 1:
+    #                 a = fp.read(1)
+    #                 if a == '\t':
+    #                     yield t.strip()
+    #                     t = ''
+    #                 t += a
+    #
+    #     g = _gen()
+    #     return lambda: g.next()
+
     def _get_next_str(self, fp):
         def _gen():
+            t = ''
             while 1:
-                t = ''
-                while 1:
-                    a = fp.read(1)
-                    if a == '\t':
-                        yield t.strip()
-                        t = ''
-                    t += a
+                a = fp.read(1)
+                if a == '\t':
+                    yield t.strip()
+                    t = ''
+                t += a
 
-        g = _gen()
-        return lambda: g.next()
-
-    #         return lambda :_gen()
+        # g = _gen()
+        # return lambda: g.next()
 
     def _get_single(self, fp):
         def _gen():
@@ -62,6 +73,9 @@ class MassSpecBinaryExtractor(Extractor):
         return _gen
 
     def import_file(self, p):
+        """
+            clone of RunData.Binary_Read from MassSpec 7.875
+        """
         if not os.path.isfile(p):
             return
 
@@ -70,9 +84,6 @@ class MassSpecBinaryExtractor(Extractor):
         with open(p, 'r') as fp:
             # use big-endian
             gns = self._get_next_str(fp)
-
-            def pgns():
-                print gns()
 
             gh = self._get_short(fp)
             gs = self._get_single(fp)

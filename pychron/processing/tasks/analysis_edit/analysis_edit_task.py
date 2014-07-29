@@ -408,8 +408,7 @@ class AnalysisEditTask(BaseBrowserTask):
             #                 self.controls_pane,
             self.plot_editor_pane,
             #                self.results_pane,
-            self._create_browser_pane()
-        ]
+            self._create_browser_pane()]
         cp = self._create_control_pane()
         if cp:
             self.controls_pane = cp
@@ -797,53 +796,6 @@ class AnalysisEditTask(BaseBrowserTask):
         rc.isotope_table_configurer.adapter = self.isotope_adapter
         rc.load()
         return rc
-
-        #@on_trait_change('data_selector:selector:key_pressed')
-        #def _key_press(self, obj, name, old, new):
-        #    '''
-        #        use 'u' to add selected analyses to unknowns pane
-        #    '''
-        #
-        #    if new:
-        #        s = self._get_selected_analyses()
-        #        if s:
-        #
-        #            c = new.text
-        #            if c == 'u':
-        #                self.active_editor.unknowns.extend(s)
-        #            elif c == 'U':
-        #                self.active_editor.unknowns = s
-        #            else:
-        #                self._handle_key_pressed(c)
-        #
-        #def _handle_key_pressed(self, c):
-        #    pass
-
-#===============================================================================
-#
-#===============================================================================
-#    @on_trait_change('unknowns_pane:[+button]')
-#    def _update_unknowns(self, name, new):
-#        print name, new
-#        '''
-#            get selected analyses and append/replace to unknowns_pane.items
-#        '''
-#        sel = None
-#        if sel:
-#            if name == 'replace_button':
-#                self.unknowns_pane.items = sel
-#            else:
-#                self.unknowns_pane.items.extend(sel)
-
-#    @on_trait_change('references_pane:[+button]')
-#    def _update_items(self, name, new):
-#        print name, new
-#        sel = None
-#        if sel:
-#            if name == 'replace_button':
-#                self.references_pane.items = sel
-#            else:
-#                self.references_pane.items.extend(sel)
 
 
 #============= EOF =============================================

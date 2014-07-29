@@ -18,19 +18,16 @@
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
-import apptools.sweet_pickle as pickle
 from traits.api import List, Str, Bool, Any, String, \
     on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
 
 # ============= standard library imports ========================
-import os
 # ============= local library imports  ==========================
 from pychron.core.progress import progress_loader
 from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
-from pychron.paths import paths
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -89,28 +86,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     _activated = False
 
-    def dump_browser_options(self):
-        d = {'include_monitors': self.include_monitors,
-             'include_unknowns': self.include_unknowns}
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        with open(p, 'w') as fp:
-            pickle.dump(d, fp)
-
-    def load_browser_options(self):
-        d = {}
-        p = os.path.join(paths.hidden_dir, 'browser_options')
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except Exception:
-                    pass
-        if d:
-            self.trait_set(**d)
-
     def prepare_destroy(self):
-        self.dump_browser_selection()
-        self.dump_browser_options()
+        self.dump_browser()
         self._activated = False
 
     def activated(self):
@@ -324,6 +301,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)
+            self.dump_browser()
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)
