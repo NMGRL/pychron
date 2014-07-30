@@ -1,16 +1,36 @@
-import itertools
+# ===============================================================================
+# Copyright 2014 Jake Ross
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================
 
+# ============= enthought library imports =======================
 from traits.api import Property, cached_property, Button, HasTraits
 from traitsui.api import View
-
+# ============= standard library imports ========================
+import itertools
 from uncertainties import nominal_value, std_dev
 import yaml
-
+from scipy.stats import norm
+#============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.progress import progress_loader
-from pychron.core.stats.core import calculate_weighted_mean
 from pychron.loggable import Loggable
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.permutator.view import PermutatorResultsView
+from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
+from pychron.pychron_constants import ARGON_KEYS
 
 
 # class PermutationResults(object):
@@ -25,12 +45,10 @@ from pychron.processing.analyses.file_analysis import FileAnalysis
 #     # def __init__(self, a, *args, **kw):
 #     #     super(PermutatedAnalysis, self).__init__(*args, **kw)
 #     #     self.isotopes =
-from pychron.processing.tasks.figures.editors.ideogram_editor import IdeogramEditor
-from pychron.pychron_constants import ARGON_KEYS
 
 
 class PermutationRecord(object):
-    __slots__ = ('age', 'info_str')
+    __slots__ = ('age', 'info_str','identifier')
 
 
 class FitPermutator(Loggable):
@@ -40,9 +58,9 @@ class FitPermutator(Loggable):
         perms = self._gen_unique_permutations(ai.isotopes)
         records = progress_loader(perms, func)
 
-        xs, es = zip(*((nominal_value(r.age), std_dev(r.age)) for r in records))
-        wm, we = calculate_weighted_mean(xs, es)
-        return wm, records
+        # xs, es = zip(*((nominal_value(r.age), std_dev(r.age)) for r in records))
+        # wm, we = calculate_weighted_mean(xs, es)
+        return records
 
     def _gen_unique_permutations(self, isos):
         n = 5
@@ -77,6 +95,8 @@ class FitPermutator(Loggable):
         permstr = ','.join(ps)
         agestr = str(ai.uage)
         record_id = ai.record_id
+        identifier = ai.identifier
+
         self.debug('{} age: {:<20s} permutation: {}'.format(record_id, agestr, permstr))
         if prog:
             prog.change_message('Permutated {}: age: {}, perm:{}'.format(record_id,
@@ -84,6 +104,40 @@ class FitPermutator(Loggable):
         r = PermutationRecord()
         r.age = ai.uage
         r.info_str = '{} ({})'.format(record_id, permstr)
+        r.identifier = identifier
+        return r
+
+
+class ICPermutator(Loggable):
+    """
+        do a monte carlo simulation on the CDD ICFactor
+    """
+
+    def permutate(self, ai):
+        icf = ai.get_ic_factor('CDD')
+        e = std_dev(icf)
+        record_id = ai.record_id
+        icf = 1.001
+        e = 0.1
+        perms = norm.rvs(loc=nominal_value(icf), scale=e, size=20)
+        iso36 = ai.isotopes['Ar36']
+        iso36.detector = 'CDD'
+
+        func = lambda x, prog, i, n: self._permutate(ai, record_id, e, x, prog, i, n)
+        records = progress_loader(perms, func)
+        return records
+
+    def _permutate(self, ai, record_id, e, ici, prog, i, n):
+        if prog:
+            prog.change_message('Setting ic_factor to {}, {}'.format(ici, e))
+
+        ai.set_ic_factor('CDD', ici, e)
+
+        ai.calculate_age(force=True)
+        r = PermutationRecord()
+        r.age = ai.uage
+        r.info_str = '{} (ic={},{})'.format(record_id, floatfmt(ici), floatfmt(e))
+        r.identifier = ai.identifier
         return r
 
 
@@ -102,31 +156,45 @@ class Permutator(Loggable):
     def get_fits(self):
         return self.configuration_dict.get('permutations').get('fit')
 
-    def fits_permutation(self):
-        fp = FitPermutator()
-        fp.fits = self.get_fits()
-
-        editor = IdeogramEditor()
-        po = editor.plotter_options_manager.plotter_options
-        po.set_aux_plot_height('Analysis Number Stacked', 300)
-        editor.disable_aux_plots()
+    def _do_permutation(self, permutator):
+        editor = self._setup_ideo_editor()
 
         ans = []
         gid, ggid = 0, 0
         group = True
         graph = False
+
+        v = PermutatorResultsView()
         for i, ai in enumerate(self.oanalyses):
-            wm, records = fp.permutate(ai)
+            records = permutator.permutate(ai)
             if group:
                 gid = i
             elif graph:
                 ggid = i
 
+            v.append_results(records)
             ans.extend(self._make_analyses(records, gid, ggid))
 
         editor.analyses = ans
         editor.rebuild()
-        editor.edit_traits()
+        v.editor = editor
+        v.edit_traits()
+
+    def ic_permutation(self):
+        ic = ICPermutator()
+        self._do_permutation(ic)
+
+    def fits_permutation(self):
+        fp = FitPermutator()
+        fp.fits = self.get_fits()
+        self._do_permutation(fp)
+
+    def _setup_ideo_editor(self):
+        editor = IdeogramEditor()
+        po = editor.plotter_options_manager.plotter_options
+        po.set_aux_plot_height('Analysis Number Stacked', 300)
+        editor.disable_aux_plots()
+        return editor
 
     def _make_analyses(self, records, gid, ggid):
 
@@ -143,7 +211,8 @@ if __name__ == '__main__':
         test = Button
 
         def _test_fired(self):
-            self.permutator.fits_permutation()
+            # self.permutator.fits_permutation()
+            self.permutator.ic_permutation()
 
         def traits_view(self):
             v = View('test')
@@ -170,7 +239,8 @@ if __name__ == '__main__':
     db.connect()
 
     ans = man.make_analyses([Record('65c1c4a9-e317-452b-9654-3f06efcbe664'),
-                             Record('39b6e623-e178-4dc4-bf5c-14c81485bd54')],
+                             # Record('39b6e623-e178-4dc4-bf5c-14c81485bd54')
+                            ],
                             use_cache=False, unpack=True)
     # a.j = ufloat(1e-4, 1e-7)
 
@@ -179,3 +249,4 @@ if __name__ == '__main__':
     # p.fits_permutation()
     v = PermutatorView(permutator=p)
     v.configure_traits()
+#============= EOF =============================================

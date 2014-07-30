@@ -78,6 +78,28 @@ class IsotopeRecordView(object):
         self.extract_script_name = ''
         self.meas_script_name = ''
         self.analysis_type = ''
+        self.group_id = 0
+        self.graph_id = 0
+
+        self.identifier = ''
+        self.labnumber = ''
+        self.aliquot = 0
+        self.step = ''
+        self.tag = ''
+        self.uuid = ''
+        self.rundate = ''
+        self.timestamp = ''
+        self.record_id = ''
+        self.sample = ''
+        self.project = ''
+        self.irradiation_info = ''
+        self.mass_spectrometer = ''
+        self.extract_device = ''
+
+        self.flux_fit_status = ''
+        self.blank_fit_status = ''
+        self.ic_fit_status = ''
+        self.iso_fit_status = ''
 
         super(IsotopeRecordView, self).__init__(*args, **kw)
 
@@ -118,9 +140,6 @@ class IsotopeRecordView(object):
                 irl = irp.level
                 ir = irl.irradiation
                 self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
-
-            else:
-                self.irradiation_info = ''
 
             meas = dbrecord.measurement
             if meas is not None:

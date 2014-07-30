@@ -127,7 +127,31 @@ class BrowserMixin(ColumnSorterMixin):
     analysis_include_types = Property(List)
     _analysis_include_types = List(['Unknown'])
     available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail', 'Monitors'])
+
+    def dump_browser(self):
+        self.dump_browser_selection()
+        self.dump_browser_options()
+
     # persistence
+    def dump_browser_options(self):
+        d = {'include_monitors': self.include_monitors,
+             'include_unknowns': self.include_unknowns}
+        p = os.path.join(paths.hidden_dir, 'browser_options')
+        with open(p, 'w') as fp:
+            pickle.dump(d, fp)
+
+    def load_browser_options(self):
+        d = {}
+        p = os.path.join(paths.hidden_dir, 'browser_options')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                try:
+                    d = pickle.load(fp)
+                except Exception:
+                    pass
+        if d:
+            self.trait_set(**d)
+
     def load_browser_date_bounds(self):
         obj = self._get_browser_persistence()
         if obj:
@@ -402,6 +426,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.debug('selected projects={}'.format(names))
             self._load_associated_samples(names)
             self._load_associated_groups(names)
+            self.dump_browser_selection()
 
     def _clear_sample_table_fired(self):
         self.samples = []

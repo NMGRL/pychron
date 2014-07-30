@@ -114,6 +114,10 @@ class DBAnalysis(Analysis):
     extraction_script_blob = Str
     measurement_script_blob = Str
 
+    def set_ic_factor(self, det, v, e):
+        for iso in self.get_isotopes(det):
+            iso.ic_factor=ufloat(v,e)
+
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
         if iso:
