@@ -109,7 +109,8 @@ class Archiver(HasTraits):
     def _archive(self, root, p):
         # create an archive directory
         today = datetime.today()
-        month = MONTH_NAMES[today.month - 1]
+        month_idx = today.month
+        month = MONTH_NAMES[month_idx - 1]
         year = today.year
         arch = os.path.join(root, 'archive')
         if not os.path.isdir(arch):
@@ -119,14 +120,15 @@ class Archiver(HasTraits):
         if not os.path.isdir(yarch):
             os.mkdir(yarch)
 
-        march = os.path.join(yarch, month)
+        mname = '{:02n}-{}'.format(month_idx, month)
+        march = os.path.join(yarch, mname)
         if not os.path.isdir(march):
             os.mkdir(march)
 
         src = os.path.join(root, p)
         dst = os.path.join(march, p)
 
-        self.info('Archiving {:30s} to ./archive/{}/{}'.format(p, year, month))
+        self.info('Archiving {:30s} to ./archive/{}/{}'.format(p, year, mname))
         try:
             shutil.move(src, dst)
         except Exception, e:
