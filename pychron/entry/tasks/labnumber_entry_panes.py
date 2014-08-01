@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,8 +124,10 @@ class IrradiationPane(TraitsDockPane):
                  width=-150,
                  editor=EnumEditor(name='irradiations')),
             icon_button_editor('edit_irradiation_button', 'database_edit',
-                               enabled_when='edit_irradiation_enabled'),
-            icon_button_editor('add_irradiation_button', 'database_add'))
+                               enabled_when='edit_irradiation_enabled',
+                               tooltip='Edit irradiation'),
+            icon_button_editor('add_irradiation_button', 'database_add',
+                               tooltip='Add irradiation'))
 
         level = HGroup(
             spacer(),
@@ -135,8 +137,10 @@ class IrradiationPane(TraitsDockPane):
                   width=-150,
                   editor=EnumEditor(name='levels')),
             icon_button_editor('edit_level_button', 'database_edit',
+                               tooltip='Edit level',
                                enabled_when='edit_level_enabled'),
-            icon_button_editor('add_level_button', 'database_add'))
+            icon_button_editor('add_level_button', 'database_add',
+                               tooltip='Add level'))
 
         conn = HGroup(spring, CustomLabel('datasource_url', color='maroon'), spring)
         v = View(VGroup(conn, irrad, level))
