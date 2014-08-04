@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import binascii
+
 from traits.api import Instance, Bool, Int, Float, Str, \
     Dict, List, Time, Date, Any
+
 #============= standard library imports ========================
 import os
 import struct
@@ -27,6 +30,7 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.automated_run.hop_util import parse_hops
@@ -81,6 +85,9 @@ class AutomatedRunPersister(Loggable):
     previous_blanks = Dict
     secondary_database_fail = False
     use_secondary_database = True
+    use_analysis_grouping = Bool(False)
+    grouping_threshold = Float
+    grouping_suffix = Str
 
     runid = Str
     uuid = Str
@@ -91,16 +98,106 @@ class AutomatedRunPersister(Loggable):
     cdd_ic_factor = Any
 
     _db_extraction_id = None
+    _temp_analysis_buffer = None
 
-    # def __init__(self, *args, **kw):
-    #     super(AutomatedRunPersister, self).__init__(*args, **kw)
-    #     self.bind_preferences()
-    #
-    # def bind_preferences(self):
-    #     prefid = 'pychron.experiment'
-    #     bind_preference(self, 'filter_outliers', '{}.filter_outliers'.format(prefid))
-    #     bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
-    #     bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
+    def __init__(self, *args, **kw):
+        super(AutomatedRunPersister, self).__init__(*args, **kw)
+        self.bind_preferences()
+        self._temp_analysis_buffer = []
+
+    def bind_preferences(self):
+        prefid = 'pychron.experiment'
+        bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
+        bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
+        bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
+
+        # bind_preference(self, 'filter_outliers', '{}.filter_outliers'.format(prefid))
+        # bind_preference(self, 'fo_iterations', '{}.fo_iterations'.format(prefid))
+        # bind_preference(self, 'fo_std_dev', '{}.fo_std_dev'.format(prefid))
+
+    #===============================================================================
+    # data writing
+    #===============================================================================
+    def save_peak_center_to_file(self, pc):
+        dm = self.data_manager
+        with dm.open_file(self._current_data_frame):
+            tab = dm.new_table('/', 'peak_center')
+            xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
+
+            for xi, yi in zip(xs, ys):
+                nrow = tab.row
+                nrow['time'] = xi
+                nrow['value'] = yi
+                nrow.append()
+
+            xs, ys, _mx, _my = pc.result
+            attrs = tab.attrs
+            attrs.low_dac = xs[0]
+            attrs.center_dac = xs[1]
+            attrs.high_dac = xs[2]
+
+            attrs.low_signal = ys[0]
+            attrs.center_signal = ys[1]
+            attrs.high_signal = ys[2]
+            tab.flush()
+
+    def get_data_writer(self, grpname):
+        def write_data(dets, x, keys, signals):
+            dm = self.data_manager
+            for det in dets:
+                k = det.name
+                try:
+                    if k in keys:
+                        if grpname == 'baseline':
+                            grp = '/{}'.format(grpname)
+                        else:
+                            grp = '/{}/{}'.format(grpname, det.isotope)
+                        #self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
+                        # self.debug('get table {}/{}'.format(grp,k))
+                        t = dm.get_table(k, grp)
+
+                        nrow = t.row
+                        #                        self.debug('x={}'.format(x))
+                        nrow['time'] = x
+                        nrow['value'] = signals[keys.index(k)]
+                        nrow.append()
+                        t.flush()
+                except AttributeError, e:
+                    self.debug('error: {} group:{} det:{} iso:{}'.format(e, grpname, k, det.isotope))
+
+        return write_data
+
+    def build_tables(self, gn, detectors):
+        self.debug('build tables- {} {}'.format(gn, detectors))
+        dm = self.data_manager
+        with dm.open_file(self._current_data_frame):
+            dm.new_group(gn)
+            for i, d in enumerate(detectors):
+                iso = d.isotope
+                name = d.name
+                # self._save_isotopes.append((iso, name, gn))
+                if gn == 'baseline':
+                    dm.new_table('/{}'.format(gn), name)
+                    self.debug('add group {} table {}'.format(gn, name))
+                else:
+                    isogrp = dm.new_group(iso, parent='/{}'.format(gn))
+                    dm.new_table(isogrp, name)
+                    self.debug('add group {} table {}'.format(isogrp, name))
+
+    def build_peak_hop_tables(self, gn, hops):
+
+        dm = self.data_manager
+
+        with dm.open_file(self._current_data_frame):
+            dm.new_group(gn)
+
+            for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
+                if is_baseline:
+                    continue
+                # self._save_isotopes.append((iso, det, gn))
+                isogrp = dm.new_group(iso, parent='/{}'.format(gn))
+                _t = dm.new_table(isogrp, det)
+                self.debug('add group {} table {}'.format(isogrp, det))
 
     def get_last_aliquot(self, identifier):
         return self.datahub.get_greatest_aliquot(identifier)
@@ -153,24 +250,6 @@ class AutomatedRunPersister(Loggable):
         attrs['ANALYSIS_TYPE'] = self.run_spec.analysis_type
 
         dm.close_file()
-
-    def _local_db_save(self):
-        ldb = self._local_lab_db_factory()
-        with ldb.session_ctx():
-            ln = self.run_spec.labnumber
-            aliquot = self.run_spec.aliquot
-            step = self.run_spec.step
-            uuid = self.uuid
-            cp = self._current_data_frame
-
-            ldb.add_analysis(labnumber=ln,
-                             aliquot=aliquot,
-                             uuid=uuid,
-                             step=step,
-                             collection_path=cp)
-            #ldb.commit()
-            #ldb.close()
-            #del ldb
 
     def post_measurement_save(self):
         if DEBUG:
@@ -266,6 +345,9 @@ class AutomatedRunPersister(Loggable):
                 # save monitor
                 self._save_monitor_info(db, a)
 
+                if self.use_analysis_grouping:
+                    self._save_analysis_group(db, a)
+
                 mem_log('post pychron save')
 
                 pt = time.time() - pt
@@ -288,6 +370,68 @@ class AutomatedRunPersister(Loggable):
                 # self.is_peak_hop = False
                 # self.plot_panel.is_peak_hop = False
                 # return True
+
+    def _save_analysis_group(self, db, analysis):
+        """
+            if analysis is an unknown add to project's analysis_group
+            if analysis_group does not exist make it
+
+            if project is reference then find and associate with the unknown's project
+            if the next analysis is not from the same project then need to associate this analysis
+            with that project as well.
+
+
+        """
+        self.debug('save analysis_group')
+        rs = self.run_spec
+        prj = rs.project
+        if prj == 'references':
+            #get the most recent unknown analysis
+            lan = db.get_last_analysis(spectrometer=rs.mass_spectrometer,
+                                       analysis_type=rs.analysis_type,
+                                       hours_limit=self.grouping_threshold)
+            if lan is not None:
+                try:
+                    # prj = lan.labnumber.sample.project.name
+                    prj = lan.project_name
+                    self._add_to_project_group(db, prj, analysis)
+
+                    #add this analysis to a temporary buffer. this is used when a following
+                    #analysis is associated with a different project
+                    self._temp_analysis_buffer.append((prj, analysis.uuid))
+
+                except AttributeError:
+                    pass
+            else:
+                #this maybe the first reference in the queue, so it should be associated with
+                #the first subsequent unknown.
+                self._temp_analysis_buffer.append((None, analysis.uuid))
+
+        else:
+            self._add_to_project_group(db, prj, analysis)
+
+            if self._temp_analysis_buffer:
+                for p, uuid in self._temp_analysis_buffer:
+                    if p!=prj:
+                        analysis = db.get_analysis_uuid(uuid)
+                        self._add_to_project_group(db, prj, analysis)
+
+            self._temp_analysis_buffer = []
+
+    def _add_to_project_group(self, db, prj, analysis):
+        if self.grouping_suffix:
+            prj = '{}-{}'.format(prj, self.grouping_suffix)
+
+        ag = db.get_analysis_group(prj, key='name')
+        if ag is None:
+            ag = db.add_analysis_group(prj)
+
+        #modify ag's id to reflect addition of another analysis
+        aa = ag.analyses[:]
+        aa.append(analysis)
+        ag.id = binascii.crc32(''.join([ai.uuid for ai in aa]))
+
+        db.add_analysis_group_set(ag, analysis)
 
     def _save_isotope_data(self, db, analysis):
         self.debug('saving isotopes')
@@ -582,95 +726,29 @@ class AutomatedRunPersister(Loggable):
                      ramp_duration=spec.ramp_duration,
                      ramp_rate=spec.ramp_rate)
 
-    #===============================================================================
-    # data writing
-    #===============================================================================
-    def save_peak_center_to_file(self, pc):
-        dm = self.data_manager
-        with dm.open_file(self._current_data_frame):
-            tab = dm.new_table('/', 'peak_center')
-            xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
-
-            for xi, yi in zip(xs, ys):
-                nrow = tab.row
-                nrow['time'] = xi
-                nrow['value'] = yi
-                nrow.append()
-
-            xs, ys, _mx, _my = pc.result
-            attrs = tab.attrs
-            attrs.low_dac = xs[0]
-            attrs.center_dac = xs[1]
-            attrs.high_dac = xs[2]
-
-            attrs.low_signal = ys[0]
-            attrs.center_signal = ys[1]
-            attrs.high_signal = ys[2]
-            tab.flush()
-
-    def get_data_writer(self, grpname):
-        def write_data(dets, x, keys, signals):
-            dm = self.data_manager
-            for det in dets:
-                k = det.name
-                try:
-                    if k in keys:
-                        if grpname == 'baseline':
-                            grp = '/{}'.format(grpname)
-                        else:
-                            grp = '/{}/{}'.format(grpname, det.isotope)
-                        #self.debug('get table {} /{}/{}'.format(k,grpname, det.isotope))
-                        # self.debug('get table {}/{}'.format(grp,k))
-                        t = dm.get_table(k, grp)
-
-                        nrow = t.row
-                        #                        self.debug('x={}'.format(x))
-                        nrow['time'] = x
-                        nrow['value'] = signals[keys.index(k)]
-                        nrow.append()
-                        t.flush()
-                except AttributeError, e:
-                    self.debug('error: {} group:{} det:{} iso:{}'.format(e, grpname, k, det.isotope))
-
-        return write_data
-
     def _set_table_attr(self, name, grp, attr, value):
         dm = self.data_manager
         tab = dm.get_table(name, grp)
         setattr(tab.attrs, attr, value)
         tab.flush()
 
-    def build_tables(self, gn, detectors):
-        self.debug('build tables- {} {}'.format(gn, detectors))
-        dm = self.data_manager
-        with dm.open_file(self._current_data_frame):
-            dm.new_group(gn)
-            for i, d in enumerate(detectors):
-                iso = d.isotope
-                name = d.name
-                # self._save_isotopes.append((iso, name, gn))
-                if gn == 'baseline':
-                    dm.new_table('/{}'.format(gn), name)
-                    self.debug('add group {} table {}'.format(gn, name))
-                else:
-                    isogrp = dm.new_group(iso, parent='/{}'.format(gn))
-                    dm.new_table(isogrp, name)
-                    self.debug('add group {} table {}'.format(isogrp, name))
+    def _local_db_save(self):
+        ldb = self._local_lab_db_factory()
+        with ldb.session_ctx():
+            ln = self.run_spec.labnumber
+            aliquot = self.run_spec.aliquot
+            step = self.run_spec.step
+            uuid = self.uuid
+            cp = self._current_data_frame
 
-    def build_peak_hop_tables(self, gn, hops):
-
-        dm = self.data_manager
-
-        with dm.open_file(self._current_data_frame):
-            dm.new_group(gn)
-
-            for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
-                if is_baseline:
-                    continue
-                # self._save_isotopes.append((iso, det, gn))
-                isogrp = dm.new_group(iso, parent='/{}'.format(gn))
-                _t = dm.new_table(isogrp, det)
-                self.debug('add group {} table {}'.format(isogrp, det))
+            ldb.add_analysis(labnumber=ln,
+                             aliquot=aliquot,
+                             uuid=uuid,
+                             step=step,
+                             collection_path=cp)
+            #ldb.commit()
+            #ldb.close()
+            #del ldb
 
     def _local_lab_db_factory(self):
         if self.local_lab_db:
