@@ -1,6 +1,9 @@
 import time
+
 from uncertainties import ufloat
+
 from pychron.core.ui import set_toolkit
+
 
 set_toolkit('qt4')
 
@@ -17,7 +20,7 @@ from threading import Thread
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 from pychron.processing.arar_age import ArArAge
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
-from pychron.spectrometer.spectrometer_manager import SpectrometerManager
+from pychron.spectrometer.thermo.spectrometer_manager import SpectrometerManager
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 

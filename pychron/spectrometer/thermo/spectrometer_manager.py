@@ -21,7 +21,7 @@ import os
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.managers.manager import Manager
-from pychron.spectrometer.spectrometer import Spectrometer
+from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
 from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan

@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from numpy import Inf
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
-    Bool, Int, Button, String, cached_property, \
+    Bool, Button, String, cached_property, \
     HasTraits, Range, Float
 # from pyface.timer.api import Timer
 #============= standard library imports ========================
@@ -29,7 +29,7 @@ from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
-from pychron.spectrometer.detector import Detector
+from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths

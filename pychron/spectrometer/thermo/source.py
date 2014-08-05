@@ -23,7 +23,7 @@ from traitsui.api import View, Item, RangeEditor
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
-from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 class Source(SpectrometerDevice):
     nominal_hv = Float(4500)

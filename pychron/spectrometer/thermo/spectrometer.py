@@ -21,10 +21,10 @@ from traits.api import Instance, Int, Property, List, \
 import os
 from numpy import array, argmin
 #============= local library imports  ==========================
-from pychron.spectrometer.source import Source
-from pychron.spectrometer.magnet import Magnet
-from pychron.spectrometer.detector import Detector
-from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.thermo.source import Source
+from pychron.spectrometer.thermo.magnet import Magnet
+from pychron.spectrometer.thermo.detector import Detector
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
 from pychron.paths import paths
 

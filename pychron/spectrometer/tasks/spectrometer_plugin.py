@@ -21,7 +21,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.spectrometer.spectrometer_manager import SpectrometerManager
+from pychron.spectrometer.thermo.spectrometer_manager import SpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
@@ -30,6 +30,9 @@ from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
     DBMagnetFieldTableHistoryAction
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
+
+
+
 
 
 

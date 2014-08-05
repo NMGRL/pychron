@@ -27,7 +27,7 @@ import time
 # import math
 # from pychron.graph.graph import Graph
 from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
-from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 # from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS
 # from pychron.core.regression.ols_regressor import PolynomialRegressor
 
