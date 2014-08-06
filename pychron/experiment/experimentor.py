@@ -109,8 +109,11 @@ class Experimentor(IsotopeDatabaseManager):
                 for ai in ei.executed_runs + ei.automated_runs
                 if ai.executable and not ai.skip]
 
-    def _get_all_automated_runs(self):
-        return [ai for ei in self.experiment_queues
+    def _get_all_automated_runs(self, qs=None):
+        if qs is None:
+            qs = self.experiment_queues
+
+        return [ai for ei in qs
                 for ai in ei.automated_runs
                 if ai.executable]
 
@@ -140,7 +143,10 @@ class Experimentor(IsotopeDatabaseManager):
         # exclude = ('dg', 'pa')
         #        timethis(self._modify_aliquots_steps, args=(ans,), kwargs=dict(exclude=exclude))
         # self._modify_aliquots_steps(ans, exclude=exclude)
-        self._compress_aliquots()
+        for qi in self.experiment_queues:
+            aruns = self._get_all_automated_runs([qi])
+            self._renumber_aliquots(aruns)
+
         self._set_analysis_metatata()
 
         self.debug('info updated')
@@ -192,11 +198,11 @@ class Experimentor(IsotopeDatabaseManager):
 
         return project, sample, material, irradiation
 
-    def _compress_aliquots(self):
-        aruns = self._get_all_automated_runs()
-
+    def _renumber_aliquots(self, aruns):
         key = lambda x: x.labnumber
         akey = lambda x: x.user_defined_aliquot
+
+        aruns = sorted(aruns, key=key)
         for ln, ans in groupby(aruns, key=key):
             if is_special(ln):
                 continue
