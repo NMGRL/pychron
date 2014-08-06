@@ -15,7 +15,7 @@ from pychron.core.helpers.logger_setup import logging_setup
 from threading import Thread
 from pychron.processing.arar_age import ArArAge
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
-from pychron.spectrometer.thermo.spectrometer_manager import SpectrometerManager
+from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 
@@ -57,7 +57,7 @@ class MulticollectTestCase(unittest.TestCase):
         a.script_info.measurement_script_name = 'unknown'
         a.script_info.extraction_script_name = 'pause'
 
-        s = SpectrometerManager()
+        s = ArgusSpectrometerManager()
         ion = IonOpticsManager(spectrometer=s.spectrometer)
 
         s.load(db_mol_weights=False)

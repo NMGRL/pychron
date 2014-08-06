@@ -52,7 +52,7 @@ PACKAGE_DICT = dict(
 
     #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
 
-    SpectrometerPlugin='pychron.spectrometer.tasks.spectrometer_plugin',
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
 
     #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
 

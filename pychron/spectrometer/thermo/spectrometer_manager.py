@@ -31,7 +31,7 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
     SpectrometerParametersView
 
 
-class SpectrometerManager(Manager):
+class ArgusSpectrometerManager(Manager):
     spectrometer = Instance(Spectrometer)
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')

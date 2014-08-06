@@ -23,7 +23,7 @@ set_qt()
 # ============= enthought library imports =======================
 from numpy import linspace
 from traits.api import HasTraits, Instance, Float
-from traitsui.api import View, Item, UItem, HGroup
+from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.regression_graph import StackedRegressionGraph
@@ -33,7 +33,7 @@ from pychron.processing.isotope import Isotope
 def gen_data(b, m):
     xs = linspace(15, 100)
     ys = m * xs + b + normal(size=50)
-    ys[6] = ys[6] + 10
+    # ys[6] = ys[6] + 10
     return xs, ys
 
 
@@ -41,7 +41,7 @@ def generate_test_data():
     xs, ys = gen_data(500, -2)
     a40 = Isotope(name='Ar40', xs=xs, ys=ys)
 
-    xs, ys = gen_data(2, 0.025)
+    xs, ys = gen_data(10, 0.025)
     a39 = Isotope(name='Ar39', xs=xs, ys=ys)
 
     return dict(Ar40=a40, Ar39=a39)
@@ -53,7 +53,8 @@ class RatioEditor(HasTraits):
     graph = Instance(StackedRegressionGraph)
 
     intercept_ratio = Float
-    time_zero_offset = Float(0)
+    time_zero_offset = Float(0, auto_set=False, enter_set=True)
+    ratio_intercept = Float
 
     def _time_zero_offset_changed(self):
         self.refresh_plot()
@@ -61,6 +62,7 @@ class RatioEditor(HasTraits):
     def setup_graph(self):
         self.d = generate_test_data()
         cd = dict(padding=20,
+                  spacing=5,
                   stack_order='top_to_bottom')
         g = StackedRegressionGraph(container_dict=cd)
         self.graph = g
@@ -86,29 +88,46 @@ class RatioEditor(HasTraits):
 
         niso.filter_outliers_dict = fd
         diso.filter_outliers_dict = fd
-        # niso.dirty = True
-        # diso.dirty = True
+        niso.dirty = True
+        diso.dirty = True
 
         g.new_plot()
         g.set_x_limits(min_=0, max_=100)
         g.set_y_title(niso.name)
-        g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=fd)
+        _,_,nl = g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=None)
 
         g.new_plot()
         g.set_y_title(diso.name)
-        g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=fd)
+        _,_,dl = g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=None)
 
-        xs = linspace(0, 100)
-        rys = niso.regressor.predict(xs) / diso.regressor.predict(xs)
+        # g.new_plot()
+        # nreg = nl.regressor
+        # dreg = dl.regressor
+        #
+        # xs = nreg.xs
+        # ys = nreg.predict(xs)/dreg.predict(xs)
+        # _,_,l =g.new_series(xs, ys, fit='parabolic')
+        # reg = l.regressor
+        # self.regressed_ratio_intercept = reg.predict(0)
+
+        # xs = linspace(0, 100)
+        # rys = niso.regressor.predict(xs) / diso.regressor.predict(xs)
+        xs = niso.offset_xs
+        rys = niso.ys / diso.ys
+
         g.new_plot()
         g.set_y_title('{}/{}'.format(niso.name, diso.name))
         g.set_x_title('Time (s)')
-        g.new_series(xs, rys, fit=None, add_tools=False)
+        p,s,l = g.new_series(xs, rys, fit='linear', filter_outliers_dict=fd)
+        reg = l.regressor
+        self.ratio_intercept = reg.predict(0)
+
 
     def traits_view(self):
         v = View(UItem('graph', style='custom'),
-                 HGroup(Item('time_zero_offset'),
-                        Item('intercept_ratio', style='readonly')))
+                 VGroup(Item('time_zero_offset'),
+                        Item('intercept_ratio', style='readonly'),
+                        Item('ratio_intercept', style='readonly')))
         return v
 
 

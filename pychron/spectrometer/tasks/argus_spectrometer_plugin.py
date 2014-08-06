@@ -21,7 +21,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema import SMenu
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.spectrometer.thermo.spectrometer_manager import SpectrometerManager
+from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
@@ -33,21 +33,15 @@ from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPref
 
 
 
-
-
-
-
-
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
-class SpectrometerPlugin(BaseTaskPlugin):
+
+class ArgusSpectrometerPlugin(BaseTaskPlugin):
     #id = 'pychron.spectrometer'
 
     def get_spectrometer(self):
-        spec = self.application.get_service('pychron.spectrometer.spectrometer_manager.SpectrometerManager')
+        spec = self.application.get_service('pychron.spectrometer.thermo.spectrometer_manager.ArgusSpectrometerManager')
         return spec.spectrometer
 
     def get_ion_optics(self):
@@ -63,14 +57,14 @@ class SpectrometerPlugin(BaseTaskPlugin):
                                 spectrometer=self.get_spectrometer())
 
     def _factory_spectrometer(self, *args, **kw):
-        return SpectrometerManager(application=self.application)
+        return ArgusSpectrometerManager(application=self.application)
 
     def _managers_default(self):
         """
         """
         app = self.application
-        return [dict(name='spectrometer_manager',
-                     manager=app.get_service(SpectrometerManager))]
+        return [dict(name='argus_spectrometer_manager',
+                     manager=app.get_service(ArgusSpectrometerManager))]
 
     def _tasks_default(self):
         ts = [TaskFactory(id='pychron.spectrometer',
@@ -85,12 +79,12 @@ class SpectrometerPlugin(BaseTaskPlugin):
         return ts
 
     def _mass_cal_task_factory(self):
-        sm = self.application.get_service(SpectrometerManager)
+        sm = self.application.get_service(ArgusSpectrometerManager)
         t = MassCalibrationTask(spectrometer_manager=sm)
         return t
 
     def _task_factory(self):
-        sm = self.application.get_service(SpectrometerManager)
+        sm = self.application.get_service(ArgusSpectrometerManager)
         #scm = self.application.get_service(ScanManager)
         scm = self._factory_scan()
         t = SpectrometerTask(manager=sm,
@@ -107,7 +101,7 @@ class SpectrometerPlugin(BaseTaskPlugin):
         """
         """
         so = self.service_offer_factory(
-            protocol=SpectrometerManager,
+            protocol=ArgusSpectrometerManager,
             factory=self._factory_spectrometer)
         #so1 = self.service_offer_factory(
         #    protocol=ScanManager,
