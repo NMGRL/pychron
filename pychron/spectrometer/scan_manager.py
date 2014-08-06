@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 from numpy import Inf
+from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
     HasTraits, Range, Float
@@ -98,10 +99,13 @@ class ScanManager(Manager):
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)
     record_data_manager = Any
+
+    use_detector_protection = Bool(True)
+
     _consuming = False
     queue = None
-
     timer = None
+
 
     def _update_graph_limits(self, name, new):
         if 'high' in name:
@@ -262,29 +266,80 @@ class ScanManager(Manager):
         self._consuming = False
         self.record_data_manager.close_file()
 
-    #===============================================================================
-    # handlers
-    #===============================================================================
+    # def _check_detector_protection1(self, prev):
+    #     """
+    #         used when detector changes
+    #         return True if magnet move should be aborted
+    #     """
+    #     return self._check_detector_protection(prev, True)
+    #
+    # def _check_detector_protection2(self, prev):
+    #     """
+    #         used when isotope changes
+    #         return True if magnet move should be aborted
+    #     """
+    #     return self._check_detector_protection(prev, False)
+
+    def _check_detector_protection(self, prev, is_detector):
+        """
+            return True if magnet move should be aborted
+
+            @todo: this should be more sophisticated. eg
+
+            refdet=H1, refiso=Ar40
+            H1  0
+            AX  100
+            L1  0
+            L2  0
+            CDD 1
+
+            move H1,Ar40 to L2
+            this would place the 100 on CDD but this algorithm would not catch this problem
+
+        """
+        if self.use_detector_protection:
+            for d in self.detectors:
+                threshold=d.protection_threshold
+                if threshold:
+
+                    #find detector that the desired isotope is being measured on
+                    det = next((di for di in self.detectors
+                                if di.isotope==self.isotope), None)
+
+                    #check that the intensity is less than threshold
+                    abort = det.intensity>d.protection_threshold
+                    if abort:
+                        self.debug('aborting magnet move {} intensity {} > {}'.format(det, det.intensity, threshold))
+                        if is_detector:
+                            do_later(self.trait_set, detector=prev)
+                        else:
+                            do_later(self.trait_set, isotope=prev)
+
+                    return abort
+
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR \
                 and self.detector:
             self.info('set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
-    def _isotope_changed(self):
-        if self.isotope != NULL_STR:
-            self._set_position()
-
+    #===============================================================================
+    # handlers
+    #===============================================================================
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
 
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(self._update_graph_limits, '_low_value, _high_value')
 
-    #        plot.value_range.on_trait_change(self._update_graph_limits, '_high_value')
+    def _isotope_changed(self, old, new):
+        self.debug('isotope changed {}'.format(self.isotope))
+        if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
+            self._set_position()
 
-    def _detector_changed(self):
-        if self.detector:
+    def _detector_changed(self, old, new):
+        self.debug('detector changed {}'.format(self.detector))
+        if self.detector and not self._check_detector_protection(old, False):
             self.scanner.detector = self.detector
             self.rise_rate.detector = self.detector
             self.magnet.detector = self.detector

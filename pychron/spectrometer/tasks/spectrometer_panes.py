@@ -87,6 +87,8 @@ class ControlsPane(TraitsDockPane):
                       editor=EnumEditor(name='detectors')),
                 UItem('isotope',
                       editor=EnumEditor(name='isotopes'))),
+            Item('use_detector_protection', label='Protect', tooltip='Abort magnet moves '
+                                            'if move will place an intensity greater than X on the current detector'),
             UItem('magnet', style='custom'),
             UItem('scanner', style='custom'),
             label='Magnet')

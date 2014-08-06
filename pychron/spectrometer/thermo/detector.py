@@ -37,6 +37,7 @@ class Detector(SpectrometerDevice):
 
     kind = Str
 
+    protection_threshold = None
     deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
     _deflection = Float(0)
 
