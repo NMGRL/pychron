@@ -141,8 +141,7 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _get_labnumber(self, ln):
         """
-            dont use cache
-            cache labnumbers for quick retrieval
+           return gen_labtable object
         """
         db = self.db
         ln = convert_identifier(ln)
@@ -152,7 +151,7 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _group_analyses(self, ans, exclude=None):
         """
-        sort, group and filter by labnumber
+            sort, group and filter by labnumber
         """
         if exclude is None:
             exclude = tuple()
