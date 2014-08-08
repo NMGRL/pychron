@@ -53,6 +53,7 @@ PACKAGE_DICT = dict(
     #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
 
     ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+    MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
 
     #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
 
@@ -123,6 +124,9 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
+    else:
+        logger.warning('****** {} not a valid plugin name******'.format(pname),
+                       extra={'threadName_': 'Launcher'})
 
     if klass is not None:
         plugin = klass()
