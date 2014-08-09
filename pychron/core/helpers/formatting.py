@@ -69,8 +69,9 @@ def floatfmt(f, n=4, s=4, max_width=None, default='NaN', use_scientific=False):
             if use_scientific:
                 fmt = '{{:0.{}E}}'.format(s)
             else:
-                f = Decimal(f)
-                n = int(math.ceil(abs(math.log10(abs(f)))))
+                if abs(f) < math.pow(10, s + 1):
+                    f = Decimal(f)
+                    n = int(math.ceil(abs(math.log10(abs(f)))))
                 fmt = '{{:0.{}f}}'.format(n)
 
         else:

@@ -16,27 +16,13 @@
 
 
 #============= enthought library imports =======================
-from ConfigParser import ConfigParser
-from copy import copy
-import os
-
 from traits.api import Dict, Property, Instance, Float, Str, List, Either, cached_property
-
-from pychron.core.helpers.logger_setup import new_logger
-from pychron.paths import paths
-from pychron.pychron_constants import ARGON_KEYS
-
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
 from numpy import hstack
+from ConfigParser import ConfigParser
+from copy import copy
+import os
 #============= local library imports  ==========================
 from pychron.processing.argon_calculations import calculate_F, abundance_sensitivity_correction, age_equation, \
     calculate_decay_factor
@@ -45,6 +31,9 @@ from pychron.processing.isotope import Isotope, Baseline
 
 from pychron.loggable import Loggable
 from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.core.helpers.logger_setup import new_logger
+from pychron.paths import paths
+from pychron.pychron_constants import ARGON_KEYS
 
 logger = new_logger('ArArAge')
 # arar_constants = None
@@ -80,6 +69,7 @@ class ArArAge(Loggable):
     isotope_keys = Property
     non_ar_isotopes = Dict
     computed = Dict
+    corrected_intensities = Dict
 
     uF = Either(Variable, AffineScalarFunc)
     F = Float
@@ -453,6 +443,11 @@ class ArArAge(Loggable):
         # self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
         # print isos[4]
         # print 'ifc',self.interference_corrections
+        self.corrected_intensities= dict(Ar40=iso_intensities[0],
+                                         Ar39=iso_intensities[1],
+                                         Ar38=iso_intensities[2],
+                                         Ar37=iso_intensities[3],
+                                         Ar36=iso_intensities[4],)
         f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
                                                                               decay_time=self.decay_days,
                                                                               interferences=self.interference_corrections,
