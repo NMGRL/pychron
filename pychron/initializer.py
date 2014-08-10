@@ -188,8 +188,6 @@ class Initializer(Loggable):
 
         for mi in managers:
             man = None
-            # if mi == '':
-            #     continue
 
             self.info('load {}'.format(mi))
             mode, host, port = self.parser.get_rpc_params((mi, manager.name))
