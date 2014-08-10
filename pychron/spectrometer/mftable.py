@@ -15,16 +15,10 @@
 #===============================================================================
 from apptools.preferences.preference_binding import bind_preference
 
-from pychron.core.ui import set_qt
-
-
-set_qt()
-
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Dict, Float, Bool
 from traitsui.api import View, Controller, TableEditor, UItem
 from traitsui.table_column import ObjectColumn
-
 #============= standard library imports ========================
 import csv
 import os

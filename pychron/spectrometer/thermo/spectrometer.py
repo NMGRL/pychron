@@ -21,8 +21,8 @@ from traits.api import Instance, Int, Property, List, \
 import os
 from numpy import array, argmin
 #============= local library imports  ==========================
-from pychron.spectrometer.thermo.source import Source
-from pychron.spectrometer.thermo.magnet import Magnet
+from pychron.spectrometer.thermo.source import ArgusSource
+from pychron.spectrometer.thermo.magnet import ArgusMagnet
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
@@ -52,8 +52,8 @@ def calculate_radius(m_e, hv, mfield):
 
 
 class Spectrometer(SpectrometerDevice):
-    magnet = Instance(Magnet)
-    source = Instance(Source)
+    magnet = Instance(ArgusMagnet)
+    source = Instance(ArgusSource)
 
     detectors = List(Detector)
 
@@ -405,10 +405,10 @@ class Spectrometer(SpectrometerDevice):
     # defaults
     #===============================================================================
     def _magnet_default(self):
-        return Magnet(spectrometer=self)
+        return ArgusMagnet(spectrometer=self)
 
     def _source_default(self):
-        return Source(spectrometer=self)
+        return ArgusSource(spectrometer=self)
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]

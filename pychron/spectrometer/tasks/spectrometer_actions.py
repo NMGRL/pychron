@@ -15,16 +15,14 @@
 #===============================================================================
 
 
-
 #============= enthought library imports =======================
 from pyface.action.api import Action
-# from pychron.envisage.core.action_helper import open_manager
-
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
 
-SPECTROMETER_PROTOCOL = 'pychron.spectrometer.spectrometer_manager.SpectrometerManager'
+
+SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
 

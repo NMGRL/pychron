@@ -16,15 +16,14 @@
 
 #============= enthought library imports =======================
 from scipy import optimize
-from traits.api import List, Any, Property, Float, Event, Bool, Instance, Int
+from traits.api import List, Any, Property, Float, Event, Bool, Instance, Int, HasTraits
 from traitsui.api import View, Item, VGroup, HGroup, Spring, \
     RangeEditor
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import to_bool
 from pychron.spectrometer.mftable import MagnetFieldTable, get_detector_name, mass_cal_func
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
+from pychron.core.helpers.filetools import to_bool
 
 
 def get_float(func):
@@ -37,7 +36,7 @@ def get_float(func):
     return dec
 
 
-class ArgusMagnet(SpectrometerDevice):
+class MapMagnet(HasTraits):
     dac = Property(Float, depends_on='_dac')
     mass = Float
 
@@ -294,121 +293,4 @@ class ArgusMagnet(SpectrometerDevice):
                     label='Control')))
 
         return v
-
-    #============= EOF =============================================
-        # def _load_mftable(self):
-        #     p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
-        #     self.info('loading mftable {}'.format(p))
-        #     if os.path.isfile(p):
-        #         with open(p, 'U') as f:
-        #             reader = csv.reader(f)
-        #             if self.spectrometer:
-        #                 molweights = self.spectrometer.molecular_weights
-        #             else:
-        #                 from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
-        #
-        #             header = map(str.strip, reader.next()[1:])
-        #             d = {}
-        #             for line in reader:
-        #                 iso = line[0]
-        #                 try:
-        #                     mw = molweights[iso]
-        #                 except KeyError:
-        #                     continue
-        #
-        #                 for i, li in enumerate(line[1:]):
-        #                     hi = header[i]
-        #                     try:
-        #                         li = float(li)
-        #                     except (TypeError, ValueError):
-        #                         continue
-        #
-        #                     if hi in d:
-        #                         isos, xs, ys = d[hi]
-        #                         isos.append(iso)
-        #                         xs.append(mw)
-        #                         ys.append(li)
-        #                     else:
-        #                         d[hi] = [iso], [mw], [li]
-        #
-        #         for k, (isos, xs, ys) in d.iteritems():
-        #             cs = least_squares(mass_cal_func, xs, ys, [ys[0], xs[0], 0])
-        #             d[k] = (isos, xs, ys, cs)
-        #
-        #         return d, header
-        #     else:
-        #         self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
-
-        # def get_dac_for_mass(self, mass):
-    #        reg = self.regressor
-    #        data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
-    #                self.mftable[1]
-    #                ]
-    #        if isinstance(mass, str):
-    #            mass = MOLECULAR_WEIGHTS[mass]
-    #
-    #        if data:
-    #            dac_value = reg.get_value('parabolic', data, mass)
-    #        else:
-    #            dac_value = 4
-    #
-    #        return dac_value
-    #
-    #    def set_axial_mass(self, x, hv_correction=1, dac=None):
-    #        '''
-    #            set the axial detector to mass x
-    #        '''
-    #        reg = self.regressor
-    #
-    #        if dac is None:
-    #            data = [[MOLECULAR_WEIGHTS[i] for i in self.mftable[0]],
-    #                    self.mftable[1]
-    #                    ]
-    #            dac = reg.get_value('parabolic', data, x) * hv_correction
-    #
-    #        #print x, dac_value, hv_correction
-    #
-    #        self.set_dac(dac)
-    #    def set_graph(self, pts):
-    #
-    #        g = Graph(container_dict=dict(padding=10))
-    #        g.clear()
-    #        g.new_plot(xtitle='Mass',
-    #                   ytitle='DAC',
-    #                   padding=[30, 0, 0, 30],
-    #                   zoom=True,
-    #                   pan=True
-    #                   )
-    #        g.set_x_limits(0, 150)
-    #        g.set_y_limits(0, 100)
-    #        xs = [cp.x for cp in pts]
-    #        ys = [cp.y * 10 for cp in pts]
-    #
-    #        reg = self.regressor
-    #        rdict = reg.parabolic(xs, ys, data_range=(0, 150), npts=5000)
-    #
-    #        g.new_series(x=xs, y=ys, type='scatter')
-    #
-    #
-    #        g.new_series(x=rdict['x'], y=rdict['y'])
-    #        self.graph = g
-    #    def calculate_dac(self, pos):
-    #        #is pos a number
-    #        if not isinstance(pos, (float, int)):
-    #            #is pos a isokey or a masskey
-    #            # eg. Ar40, or 39.962
-    #            mass = None
-    #            isokeys = {'Ar40':39.962}
-    #            try:
-    #                mass = isokeys[pos]
-    #            except KeyError:
-    #                try:
-    #                    mass = float(pos)
-    #                except:
-    #                    self.debug('invalid magnet position {}'.format(pos))
-    #
-    #            print 'ionpt', mass, pos,
-    #            pos = self.map_mass_to_dac(mass)
-    #            print pos
-
-    #        return pos
+#============= EOF =============================================

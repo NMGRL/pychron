@@ -20,6 +20,7 @@ from traits.api import Any
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.scan_manager import ScanManager
 from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
@@ -64,7 +65,8 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
         """
         """
         so = self.service_offer_factory(
-            protocol=self.spectrometer_manager_klass,
+            protocol = BaseSpectrometerManager,
+            # protocol=self.spectrometer_manager_klass,
             factory=self._factory_spectrometer)
         so1 = self.service_offer_factory(
             protocol=IonOpticsManager,
