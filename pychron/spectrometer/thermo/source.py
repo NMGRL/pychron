@@ -23,12 +23,10 @@ from traitsui.api import View, Item, RangeEditor
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class ArgusSource(SpectrometerDevice):
+class Source(SpectrometerDevice):
     nominal_hv = Float(4500)
     current_hv = Float(4500)
 
-    #    y_symmetry = Property(Range(-50.0, 50.0), depends_on='_y_symmetry')
-    #    z_symmetry = Property(Range(-50.0, 100.0), depends_on='_z_symmetry')
     z_symmetry = Property(depends_on='_z_symmetry')
     y_symmetry = Property(depends_on='_y_symmetry')
     extraction_lens = Property(Range(0, 100.0), depends_on='_extraction_lens')
@@ -42,7 +40,7 @@ class ArgusSource(SpectrometerDevice):
     z_symmetry_high = Float(100.0)
 
     _extraction_lens = Float  # Range(0.0, 100.)
-    #    zlow=Float()
+
     def read_y_symmetry(self):
         return self._read_value('GetYSymmetry', '_y_symmetry')
 

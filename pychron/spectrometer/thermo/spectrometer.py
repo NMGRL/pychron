@@ -28,9 +28,6 @@ from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.pychron_constants import NULL_STR, DETECTOR_ORDER, QTEGRA_INTEGRATION_TIMES
 from pychron.paths import paths
 
-debug = False
-
-
 
 def normalize_integration_time(it):
     """
@@ -68,7 +65,6 @@ class Spectrometer(SpectrometerDevice):
     magnet_dacmax = DelegatesTo('magnet', prefix='dacmin')
 
     current_hv = DelegatesTo('source')
-    scan_timer = None
 
     molecular_weight = Str('Ar40')
     molecular_weights = None
@@ -85,10 +81,6 @@ class Spectrometer(SpectrometerDevice):
     dc_threshold = Int(3)
     dc_npeak_centers = Int(3)
 
-    _alive = False
-    #intensity_dirty = Event
-
-    testcnt = 0
     send_config_on_startup = Bool
 
     def test_connection(self):
@@ -145,9 +137,6 @@ class Spectrometer(SpectrometerDevice):
 
         return next((det for det in self.detectors if det.name == name), None)
 
-    def isAlive(self):
-        return self._alive
-
     def update_isotopes(self, isotope, detector):
 
         if isotope != NULL_STR:
@@ -178,7 +167,6 @@ class Spectrometer(SpectrometerDevice):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.microcontroller.ask('SetSubCupConfiguration {}'.format(v))
-
 
     #===============================================================================
     # load
@@ -266,38 +254,34 @@ class Spectrometer(SpectrometerDevice):
                               kind=kind)
 
     def add_detector(self, **kw):
-        d = Detector(spectrometer=self,
-                     **kw)
+        d = Detector(spectrometer=self, **kw)
         self.detectors.append(d)
 
     #===============================================================================
     # signals
     #===============================================================================
-    def get_intensities(self, record=True, tagged=True):
+    def get_intensities(self, tagged=True):
         keys, signals = None, None
         if self.microcontroller:
-            datastr = self.microcontroller.ask('GetData', verbose=False)
-            keys = []
-            signals = []
-            if datastr:
-                if not 'ERROR' in datastr:
-                    try:
-                        data = [float(d) for d in datastr.split(',')]
-                    except:
-
-                        if tagged:
-                            data = [d for d in datastr.split(',')]
-
-                            keys = [data[i] for i in range(0, len(data), 2)]
-                            signals = map(float, [data[i + 1] for i in range(0, len(data), 2)])
-
-        if not keys:
-            import random
-
-            signals = [1, 100, 3, 0.01, 0.01, 0.01]
-            signals = [si + random.random() for si in signals]
-            if tagged:
+            if self.microcontroller.simulation:
+                from numpy.random import random
+                signals = [1, 100, 3, 0.01, 0.01, 0.01]+random(6)
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+            else:
+                datastr = self.microcontroller.ask('GetData', verbose=False)
+                keys = []
+                signals = []
+                if datastr:
+                    if not 'ERROR' in datastr:
+                        data = datastr.split(',')
+                        if tagged:
+                            keys = data[::2]
+                            signals = data[1::2]
+                        else:
+                            keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+                            signals = data
+
+                    signals=map(float, signals)
 
         for k, v in zip(keys, signals):
             det=self.get_detector(k)
@@ -412,158 +396,4 @@ class Spectrometer(SpectrometerDevice):
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]
-        #============= EOF =============================================
-
-        #    def _peak_center_scan_step(self, di, graph, plotid, cond):
-        # #       3print cond
-        #        if self.first:
-        #            self.first = False
-        #            x = di
-        #            cond.acquire()
-        #        else:
-        #            x = self.x
-        #        data = self.get_intensities()
-        #        if data is not None:
-        #            if self.simulation:
-        #                intensity = self.peak_generator.next()
-        #            else:
-        #                intensity = data[DETECTOR_ORDER.index(self.reference_detector)]
-        #
-        #            self.intensities.append(intensity)
-        #            graph.add_datum((x, intensity), plotid = plotid, update_y_limits = True)
-        #
-        #        try:
-        #            x = self.gen.next()
-        #        except StopIteration:
-        #            try:
-        #                cond.notify()
-        #                cond.release()
-        #            finally:
-        #                raise StopIteration
-        #
-        #        self.x = x
-        #        self.magnet.set_dac(x)
-        #    def _peak_center(self, graph, update_mftable, update_pos, center_pos):
-
-        #    def _peak_center_scan(self, start, end, step_len, graph, ppc = 40, plotid = 0):
-        #
-        #        #stop the scan timer and use peak scan timer
-        #        self.intensities = []
-        #        sign = 1 if start < end else - 1
-        #        nsteps = abs(end - start + step_len * sign) / step_len
-        #        dac_values = np.linspace(start, end, nsteps)
-        #        self.peak_generator = psuedo_peak(ppc, start, end, nsteps)
-        #
-        #        self.first = True
-        #        self.x = 0
-        #        self.gen = (i for i in dac_values)
-        #        period = self.integration_time * 1000
-        #        if self.simulation:
-        #            period = 150
-        #
-        #        #do first dac move
-        # #        di = self.gen.next()
-        # #        self.magnet.set_dac(di)
-        # #        time.sleep(2)
-        #
-        #        if self.scan_timer.IsRunning():
-        #            self.scan_timer.Stop()
-
-        #        t = Thread(target = self.scan, args = (dac_values, graph))
-        #        t.start()
-        #        t.join()
-        #===============================================================================
-        # old
-        #===============================================================================
-        #        if self.condition is None:
-        #            cond = Condition()
-        #        with cond:
-        #            if self.centering_timer is not None:
-        #                self.centering_timer.Stop()
-        #
-        #            self.centering_timer = Timer(period, self._peak_center_scan_step, di, graph, plotid, cond)
-        #            self.centering_timer.Start()
-        #
-        #            cond.wait()
-        #===============================================================================
-        # old end
-        #===============================================================================
-
-        # restart the scan timer
-
-#        self._timer_factory()
-#
-#        return self.finish_peak_center(graph, dac_values, self.intensities)
-        #    def get_hv_correction(self, current=False):
-        #        cur = self.source.current_hv
-        #        if current:
-        #            cur = self.source.read_hv()
-        #
-        #        if cur is None:
-        #            cor = 1
-        #        else:
-        #            cor = self.source.nominal_hv / cur
-        #        return cor
-
-        #    def get_relative_detector_position(self, det):
-        #        '''
-        #            return position relative to ref detector in dac space
-        #        '''
-        #        if det is None:
-        #            return 0
-        #        else:
-        #            return 0
-
-        #    def set_magnet_position(self, pos, detector=None):
-        #        #calculate the dac value for pos is on the reference detector
-        #        #the mftable should be set to the ref detector
-        #        dac = self.magnet.calculate_dac(pos)
-        #
-        #        #correct for detector
-        #        #calculate the dac so that this position is shifted onto the given
-        #        #detector.
-        # #        dac += self.get_detector_position(detector)
-        #
-        #        #correct for deflection
-        #        self.magnet.dac = dac
-        #
-        #        #correct for hv
-        #        dac *= self.get_hv_correction(current=True)
-
-        #===============================================================================
-        # change handlers
-        #===============================================================================
-        #    def _molecular_weight_changed(self):
-        #        self.set_magnet_position(MOLECULAR_WEIGHTS[self.molecular_weight])
-
-        #    def _integration_time_changed(self):
-        #        if self.microcontroller:
-        #            self.microcontroller.ask('SetIntegrationTime {}'.format(self.integration_time))
-        #            self.reset_scan_timer()
-
-        #===============================================================================
-        # timers
-        #===============================================================================
-
-        #    def reset_scan_timer(self):
-        #        if self.scan_timer is not None:
-        #            self.scan_timer.Stop()
-        #        self._timer_factory()
-        #
-        #    def stop(self):
-        #        if self._alive == True:
-        #            self.info('Calibration canceled by user')
-        #            self._alive = False
-        #            return False
-        #        else:
-        #            self._alive = False
-        #            return True
-        #        if self.centering_timer and self.centering_timer.IsRunning():
-        #            self.centering_timer.Stop()
-        #            self.info('Peak centering stopped by user')
-        #            self._timer_factory()
-        #        else:
-        #            return True
-        #===============================================================================
-        # peak centering
-        #===============================================================================
+#============= EOF =============================================
