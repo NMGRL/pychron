@@ -66,7 +66,7 @@ class InitializationParser(XMLParser):
         # ver = '_uv'
         # ver = '_exp'
         # ver = '_exp_uv'
-        # ver= '_spec'
+        ver= '_spec'
         # ver = '_diode'
         # ver = '_dash'
         #ver = '_dash_client'
@@ -278,7 +278,6 @@ class InitializationParser(XMLParser):
         p = self.get_plugin(plugin)
 
         man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)
-
         return man
 
     def get_categories(self):

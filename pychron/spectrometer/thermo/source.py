@@ -23,7 +23,7 @@ from traitsui.api import View, Item, RangeEditor
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class Source(SpectrometerDevice):
+class ArgusSource(SpectrometerDevice):
     nominal_hv = Float(4500)
     current_hv = Float(4500)
 
