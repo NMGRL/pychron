@@ -15,14 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Float
+from traits.api import Float, HasTraits
 from traitsui.api import View, Item
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class MapSource(SpectrometerDevice):
+class MapSource(HasTraits):
     nominal_hv = Float(4500)
     current_hv = Float(4500)
 
