@@ -1467,8 +1467,7 @@ anaylsis_type={}
         def gen():
             spec = self.spectrometer_manager.spectrometer
             while 1:
-                v = spec.get_intensities(tagged=True)
-                yield v
+                yield spec.get_intensities(tagged=True)
 
         return gen()
 

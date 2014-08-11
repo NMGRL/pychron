@@ -71,10 +71,6 @@ class Initializer(Loggable):
 
         pd.close()
 
-        # if pd is not None:
-        #     self.pd.update(self.pd.max)
-        #     if self.pd.progress_bar:
-        #         self.pd.close()
         return ok
 
     def info(self, msg, **kw):
@@ -114,7 +110,7 @@ class Initializer(Loggable):
         timed_flags = []
         valve_flags_attrs = []
 
-        mp = self._get_plugin(name, plugin_name)
+        mp, name = self._get_plugin(name, plugin_name)
 
         if mp is not None:
             if not globalv.ignore_required:
@@ -335,11 +331,11 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
             mp = parser.get_manager(name, plugin_name)
         if mp is None:
             mp = parser.get_root().find('plugins/{}'.format(name))
-        return mp
+        return mp, name
 
     def _get_nsteps(self, name=None, plugin_name=None, **kw):
         parser = self.parser
-        mp = self._get_plugin(name, plugin_name)
+        mp, name= self._get_plugin(name, plugin_name)
 
         ns = 0
         if mp is not None:

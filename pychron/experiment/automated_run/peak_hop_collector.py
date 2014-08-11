@@ -48,11 +48,12 @@ class PeakHopCollector(DataCollector):
         if args:
             is_baseline, dets, isos = args
             if not is_baseline:
-                # is_baseline, dets, isos = args
-                # dets, isos = args
-                # get the data
-                # data = self._get_data(None if is_baseline else dets)
-                data = self._get_data(dets)
+                try:
+                    data = self._get_data(dets)
+                except (AttributeError, TypeError, ValueError), e:
+                    self.debug('failed getting data {}'.format(e))
+                    return
+
                 con.add_consumable((time.time() - self.starttime,
                                     data, dets, isos, i))
             return True
