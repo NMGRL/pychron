@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from numpy import Inf, inf, isinf
+from math import isinf
+
+from numpy import Inf, inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int, Str
+
 #============= standard library imports ========================
 from itertools import groupby
 
@@ -56,12 +59,14 @@ class FigurePanel(HasTraits):
     #     self.graph.load_metadata(md)
 
     def make_graph(self):
-
+        po = self.plot_options
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
-                             container_dict=dict(padding=0, spacing=self.graph_spacing), )
+                             container_dict=dict(padding=0,
+                                                 spacing=self.graph_spacing,
+                                                 bgcolor=po.bgcolor))
 
-        po = self.plot_options
+
         attr = po.index_attr
         center = None
         mi, ma = Inf, -Inf

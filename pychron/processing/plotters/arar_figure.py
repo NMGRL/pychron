@@ -70,6 +70,8 @@ class BaseArArFigure(HasTraits):
 
     title = Str
 
+    bgcolor = None
+
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
                        orientation=orientation)
@@ -108,6 +110,8 @@ class BaseArArFigure(HasTraits):
 
             pp.y_axis.title_font = options.ytitle_font
             pp.y_axis.tick_label_font = options.ytick_font
+
+            pp.bgcolor = options.plot_bgcolor
 
             if po:
                 pp.value_scale = po.scale

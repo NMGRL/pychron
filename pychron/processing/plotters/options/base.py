@@ -15,7 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, TraitError, Button, Bool, Event
+from traits.api import HasTraits, List, Str, TraitError, \
+    Button, Bool, Event, Color
 from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
@@ -33,6 +34,9 @@ class BasePlotterOptions(HasTraits):
     name = Str
     initialized = True
     refresh_plot_needed = Event
+
+    bgcolor = Color
+    plot_bgcolor = Color
 
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
@@ -174,7 +178,7 @@ class FigurePlotterOptions(BasePlotterOptions):
     # persistence
     #===============================================================================
     def _get_dump_attrs(self):
-        return ['auto_refresh', 'aux_plots']
+        return ['auto_refresh', 'aux_plots', 'bgcolor', 'plot_bgcolor']
 
     # def dump(self, root):
     #     self._dump(root)

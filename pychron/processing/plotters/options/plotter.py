@@ -285,15 +285,22 @@ class PlotterOptions(FigurePlotterOptions):
                                                 reorderable=False))
         return aux_plots_grp
 
+    def _get_bg_group(self):
+        grp = Group(Item('bgcolor', label='Figure'),
+                    Item('plot_bgcolor', label='Plot'),
+                    label='Background')
+        return grp
+
     def traits_view(self):
         main_grp = self._get_main_group()
-
+        bg_grp = self._get_bg_group()
         grps = self._get_groups()
         if grps:
             g = Group(main_grp,
+                      bg_grp,
                       layout='fold', *grps)
         else:
-            g = main_grp
+            g = Group(main_grp, bg_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
                  scrollable=True)

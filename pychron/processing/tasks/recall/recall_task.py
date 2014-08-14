@@ -30,14 +30,6 @@ from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
 
 
-class DummyRecord():
-    uuid = ''
-    analysis_type = 'unknown'
-
-    def __init__(self, uuid):
-        self.uuid = uuid
-
-
 class RecallTask(AnalysisEditTask):
     name = 'Recall'
     id = 'pychron.recall'
