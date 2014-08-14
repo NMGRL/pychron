@@ -35,7 +35,7 @@ class FigurePanel(HasTraits):
     _index_attr = ''
     equi_stack = False
     graph_klass = AnalysisStackedGraph
-    graph_spacing = Int
+    plot_spacing = Int
     meta = Any
     title = Str
     use_previous_limits=True
@@ -63,7 +63,7 @@ class FigurePanel(HasTraits):
         g = self.graph_klass(panel_height=200,
                              equi_stack=self.equi_stack,
                              container_dict=dict(padding=0,
-                                                 spacing=self.graph_spacing,
+                                                 spacing=self.plot_spacing or po.plot_spacing,
                                                  bgcolor=po.bgcolor))
 
 

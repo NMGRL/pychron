@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, TraitError, \
-    Button, Bool, Event, Color
+    Button, Bool, Event, Color, Range
 from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
@@ -34,9 +34,6 @@ class BasePlotterOptions(HasTraits):
     name = Str
     initialized = True
     refresh_plot_needed = Event
-
-    bgcolor = Color
-    plot_bgcolor = Color
 
     def __init__(self, root, clean=False, *args, **kw):
         super(BasePlotterOptions, self).__init__(*args, **kw)
@@ -109,6 +106,10 @@ class FigurePlotterOptions(BasePlotterOptions):
     auto_generate_title = Bool(False)
     index_attr = Str
 
+    bgcolor = Color
+    plot_bgcolor = Color
+    plot_spacing = Range(0, 50)
+
     def deinitialize(self):
         for po in self.aux_plots:
             po.initialized = False
@@ -178,59 +179,10 @@ class FigurePlotterOptions(BasePlotterOptions):
     # persistence
     #===============================================================================
     def _get_dump_attrs(self):
-        return ['auto_refresh', 'aux_plots', 'bgcolor', 'plot_bgcolor']
+        return ['auto_refresh', 'aux_plots',
+                'bgcolor', 'plot_bgcolor',
+                'plot_spacing']
 
-    # def dump(self, root):
-    #     self._dump(root)
-
-    # def _make_dir(self, root):
-    #     if os.path.isdir(root):
-    #         return
-    #     else:
-    #         self._make_dir(os.path.dirname(root))
-    #         os.mkdir(root)
-
-    # def _dump(self, root):
-    #     if not self.name:
-    #         return
-    #     p = os.path.join(root, self.name)
-    #     #         print root, self.name
-    #     self._make_dir(root)
-    #     with open(p, 'w') as fp:
-    #         d = dict()
-    #         attrs = self._get_dump_attrs()
-    #         for t in attrs:
-    #             d[t] = v = getattr(self, t)
-    #
-    #         try:
-    #             pickle.dump(d, fp)
-    #         except (pickle.PickleError, TypeError, EOFError, TraitError), e:
-    #             print 'error dumping {}'.format(self.name), e
-
-    # def _load(self, root):
-    #     p = os.path.join(root, self.name)
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as fp:
-    #             try:
-    #                 obj = pickle.load(fp)
-    #                 self.trait_set(**obj)
-    #             except (pickle.PickleError, TypeError, EOFError, TraitError), e:
-    #                 print 'error loading {}'.format(self.name), e
-    #
-    #     klass = self.plot_option_klass
-    #     name = self.plot_option_name
-    #     if name:
-    #
-    #         pp = next((p for p in self.aux_plots if p.name == name), None)
-    #         if not pp:
-    #             po = klass(height=0)
-    #             po.trait_set(name=name,
-    #                          use=True,
-    #                          trait_change_notfiy=False)
-    #             self.aux_plots.append(po)
-    #
-    #     self.initialize()
-    #
     def _load_hook(self):
         klass = self.plot_option_klass
         name = self.plot_option_name

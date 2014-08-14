@@ -257,6 +257,7 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
+                          HGroup(Item('plot_spacing', label='Spacing')),
                           # HGroup(Item('x_filter_str', label='X Filter')),
                           label='Plots')
         return main_grp
