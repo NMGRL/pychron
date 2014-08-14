@@ -22,8 +22,8 @@ from traitsui.api import View, HGroup, spring
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
-#============= local library imports  ==========================
 import yaml
+#============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR

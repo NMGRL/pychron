@@ -174,8 +174,7 @@ class PlotterOptions(FigurePlotterOptions):
                   'ytick_font_name',
                   'ytitle_font_size',
                   'ytitle_font_name',
-                  'x_filter_str'
-        ]
+                  'x_filter_str']
 
         return attrs
 
