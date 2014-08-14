@@ -20,9 +20,8 @@ from pyface.tasks.action.schema import SToolBar
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.analyses.view.calculation_view import CalculationView
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction, CalculationViewAction
-from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction
+from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
@@ -40,11 +39,26 @@ class RecallTask(AnalysisEditTask):
                  EditDataAction(),
                  ConfigureRecallAction(),
                  CalculationViewAction(),
+                 RatioEditorAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
 
+    def open_ratio_editor(self):
+        if self.has_active_editor():
+            from pychron.processing.ratios.ratio_editor import RatioEditor
+
+            rec = self.active_editor.model
+            self.manager.load_raw_data(rec)
+            editor = RatioEditor(analysis=rec)
+            try:
+                editor.setup_graph()
+                self._open_editor(editor)
+            except BaseException, e:
+                self.warning_dialog('Invalid analysis for ratio editing. {}'.format(e))
+
     def open_calculation_view(self):
         if self.has_active_editor():
+            from pychron.processing.analyses.view.calculation_view import CalculationView
             cv = CalculationView()
             cv.load_view(self.active_editor.model)
             cv.edit_traits()

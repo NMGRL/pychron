@@ -13,21 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from numpy.random.mtrand import normal
-from uncertainties import nominal_value
 
-from pychron.core.ui import set_qt
-
-
-set_qt()
 # ============= enthought library imports =======================
-from numpy import linspace
-from traits.api import HasTraits, Instance, Float
+from traits.api import Instance, Float
 from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
+from numpy import linspace
+from numpy.random.mtrand import normal
+from uncertainties import nominal_value
 # ============= local library imports  ==========================
 from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.processing.isotope import Isotope
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 
 def gen_data(b, m):
@@ -47,7 +44,7 @@ def generate_test_data():
     return dict(Ar40=a40, Ar39=a39)
 
 
-class RatioEditor(HasTraits):
+class RatioEditor(BaseTraitsEditor):
     """
     """
     graph = Instance(StackedRegressionGraph)
@@ -60,7 +57,10 @@ class RatioEditor(HasTraits):
         self.refresh_plot()
 
     def setup_graph(self):
-        self.d = generate_test_data()
+        # self.d = generate_test_data()
+
+        self.d = self.analysis.isotopes
+
         cd = dict(padding=20,
                   spacing=5,
                   stack_order='top_to_bottom')

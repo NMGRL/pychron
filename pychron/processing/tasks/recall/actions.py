@@ -40,4 +40,9 @@ class EditDataAction(TaskAction):
     method = 'edit_data'
     image = icon('edit_diff.png')
 
+
+class RatioEditorAction(TaskAction):
+    name='Ratio'
+    method = 'open_ratio_editor'
+
 #============= EOF =============================================
