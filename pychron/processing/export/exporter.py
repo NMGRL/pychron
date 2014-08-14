@@ -15,17 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-import struct
-import base64
 from traits.api import Instance, on_trait_change
 from uncertainties import nominal_value, std_dev
+
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.export.destinations import MassSpecDestination, XMLDestination
+from pychron.processing.export.destinations import MassSpecDestination
 
 
 class Exporter(Loggable):
@@ -117,74 +117,5 @@ class MassSpecExporter(Exporter):
             return True
 
 
-class XMLExporter(Exporter):
-    destination = Instance(XMLDestination, ())
-
-    def __init__(self, *args, **kw):
-        super(XMLExporter, self).__init__(*args, **kw)
-        from pychron.core.xml.xml_parser import XMLParser
-
-        xmlp = XMLParser()
-        self._parser = xmlp
-
-    def set_destination(self, destination):
-        self.destination = destination
-
-    def add(self, spec):
-        self._make_xml_analysis(self._parser, spec)
-        return True
-
-    def export(self):
-        if os.path.isdir(os.path.dirname(self.destination)):
-            self._parser.save(self.destination)
-
-    def _make_timeblob(self, t, v):
-        blob = ''
-        for ti, vi in zip(t, v):
-            blob += struct.pack('>ff', float(vi), float(ti))
-        return blob
-
-    def _make_xml_analysis(self, xmlp, spec):
-        an = xmlp.add('analysis', '', None)
-        meta = xmlp.add('metadata', '', an)
-        xmlp.add('RID', spec.runid, meta)
-        xmlp.add('Aliquot', spec.aliquot, meta)
-        xmlp.add('Step', spec.step, meta)
-
-        data = xmlp.add('data', '', None)
-        sig = xmlp.add('signals', '', data)
-        base = xmlp.add('baselines', '', data)
-        blank = xmlp.add('blanks', '', data)
-
-        for ((det, isok), si, bi, ublank, signal, baseline, sfit, bfit) in spec.iter():
-            iso = xmlp.add(isok, '', sig)
-
-            xmlp.add('detector', det, iso)
-            xmlp.add('fit', sfit, iso)
-            xmlp.add('value', signal.nominal_value, iso)
-            xmlp.add('error', signal.std_dev, iso)
-
-            t, v = zip(*si)
-            xmlp.add('blob',
-                     base64.b64encode(self._make_timeblob(t, v)), iso,
-                     dt="binary.base64"
-            )
-
-            iso = xmlp.add(isok, '', base)
-            xmlp.add('detector', det, iso)
-            xmlp.add('fit', bfit, iso)
-            xmlp.add('value', baseline.nominal_value, iso)
-            xmlp.add('error', baseline.std_dev, iso)
-
-            t, v = zip(*bi)
-            xmlp.add('blob',
-                     base64.b64encode(self._make_timeblob(t, v)), iso,
-                     dt="binary.base64"
-            )
-
-            iso = xmlp.add(isok, '', blank)
-            xmlp.add('detector', det, iso)
-            xmlp.add('value', ublank.nominal_value, iso)
-            xmlp.add('error', ublank.std_dev, iso)
 
 #============= EOF =============================================

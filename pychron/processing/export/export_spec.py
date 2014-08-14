@@ -23,12 +23,15 @@ from uncertainties import ufloat
 from pychron.loggable import Loggable
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
 
 class ExportSpec(Loggable):
     runid = CStr
+    labnumber=CStr
     aliquot = Either(CInt, Str)
     step = Str
     irradpos = CStr
@@ -60,7 +63,10 @@ class ExportSpec(Loggable):
     ic_factor_v = Float
     ic_factor_e = Float
 
-    pr_dict = Dict
+    irradiation = Str
+    level = Str
+    irradiation_position = CInt
+    production_ratios = Dict
     chron_dosages = List
     interference_corrections = Dict
     production_name = Str
@@ -81,17 +87,19 @@ class ExportSpec(Loggable):
                  ('irradiation', 'irradiation'),
                  ('irradiation_position', 'irradiation_pos'),
                  ('level', 'irradiation_level'),
-        ]
+                 ('isotopes','isotopes')]
 
-        if hasattr(record, 'spec'):
-            spec = record.spec
-        else:
-            spec = record
+        # if hasattr(record, 'spec'):
+        #     spec = record.spec
+        # else:
+        #     spec = record
 
         for exp_attr, run_attr in attrs:
-            if hasattr(spec, run_attr):
+            if hasattr(record, run_attr):
                 try:
-                    setattr(self, exp_attr, getattr(spec, run_attr))
+                    v = getattr(record, run_attr)
+                    self.debug('setting {} to {}'.format(exp_attr, v))
+                    setattr(self, exp_attr, v)
                 except TraitError, e:
                     self.debug(e)
 
@@ -112,6 +120,8 @@ class ExportSpec(Loggable):
                   'production_name', 'j'):
             if hasattr(record, a):
                 setattr(self, a, getattr(record, a))
+            else:
+                print a
 
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)
@@ -284,10 +294,11 @@ class ExportSpec(Loggable):
     #    return make_rid(self.labnumber, self.aliquot, self.step)
 
     def _set_position(self, pos):
-        if ',' in pos:
-            self._position = list(map(int, pos.split(',')))
-        else:
-            self._position = pos
+        if pos:
+            if ',' in pos:
+                self._position = list(map(int, pos.split(',')))
+            else:
+                self._position = pos
 
     def _get_position(self):
         return self._position
