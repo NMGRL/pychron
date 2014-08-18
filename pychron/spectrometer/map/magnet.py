@@ -28,10 +28,22 @@ class MapMagnet(BaseMagnet):
     #===============================================================================
     # ##positioning
     #===============================================================================
+    def set_range(self, r, verbose=False):
+        """
+            r: float or int
+
+            if float convert to integer and use as range
+        """
+        dev=self.device
+        if dev:
+            r = int(r) - 1
+            dev.tell('B{}.'.format(r), verbose=verbose)
+
     def set_dac(self, v, verbose=False):
         dev=self.device
         if dev:
-            dev.ask('', verbose=verbose)
+            self.set_range(v)
+            dev.tell('W{}.'.format(v), verbose=verbose)
             time.sleep(self.settling_time)
 
         change = v != self._dac
