@@ -21,7 +21,8 @@ import struct
 from traits.api import Instance
 
 
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
@@ -63,21 +64,32 @@ class XMLAnalysisExporter(Exporter):
         return blob
 
     def _make_xml_analysis(self, xmlp, spec):
-        xmlp.add('Encoding', 'RFC3548-Base64', None)
-        xmlp.add('Endian', 'big', None)
+        vertag = xmlp.add('version', '', None)
+        xmlp.add('ver','0.1', vertag)
+        xmlp.add('encoding', 'RFC3548-Base64', vertag)
+        xmlp.add('endian', 'big', vertag)
+        xmlp.add('format', 'ff', vertag)
+
         an = xmlp.add('analysis', '', None)
         meta = xmlp.add('metadata', '', an)
-        xmlp.add('Labnumber', spec.labnumber, meta)
-        xmlp.add('Aliquot', spec.aliquot, meta)
-        xmlp.add('Step', spec.step, meta)
 
-        irrad = xmlp.add('Irradiation','', meta)
+        for attr in ('labnumber', 'aliquot', 'step', 'timestamp',
+                     'power_requested',
+                     'power_achieved',
+                     'duration',
+                     'duration_at_request',
+                     'cleanup',
+                     'runscript_name',):
+            xmlp.add(attr, getattr(spec, attr), meta)
+
+        irrad = xmlp.add('Irradiation', '', an)
         xmlp.add('name', spec.irradiation, irrad)
         xmlp.add('level', spec.level, irrad)
         xmlp.add('position', spec.irradiation_position, irrad)
-        chron = xmlp.add('chronology','',irrad)
+
+        chron = xmlp.add('chronology', '', irrad)
         for power, start, end in spec.chron_dosages:
-            dose =xmlp.add('dose', '', chron)
+            dose = xmlp.add('dose', '', chron)
             xmlp.add('power', power, dose)
             xmlp.add('start', start, dose)
             xmlp.add('end', end, dose)
@@ -87,30 +99,31 @@ class XMLAnalysisExporter(Exporter):
         for d in (spec.production_ratios, spec.interference_corrections):
             for pname, pv in d.iteritems():
                 pp = xmlp.add(pname, '', pr)
-                xmlp.add('value',nominal_value(pv), pp)
-                xmlp.add('error',std_dev(pv), pp)
+                xmlp.add('value', nominal_value(pv), pp)
+                xmlp.add('error', std_dev(pv), pp)
 
+        isostag = xmlp.add('isotopes','', an)
         for isotope in spec.isotopes.itervalues():
             isok = isotope.name
             det = isotope.detector
             sfit = isotope.fit
 
-            isotag = xmlp.add(isok,'', an)
+            isotag = xmlp.add(isok, '', isostag)
 
             xmlp.add('detector', det, isotag)
             xmlp.add('fit', sfit, isotag)
             xmlp.add('intercept_value', nominal_value(isotope.uvalue), isotag)
             xmlp.add('intercept_error', std_dev(isotope.uvalue), isotag)
 
-            baseline=isotope.baseline
+            baseline = isotope.baseline
             xmlp.add('baseline_value', nominal_value(baseline.uvalue), isotag)
             xmlp.add('baseline_error', std_dev(baseline.uvalue), isotag)
 
-            blank=isotope.blank
+            blank = isotope.blank
             xmlp.add('blank_value', nominal_value(blank.uvalue), isotag)
             xmlp.add('blank_error', std_dev(blank.uvalue), isotag)
 
-            datatag = xmlp.add('raw','', isotag)
+            datatag = xmlp.add('raw', '', isotag)
 
             xmlp.add('signal',
                      base64.b64encode(self._make_timeblob(isotope.offset_xs,

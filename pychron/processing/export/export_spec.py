@@ -25,6 +25,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -48,9 +49,10 @@ class ExportSpec(Loggable):
     power_requested = Float(0)
     power_achieved = Float(0)
     duration = Float(0)
+    cleanup = Float(0)
     duration_at_request = Float(0)
     first_stage_delay = CInt(0)
-    second_stage_delay = CInt(0)
+
     runscript_name = Str
     runscript_text = Str
     comment = Str
@@ -72,6 +74,10 @@ class ExportSpec(Loggable):
     production_name = Str
     j = Any
 
+    @property
+    def second_stage_delay(self):
+        return self.cleanup
+
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
@@ -82,7 +88,7 @@ class ExportSpec(Loggable):
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
                  ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
-                 ('second_stage_delay', 'cleanup'),
+                 ('cleanup', 'cleanup'),
                  ('comment', 'comment'),
                  ('irradiation', 'irradiation'),
                  ('irradiation_position', 'irradiation_pos'),
