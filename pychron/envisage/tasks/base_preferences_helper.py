@@ -79,6 +79,10 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
             vs = sel.split(',')
             for v, attr in zip(vs, self._get_attrs()):
                 setattr(self, attr, str(v))
+        self._selected_change_hook()
+
+    def _selected_change_hook(self):
+        pass
 
     def _delete_favorite_fired(self):
         if self.selected:
