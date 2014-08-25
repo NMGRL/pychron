@@ -17,10 +17,10 @@
 # ============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.scpi_device import SCPIDevice
 
 
-class AgilentDMM(CoreDevice):
+class AgilentDMM(SCPIDevice):
     """
     class for interfacing with an Agilent DMM - most likely a
     34401A. Since they use SCPI
@@ -28,40 +28,18 @@ class AgilentDMM(CoreDevice):
     model number is not very important?
 
     """
-    def initialize(self, *args, **kw):
+
+
+    def configure_instrument(self):
         """
         configure instrument
         """
-        self.tell('*RST')
-        self.tell('*CLS')
-
         #configure
         self.tell('VOLT:DC:RES MAX')
 
         #look into what these are for
         self.tell(':ZERO:AUTO OFF')
         self.tell(':INP:IMP:AUTO ON')
-
-    def trigger(self):
-        """
-            trigger a measurement. should be followed by a FETCH? (AgilentDMM.get_value)
-
-        """
-        self.debug('triggering measurement')
-        self.ask('TRIGGER')
-
-    def get_value(self):
-        """
-            return a value read from the device
-        """
-        if self.simulation:
-            v= 0
-        else:
-            self.trigger()
-            v = self.ask('FETCH?')
-
-        v = self._parse_response(v)
-        return v
 
     # def _parse_response(self, v):
     #     pass

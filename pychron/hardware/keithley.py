@@ -15,26 +15,19 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
+#============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.scpi_device import SCPIDevice
 
 
-class ChannelSelect(CoreDevice):
-    prefix = ''
-    suffix = ''
-
-    def load_additional_args(self, config):
-        self.config_get(config, 'Communication', 'prefix', optional=False)
-        self.config_get(config, 'Communication', 'suffix', optional=False)
-
-        return True
-
-    def set_channel(self, ch):
-        cmd = '{}{}{}'.format(self.prefix, ch, self.suffix)
-        self.tell(cmd)
+class KeithleyMeter(CoreDevice):
+    pass
 
 
+class SCPIKeithley(SCPIDevice):
+    def configure_instrument(self):
+        pass
 #============= EOF =============================================
 
 

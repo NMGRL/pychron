@@ -53,6 +53,6 @@ class MapMagnet(BaseMagnet):
 
     @get_float
     def read_dac(self):
-        return self.device.ask('') if self.device else 0
+        return self._dac
 
 #============= EOF =============================================

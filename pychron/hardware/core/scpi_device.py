@@ -15,26 +15,47 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-# ============= standard library imports ========================
+#============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 
 
-class ChannelSelect(CoreDevice):
-    prefix = ''
-    suffix = ''
+class SCPIDevice(CoreDevice):
+    def initialize(self, *args, **kw):
+        """
+            initialize instrument
+        """
+        self.tell('*RST')
+        self.tell('*CLS')
 
-    def load_additional_args(self, config):
-        self.config_get(config, 'Communication', 'prefix', optional=False)
-        self.config_get(config, 'Communication', 'suffix', optional=False)
+        self.configure_instrument()
 
-        return True
+    def configure_instrument(self):
+        """
+            subclass should define this method
+        """
+        raise NotImplementedError
 
-    def set_channel(self, ch):
-        cmd = '{}{}{}'.format(self.prefix, ch, self.suffix)
-        self.tell(cmd)
+    def trigger(self):
+        """
+            trigger a measurement. should be followed by a FETCH? (AgilentDMM.get_value)
 
+        """
+        self.debug('triggering measurement')
+        self.ask('TRIGGER')
 
+    def get_measurement(self):
+        """
+            return a value read from the device
+        """
+        if self.simulation:
+            v= 0
+        else:
+            self.trigger()
+            v = self.ask('FETCH?')
+
+        v = self._parse_response(v)
+        return v
 #============= EOF =============================================
 
 
