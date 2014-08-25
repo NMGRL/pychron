@@ -242,7 +242,7 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
     def _load_devices(self, manager, name, devices, plugin_name, ):
         """
         """
-
+        print manager
         devs = []
         if manager is None:
             return

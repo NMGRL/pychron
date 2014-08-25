@@ -15,13 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.managers.manager import Manager
 
 
 class BaseSpectrometerManager(Manager):
-    pass
+    spectrometer = Any
+    spectrometer_klass = None
+    def _spectrometer_default(self):
+        return self.spectrometer_klass(application=self.application)
 
 #============= EOF =============================================
 
