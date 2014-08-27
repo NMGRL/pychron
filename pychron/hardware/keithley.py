@@ -36,12 +36,17 @@ class KeithleyMeter(CoreDevice):
 class SCPIKeithley(SCPIDevice):
     def configure_instrument(self):
         pass
+        # self.tell('trig:sour ext')
 
+    # def get_measurement(self):
+    #     print self.ask('read?')
 
 if __name__ == '__main__':
     d = SCPIKeithley(name='keithley617b')
     d.bootstrap()
 
+    # time.sleep(1)
+    d.identify_instrument()
     for i in range(10):
         d.get_measurement()
 

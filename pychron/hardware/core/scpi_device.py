@@ -26,9 +26,14 @@ class SCPIDevice(CoreDevice):
             initialize instrument
         """
         self.tell('*RST')
-        self.tell('*CLS')
+        # self.tell('*CLS')
 
         self.configure_instrument()
+        self.tell('INIT')
+
+    def identify_instrument(self):
+        v =self.ask('*IDN?')
+        self.info('Instrument ID {}'.format(v))
 
     def configure_instrument(self):
         """
@@ -42,17 +47,19 @@ class SCPIDevice(CoreDevice):
 
         """
         self.debug('triggering measurement')
-        self.ask('TRIGGER')
+        self.tell('TRIG')
 
     def get_measurement(self):
         """
             return a value read from the device
         """
         if self.simulation:
+            self.debug('simulation')
             v= 0
         else:
-            self.trigger()
-            v = self.ask('FETCH?')
+            v =self.ask('MEAS?')
+            # self.trigger()
+            # v = self.ask('FETCH?')
 
         v = self._parse_response(v)
         self.debug('get_measurment. value = {}'.format(v))
