@@ -47,6 +47,9 @@ class ImportName(HasTraits):
 
 
 class MassSpecExtractor(Extractor):
+    """
+        Used to import data from MassSpec database to a Pychron database
+    """
     dbconn_spec = Instance(DBConnectionSpec, ())
     connect_button = Button('Connect')
     db = Instance(MassSpecDatabaseAdapter, ())

@@ -24,7 +24,7 @@ import os
 from numpy import loadtxt, polyfit, polyval, hstack, poly1d
 from scipy import optimize
 #============= local library imports  ==========================
-from pychron.spectrometer.spectrometer_device import SpectrometerDevice
+from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 from pychron.paths import paths
 from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
 
@@ -37,6 +37,7 @@ class Detector(SpectrometerDevice):
 
     kind = Str
 
+    protection_threshold = None
     deflection = Property(Float(enter_set=True, auto_set=False), depends_on='_deflection')
     _deflection = Float(0)
 

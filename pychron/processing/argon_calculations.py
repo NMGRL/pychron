@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ from numpy import array
 
 from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
+
 
 
 
@@ -359,7 +360,8 @@ def calculate_F(isotopes,
 
     rf = deepcopy(f)
     # f = ufloat(f.nominal_value, f.std_dev, tag='F')
-    non_ar_isotopes = dict(ca39=ca39,
+    non_ar_isotopes = dict(k40=k40,
+                           ca39=ca39,
                            k38=k38,
                            ca38=ca38,
                            k37=k37,
@@ -373,7 +375,7 @@ def calculate_F(isotopes,
         rp = ufloat(0, 0)
 
     computed = dict(rad40=rad40, rad40_percent=rp,
-                    k39=k39)
+                    k39=k39, atm40=atm40)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
     interference_corrected = dict(Ar40=a40 - k40,

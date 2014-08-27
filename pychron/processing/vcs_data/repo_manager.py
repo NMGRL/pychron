@@ -15,16 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from cStringIO import StringIO
-from git.exc import GitCommandError
-
 from traits.api import Any, Directory
-
 #============= standard library imports ========================
+from cStringIO import StringIO
 import os
+from git.exc import GitCommandError
 from git import Repo, Diff
 # from dulwich.repo import Repo
-
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 

@@ -156,8 +156,13 @@ class GraphicModel(HasTraits):
         p = Plot(data=data, padding=100)
         p.x_grid.visible = False
         p.y_grid.visible = False
+
+        p.x_axis.visible = False
+        p.y_axis.visible = False
+
         p.x_axis.title = 'X cm'
         p.y_axis.title = 'Y cm'
+
         # font = 'modern 22'
         # p.x_axis.title_font = font
         # p.x_axis.tick_label_font = font
@@ -413,6 +418,7 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
+    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/24_spokes.txt'
     gcc, gm = open_txt(p, (2.54, 2.54), 0.03 * 2.54,
                        convert_mm=True, make=True,
                        rotate=0)

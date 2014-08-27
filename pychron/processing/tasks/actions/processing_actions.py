@@ -310,5 +310,12 @@ class SplitEditorActionVert(myTaskAction):
     method = 'split_editor_area_vert'
     image = icon('split_vertical')
 
+
+class CalculationViewAction(myTaskAction):
+    name='Calculation View'
+    task_ids = ['pychron.recall',]
+    method = 'open_calculation_view'
+
+
 #============= EOF =============================================
 

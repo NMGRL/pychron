@@ -29,7 +29,11 @@ class MultiCollector(DataCollector):
             #                mem_log('point {}'.format(i), verbose=True)
 
         # get the data
-        data = self._get_data()
+        try:
+            data = self._get_data()
+        except (AttributeError, TypeError, ValueError), e:
+            self.debug('failed getting data {}'.format(e))
+            return
 
         con.add_consumable((time.time() - self.starttime, data, i))
         return True

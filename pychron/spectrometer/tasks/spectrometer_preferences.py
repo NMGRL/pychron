@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,9 @@
 from traits.api import Bool, Int
 from traitsui.api import View, Item, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-
-from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-
-
-
-
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class SpectrometerPreferences(BasePreferencesHelper):
@@ -38,6 +31,7 @@ class SpectrometerPreferences(BasePreferencesHelper):
     use_local_mftable_archive = Bool
     use_db_mftable_archive = Bool
     confirmation_threshold_mass = Int
+    use_detector_safety = Bool
 
 
 class SpectrometerPreferencesPane(PreferencesPane):
@@ -45,7 +39,9 @@ class SpectrometerPreferencesPane(PreferencesPane):
     category = 'Spectrometer'
 
     def traits_view(self):
-        magnet_grp = VGroup(Item('confirmation_threshold_mass', label='Confirmation Threshold (amu)'),
+        magnet_grp = VGroup(Item('confirmation_threshold_mass',
+                                 tooltip='Request confirmation if magnet move is greater than threshold',
+                                 label='Confirmation Threshold (amu)'),
                             show_border=True,
                             label='Magnet')
         mf_grp = VGroup(Item('use_local_mftable_archive',
@@ -58,7 +54,13 @@ class SpectrometerPreferencesPane(PreferencesPane):
                         label='MFTable')
         gen_grp = Item('send_config_on_startup',
                        tooltip='Load the spectrometer parameters on startup')
+        scan_grp = VGroup(Item('use_detector_safety',
+                               label='Detector Safety',
+                               tooltip='Abort magnet moves '
+                                       'if move will place an intensity greater than X on the current detector'),
+                          label='Scan',
+                          show_border=True)
 
-        return View(VGroup(gen_grp, mf_grp, magnet_grp))
+        return View(VGroup(gen_grp, mf_grp, scan_grp, magnet_grp))
 
 #============= EOF =============================================

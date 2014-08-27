@@ -22,7 +22,6 @@ import logging
 #=============local library imports  =========================
 from pychron.paths import paths
 from filetools import unique_path2
-# from pychron.globals import globalv
 import shutil
 
 from pychron.core.helpers.filetools import list_directory
@@ -56,7 +55,7 @@ def logging_setup(name, use_archiver=True, **kw):
 
     if use_archiver:
         # archive logs older than 1 month
-        # lazy load Archive because of circulat dependency
+        # lazy load Archive because of circular dependency
         from pychron.core.helpers.archiver import Archiver
 
         a = Archiver(archive_days=30,
@@ -94,19 +93,8 @@ def logging_setup(name, use_archiver=True, **kw):
 
 def new_logger(name):
     name = '{:<{}}'.format(name, NAME_WIDTH)
-    #    if name.strip() == 'main':
-    #        l = logging.getLogger()
-    #    else:
-
     l = logging.getLogger(name)
-
-
-    #    print name
     l.setLevel(gLEVEL)
-
-    #    handler = logging.StreamHandler(stream=sys.stdout)
-    #    handler.setFormatter(logging.Formatter(gFORMAT))
-    #    l.addHandler(handler)
 
     return l
 
@@ -141,108 +129,3 @@ def wrap(items, width=40, indent=90, delimiter=','):
     return ',\n{}'.format(' ' * indent).join(rs)
 
 #============================== EOF ===================================
-# LOGGER_LIST = []
-
-# class DisplayHandler(logging.StreamHandler):
-#    '''
-#    '''
-#    output = None
-#    def emit(self, record):
-#        '''
-#
-#        '''
-#        if self.output is not None:
-#            msg = '{record.name}{record.message}'.format(record=record)
-#
-#            do_later(self.output.add_text, color='red' if record.levelno > 20 else 'black',
-#                                 msg=msg,
-#                                 kind='warning' if record.levelno > 20 else 'info',)
-#            self.output.add_text(
-#                                     color='red' if record.levelno > 20 else 'black',
-#                                 msg=msg,
-#                                 kind='warning' if record.levelno > 20 else 'info',
-#                                 )
-# def clean_logdir(p, cnt):
-#    def get_basename(p):
-#        p = os.path.basename(p)
-#        basename, _tail = os.path.splitext(p)
-#
-#        while basename[-1] in '0123456789':
-#            basename = basename[:-1]
-#
-#
-#        return basename
-#
-#    d = os.path.dirname(p)
-#    p = os.path.basename(p)
-#    b = get_basename(p)
-#    print 'cleaning {} for {}'.format(d, b)
-#
-#
-#
-#    import tarfile, time
-#    name = 'logarchive-{}'.format(time.strftime('%m-%d-%y', time.localtime()))
-#    cp, _cnt = unique_path(d, name, filetype='tar')
-#
-#    with tarfile.open(cp, 'w') as tar:
-#        for i, pi in enumerate(os.listdir(d)):
-#            if get_basename(pi) == b and i < (cnt - 5):
-#                #print 'compress', i, cnt, pi
-#                os.chdir(d)
-#                tar.add(pi)
-#                os.remove(pi)
-#
-#    print 'clean up finished'
-
-# MAXLEN = 30
-# def add_console(logger=None, name=None,
-#                display=None, level=LEVEL, unique=False):
-# def add_console(logger=None, name=None):
-#    '''
-#
-#    '''
-#    if name:
-#        n = '{:<{}}'.format(name, MAXLEN)
-#        logger = new_logger(n)
-
-#        if name == 'main':
-#            shandler = logging.StreamHandler()
-#    #        logger.setLevel(logging.NOTSET)
-#            shandler.setLevel(logging.NOTSET)
-#            shandler.setFormatter(logging.Formatter(gFORMAT))
-#            logger.addHandler(shandler)
-#        if unique:
-#            i = 1
-#            while logger in LOGGER_LIST:
-#                n = '{}-{:03n}'.format(name, i)
-#                n = '{:<{}}'.format(n, MAXLEN)
-#
-#                logger = new_logger(n)
-#                i += 1
-
-#    if logger and logger not in LOGGER_LIST:
-#        LOGGER_LIST.append(logger)
-#        #print use_debug_logger, name
-#
-#        if name == 'main' or not globalv.use_debug_logger:
-#            console = logging.StreamHandler()
-# ##
-# ##            # tell the handler to use this format
-#            console.setFormatter(logging.Formatter(gFORMAT))
-# #            console.setLevel(logging.NOTSET)
-# #
-#            logger.addHandler(console)
-# rich text or styled text handlers
-#            if display:
-#
-# #                _class_ = 'DisplayHandler'
-# #                gdict = globals()
-# #                if _class_ in gdict:
-# #                    h = gdict[_class_]()
-#                h = DisplayHandler()
-#                h.output = display
-#                h.setLevel(LEVEL)
-#                h.setFormatter(FORMATTER)
-#                logger.addHandler(h)
-
-#    return logger

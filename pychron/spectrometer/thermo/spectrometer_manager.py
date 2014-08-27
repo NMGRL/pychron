@@ -15,13 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Any, Property
+from traits.api import Any, Property
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.managers.manager import Manager
-from pychron.spectrometer.spectrometer import Spectrometer
+from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
 from pychron.spectrometer.jobs.coincidence_scan import CoincidenceScan
@@ -31,16 +31,13 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
     SpectrometerParametersView
 
 
-class SpectrometerManager(Manager):
-    spectrometer = Instance(Spectrometer)
+class ArgusSpectrometerManager(Manager):
+    spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
     def test_connection(self):
         return self.spectrometer.test_connection()
-
-    def _spectrometer_default(self):
-        return Spectrometer(application=self.application)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)

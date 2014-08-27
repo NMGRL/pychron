@@ -7,6 +7,8 @@ def suite():
     from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, FilterOLSRegressionTest
     from pychron.experiment.tests.frequency_test import FrequencyTestCase
     from pychron.experiment.tests.position_regex_test import XYTestCase
+    from pychron.experiment.tests.renumber_aliquot_test import RenumberAliquotTestCase
+
     from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestCase
     from pychron.processing.tests.plateau import PlateauTestCase
     from pychron.processing.tests.ratio import RatioTestCase
@@ -28,6 +30,7 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(WaitForTestCase))
     suite.addTest(loader.loadTestsFromTestCase(XYTestCase))
     suite.addTest(loader.loadTestsFromTestCase(FrequencyTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(RenumberAliquotTestCase))
 
     return suite
 

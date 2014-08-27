@@ -265,9 +265,19 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                     else:
                         ly, uy = fy, fy
 
+                    # not_ok=False
+                    # if isinstance(r, LeastSquaresRegressor):
+                    #     try:
+                    #         (uy-ly).sum()
+                    #     except OverflowError:
+                    #         not_ok = True
+                    #
+                    # if not_ok:
+                    #     line.error_envelope.visible=False
+                    # else:
                     line.error_envelope.lower = ly
                     line.error_envelope.upper = uy
-                    line.error_envelope.invalidate()
+                    # line.error_envelope.invalidate()
 
         return r
 
@@ -323,13 +333,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _least_square_regress(self, scatter, r, fit):
-        fitfunc, errfunc = fit
+        func, initial_guess = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
 
         self._set_regressor(scatter, r)
-        r.trait_set(fitfunc=fitfunc,
-                    errfunc=errfunc,
+        r.trait_set(fitfunc=func,
+                    initial_guess=initial_guess,
                     trait_change_notify=False)
         r.calculate()
         self._set_excluded(scatter, r)
@@ -465,7 +475,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return plot, scatter, line
 
     def _add_error_envelope_overlay(self, line):
-
         o = ErrorEnvelopeOverlay(component=line)
         line.underlays.append(o)
         line.error_envelope = o

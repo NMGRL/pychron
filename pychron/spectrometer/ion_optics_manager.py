@@ -25,7 +25,7 @@ from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
-from pychron.spectrometer.detector import Detector
+from pychron.spectrometer.thermo.detector import Detector
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths

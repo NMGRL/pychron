@@ -30,6 +30,7 @@ from sqlalchemy.sql.expression import func
 
 
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -116,6 +117,9 @@ class meas_AnalysisTable(Base, BaseMixin):
     def record_id(self):
         return make_runid(self.labnumber.identifier, self.aliquot, self.increment)
 
+    @property
+    def project_name(self):
+        return self.labnumber.sample.project.name
 
 class meas_ExperimentTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='experiment')

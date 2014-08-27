@@ -501,7 +501,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             ntries = 3
             import traceback
-
             for i in range(ntries):
                 try:
                     return q.one()

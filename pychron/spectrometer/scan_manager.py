@@ -16,8 +16,9 @@
 
 #============= enthought library imports =======================
 from numpy import Inf
+from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
-    Bool, Int, Button, String, cached_property, \
+    Bool, Button, String, cached_property, \
     HasTraits, Range, Float
 # from pyface.timer.api import Timer
 #============= standard library imports ========================
@@ -25,11 +26,12 @@ import random
 import os
 import pickle
 #============= local library imports  ==========================
+from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
-from pychron.spectrometer.detector import Detector
+from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
 from pychron.paths import paths
@@ -98,10 +100,13 @@ class ScanManager(Manager):
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)
     record_data_manager = Any
+
+    use_detector_safety = Bool(True)
+
     _consuming = False
     queue = None
-
     timer = None
+
 
     def _update_graph_limits(self, name, new):
         if 'high' in name:
@@ -143,6 +148,14 @@ class ScanManager(Manager):
         del self.graph_y_auto
         del self.graph_scan_width
 
+    def activate(self):
+        self.bind_preferences()
+        self.setup_scan()
+
+    def bind_preferences(self):
+        pref_id = 'pychron.spectrometer'
+        bind_preference(self, 'use_detector_safety', '{}.use_detector_safety'.format(pref_id))
+
     def setup_scan(self):
         self.graph = self._graph_factory()
 
@@ -164,6 +177,7 @@ class ScanManager(Manager):
     def load_settings(self):
         self.info('load scan settings')
         spec = self.spectrometer
+
         p = os.path.join(paths.hidden_dir, 'scan_settings')
         if os.path.isfile(p):
             with open(p, 'rb') as f:
@@ -215,7 +229,7 @@ class ScanManager(Manager):
 
     def _update(self, data):
         keys, signals = data
-        if signals:
+        if signals is not None:
             x = self.graph.record_multiple(signals,
                                            track_y=False)
 
@@ -262,29 +276,85 @@ class ScanManager(Manager):
         self._consuming = False
         self.record_data_manager.close_file()
 
-    #===============================================================================
-    # handlers
-    #===============================================================================
+    # def _check_detector_protection1(self, prev):
+    #     """
+    #         used when detector changes
+    #         return True if magnet move should be aborted
+    #     """
+    #     return self._check_detector_protection(prev, True)
+    #
+    # def _check_detector_protection2(self, prev):
+    #     """
+    #         used when isotope changes
+    #         return True if magnet move should be aborted
+    #     """
+    #     return self._check_detector_protection(prev, False)
+
+    def _check_detector_protection(self, prev, is_detector):
+        """
+            return True if magnet move should be aborted
+
+            @todo: this should be more sophisticated. eg
+
+            refdet=H1, refiso=Ar40
+            H1  0
+            AX  100
+            L1  0
+            L2  0
+            CDD 1
+
+            move H1,Ar40 to L2
+            this would place the 100 on CDD but this algorithm would not catch this problem
+
+        """
+        if self.use_detector_safety and self.detector:
+            threshold=self.detector.protection_threshold
+            if threshold:
+                for di in self.detectors:
+                    print di, di.isotope
+
+                #find detector that the desired isotope is being measured on
+                det = next((di for di in self.detectors
+                            if di.isotope==self.isotope), None)
+                if det:
+                    #check that the intensity is less than threshold
+                    abort = det.intensity>threshold
+                    if abort:
+                        if not self.confirmation_dialog('Are you sure you want to make this move.\n'
+                                                    'This will place {} fA on {}'.format(det.intensity, self.detector)):
+
+                            self.debug('aborting magnet move {} intensity {} > {}'.format(det, det.intensity,
+                                                                                          threshold))
+                            if is_detector:
+                                do_later(self.trait_set, detector=prev)
+                            else:
+                                do_later(self.trait_set, isotope=prev)
+
+                            return True
+
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR \
                 and self.detector:
             self.info('set position {} on {}'.format(self.isotope, self.detector))
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
-    def _isotope_changed(self):
-        if self.isotope != NULL_STR:
-            self._set_position()
-
+    #===============================================================================
+    # handlers
+    #===============================================================================
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
 
         plot = self.graph.plots[0]
         plot.value_range.on_trait_change(self._update_graph_limits, '_low_value, _high_value')
 
-    #        plot.value_range.on_trait_change(self._update_graph_limits, '_high_value')
+    def _isotope_changed(self, old, new):
+        self.debug('isotope changed {}'.format(self.isotope))
+        if self.isotope != NULL_STR and not self._check_detector_protection(old, False):
+            self._set_position()
 
-    def _detector_changed(self):
-        if self.detector:
+    def _detector_changed(self, old, new):
+        self.debug('detector changed {}'.format(self.detector))
+        if self.detector and not self._check_detector_protection(old, True):
             self.scanner.detector = self.detector
             self.rise_rate.detector = self.detector
             self.magnet.detector = self.detector
@@ -303,6 +373,8 @@ class ScanManager(Manager):
                     mw = molweights[self.isotope]
                     if abs(mw - mass) > 0.1:
                         self.isotope = NULL_STR
+                    else:
+                        mass =self.isotope
 
                 self.info('set position {} on {}'.format(mass, self.detector))
 

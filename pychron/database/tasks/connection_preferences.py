@@ -24,6 +24,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
     FavoritesPreferencesHelper, FavoritesAdapter
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
@@ -45,6 +46,10 @@ class ConnectionPreferences(FavoritesPreferencesHelper):
 
     connected_label = Str
     connected_color = Color('green')
+
+    def _selected_change_hook(self):
+        self.connected_label = 'Not Tested'
+        self.connected_color = 'red'
 
     def _test_connection_fired(self):
         db = DatabaseAdapter(username=self.username,
@@ -124,13 +129,12 @@ class ConnectionPreferencesPane(PreferencesPane):
                                                 tooltip='Delete saved connection'),
                              icon_button_editor('test_connection', 'database_connect',
                                                 tooltip='Test connection'),
-                             spring,
                              Label('Status:'),
                              CustomLabel('connected_label',
                                          label='Status',
                                          weight='bold',
                                          color_name='connected_color'),
-
+                             spring,
                              show_labels=False))
 
         db_grp = Group(HGroup(Item('kind', show_label=False),

@@ -132,6 +132,9 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator:
             return self._communicator.test_connection()
 
+    def set_simulation(self, tf):
+        if self._communicator:
+            self._communicator.simulation=tf
     #==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd

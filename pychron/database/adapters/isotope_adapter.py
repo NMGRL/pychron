@@ -15,11 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from sqlalchemy import Date, distinct
 from sqlalchemy.sql.functions import count
-
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
 from traitsui.api import View, Item, HGroup
+
 #============= standard library imports ========================
 from cStringIO import StringIO
 import hashlib
@@ -1443,7 +1445,9 @@ class IsotopeAdapter(DatabaseAdapter):
                     step = result[0]
                     return ALPHAS.index(step) if step is not None else -1
 
-    def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None, ret=None):
+    def get_last_analysis(self, ln=None, aliquot=None, spectrometer=None,
+                          hours_limit=None,
+                          analysis_type=None):
         self.debug('get last analysis labnumber={}, aliquot={}, spectrometer={}'.format(ln, aliquot, spectrometer))
         with self.session_ctx() as sess:
             if ln:
@@ -1460,6 +1464,11 @@ class IsotopeAdapter(DatabaseAdapter):
             if ln:
                 q = q.join(gen_LabTable)
 
+            if analysis_type:
+                if not spectrometer:
+                    q = q.join(meas_MeasurementTable)
+                q = q.join(gen_AnalysisTypeTable)
+
             if spectrometer:
                 q = q.filter(gen_MassSpectrometerTable.name == spectrometer)
 
@@ -1467,6 +1476,13 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(meas_AnalysisTable.labnumber == ln)
                 if aliquot:
                     q = q.filter(meas_AnalysisTable.aliquot == aliquot)
+
+            if analysis_type:
+                q = q.filter(gen_AnalysisTypeTable.name == analysis_type)
+
+            if hours_limit:
+                lpost = datetime.now()-timedelta(hours=hours_limit)
+                q = q.filter(meas_AnalysisTable.analysis_timestamp>=lpost)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             q = q.limit(1)

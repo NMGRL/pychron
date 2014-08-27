@@ -18,7 +18,7 @@
 import unittest
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.spectrometer.spectrometer import Spectrometer
+from pychron.spectrometer.thermo.spectrometer import Spectrometer
 
 class MagnetTest(unittest.TestCase):
     def setUp(self):
