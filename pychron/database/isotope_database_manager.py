@@ -441,9 +441,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     #===============================================================================
     def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, unpack, use_cache, **kw):
         uuids = [ri.uuid for ri in no_db_ans]
+        for ui in uuids:
+            self.debug('loading uuid={}'.format(ui))
 
         #get all dbrecords with one call
         ms = self.db.get_analyses_uuid(uuids)
+
         construct = self._construct_analysis
         add_to_cache = self._add_to_cache
 

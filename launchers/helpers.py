@@ -98,7 +98,12 @@ def add_eggs(root):
 
 
 def build_globals(debug):
-    from pychron.initialization_parser import InitializationParser
+    try:
+        from pychron.initialization_parser import InitializationParser
+    except ImportError, e:
+        from pyface.message_dialog import warning
+        warning(None, str(e))
+
 
     ip = InitializationParser()
 
