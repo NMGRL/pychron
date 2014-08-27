@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Any, Property
+from traits.api import Any, Property
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -32,15 +32,12 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
 
 
 class ArgusSpectrometerManager(Manager):
-    spectrometer = Instance(Spectrometer)
+    spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')
 
     def test_connection(self):
         return self.spectrometer.test_connection()
-
-    def _spectrometer_default(self):
-        return Spectrometer(application=self.application)
 
     def open_parameters(self):
         p = SpectrometerParameters(spectrometer=self.spectrometer)

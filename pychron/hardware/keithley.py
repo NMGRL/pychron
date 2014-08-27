@@ -13,19 +13,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import time
 
+from pychron.core.ui import set_qt
+
+set_qt()
 # ============= enthought library imports =======================
-from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.managers.manager import Manager
+from pychron.core.helpers.logger_setup import logging_setup
+from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.scpi_device import SCPIDevice
 
 
-class BaseSpectrometerManager(Manager):
-    spectrometer = Any
-    spectrometer_klass = None
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+logging_setup('keithley')
+
+
+class KeithleyMeter(CoreDevice):
+    pass
+
+
+class SCPIKeithley(SCPIDevice):
+    def configure_instrument(self):
+        pass
+
+
+if __name__ == '__main__':
+    d = SCPIKeithley(name='keithley617b')
+    d.bootstrap()
+
+    for i in range(10):
+        d.get_measurement()
+
+        time.sleep(0.5)
 
 #============= EOF =============================================
 

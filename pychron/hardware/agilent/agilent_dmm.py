@@ -15,17 +15,34 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.managers.manager import Manager
+from pychron.hardware.core.scpi_device import SCPIDevice
 
 
-class BaseSpectrometerManager(Manager):
-    spectrometer = Any
-    spectrometer_klass = None
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+class AgilentDMM(SCPIDevice):
+    """
+    class for interfacing with an Agilent DMM - most likely a
+    34401A. Since they use SCPI
+    http://en.wikipedia.org/wiki/Standard_Commands_for_Programmable_Instruments
+    model number is not very important?
+
+    """
+
+
+    def configure_instrument(self):
+        """
+        configure instrument
+        """
+        #configure
+        self.tell('VOLT:DC:RES MAX')
+
+        #look into what these are for
+        self.tell(':ZERO:AUTO OFF')
+        self.tell(':INP:IMP:AUTO ON')
+
+    # def _parse_response(self, v):
+    #     pass
 
 #============= EOF =============================================
 

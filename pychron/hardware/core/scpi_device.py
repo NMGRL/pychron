@@ -15,18 +15,48 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.managers.manager import Manager
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class BaseSpectrometerManager(Manager):
-    spectrometer = Any
-    spectrometer_klass = None
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+class SCPIDevice(CoreDevice):
+    def initialize(self, *args, **kw):
+        """
+            initialize instrument
+        """
+        self.tell('*RST')
+        self.tell('*CLS')
 
+        self.configure_instrument()
+
+    def configure_instrument(self):
+        """
+            subclass should define this method
+        """
+        raise NotImplementedError
+
+    def trigger(self):
+        """
+            trigger a measurement. should be followed by a FETCH? (AgilentDMM.get_value)
+
+        """
+        self.debug('triggering measurement')
+        self.ask('TRIGGER')
+
+    def get_measurement(self):
+        """
+            return a value read from the device
+        """
+        if self.simulation:
+            v= 0
+        else:
+            self.trigger()
+            v = self.ask('FETCH?')
+
+        v = self._parse_response(v)
+        self.debug('get_measurment. value = {}'.format(v))
+        return v
 #============= EOF =============================================
 
 

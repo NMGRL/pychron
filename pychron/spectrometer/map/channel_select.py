@@ -15,17 +15,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Any
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.managers.manager import Manager
+from pychron.hardware.core.core_device import CoreDevice
 
 
-class BaseSpectrometerManager(Manager):
-    spectrometer = Any
-    spectrometer_klass = None
-    def _spectrometer_default(self):
-        return self.spectrometer_klass(application=self.application)
+class ChannelSelect(CoreDevice):
+    prefix = ''
+    suffix = ''
+
+    def load_additional_args(self, config):
+        self.config_get(config, 'Communication', 'prefix', optional=False)
+        self.config_get(config, 'Communication', 'suffix', optional=False)
+
+        return True
+
+    def set_channel(self, ch):
+        cmd = '{}{}{}'.format(self.prefix, ch, self.suffix)
+        self.tell(cmd)
+
 
 #============= EOF =============================================
 

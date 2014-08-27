@@ -15,12 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import HasTraits, Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.spectrometer.map.channel_select import ChannelSelect
+from pychron.spectrometer.map.magnet import MapMagnet
 
-class MAPSpectrometer():
-    pass
 
+class MapSpectrometer(HasTraits):
+    channel_select = Instance(ChannelSelect)
+    magnet = Instance(MapMagnet)
+
+    def load(self):
+        self.channel_select.load()
+        self.magnet.load()
+
+    def finish_loading(self):
+        self.channel_select.finish_loading()
+        self.magnet.finish_loading()
+
+    def _channel_select_default(self):
+        return ChannelSelect(name='ChannelSelect',
+                             configuration_dir_name='MAP')
+
+    def _magnet_default(self):
+        return MapMagnet()
 #============= EOF =============================================
 
 

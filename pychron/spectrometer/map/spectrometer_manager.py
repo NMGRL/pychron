@@ -18,10 +18,17 @@
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
+from pychron.spectrometer.map.spectrometer import MapSpectrometer
 
 
 class MapSpectrometerManager(BaseSpectrometerManager):
-    pass
+    spectrometer_klass = MapSpectrometer
+    def load(self, *args, **kw):
+        self.spectrometer.load()
+
+    def finish_loading(self):
+        self.spectrometer.finish_loading()
+
 #============= EOF =============================================
 
 
