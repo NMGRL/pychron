@@ -137,7 +137,7 @@ class MassSpecReverter(Loggable):
 
 
 if __name__ == '__main__':
-    m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert_test.txt')
+    m = MassSpecReverter(path='/Users/ross/Sandbox/crow_revert.txt')
     # m.setup_source()
     m.setup_destination()
     m.do_revert()

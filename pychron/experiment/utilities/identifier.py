@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,6 +71,16 @@ if differed:
     SPECIAL_NAMES.extend([di[1] for di in ds])
 
 SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
+
+
+def convert_identifier_to_int(ln):
+    m = {'ba':1,'bc':2,'bu':3,'bg':4,'u':5,'c':6}
+
+    try:
+        return int(ln)
+    except ValueError:
+        return m[ln]
+
 
 
 def convert_special_name(name, output='shortname'):

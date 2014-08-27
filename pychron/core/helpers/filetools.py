@@ -279,6 +279,17 @@ def parse_canvasfile(p, kw):
             return indices
 
 
+def pathtolist(p, **kw):
+    """
+        p: absolute path to file
+
+        kw: same keyword arguments accepted by filetolist
+        return: list
+    """
+    with open(p, 'r') as fp:
+        return filetolist(fp, **kw)
+
+
 def filetolist(f, commentchar='#'):
     """
         f: file-like object
