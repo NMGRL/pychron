@@ -27,7 +27,7 @@ from pychron.hardware.core.communicators.communicator import Communicator
 # NI_PATH = '/Library/Frameworks/NI488.framework/NI488'
 
 
-class GPIBCommunicator(Communicator):
+class GpibCommunicator(Communicator):
     pass
 
 
