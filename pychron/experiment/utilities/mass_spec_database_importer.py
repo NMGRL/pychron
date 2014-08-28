@@ -20,7 +20,6 @@ from datetime import datetime
 from traits.api import Instance, Button, Int
 from traits.has_traits import provides
 
-
 #============= standard library imports ========================
 import struct
 from numpy import array
@@ -374,7 +373,7 @@ class MassSpecDatabaseImporter(Loggable):
         vb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, vb)
 
-        blob2 = ''.join([struct.pack('>f', float(v)) for v in vb])
+        blob2 = ''.join([struct.pack('>f', v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         #@todo: add filtered points blob
@@ -442,7 +441,7 @@ class MassSpecDatabaseImporter(Loggable):
         """
         blob = ''
         for ti, vi in zip(t, v):
-            blob += struct.pack('>ff', float(vi), float(ti))
+            blob += struct.pack('>ff', vi, ti)
         return blob
 
     def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
