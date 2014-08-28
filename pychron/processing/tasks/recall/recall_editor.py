@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Property, Instance, Any
+from traits.api import Property, Instance, Any, on_trait_change
 from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -25,11 +25,30 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 class RecallEditor(BaseTraitsEditor):
     model = Any
     analysis_view = Instance('pychron.processing.analyses.analysis_view.AnalysisView')
-    #analysis_summary = Any
+    manager = Any
 
     name = Property(depends_on='analysis_view.analysis_id')
     basename = Property(depends_on='analysis_view.analysis_id')
     instance_id = 0
+
+    @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
+    def handle_show_iso_evo(self, obj):
+        from pychron.graph.regression_graph import RegressionGraph
+        self.manager.load_raw_data(self.model)
+        iso = next((i for i in self.model.isotopes.itervalues() if i.name==obj.name),None)
+
+        g=RegressionGraph()
+        g.new_plot(padding=[60,10,10,40])
+        g.new_series(iso.xs, iso.ys,
+                     fit=iso.fit,
+                     filter_outliers_dict=iso.filter_outliers_dict)
+        g.set_x_limits(min_=0, max_=iso.xs[-1]*1.1)
+        g.refresh()
+        g.set_x_title('Time (s)')
+        g.set_y_title(iso.name)
+        g.window_title='{} {}'.format(self.name, iso.name)
+        self.manager.application.open_view(g)
+
 
     def set_items(self, items):
         self.model = items[0]

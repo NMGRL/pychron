@@ -211,7 +211,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 mv.show_intermediate = self.recall_configurer.show_intermediate
 
                 editor = RecallEditor(analysis_view=av,
-                                      model=rec)
+                                      model=rec,
+                                      manager=self.manager)
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
 

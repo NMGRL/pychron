@@ -22,7 +22,6 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
-
 from pychron.processing.analyses.view.experiment_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
@@ -55,7 +54,7 @@ class AnalysisView(HasTraits):
 
     refresh_needed = Event
 
-    main_view = None
+    main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     _experiment_view = None
     _history_view = None
     _interference_view = None

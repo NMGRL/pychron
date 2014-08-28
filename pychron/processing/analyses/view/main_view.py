@@ -15,18 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Button, Instance, Bool
-from traitsui.api import View, UItem, HSplit, VSplit
+from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any
+from traitsui.api import View, UItem, HSplit, VSplit, Handler
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
-from pychron.envisage.browser.table_configurer import RecallTableConfigurer
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, ComputedValueTabularAdapter, \
     DetectorRatioTabularAdapter, ExtractionTabularAdapter, MeasurementTabularAdapter, IntermediateTabularAdapter
 from pychron.processing.analyses.view.values import ExtractionValue, ComputedValue, MeasurementValue, DetectorRatio
 from pychron.core.ui.tabular_editor import myTabularEditor
+
+
+class MainViewHandler(Handler):
+    def show_isotope_evolution(self, uiinfo, obj):
+        iso=obj.selected
+        obj.show_iso_evo_needed=iso
 
 
 class MainView(HasTraits):
@@ -48,6 +53,9 @@ class MainView(HasTraits):
     isotope_adapter = Instance(IsotopeTabularAdapter)
     intermediate_adapter = Instance(IntermediateTabularAdapter)
     show_intermediate = Bool(True)
+
+    selected = Any
+    show_iso_evo_needed=Event
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -356,6 +364,7 @@ class MainView(HasTraits):
                                   drag_enabled=False,
                                   stretch_last_section=False,
                                   editable=False,
+                                  selected='selected',
                                   refresh='refresh_needed')
 
         adapter = ComputedValueTabularAdapter
@@ -409,7 +418,9 @@ class MainView(HasTraits):
                              height=200),
                        UItem('corrected_values',
                              height=200,
-                             editor=ceditor))))
+                             editor=ceditor))),
+            handler = MainViewHandler()
+            )
         return v
 
 

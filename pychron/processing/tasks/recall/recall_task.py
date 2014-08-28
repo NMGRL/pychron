@@ -23,7 +23,6 @@ from pyface.tasks.action.schema import SToolBar
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction, CalculationViewAction
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
-from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
@@ -63,22 +62,22 @@ class RecallTask(AnalysisEditTask):
             cv.load_view(self.active_editor.model)
             cv.edit_traits()
 
-    def append_unknown_analyses(self, ans):
-
-        for i, ai in enumerate(ans):
-            if not (i == 0 and self.active_editor):
-                self.new_editor()
-            self._set_selected_analysis(ai)
-
-    def replace_unkonwn_analyses(self, ans):
-        for ei in self.editor_area.editors:
-            ei.close()
-
-        self.append_unknown_analyses(ans)
-
-    def new_editor(self):
-        editor = RecallEditor()
-        self._open_editor(editor)
+    # def append_unknown_analyses(self, ans):
+    #
+    #     for i, ai in enumerate(ans):
+    #         if not (i == 0 and self.active_editor):
+    #             self.new_editor()
+    #         self._set_selected_analysis(ai)
+    #
+    # def replace_unkonwn_analyses(self, ans):
+    #     for ei in self.editor_area.editors:
+    #         ei.close()
+    #
+    #     self.append_unknown_analyses(ans)
+    #
+    # def new_editor(self):
+    #     editor = RecallEditor()
+    #     self._open_editor(editor)
 
     def edit_data(self):
         if not self.has_active_editor():
