@@ -368,8 +368,8 @@ class MassSpecDatabaseImporter(Loggable):
         # baseline = spec.get_baseline_uvalue(iso)
         baseline, fncnts = spec.get_filtered_baseline_uvalue(iso)
 
-        vb = array(vb) - baseline.nominal_value
-        blob1 = self._build_timeblob(tb, vb)
+        cvb = array(vb) - baseline.nominal_value
+        blob1 = self._build_timeblob(tb, cvb)
 
         blob2 = ''.join([struct.pack('>f', float(v)) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
