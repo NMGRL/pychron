@@ -48,6 +48,9 @@ class GpibCommunicator(Communicator):
         self.set_attribute(config, 'secondary_address', 'Communications','secondary_address', optional=False)
         return True
 
+    def trigger(self):
+        self.handle.trigger()
+
     def ask(self, cmd):
         return self.handle.ask(cmd)
 

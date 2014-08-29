@@ -35,9 +35,20 @@ class KeithleyMeter(CoreDevice):
 
 class SCPIKeithley(SCPIDevice):
     def configure_instrument(self):
-        pass
-        # self.tell('trig:sour ext')
 
+        # self.tell('SYST:ZCH ON')
+        # self.tell('TRIG:COUNT INF;SOUR TIM;TIM 0.1')
+        self.tell('TRIG:COUNT INF')
+        # self.tell('TRIG:SOUR TIM')
+        # self.tell('TRIG:TIM 0.1')
+
+        self.tell('SYST:ZCH OFF')
+        # self.tell('SYST:ZCOR ON')
+        self.tell('VOLT:RANG:AUTO ON')
+        self.trigger()
+        # self.tell('VOLT:RANG:AUTO OFF')
+        # self.tell('SENS:VOLT:RANG 20')
+        # self.tell('STAT:PRES')
     # def get_measurement(self):
     #     print self.ask('read?')
 
@@ -46,11 +57,11 @@ if __name__ == '__main__':
     d.bootstrap()
 
     # time.sleep(1)
-    d.identify_instrument()
-    for i in range(10):
+    # d.identify_instrument()
+    for i in range(100):
         d.get_measurement()
 
-        time.sleep(0.5)
+        time.sleep(1)
 
 #============= EOF =============================================
 
