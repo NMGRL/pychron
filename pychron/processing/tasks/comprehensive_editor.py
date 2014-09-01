@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Int, Float
-from traitsui.api import View, VGroup, Readonly, HGroup
+from enable.component_editor import ComponentEditor
+from traits.api import List, Int, Float, Any
+from traitsui.api import View, VGroup, Readonly, HGroup, UItem
 # ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
@@ -25,6 +26,8 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 # class ATabularAdapter(TabularAdapter):
 #     columns=[()]
+from pychron.processing.plotter_options_manager import IdeogramOptionsManager
+from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
 
 
 class ComprehensiveEditor(BaseTraitsEditor):
@@ -37,6 +40,8 @@ class ComprehensiveEditor(BaseTraitsEditor):
     mswd = Float
     mswd_low = Float
     mswd_high = Float
+
+    ideogram_graph=Any
 
     def load(self):
         ans = self.analyses
@@ -55,18 +60,34 @@ class ComprehensiveEditor(BaseTraitsEditor):
         self.mswd=mswd
         self.mswd_low,self.mswd_high=get_mswd_limits(n)
 
+        plot_options=IdeogramOptionsManager().plotter_options
+
+        model=IdeogramModel(analyses=self.analyses,
+                            plot_options=plot_options)
+        model.refresh_panels()
+        p = model.next_panel()
+        self.ideogram = p.make_graph()
+
+        # plots=plot_options.aux_plots
+        # ideo=Ideogram(analyses=self.analyses)
+        # ideo.build(plots)
+        # self.ideogram_graph =ideo.graph
+
     def traits_view(self):
         mswd_grp=HGroup(Readonly('mswd',label='MSWD'),
                         HGroup(Readonly('mswd_low',label='Low'),
                         Readonly('mswd_high',label='High'),
                         show_border=True, label='Acceptable Range'))
 
+        ideogram_grp=UItem('ideogram',editor=ComponentEditor())
+
         stats_grp = VGroup(Readonly('min_age'),
                            Readonly('max_age'),
                            Readonly('n'),
                            Readonly('mean'),
                            Readonly('weighted_mean'),
-                           mswd_grp
+                           mswd_grp,
+                           ideogram_grp
                            )
         v = View(stats_grp)
         return v
