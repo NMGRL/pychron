@@ -71,7 +71,8 @@ class RecallTask(AnalysisEditTask):
             for si in self.selected_samples:
                 ans = self._get_selected_analyses(selection=[si])
                 ans=self.manager.make_analyses(ans, calculate_age=True)
-                editor=ComprehensiveEditor(name='{} Comp.'.format(si.name),
+                editor=ComprehensiveEditor(name='{} ({})Comp.'.format(si.identifier,
+                                                                      si.name),
                                            analyses=ans)
                 editor.load()
                 self._open_editor(editor)
