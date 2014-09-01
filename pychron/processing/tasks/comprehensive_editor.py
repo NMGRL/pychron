@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
-from traits.api import List, Int, Float, Any
-from traitsui.api import View, VGroup, Readonly, HGroup, UItem, VFold
+from traits.api import HasTraits, List, Int, Float, Any, Instance, on_trait_change, \
+    Str, Button
+from traitsui.api import View, VGroup, Readonly, HGroup, UItem, VFold, spring, \
+    InstanceEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
@@ -26,8 +28,25 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 # class ATabularAdapter(TabularAdapter):
 # columns=[()]
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+
+
+class OptionsView(HasTraits):
+    model = Any
+    title = Str
+
+    def traits_view(self):
+        v = View(UItem('model',
+                       style='custom',
+                       editor=InstanceEditor()),
+                 title=self.title,
+                 resizable=True,
+                 kind='livemodal',
+                 buttons=['OK'])
+
+        return v
 
 
 class ComprehensiveEditor(BaseTraitsEditor):
@@ -42,6 +61,27 @@ class ComprehensiveEditor(BaseTraitsEditor):
     mswd_high = Float
 
     ideogram_graph = Any
+    ideogram_model = Instance(IdeogramModel)
+    ideogram_options = Instance(IdeogramOptionsManager)
+    ideogram_options_button = Button
+
+    spectrum_graph = Any
+    spectrum_defined = False
+
+    def _ideogram_options_button_fired(self):
+        v = OptionsView(model=self.ideogram_options,
+                        title='Edit Ideogram Options')
+        v.edit_traits()
+
+
+    @on_trait_change('ideogram_options:plotter_options:refresh_plot')
+    def _ideogram_update(self):
+        # model = IdeogramModel(analyses=self.analyses,
+        # plot_options=self.ideogram_options.plotter_options)
+        model = self.ideogram_model
+        model.refresh_panels()
+        p = model.next_panel()
+        self.ideogram_graph = p.make_graph()
 
     def load(self):
         ans = self.analyses
@@ -60,13 +100,15 @@ class ComprehensiveEditor(BaseTraitsEditor):
         self.mswd = mswd
         self.mswd_low, self.mswd_high = get_mswd_limits(n)
 
-        plot_options = IdeogramOptionsManager().plotter_options
+        self.ideogram_options = IdeogramOptionsManager()
 
         model = IdeogramModel(analyses=self.analyses,
-                              plot_options=plot_options)
+                              plot_options=self.ideogram_options.plotter_options)
         model.refresh_panels()
         p = model.next_panel()
-        self.ideogram_graph=p.make_graph()
+
+        self.ideogram_graph = p.make_graph()
+        self.ideogram_model = model
 
     def traits_view(self):
         mswd_grp = HGroup(Readonly('mswd', label='MSWD'),
@@ -74,9 +116,11 @@ class ComprehensiveEditor(BaseTraitsEditor):
                                  Readonly('mswd_high', label='High'),
                                  show_border=True, label='Acceptable Range'))
 
-        ideogram_grp = VGroup(UItem('ideogram_graph',
+        ideogram_grp = VGroup(HGroup(spring,
+                                     icon_button_editor('ideogram_options_button',
+                                                        'cog')),
+                              UItem('ideogram_graph',
                                     editor=ComponentEditor()),
-                              scrollable=True,
                               label='Ideogram')
 
         stats_grp = VGroup(Readonly('min_age'),
@@ -86,11 +130,19 @@ class ComprehensiveEditor(BaseTraitsEditor):
                            Readonly('weighted_mean'),
                            mswd_grp,
                            label='Stats')
-        v = View(VFold(stats_grp, ideogram_grp),
-                 scrollable=True)
+
+        if self.spectrum_defined:
+            spectrum_grp = VGroup(UItem('spectrum_graph',
+                                        editor=ComponentEditor()),
+                                  label='Spectrum')
+            vf = VFold(stats_grp, ideogram_grp, spectrum_grp)
+        else:
+            vf = VFold(ideogram_grp, stats_grp)
+
+        v = View(vf)
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 
