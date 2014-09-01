@@ -354,7 +354,9 @@ class BrowserMixin(ColumnSorterMixin):
                                   low_post=None,
                                   high_post=None,
                                   exclude_uuids=None,
-                                  include_invalid=False, mass_spectrometers=None):
+                                  include_invalid=False,
+                                  mass_spectrometers=None,
+                                  make_records=True):
         db = self.manager.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
@@ -370,12 +372,15 @@ class BrowserMixin(ColumnSorterMixin):
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers)
 
-            def func(xi, prog, i, n):
-                if prog:
-                    prog.change_message('Loading {}'.format(xi.record_id))
-                return IsotopeRecordView(xi)
+            if make_records:
+                def func(xi, prog, i, n):
+                    if prog:
+                        prog.change_message('Loading {}'.format(xi.record_id))
+                    return IsotopeRecordView(xi)
 
-            return progress_loader(ans, func, threshold=25)
+                return progress_loader(ans, func, threshold=25)
+            else:
+                return ans
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter

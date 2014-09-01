@@ -317,5 +317,10 @@ class CalculationViewAction(myTaskAction):
     method = 'open_calculation_view'
 
 
+class ComprehensiveAction(myTaskAction):
+    name = 'Comprehensive View'
+    method = 'new_comprehensive_editor'
+    task_ids=['pychron.recall']
+
 #============= EOF =============================================
 

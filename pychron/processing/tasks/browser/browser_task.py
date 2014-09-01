@@ -109,18 +109,25 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.load_browser_options()
         self._activated = True
 
-    def _get_selected_analyses(self, unks=None):
-        s = self.analysis_table.selected
-        if not s:
-            if self.selected_samples:
-                iv = not self.analysis_table.omit_invalid
-                uuids = [x.uuid for x in unks] if unks else None
-                s = [ai for ai in self._retrieve_sample_analyses(self.selected_samples,
-                                                                 exclude_uuids=uuids,
-                                                                 include_invalid=iv,
-                                                                 low_post=self.start_date,
-                                                                 high_post=self.end_date)]
-        return s
+    def _get_selected_analyses(self, unks=None, selection=None, make_records=True):
+        """
+        """
+        if selection is None:
+            if self.analysis_table.selected:
+                return self.analysis_table.selected
+            else:
+                selection=self.selected_samples
+
+        if selection:
+            iv = not self.analysis_table.omit_invalid
+            uuids = [x.uuid for x in unks] if unks else None
+            s = [ai for ai in self._retrieve_sample_analyses(selection,
+                                                             exclude_uuids=uuids,
+                                                             include_invalid=iv,
+                                                             low_post=self.start_date,
+                                                             high_post=self.end_date,
+                                                             make_records=True)]
+            return s
 
     def _load_mass_spectrometers(self):
         db = self.manager.db

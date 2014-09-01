@@ -20,7 +20,8 @@ from pyface.tasks.action.schema import SToolBar
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction, CalculationViewAction
+from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction, CalculationViewAction, \
+    ComprehensiveAction
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
@@ -38,6 +39,7 @@ class RecallTask(AnalysisEditTask):
                  EditDataAction(),
                  ConfigureRecallAction(),
                  CalculationViewAction(),
+                 ComprehensiveAction(),
                  RatioEditorAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
@@ -61,6 +63,18 @@ class RecallTask(AnalysisEditTask):
             cv = CalculationView()
             cv.load_view(self.active_editor.model)
             cv.edit_traits()
+
+    def new_comprehensive_editor(self):
+        from pychron.processing.tasks.comprehensive_editor import ComprehensiveEditor
+        db=self.manager.db
+        with db.session_ctx():
+            for si in self.selected_samples:
+                ans = self._get_selected_analyses(selection=[si])
+                ans=self.manager.make_analyses(ans, calculate_age=True)
+                editor=ComprehensiveEditor(name='{} Comp.'.format(si.name),
+                                           analyses=ans)
+                editor.load()
+                self._open_editor(editor)
 
     # def append_unknown_analyses(self, ans):
     #
