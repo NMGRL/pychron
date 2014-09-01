@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, List, Int, Float, Any, Instance, on_trait_change, \
-    Str, Button
+    Str, Button, Property
 from traitsui.api import View, VGroup, Readonly, HGroup, UItem, VFold, spring, \
-    InstanceEditor
+    InstanceEditor, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
@@ -31,6 +33,28 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+
+
+class AnalysisAdapter(TabularAdapter):
+    columns = [('RunID', 'record_id'),
+               ('Age', 'age'),
+               ('Err', 'age_err'),
+               ('Err Wo/J', 'age_err_wo_j'),
+               ('Tag', 'tag')]
+    font = '10'
+
+    age_text = Property
+    age_err_text = Property
+    age_err_wo_j_text = Property
+
+    def _get_age_text(self):
+        return floatfmt(self.item.age)
+
+    def _get_age_err_text(self):
+        return floatfmt(self.item.age_err)
+
+    def _get_age_err_wo_j_text(self):
+        return floatfmt(self.item.age_err_wo_j)
 
 
 class OptionsView(HasTraits):
@@ -73,7 +97,6 @@ class ComprehensiveEditor(BaseTraitsEditor):
                         title='Edit Ideogram Options')
         v.edit_traits()
 
-
     @on_trait_change('ideogram_options:plotter_options:refresh_plot')
     def _ideogram_update(self):
         # model = IdeogramModel(analyses=self.analyses,
@@ -111,23 +134,29 @@ class ComprehensiveEditor(BaseTraitsEditor):
         self.ideogram_model = model
 
     def traits_view(self):
-        mswd_grp = HGroup(Readonly('mswd', label='MSWD'),
-                          HGroup(Readonly('mswd_low', label='Low'),
-                                 Readonly('mswd_high', label='High'),
-                                 show_border=True, label='Acceptable Range'))
-
         ideogram_grp = VGroup(HGroup(spring,
                                      icon_button_editor('ideogram_options_button',
                                                         'cog')),
                               UItem('ideogram_graph',
                                     editor=ComponentEditor()),
                               label='Ideogram')
+        fmt = '%0.4f'
+        age_grp = HGroup(Readonly('min_age', format_str=fmt, label='Min.'),
+                         Readonly('max_age', format_str=fmt, label='Max.'),
+                         Readonly('mean', format_str=fmt, ),
+                         Readonly('weighted_mean', format_str=fmt, label='Wtd. Mean'),
+                         label='Age',
+                         show_border=True)
 
-        stats_grp = VGroup(Readonly('min_age'),
-                           Readonly('max_age'),
-                           Readonly('n'),
-                           Readonly('mean'),
-                           Readonly('weighted_mean'),
+        mswd_grp = HGroup(Readonly('mswd', format_str=fmt, label='MSWD'),
+                          HGroup(Readonly('mswd_low', format_str=fmt, label='Low'),
+                                 Readonly('mswd_high', format_str=fmt, label='High'),
+                                 show_border=True, label='Acceptable Range'))
+
+        analyses_grp = UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter()))
+        stats_grp = VGroup(Readonly('n'),
+                           analyses_grp,
+                           age_grp,
                            mswd_grp,
                            label='Stats')
 
@@ -137,7 +166,8 @@ class ComprehensiveEditor(BaseTraitsEditor):
                                   label='Spectrum')
             vf = VFold(stats_grp, ideogram_grp, spectrum_grp)
         else:
-            vf = VFold(ideogram_grp, stats_grp)
+            # vf = VFold(ideogram_grp, stats_grp)
+            vf = VFold(stats_grp, ideogram_grp)
 
         v = View(vf)
         return v
