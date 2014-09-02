@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -293,13 +293,14 @@ class BaseArArFigure(HasTraits):
         return self._plot_aux('K/Ca', k, ys, po, plot, pid, es, **kw)
 
     def _plot_moles_k39(self, po, plot, pid, **kw):
-        k='k39'
+        k = 'k39'
         ys, es = self._get_aux_plot_data(k)
         return self._plot_aux('K39(fA)', k, ys, po, plot, pid, es, **kw)
 
     def _get_aux_plot_data(self, k):
         vs = self._unpack_attr(k)
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
+
     #===============================================================================
     #
     #===============================================================================

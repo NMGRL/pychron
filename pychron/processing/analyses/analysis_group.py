@@ -35,7 +35,7 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
-    sample = Str
+
     analyses = List
     nanalyses = AGProperty()
 
@@ -56,6 +56,7 @@ class AnalysisGroup(HasTraits):
     isochron_age = AGProperty()
     isochron_age_error_kind = Str
     identifier = Property
+    sample = Property
     age_scalar = Property
     age_units = Property
 
@@ -110,6 +111,10 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
+
+    @cached_property
+    def _get_sample(self):
+        return self.analyses[0].sample
 
     # @cached_property
     def _get_weighted_age(self):

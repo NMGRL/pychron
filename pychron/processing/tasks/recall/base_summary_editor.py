@@ -24,6 +24,7 @@ from traitsui.api import View, UItem, InstanceEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.processing.plotter_options_manager import IdeogramOptionsManager
 from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+from pychron.processing.plotters.ideogram.ideogram_panel import IdeogramPanel
 
 
 class OptionsView(HasTraits):
@@ -49,6 +50,7 @@ class BaseSummaryEditor(BaseTraitsEditor):
     ideogram_graph = Any
     ideogram_model = Instance(IdeogramModel)
     ideogram_options = Instance(IdeogramOptionsManager)
+    ideogram_panel = Instance(IdeogramPanel)
 
     def _create_ideogram(self):
         self.ideogram_options = IdeogramOptionsManager()
@@ -56,8 +58,10 @@ class BaseSummaryEditor(BaseTraitsEditor):
                               plot_options=self.ideogram_options.plotter_options)
         model.refresh_panels()
         p = model.next_panel()
+
         self.ideogram_graph = p.make_graph()
         self.ideogram_model = model
+        self.ideogram_panel = p
 
     @on_trait_change('tool:ideogram_options_button')
     def _ideogram_options_button_fired(self):
