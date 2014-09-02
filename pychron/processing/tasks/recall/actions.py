@@ -44,5 +44,5 @@ class EditDataAction(TaskAction):
 class RatioEditorAction(TaskAction):
     name='Ratio'
     method = 'open_ratio_editor'
-
+    image = icon('window-new')
 #============= EOF =============================================

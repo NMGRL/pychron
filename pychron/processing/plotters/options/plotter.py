@@ -98,7 +98,8 @@ class PlotterOptions(FigurePlotterOptions):
         rref, ctx = None, {}
         material_map = {'Groundmass concentrate': 'GMC',
                         'Kaersutite': 'Kaer',
-                        'Plagioclase': 'Plag'}
+                        'Plagioclase': 'Plag',
+                        'Sanidine': 'San'}
 
         for gid, ais in groupby(analyses, key=lambda x: x.group_id):
             ref = ais.next()
@@ -111,7 +112,10 @@ class PlotterOptions(FigurePlotterOptions):
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':
-                        v = material_map[v]
+                        try:
+                            v = material_map[v]
+                        except KeyError:
+                            pass
                 d[ai] = v
 
             if not rref:

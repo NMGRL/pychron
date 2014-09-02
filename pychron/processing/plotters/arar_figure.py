@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ from chaco.tools.data_label_tool import DataLabelTool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -223,11 +224,10 @@ class BaseArArFigure(HasTraits):
             def gen():
                 for ai in self.sorted_analyses:
                     r = ai.get_ratio(attr)
-                    if r is not None:
-                        yield r
-                        # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
-                        # if n is not None and d is not None:
-                        #     yield nv/dv
+                    yield r or 0
+                    # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
+                    # if n is not None and d is not None:
+                    #     yield nv/dv
         else:
             def gen():
                 # f = lambda x: x
@@ -236,9 +236,10 @@ class BaseArArFigure(HasTraits):
 
                 for ai in self.sorted_analyses:
                     v = ai.get_value(attr)
-                    if v is not None:
-                        yield v
-                        # yield f(ai.get_value(attr))
+                    yield v or 0
+                    # if v is not None:
+                    #     yield v
+                    # yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -278,26 +279,28 @@ class BaseArArFigure(HasTraits):
         return omits
 
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('rad40_percent')])
-        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es, **kw)
+        k = 'rad40_percent'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('%40Ar*', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kcl(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('kcl')])
-        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es, **kw)
+        k = 'kcl'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Cl', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kca(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('kca')])
-        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es, **kw)
+        k = 'kca'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Ca', k, ys, po, plot, pid, es, **kw)
 
     def _plot_moles_k39(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('k39')])
+        k='k39'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K39(fA)', k, ys, po, plot, pid, es, **kw)
 
-        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es, **kw)
-
+    def _get_aux_plot_data(self, k):
+        vs = self._unpack_attr(k)
+        return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
     #===============================================================================
     #
     #===============================================================================

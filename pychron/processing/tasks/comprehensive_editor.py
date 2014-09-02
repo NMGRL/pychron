@@ -15,24 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from enable.component_editor import ComponentEditor
 from traits.api import HasTraits, List, Int, Float, Any, Instance, on_trait_change, \
-    Str, Button, Property
-from traitsui.api import View, VGroup, Readonly, HGroup, UItem, VFold, spring, \
-    InstanceEditor, TabularEditor
+    Str, Button, Property, Bool, DelegatesTo
+from traitsui.api import View, VGroup, Readonly, HGroup, UItem, InstanceEditor, TabularEditor
+from traitsui.group import Tabbed
+from traitsui.tabular_adapter import TabularAdapter
+from enable.component_editor import ComponentEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-
-
-# class ATabularAdapter(TabularAdapter):
-# columns=[()]
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager
+from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager
 from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+from pychron.processing.plotters.spectrum.spectrum_model import SpectrumModel
 
 
 class AnalysisAdapter(TabularAdapter):
@@ -73,6 +70,26 @@ class OptionsView(HasTraits):
         return v
 
 
+class ComprehensiveEditorTool(HasTraits):
+    ideogram_options_button = Button
+    spectrum_options_button = Button
+    spectrum_visible = Bool(True)
+    ideogram_visible = Bool(True)
+
+    def traits_view(self):
+        igrp=VGroup(UItem('ideogram_visible'),
+                    icon_button_editor('ideogram_options_button', 'cog', enabled_when='ideogram_visible'),
+                    label='Ideogram',show_border=True)
+
+        sgrp=VGroup(
+                    UItem('spectrum_visible'),
+                    icon_button_editor('spectrum_options_button', 'cog', enabled_when='spectrum_visible'),
+                    label='Spectrum',show_border=True)
+
+        v=View(VGroup(igrp,sgrp))
+        return v
+
+
 class ComprehensiveEditor(BaseTraitsEditor):
     analyses = List
     min_age = Float
@@ -87,24 +104,32 @@ class ComprehensiveEditor(BaseTraitsEditor):
     ideogram_graph = Any
     ideogram_model = Instance(IdeogramModel)
     ideogram_options = Instance(IdeogramOptionsManager)
-    ideogram_options_button = Button
 
     spectrum_graph = Any
-    spectrum_defined = False
+    spectrum_model = Instance(SpectrumModel)
+    spectrum_options = Instance(SpectrumOptionsManager)
 
-    def _ideogram_options_button_fired(self):
-        v = OptionsView(model=self.ideogram_options,
-                        title='Edit Ideogram Options')
-        v.edit_traits()
+    spectrum_visible=DelegatesTo('tool')
+    ideogram_visible=DelegatesTo('tool')
+    tool = Instance(ComprehensiveEditorTool, ())
 
-    @on_trait_change('ideogram_options:plotter_options:refresh_plot')
-    def _ideogram_update(self):
-        # model = IdeogramModel(analyses=self.analyses,
-        # plot_options=self.ideogram_options.plotter_options)
-        model = self.ideogram_model
+    def _create_ideogram(self):
+        self.ideogram_options = IdeogramOptionsManager()
+        model = IdeogramModel(analyses=self.analyses,
+                              plot_options=self.ideogram_options.plotter_options)
         model.refresh_panels()
         p = model.next_panel()
         self.ideogram_graph = p.make_graph()
+        self.ideogram_model = model
+
+    def _create_spectrum(self):
+        self.spectrum_options = SpectrumOptionsManager()
+        model = SpectrumModel(analyses=self.analyses,
+                              plot_options=self.spectrum_options.plotter_options)
+        model.refresh_panels()
+        p = model.next_panel()
+        self.spectrum_graph = p.make_graph()
+        self.spectrum_model = model
 
     def load(self):
         ans = self.analyses
@@ -123,23 +148,42 @@ class ComprehensiveEditor(BaseTraitsEditor):
         self.mswd = mswd
         self.mswd_low, self.mswd_high = get_mswd_limits(n)
 
-        self.ideogram_options = IdeogramOptionsManager()
+        self._create_ideogram()
 
-        model = IdeogramModel(analyses=self.analyses,
-                              plot_options=self.ideogram_options.plotter_options)
+        self._create_spectrum()
+    
+    #handlers
+    @on_trait_change('tool:ideogram_options_button')
+    def _ideogram_options_button_fired(self):
+        v = OptionsView(model=self.ideogram_options,
+                        title='Edit Ideogram Options')
+        v.edit_traits()
+
+    @on_trait_change('tool:spectrum_options_button')
+    def _spectrum_options_button_fired(self):
+        v = OptionsView(model=self.spectrum_options,
+                        title='Edit Spectrum Options')
+        v.edit_traits()
+
+    @on_trait_change('ideogram_options:plotter_options:refresh_plot')
+    def _ideogram_update(self):
+        model = self.ideogram_model
         model.refresh_panels()
         p = model.next_panel()
-
         self.ideogram_graph = p.make_graph()
-        self.ideogram_model = model
 
+    #views
     def traits_view(self):
-        ideogram_grp = VGroup(HGroup(spring,
-                                     icon_button_editor('ideogram_options_button',
-                                                        'cog')),
-                              UItem('ideogram_graph',
+        ideogram_grp = VGroup(UItem('ideogram_graph',
+                                    visible_when='ideogram_visible',
                                     editor=ComponentEditor()),
                               label='Ideogram')
+
+        spectrum_grp = VGroup(UItem('spectrum_graph',
+                                    visible_when='spectrum_visible',
+                                    editor=ComponentEditor()),
+                              label='Spectrum')
+
         fmt = '%0.4f'
         age_grp = HGroup(Readonly('min_age', format_str=fmt, label='Min.'),
                          Readonly('max_age', format_str=fmt, label='Max.'),
@@ -154,22 +198,15 @@ class ComprehensiveEditor(BaseTraitsEditor):
                                  show_border=True, label='Acceptable Range'))
 
         analyses_grp = UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter()))
+
         stats_grp = VGroup(Readonly('n'),
                            analyses_grp,
                            age_grp,
                            mswd_grp,
                            label='Stats')
 
-        if self.spectrum_defined:
-            spectrum_grp = VGroup(UItem('spectrum_graph',
-                                        editor=ComponentEditor()),
-                                  label='Spectrum')
-            vf = VFold(stats_grp, ideogram_grp, spectrum_grp)
-        else:
-            # vf = VFold(ideogram_grp, stats_grp)
-            vf = VFold(stats_grp, ideogram_grp)
-
-        v = View(vf)
+        vg = Tabbed(stats_grp, ideogram_grp, spectrum_grp)
+        v = View(vg)
         return v
 
 # ============= EOF =============================================

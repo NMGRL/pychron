@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 #============= standard library imports ========================
-from numpy import array
+from numpy import array, nan
 #============= local library imports  ==========================
 from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
@@ -100,7 +100,7 @@ class AnalysisGroup(HasTraits):
         try:
             e = (j.std_dev / j.nominal_value) if j is not None else 0
         except ZeroDivisionError:
-            e = 0
+            e = nan
         return e
 
     @cached_property
@@ -137,7 +137,10 @@ class AnalysisGroup(HasTraits):
             include_j_error = self.include_j_error_in_mean
 
         if include_j_error:
-            e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+            try:
+                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+            except ZeroDivisionError:
+                return nan
         return e
 
     # @cached_property
@@ -242,7 +245,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         k39 = sum(k39)
 
         j = a.j
-        return age_equation(rad40 / k39, j, a.arar_constants)
+        try:
+            return age_equation(rad40 / k39, j, a.arar_constants)
+        except ZeroDivisionError:
+            return nan
 
     def _get_steps(self):
 

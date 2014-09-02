@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -228,7 +228,7 @@ class ConfigureRecallAction(myTaskAction):
     name = 'Configure Recall'
     method = 'configure_recall'
     image = icon('cog.png')
-    task_ids = List(['pychron.recall','pychron.processing.figures',
+    task_ids = List(['pychron.recall', 'pychron.processing.figures',
                      'pychron.processing.blanks',
                      'pychron.processing.isotope_evolution',
                      'pychron.processing.ic_factor',
@@ -312,15 +312,17 @@ class SplitEditorActionVert(myTaskAction):
 
 
 class CalculationViewAction(myTaskAction):
-    name='Calculation View'
-    task_ids = ['pychron.recall',]
+    name = 'Calculation View'
+    task_ids = ['pychron.recall', ]
     method = 'open_calculation_view'
+    image = icon('window-new')
 
 
 class ComprehensiveAction(myTaskAction):
     name = 'Comprehensive View'
     method = 'new_comprehensive_editor'
-    task_ids=['pychron.recall']
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
 
 #============= EOF =============================================
 
