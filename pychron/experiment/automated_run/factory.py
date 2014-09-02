@@ -15,19 +15,21 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, Button, \
+from traits.api import String, Str, Property, Any, Float, Instance, Int, List, cached_property, on_trait_change, Bool, \
+    Button, \
     Event, Enum
 
 #============= standard library imports ========================
 import yaml
 import os
 #============= local library imports  ==========================
+from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
-    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX
+    SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
 from pychron.experiment.automated_run.factory_view import FactoryView
 from pychron.experiment.utilities.identifier import convert_special_name, ANALYSIS_MAPPING, NON_EXTRACTABLE, \
-    make_special_identifier, make_standard_identifier
+    make_special_identifier, make_standard_identifier, SPECIAL_KEYS
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script
@@ -52,6 +54,7 @@ class UpdateSelectedCTX(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._factory.set_labnumber = True
         self._factory.set_position = True
+
 
 def EKlass(klass):
     return klass(enter_set=True, auto_set=False)
@@ -105,6 +108,7 @@ def generate_positions(pos):
 
 class AutomatedRunFactory(Loggable):
     db = Any
+    datahub=Instance(Datahub)
 
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
@@ -152,7 +156,7 @@ class AutomatedRunFactory(Loggable):
     auto_fill_comment = Bool
 
     position = Property(depends_on='_position')
-    _position = Str
+    _position = String
 
     #===========================================================================
     # extract
@@ -165,15 +169,12 @@ class AutomatedRunFactory(Loggable):
     extract_units_names = List(['', 'watts', 'temp', 'percent'])
     _default_extract_units = 'watts'
 
-    extract_group = Int(enter_set=True, auto_set=False)
-    extract_group_button = Button('Group Selected')
-
     ramp_duration = EKlass(Float)
 
     duration = EKlass(Float)
     cleanup = EKlass(Float)
-    beam_diameter = Property(EKlass(Str), depends_on='_beam_diameter')
-    _beam_diameter = Any
+    beam_diameter = Property(EKlass(String), depends_on='_beam_diameter')
+    _beam_diameter = String
 
     pattern = String('Pattern')
     patterns = List
@@ -194,14 +195,14 @@ class AutomatedRunFactory(Loggable):
     # truncation
     #===========================================================================
     trunc_attr = String('age')
-    trunc_attrs= List(['age',
-                       'age_err',
-                       'kca',
-                       'kca_err',
-                       'kcl',
-                       'kcl_err',
-                       'rad40_percent',
-                       'Ar40','Ar39','Ar38','Ar37','Ar36'])
+    trunc_attrs = List(['age',
+                        'age_err',
+                        'kca',
+                        'kca_err',
+                        'kcl',
+                        'kcl_err',
+                        'rad40_percent',
+                        'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'])
     trunc_comp = Enum('>', '<', '>=', '<=', '=')
     trunc_crit = Float(enter_set=True, auto_set=False)
     trunc_start = Int(100, enter_set=True, auto_set=False)
@@ -209,7 +210,7 @@ class AutomatedRunFactory(Loggable):
     truncation_str = Property(depends_on='trunc_+')
     truncation_path = String
     truncations = List
-    clear_truncation=Button
+    clear_truncation = Button
 
     #===========================================================================
     # frequency
@@ -230,7 +231,6 @@ class AutomatedRunFactory(Loggable):
     #===========================================================================
     _selected_runs = List
     _spec_klass = AutomatedRunSpec
-    _extract_group_cnt = 1
 
     extractable = Property(depends_on='labnumber')
     update_info_needed = Event
@@ -318,19 +318,17 @@ class AutomatedRunFactory(Loggable):
             s = getattr(self, '{}_script'.format(s))
             s.extract_device = new
 
-    def new_runs(self, positions=None, auto_increment_position=False,
-                 auto_increment_id=False,
-                 extract_group_cnt=0):
+    def new_runs(self, exp_queue, positions=None, auto_increment_position=False,
+                 auto_increment_id=False):
         """
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
 
-        arvs, freq = self._new_runs(positions=positions,
-                                    extract_group_cnt=extract_group_cnt)
+        arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
-            v=increment_value(self.labnumber)
+            v = increment_value(self.labnumber)
             invoke_in_main_thread(self.trait_set, _labnumber=v)
 
         if auto_increment_position:
@@ -343,7 +341,8 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # private
     #===============================================================================
-    def _new_runs(self, positions, extract_group_cnt=0):
+    # def _new_runs(self, positions, extract_group_cnt=0):
+    def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
 
@@ -352,22 +351,21 @@ class AutomatedRunFactory(Loggable):
                 positions = self.position
 
             template = self._use_template() and not freq
-            arvs = self._new_runs_by_position(positions, template, extract_group_cnt)
+            arvs = self._new_runs_by_position(exp_queue, positions, template)
         else:
             arvs = [self._new_run()]
 
         return arvs, freq
 
-    def _new_runs_by_position(self, pos, template=False, extract_group_cnt=0):
+    def _new_runs_by_position(self, exp_queue, pos, template=False):
         arvs = []
-        positions=generate_positions(pos)
+        positions = generate_positions(pos)
 
-        for i in positions:
+        for i, p in enumerate(positions):
             # if set_pos:
-            p = str(i)
+            p = str(p)
             if template:
-                arvs.extend(self._render_template(p, extract_group_cnt))
-                extract_group_cnt += 1
+                arvs.extend(self._render_template(exp_queue, p, i))
             else:
                 arvs.append(self._new_run(position=str(p),
                                           excludes=['position']))
@@ -460,7 +458,6 @@ class AutomatedRunFactory(Loggable):
 
         for attr in ('labnumber',
                      'extract_value', 'extract_units', 'cleanup', 'duration',
-                     'extract_group',
                      'pattern', 'beam_diameter',
                      'position',
                      'weight', 'comment'):
@@ -504,18 +501,21 @@ class AutomatedRunFactory(Loggable):
 
         return template
 
-    def _render_template(self, position, cnt):
+    def _render_template(self, exp_queue, position, offset):
         arvs = []
         template = self._new_template()
         self.debug('rendering template {}'.format(template.name))
 
+        al = self.datahub.get_greatest_aliquot(self.labnumber)
+        c = exp_queue.count_labnumber(self.labnumber)
+
         for st in template.steps:
             if st.value or st.duration or st.cleanup:
-                arv = self._new_run(extract_group=cnt + 1,
-                                    step=st.step_id,
-                                    position=position,
+                arv = self._new_run(position=position,
                                     excludes=['position'])
-                arv.trait_set(**st.make_dict(self.duration, self.cleanup))
+
+                arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
+                              **st.make_dict(self.duration, self.cleanup))
                 arvs.append(arv)
 
         return arvs
@@ -585,7 +585,6 @@ class AutomatedRunFactory(Loggable):
 
         if self._flux != self.flux or \
                         self._flux_error != self.flux_error:
-
             v, e = self._flux, self._flux_error
             self.db.save_flux(self.labnumber, v, e)
 
@@ -657,7 +656,8 @@ class AutomatedRunFactory(Loggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = self._remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device != NULL_STR:
+                    if labnumber in ('u', 'bu') and \
+                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -762,7 +762,7 @@ class AutomatedRunFactory(Loggable):
             return ''
 
         for r, _, _ in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                        TRANSECT_REGEX, POSITION_REGEX):
+                        TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
             if r.match(pos):
                 return pos
         else:
@@ -894,22 +894,15 @@ class AutomatedRunFactory(Loggable):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
 
-    def _extract_group_button_fired(self):
-        if self.edit_mode and \
-                self._selected_runs and \
-                not self.suppress_update:
-            eg = self._selected_runs[0].extract_group + 1
-            self.extract_group = eg
-
     @on_trait_change('trunc_+, truncation_path')
     def _edit_truncation(self, obj, name, old, new):
-        print name,new
+        print name, new
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
 
             if name == 'truncation_path':
-                t=new
+                t = new
                 # t = add_extension(new, '.yaml') if new else None
             else:
                 t = self.truncation_str
@@ -975,6 +968,7 @@ post_equilibration_script:name
     def _special_labnumber_changed(self):
         if not self.special_labnumber in ('Special Labnumber', LINE_STR):
             ln = convert_special_name(self.special_labnumber)
+            self.debug('special ln changed {}, {}'.format(self.special_labnumber, ln))
             if ln:
                 if ln in ('dg', 'pa'):
                     pass
@@ -985,7 +979,7 @@ post_equilibration_script:name
                     with db.session_ctx():
                         ms = db.get_mass_spectrometer(self.mass_spectrometer)
                         ed = db.get_extraction_device(self.extract_device)
-                        if ln in ('a', 'ba', 'c', 'bc', 'bg'):
+                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()
@@ -1034,6 +1028,7 @@ post_equilibration_script:name
             with db.session_ctx():
                 # convert labnumber (a, bg, or 10034 etc)
                 ln = db.get_labnumber(labnumber)
+                print ln
                 if ln:
                     # set sample and irrad info
                     try:
@@ -1105,7 +1100,6 @@ post_equilibration_script:name
         if self.edit_mode and \
                 self._selected_runs and \
                 not self.suppress_update:
-
             self._set_truncation('')
 
     def _aliquot_changed(self):
@@ -1119,6 +1113,7 @@ post_equilibration_script:name
 
             self.update_info_needed = True
             self.refresh_table_needed = True
+            self.changed = True
 
     def _save_flux_button_fired(self):
         self._save_flux()
@@ -1129,10 +1124,9 @@ post_equilibration_script:name
             script = getattr(self, si)
             setattr(script, name, new)
 
-            #===============================================================================
-            # defaults
-            #===============================================================================
-
+    #===============================================================================
+    # defaults
+    #================================================================================
     def _script_factory(self, label, name, kind='ExtractionLine'):
         return Script(label=label,
                       application=self.application,
@@ -1174,6 +1168,12 @@ post_equilibration_script:name
 
     def _factory_view_default(self):
         return self.factory_view_klass(model=self)
+
+    def _datahub_default(self):
+        dh=Datahub()
+        dh.bind_preferences()
+        dh.secondary_connect()
+        return dh
 
 #============= EOF =============================================
 #

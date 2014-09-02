@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from numpy import Inf
 from traits.api import HasTraits, Any, on_trait_change, List, Int
 #============= standard library imports ========================
 from itertools import groupby
@@ -58,16 +59,16 @@ class FigurePanel(HasTraits):
                              container_dict=dict(padding=0, spacing=self.graph_spacing), )
 
         po = self.plot_options
-        attr = self._index_attr
+        attr=po.index_attr
+        center=None
+        mi,ma=Inf, -Inf
+        if attr:
+            xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
+                               for i in self.figures])
+            mi, ma = min(xmis), max(xmas)
 
-        # center=None
-        # mi,ma=None, None
-        xmas, xmis = zip(*[(i.max_x(attr), i.min_x(attr))
-                           for i in self.figures])
-        mi, ma = min(xmis), max(xmas)
-
-        cs = [i.mean_x(attr) for i in self.figures]
-        center = sum(cs) / len(cs)
+            cs = [i.mean_x(attr) for i in self.figures]
+            center = sum(cs) / len(cs)
 
         for i, fig in enumerate(self.figures):
             fig.trait_set(xma=ma, xmi=mi,
@@ -80,8 +81,13 @@ class FigurePanel(HasTraits):
             if i == 0:
                 fig.build(plots)
                 #print fig
+
+            fig.suppress_ylimits_update=True
             fig.plot(plots)
+            fig.suppress_ylimits_update=False
             ma, mi = max(fig.xma, ma), min(fig.xmi, mi)
+
+
             #timethis(fig.plot, args=(plots,), msg='fit.plot {} {}'.format(i, fig))
 
             #meta=self.meta
@@ -92,8 +98,9 @@ class FigurePanel(HasTraits):
             # mi,ma=0, 100
         if mi is None and ma is None:
             mi, ma = 0, 100
+        g.set_x_limits(mi, ma, pad=fig.xpad or 0)
 
-        g.set_x_limits(mi, ma)
+
         self.graph = g
         #print self.graph
         return g.plotcontainer

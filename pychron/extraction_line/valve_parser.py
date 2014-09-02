@@ -27,6 +27,12 @@ class ValveParser(XMLParser):
         return [g if element else g.text.strip()
                 for g in tree.findall('group')]
 
+    def get_switches(self, group=None, element=True):
+        if group is None:
+            group = self.get_root()
+        return [v if element else v.text.strip()
+                for v in group.findall('switch')]
+
     def get_valves(self, group=None, element=True):
         if group is None:
             group = self.get_root()

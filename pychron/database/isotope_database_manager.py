@@ -16,19 +16,22 @@
 
 #============= enthought library imports =======================
 from traits.api import String, Property, Event, \
-    cached_property, Any, Bool
+    cached_property, Any, Bool, Int
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import weakref
 #============= local library imports  ==========================
+from traits.has_traits import provides
+from pychron.core.i_datastore import IDatastore
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.core.helpers.iterfuncs import partition
 from pychron.core.ui.progress_dialog import myProgressDialog
 
-from pychron.processing.analyses.analysis import DBAnalysis, VCSAnalysis
 from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
+from pychron.processing.analyses.dbanalysis import DBAnalysis
+from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 
 
 ANALYSIS_CACHE = {}
@@ -36,10 +39,14 @@ ANALYSIS_CACHE_COUNT = {}
 CACHE_LIMIT = 500
 
 
+@provides(IDatastore)
 class BaseIsotopeDatabaseManager(Loggable):
+
     db = Any
     _db_klass = Any
     datasource_url = Property
+    precedence=Int(0)
+
     def __init__(self, bind=True, connect=True, warn=True, *args, **kw):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
@@ -54,7 +61,24 @@ class BaseIsotopeDatabaseManager(Loggable):
         if connect:
             self.db.connect(warn=warn)
 
-    def isConnected(self):
+    #IDatastore protocol
+    def get_greatest_aliquot(self, identifier):
+        ret=0
+        if self.db:
+            ret= self.db.get_greatest_aliquot(identifier)
+        return ret
+
+    def get_greatest_step(self, identifier, aliquot):
+        ret=0
+        if self.db:
+            ret=self.db.get_greatest_step(identifier, aliquot)
+        return ret
+
+    def connect(self, *args,**kw):
+        if self.db:
+            return self.db.connect(*args,**kw)
+
+    def is_connected(self):
         if self.db:
             return self.db.connected
 
@@ -192,6 +216,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                       progress=None,
                       exclude=None,
                       use_cache=True,
+                      unpack=False,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -214,18 +239,27 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     #partition into cached and non cached analyses
                     cached_ans, no_db_ans = partition(no_db_ans,
                                                       lambda x: x.uuid in ANALYSIS_CACHE)
-
                     cached_ans = list(cached_ans)
+                    no_db_ans = list(no_db_ans)
 
-                    #add analyses from cache to db_ans
-                    db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
+                    #if unpack is true make sure cached analyses have raw data
+                    if unpack:
+                        for ci in cached_ans:
+                            ca=ANALYSIS_CACHE[ci.uuid]
+                            if not ca.has_raw_data:
+                                print ca.record_id, 'no rawasffas'
+                                no_db_ans.append(ci)
+                            else:
+                                db_ans.append(ca)
+                    else:
+                        #add analyses from cache to db_ans
+                        db_ans.extend([ANALYSIS_CACHE[ci.uuid] for ci in cached_ans])
 
                     #increment value in cache_count
                     for ci in cached_ans:
                         self._add_to_cache(ci)
 
                     #load remaining analyses
-                    no_db_ans = list(no_db_ans)
                     n = len(no_db_ans)
                     if n:
 
@@ -258,7 +292,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                                     self.debug('accepting {}/{} analyses'.format(i, n))
                                     break
 
-                            a = self._construct_analysis(ai, progress, **kw)
+                            a = self._construct_analysis(ai, progress, unpack=unpack, **kw)
                             if a:
                                 if use_cache:
                                     self._add_to_cache(a)
@@ -357,7 +391,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         synced=False
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
-                ai.sync(meas_analysis, load_changes=load_changes)
+                ai.sync(meas_analysis, unpack=unpack, load_changes=load_changes)
                 ai.calculate_age(force=not self.use_vcs)
                 synced=True
 

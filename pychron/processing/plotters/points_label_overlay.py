@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from kiva.fonttools import str_to_font
-from traits.api import cached_property, Property, Str
+from traits.api import cached_property, Property, Str, Bool
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -28,6 +28,8 @@ class PointsLabelOverlay(AbstractOverlay):
 
     width = 0
     height = 0
+
+    label_box=Bool(False)
 
     @cached_property
     def _get_gfont(self):
@@ -49,9 +51,23 @@ class PointsLabelOverlay(AbstractOverlay):
             w, h, _, _ = gc.get_full_text_extent('ff')
             ys += yoffset - h / 2.0
 
+            show_bound_box=self.label_box
             for xi, yi, li in zip(xs, ys, self.labels):
-                gc.set_text_position(xi, yi)
-                gc.show_text(li)
+                with gc:
+                    gc.translate_ctm(xi,yi)
+                    if show_bound_box:
+                        gc.set_fill_color((1,1,1))
+                        # gc.set_fill_color((1,))
+                        w, h, _, _ = gc.get_full_text_extent(li)
+                        gc.rect(-2,-2, w+4,h+4)
+                        gc.draw_path()
+
+                    # gc.set_text_position(xi, yi)
+                    gc.set_fill_color((0, 0, 0))
+                    gc.set_text_position(0, 0)
+                    gc.show_text(li)
+
+
 
 
 #============= EOF =============================================

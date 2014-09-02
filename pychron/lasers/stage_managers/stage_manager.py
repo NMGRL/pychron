@@ -1058,7 +1058,7 @@ class StageManager(Manager):
         self.goto_position(v)
 
     def goto_position(self, v):
-        if XY_REGEX.match(v):
+        if XY_REGEX[0].match(v):
             self._move_to_calibrated_position(v)
         elif POINT_REGEX.match(v) or TRANSECT_REGEX[0].match(v):
             self.move_to_point(v)
@@ -1067,8 +1067,18 @@ class StageManager(Manager):
             self.move_to_hole(v)
 
     def _move_to_calibrated_position(self, pos):
-        x, y = map(float, pos.split(','))
-        self.linear_move(x, y, use_calibration=True, block=False)
+        try:
+            args = map(float, pos.split(','))
+        except ValueError:
+            self.warning('invalid calibrated position "{}". Could not convert to floats'.format(pos))
+            return
+
+        if len(args) == 2:
+            x, y = args
+            self.linear_move(x, y, use_calibration=True, block=False)
+        else:
+            self.warning('invalid calibrated position. incorrect number of arguments "{}"'.format(args))
+
 
     #    def _set_hole(self, v):
     #        if v is None:

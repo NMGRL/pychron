@@ -28,8 +28,11 @@ from pychron.processing.plotters.options.option import FitPlotterOptions
 class SeriesOptions(BasePlotterOptions):
     def load_aux_plots(self, ref):
         def f(kii):
-            ff = FitPlotterOptions(name=kii)
-            ff.trait_set(use=False, fit='')
+            ff=next((x for x in self.aux_plots if x.name==kii))
+            if not ff:
+                ff = FitPlotterOptions(name=kii)
+                ff.trait_set(use=False, fit='')
+
             return ff
 
         keys = ref.isotope_keys

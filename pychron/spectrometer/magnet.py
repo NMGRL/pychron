@@ -155,19 +155,24 @@ class Magnet(SpectrometerDevice):
             micro.ask('SetMagnetDAC {}'.format(v), verbose=verbose)
             time.sleep(self.settling_time)
 
-            for i in xrange(50):
-                if not to_bool(micro.ask('GetMagnetMoving')):
-                    break
-                time.sleep(0.25)
+            #only block if move is large and was made slowly.
+            #this should be more explicit. get MAGNET_MOVE_THRESHOLD from RCS
+            # and use it as to test whether to GetMagnetMoving
+            if unprotect or unblank:
+                for i in xrange(50):
+                    if not to_bool(micro.ask('GetMagnetMoving')):
+                        break
+                    time.sleep(0.25)
 
-            if unprotect:
-                for pd in self.protected_detectors:
-                    micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
-            if unblank:
-                micro.ask('BlankBeam False', verbose=verbose)
-
+                if unprotect:
+                    for pd in self.protected_detectors:
+                        micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
+                if unblank:
+                    micro.ask('BlankBeam False', verbose=verbose)
+        change = v != self._dac
         self._dac = v
         self.dac_changed = True
+        return change
 
     @get_float
     def read_dac(self):

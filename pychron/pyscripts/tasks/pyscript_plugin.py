@@ -36,65 +36,38 @@ class PyScriptPlugin(BaseTaskPlugin):
                               method='replace')
 
         exts = [
-                TaskExtension(
-                              task_id='pychron.pyscript',
-                              actions=[SchemaAddition(
-                                                      id='Edit',
-                                                      factory=lambda:SMenu(id='Edit', name='Edit'),
-                                                      path='MenuBar',
-                                                      ),
-                                       SchemaAddition(id='replace',
-                                            path='MenuBar/Edit',
-                                            factory=_replace_action
-                                            )
-                                       ]
-                              ),
+            TaskExtension(
+                task_id='pychron.pyscript',
+                actions=[SchemaAddition(
+                    id='Edit',
+                    factory=lambda: SMenu(id='Edit', name='Edit'),
+                    path='MenuBar'),
+                         SchemaAddition(id='replace',
+                                        path='MenuBar/Edit',
+                                        factory=_replace_action)]),
 
-                TaskExtension(
-#                              task_id='pychron.pyscript',
-                              actions=[
-#                                        SchemaAddition(
-#                                                       id='Open',
-#                                                       factory=lambda:SMenu(id='Open', name='Open'),
-#                                                       path='MenuBar/File',
-# #                                                       before='find_bake'
-#                                                       ),
-#                                        SchemaAddition(
-#                                                       id='New',
-#                                                       factory=lambda:SMenu(id='New', name='New'),
-#                                                       path='MenuBar/File',
-# #                                                       before='find_bake'
-#                                                       ),
-                                       SchemaAddition(id='open_script',
-                                                    path='MenuBar/File/Open',
-                                                    factory=OpenPyScriptAction
-                                                    ),
-                                       SchemaAddition(id='new_script',
-                                                    path='MenuBar/File/New',
-                                                    factory=NewPyScriptAction
-                                                    ),
-#                                       SchemaAddition(id='replace',
-#                                                    path='MenuBar/Edit',
-#                                                    factory=_replace_action
-#                                                    )
-
-                                       ])
-                ]
+            TaskExtension(
+                actions=[
+                    SchemaAddition(id='open_script',
+                                   path='MenuBar/File/Open',
+                                   factory=OpenPyScriptAction),
+                    SchemaAddition(id='new_script',
+                                   path='MenuBar/File/New',
+                                   factory=NewPyScriptAction)])]
         return exts
 
     def _tasks_default(self):
         return [TaskFactory(
-                            id='pychron.pyscript',
-                            name='PyScript',
-                            factory=self._task_factory,
-                            task_group='experiment'
-                            )
-                ]
+            id='pychron.pyscript',
+            name='PyScript',
+            factory=self._task_factory,
+            task_group='experiment',
+            image='script.png')]
 
     def _task_factory(self):
         return PyScriptTask()
 
     def _preferences_panes_default(self):
-        return [PyScriptPreferencesPane,
-                ]
+        return [PyScriptPreferencesPane]
+
 #============= EOF =============================================

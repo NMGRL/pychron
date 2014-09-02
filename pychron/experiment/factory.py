@@ -69,7 +69,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     #    can_edit_scripts = Bool(True)
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
-        self.setup_consumer(self._add_run)
+        self.setup_consumer(self._add_run, main=True)
 
     def destroy(self):
         self._should_consume = False
@@ -78,19 +78,20 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.run_factory.set_selected_runs(runs)
 
     def _add_run(self, *args, **kw):
-        egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
-        eg = max(egs) if egs else 0
+        # egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
+        # eg = max(egs) if egs else 0
 
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
 
         load_name = self.queue_factory.load_name
-        new_runs, freq = self.run_factory.new_runs(positions=positions,
+
+        q = self.queue
+        new_runs, freq = self.run_factory.new_runs(q, positions=positions,
                                                    auto_increment_position=self.auto_increment_position,
-                                                   auto_increment_id=self.auto_increment_id,
-                                                   extract_group_cnt=eg)
+                                                   auto_increment_id=self.auto_increment_id)
         #         if self.run_factory.check_run_addition(new_runs, load_name):
         #if self.run_factory.check_run_addition(new_runs, load_name):
-        q = self.queue
+        # q = self.queue
         if q.selected:
             idx = q.automated_runs.index(q.selected[-1])
         else:
@@ -187,9 +188,9 @@ extract_device, delay_+, tray, username, load_name]''')
     # property get/set
     #===============================================================================
     def _get_ok_add(self):
-        '''
+        """
             tol should be a user permission
-        '''
+        """
         return self._username and \
                not self._mass_spectrometer in ('', 'Spectrometer', LINE_STR) and \
                self._labnumber

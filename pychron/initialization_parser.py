@@ -60,10 +60,11 @@ class InitializationParser(XMLParser):
 
     def __init__(self, *args, **kw):
         ver = '_proc'
-        # ver = '_exp'
-        #ver = '_exp_uv'
-        #ver= '_spec'
-        # ver='_diode'
+        ver = '_exp'
+        ver = '_apis'
+        # ver = '_exp_uv'
+        # ver= '_spec'
+        # ver = '_diode'
         # ver = '_dash'
         #ver = '_dash_client'
         #ver = ''
@@ -214,11 +215,11 @@ class InitializationParser(XMLParser):
             return p[0]
 
     def get_processors(self):
-    #        ps = []
-    #        for p in self.get_plugins('Hardware'):
-    #            pp = self.get_processor(p)
-    #            if pp:
-    #                ps.append(pp)
+        #        ps = []
+        #        for p in self.get_plugins('Hardware'):
+        #            pp = self.get_processor(p)
+        #            if pp:
+        #                ps.append(pp)
         pl = self.get_plugin_group('hardware')
         ps = [pi for pi in [self.get_processor(p)
                             for p in self.get_plugins('hardware', element=True)] if pi]

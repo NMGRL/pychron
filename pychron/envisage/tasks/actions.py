@@ -28,6 +28,9 @@ from pyface.constant import YES
 #===============================================================================
 # help
 #===============================================================================
+from pychron.envisage.resources import icon
+
+
 class WebAction(Action):
     def _open_url(self, url):
         webbrowser.open_new(url)
@@ -35,12 +38,13 @@ class WebAction(Action):
 
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
+    image = icon('bug.png')
 
     def perform(self, event):
         """
             goto issues page add an request or report bug
         """
-        url = 'https://github.com/jirhiker/pychron/issues/new'
+        url = 'https://github.com/NMGRL/pychron/issues/new'
         self._open_url(url)
 
 
@@ -53,6 +57,7 @@ class AboutAction(Action):
 
 class ResetLayoutAction(TaskAction):
     name = 'Reset Layout'
+    image = icon('view-restore')
 
     def perform(self, event):
         self.task.window.reset_layout()
@@ -60,6 +65,7 @@ class ResetLayoutAction(TaskAction):
 
 class PositionAction(Action):
     name = 'Window Positions'
+    image = icon('window-new')
 
     def perform(self, event):
         from pychron.envisage.tasks.layout_manager import LayoutManager
@@ -125,6 +131,7 @@ class RaiseUIAction(TaskAction):
 class GenericSaveAction(TaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
+    image = icon('document-save.png')
 
     def perform(self, event):
         task = self.task
@@ -135,6 +142,7 @@ class GenericSaveAction(TaskAction):
 class GenericSaveAsAction(TaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
+    image = icon('document-save-as.png')
 
     def perform(self, event):
         task = self.task

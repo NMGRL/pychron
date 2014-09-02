@@ -78,6 +78,12 @@ class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
 
+
+class GraphGroupSelectedAction(GroupAction):
+    name = 'Graph Group Selected'
+    method = 'graph_group_selected'
+
+
 #     def perform(self, event):
 #         task = event.task
 #         if task.id == 'pychron.processing.figures':
@@ -127,25 +133,15 @@ class FigureAction(Action):
     def perform(self, event):
         app = event.task.window.application
         task = app.get_task('pychron.processing.figures')
-        #         task = event.task
-        #         if not task.id == 'pychron.processing.figures':
-        #             app = task.window.application
-        #             win = app.create_window(TaskWindowLayout(
-        #                                                'pychron.processing.figures'
-        #                                                )
-        #                               )
-        #             win.open()
-        #             task = win.active_task
-
         if hasattr(task, self.method):
             getattr(task, self.method)()
 
-#         task.new_ideogram()
 
 class IdeogramAction(FigureAction):
     name = 'Ideogram'
     accelerator = 'Ctrl+J'
     method = 'new_ideogram'
+    image = icon('histogram')
 
 
 class SpectrumAction(FigureAction):
@@ -159,25 +155,18 @@ class SeriesAction(FigureAction):
     accelerator = 'Ctrl+U'
     method = 'new_series'
 
-#     def perform(self, event):
-#
-#         task = event.task
-#         if not task.id == 'pychron.processing.figures':
-#             app = task.window.application
-#             win = app.create_window(TaskWindowLayout(
-#                                                'pychron.processing.figures'
-#                                                )
-#                               )
-#             win.open()
-#             task = win.active_task
-#
-#         task.new_spectrum()
-
 
 class InverseIsochronAction(FigureAction):
     name = 'Inverse Isochron'
     method = 'new_inverse_isochron'
     accelerator = 'Ctrl+i'
+
+
+class FigureFromFile(FigureAction):
+    name = 'Ideogram from File'
+    method = 'new_ideogram_from_file'
+    accelerator = 'Ctrl+shift+j'
+
 
 #===============================================================================
 #
@@ -221,6 +210,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 class OpenAdvancedQueryAction(Action):
     name = 'Find Analysis...'
+    image = icon('edit-find.png')
 
     def perform(self, event):
         app = event.task.window.application
@@ -230,6 +220,7 @@ class OpenAdvancedQueryAction(Action):
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
+    image = icon('edit-clear')
 
     def perform(self, event=None):
         from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT
@@ -244,6 +235,7 @@ class ExportAnalysesAction(Action):
     def perform(self, event):
         app = event.task.window.application
         app.open_task('pychron.export')
+
 
 #============= EOF =============================================
 

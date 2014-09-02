@@ -16,6 +16,7 @@
 
 #============= enthought library imports =======================
 import copy
+
 from chaco.axis import DEFAULT_TICK_FORMATTER
 from chaco.base_xy_plot import BaseXYPlot
 from chaco.scatterplot import ScatterPlot
@@ -25,6 +26,7 @@ from enable.markers import MarkerTrait
 from traits.api import HasTraits, Any, Float, Int, on_trait_change, Bool, \
     Instance, List, Range, Color, Str, Font, Enum
 from traitsui.api import View, Item, Group, VGroup, UItem, Heading, HGroup, EnumEditor
+
 # from pyface.timer.do_later import do_later
 # from traitsui.editors.range_editor import RangeEditor
 # from numpy.core.numeric import Inf
@@ -276,7 +278,6 @@ class PlotEditor(HasTraits):
         self.plot.invalidate_and_redraw()
 
     def _xmin_changed(self):
-        print 'xmin change'
         p = self.plot
         v = p.index_range.high
         if self.xmin < v:
@@ -289,7 +290,6 @@ class PlotEditor(HasTraits):
             pass
 
     def _xmax_changed(self):
-        print 'xmax change'
         p = self.plot
         v = p.index_range.low
         if self.xmax > v:
@@ -318,8 +318,8 @@ class PlotEditor(HasTraits):
     def _xauto_changed(self):
         if self.xauto:
             #p = self.plot
-            dd = [a.uage for a in self.analyses]
-
+            # dd = [a.uage for a in self.analyses]
+            dd=[a.get_value(self.index_attr) for a in self.analyses]
             mid = [di.nominal_value - di.std_dev for di in dd]
             mad = [di.nominal_value + di.std_dev for di in dd]
             #mid=[di.nominal_value for di in dd]

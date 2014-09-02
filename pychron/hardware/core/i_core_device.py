@@ -26,15 +26,15 @@ from traits.api import Interface
 
 class ICoreDevice(Interface):
     def get(self):
-        '''
-        '''
+        """
+        """
 
-    def set(self, *args, **kw):
-        '''
-        '''
+    def set(self, v):
+        """
+        """
 
-    def close(self, *args, **kw):
-        '''
-        '''
+    def close(self):
+        """
+        """
 #============= views ===================================
 #============= EOF ====================================

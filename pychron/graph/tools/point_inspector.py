@@ -19,6 +19,7 @@ from traits.api import Callable
 #============= standard library imports ========================
 from numpy import where, abs
 #============= local library imports  ==========================
+from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.info_inspector import InfoInspector, InfoOverlay
 
 
@@ -34,14 +35,13 @@ class PointInspector(InfoInspector):
         if xxyy:
             x, _ = self.component.map_data((xxyy))
             d = self.component.index.get_data()
-            tol = 0.0001
-            ind = where(abs(d - x) < tol)[0]
-            return ind
+            tol = 0.001
+            return where(abs(d - x) < tol)[0]
 
     def percent_error(self, s, e):
-        v = 'Inf'
+        v ='(Inf%)'
         try:
-            v = abs(e / s) * 100
+            return '({:0.2f}%)'.format(abs(e / s) * 100)
         except ZeroDivisionError:
             pass
         return v
@@ -55,24 +55,33 @@ class PointInspector(InfoInspector):
             else:
                 x = '{:0.5f}'.format(x)
 
-            ind = self.get_selected_index()
+            inds = self.get_selected_index()
+            lines=[]
+            if inds is not None and hasattr(self.component, 'yerror'):
+                for i in inds:
+                    ye = self.component.yerror.get_data()[i]
+                    pe = self.percent_error(y, ye)
 
-            if ind is not None and hasattr(self.component, 'yerror'):
-                ye = self.component.yerror.get_data()[ind][0]
-                pe = self.percent_error(y, ye)
+                    # fmt = '{:0.3e}' if abs(ye) < 10e-6 else '{:0.6f}'
+                    # ye = fmt.format(ye)
 
-                fmt = '{:0.3e}' if abs(ye) < 10e-6 else '{:0.6f}'
-                ye = fmt.format(ye)
+                    # fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
+                    # y = fmt.format(y)
+                    ye=floatfmt(ye, n=6, s=3)
+                    y=floatfmt(y, n=6, s=3)
+                    y = u'{} {}{} ({})'.format(y, '+/-', ye, pe)
 
-                fmt = '{:0.3e}' if abs(y) < 10e-6 else '{:0.6f}'
-                y = fmt.format(y)
-                y = u'{} {}{}({:0.2f}%)'.format(y, '+/-', ye, pe)
+                    lines.extend([u'x= {}'.format(x), u'y= {}'.format(y)])
+                    if hasattr(self.component, 'display_index'):
+                        x = self.component.display_index.get_data()[i]
+                        lines.append(u'{}'.format(x))
+                        # lines = [u'{}'.format(x)] + lines
+            # else:
+            #     lines = [u'x= {}'.format(x), u'y= {}'.format(y)]
 
-            lines = [u'x= {}'.format(x), u'y= {}'.format(y)]
-
-            if ind is not None and hasattr(self.component, 'display_index'):
-                x = self.component.display_index.get_data()[ind][0]
-                lines = [u'{}'.format(x)] + lines
+            # if inds is not None and hasattr(self.component, 'display_index'):
+            #     x = self.component.display_index.get_data()[ind][0]
+            #     lines = [u'{}'.format(x)] + lines
 
             return lines
         else:

@@ -114,7 +114,7 @@ class DataCollector(Loggable):
         with consumable(func=self._iter_step) as con:
             self._iter(con, evt, 1)
             while not evt.is_set():
-                time.sleep(0.25)
+                time.sleep(0.05)
 
         self.debug('measurement finished')
 
@@ -157,7 +157,6 @@ class DataCollector(Loggable):
 
     def _save_data(self, x, keys, signals):
         self.data_writer(self.detectors, x, keys, signals)
-
         #update arar_age
         if self.is_baseline and self.for_peak_hop:
             self._update_baseline_peak_hop(x, keys, signals)
@@ -218,30 +217,44 @@ class DataCollector(Loggable):
                 signal = signals[keys.index(dn.name)]
                 self._set_plot_data(cnt, iso, dn.name, x, signal)
 
-    def _set_plot_data(self, cnt, iso, det, x, signal):
-        try:
-            name=iso
-            iso=self.arar_age.isotopes[iso]
-        except KeyError:
-            name='{}{}'.format(iso, det)
-            iso=self.arar_age.isotopes[name]
-
+    def _get_fit(self, cnt, det, iso):
+        isotopes = self.arar_age.isotopes
         if self.is_baseline:
-            fit=iso.baseline.get_fit(cnt)
+            for i in isotopes.itervalues():
+                if i.detector == det:
+                    break
+            name = i.name
+            fit = i.baseline.get_fit(cnt)
         else:
-            fit=iso.get_fit(cnt)
+            try:
+                name = iso
+                iso = isotopes[iso]
+            except KeyError:
+                name = '{}{}'.format(iso, det)
+                iso = isotopes[name]
+            fit = iso.get_fit(cnt)
+
+        return fit, name
+
+    def _set_plot_data(self, cnt, iso, det, x, signal):
+        """
+            if is_baseline than use detector to get isotope
+        """
+
+        #get fit and name
+        fit, name = self._get_fit(cnt, det, iso)
 
         graph = self.plot_panel.isotope_graph
         pid=graph.get_plotid_by_ytitle(name)
+        if pid is not None:
+            graph.add_datum((x, signal),
+                            series=self.series_idx,
+                            plotid=pid,
+                            update_y_limits=True,
+                            ypadding='0.1')
 
-        graph.add_datum((x, signal),
-                        series=self.series_idx,
-                        plotid=pid,
-                        update_y_limits=True,
-                        ypadding='0.1')
-
-        if fit:
-            graph.set_fit(fit, plotid=pid, series=self.series_idx)
+            if fit:
+                graph.set_fit(fit, plotid=pid, series=self.series_idx)
 
     def _plot_data(self, i, x, keys, signals):
         if globalv.experiment_debug:

@@ -44,6 +44,7 @@ class FitSelector(HasTraits):
     auto_update = Bool(True)
 
     plot_button = Button('Plot')
+    default_error_type='SD'
 
     def _plot_button_fired(self):
         self.update_needed = True
@@ -108,10 +109,17 @@ class FitSelector(HasTraits):
         nfs = []
         for ki, fi in zip(keys, fits):
             pf = next((fa for fa in self.fits if fa.name == ki), None)
+            fit, et, fod = fi
             if pf is None:
-                pf = self.fit_klass(name=ki, fit=fi)
-            else:
-                pf.fit = fi
+                pf = self.fit_klass(name=ki)
+
+            pf.fit = fit
+            pf.filter_outliers = fod.get('filter_outliers')
+
+            pf.filter_iterations = fod.get('iterations', 0)
+            pf.filter_std_devs = fod.get('std_devs', 0)
+            pf.error_type = et
+
             nfs.append(pf)
 
         self.fits = nfs
@@ -133,28 +141,28 @@ class FitSelector(HasTraits):
         fits.extend(fs)
         self.fits = fits
 
-    def add_peak_center_fit(self):
-        fits = self.fits
-        if not fits:
-            fits = []
-
-        fs = self.fit_klass(name='PC', fit='average')
-
-        fits.append(fs)
-        self.fits = fits
-
-    def add_derivated_fits(self, keys):
-        fits = self.fits
-        if not fits:
-            fits = []
-
-        fs = [
-            self.fit_klass(name='{}E'.format(ki), fit='average')
-            for ki in keys
-        ]
-
-        fits.extend(fs)
-        self.fits = fits
+    # def add_peak_center_fit(self):
+    #     fits = self.fits
+    #     if not fits:
+    #         fits = []
+    #
+    #     fs = self.fit_klass(name='PC', fit='average')
+    #
+    #     fits.append(fs)
+    #     self.fits = fits
+    #
+    # def add_derivated_fits(self, keys):
+    #     fits = self.fits
+    #     if not fits:
+    #         fits = []
+    #
+    #     fs = [
+    #         self.fit_klass(name='{}E'.format(ki), fit='average')
+    #         for ki in keys
+    #     ]
+    #
+    #     fits.extend(fs)
+    #     self.fits = fits
 
     def _update_command_key(self, new):
         self.command_key = new

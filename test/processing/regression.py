@@ -160,7 +160,7 @@ class OLSRegressionTest(TestCase):
 
     def testPredictYerr(self):
         ols = self.ols
-        ypred = ols.predict_error(self.Xk)
+        ypred = ols.predict_error(self.Xk, error_calc='SEM')
         self.assertAlmostEqual(ypred, self.ypred_k, 3)
 
     def testPredictYerr_matrix(self):
@@ -175,8 +175,8 @@ class OLSRegressionTest(TestCase):
 
     def testPredictYerrSD(self):
         ols = self.ols
-        ypred = ols.predict_error(self.Xk, error_calc='sd')
-        ypredm = ols.predict_error_matrix([self.Xk], error_calc='sd')[0]
+        ypred = ols.predict_error(self.Xk, error_calc='SEM')
+        ypredm = ols.predict_error_matrix([self.Xk], error_calc='SEM')[0]
         self.assertAlmostEqual(ypred, ypredm, 7)
 
     def testPredictYerrSD_al(self):

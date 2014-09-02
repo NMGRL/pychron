@@ -15,11 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from chaco.tools.broadcaster import BroadcasterTool
 from traits.api import List, on_trait_change, Bool, \
     Property, cached_property, HasTraits, Tuple
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 #============= standard library imports ========================
@@ -357,12 +359,12 @@ class InterpolationEditor(GraphEditor):
         if r_ys:
             reg = None
             # plot references
-
-            if fit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            efit=fit[0]
+            if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
                 reg = InterpolationRegressor(xs=r_xs,
                                              ys=r_ys,
                                              yserr=r_es,
-                                             kind=fit)
+                                             kind=efit)
                 s, _p = graph.new_series(r_xs, r_ys,
                                          yerror=r_es,
                                          type='scatter',
@@ -431,6 +433,16 @@ class InterpolationEditor(GraphEditor):
         return ebo
 
     def _add_inspector(self, scatter, ans):
+        broadcaster = BroadcasterTool()
+        scatter.tools.append(broadcaster)
+
+        rect_tool = RectSelectionTool(scatter)
+        rect_overlay = RectSelectionOverlay(component=scatter,
+                                            tool=rect_tool)
+
+        scatter.overlays.append(rect_overlay)
+        broadcaster.tools.append(rect_tool)
+
         point_inspector = AnalysisPointInspector(scatter,
                                                  analyses=ans,
                                                  convert_index=lambda x: '{:0.3f}'.format(x))
@@ -440,6 +452,8 @@ class InterpolationEditor(GraphEditor):
 
         scatter.overlays.append(pinspector_overlay)
         scatter.tools.append(point_inspector)
+        broadcaster.tools.append(point_inspector)
+
         scatter.index.on_trait_change(self._update_metadata(ans), 'metadata_changed')
 
     def _update_metadata(self, ans):

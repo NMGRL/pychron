@@ -15,24 +15,21 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Button
-from traitsui.api import View, Item, HGroup, spring
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.fits.filter_fit_selector import FilterFitSelector
 
 
 class IsoEvoFitSelector(FilterFitSelector):
-
+    default_error_type = 'SEM'
     def load_fits(self, keys, fits):
         bs = ['{}bs'.format(ki) for ki in keys]
-        bfs = ['average_SEM' for fi in fits]
+        # bfs = ['average' for fi in fits]
 
-        super(IsoEvoFitSelector, self).load_fits(keys + bs, fits + bfs)
+        super(IsoEvoFitSelector, self).load_fits(keys + bs, fits)
 
-    # def traits_view(self):
+        # def traits_view(self):
     #     v = View(
     #         self
     #         self._get_fit_group())

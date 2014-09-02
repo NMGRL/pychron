@@ -37,7 +37,7 @@ class Ideogram(BaseArArFigure):
     xma = Float
     xs = Array
     xes = Array
-    index_key = 'uage'
+    # index_key = 'uage'
     ytitle = 'Relative Probability'
     #     _reverse_sorted_analyses = True
     _analysis_number_cnt = 0
@@ -45,16 +45,16 @@ class Ideogram(BaseArArFigure):
     x_grid_visible = False
     y_grid_visible = False
 
-    _omit_key='omit_ideo'
+    _omit_key = 'omit_ideo'
 
     def plot(self, plots):
         """
             plot data on plots
         """
-        opt=self.options
+        opt = self.options
+        index_attr = 'uage'
         if opt.index_attr:
-            if opt.index_attr=='Age':
-                self.index_key='uage'
+            index_attr = opt.index_attr
 
         graph = self.graph
 
@@ -62,19 +62,27 @@ class Ideogram(BaseArArFigure):
 
         try:
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
-                                       for ai in self._get_xs(key=self.index_key)]).T
-        except (ValueError, AttributeError):
+                                       for ai in self._get_xs(key=index_attr)]).T
+        except (ValueError, AttributeError), e:
+            print 'asdfasdf', e
             return
 
         omit = self._get_omitted(self.sorted_analyses,
                                  omit='omit_ideo',
                                  include_value_filtered=False)
-        omit=set(omit)
+        omit = set(omit)
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            args=getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            try:
+                args = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            except AttributeError:
+                import traceback
+
+                traceback.print_exc()
+                continue
+
             if args:
-                scatter, omits=args
-                omit=omit.union(set(omits))
+                scatter, omits = args
+                omit = omit.union(set(omits))
 
             self._update_options_limits(pid)
 
@@ -82,28 +90,34 @@ class Ideogram(BaseArArFigure):
             # print ai.record_id, i in omit
             ai.value_filter_omit = i in omit
 
-        self._asymptotic_limit_flag=True
-        opt=self.options
-        xmi, xma=self.xmi, self.xma
-        pad = '0.05'
+        # self._asymptotic_limit_flag = True
+        opt = self.options
+        xmi, xma = self.xmi, self.xma
+        # pad = '0.05'
         if opt.use_asymptotic_limits:
             xmi, xma = self.xmi, self.xma
         elif opt.use_centered_range:
-            w2=opt.centered_range/2.0
-            r=self.center
-            xmi, xma=r-w2, w2+r
-            pad=False
+            w2 = opt.centered_range / 2.0
+            r = self.center
+            xmi, xma = r - w2, w2 + r
+            # pad=False
         elif opt.xlow or opt.xhigh:
-            xmi,xma=opt.xlow, opt.xhigh
-            pad=False
+            xmi, xma = opt.xlow, opt.xhigh
+            # pad=False
 
-        self.xmi=min(xmi, self.xmi)
-        self.xma=max(xma, self.xma)
+        self.xmi = min(xmi, self.xmi)
+        self.xma = max(xma, self.xma)
         # graph.set_x_limits(min_=xmi, max_=xma,pad=pad)
 
-        ref = self.analyses[0]
-        age_units = ref.arar_constants.age_units
-        graph.set_x_title('Age ({})'.format(age_units))
+        t = index_attr
+        if index_attr == 'uF':
+            t = 'Ar40*/Ar39k'
+        elif index_attr == 'uage':
+            ref = self.analyses[0]
+            age_units = ref.arar_constants.age_units
+            t = 'Age ({})'.format(age_units)
+
+        graph.set_x_title(t)
 
         #turn off ticks for prob plot by default
         plot = graph.plots[0]
@@ -127,15 +141,15 @@ class Ideogram(BaseArArFigure):
     def max_x(self, attr):
         try:
             return max([ai.nominal_value + ai.std_dev
-                    for ai in self._unpack_attr(attr)])
-        except (AttributeError,ValueError):
+                        for ai in self._unpack_attr(attr)])
+        except (AttributeError, ValueError):
             return 0
 
     def min_x(self, attr):
         try:
             return min([ai.nominal_value - ai.std_dev
-                    for ai in self._unpack_attr(attr)])
-        except (AttributeError,ValueError):
+                        for ai in self._unpack_attr(attr)])
+        except (AttributeError, ValueError):
             return 0
 
 
@@ -146,15 +160,17 @@ class Ideogram(BaseArArFigure):
     def _plot_aux(self, title, vk, ys, po, plot, pid,
                   es=None):
 
-        omits=self._get_aux_plot_omits(po, ys)
+        omits = self._get_aux_plot_omits(po, ys)
 
         scatter = self._add_aux_plot(ys,
                                      title, pid)
 
         self._add_error_bars(scatter, self.xes, 'x', 1,
+                             end_caps=self.options.x_end_caps,
                              visible=po.x_error)
         if es:
             self._add_error_bars(scatter, es, 'y', 1,
+                                 end_caps=self.options.y_end_caps,
                                  visible=po.y_error)
 
         if po.show_labels:
@@ -190,11 +206,9 @@ class Ideogram(BaseArArFigure):
         scatter = self._add_aux_plot(ys, name, pid)
 
         self._add_error_bars(scatter, self.xes, 'x', 1,
+                             end_caps=self.options.x_end_caps,
                              visible=po.x_error)
 
-        self._add_scatter_inspector(scatter,
-                                    value_format=lambda x: '{:d}'.format(int(x)),
-                                    additional_info=lambda x: u'Age= {}'.format(x.age_string))
         if po.show_labels:
             self._add_point_labels(scatter)
 
@@ -204,9 +218,21 @@ class Ideogram(BaseArArFigure):
         #                         # pad='0.01',
         #                         plotid=pid)
         if not po.has_ylimits():
-            self._set_y_limits(0, max(ys)+1, pid=pid)
+            self._set_y_limits(0, max(ys) + 1, pid=pid)
 
-        omits=self._get_aux_plot_omits(po, ys)
+        omits = self._get_aux_plot_omits(po, ys)
+        ia = self.options.index_attr
+        # if ia == 'uF':
+        #     f = lambda x: u'{}= {}'.format(ia, x.f_string)
+        # elif ia =='uage':
+        #     f = lambda x: u'{}= {}'.format(ia, x.age_string)
+        # else:
+        f= lambda x: u'{}= {}'.format(ia, x.value_string(ia))
+
+        self._add_scatter_inspector(scatter,
+                                    value_format=lambda x: '{:d}'.format(int(x)),
+                                    additional_info=f)
+
         return scatter, omits
 
     def _plot_relative_probability(self, po, plot, pid):
@@ -216,7 +242,7 @@ class Ideogram(BaseArArFigure):
         ogid = self.group_id
         gid = ogid + 1
         sgid = ogid * 2
-
+        # print 'ogid={} gid={} sgid={}'.format(ogid, gid, sgid)
         scatter, _p = graph.new_series(x=bins, y=probs, plotid=pid)
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -230,11 +256,11 @@ class Ideogram(BaseArArFigure):
         graph.set_series_label('Original-{}'.format(gid), series=sgid + 1, plotid=pid)
 
         self._add_info(graph, plot)
-        mo=self._add_mean_indicator(graph, scatter, bins, probs, pid)
+        mo = self._add_mean_indicator(graph, scatter, bins, probs, pid)
         mo.id = 'mean_{}'.format(self.group_id)
         if mo.id in po.overlay_positions:
             ap = po.overlay_positions[mo.id]
-            mo.y=ap[1]
+            mo.y = ap[1]
 
         mi, ma = min(probs), max(probs)
 
@@ -244,9 +270,9 @@ class Ideogram(BaseArArFigure):
         d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         plot.index_mapper.on_trait_change(d, 'updated')
 
-    #===============================================================================
-    # overlays
-    #===============================================================================
+        #===============================================================================
+        # overlays
+        #===============================================================================
         #def _add_limits_tool(self, plot):
 
         #t = LimitsTool(component=plot)
@@ -257,19 +283,19 @@ class Ideogram(BaseArArFigure):
     def _add_info(self, g, plot):
         if self.group_id == 0:
             if self.options.show_info:
-                ts=[]
+                ts = []
                 if self.options.show_mean_info:
                     m = self.options.mean_calculation_kind
-                    s=self.options.nsigma
-                    ts.append('Mean: {} +/-{}s'.format(m,s))
+                    s = self.options.nsigma
+                    ts.append('Mean: {} +/-{}s'.format(m, s))
                 if self.options.show_error_type_info:
                     ts.append('Error Type:{}'.format(self.options.error_calc_method))
 
                 if ts:
                     pl = FlowPlotLabel(text='\n'.join(ts),
-                                   overlay_position='inside top',
-                                   hjustify='left',
-                                   component=plot)
+                                       overlay_position='inside top',
+                                       hjustify='left',
+                                       component=plot)
                     plot.overlays.append(pl)
 
     def _add_mean_indicator(self, g, line, bins, probs, pid):
@@ -440,18 +466,17 @@ class Ideogram(BaseArArFigure):
         if xmi == -Inf or xma == Inf:
             xmi, xma = self.xmi, self.xma
 
-        opt=self.options
-
+        opt = self.options
 
         if opt.probability_curve_kind == 'kernel':
             return self._kernel_density(ages, errors, xmi, xma)
 
         else:
             if opt.use_asymptotic_limits and calculate_limits:
-                cfunc=lambda x1,x2: self._cumulative_probability(ages, errors, x1,x2)
+                cfunc = lambda x1, x2: self._cumulative_probability(ages, errors, x1, x2)
                 # bins,probs=cfunc(xmi,xma)
-                bins, probs, x1,x2=self._calculate_asymptotic_limits(cfunc, xmi, xma,
-                                                                     asymptotic_width=opt.asymptotic_width)
+                bins, probs, x1, x2 = self._calculate_asymptotic_limits(cfunc, xmi, xma,
+                                                                        asymptotic_width=opt.asymptotic_width)
                 self.trait_setq(xmi=x1, xma=x2)
                 # print x1, x2
                 # self.xmi, self.xma=x1,x2
@@ -502,38 +527,38 @@ class Ideogram(BaseArArFigure):
 
             returns xs,ys,xmi,xma
         """
-        rx1,rx2=None, None
-        step=asymptotic_width*0.25
-        N2=N/2.0
+        rx1, rx2 = None, None
+        step = asymptotic_width * 0.25
+        N2 = N / 2.0
         for i in xrange(max_iter):
-            x1,x2=xmi-step*i, xma+step*i
-            xs, ys=cfunc(x1,x2)
+            x1, x2 = xmi - step * i, xma + step * i
+            xs, ys = cfunc(x1, x2)
 
-            bin_per_ma=N/(x2-x1)
+            bin_per_ma = N / (x2 - x1)
 
-            aw=int(asymptotic_width * bin_per_ma)
-            if aw>N2:
+            aw = int(asymptotic_width * bin_per_ma)
+            if aw > N2:
                 continue
 
-            if aw<1:
+            if aw < 1:
                 break
 
             low = ys[:aw]
             high = ys[-aw:]
 
-            tt=tol*max(ys)
+            tt = tol * max(ys)
             # print tt, low.mean(), high.mean(), aw, bin_per_ma, asymptotic_width, xmi, xma
-            if low.mean()<tt:# and low.std()<std_tol:
-                rx1=x1
-            if high.mean()<tt:# and high.std()<std_tol:
-                rx2=x2
+            if low.mean() < tt:  # and low.std()<std_tol:
+                rx1 = x1
+            if high.mean() < tt:  # and high.std()<std_tol:
+                rx2 = x2
             if rx1 is not None and rx2 is not None:
                 break
 
         if rx1 is None:
-            rx1=x1
+            rx1 = x1
         if rx2 is None:
-            rx2=x2
+            rx2 = x2
 
         # print 'x1,x2',rx1, rx2
         return xs, ys, rx1, rx2
@@ -542,7 +567,7 @@ class Ideogram(BaseArArFigure):
         return x.age
 
     def _calculate_stats(self, ages, errors, xs, ys):
-        mswd, valid_mswd, n =self.analysis_group.get_mswd_tuple()
+        mswd, valid_mswd, n = self.analysis_group.get_mswd_tuple()
 
         if self.options.mean_calculation_kind == 'kernel':
             wm, we = 0, 0

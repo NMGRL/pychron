@@ -720,13 +720,13 @@ class Graph(Viewable, ContextMenuMixin):
         self._set_title('x_axis', title, plotid, **font)
 
     def set_y_title(self, title, plotid=0, **font):
-        '''
-        '''
+        """
+        """
         self._set_title('y_axis', title, plotid, **font)
 
-    def add_plot_label(self, txt, x, y, plotid=0, **kw):
-        '''
-        '''
+    def add_plot_label(self, txt, plotid=0, **kw):
+        """
+        """
 
         #        print x, y
         # #        x, y = .map_screen([(x, y)])[0]
@@ -1083,21 +1083,19 @@ class Graph(Viewable, ContextMenuMixin):
 
         l = GuideOverlay(plot, value=v, orientation='v', **kw)
 
-        plot.overlays.append(l)
+        plot.underlays.append(l)
         return l
 
     def add_horizontal_rule(self, v, plotid=0, **kw):
-        '''
-        '''
+        """
+        """
         plot = self.plots[plotid]
-
         l = GuideOverlay(plot, value=v, **kw)
-
-        plot.overlays.append(l)
+        plot.underlays.append(l)
 
     def add_opposite_ticks(self, plotid=0, key=None):
-        '''
-        '''
+        """
+        """
         p = self.plots[plotid]
         if key is None:
             for key in ['x', 'y']:

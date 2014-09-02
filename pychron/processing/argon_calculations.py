@@ -30,16 +30,29 @@ from pychron.core.stats.core import calculate_weighted_mean
 #============= local library imports  ==========================
 
 
-def calculate_isochron(analyses, reg='Reed'):
-    if reg.lower() in ('newyork','new_york'):
-        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
-    else:
-        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
+def extract_isochron_xy(analyses):
+    ans = [(ai.get_interference_corrected_value('Ar39'),
+            ai.get_interference_corrected_value('Ar36'),
+            ai.get_interference_corrected_value('Ar40'))
+           for ai in analyses]
+    a39, a36, a40 = array(ans).T
+    # print 'a40',a40
+    # print 'a39',a39
+    # print 'a36',a36
+    try:
+        xx = a39 / a40
+        yy = a36 / a40
+    except ZeroDivisionError:
+        return
 
-    ref=analyses[0]
-    ans = [(ai.isotopes['Ar39'].get_interference_corrected_value(),
-            ai.isotopes['Ar36'].get_interference_corrected_value(),
-            ai.isotopes['Ar40'].get_interference_corrected_value())
+    return xx, yy
+
+
+def calculate_isochron(analyses, reg='NewYork'):
+    ref = analyses[0]
+    ans = [(ai.get_interference_corrected_value('Ar39'),
+            ai.get_interference_corrected_value('Ar36'),
+            ai.get_interference_corrected_value('Ar40'))
            for ai in analyses]
 
     a39, a36, a40 = array(ans).T
@@ -52,20 +65,38 @@ def calculate_isochron(analyses, reg='Reed'):
     xs, xerrs = zip(*[(xi.nominal_value, xi.std_dev) for xi in xx])
     ys, yerrs = zip(*[(yi.nominal_value, yi.std_dev) for yi in yy])
 
-    reg = klass(xs=xs, ys=ys, xserr=xerrs, yserr=yerrs)
-    reg.calculate()
-
+    xds, xdes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a40])
+    yns, ynes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a36])
+    xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
+    reg = isochron_regressor(xs, xerrs, ys, yerrs,
+                             xds, xdes, xns, xnes, yns, ynes,
+                             reg)
     xint = ufloat(reg.x_intercept, reg.x_intercept_error)
     try:
         R = xint ** -1
     except ZeroDivisionError:
         R = 0
 
-    age=ufloat(0,0)
+    age = ufloat(0, 0)
     if R > 0:
         age = age_equation(ref.j, R, arar_constants=ref.arar_constants)
+    return age, reg, (xs, ys, xerrs, yerrs)
 
-    return age, reg, (xs,ys,xerrs,yerrs)
+
+def isochron_regressor(xs, xes, ys, yes,
+                       xds, xdes, xns, xnes, yns, ynes,
+                       reg='Reed'):
+    if reg.lower() in ('newyork', 'new_york'):
+        from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
+    else:
+        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
+    reg = klass(xs=xs, ys=ys,
+                xserr=xes, yserr=yes,
+                xds=xds, xdes=xdes,
+                xns=xns, xnes=xnes,
+                yns=yns, ynes=ynes)
+    reg.calculate()
+    return reg
 
 
 def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
@@ -83,7 +114,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
     pidx = find_plateaus(ages, errors, k39,
                          overlap_sigma=2)
     if pidx:
-        sx=slice(*pidx)
+        sx = slice(*pidx)
         plateau_ages = ages[sx]
 
         if kind == 'vol_fraction':
@@ -97,13 +128,13 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
 
 
 def calculate_flux(rad40, k39, age, arar_constants=None):
-    '''
+    """
         rad40: radiogenic 40Ar
         k39: 39Ar from potassium
         age: age of monitor in years
-        
+
         solve age equation for J
-    '''
+    """
     if isinstance(rad40, (list, tuple)):
         rad40 = ufloat(*rad40)
     if isinstance(k39, (list, tuple)):
@@ -122,7 +153,6 @@ def calculate_flux(rad40, k39, age, arar_constants=None):
 
 #    return j
 def calculate_decay_time(dc, f):
-    print dc, f
     return math.log(f) / dc
 
 
@@ -273,31 +303,32 @@ def calculate_F(isotopes,
     try:
         f = rad40 / k39
     except ZeroDivisionError:
-        f=ufloat(1.0,0)
+        f = ufloat(1.0, 0)
 
-    rf=deepcopy(f)
+    rf = deepcopy(f)
     # f = ufloat(f.nominal_value, f.std_dev, tag='F')
-
-    non_ar_isotopes = dict(k38=k38, k37=k37,
-                           ca36=ca36, ca37=ca37, ca38=ca38, ca39=ca39,
+    non_ar_isotopes = dict(ca39=ca39,
+                           k38=k38,
+                           ca38=ca38,
+                           k37=k37,
+                           ca37=ca37,
+                           ca36=ca36,
                            cl36=cl36)
 
     try:
-        rp=rad40 / a40 * 100
+        rp = rad40 / a40 * 100
     except ZeroDivisionError:
-        rp=ufloat(0,0)
+        rp = ufloat(0, 0)
 
     computed = dict(rad40=rad40, rad40_percent=rp,
                     k39=k39)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
-
-
     interference_corrected = dict(Ar40=a40 - k40,
                                   Ar39=k39,
-                                  Ar38=a38 - k38 - ca38,
-                                  Ar37=a37 - ca37 - k37,
-                                  Ar36=a36)
+                                  Ar38=a38, #- k38 - ca38,
+                                  Ar37=a37, #- ca37 - k37,
+                                  Ar36=atm36)
     ##clear errors in irrad
     for pp in pr.itervalues():
         pp.std_dev = 0
@@ -324,7 +355,7 @@ def age_equation(j, f,
     try:
         return (lk ** -1 * umath.log(1 + j * f)) / scalar
     except (ValueError, TypeError):
-        return ufloat(0,0)
+        return ufloat(0, 0)
 
 # plateau definition
 plateau_criteria = {'number_steps': 3}
@@ -362,10 +393,9 @@ def find_plateaus(ages, errors, signals, overlap_sigma=1, exclude=None):
         plats = asarray(plats)
         #platids = asarray(platids)
 
-        ps=platids[argmax(plats)]
-        if ps[0]!=ps[1]:
+        ps = platids[argmax(plats)]
+        if ps[0] != ps[1]:
             return ps
-
 
 
 def _find_plateau(ages, errors, signals, start, overlap_sigma, exclude):

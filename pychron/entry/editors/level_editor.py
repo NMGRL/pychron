@@ -17,12 +17,14 @@
 #============= enthought library imports =======================
 import os
 import struct
+
 from enable.component_editor import ComponentEditor
 from pyface.constant import OK, YES, NO
 from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -149,10 +151,11 @@ class LevelEditor(Loggable):
         with db.session_ctx():
             level = db.get_irradiation_level(self.irradiation, self.name)
 
-            self.z = level.z
+            self.z = level.z or 0
             if level.production:
                 self.selected_production = next((p for p in self.productions
                                                  if p.name == level.production.name), None)
+            original_tray = None
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
                 original_tray=self.selected_tray
@@ -348,7 +351,7 @@ class LevelEditor(Loggable):
                     db = self.db
                     with db.session_ctx():
                         load_irradiation_map(db, dlg.path,
-                                             os.path.basename(dlg.path))
+                                             os.path.basename(dlg.path), overwrite_geometry=True)
 
 
 #============= EOF =============================================

@@ -17,10 +17,8 @@ from pychron.core.ui import set_toolkit
 set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
-from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
 from numpy import linspace, random
-import weakref
 
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
@@ -277,6 +275,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         r.trait_set(xs=x, ys=y,
                     user_excluded=sel,
                     filter_outliers_dict=scatter.filter_outliers_dict)
+        r.dirty=True
 
     def _set_excluded(self, scatter, r):
         scatter.no_regression = True
@@ -442,8 +441,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
 
     def _add_error_envelope_overlay(self, line):
 
-        o = ErrorEnvelopeOverlay(component=weakref.ref(line)())
-        line.overlays.append(o)
+        o = ErrorEnvelopeOverlay(component=line)
+        line.underlays.append(o)
         line.error_envelope = o
 
     def add_tools(self, plot, scatter, line=None,
@@ -457,8 +456,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             line.tools.append(tool)
             line.overlays.append(overlay)
 
-        broadcaster = BroadcasterTool()
-        scatter.tools.append(broadcaster)
+        # broadcaster = BroadcasterTool()
+        # scatter.tools.append(broadcaster)
 
         if add_inspector:
             point_inspector = PointInspector(scatter,
@@ -467,13 +466,13 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                                                        tool=point_inspector)
 
             scatter.overlays.append(pinspector_overlay)
-            broadcaster.tools.append(point_inspector)
+            # broadcaster.tools.append(point_inspector)
 
         rect_tool = RectSelectionTool(scatter)
         rect_overlay = RectSelectionOverlay(tool=rect_tool)
 
         scatter.overlays.append(rect_overlay)
-        broadcaster.tools.append(rect_tool)
+        # broadcaster.tools.append(rect_tool)
 
     def _bind_index(self, *args, **kw):
         pass

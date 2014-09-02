@@ -18,6 +18,7 @@
 from traits.api import Property, Int
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
+from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
     FAILED_COLOR, END_AFTER_COLOR
@@ -29,8 +30,7 @@ COLORS = {'success': SUCCESS_COLOR,
           'truncated': TRUNCATED_COLOR,
           'failed': FAILED_COLOR,
           'end_after': END_AFTER_COLOR,
-          'invalid': 'red'
-}
+          'invalid': 'red'}
 
 
 class AutomatedRunSpecAdapter(TabularAdapter):
@@ -45,7 +45,6 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     position_width = Int(50)
     extract_value_width = Int(50)
     extract_units_width = Int(40)
-    extract_group_width = Int(40)
     duration_width = Int(60)
     ramp_duration_width = Int(50)
     cleanup_width = Int(60)
@@ -58,12 +57,9 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     extraction_script_width = Int(80)
     measurement_script_width = Int(90)
     truncate_condition_width = Int(80)
+    syn_extraction_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
-    #    extraction_script_width = Int(125)
-    #    measurement_script_width = Int(125)
-    #    post_measurement_script_width = Int(125)
-    #    post_equilibration_script_width = Int(125)
 
     comment_width = Int(125)
     #===========================================================================
@@ -74,9 +70,12 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     beam_diameter_text = Property
     duration_text = Property
     cleanup_text = Property
-    labnumber_text = Property
+    # labnumber_text = Property
     aliquot_text = Property
-    extract_group_text = Property
+    aliquot_content=Property
+
+    def _get_aliquot_content(self):
+        return 'asdf'
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -97,31 +96,33 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
         return color
 
-    def _get_labnumber_text(self, trait, item):
-        it = self.item
-        ln = it.labnumber
-        if it.user_defined_aliquot:
-            ln = '{}-{:02n}'.format(it.labnumber, it.aliquot)
-
-        return ln
+    # def _get_labnumber_text(self, trait, item):
+        # it = self.item
+        # ln = it.labnumber
+        # if it.user_defined_aliquot:
+        #     ln = '{}-{:02n}'.format(it.labnumber, it.aliquot)
+        # return ln
 
     def _get_aliquot_text(self, trait, item):
         al = ''
         it = self.item
         if it.aliquot != 0:
-            al = it.aliquot
-            #            if isinstance(al, int):
-            al = '{:03n}'.format(al)
-        if it.step:
-            al = '{}{}'.format(al, it.step)
+            al=make_aliquot_step(it.aliquot, it.step)
 
         return al
 
+    def _validate_aliquot_text(self, v):
+        try:
+            return int(v)
+        except ValueError:
+            pass
+
+    def _set_aliquot_text(self,v):
+        if v is not None:
+            self.item.user_defined_aliquot=v
+
     def _get_ramp_duration_text(self, trait, item):
         return self._get_number('ramp_duration', fmt='{:n}')
-
-    def _get_extract_group_text(self, trait, item):
-        return self._get_number('extract_group', fmt='{:02n}')
 
     def _get_beam_diameter_text(self, trait, item):
         return self._get_number('beam_diameter')
@@ -136,9 +137,9 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         return self._get_number('cleanup')
 
     def _get_number(self, attr, fmt='{:0.2f}'):
-        '''
+        """
             dont display 0.0's
-        '''
+        """
         v = getattr(self.item, attr)
         if v:
             if isinstance(v, str):
@@ -162,7 +163,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             # #                 ('Overlap', 'overlap'),
             ('Extract', 'extract_value'),
             ('Units', 'extract_units'),
-            ('Group', 'extract_group'),
+
             ('Ramp (s)', 'ramp_duration'),
             ('Duration (s)', 'duration'),
             ('Cleanup (s)', 'cleanup'),
@@ -171,6 +172,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
+            ('SynExtraction', 'syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')
@@ -197,6 +199,7 @@ class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
             ('Extraction', 'extraction_script'),
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
+            ('SynExtraction','syn_extraction'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')

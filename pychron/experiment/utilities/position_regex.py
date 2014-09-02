@@ -161,7 +161,7 @@ POSITION_REGEX = (re.compile('[pPlLrRdD\d]?[\d]$|[\d]$'), None, None)
 '''
     e.g. 1.00,3.01
 '''
-XY_REGEX = re.compile('[-,\d+].*\d*,[-,\d+].*\d*')
+XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
 
 '''
     e.g d1

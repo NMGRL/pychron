@@ -15,8 +15,11 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from itertools import groupby
+
 from traits.api import Any, on_trait_change, Int, List, Bool, Instance
 from pyface.timer.do_later import do_later
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
@@ -42,29 +45,49 @@ class ExperimentQueue(BaseExperimentQueue):
 
     executed = Bool(False)
 
-    human_error_checker=Instance(HumanErrorChecker, ())
+    human_error_checker = Instance(HumanErrorChecker, ())
+
+
+    def count_labnumber(self, ln):
+        ans = [ai for ai in self.automated_runs if ai.labnumber == ln]
+        i = 0
+        for args in groupby(ans, key=lambda x: x.user_defined_aliquot):
+            i += 1
+        return i
 
     def select_run_idx(self, idx):
         if self.automated_runs:
-            self.selected = self.automated_runs[idx:idx + 1]
+                self.selected = self.automated_runs[idx:idx + 1]
 
     def reset(self):
-        ans = self.automated_runs
+        """
+            clear the step from the run. increment the aliquot if a step heat and experiment completed.
+        """
+
         ens = self.executed_runs
+
         self._no_update = True
-        for ei in reversed(ens):
+
+        finished = len(self.automated_runs) == 0
+        nans = []
+        # for ei in reversed(ens):
+        for ei in ens:
             ei.state = 'not run'
-            #             ei.aliquot = 0
-            #             ei.assigned_aliquot=0
-            #             ei.step = ''
-            ans.insert(0, ei)
+            if not ei.is_step_heat():
+                ei.aliquot = 0
+            elif finished and ei.user_defined_aliquot:
+                ei.user_defined_aliquot += 1
+
+            ei.reset()
+            nans.append(ei)
+            # nans.insert(0, ei)
+
+        nans.extend(self.automated_runs)
+        self.automated_runs = nans
 
         self.executed_runs = []
         self.executed = False
         self._no_update = False
-
-    #         self.update_needed = True
-    #         self.refresh_table_needed = True
 
     def set_run_inprogress(self, aid):
         run = self._find_run(aid)
@@ -77,11 +100,7 @@ class ExperimentQueue(BaseExperimentQueue):
             self.automated_runs.remove(run)
             self.executed_runs.append(run)
             idx = len(self.executed_runs) - 1
-            #             self.trait_set(executed_runs_scroll_to_row=idx)
-            #             do_later(self.trait_set, executed_runs_scroll_to_row=idx)
-            #             invoke_in_main_thread(do_later, lambda:self.trait_set(executed_runs_scroll_to_row=idx))
             invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
-            #             invoke_in_main_thread(self.trait_set, executed_runs_scroll_to_row=idx)
             self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
         else:
             self.debug('Problem removing {}'.format(aid))
@@ -105,33 +124,13 @@ class ExperimentQueue(BaseExperimentQueue):
             ci.aliquot = 0
         return ci
 
-    #     _test = True
-
     @on_trait_change('automated_runs[]')
     def _refresh_info(self, new):
-        if new:
+        if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
             self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            self.refresh_info_needed = True
             invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
-    #
-    # #             do_later(self.trait_set, automated_runs_scroll_to_row=idx)
-    #
-    # #         if new > 1:
-    # #             if self._test:
-    # #                 self.executed_runs.append(new[0])
-    # #                 self._test = False
-    # #     print 'asdf', new
-    #     # if not self._no_update:
-    #     self.debug('automated runs len changed {}'.format(len(new)))
-    #     if new:
-    #         idx = self.automated_runs.index(new[-1])
-    #         self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
-    #         self.automated_runs_scroll_to_row=idx
-    #         # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
-    #
-    #     # if self.automated_runs:
-    #     #     self.update_needed = True
-    #             #                self.refresh_button = True
 
     @on_trait_change('automated_runs:state')
     def _refresh_table1(self):
@@ -141,8 +140,7 @@ class ExperimentQueue(BaseExperimentQueue):
         super(ExperimentQueue, self)._load_meta(meta)
         if 'actions' in meta:
             self.queue_actions = [ExperimentQueueAction(astr)
-                                  for astr in meta['actions']
-            ]
+                                  for astr in meta['actions']]
 
         else:
             self.debug('no actions provided for this queue')
@@ -156,7 +154,7 @@ class ExperimentQueue(BaseExperimentQueue):
             return all([ai.executable for ai in self.automated_runs])
 
     def check_runs(self):
-        hec=self.human_error_checker
+        hec = self.human_error_checker
         err = hec.check_runs(self.automated_runs, test_all=True)
         if err:
             hec.report_errors(err)
@@ -173,11 +171,11 @@ class ExperimentQueue(BaseExperimentQueue):
     def _extract_device_changed(self):
         self.debug('extract device changed {}'.format(self.extract_device))
         if 'uv' in self.extract_device.lower():
-            k=UVHumanErrorChecker
+            k = UVHumanErrorChecker
         else:
-            k=HumanErrorChecker
+            k = HumanErrorChecker
 
-        self.human_error_checker=k()
+        self.human_error_checker = k()
 
 #============= EOF =============================================
 #        rgen = (r for r in newruns)

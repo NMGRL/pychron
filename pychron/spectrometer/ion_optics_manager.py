@@ -124,10 +124,12 @@ class IonOpticsManager(Manager):
                 # pos is isotope
                 pos = self.get_mass(pos)
                 mag._mass = pos
-            else:
-                #get nearst isotope
-                self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
-                spec.update_isotopes('  {:n}'.format(round(pos)), detector)
+
+            #this is not necessary and potential a source of issues
+            # else:
+            #     #get nearst isotope
+            #     self.debug('rounding mass {} to {}'.format(pos, '  {:n}'.format(round(pos))))
+            #     spec.update_isotopes('  {:n}'.format(round(pos)), detector)
 
             # pos is mass i.e 39.962
             dac = mag.map_mass_to_dac(pos, det.name)
@@ -136,7 +138,7 @@ class IonOpticsManager(Manager):
             dac = spec.correct_dac(det, dac)
 
             self.info('positioning {} ({}) on {}'.format(pos, dac, detector))
-            mag.set_dac(dac)
+            return mag.set_dac(dac)
 
     def get_center_dac(self, det, iso):
         spec = self.spectrometer

@@ -20,13 +20,13 @@
 
 #=============local library imports  ==========================
 import binascii
-from numpy import Inf
-
+import math
+# from sqlalchemy import INTEGER
 from sqlalchemy.sql.expression import func, distinct
 
 from pychron.database.orms.massspec_orm import IsotopeResultsTable, \
     AnalysesChangeableItemsTable, BaselinesTable, DetectorTable, \
-     IsotopeTable, AnalysesTable, \
+    IsotopeTable, AnalysesTable, \
     IrradiationPositionTable, SampleTable, \
     PeakTimeTable, DetectorTypeTable, DataReductionSessionTable, \
     PreferencesTable, DatabaseVersionTable, FittypeTable, \
@@ -41,9 +41,10 @@ from pychron.database.selectors.massspec_selector import MassSpecSelector
 class MassSpecDatabaseAdapter(DatabaseAdapter):
     selector_klass = MassSpecSelector
     test_func = 'get_database_version'
+    kind = 'mysql'
 
     def get_irradiation_positions(self, name, level):
-#         sess = self.get_session()
+    #         sess = self.get_session()
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTable)
             q = q.filter(IrradiationPositionTable.IrradiationLevel == '{}{}'.format(name, level))
@@ -57,7 +58,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             return q.one().production
 
     def get_production_ratio_by_irradname(self, name):
-#         sess = self.get_session()
+    #         sess = self.get_session()
         with self.session_ctx() as sess:
             q = sess.query(IrradiationLevelTable)
             q = q.filter(IrradiationLevelTable.IrradBaseID == name)
@@ -81,121 +82,175 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def get_chronology_by_irradname(self, name):
         with self.session_ctx() as sess:
-    #         sess = self.get_session()
+        #         sess = self.get_session()
             q = sess.query(IrradiationChronologyTable)
             q = q.filter(IrradiationChronologyTable.IrradBaseID == name)
             q = q.order_by(IrradiationChronologyTable.EndTime.asc())
             return q.all()
 
-#    def get_run_ids(self, filter_str=None):
-#        sess = self.get_session()
-#        q = sess.query(distinct(IrradiationPositionTable.IrradPosition))
-#        if filter_str is not None:
-#            q = q.filter(IrradiationPositionTable.IrradPosition == filter_str)
-#        return q.all()
+            #    def get_run_ids(self, filter_str=None):
+            #        sess = self.get_session()
+            #        q = sess.query(distinct(IrradiationPositionTable.IrradPosition))
+            #        if filter_str is not None:
+            #            q = q.filter(IrradiationPositionTable.IrradPosition == filter_str)
+            #        return q.all()
 
     def get_irradiation_names(self):
         with self.session_ctx() as sess:
-#         sess = self.get_session()
+        #         sess = self.get_session()
             q = sess.query(distinct(IrradiationLevelTable.IrradBaseID))
             return q.all()
 
     def get_analyses(self, **kw):
         return self._get_items(AnalysesTable, globals(), **kw)
+
     def get_samples(self, **kw):
         return self._get_items(SampleTable, globals(), **kw)
 
     def get_database_version(self, **kw):
         return self._retrieve_items(DatabaseVersionTable, **kw)
-#===============================================================================
-# getters
-#===============================================================================
+
+    #===============================================================================
+    # getters
+    #===============================================================================
     def get_sample_loading(self, value):
         return self._retrieve_item(SampleLoadingTable, value,
-                                   key='SampleLoadingID',
-                                   )
+                                   key='SampleLoadingID')
 
     def get_login_session(self, value):
-        return self._retrieve_item(LoginSessionTable, value, key='LoginSessionID',
+        return self._retrieve_item(LoginSessionTable, value, key='LoginSessionID')
 
-                                   )
-
-    def get_latest_analysis_aliquot(self, labnumber):
+    def get_latest_analysis(self, labnumber, aliquot=None):
         """
             return the analysis with the greatest aliquot with this labnumber
         """
         with self.session_ctx() as sess:
-    #         sess = self.get_session()
-            q = sess.query(AnalysesTable.Aliquot)
-            q = q.filter(AnalysesTable.IrradPosition == labnumber)
-            q = q.order_by(AnalysesTable.RunDateTime.desc())
-            q = q.limit(1)
-            try:
-                a = q.one()
+            # if aliquot is not None:
+            #     sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+            #         'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" AND `AnalysesTable`.`Aliquot` = {} ' \
+            #         'ORDER BY CAST(`AnalysesTable`.`Increment` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber, aliquot)
+            # else:
+            #     sql='SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+            #         'FROM `AnalysesTable` WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+            #         'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+            #
+            # v=sess.execute(sql)
 
-                if a:
-                    a = int(a[0])
-            except Exception, e:
-                self.debug(e)
-                a = None
+            # q = sess.query(AnalysesTable.Aliquot, AnalysesTable.Increment)
 
-            return a
+
+            if aliquot is not None:
+                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                #       'FROM `AnalysesTable` ' \
+                #       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+                #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
+                      'FROM `AnalysesTable` ' \
+                      'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
+                      'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+                v = sess.execute(sql)
+                if v is not None:
+                    r = v.fetchone()
+                    if r:
+                        a, s = r
+                        return int(a), s
+
+                        # q = q.filter(AnalysesTable.RID.like('"{}-{:02n}%"'.format(labnumber, aliquot)))
+                        # q = q.filter(AnalysesTable.Aliquot == "'{:02n}'".format(aliquot))
+
+                        #castting A,B,C... doesnt produce 0,1,2
+                        # q = q.order_by(cast(AnalysesTable.Increment, INTEGER(unsigned=True)).desc())
+
+                        #assume greatest step also greatest AnalysisID
+                        # q = q.order_by(AnalysesTable.AnalysisID.desc())
+
+            else:
+                #!!!!!
+                #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
+                #sorts lexicographically instead of numerically
+                #so '100'<'001'
+                #http://stackoverflow.com/questions/4686849/sorting-varchar-field-numerically-in-mysql
+                #use option 2. this is a low use query and performance is not and issue
+                #switch to option 3. if performance increase is desired
+                #!!!!!
+                #q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
+
+                #need to add Aliquot_pychron to AnalysesTable. Mass spec modifying Aliquot after original save
+                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
+                #       'FROM `AnalysesTable` ' \
+                #       'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+                #       'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
+                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
+                      'FROM `AnalysesTable` ' \
+                      'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
+                      'ORDER BY `AnalysesTable`.`Aliquot_pychron` DESC LIMIT 1'.format(labnumber)
+
+                v = sess.execute(sql)
+
+                if v is not None:
+                    r = v.fetchone()
+                    if r:
+                        a, s = r
+                        # if '-' in a:
+                        #     a=a.split('-')[-1]
+
+                        return int(a), s
 
     def get_analysis(self, value, aliquot=None, step=None):
-#        key = 'RID'
+    #        key = 'RID'
         key = 'IrradPosition'
         if aliquot:
             if step:
-#                value = ('{}-{}{}'.format(value, aliquot, step), aliquot, step)
+            #                value = ('{}-{}{}'.format(value, aliquot, step), aliquot, step)
                 key = (key, 'Aliquot', 'Increment')
                 value = (value, aliquot, step)
             else:
                 key = (key, 'Aliquot')
                 value = (value, aliquot)
-#                value = ('{}-{}'.format(value, aliquot), aliquot)
+                #                value = ('{}-{}'.format(value, aliquot), aliquot)
 
         return self._retrieve_item(AnalysesTable, value,
-                                   key=key,)
+                                   key=key, )
 
     def get_irradiation_position(self, value):
         return self._retrieve_item(IrradiationPositionTable, value,
-                                    key='IrradPosition',)
+                                   key='IrradPosition', )
 
     def get_sample(self, value):
         return self._retrieve_item(SampleTable, value, key='Sample',
-                                   )
+        )
 
     def get_detector_type(self, value):
         return self._retrieve_item(DetectorTypeTable, value, key='Label',
 
-                                   )
+        )
 
-#    @get_first
+    #    @get_first
     def get_detector(self, name):
         return self._retrieve_first(DetectorTable, name,
                                     key='Label',
                                     order_by=DetectorTable.DetectorID.desc(),
-                                    )
+        )
 
-#        return DetectorTable, 'DetectorTypeID', \
-#                DetectorTable.DetectorID.desc() # gets the most recent value
+    #        return DetectorTable, 'DetectorTypeID', \
+    #                DetectorTable.DetectorID.desc() # gets the most recent value
 
     def get_isotope(self, value):
         return self._retrieve_item(IsotopeTable, value, key='AnalysisID',
-                                   )
+        )
 
     def get_data_reduction_session(self, value):
         return self._retrieve_item(DataReductionSessionTable, value,
                                    key='DataReductionSessionID',
-                                   )
+        )
 
     def get_preferences_set(self, value):
         return self._retrieve_item(PreferencesTable, value, key='PreferenceSetID',
-                                   )
+        )
 
     def get_system(self, value):
         return self._retrieve_item(MachineTable, value, key='Label',
-                                   )
+        )
 
     def get_fittype(self, label):
         '''
@@ -206,7 +261,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             if label.startswith('Average'):
                 label = 'Average Y'
 
-        fit = self._get_fittype(label,)
+        fit = self._get_fittype(label, )
         if fit is None:
             fit = 0
         else:
@@ -215,18 +270,19 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return fit
 
     def _get_fittype(self, value):
-        return self._retrieve_item(FittypeTable, value, key='Label',)
+        return self._retrieve_item(FittypeTable, value, key='Label', )
 
     def get_runscript(self, value):
-        return self._retrieve_item(RunScriptTable, value, key='RunScriptID',)
-#===============================================================================
-# adders
-#===============================================================================
+        return self._retrieve_item(RunScriptTable, value, key='RunScriptID', )
+
+    #===============================================================================
+    # adders
+    #===============================================================================
     def add_sample_loading(self, ms, tray):
 
         if isinstance(ms, str):
             ms = ms.capitalize()
-            system = self.get_system(ms,)
+            system = self.get_system(ms, )
             if system:
                 ms = system.SpecSysN
             else:
@@ -234,8 +290,8 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         sm = SampleLoadingTable(SampleHolder=tray,
                                 SpecSysN=ms
-                                )
-        self._add_item(sm,)
+        )
+        self._add_item(sm, )
         return sm
 
     def add_analysis_positions(self, analysis, positions):
@@ -243,7 +299,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             if not isinstance(positions, list):
                 positions = [positions]
 
-            analysis = self.get_analysis(analysis,)
+            analysis = self.get_analysis(analysis, )
             if analysis:
                 for i, pi in enumerate(positions):
                     try:
@@ -256,41 +312,40 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         a = AnalysisPositionTable(Hole=pi, PositionOrder=po)
         analysis.positions.append(a)
 
-#    @add
+    #    @add
     def add_analysis(self, rid, aliquot, step, irradpos, runtype,
-                     sess=None,
-#                     refdetlabel,
-#                     overwrite=True,
+                     # sess=None,
+                     #                     refdetlabel,
+                     #                     overwrite=True,
                      **kw):
-        '''
-            this function does not check for existence of the record_id
-        '''
 
-#        if analysis is None:
-#            rid, aliquot = rid.split('-')
-#            r = int(args[0])
-#            d = int(args[1]) if len(args) == 2 else None
-#        rd = self.get_detector(refdetlabel)
-#        refid, label = 0, ''
-#        if rd:
-#            refid = rd.DetectorID
-#            label = rd.Label
+
+        #        if analysis is None:
+        #            rid, aliquot = rid.split('-')
+        #            r = int(args[0])
+        #            d = int(args[1]) if len(args) == 2 else None
+        #        rd = self.get_detector(refdetlabel)
+        #        refid, label = 0, ''
+        #        if rd:
+        #            refid = rd.DetectorID
+        #            label = rd.Label
 
         if isinstance(aliquot, int):
             aliquot = '{:02n}'.format(aliquot)
 
         # query the IrradiationPositionTable
-        irradpos = self.get_irradiation_position(irradpos,)
-        params = dict(RID=rid,  # make_runid(rid, aliquot, step),
-#                    '{}-{}{}'.format(rid, aliquot, step),
-                     Aliquot=aliquot,
-                     RunDateTime=func.current_timestamp(),
-                     LoginSessionID=1,
-                     SpecRunType=runtype,
-                     Increment=step,
-#                     RefDetID=refid,
-#                     ReferenceDetectorLabel=label
-                     )
+        irradpos = self.get_irradiation_position(irradpos, )
+        params = dict(RID=rid, # make_runid(rid, aliquot, step),
+                      #                    '{}-{}{}'.format(rid, aliquot, step),
+                      Aliquot=aliquot,
+                      Aliquot_pychron=int(aliquot),
+                      RunDateTime=func.current_timestamp(),
+                      LoginSessionID=1,
+                      SpecRunType=runtype,
+                      Increment=step,
+                      #                     RefDetID=refid,
+                      #                     ReferenceDetectorLabel=label
+        )
 
         # IrradPosition cannot be null
         if irradpos is not None:
@@ -304,82 +359,81 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         params['IrradPosition'] = ip
         params.update(kw)
 
-#        analysis = self.get_analysis(rid, aliquot, step)
-#        if analysis is None:
+        #        analysis = self.get_analysis(rid, aliquot, step)
+        #        if analysis is None:
         analysis = AnalysesTable(**params)
-        self._add_item(analysis,)
+        self._add_item(analysis, )
 
-#        elif overwrite:
-#            for k, v in params.iteritems():
-#                setattr(analysis, k, v)
+        #        elif overwrite:
+        #            for k, v in params.iteritems():
+        #                setattr(analysis, k, v)
 
 
         return analysis
 
-    def add_baseline(self, blob, label, cnts, iso , **kw):
+    def add_baseline(self, blob, label, cnts, iso, **kw):
         bs = BaselinesTable(PeakTimeBlob=blob,
                             Label=label,
                             NumCnts=cnts)
         if iso is not None:
             iso.baseline = bs
-#            return bs, True
+            #            return bs, True
 
         return bs
 
-#    @add
+    #    @add
     def add_baseline_changeable_item(self, data_reduction_session_id, fit, infoblob,
                                      sess=None):
-        fit = self.get_fittype(fit,)
-#        print data_reduction_session,'dd'
-#        dr=self.get_data_reduction_session(data_reduction_session)
-#        print dr, 'db dr'
+        fit = self.get_fittype(fit, )
+        #        print data_reduction_session,'dd'
+        #        dr=self.get_data_reduction_session(data_reduction_session)
+        #        print dr, 'db dr'
         bs = BaselinesChangeableItemsTable(Fit=fit,
                                            DataReductionSessionID=data_reduction_session_id,
                                            InfoBlob=infoblob
-                                           )
-        self._add_item(bs,)
+        )
+        self._add_item(bs, )
         return bs
-#        return bs, True
 
-#    @add
+    #        return bs, True
+
+    #    @add
     def add_peaktimeblob(self, blob1, blob2, iso, **kw):
-        iso = self.get_isotope(iso,)
+        iso = self.get_isotope(iso, )
         pk = PeakTimeTable(PeakTimeBlob=blob1,
                            PeakNeverBslnCorBlob=blob2
-                           )
+        )
         if iso is not None:
-#            iso.peak_time_series= pk
+        #            iso.peak_time_series= pk
             iso.peak_time_series.append(pk)
 
         return pk
 
     def add_detector(self, det_type, **kw):
-        dtype = self.get_detector_type(det_type,)
+        dtype = self.get_detector_type(det_type, )
         d = DetectorTable(
-                          DetectorTypeID=dtype.DetectorTypeID,
-                          **kw)
-#        if dtype is not None:
-#            dtype.detectors.append(d)
+            DetectorTypeID=dtype.DetectorTypeID,
+            **kw)
+        #        if dtype is not None:
+        #            dtype.detectors.append(d)
 
-        self._add_item(d,)
+        self._add_item(d, )
         return d
 
     def add_isotope(self, rid, detector, label, **kw):
 
-        analysis = self.get_analysis(rid,)
+        analysis = self.get_analysis(rid, )
 
         if isinstance(detector, str):
             # assume is a detector label e.i H1
-            detector = self.get_detector_type(detector,)
+            detector = self.get_detector_type(detector, )
             if detector:
                 detector = detector.Label
 
         if detector is not None:  # and len(dettype.detectors):
-            detector = self.get_detector(detector,)
+            detector = self.get_detector(detector, )
 
-        iso = IsotopeTable(Label=label,
-                           NumCnts=1
-                           )
+        iso = IsotopeTable(Label=label, **kw)
         if analysis is not None:
             analysis.isotopes.append(iso)
 
@@ -387,7 +441,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             iso.DetectorID = detector.DetectorID
             iso.BkgdDetectorID = detector.DetectorID
 
-        self._add_item(iso,)
+        self._add_item(iso, )
         return iso
 
     def add_isotope_result(self, isotope, data_reduction_session_id,
@@ -395,17 +449,17 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                            fit,
                            detector
 
-#                           intercept, intercept_err,
-#                           baseline, baseline_err,
-#                           blank, blank_err
-                           ):
+                           #                           intercept, intercept_err,
+                           #                           baseline, baseline_err,
+                           #                           blank, blank_err
+    ):
         """
             intercept, baseline and blank should be ufloats
 
             mass spec does not propogate baseline error
         """
 
-        isotope = self.get_isotope(isotope,)
+        isotope = self.get_isotope(isotope, )
 
         # in mass spec intercept is baseline corrected
         # mass spec does not propogate baseline error
@@ -417,17 +471,30 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         # isotope is corrected for background (blank in pychron parlance)
         isotope_value = intercept - blank
 
-        fit = self.get_fittype(fit,)
+        fit = self.get_fittype(fit, )
 
-        detector = self.get_detector(detector,)
+        detector = self.get_detector(detector, )
 
-        i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
-        ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
-        iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
-        isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+        def clean_value(x, k='nominal_value'):
+            v = getattr(x, k)
+            return float(v) if not (math.isnan(v) or math.isinf(v)) else 0
 
-        b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
-        be = float(blank.nominal_value) if blank.std_dev != Inf else 0
+        i = clean_value(intercept)
+        ie = clean_value(intercept, 'std_dev')
+
+        iso = clean_value(isotope_value)
+        isoe = clean_value(isotope_value, 'std_dev')
+
+        b = clean_value(blank)
+        be = clean_value(blank, 'std_dev')
+
+        # i = float(intercept.nominal_value) if intercept.nominal_value != Inf else 0
+        # ie = float(intercept.std_dev) if intercept.std_dev != Inf else 0
+        # iso = float(isotope_value.nominal_value) if isotope_value.nominal_value != Inf else 0
+        # isoe = float(isotope_value.std_dev) if isotope_value.std_dev != Inf else 0
+        #
+        # b = float(blank.nominal_value) if blank.nominal_value != Inf else 0
+        # be = float(blank.std_dev) if blank.std_dev != Inf else 0
 
         iso_r = IsotopeResultsTable(DataReductionSessionID=data_reduction_session_id,
                                     Intercept=i,
@@ -442,7 +509,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                                     BkgdDetTypeID=detector.DetectorTypeID,
 
                                     Fit=fit
-                                    )
+        )
         if isotope:
             isotope.results.append(iso_r)
 
@@ -450,47 +517,47 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
     def add_data_reduction_session(self, **kw):
         drs = DataReductionSessionTable(
-                                   SessionDate=func.current_timestamp()
-                                   )
-        self._add_item(drs,)
+            SessionDate=func.current_timestamp()
+        )
+        self._add_item(drs, )
         return drs
 
     def add_login_session(self, ms, **kw):
 
         if isinstance(ms, str):
             ms = ms.capitalize()
-            system = self.get_system(ms,)
+            system = self.get_system(ms, )
             if system:
                 ms = system.SpecSysN
             else:
                 ms = 0
 
         drs = LoginSessionTable(SpecSysN=ms)
-        self._add_item(drs,)
+        self._add_item(drs, )
         return drs
 
     def add_changeable_items(self, rid, drs_id):
         item = AnalysesChangeableItemsTable()
-        analysis = self.get_analysis(rid,)
+        analysis = self.get_analysis(rid, )
         if analysis is not None:
-            # get the lastest preferencesetid
-#            sess = self.get_session()
-#            q = sess.query(PreferencesTable)
-#            q = q.order_by(PreferencesTable.PreferencesSetID.desc())
-#            q = q.limit(1)
-#            pref = q.one()
+        # get the lastest preferencesetid
+        #            sess = self.get_session()
+        #            q = sess.query(PreferencesTable)
+        #            q = q.order_by(PreferencesTable.PreferencesSetID.desc())
+        #            q = q.limit(1)
+        #            pref = q.one()
 
-            pref = self.get_preferences_set(None,)
+            pref = self.get_preferences_set(None, )
             if pref is not None:
                 pref.changeable_items.append(item)
             else:
                 item.PreferencesSetID = 0
             item.AnalysisID = analysis.AnalysisID
-#            analysis.changeable.append(item)
+            #            analysis.changeable.append(item)
 
             item.DataReductionSessionID = drs_id
-#            drs.changeable_items.append(item)
-            self._add_item(item,)
+            #            drs.changeable_items.append(item)
+            self._add_item(item, )
 
         return item
 
@@ -508,9 +575,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 
         return rs
 
-#===============================================================================
-# deleters
-#===============================================================================
+    #===============================================================================
+    # deleters
+    #===============================================================================
     @delete_one
     def delete_analysis(self, rid):
         return AnalysesTable, 'RID'
@@ -881,11 +948,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
 #        return p,sess
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
+
     logging_setup('ia')
     ia = MassSpecDatabaseAdapter()
     ia.connect()
 
-#    ia.selector_factory()
+    #    ia.selector_factory()
     dbs = ia.selector
     dbs.load_recent()
 

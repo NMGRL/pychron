@@ -504,5 +504,8 @@ class SetFits(Command):
 class SetIntegrationTime(Command):
     pass
 
+class SetAcceleratingVoltage(Command):
+    description = 'Set the source accelerating voltage in volts'
+    example = 'set_accelerating_voltage(4500)'
 
 #============= EOF =============================================

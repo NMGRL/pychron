@@ -17,15 +17,17 @@
 
 #============= enthought library imports =======================
 import os
+
 from pyface.message_dialog import warning
-from traits.api import Any
 from pyface.action.api import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from pyface.tasks.action.task_action import TaskAction
 
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+from pychron.envisage.resources import icon
 from pychron.paths import paths
 
 
@@ -159,6 +161,7 @@ class OpenExperimentQueueAction(QueueAction):
     description = 'Open experiment'
     name = 'Open Experiment...'
     accelerator = 'Ctrl+O'
+    image = icon('project-open')
 
     def perform(self, event):
         path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
@@ -169,6 +172,7 @@ class SaveExperimentQueueAction(ExperimentAction):
     name = 'Save Experiment'
     enabled = False
     accelerator = 'Ctrl+s'
+    # image = icon('project-save')
 
 
     def perform(self, event):

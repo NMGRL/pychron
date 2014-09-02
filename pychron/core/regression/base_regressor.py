@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 import re
+
 from traits.api import Array, List, Event, Property, Any, \
-    Dict, Str, Bool
+    Dict, Str, Bool, cached_property
+
 #============= standard library imports ========================
 import math
 from numpy import where, delete
@@ -62,6 +64,10 @@ class BaseRegressor(Loggable):
     mswd=Property(depends_on='dirty, xs, ys')
     valid_mswd=Bool
 
+    clean_xs=Property(depends_on='dirty, xs, ys')
+    clean_ys=Property(depends_on='dirty, xs, ys')
+    clean_xserr=Property(depends_on='dirty, xs, ys')
+    clean_yserr=Property(depends_on='dirty, xs, ys')
     # def _xs_changed(self):
     #        if len(self.xs) and len(self.ys):
     #     self.calculate()
@@ -73,12 +79,12 @@ class BaseRegressor(Loggable):
         rx, ry = xs, ys
         fod = self.filter_outliers_dict
         if fod.get('filter_outliers', False):
-            for _ in range(fod['iterations']):
+            for _ in range(fod.get('iterations', 1)):
                 self._filtering = True
                 self.calculate()
                 self._filtering = False
 
-                outliers = self.calculate_outliers(nsigma=fod['std_devs'])
+                outliers = self.calculate_outliers(nsigma=fod.get('std_devs', 2))
                 self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
                 rx = delete(rx, outliers, 0)
                 ry = delete(ry, outliers, 0)
@@ -89,11 +95,27 @@ class BaseRegressor(Loggable):
     def _delete_filtered_hook(self, outliers):
         pass
 
-    def get_clean_xs(self):
+    # def get_clean_xs(self):
+    #     return self._clean_array(self.xs)
+    #
+    # def get_clean_ys(self):
+    #     return self._clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xs(self):
         return self._clean_array(self.xs)
 
-    def get_clean_ys(self):
+    @cached_property
+    def _get_clean_ys(self):
         return self._clean_array(self.ys)
+
+    @cached_property
+    def _get_clean_xserr(self):
+        return self._clean_array(self.xserr)
+
+    @cached_property
+    def _get_clean_yserr(self):
+        return self._clean_array(self.yserr)
 
     def _clean_array(self, v):
         exc = list(set(self.user_excluded + self.truncate_excluded))
@@ -175,7 +197,6 @@ class BaseRegressor(Loggable):
 
         n = res.shape[0]
         q=len(self.coefficients)
-
         s = (ss_res / (n - q)) ** 0.5
         return s
 
@@ -192,9 +213,12 @@ class BaseRegressor(Loggable):
         raise NotImplementedError
 
     def calculate_residuals(self):
-        return self.predict(self.xs) - self.ys
+        return self.predict(self.clean_xs) - self.clean_ys
 
     def calculate_ci(self, rx, rmodel=None):
+        if rmodel is None:
+            rmodel = self.predict(rx)
+
         cors=self.calculate_ci_error(rx, rmodel)
         if rmodel is not None and cors is not None:
             if rmodel.shape[0] and cors.shape[0]:
@@ -211,8 +235,8 @@ class BaseRegressor(Loggable):
         if isinstance(rx, (float, int)):
             rx = [rx]
 
-        X = self.xs
-        Y = self.ys
+        X = self.clean_xs
+        Y = self.clean_ys
         cors = self._calculate_confidence_interval(X, Y, rx, rmodel)
         return cors
 
@@ -310,8 +334,11 @@ class BaseRegressor(Loggable):
 
     def _get_mswd(self):
         self.valid_mswd=False
-        ys=self._clean_array(self.ys)
-        yserr=self._clean_array(self.yserr)
+        # ys=self._clean_array(self.ys)
+        # yserr=self._clean_array(self.yserr)
+        ys=self.clean_ys
+        yserr=self.clean_yserr
+
         if self._check_integrity(ys,yserr):
 
             mswd=calculate_mswd(ys, yserr)

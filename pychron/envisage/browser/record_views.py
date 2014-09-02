@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Date, Float
+from traits.api import HasTraits, Str, Date, Float, Property
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -30,25 +30,29 @@ class RecordView(HasTraits):
 
 
 class LabnumberRecordView(RecordView):
-
     name = Str
     material = Str
     project = Str
     labnumber = Str
-    lat=Float
-    lon=Float
-    elevation=Float
-    lithology=Str
+    identifier = Property
+    sample = Str
 
-    alt_name=Str
-    low_post=Date #
+    lat = Float
+    lon = Float
+    elevation = Float
+    lithology = Str
 
-    irradiation=Str
-    irradiation_level=Str
-    irradiation_pos=Str
+    alt_name = Str
+    low_post = Date  #
+
+    irradiation = Str
+    irradiation_level = Str
+    irradiation_and_level = Property
+    irradiation_pos = Str
 
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier
+
         pos = dbrecord.irradiation_position
         if pos:
             level = pos.level
@@ -58,23 +62,34 @@ class LabnumberRecordView(RecordView):
             self.irradiation_level = level.name
             self.irradiation = irrad.name
 
-        sample=dbrecord.sample
+        sample = dbrecord.sample
 
         if sample.material:
             self.material = sample.material.name
         if sample.project:
             self.project = sample.project.name
 
-        for attr in ('name','lat',('lon','long'),
-                     'elevation','lithology','location','igsn'):
+        for attr in ('name', 'lat', ('lon', 'long'),
+                     'elevation', 'lithology', 'location', 'igsn'):
             if isinstance(attr, tuple):
-                attr,dbattr=attr
+                attr, dbattr = attr
             else:
-                dbattr=attr
+                dbattr = attr
 
-            v=getattr(sample, dbattr)
+            v = getattr(sample, dbattr)
             if v is not None:
                 setattr(self, attr, v)
+
+    #mirror labnumber as identifier
+    def _get_identifier(self):
+        return self.labnumber
+
+    def _get_irradiation_and_level(self):
+        return '{}{}'.format(self.irradiation, self.irradiation_level)
+
+    @property
+    def id(self):
+        return self.identifier
 
 
 class ProjectRecordView(RecordView):
@@ -86,4 +101,8 @@ class ProjectRecordView(RecordView):
         else:
             self.name = dbrecord
 
-            #============= EOF =============================================
+    @property
+    def id(self):
+        return self.name
+
+        #============= EOF =============================================

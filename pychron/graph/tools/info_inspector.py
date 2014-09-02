@@ -75,11 +75,11 @@ class InfoOverlay(AbstractOverlay):
             lines = self.tool.assemble_lines()
             if lines:
                 lines = [li for li in lines if li and li.strip()]
-                self._draw_info(gc, lines)
+                self._draw_info(plot, gc, lines)
 
         self.visible = False
 
-    def _draw_info(self, gc, lines):
+    def _draw_info(self, plot, gc, lines):
         if not self.tool.current_screen:
             return
 
@@ -87,32 +87,34 @@ class InfoOverlay(AbstractOverlay):
 
         gc.set_font(Font('Arial'))
         gc.set_fill_color((0.8, 0.8, 0.8))
+
         lws, lhs = zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines])
 
-        lw = max(lws)
-        lh = sum(lhs) * 1.25 + 2 * len(lhs)
+        lw = max(lws)+4
+        lh = sum(lhs) + len(lhs)*0.75
 
         xoffset = 12
-        yoffset = 10
-
-        x += xoffset
-        y -= yoffset
+        yoffset = -10
+        gc.translate_ctm(xoffset, yoffset)
+        # x += xoffset
+        # y -= yoffset
 
         # if the box doesnt fit in window
         # move left
         x2 = self.component.x2
-        if x + lw > x2:
-            x = x2 - lw - 3
+        if x+xoffset + lw> x2:
+            x = x2 - lw - xoffset-1
 
-        gc.rect(x, y - lh + 2, lw + 4, lh)
+        h = lhs[0]
+        py = max(0, y - lh)
+
+        gc.rect(x,py, lw, lh)
         gc.draw_path()
         gc.set_fill_color((0, 0, 0))
-        h = lhs[0] * 1.25
 
-        for i, mi in enumerate(lines):
-            gc.set_text_position(x + 2,
-                                 y - h * (i + 1)
-            )
+        gc.translate_ctm(x+2,py+2)
+        for i, mi in enumerate(lines[::-1]):
+            gc.set_text_position(0, h * i)
             gc.show_text(mi)
 
 #============= EOF =============================================

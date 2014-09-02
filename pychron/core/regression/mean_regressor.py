@@ -16,15 +16,30 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import average, ones, asarray
+from numpy import average, ones, asarray, where
 #============= local library imports  ==========================
 from base_regressor import BaseRegressor
 
 class MeanRegressor(BaseRegressor):
     ddof = 1
     _fit = 'average'
+
+    def calculate(self):
+        cxs, cys = self.clean_ys, self.clean_ys
+        if not self._filtering:
+            #prevent infinite recursion
+            fx, fy = self.get_filtered_data(cxs, cys)
+        else:
+            fx, fy = cxs, cys
+
+    def calculate_outliers(self, nsigma=2):
+        # res = self.calculate_residuals()
+        res=abs(self.clean_ys-self.mean)
+        s=self.std
+        return where(res > (s * nsigma))[0]
+
     def _calculate_coefficients(self):
-        ys = self._clean_array(self.ys)
+        ys = self.clean_ys
         if self._check_integrity(ys, ys):
             return [ys.mean()]
         else:
@@ -47,7 +62,7 @@ sem={}
 
     @property
     def mean(self):
-        ys = self._clean_array(self.ys)
+        ys = self.clean_ys
         if self._check_integrity(ys,ys):
             return ys.mean()
         else:
@@ -68,7 +83,7 @@ sem={}
 
     @property
     def sem(self):
-        ys = self._clean_array(self.ys)
+        ys = self.clean_ys
         if self._check_integrity(ys, ys):
             return self.std * 1 / len(ys) ** 0.5
         else:
@@ -119,7 +134,7 @@ class WeightedMeanRegressor(MeanRegressor):
 
     @property
     def mean(self):
-        ys = self._clean_array(self.ys)
+        ys = self.clean_ys
         ws=self._get_weights()
         if self._check_integrity(ys, ws):
             return average(ys, weights=ws)
@@ -133,9 +148,9 @@ class WeightedMeanRegressor(MeanRegressor):
     #         return var ** 0.5
 
     def _get_weights(self):
-        e=self._clean_array(self.yserr)
+        e=self.clean_yserr
         if self._check_integrity(e,e):
-            return 1 / self.yserr ** 2
+            return 1 / e ** 2
 
 
 #============= EOF =============================================

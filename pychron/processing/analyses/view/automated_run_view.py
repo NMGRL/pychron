@@ -23,9 +23,9 @@ from pychron.processing.analyses.view.main_view import MainView
 
 
 class AutomatedRunAnalysisView(MainView):
-    def update_values(self, arar_age):
-        for ci in self.computed_values:
-            v = getattr(arar_age, ci)
+    # def update_values(self, arar_age):
+    #     for ci in self.computed_values:
+    #         v = getattr(arar_age, ci)
 
     def load(self, ar):
         an = ar.arar_age
@@ -45,7 +45,7 @@ class AutomatedRunAnalysisView(MainView):
         return self._j
 
     def traits_view(self):
-        teditor, ceditor, eeditor, meditor = es = self._get_editors()
+        teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
             ei.adapter.font = 'arial 10'
 

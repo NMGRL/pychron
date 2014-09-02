@@ -16,7 +16,8 @@
 
 #============= enthought library imports =======================
 # from traits.api import HasTraits
-
+from pychron.core.ui import set_toolkit
+set_toolkit('qt4')
 #============= standard library imports ========================
 import unittest
 import numpy as np
@@ -56,6 +57,47 @@ class NewYorkRegressionTest(unittest.TestCase):
         err = self.reg.get_slope_error()
         self.assertAlmostEqual(err, 0.0702, 4)
 
+    def testInterceptError(self):
+        err = self.reg.get_intercept_error()
+        self.assertAlmostEqual(err, 0.3555, 4)
+class ReedRegressionTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Pearson Data with Weights
+        xs = [0, 0.9, 1.8, 2.6, 3.3, 4.4, 5.2, 6.1, 6.5, 7.4]
+        ys = [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5]
+
+        #         xs = [5, 10, 6, 8, 4, 4, 3, 10, 2, 6, 7, 9]
+        #         ys = [5, 20, 4, 15, 11, 9, 12, 18, 7, 2, 14, 17]
+
+        wxs = np.array([1000, 1000, 500, 800, 200, 80, 60, 20, 1.8, 1])
+        wys = np.array([1, 1.8, 4, 8, 20, 20, 70, 70, 100, 500])
+        exs = 1 / wxs ** 0.5
+        eys = 1 / wys ** 0.5
+
+        cls.reg = ReedYorkRegressor(xs=xs, ys=ys, xserr=exs, yserr=eys)
+
+    def setUp(self):
+        pass
+
+    def testSlope(self):
+        slope = self.reg.get_slope()
+        self.assertAlmostEqual(slope, -0.4805, 4)
+
+    def testIntercept(self):
+        intercept = self.reg.get_intercept()
+        self.assertAlmostEqual(intercept, 5.4799, 4)
+
+    def testSlopeError(self):
+        err = self.reg.get_slope_error()
+        self.assertAlmostEqual(err, 0.0702, 4)
+
+    def testInterceptError(self):
+        err = self.reg.get_intercept_error()
+        self.assertAlmostEqual(err, 0.3555, 4)
+
+    def testMSWD(self):
+        self.assertAlmostEqual(self.reg.mswd, 1.4833)
 # #
 #     def testPredict(self):
 #         y = self.reg.predict(0)

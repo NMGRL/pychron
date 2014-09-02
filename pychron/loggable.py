@@ -34,17 +34,22 @@ NAME_WIDTH = 40
 
 
 def confirmation_dialog(msg, return_retval=False,
-                        cancel=False, title='', timeout=None, size=None):
+                        cancel=False, title='',
+                        timeout=None, size=None,
+                        timeout_ret=None):
 
     if size is None:
         size = (-1, -1)
 
     dlg = myConfirmationDialog(
+        timeout_return_code=timeout_ret,
         cancel=cancel,
         message=msg,
         title=title,
         style='modal',
         size=size)
+
+
 
     retval = dlg.open(timeout)
     if return_retval:

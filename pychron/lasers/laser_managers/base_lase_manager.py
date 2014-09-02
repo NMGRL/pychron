@@ -15,8 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Event, Bool, Any, Property, Str, implements, \
-    Float
+from traits.api import Instance, Event, Bool, Any, Property, Str, Float
+from traits.has_traits import provides
 
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.pattern.pattern_executor import PatternExecutor
@@ -28,8 +28,10 @@ from pychron.paths import paths
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
+@provides(ILaserManager)
 class BaseLaserManager(Manager):
-    implements(ILaserManager)
+    # implements(ILaserManager)
+    # provides(ILaserManager)
     pattern_executor = Instance(PatternExecutor)
     use_video = Bool(False)
 
@@ -55,6 +57,7 @@ class BaseLaserManager(Manager):
     def initialize_video(self):
         if self.use_video:
             self.stage_manager.initialize_video()
+
     def is_ready(self):
         return True
 
@@ -67,7 +70,7 @@ class BaseLaserManager(Manager):
     def extract(self, *args, **kw):
         pass
 
-    def prepare(self):
+    def prepare(self, *args, **kw):
         pass
 
     def set_motor_lock(self, name, value):
@@ -129,12 +132,12 @@ class BaseLaserManager(Manager):
         pm = PatternExecutor(application=self.application, controller=controller)
         return pm
 
-    def move_to_position(self, pos, autocenter, *args, **kw):
+    def move_to_position(self, pos, *args, **kw):
         if not isinstance(pos, list):
             pos = [pos]
 
-        for pi in pos:
-            self._move_to_position(pi, autocenter)
+        for p in pos:
+            self._move_to_position(p, *args, **kw)
 
         return True
 

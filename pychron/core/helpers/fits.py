@@ -21,9 +21,9 @@
 
 
 def convert_fit(f):
-    err=None
+    err = 'SEM'
     if isinstance(f, tuple):
-        f,err=f
+        f, err = f
 
     if isinstance(f, (str, unicode)):
         f = f.lower()
@@ -31,24 +31,25 @@ def convert_fit(f):
         if '_' in f:
 
             try:
-                f,err=f.split('_')
-                err=err.upper()
+                f, err = f.split('_')
+                err = err.upper()
             except ValueError:
                 return None, None
 
         if f in fits:
             f = fits.index(f) + 1
         elif f.startswith('average'):
-            f='average'
-            err='SEM' if 'sem' in f else 'SD'
+            f = 'average'
+            if not err:
+                err = 'SEM' if 'sem' in f else 'SD'
         elif f.startswith('weightedmean'):
             f = 'weightedmean'
-            err = 'SEM' if 'sem' in f else 'SD'
+            if not err:
+                err = 'SEM' if 'sem' in f else 'SD'
         else:
             f = None
 
     return f, err
-
 
 
 #============= EOF =============================================

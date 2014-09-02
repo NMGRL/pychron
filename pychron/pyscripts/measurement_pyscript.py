@@ -16,11 +16,11 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-
 import time
 import os
 from ConfigParser import ConfigParser
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import fileiter
 from pychron.pyscripts.pyscript import verbose_skip, count_verbose_skip, \
     makeRegistry
 from pychron.paths import paths
@@ -46,16 +46,19 @@ class MeasurementPyScript(ValvePyScript):
 
     _detectors = None
     abbreviated_count_ratio = None
+    _fit_series_count = 0
 
     def gosub(self, *args, **kw):
         kw['automated_run'] = self.automated_run
         super(MeasurementPyScript, self).gosub(*args, **kw)
 
     def reset(self, arun):
+        self.debug('%%%%%%%%%%%%%%%%%% setting automated run {}'.format(arun.runid))
         self.automated_run = arun
 
         self._baseline_series = None
         self._series_count = 0
+        self._fit_series_count = 0
         self._time_zero = None
         self._regress_id = 0
         self._detectors = None
@@ -114,14 +117,18 @@ class MeasurementPyScript(ValvePyScript):
         if self.abbreviated_count_ratio:
             ncounts *= self.abbreviated_count_ratio
 
-        if not self._automated_run_call('py_data_collection', ncounts,
+        if not self._automated_run_call('py_data_collection',
+                                        self,
+                                        ncounts,
                                         self._time_zero,
                                         self._time_zero_offset,
+                                        fit_series=self._fit_series_count,
                                         series=self._series_count):
             self.cancel()
 
         #        self._regress_id = self._series_count
         self._series_count += 2
+        self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -151,11 +158,13 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero_offset,
                                         mass,
                                         detector,
+                                        fit_series=self._fit_series_count,
                                         settling_time=settling_time,
                                         series=series):
             self.cancel()
         self._baseline_series = series
         self._series_count += 2
+        self._fit_series_count += 1
 
     @count_verbose_skip
     @command_register
@@ -165,7 +174,8 @@ class MeasurementPyScript(ValvePyScript):
 
         if os.path.isfile(p):
             with open(p, 'r') as fp:
-                hops = [eval(line) for line in fp if not line.strip().startswith('#')]
+                # hops = [eval(line) for line in fp if not line.strip().startswith('#')]
+                hops = [eval(li) for li in fileiter(fp)]
                 return hops
 
         else:
@@ -206,9 +216,11 @@ class MeasurementPyScript(ValvePyScript):
                                         self._time_zero,
                                         self._time_zero_offset,
                                         self._series_count,
+                                        fit_series=self._fit_series_count,
                                         group=group):
             self.cancel()
-        self._series_count += 2
+        self._series_count += 1
+        self._fit_series_count += 1
         #self._series_count += 4
 
     #    @count_verbose_skip
@@ -247,13 +259,16 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def equilibrate(self, eqtime=20, inlet=None, outlet=None, do_post_equilibration=True, delay=3):
+    def equilibrate(self, eqtime=20, inlet=None, outlet=None,
+                    do_post_equilibration=True, close_inlet=True, delay=3):
+
         evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
                                        inlet=inlet,
                                        outlet=outlet,
                                        do_post_equilibration=do_post_equilibration,
-                                       delay=delay
-        )
+                                       close_inlet=close_inlet,
+                                       delay=delay)
+
         if not evt:
             self.cancel()
         else:
@@ -296,12 +311,12 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def position_magnet(self, pos, detector='AX', dac=False):
-        '''
+        """
             position_magnet(4.54312, dac=True) # detector is not relevant
             position_magnet(39.962, detector='AX')
             position_magnet('Ar40', detector='AX') #Ar40 will be converted to 39.962 use mole weight dict
             
-        '''
+        """
         self._automated_run_call('py_position_magnet', pos, detector, dac=dac)
 
     @verbose_skip
@@ -313,9 +328,9 @@ class MeasurementPyScript(ValvePyScript):
     #
     #===============================================================================
     def _automated_run_call(self, func, *args, **kw):
-    #         return True
-    #         if func not in ('py_activate_detectors',):
-    #             return True
+        #         return True
+        #         if func not in ('py_activate_detectors',):
+        #             return True
 
         if self.automated_run is None:
             return
@@ -383,16 +398,15 @@ class MeasurementPyScript(ValvePyScript):
                    action=None,
                    resume=False):
 
-    #        if self._syntax_checking:
-    #            if isinstance(action, str):
-    #                self.execute_snippet(action)
+        #        if self._syntax_checking:
+        #            if isinstance(action, str):
+        #                self.execute_snippet(action)
 
         self._automated_run_call('py_add_action', attr, comp,
                                  start_count=start_count,
                                  frequency=frequency,
                                  action=action,
-                                 resume=resume
-        )
+                                 resume=resume)
 
     @verbose_skip
     @command_register
@@ -406,17 +420,17 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_time_zero(self, offset=0):
-        '''
-            set the time_zero value. 
+        """
+            set the time_zero value.
             add offset to time_zero
-            e.g 
-                
+            e.g
+
                 T_o= ion pump closes
                 offset seconds after T_o. define time_zero
-                
+
                 T_eq= inlet closes
-            
-        '''
+
+        """
         self._time_zero = time.time() + offset
         self._time_zero_offset = offset
 
@@ -482,21 +496,24 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def set_source_optics(self, **kw):
-        ''' 
+        """
         set_source_optics(YSymmetry=10.0)
         set ysymmetry to 10 use config.cfg
-        
-        '''
+
+        """
         attrs = ['YSymmetry', 'ZSymmetry', 'ZFocus', 'ExtractionLens']
         self._set_from_file(attrs, 'SourceOptics', **kw)
 
     @verbose_skip
     @command_register
     def set_source_parameters(self, **kw):
-        '''            
-        '''
         attrs = ['IonRepeller', 'ElectronVolts']
         self._set_from_file(attrs, 'SourceParameters', **kw)
+
+    @verbose_skip
+    @command_register
+    def set_accelerating_voltage(self, v=''):
+        self._set_spectrometer_parameter('SetHV', v)
 
     @verbose_skip
     @command_register
@@ -552,6 +569,13 @@ class MeasurementPyScript(ValvePyScript):
             if cg.has_option('Default', 'eqtime'):
                 r = cg.getfloat('Default', 'eqtime', )
             return r
+
+    @property
+    def time_zero_offset(self):
+        if self.automated_run:
+            return self._automated_run_call(lambda: self.automated_run.time_zero_offset)
+        else:
+            return 0
 
 #===============================================================================
 # handler

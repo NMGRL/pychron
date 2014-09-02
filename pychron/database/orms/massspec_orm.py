@@ -55,14 +55,16 @@ class AnalysisPositionTable(Base):
 
 
 class AnalysesTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'AnalysesTable'
     AnalysisID = Column(Integer, primary_key=True)
     RID = Column(String(40))
 
     IrradPosition = Column(Integer, ForeignKey('IrradiationPositionTable.IrradPosition'))
-    Aliquot = Column(Integer)
+    Aliquot = Column(String(10))
+    Aliquot_pychron = Column(Integer)
+
     Increment = Column(String(20))
     SpecParametersID = Column(Integer, default=0)
     RunScriptID = Column(Integer, ForeignKey('RunScriptTable.RunScriptID'))
@@ -174,8 +176,8 @@ class DataReductionSessionTable(Base):
 
 
 class DetectorTable(Base):
-    '''
-    '''
+    """
+    """
     __tablename__ = 'DetectorTable'
     DetectorID = Column(Integer, primary_key=True)
     DetectorTypeID = Column(Integer, ForeignKey('DetectorTypeTable.DetectorTypeID'))
@@ -185,6 +187,7 @@ class DetectorTable(Base):
     DiscEr = Column(Float, default=0)
     ICFactor = Column(Float, default=1)
     ICFactorEr = Column(Float, default=0)
+    ICFactorSource = Column(Integer, default=1)
     IonCounterDeadtimeSec = Column(Float, default=0)
     Label = Column(String(40))
 

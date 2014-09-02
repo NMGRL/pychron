@@ -46,25 +46,18 @@ class Gauge(HasTraits):
 
     def traits_view(self):
         v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-30,
-        ),
+                             width=-30, ),
                         Item('pressure',
                              format_str='%0.2e',
                              show_label=False,
-                             style='readonly'
-                        ),
+                             style='readonly'),
                         Item('pressure',
                              show_label=False,
                              width=self.width,
                              editor=BarGaugeEditor(low=self.low,
                                                    high=self.high,
                                                    color_scalar=self.color_scalar,
-                                                   width=self.width
-                             )
-                        )
-
-        )
-        )
+                                                   width=self.width))))
         return v
 
 
@@ -163,7 +156,7 @@ class MicroIonController(CoreDevice):
                 pass
 
     def get_pressures(self, verbose=False):
-    #        self.debug('getting pressure')
+        #        self.debug('getting pressure')
         b = self.get_convectron_b_pressure(verbose=verbose, force=True)
         self._set_gauge_pressure('CG2', b)
         time.sleep(0.05)

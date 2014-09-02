@@ -104,7 +104,7 @@ class ArArAgeCase(unittest.TestCase):
         an = self.analysis
         iso = an.isotopes['Ar40']
 
-        self.assertAlmostEqual(iso.baseline_corrected_value().std_dev,
+        self.assertAlmostEqual(iso.get_baseline_corrected_value().std_dev,
                                self.expected['Ar40bs_ce'], 6)
 
 
@@ -112,7 +112,7 @@ class ArArAgeCase(unittest.TestCase):
         an = self.analysis
         iso = an.isotopes['Ar39']
 
-        self.assertAlmostEqual(iso.baseline_corrected_value().std_dev,
+        self.assertAlmostEqual(iso.get_baseline_corrected_value().std_dev,
                                self.expected['Ar39bs_ce'], 6)
 
 
@@ -179,30 +179,30 @@ class ArArAgeCase(unittest.TestCase):
 
     def test_Ar40_baseline_corrected(self):
         an = self.analysis
-        self.assertAlmostEqual(an.isotopes['Ar40'].baseline_corrected_value().nominal_value,
+        self.assertAlmostEqual(an.isotopes['Ar40'].get_baseline_corrected_value().nominal_value,
                                self.expected['Ar40bs_c'], 4)
 
 
     def test_Ar39_baseline_corrected(self):
         an = self.analysis
-        self.assertAlmostEqual(an.isotopes['Ar39'].baseline_corrected_value().nominal_value,
+        self.assertAlmostEqual(an.isotopes['Ar39'].get_baseline_corrected_value().nominal_value,
                                self.expected['Ar39bs_c'], 7)
 
 
     def test_Ar37_baseline_corrected(self):
         an = self.analysis
-        self.assertAlmostEqual(an.isotopes['Ar37'].baseline_corrected_value().nominal_value,
+        self.assertAlmostEqual(an.isotopes['Ar37'].get_baseline_corrected_value().nominal_value,
                                self.expected['Ar37bs_c'], 7)
 
 
     def test_Ar38_baseline_corrected(self):
         an = self.analysis
-        self.assertAlmostEqual(an.isotopes['Ar38'].baseline_corrected_value().nominal_value,
+        self.assertAlmostEqual(an.isotopes['Ar38'].get_baseline_corrected_value().nominal_value,
                                self.expected['Ar38bs_c'], 7)
 
     def test_Ar36_baseline_corrected(self):
         an = self.analysis
-        self.assertAlmostEqual(an.isotopes['Ar36'].baseline_corrected_value().nominal_value,
+        self.assertAlmostEqual(an.isotopes['Ar36'].get_baseline_corrected_value().nominal_value,
                                self.expected['Ar36bs_c'], 7)
 
 

@@ -16,10 +16,13 @@
 
 #============= enthought library imports =======================
 import re
+
 from chaco.array_data_source import ArrayDataSource
+from numpy import Inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
@@ -34,6 +37,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.pychron_constants import ARGON_KEYS
 
 PLOT_MAPPING = {'analysis #': 'Analysis Number', 'Analysis #': 'Analysis Number Stacked',
                 '%40Ar*': 'Radiogenic 40Ar'}
@@ -59,8 +63,9 @@ class BaseArArFigure(HasTraits):
 
     refresh_unknowns_table = Event
     _suppress_table_update = False
-
+    suppress_ylimits_update=False
     _omit_key=None
+    xpad=None
 
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
@@ -124,6 +129,15 @@ class BaseArArFigure(HasTraits):
     def replot(self, *args, **kw):
         pass
 
+    def max_x(self, *args):
+        return -Inf
+
+    def min_x(self, *args):
+        return Inf
+
+    def mean_x(self, *args):
+        return 0
+
     def _get_omitted(self, ans, omit=None, include_value_filtered=True):
         return [i for i, ai in enumerate(ans)
                 if ai.is_omitted(omit, include_value_filtered)]
@@ -132,7 +146,6 @@ class BaseArArFigure(HasTraits):
         for i, a in enumerate(ans):
             if not (a.table_filter_omit or a.value_filter_omit or a.is_tag_omitted(self._omit_key)):
                 a.temp_status = 1 if i in sel else 0
-
         self.refresh_unknowns_table = True
 
     def _filter_metadata_changes(self, obj, func, ans):
@@ -180,8 +193,12 @@ class BaseArArFigure(HasTraits):
                         yield ai.isotopes[n].get_intensity()/ai.isotopes[d].get_intensity()
         else:
             def gen():
+                f=lambda x: x
+                if attr in ARGON_KEYS:
+                    f=lambda x: x.get_intensity()
+
                 for ai in self.sorted_analyses:
-                    yield ai.get_value(attr)
+                    yield f(ai.get_value(attr))
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None,
@@ -198,7 +215,6 @@ class BaseArArFigure(HasTraits):
     def _update_options_limits(self, pid):
         n = len(self.options.aux_plots)
         ap = self.options.aux_plots[n - pid - 1]
-
         ap.ylimits = self.graph.get_y_limits(pid)
 
     #===========================================================================
@@ -243,15 +259,20 @@ class BaseArArFigure(HasTraits):
     def _add_point_labels(self, scatter):
         labels = ['{:02n}{}'.format(si.aliquot, si.step) for si in self.sorted_analyses]
         ov = PointsLabelOverlay(component=scatter,
-                                labels=labels)
-        scatter.underlays.append(ov)
+                                labels=labels,
+                                label_box=self.options.label_box
+                                )
+        scatter.overlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
+                        end_caps,
                         visible=True):
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
-                              visible=visible)
+                              visible=visible,
+                              use_end_caps=end_caps
+                              )
 
         scatter.underlays.append(ebo)
         setattr(scatter, '{}error'.format(axis), ArrayDataSource(errors))
@@ -288,9 +309,8 @@ class BaseArArFigure(HasTraits):
             scatter.overlays.append(pinspector_overlay)
             broadcaster.tools.append(point_inspector)
 
-            u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
-            scatter.index.on_trait_change(u, 'metadata_changed')
-
+            # u = lambda a, b, c, d: self.update_graph_metadata(a, b, c, d)
+            scatter.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
             #===============================================================================
             # labels
             #===============================================================================
@@ -340,11 +360,15 @@ class BaseArArFigure(HasTraits):
 
         x = floatfmt(x, 3)
         we = floatfmt(we, 4)
-        pm = '+/-'
 
-        age_units = self._get_age_units()
+        if self.options.index_attr in ('uF','Ar40/Ar36'):
+            me='{} +/-{}'.format(x,we)
+        else:
+            age_units = self._get_age_units()
+            me='{} +/-{} {}'.format(x,we,age_units)
 
-        return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
+        return u'{} {} {}'.format(me, mswd, n)
+        # return u'{} {}{} {} {} {}'.format(x, pm, we, age_units, mswd, n)
 
     def _get_age_units(self):
         a = 'Ma'
@@ -376,7 +400,9 @@ class BaseArArFigure(HasTraits):
     @on_trait_change('graph:plots:value_mapper:updated')
     def _handle_value_range(self, obj,name, old, new):
         if not isinstance(new, bool):
-            # print 'aaa',new.low, new.high
+            if self.suppress_ylimits_update:
+                return
+
             for p in self.graph.plots:
                 if p.value_mapper==obj:
                     plot=p

@@ -57,7 +57,7 @@ def load_isotopedb_defaults(db):
         for mi in ['obama', 'jan', 'nmgrl map']:
             db.add_mass_spectrometer(mi)
 
-        project = db.add_project('references')
+        project = db.add_project('REFERENCES')
         #print project
         for i, di in enumerate(['blank_air',
                                 'blank_cocktail',
@@ -73,23 +73,12 @@ def load_isotopedb_defaults(db):
 
         for hi, kind, make in [('Fusions CO2', '10.6um co2', 'photon machines'),
                                ('Fusions Diode', '810nm diode', 'photon machines'),
-                               ('Fusions UV', '193nm eximer', 'photon machines')
-        ]:
+                               ('Fusions UV', '193nm eximer', 'photon machines')]:
             db.add_extraction_device(name=hi,
                                      kind=kind,
-                                     make=make,
-            )
+                                     make=make)
 
-        mdir = os.path.join(paths.setup_dir, 'irradiation_tray_maps')
-        mdir=paths.irradiation_tray_maps_dir
-        # if not os.path.isdir(mdir):
-        #     if information(None, 'No irradiation_tray_maps directory. add to .../setupfiles'):
-        #         try:
-        #             os.mkdir(mdir)
-        #         except OSError,e:
-        #             warning(None, 'Failed making {}: error={}'.format(mdir, e))
-        #
-        # else:
+        mdir = paths.irradiation_tray_maps_dir
         for p, name in iterdir(mdir, exclude=('.zip',)):
             load_irradiation_map(db, p, name)
 
@@ -110,6 +99,7 @@ def _load_tray_map(db, p, name):
     blob = ''.join([struct.pack('>fff', si.x, si.y, r)
                     for si in sm.sample_holes])
     db.add_load_holder(name, geometry=blob)
+
 
 def parse_irradiation_tray_map(p):
     """
@@ -138,10 +128,8 @@ def parse_irradiation_tray_map(p):
         return
 
 
-def load_irradiation_map(db, p, name):
-    overwrite_geometry = False
-
-    holes=parse_irradiation_tray_map(p)
+def load_irradiation_map(db, p, name, overwrite_geometry=False):
+    holes = parse_irradiation_tray_map(p)
     if holes is not None:
         try:
             blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
@@ -154,18 +142,18 @@ def load_irradiation_map(db, p, name):
             print p, name, e
             db.sess.rollback()
 
-    # with open(p, 'r') as f:
-    #     try:
-    #
-    #
-    #         blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
-    #         name, _ = os.path.splitext(name)
-    #
-    #         h = db.add_irradiation_holder(name, geometry=blob)
-    #         if overwrite_geometry:
-    #             h.geometry = blob
-    #
-    #     except Exception, e:
-    #         print p, name, e
-    #         db.sess.rollback()
+            # with open(p, 'r') as f:
+            #     try:
+            #
+            #
+            #         blob = ''.join([struct.pack('>fff', x, y, r) for x, y, r in holes])
+            #         name, _ = os.path.splitext(name)
+            #
+            #         h = db.add_irradiation_holder(name, geometry=blob)
+            #         if overwrite_geometry:
+            #             h.geometry = blob
+            #
+            #     except Exception, e:
+            #         print p, name, e
+            #         db.sess.rollback()
 

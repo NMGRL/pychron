@@ -72,7 +72,7 @@ class SpectrometerManager(Manager):
             dbm = IsotopeDatabaseManager(application=self.application,
                                          warn=False)
             self.db = dbm
-            if dbm.isConnected():
+            if dbm.is_connected():
                 self.info('loading molecular_weights from database')
                 mws = dbm.db.get_molecular_weights()
                 # convert to a dictionary

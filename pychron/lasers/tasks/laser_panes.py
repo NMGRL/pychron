@@ -22,30 +22,23 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.experiment.utilities.identifier import pretty_extract_device
 from pychron.core.ui.led_editor import LEDEditor
 from enable.component_editor import ComponentEditor
-# from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 
 
 def SUItem(name, **kw):
-    return UItem('object.stage_manager.{}'.format(name),
-                 #                 defined_when='mode!="client"',
-                 **kw)
+    return UItem('object.stage_manager.{}'.format(name), **kw)
 
 
 class BaseLaserPane(TraitsTaskPane):
     def traits_view(self):
-    #         if self.model.mode!='client':
         v = View(UItem('stage_manager',
-                       # defined_when='mode!="client"',
                        style='custom'),
-                 HGroup(UItem('status_text', style='readonly'), spring),
-                 #                  statusbar='status_text'
-        )
-        #         else:
-        #             v=View()
+                 HGroup(UItem('status_text', style='readonly'), spring))
+
         return v
 
 
@@ -68,114 +61,70 @@ class StageControlPane(TraitsDockPane):
             return 'object.stage_manager.{}'.format(name)
 
         def SItem(name, **kw):
-            return Item(make_sm_name(name),
-                        #                         defined_when='mode!="client"',
-                        **kw)
+            return Item(make_sm_name(name), **kw)
 
         def CItem(name, **kw):
-            return Item('object.stage_manager.canvas.{}'.format(name),
-                        #                         defined_when='mode!="client"',
-                        **kw)
+            return Item('object.stage_manager.canvas.{}'.format(name), **kw)
 
         def CUItem(name, **kw):
-            return UItem('object.stage_manager.canvas.{}'.format(name),
-                         #                         defined_when='mode!="client"',
-                         **kw)
-            #=======================================================================
-            #
-            #=======================================================================
+            return UItem('object.stage_manager.canvas.{}'.format(name), **kw)
 
-        #         agrp = SUItem('stage_controller', style='custom')
+
         pgrp = Group(
             SUItem('calibrated_position_entry',
-                   tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'
-            ),
+                   tooltip='Enter a positon e.g 1 for a hole, or 3,4 for X,Y'),
             label='Calibrated Position',
             show_border=True)
         hgrp = HGroup(SUItem('stop_button'),
                       SUItem('home'),
-                      SUItem('home_option', editor=EnumEditor(name='object.stage_manager.home_options'))
-        )
+                      SUItem('home_option', editor=EnumEditor(name='object.stage_manager.home_options')))
         cngrp = VGroup(
             CItem('show_bounds_rect'),
-            #                       Item('render_map'),
             CItem('show_grids'),
             HGroup(CItem('show_laser_position'),
-                   CUItem('crosshairs_color',
-                          #                                   editor=ColorEditor(),
-                          #                                    springy=True,
-                          #                                    show_label=False
-                   )
-            ),
+                   CUItem('crosshairs_color')),
             CItem('crosshairs_kind'),
             CItem('crosshairs_radius'),
             HGroup(
                 CItem('crosshairs_offsetx', label='Offset'),
-                CUItem('crosshairs_offsety')
-            ),
+                CUItem('crosshairs_offsety')),
             CItem('crosshairs_offset_color'),
             HGroup(CItem('show_desired_position'),
-                   CUItem('desired_position_color',
-                          #                                     springy=True
-                   )
-            ),
-            label='Canvas'
-        )
-
-        #         if self.model.mode != 'client':
+                   CUItem('desired_position_color')),
+            label='Canvas')
 
         mode = self.model.mode
-        #         mvgrp = None
-        #         recgrp = None
         cagrp = VGroup(
             visible_when='use_video',
             label='Camera')
 
         if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
             mvgrp = VGroup(
-                #                       HGroup(SItem('use_autocenter', label='Enabled'),
-                #                              SUItem('autocenter_button',
-                #                                   enabled_when='use_autocenter'),
-                #                              SUItem('configure_autocenter_button')
-                #                           ),
                 SUItem('autocenter_manager', style='custom'),
                 SUItem('autofocus_manager', style='custom'),
-                label='Machine Vision', show_border=True,
-            )
+                label='Machine Vision', show_border=True)
 
             recgrp = VGroup(
-                HGroup(SItem('snapshot_button', show_label=False),
-                       VGroup(SItem('auto_save_snapshot'),
-                              SItem('render_with_markup'))),
-                SUItem('record', editor=ButtonEditor(label_value=make_sm_name('record_label'))),
+                HGroup(icon_button_editor(make_sm_name('snapshot_button'), 'camera',
+                                          tooltip='Take a snapshot'),
+                       icon_button_editor(make_sm_name('record'),
+                                          'media-record',
+                                          tooltip='Record video'),
+                       CustomLabel(make_sm_name('record_label'), color='red')),
+                VGroup(SItem('auto_save_snapshot'),
+                       SItem('render_with_markup')),
                 show_border=True,
-                label='Recording'
-            )
-            cfggrp = VGroup(
-                SItem('camera_zoom_coefficients', label='Zoom Coefficients')
-            )
-            cagrp.content.extend((cfggrp, recgrp, mvgrp))
-            #         else:
-        #             recgrp = Group()
+                label='Recording')
 
-        #         cagrp = VGroup(
-        #                        recgrp,
-        # #                   label='Machine Vision', show_border=True)
-        #                        visible_when='use_video',
-        #                        label='Camera'
-        #                        )
-        #         if mode != 'client' and mvgrp:
-        #             cagrp.content.insert(0, co)
-        #             cagrp.content.append(mvgrp)
+            cfggrp = VGroup(SItem('camera_zoom_coefficients', label='Zoom Coefficients'))
+            cagrp.content.extend((cfggrp, recgrp, mvgrp))
 
         cgrp = Group(
             SUItem('stage_controller', style='custom',
-                   label='Axes'
-            ),
+                   label='Axes'),
             cngrp,
             cagrp,
-            layout='tabbed'
-        )
+            layout='tabbed')
 
         if mode != 'client':
             grps = (
@@ -187,23 +136,10 @@ class StageControlPane(TraitsDockPane):
                 SUItem('tray_calibration_manager',
                        label='Calibration',
                        style='custom',
-                       defined_when='mode!="client"',
-
-                ))
+                       defined_when='mode!="client"'))
             cgrp.content.extend(grps)
 
-        v = View(
-            #                      VFold(agrp,
-            VGroup(
-                hgrp,
-                pgrp,
-                cgrp
-            )
-            #                            )
-        )
-        #         else:
-        #             v = View()
-
+        v = View(VGroup(hgrp, pgrp, cgrp))
 
         return v
 
@@ -222,27 +158,23 @@ class ControlPane(TraitsDockPane):
                     UItem('enabled_led',
                           editor=LEDEditor(),
                           style='custom',
-                          height=-35
-                    ),
-                    UItem('enable', editor=ButtonEditor(label_value='enable_label'))
-                ),
+                          height=-35),
+                    UItem('enable', editor=ButtonEditor(label_value='enable_label'))),
                 HGroup(
                     Item('requested_power',
                          style='readonly',
                          format_str='%0.2f',
-                         width=100
-                    ),
+                         width=100),
                     Spring(springy=False, width=50),
                     UItem('units', style='readonly'),
                     spring),
-                show_border=True
-            ),
-        )
+                show_border=True))
         return v
 
 
 class SupplementalPane(TraitsDockPane):
     pass
+
 
 #===============================================================================
 # generic
@@ -264,9 +196,7 @@ class OpticsPane(TraitsDockPane):
         v = View(Group(UItem('laser_controller',
                              editor=InstanceEditor(view='control_view'),
                              style='custom'),
-                       show_border=True
-        )
-        )
+                       show_border=True))
         return v
 
 
@@ -276,13 +206,11 @@ class ClientPane(TraitsTaskPane):
             Item('test_connection_button', show_label=False),
             HGroup(
                 UItem('enabled_led', editor=LEDEditor()),
-                UItem('enable', editor=ButtonEditor(label_value='enable_label'))
-            ),
+                UItem('enable', editor=ButtonEditor(label_value='enable_label'))),
             Item('position'),
             Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
             Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-            Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
-        )
+            Item('z', editor=RangeEditor(low=-25.0, high=25.0)))
         return v
 
 

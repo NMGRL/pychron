@@ -32,7 +32,8 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction
+    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, ExportAnalysesAction, \
+    GraphGroupSelectedAction, FigureFromFile
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -81,7 +82,9 @@ Install to enable MS Excel export''')
                 SpectrumAction(),
                 IdeogramAction(),
                 InverseIsochronAction(),
-                SeriesAction())
+                SeriesAction(),
+                FigureFromFile()
+                )
 
         def data_menu():
             return SMenu(id='data.menu', name='Data')
@@ -93,7 +96,10 @@ Install to enable MS Excel export''')
             return Group(GroupSelectedAction(),
                          GroupbyAliquotAction(),
                          GroupbyLabnumberAction(),
-                         ClearGroupAction())
+                         ClearGroupAction(),)
+
+        def graph_grouping_group():
+            return Group(GraphGroupSelectedAction())
 
         def reduction_group():
             return Group(IsotopeEvolutionAction(),
@@ -127,6 +133,7 @@ Install to enable MS Excel export''')
                            ('tag', TagAction, 'MenuBar/data.menu'),
                            ('database_save', DatabaseSaveAction, 'MenuBar/data.menu'),
                            ('grouping_group', grouping_group, 'MenuBar/data.menu'),
+                           ('graph_grouping_group', graph_grouping_group, 'MenuBar/data.menu'),
                            ('clear_cache', ClearAnalysisCacheAction, 'MenuBar/data.menu'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu')]
@@ -164,10 +171,13 @@ Install to enable MS Excel export''')
         return exts
 
     def _meta_task_factory(self, i, f, n, task_group=None,
-                           accelerator='', include_view_menu=False):
+                           accelerator='', include_view_menu=False,
+                           image=None
+    ):
         return TaskFactory(id=i, factory=f, name=n,
                            task_group=task_group,
                            accelerator=accelerator,
+                           image=image,
                            include_view_menu=include_view_menu or accelerator)
 
     def _tasks_default(self):
@@ -202,12 +212,11 @@ Install to enable MS Excel export''')
             ('pychron.processing.publisher',
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
-             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R'),
+             self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
             ('pychron.processing.vcs',
              self._vcs_data_task_factory, 'VCS', '', ''),
             ('pychron.export',
-             self._export_task_factory, 'Export', '', '')
-        ]
+             self._export_task_factory, 'Export', '', '')]
 
         return [
             self._meta_task_factory(*args)

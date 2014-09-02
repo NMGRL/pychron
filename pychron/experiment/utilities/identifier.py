@@ -17,17 +17,15 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.pychron_constants import LINE_STR
+from pychron.pychron_constants import LINE_STR, ALPHAS
 
 ANALYSIS_MAPPING = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
                         bg='Background', u='Unknown', c='Cocktail', a='Air',
-                        pa='Pause'
-)
+                        pa='Pause')
 
 # "labnumbers" where extract group is disabled
 NON_EXTRACTABLE = dict(ba='Blank Air', bc='Blank Cocktail', bu='Blank Unknown',
-                       bg='Background', c='Cocktail', a='Air'
-)
+                       bg='Background', c='Cocktail', a='Air')
 
 SPECIAL_NAMES = ['Special Labnumber', LINE_STR, 'Air', 'Cocktail', 'Blank Unknown',
                  'Blank Air', 'Blank Cocktail', 'Background', 'Pause', 'Degas']
@@ -37,47 +35,66 @@ SPECIAL_MAPPING = dict(background='bg', air='a', cocktail='c',
                        blank_cocktail='bc',
                        blank_unknown='bu',
                        pause='pa',
-                       degas='dg'
-)
-#        sn = ['Blank_air', 'Blank_cocktail', 'Blank_unknown',
-#              'Background', 'Air', 'Cocktail']
-# SPECIAL_IDS = {1:'Blank Air', 2:'Blank Cocktail', 3:'Blank Unknown',
-#               4:'Background', 5:'Air', 6:'Cocktail'
-#               }
+                       degas='dg')
 
-from ConfigParser import ConfigParser
+
+# from ConfigParser import ConfigParser
+# import os
+# from pychron.paths import paths
+#
+# p = os.path.join(paths.setup_dir, 'identifiers.cfg')
+# if os.path.isfile(p):
+#     cp = ConfigParser()
+#     cp.read(p)
+#     for option in cp.options('AnalysisNames'):
+#         v = cp.get('AnalysisNames', option)
+#         labnumber, kname = map(str.strip, v.split(','))
+#         ANALYSIS_MAPPING[option] = kname
+#         SPECIAL_NAMES.append(kname)
+#         SPECIAL_MAPPING[kname.lower()] = option
+
 import os
 from pychron.paths import paths
+import yaml
 
-cp = ConfigParser()
-p = os.path.join(paths.setup_dir, 'identifiers.cfg')
+p = os.path.join(paths.setup_dir, 'identifiers.yaml')
+differed = []
 if os.path.isfile(p):
-    cp.read(p)
-    for option in cp.options('AnalysisNames'):
-        v = cp.get('AnalysisNames', option)
-        labnumber, kname = v.split(',')
-        ANALYSIS_MAPPING[option] = kname
-        SPECIAL_NAMES.append(kname)
-        SPECIAL_MAPPING[kname] = option
+    with open(p, 'r') as fp:
+        yd = yaml.load(fp)
+        for k, v in yd.items():
+            ANALYSIS_MAPPING[k] = v
 
-#        SPECIAL_IDS[int(labnumber)] = name
+            #if : assume '01:Value' where 01 is used for preserving order
+            if ':' in v:
+                a, v = v.split(':')
+                differed.append((int(a), v))
+            else:
+                SPECIAL_NAMES.append(v)
+            SPECIAL_MAPPING[v.lower()] = k
+
+if differed:
+    ds = sorted(differed, key=lambda x: x[0])
+    SPECIAL_NAMES.extend([di[1] for di in ds])
+
+SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
+
 
 def convert_special_name(name, output='shortname'):
-    '''
+    """
         input name output shortname
-        
+
         name='Background'
         returns:
-            
+
             if output=='shortname'
                 return 'bg'
             else
                 return 4 #identifier
-    '''
+    """
     if isinstance(name, str):
         name = name.lower()
         name = name.replace(' ', '_')
-
         if name in SPECIAL_MAPPING:
             sn = SPECIAL_MAPPING[name]
             if output == 'labnumber':
@@ -88,15 +105,15 @@ def convert_special_name(name, output='shortname'):
 
 
 def convert_identifier(identifier):
-    '''
+    """
         old:
             identifier=='bg, a, ...'
             return  1
-        
+
         identifier== bu-FD-J, 51234, 13212-01
         return bu-FD-J, 51234, 13212
-        
-    '''
+
+    """
     if '-' in identifier:
         ln = identifier.split('-')[0]
         try:
@@ -126,7 +143,7 @@ def get_analysis_type(idn):
         return 'background'
     elif idn.startswith('ba'):
         return 'blank_air'
-    elif idn.startswith('bu'):
+    elif idn.startswith('bu') or idn.startswith('bfc'):
         return 'blank_unknown'
     elif idn.startswith('bc'):
         return 'blank_cocktail'
@@ -142,7 +159,7 @@ def get_analysis_type(idn):
         return 'unknown'
 
 
-def make_runid(ln, a, s):
+def make_runid(ln, a, s=''):
     _as = make_aliquot_step(a, s)
     return '{}-{}'.format(ln, _as)
 
@@ -151,7 +168,6 @@ def strip_runid(r):
     l, x = r.split('-')
 
     a = ''
-    s = ''
     for i, xi in enumerate(x):
         a += xi
         try:
@@ -164,6 +180,13 @@ def strip_runid(r):
         s = ''
 
     return l, int(a), s
+
+
+def make_step(s):
+    if isinstance(s, (float, int, long)):
+        s = ALPHAS[int(s)]
+
+    return s
 
 
 def make_aliquot_step(a, s):
@@ -182,12 +205,12 @@ def make_identifier(ln, ed, ms):
 
 
 def make_standard_identifier(ln, modifier, ms, aliquot=None):
-    '''
+    """
         ln: str or int
         a: int
-        modifier: str or int. if int zero pad 
-        ms: int or str 
-    '''
+        modifier: str or int. if int zero pad
+        ms: int or str
+    """
     if isinstance(ms, int):
         ms = '{:02n}'.format(ms)
     try:
@@ -202,12 +225,12 @@ def make_standard_identifier(ln, modifier, ms, aliquot=None):
 
 
 def make_special_identifier(ln, ed, ms, aliquot=None):
-    '''
+    """
         ln: str or int
         a: int aliquot
         ms: int mass spectrometer id
         ed: int extract device id
-    '''
+    """
     if isinstance(ed, int):
         ed = '{:02n}'.format(ed)
     if isinstance(ms, int):
@@ -223,10 +246,10 @@ def make_special_identifier(ln, ed, ms, aliquot=None):
 
 
 def make_rid(ln, a, step=''):
-    '''
+    """
         if ln can be converted to integer return runid
         else return ln-a
-    '''
+    """
     try:
         _ = int(ln)
         return make_runid(ln, a, step)
@@ -235,40 +258,49 @@ def make_rid(ln, a, step=''):
             a = '{:02n}'.format(a)
         return '{}-{}'.format(ln, a)
 
+
+def is_special(ln):
+    special = False
+    if '-' in ln:
+        special = ln.split('-')[0] in ANALYSIS_MAPPING
+    return special
+
+
 #        return make_special_identifier(ln, ed, ms, aliquot=a)
 #===============================================================================
 # deprecated
 #===============================================================================
-SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
-               4: 'Background', 5: 'Air', 6: 'Cocktail'
-}
-# @deprecated
-def convert_labnumber(ln):
-    '''
-        ln is a str  but only special labnumbers cannot be converted to int
-        convert number to name
-        
-    '''
-    try:
-        ln = int(ln)
-
-        if ln in SPECIAL_IDS:
-            ln = SPECIAL_IDS[ln]
-    except ValueError:
-        pass
-
-    return ln
-
-# @deprecated
-def convert_shortname(ln):
-    """
-        convert number to shortname (a for air, bg for background...)
-    """
-    name = convert_labnumber(ln)
-    if name is not None:
-        ln = next((k for k, v in ANALYSIS_MAPPING.iteritems()
-                   if v == name), ln)
-    return ln
+# SPECIAL_IDS = {1: 'Blank Air', 2: 'Blank Cocktail', 3: 'Blank Unknown',
+#                4: 'Background', 5: 'Air', 6: 'Cocktail'
+# }
+# # @deprecated
+# def convert_labnumber(ln):
+#     """
+#         ln is a str  but only special labnumbers cannot be converted to int
+#         convert number to name
+#
+#     """
+#     try:
+#         ln = int(ln)
+#
+#         if ln in SPECIAL_IDS:
+#             ln = SPECIAL_IDS[ln]
+#     except ValueError:
+#         pass
+#
+#     return ln
+#
+#
+# # @deprecated
+# def convert_shortname(ln):
+#     """
+#         convert number to shortname (a for air, bg for background...)
+#     """
+#     name = convert_labnumber(ln)
+#     if name is not None:
+#         ln = next((k for k, v in ANALYSIS_MAPPING.iteritems()
+#                    if v == name), ln)
+#     return ln
 
 
 def convert_extract_device(name):

@@ -36,6 +36,9 @@ class BaseEditorTask(BaseManagerTask):
     def db_save_info(self):
         self.information_dialog('Changes saved to the database')
 
+    def get_editor(self, name):
+        return next((e for e in self.editor_area.editors if e.name==name), None)
+
     def has_active_editor(self):
         if not self.active_editor:
             self.information_dialog('No active tab. Please open a tab')

@@ -16,8 +16,10 @@
 
 #============= enthought library imports =======================
 import random
+
 from traits.api import Instance, Int, Property, List, \
     Any, Enum, Str, DelegatesTo, Bool, TraitError
+
 
 #============= standard library imports ========================
 import os
@@ -112,6 +114,7 @@ class Spectrometer(SpectrometerDevice):
         if self.integration_time!=it or force:
             name = 'SetIntegrationTime'
             self.set_parameter(name, it)
+            self.trait_setq(integration_time=it)
 
         return it
 
@@ -150,13 +153,16 @@ class Spectrometer(SpectrometerDevice):
 
         if isotope != NULL_STR:
             det = self.get_detector(detector)
-            det.isotope = isotope
-            index = self.detectors.index(det)
+            if not det:
+                self.debug('cannot update detector "{}"'.format(detector))
+            else:
+                det.isotope = isotope
+                index = self.detectors.index(det)
 
-            nmass = int(isotope[2:])
-            for i, di in enumerate(self.detectors):
-                mass = nmass - (i - index)
-                di.isotope = 'Ar{}'.format(mass)
+                nmass = int(isotope[2:])
+                for i, di in enumerate(self.detectors):
+                    mass = nmass - (i - index)
+                    di.isotope = 'Ar{}'.format(mass)
 
     #===============================================================================
     # property get/set
@@ -396,7 +402,10 @@ class Spectrometer(SpectrometerDevice):
 
     def _source_default(self):
         return Source(spectrometer=self)
-#============= EOF =============================================
+
+    def _integration_time_default(self):
+        return QTEGRA_INTEGRATION_TIMES[4]
+        #============= EOF =============================================
 
         #    def _peak_center_scan_step(self, di, graph, plotid, cond):
         # #       3print cond

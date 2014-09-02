@@ -17,49 +17,12 @@
 #============= enthought library imports =======================
 from pychron.core.helpers.filetools import to_bool
 #============= standard library imports ========================
-import re
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.regex import ALIQUOT_REGEX
 
+
 class RunParser(Loggable):
-    def _get_attr(self, attr):
-        if isinstance(attr, tuple):
-            attr, rattr = attr
-        else:
-            attr, rattr = attr, attr
-        return attr, rattr
-
-    def _get_idx(self, header, attr):
-        try:
-            return header.index(attr)
-        except ValueError:
-            pass
-
-    def _load_scripts(self, header, args):
-        script_info = dict()
-        # load scripts
-        for attr in [
-                     # ver. 1.0
-                     'measurement', 'extraction',
-                     'post_measurement',
-                     'post_equilibration',
-
-                     # ver. 2.0
-                     ('post_eq', 'post_equilibration'),
-                     ('post_meas', 'post_measurement'),
-                     ]:
-
-            attr, rattr = self._get_attr(attr)
-            idx = self._get_idx(header, attr)
-            if idx:
-                try:
-                    script_info[rattr] = args[idx]
-                except IndexError, e:
-                    pass
-#                    self.debug('base schedule _run_parser {} {}'.format(e, attr))
-
-        return script_info
 
     def parse(self, header, line, meta, delim='\t'):
         params = dict()
@@ -68,7 +31,6 @@ class RunParser(Loggable):
 
         args = map(str.strip, line)
         script_info = self._load_scripts(header, args)
-
         ln = args[header.index('labnumber')]
         if ALIQUOT_REGEX.match(ln):
             ln, a = ln.split('-')
@@ -77,108 +39,104 @@ class RunParser(Loggable):
 
         params['labnumber'] = ln
 
-        attr, rattr = self._get_attr('truncate_condition')
-        idx = self._get_idx(header, attr)
-        if idx is not None:
-            tc = args[idx]
-            if self._validate_truncate_condition(tc):
-                params['truncate_condition'] = tc
-
         # load strings
-        for attr in [
-                     'pattern',
-                     'position',
-                     'comment',
-                     ('truncate', 'truncate_condition'),
-                     # ver 1.0
-                     'extract_units',
-                     # ver 2.0
-                     ('e_units', 'extract_units')
-                     ]:
-
-            attr, rattr = self._get_attr(attr)
-            idx = self._get_idx(header, attr)
-            if idx:
-                try:
-                    params[rattr] = args[idx]
-                except IndexError, e:
-                    pass
-#                     self.debug('base schedule _run_parser {} {}'.format(e, attr))
+        self._load_strings(header, args, params)
 
         # load booleans
-        for attr in [
-                     # ver 1.0
-                     'autocenter',
-                     'disable_between_positions',
-
-                     # ver 2.0
-                     ('dis_btw_pos', 'disable_between_positions')
-                     ]:
-            attr = self._get_attr(attr)
-            idx = self._get_idx(header, attr)
-            if idx:
-                try:
-                    param = args[idx]
-                except IndexError:
-                    params[rattr] = False
-                    continue
-
-                if param.strip():
-                    bo = to_bool(param)
-                    if bo is not None:
-                        params[rattr] = bo
-                    else:
-                        params[rattr] = False
+        self._load_booleans(header, args, params)
 
         # load numbers
-        for attr in ['duration',
-#                     'overlap',
-                     'cleanup',
-#                     'aliquot',
-
-                     'ramp_duration',
-
-                     # ver 1.0
-                     'extract_group',
-                     # ver 2.0
-                     ('e_group', 'extract_group'),
-                     'weight',
-                     # ver 1.0
-                     'extract_value',
-                     # ver 2.0
-                     ('e_value', 'extract_value'),
-                     'beam_diameter'
-                     ]:
-            attr, rattr = self._get_attr(attr)
-            idx = self._get_idx(header, attr)
-            if idx:
-                try:
-                    param = args[idx]
-                    params[rattr] = float(param.strip())
-                except IndexError, e:
-                    pass
-#                    self.debug('{} {}'.format(e, attr))
-                except ValueError, e:
-                    pass
-#                     self.debug('{} {} {}'.format(e, attr, param))
+        self._load_numbers(header, args, params)
 
         return script_info, params
 
-    def _validate_truncate_condition(self, t):
-        if t.endswith('.yaml'):
-            return True
+    def _load_scripts(self, header, args):
+        script_info = dict()
+        # load scripts
+        for attr in ['measurement', 'extraction',
+                     ('post_measurement','post_meas'),
+                     ('post_equilibration','post_eq'),]:
+            v=self._get_attr_value(header, args, attr)
+            if v is not None:
+                script_info[v[0]]=v[1]
 
+        return script_info
+
+    def _get_attr_value(self, header, args, attr, cast=None):
+        for hi, ai in self._get_attr(attr):
+            idx = self._get_idx(header, ai)
+            #print header
+            #print hi, ai, idx
+            if idx:
+                try:
+                    v=args[idx]
+                    if v.strip():
+                        return hi, cast(v) if cast else v
+                except IndexError, e:
+                    pass
+                    #print e, attr, idx, args
+
+    def _load_strings(self, header, args, params):
+        for attr in [
+            'pattern',
+            'position',
+            'comment',
+            'syn_extraction',
+            ('truncate_condition','truncate'),
+            ('extract_units', 'e_units')]:
+            v = self._get_attr_value(header, args, attr)
+            if v is not None:
+                params[v[0]]=v[1]
+
+    def _load_numbers(self,header, args, params):
+        for attr in ['duration',
+                     'cleanup',
+                     'ramp_duration',
+                     'weight',
+                     ('extract_value', 'e_value'),
+                     ('beam_diameter', 'beam_diam')]:
+
+            v=self._get_attr_value(header, args, attr, cast=float)
+            if v is not None:
+                params[v[0]]=v[1]
+
+    def _load_booleans(self, header, args, params):
+
+        for attr in [
+                     'autocenter',
+                     ('disable_between_positions','dis_btw_pos')
+                     ]:
+            v=self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
+            if v is not None:
+                params[v[0]]=v[1]
+
+#     def _validate_truncate_condition(self, t):
+#         if t.endswith('.yaml'):
+#             return True
+#
+#         try:
+#             c, start = t.split(',')
+#             pat = '<=|>=|[<>=]'
+#             attr, value = re.split(pat, c)
+#             m = re.search(pat, c)
+#             comp = m.group(0)
+# #             self.py_add_truncation(attr, comp, value, int(start))
+#             return True
+#         except Exception, e:
+#             self.debug('truncate_condition parse failed {} {}'.format(e, t))
+
+    def _get_attr(self, attr):
+        if isinstance(attr, tuple):
+            ref = attr[0]
+            return [(ref, hi) for hi in attr]
+        else:
+            return [(attr, attr)]
+
+    def _get_idx(self, header, attr):
         try:
-            c, start = t.split(',')
-            pat = '<=|>=|[<>=]'
-            attr, value = re.split(pat, c)
-            m = re.search(pat, c)
-            comp = m.group(0)
-#             self.py_add_truncation(attr, comp, value, int(start))
-            return True
-        except Exception, e:
-            self.debug('truncate_condition parse failed {} {}'.format(e, t))
-
+            return header.index(attr)
+        except ValueError:
+            pass
 
 class UVRunParser(RunParser):
     def parse(self, header, line, meta, delim='\t'):

@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+
 #=============enthought library imports=======================
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Dict
 #=============standard library imports ========================
 import os
 import time
@@ -82,6 +83,7 @@ class ExtractionLineManager(Manager):
     volume_key = Str
 
     sample_changer = Instance(SampleChanger)
+    link_valve_actuation_dict = Dict
 
     def _sample_changer_factory(self):
         sc = self.sample_changer
@@ -95,6 +97,18 @@ class ExtractionLineManager(Manager):
             if sc.chamber and sc.chamber != 'None':
                 self.sample_changer = sc
                 return sc
+
+    def link_valve_actuation(self, name, func, remove=False):
+        if remove:
+            try:
+                del self.link_valve_actuation_dict[name]
+            except KeyError:
+                self.debug('could not remove "{}". not in dict {}'.format(name,
+                                                                          ','.join(
+                                                                              self.link_valve_actuation_dict.keys())))
+        else:
+            self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.func_name))
+            self.link_valve_actuation_dict[name] = func
 
     def isolate_chamber(self):
         #get chamber name
@@ -147,61 +161,11 @@ class ExtractionLineManager(Manager):
     def test_connection(self):
         return self.get_valve_states() is not None
 
-    def get_subsystem_module(self, subsystem, module):
-        '''
-        '''
-        try:
-            ss = getattr(self, subsystem)
-            return ss.get_module(module)
-        except AttributeError:
-            self.warning('{} not initialized'.format(subsystem))
-
-    def _create_manager(self, klass, manager, params, **kw):
-        #gdict = globals()
-        #if klass in gdict:
-        #    class_factory = gdict[klass]
-        #else:
-        # try a lazy load of the required module
-        if 'fusions' in manager:
-            package = 'pychron.managers.laser_managers.{}'.format(manager)
-            self.laser_manager_id = manager
-        elif 'rpc' in manager:
-            package = 'pychron.rpc.manager'
-        else:
-            package = 'pychron.managers.{}'.format(manager)
-
-        class_factory = self.get_manager_factory(package, klass, warn=False)
-        if class_factory is None:
-            package = 'pychron.extraction_line.{}'.format(manager)
-            class_factory = self.get_manager_factory(package, klass)
-
-        if class_factory:
-        #            params['application'] = self.application
-            m = class_factory(**params)
-
-            if manager in ['gauge_manager',
-                           'valve_manager',
-                           'multiplexer_manager',
-                           # 'environmental_manager', 'device_stream_manager',
-                           'multruns_report_manager',
-            ]:
-                self.trait_set(**{manager: m})
-            else:
-                self.add_trait(manager, m)
-
-            # m.exit_on_close = False
-
-            return m
-        else:
-            self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
-
     def refresh_canvas(self):
         for ci in self._canvases:
             ci.refresh()
 
     def finish_loading(self):
-        '''
-        '''
         if self.mode != 'client':
             self.monitor = SystemMonitor(manager=self,
                                          name='system_monitor'
@@ -251,14 +215,6 @@ class ExtractionLineManager(Manager):
         self.refresh_canvas()
 
     def activate(self):
-    #         p = os.path.join(paths.hidden_dir, 'show_explanantion')
-    #         if os.path.isfile(p):
-    #             with open(p, 'rb') as f:
-    #                 try:
-    #                     self.show_explanation = pickle.load(f)
-    #                 except pickle.PickleError:
-    #                     pass
-
         self.debug('$$$$$$$$$$$$$$$$$$$$$$$$ EL Activated')
         if self.mode == 'client':
             self.start_status_monitor()
@@ -353,12 +309,11 @@ class ExtractionLineManager(Manager):
             c.update_valve_owned_state(*args, **kw)
 
     def set_valve_owner(self, name, owner):
-        '''
+        """
             set flag indicating if the valve is owned by a system
-        '''
+        """
         if self.valve_manager is not None:
             self.valve_manager.set_valve_owner(name, owner)
-        #
 
     def show_valve_properties(self, name):
         if self.valve_manager is not None:
@@ -411,13 +366,9 @@ class ExtractionLineManager(Manager):
         self._enable_valve(description, True)
 
     def open_valve(self, name, **kw):
-        '''
-        '''
         return self._open_close_valve(name, 'open', **kw)
 
     def close_valve(self, name, **kw):
-        '''
-        '''
         return self._open_close_valve(name, 'close', **kw)
 
     def sample(self, name, **kw):
@@ -467,7 +418,6 @@ class ExtractionLineManager(Manager):
         #===============================================================================
         # private
         #===============================================================================
-
     def _enable_valve(self, description, state):
         if self.valve_manager:
             valve = self.valve_manager.get_valve_by_description(description)
@@ -491,9 +441,17 @@ class ExtractionLineManager(Manager):
                 name = vm.get_name_by_description(description)
 
             result = self._change_valve_state(name, mode, action, **kw)
+            if result:
+                vm.actuate_children(name, action, mode)
 
-            #            if self.learner:
-            #                self.learner.open_close_valve(name, action, result)
+                ld = self.link_valve_actuation_dict
+                if ld:
+                    try:
+                        func = ld[name]
+                        func(name, action)
+                    except KeyError:
+                        self.debug('name="{}" not in '
+                                   'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
 
             return result
 
@@ -610,9 +568,7 @@ class ExtractionLineManager(Manager):
 
     def new_canvas(self, name='canvas_config'):
         c = ExtractionLineCanvas(manager=self,
-                                 config_name='{}.xml'.format(name),
-                                 #                                  path_name='{}.xml'.format(name)
-        )
+                                 config_name='{}.xml'.format(name))
         self._canvases.append(c)
         c.canvas2D.trait_set(display_volume=self.display_volume,
                              volume_key=self.volume_key)
@@ -620,8 +576,8 @@ class ExtractionLineManager(Manager):
         return c
 
     def _canvas_default(self):
-        '''
-        '''
+        """
+        """
         return self.new_canvas()
 
     def _network_default(self):

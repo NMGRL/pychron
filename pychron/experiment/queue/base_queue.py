@@ -57,6 +57,7 @@ class BaseExperimentQueue(Loggable):
 
     update_needed = Event
     refresh_table_needed = Event
+    refresh_info_needed = Event
     changed = Event
     name = Property(depends_on='path')
     path = String
@@ -85,10 +86,10 @@ class BaseExperimentQueue(Loggable):
                                if not ri.frequency_added]
 
     def add_runs(self, runviews, freq=None):
-        '''
+        """
             runviews: list of runs
             freq: optional inter
-        '''
+        """
         if not runviews:
             return
 
@@ -272,47 +273,30 @@ class BaseExperimentQueue(Loggable):
         setattr(self, attr, func(v))
 
     def _get_dump_attrs(self):
-        header = ['labnumber',
-                  'sample',
-                  'position',
-                  'e_value',
-                  'e_units',
-                  'duration',
-                  'cleanup',
-                  'beam_diameter',
-                  'pattern',
-                  'e_group',
-                  'extraction', 'measurement',
-                  'truncate',
-                  'post_eq', 'post_meas',
-                  'dis_btw_pos',
-                  'weight', 'comment',
-                  'overlap',
-                  'autocenter',
-        ]
-        attrs = ['labnumber',
-                 'sample',
-                 'position',
-                 'extract_value',
-                 'extract_units',
-                 'duration',
-                 'cleanup',
-                 'beam_diameter',
-                 'pattern',
-                 'extract_group',
-                 'extraction_script', 'measurement_script',
-                 'truncate_condition',
-                 'post_equilibration_script', 'post_measurement_script',
-                 'disable_between_positions',
-                 'weight', 'comment',
-                 'overlap',
-                 'autocenter',
-        ]
+        seq = ['labnumber', 'sample', 'position',
+               ('e_value', 'extract_value'),
+               ('e_units', 'extract_units'),
+               'duration', 'cleanup',
+               ('beam_diam', 'beam_diameter'),
+               'pattern',
+               ('extraction', 'extraction_script'),
+               ('measurement', 'measurement_script'),
+               ('truncate','truncate_condition'),
+               'syn_extraction',
+               ('post_measurement', 'post_measurement_script'),
+               ('post_equilibration', 'post_equilibration_script'),
+               ('dis_btw_pos','disable_between_positons'),
+               'weight', 'comment',
+               'overlap',
+               'autocenter']
 
         if self.extract_device == 'Fusions UV':
-            header.extend(('reprate', 'mask', 'attenuator', 'image'))
-            attrs.extend(('reprate', 'mask', 'attenuator', 'image'))
+            # header.extend(('reprate', 'mask', 'attenuator', 'image'))
+            # attrs.extend(('reprate', 'mask', 'attenuator', 'image'))
+            seq.extend(('reprate', 'mask', 'attenuator', 'image'))
 
+        seq = [(v, v) if not isinstance(v, tuple) else v for v in seq]
+        header, attrs = zip(*seq)
         return header, attrs
 
     def _meta_dumper(self, fp):

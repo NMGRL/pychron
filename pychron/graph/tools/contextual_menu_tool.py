@@ -16,7 +16,6 @@
 
 
 #============= enthought library imports =======================
-from PySide.QtCore import QPoint
 from traits.api import Any
 from enable.api import Interactor
 # from chaco.base_plot_container import BasePlotContainer
@@ -63,7 +62,7 @@ class ContextualMenuTool(Interactor):
             plot = comps[0]
             while not isinstance(plot, Plot):
                 plots = plot.components_at(event.x, event.y)
-#                print plots
+                #                print plots
                 if plots:
                     plot = plots[0]
                 else:
@@ -85,15 +84,17 @@ class ContextualMenuTool(Interactor):
 
     def _display_menu(self, event):
         control = event.window.control
-        ex, ey = event.x, event.y
-        size = control.size()
-        pt = control.mapToGlobal(QPoint(ex, size.height() - ey))
-        x, y = pt.x(), pt.y()
+        # ex, ey = event.x, event.y
+        # size = control.size()
+        # pt = control.mapToGlobal(QPoint(ex, size.height() - ey))
+        # x, y = pt.x(), pt.y()
 
         menu_manager = self.parent.get_contextual_menu()
         menu = menu_manager.create_menu(control, None)
 
-        menu.show(x, y)
+        # menu.show(x, y)
+        menu.show()
         menu_manager.destroy()
+        event.handled = True
 
 #============= EOF ====================================

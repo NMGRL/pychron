@@ -17,17 +17,19 @@
 #============= enthought library imports =======================
 import os
 import shelve
-from pyface.tasks.traits_task_pane import TraitsTaskPane
 
-from traits.api import Instance, on_trait_change, List
+from pyface.tasks.traits_task_pane import TraitsTaskPane
+from traits.api import Instance, on_trait_change
 from pyface.tasks.task_layout import TaskLayout, Splitter, PaneItem, Tabbed
+
 from pychron.entry.sensitivity_entry import SensitivityEntry
 from pychron.entry.tasks.sensitivity_entry_panes import SensitivityPane
-
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.batch_edit.batch_editor import BatchEditor
 from pychron.processing.tasks.batch_edit.panes import BatchEditPane
 from pychron.paths import paths
+
+
 
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
@@ -45,7 +47,7 @@ class BatchEditTask(AnalysisEditTask):
     central_pane_klass = BatchEditPane
     batch_editor = Instance(BatchEditor, ())
 
-    unknowns = List
+    # unknowns = List
 
     # smart_selection = Instance(SmartSelection, ())
 
@@ -102,11 +104,14 @@ class BatchEditTask(AnalysisEditTask):
         self.debug('save to database')
         cname = 'blanks'
         proc = self.manager
-        for ui in self.analyses:
+        for ui in self.unknowns_pane.items:
+            ui = proc.db.get_analysis_uuid(ui.uuid)
+
             # blanks
-            history = proc.add_history(ui, cname)
-            for bi in self.central_pane.blanks:
-                if bi.use:
+            blanks = [bi for bi in self.batch_editor.blanks if bi.use]
+            if blanks:
+                history = proc.add_history(ui, cname)
+                for bi in blanks:
                     self.debug('applying blank correction {} {}'.format(ui.record_id, bi.name))
                     proc.apply_fixed_correction(history, bi.name,
                                                 bi.nominal_value, bi.std_dev,
@@ -114,10 +119,11 @@ class BatchEditTask(AnalysisEditTask):
 
             # disc/ic factors
             ics = []
-            for value in self.central_pane.values:
+            for value in self.batch_editor.values:
                 if value.use:
-                    if value.name == 'disc':
-                        self._add_discrimination(ui.dbrecord, value.nominal_value,
+                    if value.name.startswith('Disc.'):
+                        det = ' '.join(value.name.split(' ')[1:])
+                        self._add_discrimination(ui, det, value.nominal_value,
                                                  value.std_dev)
                     else:
                         '''
@@ -127,15 +133,15 @@ class BatchEditTask(AnalysisEditTask):
                         ics.append((det, value.nominal_value, value.std_dev))
             dets = [args[0] for args in ics]
             for args in ics:
-                self._add_ic_factory(ui.dbrecord, dets, *args)
+                self._add_ic_factory(ui, dets, *args)
 
 
     def _add_ic_factory(self, analysis, dets, det, v, e):
-        '''
-            det= current detector 
+        """
+            det= current detector
             dets= all detectors that will be added. use this so that previous ics
-            are not copied. ie. if prev_hist_det in dets dont copy prev_hist_det 
-        '''
+            are not copied. ie. if prev_hist_det in dets dont copy prev_hist_det
+        """
         db = self.manager.db
 
         history = db.add_detector_intercalibration_history(analysis)
@@ -154,56 +160,56 @@ class BatchEditTask(AnalysisEditTask):
                                                      user_value=ics.user_value,
                                                      user_error=ics.user_error,
                                                      sets=ics.sets,
-                                                     fit=ics.fit
-                    )
+                                                     fit=ics.fit)
 
         db.add_detector_intercalibration(history, dbdet,
-                                         user_value=v, user_error=e
-        )
+                                         user_value=v, user_error=e)
         analysis.selected_histories.selected_detector_intercalibration = history
 
-    def _add_discrimination(self, analysis, v, e):
+    def _add_discrimination(self, analysis, detector, v, e):
         db = self.manager.db
         hist = db.add_detector_parameter_history(analysis)
-
-        db.add_detector_parameter(hist, disc=v, disc_error=e)
-        analysis.dbrecord.selected_histories.selected_detector_param = hist
+        db.add_detector_parameter(hist, detector, disc=v, disc_error=e)
+        analysis.selected_histories.selected_detector_param = hist
 
     @on_trait_change('unknowns_pane:[items, update_needed]')
     def _update_unknowns_runs(self, obj, name, old, new):
-        AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
 
-        # ans=self.manager.make_analyses(self.unknowns_pane.items)
-        self.batch_editor.populate(self.unknowns_pane.items)
+        AnalysisEditTask._update_unknowns_runs(self, obj, name, old, new)
+        if not obj.no_update:
+            ans = self.manager.make_analyses(self.unknowns_pane.items)
+            self.unknowns_pane.items = ans
+            self.batch_editor.populate(ans)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
     def _append_unknowns(self, obj, name, old, new):
 
-        s=self._get_selected_analyses(self.analyses)
+        s = self._get_selected_analyses(self.unknowns_pane.items)
         if s:
-            if name=='replace_button':
-                self.unknowns_pane.items=s
+            if name == 'replace_button':
+                self.unknowns_pane.items = s
             else:
                 self.unknowns_pane.items.extend(s)
 
-        #is_append = name == 'append_button'
-        #unks = None
-        #if is_append:
-        #    unks = self.unknowns
+                #is_append = name == 'append_button'
+                #unks = None
+                #if is_append:
+                #    unks = self.unknowns
 
-        #s = self._get_selected_analyses(unks)
-        #if s:
-        #    s = self.manager.make_analyses(s)
-            #if is_append:
-            #    unks.extend(s)
-            #else:
-            #    self.unknowns = s
-            #
-            #self.unknowns_pane.items = self.unknowns
+                #s = self._get_selected_analyses(unks)
+                #if s:
+                #    s = self.manager.make_analyses(s)
+                #if is_append:
+                #    unks.extend(s)
+                #else:
+                #    self.unknowns = s
+                #
+                #self.unknowns_pane.items = self.unknowns
 
-            #===============================================================================
+                #===============================================================================
 
-        # handlers
+                # handlers
+
     #===============================================================================
     #     @on_trait_change('unknowns_pane:items')
     #     def _update_unknowns_runs(self, obj, name, old, new):
@@ -235,7 +241,7 @@ class BatchEditTask(AnalysisEditTask):
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
         search = Tabbed(PaneItem('pychron.browser'))
-                        #PaneItem('pychron.search.query'))
+        #PaneItem('pychron.search.query'))
 
         #a=Splitter(d,orientation='vertical')
 

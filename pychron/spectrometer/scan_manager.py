@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from numpy import Inf
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
-    Bool, Int, Button, Event, String, cached_property, \
+    Bool, Int, Button, String, cached_property, \
     HasTraits, Range, Float
 # from pyface.timer.api import Timer
 #============= standard library imports ========================
@@ -25,6 +25,8 @@ import random
 import os
 import pickle
 #============= local library imports  ==========================
+from pychron.core.ui.toggle_button import ToggleButton
+from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
 from pychron.spectrometer.detector import Detector
@@ -84,7 +86,14 @@ class ScanManager(Manager):
     _graph_ymax = Float
     graph_scan_width = Int  # in minutes
 
-    record_button = Event
+    # record_button = Event
+    record_button = ToggleButton(image_on=icon('media-record'),
+                                 image_off=icon('media-playback-stop'),
+                                 tooltip_on='Start recording scan',
+                                 tooltip_off='Stop recording scan',
+                                 height=22,
+                                 width=45)
+
     add_marker_button = Button('Add Marker')
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)

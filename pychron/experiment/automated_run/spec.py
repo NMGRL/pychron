@@ -16,24 +16,26 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
-from traits.api import Str, CInt, Int, Bool, Float, Property, \
+
+from traits.api import Str, Int, Bool, Float, Property, \
     Enum, on_trait_change, CStr
+
 #============= standard library imports ========================
 import uuid
+import weakref
 #============= local library imports  ==========================
 from pychron.experiment.automated_run.automated_run import AutomatedRun
 from pychron.experiment.utilities.identifier import get_analysis_type, make_rid, \
-    make_runid
+    make_runid, is_special
 from pychron.pychron_constants import SCRIPT_KEYS, SCRIPT_NAMES, ALPHAS
 from pychron.loggable import Loggable
-import weakref
 
 
 class AutomatedRunSpec(Loggable):
-    '''
-        this class is used to as a simple container and factory for 
+    """
+        this class is used to as a simple container and factory for
         an AutomatedRun. the AutomatedRun does the actual work. ie extraction and measurement
-    '''
+    """
     #     automated_run = Instance(AutomatedRun)
     #    state = Property(depends_on='_state')
     state = Enum('not run', 'extraction',
@@ -65,7 +67,6 @@ class AutomatedRunSpec(Loggable):
     step = Property(depends_on='_step')
     _step = Int(-1)
 
-
     #===========================================================================
     # scripts
     #===========================================================================
@@ -77,7 +78,6 @@ class AutomatedRunSpec(Loggable):
     #===========================================================================
     # extraction
     #===========================================================================
-    extract_group = CInt
     extract_value = Float
     extract_units = Str
     position = Str
@@ -90,6 +90,8 @@ class AutomatedRunSpec(Loggable):
     disable_between_positions = Bool(False)
     overlap = Bool(False)
     truncate_condition = Str
+    syn_extraction = Str
+
     #===========================================================================
     # info
     #===========================================================================
@@ -107,7 +109,10 @@ class AutomatedRunSpec(Loggable):
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
 
-    executable = Bool(True)
+    identifier_error = Bool(False)
+    _executable = Bool(True)
+    executable = Property(depends_on='identifier_error, _executable')
+
     frequency_added = False
 
     runid = Property
@@ -115,6 +120,15 @@ class AutomatedRunSpec(Loggable):
     _changed = False
 
     rundate = Property
+    _step_heat = False
+    conflicts_checked = False
+
+
+    def is_step_heat(self):
+        return bool(self.user_defined_aliquot) and not self.is_special()
+
+    def is_special(self):
+        return is_special(self.labnumber)
 
     def to_string(self):
         attrs = ['labnumber', 'aliquot', 'step',
@@ -122,8 +136,7 @@ class AutomatedRunSpec(Loggable):
                  'position', 'duration', 'cleanup', 'beam_diameter',
                  'mass_spectrometer', 'extract_device',
                  'extraction_script', 'measurement_script',
-                 'post_equilibration_script', 'post_measurement_script'
-        ]
+                 'post_equilibration_script', 'post_measurement_script']
         return ','.join(map(str, self.to_string_attrs(attrs)))
 
     def test_scripts(self, script_context=None, warned=None, duration=True):
@@ -154,24 +167,24 @@ class AutomatedRunSpec(Loggable):
                 # arun.invalid_script = False
                 script = getattr(arun, si)
                 if script is not None:
+                    if duration:
+                        arun.setup_context(script)
+
                     ok = script.syntax_ok()
                     script_oks.append(ok)
                     script_context[name] = script, ok
-                    if ok and duration:
-                        arun.setup_context(script)
+                    if ok:
                         if si in ('measurement_script', 'extraction_script'):
                             d = script.calculate_estimated_duration()
                             s += d
-                # elif arun.invalid_script:
-                #     script_oks.append(False)
         if arun:
             arun.spec = None
             # set executable. if all scripts have OK syntax executable is True
 
-        self.executable = all(script_oks)
+        self._executable = all(script_oks)
         return s
 
-    def get_estimated_duration(self, script_context, warned):
+    def get_estimated_duration(self, script_context, warned, force=False):
         """
             use the pyscripts to calculate etd
 
@@ -179,7 +192,7 @@ class AutomatedRunSpec(Loggable):
 
             this is a good point to set executable as well
         """
-        if not self._estimated_duration or self._changed:
+        if not self._estimated_duration or self._changed or force:
             s = self.test_scripts(script_context, warned)
 
             db_save_time = 1
@@ -192,10 +205,6 @@ class AutomatedRunSpec(Loggable):
         if run is None:
             run = self.run_klass()
 
-        #         attrs = self._get_run_attrs()
-        #         for ai in attrs:
-        #             setattr(run, ai, getattr(self, ai))
-
         for si in SCRIPT_KEYS:
             setattr(run.script_info, '{}_script_name'.format(si),
                     getattr(self, '{}_script'.format(si)))
@@ -203,7 +212,9 @@ class AutomatedRunSpec(Loggable):
         if new_uuid:
             run.uuid = str(uuid.uuid4())
 
-        #         run.spec = self
+            # self._step_heat = bool(self.aliquot)
+            # print self._step_heat, bool(self.aliquot), self.aliquot
+
         run.spec = weakref.ref(self)()
 
         return run
@@ -213,7 +224,6 @@ class AutomatedRunSpec(Loggable):
             setattr(self, '{}_script'.format(k), v)
 
         for k, v in params.iteritems():
-        #            print 'param', k, v
             if hasattr(self, k):
                 setattr(self, k, v)
 
@@ -233,7 +243,7 @@ class AutomatedRunSpec(Loggable):
     def to_string_attrs(self, attrs):
         def get_attr(attrname):
             if attrname == 'labnumber':
-                if self.user_defined_aliquot:
+                if self.user_defined_aliquot and not self.is_special():
                     v = make_rid(self.labnumber, self.aliquot)
                 else:
                     v = self.labnumber
@@ -259,10 +269,10 @@ class AutomatedRunSpec(Loggable):
                 'pattern',
                 'beam_diameter',
                 'truncate_condition',
+                'syn_extraction',
                 'mass_spectrometer', 'extract_device',
                 'analysis_type',
-                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after'
-        )
+                'sample', 'irradiation', 'username', 'comment', 'skip', 'end_after')
 
     #===============================================================================
     # handlers
@@ -275,19 +285,16 @@ class AutomatedRunSpec(Loggable):
     #         print 'upda', new
     #         self.aliquot = new
 
-    @on_trait_change(''' 
-    measurment_script, post_measurment_script,
-    post_equilibration_script, extraction_script,extract_+, position, duration, cleanup
-    ''')
+    @on_trait_change('''measurment_script, post_measurment_script,
+    post_equilibration_script, extraction_script,extract_+, position, duration, cleanup''')
     def _script_changed(self, name, new):
         if new == 'None':
-        #            self.trait_set(trait_change_notify=False, **{name: ''})
+            #            self.trait_set(trait_change_notify=False, **{name: ''})
             self.trait_set(**{name: ''})
         else:
             self._changed = True
 
-    @on_trait_change('''extract_+, position, duration, cleanup
-    ''')
+    @on_trait_change('''extract_+, position, duration, cleanup ''')
     def _extract_changed(self):
         self._changed = True
 
@@ -303,12 +310,23 @@ class AutomatedRunSpec(Loggable):
     def _set_aliquot(self, v):
         self._aliquot = v
 
-    #
     def _get_aliquot(self):
-        a = self.user_defined_aliquot
-        if not a:
-            a = self._aliquot
-        return a
+        if self.is_special():
+            return self._aliquot
+        else:
+            if self.user_defined_aliquot:
+                return self.user_defined_aliquot
+        return self._aliquot
+
+        # return a
+        # # a=self._aliquot
+        # a = self.user_defined_aliquot
+        # if not self.is_special():
+        #     if not a:
+        #         a = self._aliquot
+        #         # a = self.user_defined_aliquot
+        #
+        # return a
         #a = self.assigned_aliquot
         #if not a:
         #    a = self._aliquot
@@ -316,6 +334,13 @@ class AutomatedRunSpec(Loggable):
 
     def _get_analysis_type(self):
         return get_analysis_type(self.labnumber)
+
+    def reset(self):
+        self.clear_step()
+        self.conflicts_checked = False
+
+    def clear_step(self):
+        self._step = -1
 
     def _set_step(self, v):
         if isinstance(v, str):
@@ -336,5 +361,20 @@ class AutomatedRunSpec(Loggable):
 
     def _get_rundate(self):
         return datetime.now()
+
+    def _set_executable(self, v):
+        self._executable = v
+
+    def _get_executable(self):
+        return self._executable and not self.identifier_error
+
+    #mirror labnumber for now. deprecate labnumber and replace with identifier
+    @property
+    def identifier(self):
+        return self.labnumber
+
+    @property
+    def increment(self):
+        return '' if self._step < 0 else self._step
 
         #============= EOF =============================================

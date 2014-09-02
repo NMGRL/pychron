@@ -16,7 +16,9 @@
 
 #============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
+
 from pychron.envisage.resources import icon
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -53,34 +55,27 @@ class OpenFigureAction(TaskAction):
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
     method = 'tb_new_ideogram'
-    image = icon('ideo.png'
-    )
-
-
-class AppendIdeogramAction(TaskAction):
-    name = 'Append Ideogram'
-    method = 'append_ideogram'
-    tooltip = '''Add selected analyses to current ideogram.
-If no analyses selected add all from the selected sample'''
-
-    image = icon('ideo_add.png'
-    )
+    image = icon('histogram')
 
 
 class NewSpectrumAction(TaskAction):
     name = 'New Spectrum'
     method = 'tb_new_spectrum'
-    image = icon('chart_curve.png'
-    )
+    image = icon('chart_curve.png')
 
-
-class AppendSpectrumAction(TaskAction):
-    name = 'Append Spectrum'
-    method = 'append_spectrum'
-    tooltip = '''Add selected analyses to current spectrum.
-If no analyses selected add all from the selected sample'''
-
-    image = icon('chart_curve_add.png'
-    )
 
 #============= EOF =============================================
+# class AppendSpectrumAction(TaskAction):
+#     name = 'Append Spectrum'
+#     method = 'append_spectrum'
+#     tooltip = '''Add selected analyses to current spectrum.
+# If no analyses selected add all from the selected sample'''
+#
+#     image = icon('chart_curve_add.png')
+# class AppendIdeogramAction(TaskAction):
+#     name = 'Append Ideogram'
+#     method = 'append_ideogram'
+#     tooltip = '''Add selected analyses to current ideogram.
+# If no analyses selected add all from the selected sample'''
+#
+#     image = icon('ideo_add.png')

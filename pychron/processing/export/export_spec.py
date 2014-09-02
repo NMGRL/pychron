@@ -15,10 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from numpy import std, mean, where, delete
 from traits.api import CStr, Str, CInt, Float, \
-    TraitError, Property, Any, Either, Dict, Bool
+    TraitError, Property, Any, Either, Dict, Bool, List
 from uncertainties import ufloat
+
 from pychron.loggable import Loggable
+
+
+
+
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -56,6 +64,12 @@ class ExportSpec(Loggable):
     ic_factor_v = Float
     ic_factor_e = Float
 
+    pr_dict = Dict
+    chron_dosages = List
+    interference_corrections = Dict
+    production_name = Str
+    j = Any
+
     def load_record(self, record):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
@@ -65,8 +79,13 @@ class ExportSpec(Loggable):
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
                  ('position', 'position'), ('power_requested', 'extract_value'),
                  ('power_achieved', 'extract_value'), ('duration', 'duration'),
-                 ('duration_at_request', 'duration'), ('first_stage_delay', 'cleanup'),
-                 ('comment', 'comment'), ]
+                 ('duration_at_request', 'duration'), ('first_stage_delay', 'duration'),
+                 ('second_stage_delay', 'cleanup'),
+                 ('comment', 'comment'),
+                 ('irradiation', 'irradiation'),
+                 ('irradiation_position', 'irradiation_pos'),
+                 ('level', 'irradiation_level'),
+        ]
 
         if hasattr(record, 'spec'):
             spec = record.spec
@@ -80,16 +99,23 @@ class ExportSpec(Loggable):
                 except TraitError, e:
                     self.debug(e)
 
-        if hasattr(record, 'cdd_ic_factor'):
-            ic = record.cdd_ic_factor
-            if ic is None:
-                self.debug('Using default CDD IC factor 1.0')
-                ic = ufloat(1, 1.0e-20)
+        # if hasattr(record, 'cdd_ic_factor'):
+        #     ic = record.cdd_ic_factor
+        #     if ic is None:
+        #         self.debug('Using default CDD IC factor 1.0')
+        #         ic = ufloat(1, 1.0e-20)
+        #
+        #     self.ic_factor_v = float(ic.nominal_value)
+        #     self.ic_factor_e = float(ic.std_dev)
+        # else:
+        #     self.debug('{} has no ic_factor attribute'.format(record, ))
 
-            self.ic_factor_v = float(ic.nominal_value)
-            self.ic_factor_e = float(ic.std_dev)
-        else:
-            self.debug('{} has no ic_factor attribute'.format(record, ))
+        for a in ('chron_dosages',
+                  'production_ratios',
+                  'interference_corrections',
+                  'production_name', 'j'):
+            if hasattr(record, a):
+                setattr(self, a, getattr(record, a))
 
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)
@@ -110,9 +136,19 @@ class ExportSpec(Loggable):
         #
         # return _iter()
 
+    def get_ncounts(self, iso):
+        try:
+            n = self.isotopes[iso].n
+        except KeyError:
+            n = 1
+        return n
+
+    def get_baseline_position(self, iso):
+        return 39.5
+
     def get_blank_uvalue(self, iso):
         try:
-            b = self.isotopes[iso].blank.baseline_corrected_value()
+            b = self.isotopes[iso].blank.get_baseline_corrected_value()
         except KeyError:
             self.debug('no blank for {} {}'.format(iso, self.isotopes.keys()))
             b = ufloat(0, 0)
@@ -153,6 +189,24 @@ class ExportSpec(Loggable):
     def get_signal_data(self, iso, det, **kw):
         self.debug('get signal data {} {}'.format(iso, det))
         return self._get_data('signal', iso, det, **kw)
+
+    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1):
+        m,s=0,0
+        n_filtered_pts = 0
+        if iso in self.isotopes:
+            iso=self.isotopes[iso]
+            xs,ys=iso.baseline.xs, iso.baseline.ys
+            for i in range(niter):
+                m,s=mean(ys), std(ys)
+                res=abs(ys-m)
+
+                outliers=where(res > (s * nsigma))[0]
+                ys=delete(ys, outliers)
+                n_filtered_pts += len(outliers)
+
+            m, s = mean(ys), std(ys)
+
+        return ufloat(m, s), len(ys)
 
     def get_baseline_uvalue(self, iso):
         try:

@@ -29,6 +29,7 @@ class OpenPyScriptAction(Action):
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
+    image = icon('document-open')
 
     def perform(self, event):
         if event.task.id == 'pychron.pyscript':
@@ -51,7 +52,7 @@ class NewPyScriptAction(Action):
     description = 'New pyscript'
     name = 'New Script'
 #    accelerator = 'Shift+Ctrl+O'
-
+    #     image = icon('script-new')
     def perform(self, event):
         if event.task.id == 'pychron.pyscript':
             task = event.task

@@ -21,6 +21,10 @@ import sys
 #============= local library imports  ==========================
 
 def build_version(ver=None, setup_ver=None, debug=False):
+    """
+        set the python path and build/setup Pychrondata for support files
+    """
+
     if ver is None:
         ver = ''
 
