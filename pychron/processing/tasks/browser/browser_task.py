@@ -126,7 +126,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                              include_invalid=iv,
                                                              low_post=self.start_date,
                                                              high_post=self.end_date,
-                                                             make_records=True)]
+                                                             make_records=make_records)]
             return s
 
     def _load_mass_spectrometers(self):

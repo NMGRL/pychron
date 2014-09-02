@@ -15,17 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import re
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import Inf, inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
-
+from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
-#============= local library imports  ==========================
+from numpy import Inf, inf
+import re
 from uncertainties import std_dev, nominal_value
+#============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
 from pychron.processing.analyses.analysis_group import AnalysisGroup
@@ -33,7 +33,6 @@ from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.processing.plotters.flow_label import FlowDataLabel
-from chaco.tools.broadcaster import BroadcasterTool
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector

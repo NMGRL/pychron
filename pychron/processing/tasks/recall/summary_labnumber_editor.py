@@ -15,9 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Int, Float, Any, Instance, on_trait_change, \
-    Str, Button, Property, Bool, DelegatesTo
-from traitsui.api import View, VGroup, Readonly, HGroup, UItem, InstanceEditor, TabularEditor
+from traits.api import HasTraits, Int, Float, Any, Instance, on_trait_change, \
+    Button, Property, Bool, DelegatesTo
+from traitsui.api import View, VGroup, Readonly, HGroup, UItem, TabularEditor
 from traitsui.group import Tabbed
 from traitsui.tabular_adapter import TabularAdapter
 from enable.component_editor import ComponentEditor
@@ -25,11 +25,10 @@ from enable.component_editor import ComponentEditor
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.stats.core import calculate_weighted_mean, calculate_mswd, get_mswd_limits
-from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
-from pychron.processing.plotter_options_manager import IdeogramOptionsManager, SpectrumOptionsManager
-from pychron.processing.plotters.ideogram.ideogram_model import IdeogramModel
+from pychron.processing.plotter_options_manager import SpectrumOptionsManager
 from pychron.processing.plotters.spectrum.spectrum_model import SpectrumModel
+from pychron.processing.tasks.recall.base_summary_editor import BaseSummaryEditor, OptionsView
 
 
 class AnalysisAdapter(TabularAdapter):
@@ -54,23 +53,7 @@ class AnalysisAdapter(TabularAdapter):
         return floatfmt(self.item.age_err_wo_j)
 
 
-class OptionsView(HasTraits):
-    model = Any
-    title = Str
-
-    def traits_view(self):
-        v = View(UItem('model',
-                       style='custom',
-                       editor=InstanceEditor()),
-                 title=self.title,
-                 resizable=True,
-                 kind='livemodal',
-                 buttons=['OK'])
-
-        return v
-
-
-class ComprehensiveEditorTool(HasTraits):
+class SummaryLabnumberEditorTool(HasTraits):
     ideogram_options_button = Button
     spectrum_options_button = Button
     spectrum_visible = Bool(True)
@@ -90,8 +73,7 @@ class ComprehensiveEditorTool(HasTraits):
         return v
 
 
-class ComprehensiveEditor(BaseTraitsEditor):
-    analyses = List
+class SummaryLabnumberEditor(BaseSummaryEditor):
     min_age = Float
     max_age = Float
     n = Int
@@ -101,26 +83,13 @@ class ComprehensiveEditor(BaseTraitsEditor):
     mswd_low = Float
     mswd_high = Float
 
-    ideogram_graph = Any
-    ideogram_model = Instance(IdeogramModel)
-    ideogram_options = Instance(IdeogramOptionsManager)
-
     spectrum_graph = Any
     spectrum_model = Instance(SpectrumModel)
     spectrum_options = Instance(SpectrumOptionsManager)
 
     spectrum_visible=DelegatesTo('tool')
     ideogram_visible=DelegatesTo('tool')
-    tool = Instance(ComprehensiveEditorTool, ())
-
-    def _create_ideogram(self):
-        self.ideogram_options = IdeogramOptionsManager()
-        model = IdeogramModel(analyses=self.analyses,
-                              plot_options=self.ideogram_options.plotter_options)
-        model.refresh_panels()
-        p = model.next_panel()
-        self.ideogram_graph = p.make_graph()
-        self.ideogram_model = model
+    tool = Instance(SummaryLabnumberEditorTool, ())
 
     def _create_spectrum(self):
         self.spectrum_options = SpectrumOptionsManager()
@@ -153,24 +122,12 @@ class ComprehensiveEditor(BaseTraitsEditor):
         self._create_spectrum()
     
     #handlers
-    @on_trait_change('tool:ideogram_options_button')
-    def _ideogram_options_button_fired(self):
-        v = OptionsView(model=self.ideogram_options,
-                        title='Edit Ideogram Options')
-        v.edit_traits()
 
     @on_trait_change('tool:spectrum_options_button')
     def _spectrum_options_button_fired(self):
         v = OptionsView(model=self.spectrum_options,
                         title='Edit Spectrum Options')
         v.edit_traits()
-
-    @on_trait_change('ideogram_options:plotter_options:refresh_plot')
-    def _ideogram_update(self):
-        model = self.ideogram_model
-        model.refresh_panels()
-        p = model.next_panel()
-        self.ideogram_graph = p.make_graph()
 
     #views
     def traits_view(self):

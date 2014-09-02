@@ -39,7 +39,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
-    SplitEditorActionVert, ConfigureRecallAction, CalculationViewAction, ComprehensiveAction
+    SplitEditorActionVert, ConfigureRecallAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -48,6 +48,7 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
 from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
+from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -150,7 +151,7 @@ Install to enable MS Excel export''')
                          MakeTASAction(),
                          ModifyK3739Action(),
                          CalculationViewAction(),
-                         ComprehensiveAction(),
+                         SummaryLabnumberAction(),
                          name='misc')
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
