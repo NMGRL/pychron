@@ -1101,6 +1101,7 @@ anaylsis_type={}
 
             #set the interpolation path
             self.measurement_script.interpolation_path = ip
+            self.measurement_script.use_cdd_warming = self.spec.use_cdd_warming
 
         for si in ('extraction', 'post_measurement', 'post_equilibration'):
             script = getattr(self, '{}_script'.format(si))

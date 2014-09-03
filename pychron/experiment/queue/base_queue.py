@@ -331,12 +331,14 @@ class BaseExperimentQueue(Loggable):
                ('measurement', 'measurement_script'),
                ('truncate', 'truncate_condition'),
                'syn_extraction',
+               'use_cdd_warming',
                ('post_meas', 'post_measurement_script'),
                ('post_eq', 'post_equilibration_script'),
                ('s_opt', 'script_options'),
                ('dis_btw_pos', 'disable_between_positons'),
                'weight', 'comment',
-               'autocenter', 'frequency_group']
+               'autocenter', 'frequency_group',
+               ]
 
         if self.extract_device == 'Fusions UV':
             # header.extend(('reprate', 'mask', 'attenuator', 'image'))

@@ -174,7 +174,12 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
+    #===========================================================================
+    # measurement
+    #===========================================================================
+    use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
+
     #===========================================================================
     # extract
     #===========================================================================
@@ -525,6 +530,7 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
+                     'use_cdd_warming',
                      'weight', 'comment'):
 
             if attr in excludes:
@@ -1045,7 +1051,9 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+collection_time_zero_offset,
+use_cdd_warming,
 extract_units,
 pattern,
 position,

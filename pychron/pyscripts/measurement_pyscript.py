@@ -61,6 +61,8 @@ class MeasurementPyScript(ValvePyScript):
     abbreviated_count_ratio = None
     _fit_series_count = 0
 
+    use_cdd_warming = False
+
     def gosub(self, *args, **kw):
         kw['automated_run'] = self.automated_run
         super(MeasurementPyScript, self).gosub(*args, **kw)
@@ -94,7 +96,7 @@ class MeasurementPyScript(ValvePyScript):
     #        return cmds
 
     def get_variables(self):
-        return ['truncated', 'eqtime']
+        return ['truncated', 'eqtime', 'use_cdd_warming']
 
     #===============================================================================
     # commands

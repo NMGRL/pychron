@@ -14,12 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports=======================
+# ============= enthought library imports=======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
@@ -60,6 +61,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     measurement_script_width = Int(90)
     truncate_condition_width = Int(80)
     syn_extraction_width = Int(80)
+    use_cdd_warming_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
 
@@ -84,6 +86,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     measurement_script_text = Property
     post_measurement_script_text = Property
     post_equilibration_script_text = Property
+
+    use_cdd_warming_text = Property
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -168,6 +172,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _get_cleanup_text(self, trait, item):
         return self._get_number('cleanup')
 
+    def _get_use_cdd_warming_text(self, trait, item):
+        return 'Yes' if self.item.use_cdd_warming else 'No'
 
     # ===============set================
     def _set_ramp_duration_text(self, v):
@@ -185,6 +191,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     def _set_cleanup_text(self, v):
         self._set_number(v, 'cleanup')
 
+    def _set_use_cdd_warming_text(self, v):
+        self.item.use_cdd_warming = to_bool(v)
 
     # ==============validate================
     def _validate_extract_value_text(self, v):
@@ -256,6 +264,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
             ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Options', 'script_options'),
@@ -303,6 +312,7 @@ class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
             ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')

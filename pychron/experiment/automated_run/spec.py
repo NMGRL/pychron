@@ -78,6 +78,7 @@ class AutomatedRunSpec(Loggable):
     post_equilibration_script = Str
     extraction_script = Str
     script_options = Str
+    use_cdd_warming = Bool
 
     #===========================================================================
     # extraction
