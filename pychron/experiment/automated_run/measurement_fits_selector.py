@@ -141,6 +141,7 @@ class MeasurementFitsSelectorView(Controller):
                         self._get_toggle_group(),
                         self._get_auto_group(),
                         self._get_fit_group()),
+                 height=400,
                  title='Edit Default Fits',
                  buttons=['OK', 'Cancel'],
                  resizable=True)
