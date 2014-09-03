@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,7 @@ class MagnetFieldTable(Loggable):
         if not os.path.isfile(p):
             self.warning_dialog('No Magnet Field Table. Create {}'.format(p))
         else:
-            self.load_mftable()
+            self.load_mftable(load_items=True)
 
     def bind_preferences(self):
         prefid = 'pychron.spectrometer'
@@ -198,7 +198,8 @@ class MagnetFieldTable(Loggable):
                 iso = line[0]
                 try:
                     mw = molweights[iso]
-                except KeyError:
+                except KeyError, e:
+                    self.warning('"{}" not in molweights {}'.format(iso, molweights))
                     continue
 
                 dacs = map(float, line[1:])
@@ -212,6 +213,7 @@ class MagnetFieldTable(Loggable):
 
                 table.append(row)
 
+            self._report_mftable(detectors, items)
             self.items = items
 
             table = zip(*table)
@@ -227,6 +229,14 @@ class MagnetFieldTable(Loggable):
             # self._mftable={k: (isos, mws, table[2 + i], )
             #                for i, k in enumerate(detectors)}
             self._detectors = detectors
+
+    def _report_mftable(self, detectors, items):
+        self.debug('============ MFtable ===========')
+        self.debug('{:<8s} {}'.format('Isotope', ''.join(['{:<7s}'.format(di) for di in detectors])))
+        for it in items:
+            vs = ['{:0.4f}'.format(getattr(it, di)) for di in detectors]
+            self.debug('{:<8s} {}'.format(it.isotope, ' '.join(vs)))
+        self.debug('================================')
 
     def _get_mftable(self):
         if not self._mftable or not self._check_mftable_hash():
@@ -276,7 +286,7 @@ class MagnetFieldTableView(Controller):
 
     def traits_view(self):
 
-        self.model.load_mftable(True)
+        # self.model.load_mftable(True)
 
         cols = [ObjectColumn(name='isotope', editable=False)]
 
