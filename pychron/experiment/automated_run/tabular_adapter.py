@@ -86,7 +86,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     measurement_script_text = Property
     post_measurement_script_text = Property
     post_equilibration_script_text = Property
-
+    sample_text = Property
     use_cdd_warming_text = Property
 
     def get_bg_color(self, obj, trait, row, column):
@@ -114,6 +114,12 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
 
     def _set_labnumber_text(self, v):
         pass
+
+    def _set_sample_text(self, v):
+        pass
+
+    def _get_sample_text(self):
+        return self.item.sample
 
     def _get_extraction_script_text(self, trait, item):
         return self.item.extraction_script

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -179,26 +179,35 @@ class AutomatedRun(Loggable):
             fits = dict([f.split(':') for f in fits])
 
         for k, iso in isotopes.iteritems():
-            if k in fits:
+            try:
                 fi = fits[k]
-            else:
+            except KeyError:
                 fi = 'linear'
-                self.warning('Invalid fit "{}". '
-                             'check the measurement script "{}"'.format(k, self.measurement_script.name))
+                self.warning('No fit for "{}". defaulting to {}. '
+                             'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
             iso.set_fit_blocks(fi)
-
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
+
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
-            fits = {i: fits for i in isotopes}
+            fits = {i.detector: fits[0] for i in isotopes.itervalues()}
+        elif isinstance(fits, str):
+            fits = {i.detector: fits for i in isotopes.itervalues()}
         else:
             fits = dict([f.split(':') for f in fits])
 
         for k, iso in isotopes.iteritems():
-            iso.baseline.set_fit_blocks(fits[iso.detector])
+            try:
+                fi = fits[iso.detector]
+            except KeyError:
+                fi = ('average','SEM')
+                self.warning('No fit for "{}". defaulting to {}. '
+                             'check the measurement script "{}"'.format(iso.detector, fi, self.measurement_script.name))
+
+            iso.baseline.set_fit_blocks(fi)
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -1124,11 +1133,12 @@ anaylsis_type={}
 
     def _get_default_fits_file(self):
         p = self._get_measurement_parameter('default_fits')
-        dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
-        if os.path.isfile(dfp):
-            return dfp
-        else:
-            self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
+        if p:
+            dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
+            if os.path.isfile(dfp):
+                return dfp
+            else:
+                self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
 
     def _get_default_fits(self, is_baseline=False):
         """

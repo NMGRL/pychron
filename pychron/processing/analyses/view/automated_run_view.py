@@ -47,8 +47,8 @@ class AutomatedRunAnalysisView(MainView):
 
     def traits_view(self):
         teditor, ieditor, ceditor, eeditor, meditor = es = self._get_editors()
-        # for ei in es:
-        #     ei.adapter.font = '10'
+        for ei in es:
+            ei.adapter.font = '10'
 
         isotopes = UItem('isotopes', editor=teditor, label='Isotopes')
 

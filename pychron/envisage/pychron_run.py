@@ -14,6 +14,7 @@
 # limitations under the License.
 #===============================================================================
 #============= enthought library imports =======================
+import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
@@ -245,6 +246,7 @@ def launch(klass):
 
     finally:
         app.exit()
+        os._exit(0)
 
     return
 

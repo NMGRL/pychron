@@ -15,31 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import hashlib
-
 from traits.api import Str, Any, Bool, Property, Int, Dict
 from pyface.confirmation_dialog import confirm
 
 #============= standard library imports ========================
+from threading import Event, Thread, Lock
+from Queue import Empty, LifoQueue
+import hashlib
 import time
 import os
 import inspect
-from threading import Event, Thread, Lock
 import traceback
-#============= local library imports  ==========================
 import yaml
-
-from pychron.loggable import Loggable
-
-from Queue import Empty, LifoQueue
-# from pychron.globals import globalv
-# from pychron.core.ui.gui import invoke_in_main_thread
 import sys
-# import bdb
-# from pychron.core.ui.thread import Thread
 import weakref
+#============= local library imports  ==========================
+from pychron.paths import paths
+from pychron.loggable import Loggable
 from pychron.globals import globalv
-
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -71,7 +64,6 @@ class IntervalContext(object):
 
 def verbose_skip(func):
     def decorator(obj, *args, **kw):
-
 
         fname = func.__name__
         #        print fname, obj.testing_syntax, obj._cancel
@@ -492,6 +484,7 @@ class PyScript(Loggable):
     #==============================================================================
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
+
         if not name.endswith('.py'):
             name += '.py'
 
@@ -503,6 +496,7 @@ class PyScript(Loggable):
                 d = ':'
 
             if d:
+                # name = name.split(d)[-1]
                 dirs = name.split(d)
                 name = dirs[0]
                 for di in dirs[1:]:
@@ -519,8 +513,7 @@ class PyScript(Loggable):
         #             break
         #     else:
         #         raise GosubError(p)
-
-        root = self._find_root(root, name)
+        root, name = self._find_root(root, name)
 
         if klass is None:
             klass = self.__class__
@@ -673,12 +666,11 @@ class PyScript(Loggable):
                         p = os.path.join(d, name)
                         if os.path.isfile(p):
                             break
-
                 if os.path.isfile(p):
                     break
             else:
                 raise GosubError(name)
-        return os.path.dirname(p)
+        return os.path.dirname(p), os.path.basename(p)
 
     def _cancel_flag_changed(self, v):
         if v:
@@ -907,7 +899,7 @@ if __name__ == '__main__':
 
     logging_setup('pscript')
     #    execute_script(t)
-    from pychron.paths import paths
+    # from pychron.paths import paths
 
     ps = PyScript(root=os.path.join(paths.scripts_dir, 'pyscripts'),
                  path='test.py',

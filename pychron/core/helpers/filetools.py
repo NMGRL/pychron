@@ -18,7 +18,6 @@
 import glob
 import os
 import subprocess
-import time
 from datetime import datetime
 
 
@@ -129,9 +128,9 @@ def unique_dir(root, base):
 def unique_date_path(root, base, extension='.txt'):
     """
         make a unique path with the a timestamp appended
-        e.g foo_11-01-2012_12:00
+        e.g foo_11-01-2012-001
     """
-    base = '{}_{}'.format(base, datetime.strptime(time.time(), '%m-%d-Y_%H:%M'))
+    base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
     p, _ = unique_path2(root, base, extension)
     return p
 

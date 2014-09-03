@@ -116,6 +116,7 @@ class AutomatedRunSpec(Loggable):
     sample = Str
     irradiation = Str
     material = Str
+    data_reduction_tag = ''
 
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
@@ -133,7 +134,6 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
-
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()

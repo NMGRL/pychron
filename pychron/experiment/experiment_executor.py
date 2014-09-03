@@ -131,6 +131,7 @@ class ExperimentExecutor(Loggable):
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
     min_ms_pumptime = Int(30)
+    use_automated_run_monitor = Bool(False)
 
     use_memory_check = Bool(True)
     memory_threshold = Int
@@ -155,7 +156,7 @@ class ExperimentExecutor(Loggable):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
-        self.monitor = self._monitor_factory()
+        # self.monitor = self._monitor_factory()
 
     def set_queue_modified(self):
         self.queue_modified = True
@@ -238,7 +239,7 @@ class ExperimentExecutor(Loggable):
         self._cancel(*args, **kw)
 
     def set_extract_state(self, state, flash=0.75, color='green', period=1.5):
-        self._set_extract_state(state, flash, color, period=period)
+        self._set_extract_state(state, flash, color, period)
 
     def info_heading(self, msg):
         self.info('')
@@ -248,6 +249,9 @@ class ExperimentExecutor(Loggable):
         self.info('')
 
     def execute(self):
+
+        if self.use_automated_run_monitor:
+            self.monitor = self._monitor_factory()
 
         if self._pre_execute_check():
             self._alive = True
@@ -424,10 +428,11 @@ class ExperimentExecutor(Loggable):
 
             if self.end_at_run_completion:
                 #if overlapping run is a special labnumber cancel it and finish experiment
-                if not self.extracting_run.spec.is_special():
-                    self._wait_for(lambda x: self.extracting_run)
-                else:
-                    self.extracting_run.cancel_run()
+                if self.extracting_run:
+                    if not self.extracting_run.spec.is_special():
+                        self._wait_for(lambda x: self.extracting_run)
+                    else:
+                        self.extracting_run.cancel_run()
 
                 #wait for the measurement run to finish
                 self._wait_for(lambda x: self.measuring_run)
@@ -500,7 +505,7 @@ class ExperimentExecutor(Loggable):
             if not self.isAlive():
                 break
 
-            if self.monitor.has_fatal_error():
+            if self.monitor and self.monitor.has_fatal_error():
                 run.cancel()
                 run.state = 'failed'
                 break
@@ -830,7 +835,7 @@ class ExperimentExecutor(Loggable):
         else:
             self._extraction_state_off()
 
-    def _extraction_state_on(self, state, flash, color, period, end):
+    def _extraction_state_on(self, state, flash, color, period):
         """
             flash: float (0.0 - 1.0) percent of period to be on. e.g if flash=0.75 and period=4,
                     state displayed for 3 secs, then off for 1 sec
@@ -1290,14 +1295,20 @@ Use Last "blank_{}"= {}
     #===============================================================================
     # handlers
     #===============================================================================
-    def _current_run_changed(self):
-        if self.current_run:
-            self.current_run.is_last = self.end_at_run_completion
+    def _measuring_run_changed(self):
+        if self.measuring_run:
+            self.measuring_run.is_last = self.end_at_run_completion
+
+    def _extracting_run_changed(self):
+        if self.extracting_run:
+            self.extracting_run.is_last = self.end_at_run_completion
 
     def _end_at_run_completion_changed(self):
         if self.end_at_run_completion:
-            if self.current_run:
-                self.current_run.is_last = True
+            if self.measuring_run:
+                self.measuring_run.is_last = True
+            if self.extracting_run:
+                self.extracting_run.is_last = True
         else:
             self._update_automated_runs()
 
