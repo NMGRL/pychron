@@ -26,3 +26,7 @@ CHANGELOG
 * started permutator. use to generate all permutations of a dataset
 * started summary views accessible for recall task
 * added use_cdd_warming to experiment queue
+* added preset decay constants for easy switching
+* added default snapshot name (RunID_Pos) when used from pyscript, e.g. 12345-01A_3
+* added note, last_modified to irrad_ProductionTable
+* updated editing default_fits
