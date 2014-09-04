@@ -629,7 +629,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, **kw):
         ip = irrad_ProductionTable(**kw)
-        self._add_item(ip, )
+        self._add_item(ip)
         return ip
 
     def add_irradiation_position(self, pos, labnumber, irrad, level, **kw):
