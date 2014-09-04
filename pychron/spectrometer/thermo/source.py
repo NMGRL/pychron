@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Float, Range, Property
@@ -59,7 +59,8 @@ class ArgusSource(SpectrometerDevice):
     def _read_value(self, name, value):
         r = self.ask(name)
         try:
-            setattr(self, value, float(r))
+            r = float('{:0.3f}'.format(float(r)))
+            setattr(self, value, r)
             return getattr(self, value)
         except (ValueError, TypeError):
             pass
@@ -70,8 +71,8 @@ class ArgusSource(SpectrometerDevice):
         self.read_hv()
 
     def traits_view(self):
-        v = View(Item('nominal_hv'),
-                 Item('current_hv', style='readonly'),
+        v = View(Item('nominal_hv', format_str='%0.4f'),
+                 Item('current_hv', format_str='%0.4f', style='readonly'),
                  Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
                                                        high_name='y_symmetry_high',
                                                        mode='slider')),

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,20 +89,20 @@ class Spectrometer(SpectrometerDevice):
     def get_integration_time(self, current=True):
         if current:
             if self.microcontroller:
-                resp=self.microcontroller.ask('GetIntegrationTime')
+                resp = self.microcontroller.ask('GetIntegrationTime')
                 if resp:
                     try:
-                        self.integration_time=float(resp)
+                        self.integration_time = float(resp)
                         self.info('Integration Time {}'.format(self.integration_time))
 
                     except (TypeError, ValueError, TraitError):
                         self.warning('Invalid integration time. resp={}'.format(resp))
-                        self.integration_time=QTEGRA_INTEGRATION_TIMES[4]
+                        self.integration_time = QTEGRA_INTEGRATION_TIMES[4]
         return self.integration_time
 
     def set_integration_time(self, it, force=False):
         it = normalize_integration_time(it)
-        if self.integration_time!=it or force:
+        if self.integration_time != it or force:
             name = 'SetIntegrationTime'
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
@@ -194,27 +194,23 @@ class Spectrometer(SpectrometerDevice):
 
         p = os.path.join(paths.spectrometer_dir, 'config.cfg')
         config = self.get_configuration_writer(p)
-        pd='Protection'
-
-        name = self.config_get(config, 'General', 'name')
-        if name:
-            self.name = name
+        pd = 'Protection'
 
         if config.has_section(pd):
 
-            self.magnet.use_beam_blank=self.config_get(config, pd, 'use_beam_blank',
-                                                       cast='boolean',default=False)
-            self.magnet.use_detector_protection=self.config_get(config, pd,
-                                                                'use_detector_protection',
-                                                                cast='boolean', default=False)
-            self.magnet.beam_blank_threshold=self.config_get(config, pd,
-                                                             'beam_blank_threshold',cast='float',default=0.1)
-            self.magnet.detector_protection_threshold=self.config_get(config, pd,
-                                                                      'detector_protection_threshold',
-                                                                      cast='float',default=0.1)
-            ds=self.config_get(config, pd, 'detectors')
+            self.magnet.use_beam_blank = self.config_get(config, pd, 'use_beam_blank',
+                                                         cast='boolean', default=False)
+            self.magnet.use_detector_protection = self.config_get(config, pd,
+                                                                  'use_detector_protection',
+                                                                  cast='boolean', default=False)
+            self.magnet.beam_blank_threshold = self.config_get(config, pd,
+                                                               'beam_blank_threshold', cast='float', default=0.1)
+            self.magnet.detector_protection_threshold = self.config_get(config, pd,
+                                                                        'detector_protection_threshold',
+                                                                        cast='float', default=0.1)
+            ds = self.config_get(config, pd, 'detectors')
             if ds:
-                ds=ds.split(',')
+                ds = ds.split(',')
                 self.magnet.protected_detectors = ds
                 for di in ds:
                     self.info('Making protection available for detector "{}"'.format(di))
@@ -226,6 +222,8 @@ class Spectrometer(SpectrometerDevice):
             d.load_deflection_coefficients()
 
     def finish_loading(self):
+        self.name = self.microcontroller.name
+
         self.magnet.finish_loading()
 
         if self.send_config_on_startup:
@@ -246,7 +244,7 @@ class Spectrometer(SpectrometerDevice):
 
             self.add_detector(name=name,
                               #relative_position=relative_position,
-                              protection_threshold = pt,
+                              protection_threshold=pt,
                               deflection_corrrection_sign=deflection_corrrection_sign,
                               color=color,
                               active=default_state,
@@ -265,7 +263,8 @@ class Spectrometer(SpectrometerDevice):
         if self.microcontroller:
             if self.microcontroller.simulation:
                 from numpy.random import random
-                signals = [1, 100, 3, 0.01, 0.01, 0.01]+random(6)
+
+                signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
                 keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
             else:
                 datastr = self.microcontroller.ask('GetData', verbose=False)
@@ -281,10 +280,10 @@ class Spectrometer(SpectrometerDevice):
                             keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
                             signals = data
 
-                    signals=map(float, signals)
+                    signals = map(float, signals)
 
         for k, v in zip(keys, signals):
-            det=self.get_detector(k)
+            det = self.get_detector(k)
             det.set_intensity(v)
 
         return keys, signals
@@ -367,10 +366,10 @@ class Spectrometer(SpectrometerDevice):
         if self.microcontroller:
 
             p = os.path.join(paths.spectrometer_dir, 'config.cfg')
-            config=self.get_configuration_writer(p)
+            config = self.get_configuration_writer(p)
 
             for section in config.sections():
-                if section in ['Default','Protection']:
+                if section in ['Default', 'Protection']:
                     continue
 
                 for attr in config.options(section):
@@ -396,4 +395,5 @@ class Spectrometer(SpectrometerDevice):
 
     def _integration_time_default(self):
         return QTEGRA_INTEGRATION_TIMES[4]
+
 #============= EOF =============================================

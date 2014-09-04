@@ -24,7 +24,7 @@ from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class ArgusMagnet(SpectrometerDevice, BaseMagnet):
+class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     protected_detectors=List
 
     use_detector_protection=Bool

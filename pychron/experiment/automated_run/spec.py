@@ -78,6 +78,7 @@ class AutomatedRunSpec(Loggable):
     post_equilibration_script = Str
     extraction_script = Str
     script_options = Str
+    use_cdd_warming = Bool
 
     #===========================================================================
     # extraction
@@ -115,6 +116,7 @@ class AutomatedRunSpec(Loggable):
     sample = Str
     irradiation = Str
     material = Str
+    data_reduction_tag = ''
 
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
@@ -132,7 +134,6 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
-
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()

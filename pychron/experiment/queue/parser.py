@@ -107,6 +107,7 @@ class RunParser(Loggable):
 
         for attr in [
             'autocenter',
+            'use_cdd_warming',
             ('disable_between_positions', 'dis_btw_pos')]:
             v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:

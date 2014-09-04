@@ -127,7 +127,7 @@ class ExportSpec(Loggable):
             if hasattr(record, a):
                 setattr(self, a, getattr(record, a))
             else:
-                print a
+                self.debug('no attribute {}'.format(a))
 
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)

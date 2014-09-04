@@ -21,6 +21,7 @@ import os
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.managers.manager import Manager
+from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.thermo.spectrometer import Spectrometer
 from pychron.paths import paths
 from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
@@ -31,7 +32,7 @@ from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters,
     SpectrometerParametersView
 
 
-class ArgusSpectrometerManager(Manager):
+class ArgusSpectrometerManager(BaseSpectrometerManager):
     spectrometer_klass = Spectrometer
     spectrometer_microcontroller = Any
     name = Property(depends_on='spectrometer_microcontroller')

@@ -24,8 +24,6 @@ import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
-from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
-    MeasurementFitsSelectorView
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
@@ -174,7 +172,12 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
+    #===========================================================================
+    # measurement
+    #===========================================================================
+    use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
+
     #===========================================================================
     # extract
     #===========================================================================
@@ -525,6 +528,7 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
+                     'use_cdd_warming',
                      'weight', 'comment'):
 
             if attr in excludes:
@@ -986,10 +990,22 @@ class AutomatedRunFactory(Loggable):
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
+        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+            MeasurementFitsSelectorView
+        from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
+        from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
         m = MeasurementFitsSelector()
-        m.open(self.measurement_script.script_path())
+        sp =self.measurement_script.script_path()
+        m.open(sp)
         f = MeasurementFitsSelectorView(model=m)
-        f.edit_traits()
+        info = f.edit_traits(kind='livemodal')
+        if info.result:
+            #update the default_fits entry in the docstr
+            ed = PyScriptEdit()
+            ed.context_editor=MeasurementContextEditor()
+            ed.open_script(sp)
+            ed.context_editor.default_fits = str(m.name)
+            ed.update_docstr()
 
     def _new_truncation_button_fired(self):
 
@@ -1045,7 +1061,9 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+collection_time_zero_offset,
+use_cdd_warming,
 extract_units,
 pattern,
 position,

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -288,7 +288,24 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
                    ('IC', 'ic_factor'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
-    columns = [('Iso.', 'name')]
+    columns = [('Iso.', 'name'),
+               ('Det.', 'detector'),
+               ('Fit', 'fit_abbreviation'),
+               ('Int.', 'value'),
+               (SIGMA_1, 'error'),
+               ('%', 'value_percent_error'),
+               # ('I. BsEr', 'include_baseline_error'),
+               ('Fit(Bs)', 'baseline_fit_abbreviation'),
+               ('Bs', 'base_value'),
+               (sigmaf('Bs'), 'base_error'),
+               ('%(Bs)', 'baseline_percent_error'),
+               ('Bk', 'blank_value'),
+               (sigmaf('Bk'), 'blank_error'),
+               ('%(Bk)', 'blank_percent_error'),
+               ('IC', 'ic_factor'),
+               # ('Disc', 'discrimination'),
+               # ('Error Comp.', 'age_error_component')
+                ]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -326,6 +343,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     ic_factor_width = Int(50)
     discrimination_width = Int(50)
+
     def get_menu(self, object, trait, row, column):
         return MenuManager(Action(name='Show Isotope Evolution', action='show_isotope_evolution'))
 

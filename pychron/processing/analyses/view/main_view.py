@@ -50,8 +50,8 @@ class MainView(HasTraits):
 
     _corrected_enabled = True
 
-    isotope_adapter = Instance(IsotopeTabularAdapter)
-    intermediate_adapter = Instance(IntermediateTabularAdapter)
+    isotope_adapter = Instance(IsotopeTabularAdapter, ())
+    intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     show_intermediate = Bool(True)
 
     selected = Any
