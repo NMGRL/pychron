@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-from pychron.core.ui import set_qt
-
-set_qt()
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Date, Int, Button, Property
 from traitsui.api import View, Item, Controller, TextEditor, \
@@ -50,16 +47,23 @@ class Commit(HasTraits):
 
 class DiffView(HasTraits):
     left = Str
-    rigth = Str
+    left_date =Str
+    right = Str
+    right_date =Str
     diff = Str
 
     def traits_view(self):
-        return View(VGroup(HSplit(UItem('left',
-                                        style='custom',
-                                        editor=TextEditor(read_only=True)),
-                                  UItem('right',
-                                        style='custom',
-                                        editor=TextEditor(read_only=True))),
+        left_grp = VGroup(HGroup(UItem('left_message',style='readonly'),
+                                 UItem('left_date', style='readonly')),
+                          UItem('left',
+                                style='custom',
+                                editor=TextEditor(read_only=True)))
+        right_grp = VGroup(HGroup(UItem('right_message',style='readonly'),
+                                  UItem('right_date', style='readonly')),
+                           UItem('right',
+                                 style='custom',
+                                 editor=TextEditor(read_only=True)))
+        return View(VGroup(HSplit(left_grp, right_grp),
                            UItem('diff',
                                  style='custom',
                                  editor=TextEditor(read_only=True))),
@@ -132,7 +136,19 @@ class GitArchiveHistory(HasTraits):
 
         ds = '\n'.join([li for li in d.split('\n')
                         if li[0] in ('-', '+')])
-        dd = DiffView(left=a.blob, right=b.blob, diff=ds)
+
+        lm = a.message
+        n=40
+        if len(lm)>n:
+            lm='{}...'.format(lm[:n])
+
+        rm = a.message
+        if len(rm)>n:
+            rm='{}...'.format(rm[:n])
+
+        dd = DiffView(left=a.blob, left_date=a.date.strftime('%m-%d-%Y %H:%M:%S'), left_message=lm,
+                      right=b.blob, right_date=b.date.strftime('%m-%d-%Y %H:%M:%S'), right_message=rm,
+                      diff=ds)
         dd.edit_traits()
 
     def _get_selected_commit(self):
@@ -178,12 +194,12 @@ class GitArchiveHistoryView(Controller):
         return v
 
 
-if __name__ == '__main__':
-    r = '/Users/ross/Sandbox/gitarchive'
-    gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
-
-    gh.load_history('ga_test.txt')
-    ghv = GitArchiveHistoryView(model=gh)
-    ghv.configure_traits(kind='livemodal')
+# if __name__ == '__main__':
+#     r = '/Users/ross/Sandbox/gitarchive'
+#     gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')
+#
+#     gh.load_history('ga_test.txt')
+#     ghv = GitArchiveHistoryView(model=gh)
+#     ghv.configure_traits(kind='livemodal')
 #============= EOF =============================================
 

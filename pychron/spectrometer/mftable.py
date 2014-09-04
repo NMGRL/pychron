@@ -90,7 +90,7 @@ class MagnetFieldTable(Loggable):
         bind_preference(self, 'use_db_archive',
                         '{}.use_db_mftable_archive'.format(prefid))
 
-    def update_field_table(self, det, isotope, dac):
+    def update_field_table(self, det, isotope, dac, message):
         """
 
             dac needs to be in axial units
@@ -115,7 +115,7 @@ class MagnetFieldTable(Loggable):
                 p = least_squares(mass_cal_func, xx, ny, [ny[0], xx[0], 0])
                 d[k] = iso, xx, ny, p
 
-            self.dump(isos, d)
+            self.dump(isos, d, message)
             #self._mftable = isos, xs, ys
 
         except ValueError:
@@ -143,9 +143,9 @@ class MagnetFieldTable(Loggable):
                 writer.writerow(fi.to_csv(detectors, fmt))
 
         self._set_mftable_hash(p)
-        self._add_to_archive(p)
+        self._add_to_archive(p, message='manual modification')
 
-    def dump(self, isos, d):
+    def dump(self, isos, d, message):
         detectors = self._detectors
         p = self.mftable_path
         with open(p, 'w') as f:
@@ -161,7 +161,7 @@ class MagnetFieldTable(Loggable):
                 writer.writerow(a)
 
         self._set_mftable_hash(p)
-        self._add_to_archive(p)
+        self._add_to_archive(p, message)
 
     @property
     def mftable_path(self):
@@ -259,7 +259,7 @@ class MagnetFieldTable(Loggable):
     def _set_mftable_hash(self, p):
         self._mftable_hash = self._make_hash(p)
 
-    def _add_to_archive(self, p):
+    def _add_to_archive(self, p, message):
         if self.use_db_archive:
             if self.db:
                 self.info('db archiving mftable')
@@ -272,7 +272,7 @@ class MagnetFieldTable(Loggable):
             from pychron.git_archive.git_archive import GitArchive
 
             archive = GitArchive(self.mftable_archive_path)
-            archive.add(p)
+            archive.add(p, message=message)
             archive.close()
             self.info('locally archiving mftable')
 

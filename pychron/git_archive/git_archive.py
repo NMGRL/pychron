@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-import shutil
-
-from pychron.core.ui import set_qt
-
-set_qt()
 #============= enthought library imports =======================
-import os
-from git import Repo
 
 #============= standard library imports ========================
+import os
+import shutil
+
+from git import Repo
+
+
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -90,20 +89,20 @@ class GitArchive(Loggable):
         return repo.git.diff(a, b, )
 
 
-if __name__ == '__main__':
-    r = '/Users/ross/Sandbox/gitarchive'
-    g = GitArchive(r)
-
-    p = '/Users/ross/Sandbox/ga_test.txt'
-    for i in range(10):
-        with open(p, 'w') as fp:
-            fp.write('''iso,H2,H1,AX,L1,L2,CDD
-Ar40,{:0.5f},5.89559,6.00675,6.12358,6.24511,6.35683
-Ar39,5.89693,5.78828,5.89693,5.89693,5.89693,5.89693
-Ar36,5.56073,5.45620,5.56073,5.56073,5.56073,5.56073
-'''.format(i))
-
-        g.add(p)
+# if __name__ == '__main__':
+#     r = '/Users/ross/Sandbox/gitarchive'
+#     g = GitArchive(r)
+#
+#     p = '/Users/ross/Sandbox/ga_test.txt'
+#     for i in range(10):
+#         with open(p, 'w') as fp:
+#             fp.write('''iso,H2,H1,AX,L1,L2,CDD
+# Ar40,{:0.5f},5.89559,6.00675,6.12358,6.24511,6.35683
+# Ar39,5.89693,5.78828,5.89693,5.89693,5.89693,5.89693
+# Ar36,5.56073,5.45620,5.56073,5.56073,5.56073,5.56073
+# '''.format(i))
+#
+#         g.add(p)
 
 #============= EOF =============================================
 

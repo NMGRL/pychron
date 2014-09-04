@@ -63,6 +63,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     grouping_threshold = Float
     grouping_suffix = Str
 
+    use_automated_run_monitor = Bool
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -147,11 +149,15 @@ class ExperimentPreferencesPane(PreferencesPane):
                                 enabled_when='use_memory_check',
                                 tooltip='Do not continue experiment if available memory less than "Threshold"'),
                            label='Memory')
+        monitor_grp = Group(Item('use_automated_run_monitor',
+                                 label='Use AutomatedRun Monitor',
+                                 tooltip='Use the automated run monitor'),
+                            label='Monitor')
 
         return View(color_group, notification_grp,
                     editor_grp, irradiation_grp,
                     analysis_grouping_grp,
-                    overlap_grp, memory_grp)
+                    overlap_grp, memory_grp, monitor_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):
