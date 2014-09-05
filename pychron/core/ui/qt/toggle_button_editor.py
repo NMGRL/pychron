@@ -35,10 +35,10 @@ class _ToggleButtonEditor(Editor):
     def init(self, parent):
         self.icon_on = QtGui.QIcon(self.factory.image_on.absolute_path)
         self.icon_off = QtGui.QIcon(self.factory.image_off.absolute_path)
-        control = self.control = QtGui.QToolButton()
-        control.setAutoRaise(True)
+        control = self.control = QtGui.QPushButton()
+        # control.setAutoRaise(True)
         control.setIcon(self.icon_on)
-        control.setIconSize(QtCore.QSize(self.factory.width, self.factory.height))
+        # control.setIconSize(QtCore.QSize(self.factory.width, self.factory.height))
 
         self.tooltip_on = self.factory.tooltip_on
         self.tooltip_off = self.factory.tooltip_off
@@ -47,10 +47,10 @@ class _ToggleButtonEditor(Editor):
 
         control.setCheckable(True)
         control.toggled.connect(self._toggle_button)
-        if self.factory.label:
-            control.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
-        else:
-            control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        # if self.factory.label:
+        #     control.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+        # else:
+        #     control.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
 
         QtCore.QObject.connect(control, QtCore.SIGNAL('clicked()'),
                                self.update_object)

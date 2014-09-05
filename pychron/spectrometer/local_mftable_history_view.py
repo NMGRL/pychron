@@ -19,7 +19,8 @@ from traitsui.api import View, UItem, VGroup, HSplit, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, left_group, right_group, DiffView
+from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, \
+    left_group, right_group, DiffView
 
 
 class ItemAdapter(TabularAdapter):
