@@ -77,10 +77,6 @@ class ControlsPane(TraitsDockPane):
     floatable = False
 
     def traits_view(self):
-        # def hitem(n, l, **kw):
-        #     return HGroup(Label(l), spring, Item(n, show_label=False, **kw),
-        #                   Spring(springy=False, width=275))
-
         magnet_grp = VGroup(
             HGroup(
                 UItem('detector',
@@ -109,18 +105,11 @@ class ControlsPane(TraitsDockPane):
             Item('graph_y_auto', label='Autoscale Y'),
             Item('graph_ymax', label='Max', format_str='%0.3f'),
             Item('graph_ymin', label='Min', format_str='%0.3f'),
-            # UItem('record_button', editor=ButtonEditor(label_value='record_label'))
             HGroup(
                 UItem('record_button'),
-                # icon_button_editor('record_button','media-record',
-                #                       tooltip='Start/stop scan recording'),
                 icon_button_editor('add_marker_button',
                                    'flag',
-                                   enabled_when='_recording'
-                )),
-            # Item('add_marker_button',
-            #         show_label=False,
-            #         enabled_when='_recording')),
+                                   enabled_when='_recording')),
             label='Graph')
 
         control_grp = Group(
