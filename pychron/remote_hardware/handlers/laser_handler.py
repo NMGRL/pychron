@@ -430,6 +430,10 @@ class LaserHandler(BaseRemoteHardwareHandler):
         result = manager.is_ready()
         return result
 
+    def SetLight(self,manager, value, *args):
+        manager.set_light(value)
+        return 'OK'
+
     def _set_axis(self, manager, axis, value):
         try:
             d = float(value)

@@ -134,6 +134,9 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     # pyscript commands
     #===============================================================================
+    def set_light(self, value):
+        self._ask('SetLight {}'.format(value))
+
     def get_response_blob(self):
         return self._ask('GetResponseBlob')
 
