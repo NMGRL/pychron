@@ -17,11 +17,12 @@
 #============= enthought library imports =======================
 from traits.api import CInt, Str, String, on_trait_change, Button, Float, \
     Property, Bool, Instance
-
 from traitsui.api import View, Item, VGroup, HGroup, RangeEditor, EnumEditor
 import apptools.sweet_pickle as pickle
+from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import time
+import os
 from threading import Thread
 #============= local library imports  ==========================
 from pychron.globals import globalv
@@ -30,7 +31,6 @@ from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserCon
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
 from pychron.core.helpers.filetools import to_bool
-import os
 from pychron.paths import paths
 
 
@@ -77,29 +77,11 @@ class PychronLaserManager(BaseLaserManager):
     optics_client = Instance(LaserOpticsClient)
     controls_client = Instance(LaserControlsClient)
 
-    def _controls_client_default(self):
-        return LaserControlsClient(parent=self)
-
-    def _optics_client_default(self):
-        return LaserOpticsClient(parent=self)
-    
-    def _test_connection_button_fired(self):
-        self.test_connection()
-        if self.connected:
-            self.opened(None)
-
     def shutdown(self):
         if self.communicator:
             self.communicator.close()
 
-    def _test_connection(self):
-        self.connected = self.communicator.open()
-        self.debug('test connection. connected= {}'.format(self.connected))
-        return self.connected
-
     def bind_preferences(self, pref_id):
-        from apptools.preferences.preference_binding import bind_preference
-
         bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
         self.stage_manager.bind_preferences(pref_id)
 
@@ -118,9 +100,6 @@ class PychronLaserManager(BaseLaserManager):
         self.update_position()
         self._opened_hook()
 
-    def _opened_hook(self):
-        pass
-
     def update_position(self):
         self.trait_set(**dict(zip(('_x', '_y', '_z'),
                                   self.get_position())))
@@ -136,36 +115,9 @@ class PychronLaserManager(BaseLaserManager):
         if name:
             return self._execute_pattern(name)
 
-    def _execute_pattern(self, pat):
-        self.info('executing pattern {}'.format(pat))
-
-        if not pat.endswith('.lp'):
-            pat = '{}.lp'.format(pat)
-
-        path = os.path.join(paths.pattern_dir, pat)
-        if os.path.isfile(path):
-            self.debug('Using local pattern {}'.format(pat))
-            pat = pickle.dumps(path)
-            self.debug('Sending Pattern:{}'.format(pat))
-
-        cmd = 'DoPattern {}'.format(pat)
-        self._ask(cmd, verbose=False)
-
-        time.sleep(0.5)
-
-        if not self._block('IsPatterning', period=1):
-            cmd = 'AbortPattern'
-            self._ask(cmd)
-
     def stop_pattern(self):
         self._ask('AbortPattern')
 
-    @on_trait_change('pattern_executor:pattern:canceled')
-    def pattern_canceled(self):
-        """
-            this patterning window was closed so cancel the blocking loop
-        """
-        self._cancel_blocking = True
 
     def get_pattern_names(self):
     # get contents of local pattern_dir
@@ -290,10 +242,59 @@ class PychronLaserManager(BaseLaserManager):
 
         if self.communicator.simulation:
             return 0, 0, 0
-            #===============================================================================
-            # pyscript private
-            #===============================================================================
 
+    #handlers
+    @on_trait_change('pattern_executor:pattern:canceled')
+    def pattern_canceled(self):
+        """
+            this patterning window was closed so cancel the blocking loop
+        """
+        self._cancel_blocking = True
+
+    def _test_connection_button_fired(self):
+        self.test_connection()
+        if self.connected:
+            self.opened(None)
+
+    def _position_changed(self):
+        if self.position is not None:
+            t = Thread(target=self._move_to_position,
+                       args=(self.position, self.use_autocenter))
+            t.start()
+            self._position_thread = t
+
+    def _test_connection(self):
+        self.connected = self.communicator.open()
+        self.debug('test connection. connected= {}'.format(self.connected))
+        return self.connected
+
+    def _opened_hook(self):
+        pass
+
+    def _execute_pattern(self, pat):
+        self.info('executing pattern {}'.format(pat))
+
+        if not pat.endswith('.lp'):
+            pat = '{}.lp'.format(pat)
+
+        path = os.path.join(paths.pattern_dir, pat)
+        if os.path.isfile(path):
+            self.debug('Using local pattern {}'.format(pat))
+            pat = pickle.dumps(path)
+            self.debug('Sending Pattern:{}'.format(pat))
+
+        cmd = 'DoPattern {}'.format(pat)
+        self._ask(cmd, verbose=False)
+
+        time.sleep(0.5)
+
+        if not self._block('IsPatterning', period=1):
+            cmd = 'AbortPattern'
+            self._ask(cmd)
+
+    #===============================================================================
+    # pyscript private
+    #===============================================================================
     def _move_to_position(self, pos, autocenter):
         cmd = 'GoToHole {} {}'.format(pos, autocenter)
         if isinstance(pos, tuple):
@@ -372,42 +373,17 @@ class PychronLaserManager(BaseLaserManager):
             if self.enable_laser():
                 self.enabled = True
 
-    def _position_changed(self):
-        if self.position is not None:
-            t = Thread(target=self._move_to_position,
-                       args=(self.position, self.use_autocenter))
-            t.start()
-            self._position_thread = t
-            #     def traits_view(self):
-            #         v = View(
-            #                  Item('test_connection_button', show_label=False),
-            #                  self.get_control_button_group(),
-            #                  Item('position'),
-            #                  Item('x', editor=RangeEditor(low= -25.0, high=25.0)),
-            #                  Item('y', editor=RangeEditor(low= -25.0, high=25.0)),
-            #                  Item('z', editor=RangeEditor(low= -25.0, high=25.0)),
-            #                  title='Laser Manager',
-            #                  handler=self.handler_klass
-            #                  )
-            #         return v
-
     def _set_x(self, v):
         self._ask('SetX {}'.format(v))
         self.update_position()
-
-    #        self._x=v
 
     def _set_y(self, v):
         self._ask('SetY {}'.format(v))
         self.update_position()
 
-    #        self._y=v
-
     def _set_z(self, v):
         self._ask('SetZ {}'.format(v))
         self.update_position()
-
-    #        self._z=v
 
     def _get_x(self):
         return self._x
@@ -418,27 +394,24 @@ class PychronLaserManager(BaseLaserManager):
     def _get_z(self):
         return self._z
 
+    #defaults
     def _stage_manager_default(self):
-        '''
-        '''
-
         args = dict(name='stage',
                     configuration_name='stage',
                     configuration_dir_name=self.name,
-                    parent=self,
-        )
+                    parent=self)
         return self._stage_manager_factory(args)
+
+    def _controls_client_default(self):
+        return LaserControlsClient(parent=self)
+
+    def _optics_client_default(self):
+        return LaserOpticsClient(parent=self)
 
 
 class PychronUVLaserManager(PychronLaserManager):
     optics_client = Instance(UVLaserOpticsClient)
     controls_client = Instance(UVLaserControlsClient)
-
-    def _controls_client_default(self):
-        return UVLaserControlsClient(parent=self)
-
-    def _optics_client_default(self):
-        return UVLaserOpticsClient(parent=self)
 
     def set_reprate(self, v):
         self._ask('SetReprate {}'.format(v))
@@ -489,16 +462,9 @@ class PychronUVLaserManager(PychronLaserManager):
 
         self._ask('Fire {}'.format(mode))
 
-        #     def _position_changed(self):
-        #         if self.position is not None:
-        #             t = Thread(target=self._move_to_position, args=(self.position,))
-        #             t.start()
-        # #            self._move_to_position(self.position)
-
-        #===============================================================================
-        #
-        #===============================================================================
-
+    #===============================================================================
+    #
+    #===============================================================================
     def _opened_hook(self):
         nb = self._ask('GetNBurst')
         self._nburst = self._get_int(nb)
@@ -506,14 +472,6 @@ class PychronUVLaserManager(PychronLaserManager):
         mb = self._ask('GetBurstMode')
         if mb is not None:
             self.fire_mode = 'Burst' if mb == '1' else 'Continuous'
-
-            #    def _set_motor(self, name, value):
-            #        self.info('setting motor {} to {}'.format(name,value))
-            #        cmd='SetMotor {} {}'.format(name, value)
-            #        time.sleep(0.5)
-            #        self._ask(cmd)
-            #        r = self._block(cmd='GetMotorMoving {}'.format(name))
-            #        return r
 
     def _move_to_position(self, pos, autocenter):
 
@@ -545,8 +503,7 @@ class PychronUVLaserManager(PychronLaserManager):
                      self.get_control_button_group(),
                      HGroup(self._button_factory('fire', 'fire_label', enabled='enabled'),
                             Item('fire_mode', show_label=False),
-                            Item('nburst')
-                     ),
+                            Item('nburst')),
                      Item('position'),
                      Item('zoom', style='simple'),
                      HGroup(Item('mask', editor=EnumEditor(name='masks')), Item('mask', show_label=False)),
@@ -555,18 +512,14 @@ class PychronUVLaserManager(PychronLaserManager):
                      Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
                      Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
                      Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
-                     enabled_when='connected'
-                 ),
+                     enabled_when='connected'),
                  title='Laser Manager',
-                 handler=self.handler_klass
-        )
+                 handler=self.handler_klass)
         return v
 
     #===============================================================================
     # property get/set
     #===============================================================================
-
-
     def _get_int(self, resp):
         r = 0
         if resp is not None:
@@ -594,9 +547,10 @@ class PychronUVLaserManager(PychronLaserManager):
     def _get_fire_label(self):
         return 'Stop' if self.firing else 'Fire'
 
-        #        else:
+    def _controls_client_default(self):
+        return UVLaserControlsClient(parent=self)
 
-#
-#            return super(PychronUVLaserManager, self)._move_to_position(pos)
+    def _optics_client_default(self):
+        return UVLaserOpticsClient(parent=self)
 
 #============= EOF =============================================

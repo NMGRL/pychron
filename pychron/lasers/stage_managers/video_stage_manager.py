@@ -245,6 +245,9 @@ class VideoStageManager(StageManager):
             self.info('Cleaning video directory')
             self.video_archiver.clean()
 
+    def is_auto_correcting(self):
+        return self._auto_correcting
+
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
             client = self.application.get_service('pychron.media_server.client.MediaClient')
@@ -321,9 +324,6 @@ class VideoStageManager(StageManager):
             renderer = self._render_snapshot
 
         self.video.start_recording(path, renderer)
-
-    def is_auto_correcting(self):
-        return self._auto_correcting
 
     def _move_to_hole_hook(self, holenum, correct):
         if correct and self.use_autocenter:

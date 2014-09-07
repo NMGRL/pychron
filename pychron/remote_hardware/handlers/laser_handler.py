@@ -190,15 +190,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         return self.error_response(err)
 
-    def _set_axis(self, manager, axis, value):
-        try:
-            d = float(value)
-        except (ValueError, TypeError), err:
-            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
-
-        err = manager.stage_manager.single_axis_move(axis, d)
-        return self.error_response(err)
-
     def SetX(self, manager, data, *args):
         return self._set_axis(manager, 'x', data)
 
@@ -259,13 +250,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
     def SetHomeZ(self, manager, *args):
         return self._set_home_(manager, axis='z')
-
-    def _set_home_(self, manager, **kw):
-        """
-        """
-        err = manager.stage_manager.define_home(**kw)
-        return self.error_response(err)
-
 
     def GoToHole(self, manager, hole, autocenter, *args):
         try:
@@ -445,6 +429,22 @@ class LaserHandler(BaseRemoteHardwareHandler):
     def IsReady(self, manager, *args):
         result = manager.is_ready()
         return result
+
+    def _set_axis(self, manager, axis, value):
+        try:
+            d = float(value)
+        except (ValueError, TypeError), err:
+            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
+
+        err = manager.stage_manager.single_axis_move(axis, d)
+        return self.error_response(err)
+
+    def _set_home_(self, manager, **kw):
+        """
+        """
+        err = manager.stage_manager.define_home(**kw)
+        return self.error_response(err)
+
 #===============================================================================
 #
 #===============================================================================
