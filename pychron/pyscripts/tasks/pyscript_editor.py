@@ -235,18 +235,13 @@ class PyScriptEditor(Editor, PyScriptEdit):
 
     def _on_dirty_changed(self, dirty):
         if dirty:
-            dirty = str(self.getText()) != str(self._cached_text)
+            dirty = str(self.get_text()) != str(self._cached_text)
 
         self.dirty = dirty
-        self._cached_text = self.getText()
+        self._cached_text = self.get_text()
 
     def _on_text_changed(self):
-        # print len(self.getText()), len(self._cached_text)
         if str(self.get_text()) != str(self._cached_text):
-            # print self.getText()
-            # print self._cached_text
-            #        if not self.suppress_change:
-            #     self.editor.parse(self.getText())
             self.changed = True
             self.dirty = True
             self._cached_text = txt = self.get_text()

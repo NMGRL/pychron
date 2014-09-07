@@ -18,7 +18,7 @@
 from itertools import groupby
 
 from traits.api import String, Property, Event, \
-    cached_property, Any, Bool, Int
+    cached_property, Any, Int
 from apptools.preferences.preference_binding import bind_preference
 
 
@@ -37,7 +37,6 @@ from pychron.loggable import Loggable
 from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.dbanalysis import DBAnalysis
-from pychron.processing.analyses.vcs_analysis import VCSAnalysis
 
 
 ANALYSIS_CACHE = {}
@@ -173,74 +172,42 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     saved = Event
     updated = Event
 
-    use_vcs = Bool
-    use_offline_database = Bool
-    vcs = Any
-    offline_bridge = Any
+    # use_vcs = Bool
+    # use_offline_database = Bool
+    # vcs = Any
+    # offline_bridge = Any
 
     def bind_preferences(self):
         super(IsotopeDatabaseManager, self).bind_preferences()
 
-        prefid = 'pychron.vcs'
-        bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
-        self._use_vcs_changed()
+        # prefid = 'pychron.vcs'
+        # bind_preference(self, 'use_vcs', '{}.use_vcs'.format(prefid))
+        # self._use_vcs_changed()
 
-        prefid = 'pychron.offline'
-        bind_preference(self, 'use_offline_database', '{}.use_offline_database'.format(prefid))
-        self._use_offline_database_changed()
+        # prefid = 'pychron.offline'
+        # bind_preference(self, 'use_offline_database', '{}.use_offline_database'.format(prefid))
+        # self._use_offline_database_changed()
 
-    def _use_offline_database_changed(self):
-        if self.use_offline_database:
-            from pychron.database.offline_bridge import OfflineBridge
-
-            if not self.offline_bridge:
-                self.offline_bridge = OfflineBridge()
-                self.offline_bridge.init()
-
-    def _use_vcs_changed(self):
-        if self.use_vcs:
-            from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
-
-            if not self.vcs:
-                self.vcs = IsotopeVCSManager()
-
-                # def progress_loader(self, xs, func, threshold=50, progress=None, reraise_cancel=False):
-                # def progress_iterator(self, *args, **kw):
-                #     progress_iterator(*args, **kw)
-
-                # def progress_loader(self, *args, **kw):
-                #     return progress_loader(*args, **kw)
-                # def gen(prog):
-                #     n = len(xs)
-                #     if n > threshold or prog:
-                #         if not prog:
-                #             prog = self.open_progress(n)
-                #
-                #         for i, x in enumerate(xs):
-                #             if prog.canceled:
-                #                 raise CancelLoadingError
-                #             elif prog.accepted:
-                #                 break
-                #             yield func(x, prog, i, n)
-                #     else:
-                #         for x in xs:
-                #             yield func(x, None, 0, 0)
-                #
-                # try:
-                #     return list(gen(progress))
-                # except CancelLoadingError:
-                #     if reraise_cancel:
-                #         raise CancelLoadingError
-                #     else:
-                #         return []
-
-    def update_vcs_analysis(self, an, msg):
-        if self.use_vcs:
-            self.vcs.update_analysis(an, msg)
-
-    def update_vcs_analyses(self, ans, msg):
-        if self.use_vcs:
-            self.vcs.update_analyses(ans, msg)
+    # def _use_offline_database_changed(self):
+    #     if self.use_offline_database:
+    #         from pychron.database.offline_bridge import OfflineBridge
+    #
+    #         if not self.offline_bridge:
+    #             self.offline_bridge = OfflineBridge()
+    #             self.offline_bridge.init()
+    # def _use_vcs_changed(self):
+    #     if self.use_vcs:
+    #         from pychron.processing.vcs_data.vcs_manager import IsotopeVCSManager
+    #
+    #         if not self.vcs:
+    #             self.vcs = IsotopeVCSManager()
+    # def update_vcs_analysis(self, an, msg):
+    #     if self.use_vcs:
+    #         self.vcs.update_analysis(an, msg)
+    #
+    # def update_vcs_analyses(self, ans, msg):
+    #     if self.use_vcs:
+    #         self.vcs.update_analyses(ans, msg)
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
@@ -313,17 +280,17 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             for ci in cached_ans:
                 self._add_to_cache(ci)
 
-    def _clone_vcs_repos(self, no_db_ans):
-        if self.use_vcs:
-            #clone the necessary project repositories
-            def f(x):
-                try:
-                    return x.labnumber.sample.project.name
-                except AttributeError:
-                    pass
-
-            prs = filter(lambda x: not x is None, (f(ai) for ai in no_db_ans))
-            self.vcs.clone_project_repos(prs)
+    # def _clone_vcs_repos(self, no_db_ans):
+    #     if self.use_vcs:
+    #         #clone the necessary project repositories
+    #         def f(x):
+    #             try:
+    #                 return x.labnumber.sample.project.name
+    #             except AttributeError:
+    #                 pass
+    #
+    #         prs = filter(lambda x: not x is None, (f(ai) for ai in no_db_ans))
+    #         self.vcs.clone_project_repos(prs)
 
     def _setup_progress(self, n, progress, use_progress):
         if n > 1:
@@ -391,7 +358,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # load remaining analyses
                 n = len(no_db_ans)
                 if n:
-                    self._clone_vcs_repos(no_db_ans)
+                    # self._clone_vcs_repos(no_db_ans)
 
                     progress = self._setup_progress(n, progress, use_progress)
 
@@ -407,12 +374,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     #
                     #     self.vcs.add_analyses(new_ans, progress=progress)
 
-                    self.debug('use offline database {}'.format(self.use_offline_database))
-                    if self.use_offline_database:
-                        if progress:
-                            progress.increase_max(len(new_ans) + 1)
-                            progress.change_message('Transfering analyses for offline usage')
-                        self.offline_bridge.add_analyses(db, new_ans, progress=progress)
+                    # self.debug('use offline database {}'.format(self.use_offline_database))
+                    # if self.use_offline_database:
+                    #     if progress:
+                    #         progress.increase_max(len(new_ans) + 1)
+                    #         progress.change_message('Transfering analyses for offline usage')
+                    #     self.offline_bridge.add_analyses(db, new_ans, progress=progress)
 
             if progress:
                 progress.soft_close()
@@ -493,7 +460,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             msg = 'loading {}. {}'.format(rid, m)
             prog.change_message(msg)
 
-        klass = DBAnalysis if not self.use_vcs else VCSAnalysis
+        klass = DBAnalysis# if not self.use_vcs else VCSAnalysis
         ai = klass(group_id=group_id,
                    graph_id=graph_id)
 
@@ -507,7 +474,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
-                ai.calculate_age(force=not self.use_vcs)
+                ai.calculate_age()#force=not self.use_vcs)
                 # timethis(ai.sync, args=(meas_analysis,),
                 #          kwargs=dict(unpack=unpack, load_changes=load_changes))
                 # timethis(ai.calculate_age)
