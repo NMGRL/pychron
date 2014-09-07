@@ -79,6 +79,7 @@ class DBAnalysis(Analysis):
     extract_device = Str
     position = Str
     xyz_position = Str
+    snapshots = List
 
     extract_value = Float
     extract_units = Str
@@ -321,6 +322,10 @@ class DBAnalysis(Analysis):
                 if v is None:
                     v = ''
                 setattr(self, attr, v)
+
+            snapshots = extraction.snapshots
+            if snapshots:
+                self.snapshots=[si.path for si in snapshots]
 
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:

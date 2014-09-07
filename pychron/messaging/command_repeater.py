@@ -165,7 +165,7 @@ class CommandRepeater(ConfigLoadable):
         try:
             totalsent = 0
             mlen = len(s)
-            s = '{:02X}{}'.format(mlen, s)
+            s = '{:04X}{}'.format(mlen, s)
 
             while totalsent < mlen:
                 sent = self._sock.send(s[totalsent:])

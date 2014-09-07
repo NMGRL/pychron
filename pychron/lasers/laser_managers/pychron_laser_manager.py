@@ -215,7 +215,7 @@ class PychronLaserManager(BaseLaserManager):
 
     def take_snapshot(self, name):
         self.info('Take snapshot')
-        self._ask('Snapshot {}'.format(name))
+        return self._ask('Snapshot {}'.format(name))
 
     def prepare(self):
         self.info('Prepare laser')

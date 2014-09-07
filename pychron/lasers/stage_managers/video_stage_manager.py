@@ -25,7 +25,7 @@ from threading import Thread, Timer
 
 import os
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.paths import paths
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
@@ -176,7 +176,7 @@ class VideoStageManager(StageManager):
     def autocenter(self, *args, **kw):
         return self._autocenter(*args, **kw)
 
-    def snapshot(self, path=None, name=None, auto=False, inform=True):
+    def snapshot(self, path=None, name=None, auto=False, inform=True, return_blob=False):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -192,8 +192,14 @@ class VideoStageManager(StageManager):
 
                 if name is None:
                     name = 'snapshot'
-                path, _cnt = unique_path(root=paths.snapshot_dir, base=name,
-                                         extension='jpg')
+                path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
+                                         extension='.jpg')
+            elif name is not None:
+                if not os.path.isdir(os.path.dirname(name)):
+                    path,_ = unique_path2(root=paths.snapshot_dir, base=name, extension='.jpg')
+                else:
+                    path = name
+
             else:
                 path = self.save_file_dialog()
 
@@ -206,8 +212,11 @@ class VideoStageManager(StageManager):
             upath = self._upload(path)
             if inform:
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
-
-            return path, upath
+            if return_blob:
+                with open(path, 'rb') as fp:
+                    return path, upath, fp.readall()
+            else:
+                return path, upath
 
     def kill(self):
         """

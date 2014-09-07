@@ -95,8 +95,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
-            _p, upath = sm.snapshot(name=name)
-            return upath
+            lpath, upath, imageblob = sm.snapshot(name=name, return_blob=True)
+
+            s = '{:02X}{}{:02x}{}{}>'.format(len(lpath),
+                                             lpath, len(upath), upath, imageblob)
+            return s
 
     def PrepareLaser(self, manager, *args):
         result = 'OK'

@@ -544,7 +544,7 @@ class AutomatedRunPersister(Loggable):
     def _save_extraction(self, db, analysis=None, loadtable=None,
                          output_blob=None, response_blob=None, snapshots=None):
         """
-            snapshots: list of paths
+            snapshots: list of tuples, (local_path, remote_path, imageblob)
         """
         self.info('saving extraction')
 
@@ -600,8 +600,9 @@ class AutomatedRunPersister(Loggable):
                 dbpos.load_identifier = loadtable.name
 
         if snapshots:
-            for sp in snapshots:
-                dbsnap = self.db.add_snapshot(sp)
+            for lpath,rpath,image in snapshots:
+                dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
+                                              image=image)
                 ext.snapshots.append(dbsnap)
         return ext
 

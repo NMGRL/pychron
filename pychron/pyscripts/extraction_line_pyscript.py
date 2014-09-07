@@ -24,6 +24,7 @@ from traits.api import List
 
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -99,7 +100,7 @@ class Ramper(object):
 class ExtractionPyScript(ValvePyScript):
     _resource_flag = None
     info_color = EXTRACTION_COLOR
-    snapshot_paths = List
+    snapshots = List
 
     _extraction_positions = List
 
@@ -248,8 +249,26 @@ class ExtractionPyScript(ValvePyScript):
         name = '{}{}'.format(prefix, name)
         ps = self._extraction_action([('take_snapshot', (), {'name': name})])
         if ps:
-            ps = ps[0]
-            self.snapshot_paths.append(ps[1])
+            nps=self._convert_snapshot_response(ps[0])
+            self.snapshots.append(nps)
+
+    def _convert_snapshot_response(self, ps):
+        """
+        #ps = XXlpathYYrpathimageblob
+        #where XX,YY is the len of the following path
+        #convert ps to a tuple
+        """
+        l=int(ps[:2],16)
+        e1=2+l
+        s1=ps[2:e1]
+
+        e2 = e1+2
+        e3=e2+int(ps[e1:e2], 16)
+        s2=ps[e2:e3]
+
+        s3=ps[e3:]
+        return s1,s2,s3
+
 
     @command_register
     def video_recording(self, name='video'):
