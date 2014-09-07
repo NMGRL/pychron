@@ -214,7 +214,7 @@ class VideoStageManager(StageManager):
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
             if return_blob:
                 with open(path, 'rb') as fp:
-                    return path, upath, fp.readall()
+                    return path, upath, fp.read()
             else:
                 return path, upath
 

@@ -34,6 +34,7 @@ class med_ImageTable(Base, NameMixin):
 
 class med_SnapshotTable(Base, BaseMixin):
     path = stringcolumn(200)
+    remote_path = stringcolumn(200)
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
     extraction_id = foreignkey('meas_ExtractionTable')
