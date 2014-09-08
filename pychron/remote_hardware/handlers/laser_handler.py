@@ -99,6 +99,8 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
             s = '{:02X}{}{:02x}{}{}'.format(len(lpath),
                                              lpath, len(upath), upath, imageblob)
+
+            self.debug('snapshot response={}'.format(s[:40]))
             return s
 
     def PrepareLaser(self, manager, *args):

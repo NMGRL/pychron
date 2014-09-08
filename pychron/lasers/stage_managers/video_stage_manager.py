@@ -218,8 +218,9 @@ class VideoStageManager(StageManager):
 
             #return path, upath
             if return_blob:
-                # with open(path, 'rb') as fp:
-                return path, upath, ''
+                with open(path, 'rb') as fp:
+                    im = fp.read()
+                    return path, upath, im
             else:
                 return path, upath
 

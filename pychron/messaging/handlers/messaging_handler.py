@@ -20,7 +20,7 @@
 
 #============= local library imports  ==========================
 from SocketServer import BaseRequestHandler
-from pychron.remote_hardware.errors.error import ErrorCode
+
 
 class MessagingHandler(BaseRequestHandler):
     _verbose = False
@@ -50,6 +50,9 @@ class MessagingHandler(BaseRequestHandler):
                 self.server.info('Sent: %s' % response.strip())
 
             self.server.parent.cur_rpacket = data
+            if len(response) > 20:
+                response = '{}...'.format(response[:20])
+
             self.server.parent.cur_spacket = response
 
             self.server.increment_packets_received()

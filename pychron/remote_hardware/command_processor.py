@@ -300,7 +300,9 @@ class CommandProcessor(ConfigLoadable):
         if isinstance(data, ErrorCode):
             data = str(data)
 
-        data = '{:04X}{}'.format(len(data) + 4, data)
+        n = len(data) + 4
+        data = '{:04X}{}'.format(n, data)
+        #self.debug('response len={}'.format(n))
         if globalv.use_ipc:
             try:
                 if globalv.ipc_dgram:
@@ -311,7 +313,11 @@ class CommandProcessor(ConfigLoadable):
                 mlen = len(data)
                 totalsent = 0
                 while totalsent < mlen:
-                    totalsent += func(data[totalsent:])
+                    try:
+                        totalsent += func(data[totalsent:])
+                        #self.debug('totalsent={} n={}'.format(totalsent, mlen))
+                    except socket.error:
+                        continue
 
             except Exception, err:
                 self.debug('End Request Exception: {}'.format(err))

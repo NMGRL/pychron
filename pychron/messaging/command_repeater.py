@@ -108,7 +108,8 @@ class CommandRepeater(ConfigLoadable):
                 if ready_flag and ready_data == rd:
                     rd = 'OK'
 
-                result = rd.split('|')[1] if '|' in rd else rd
+                result = rd
+                #result = rd.split('|')[1] if '|' in rd else rd
 
             else:
                 self.led.state = 'red'
@@ -186,11 +187,12 @@ class CommandRepeater(ConfigLoadable):
 
                 sum+=len(s)
                 ss.append(s)
-                self.debug('msg_len={} sum={}'.format(msg_len, sum))
+                #self.debug('msg_len={} sum={}'.format(msg_len, sum))
                 if sum==msg_len:
                     break
 
             rd=''.join(ss)
+            #self.debug('processor response len {}'.format(len(rd)))
             success = True
         except socket.error, e:
             success, rd = self._handle_socket_read_error(e, count, verbose)
