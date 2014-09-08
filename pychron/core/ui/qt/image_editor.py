@@ -29,6 +29,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 
 
 
+
 #=============standard library imports ========================
 
 # import math
@@ -65,6 +66,10 @@ def convert_bitmap(image, width=None, height=None):
 
     return pix
 
+class myQLabel(QLabel):
+    def paintEvent(self, event):
+        super(myQLabel, self).paintEvent(event)
+
 
 class _ImageEditor(Editor):
     image_ctrl = Any
@@ -75,28 +80,27 @@ class _ImageEditor(Editor):
         if image is None:
             image = self.value
 
-        image_ctrl = QLabel()
+        image_ctrl = myQLabel()
 
-        #         w = self.item.width
-        #        if self.factory.scale:
-        #            w *= self.factory.scale
+
         if image is not None:
             image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
+        self.image_ctrl.setScaledContents(True)
 
         if self.factory.scrollable:
             scroll_area = QScrollArea()
             scroll_area.setWidget(image_ctrl)
+
             scroll_area.setWidgetResizable(True)
-            scroll_area.setMinimumWidth(self.item.width)
-            scroll_area.setMinimumHeight(self.item.height)
+            scroll_area.setMinimumWidth(max(0,self.item.width))
+            scroll_area.setMinimumHeight(max(0,self.item.height))
 
             self.control = scroll_area
         else:
             self.control = self.image_ctrl
 
         self.set_tooltip()
-
         self.sync_value(self.factory.refresh, 'refresh', 'from')
 
     def _refresh_fired(self):

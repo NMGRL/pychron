@@ -46,7 +46,13 @@ class TCPHandler(Handler):
 
     def get_packet(self, cmd):
         try:
-            return self.sock.recv(self.datasize)
+            d=''
+            while 1:
+                try:
+                    d+=self.sock.recv(self.datasize)
+                except socket.error:
+                    return d
+
         except socket.timeout:
             return
 
