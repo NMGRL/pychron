@@ -24,6 +24,9 @@ from traits.api import List
 
 
 
+
+
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -99,7 +102,7 @@ class Ramper(object):
 class ExtractionPyScript(ValvePyScript):
     _resource_flag = None
     info_color = EXTRACTION_COLOR
-    snapshot_paths = List
+    snapshots = List
 
     _extraction_positions = List
 
@@ -237,7 +240,12 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def snapshot(self, name='', prefix=''):
+    def set_light(self, value=''):
+        self._extraction_action([('set_light', (value,), {})])
+
+    @verbose_skip
+    @command_register
+    def snapshot(self, name='', prefix='', view_snapshot=False):
         """
             if name not specified use RID_Position e.g 12345-01A_3
         """
@@ -246,10 +254,9 @@ class ExtractionPyScript(ValvePyScript):
             name = '{}_{}'.format(self.run_identifier, pos)
 
         name = '{}{}'.format(prefix, name)
-        ps = self._extraction_action([('take_snapshot', (), {'name': name})])
+        ps = self._extraction_action([('take_snapshot', (), {'name': name, 'view_snapshot':view_snapshot})])
         if ps:
-            ps = ps[0]
-            self.snapshot_paths.append(ps[1])
+            self.snapshots.append(ps)
 
     @command_register
     def video_recording(self, name='video'):
@@ -579,7 +586,6 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
-
     #===============================================================================
     # properties
     #===============================================================================

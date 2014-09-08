@@ -25,7 +25,7 @@ from threading import Thread, Timer
 
 import os
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import unique_path
+from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.paths import paths
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
@@ -87,7 +87,8 @@ class VideoStageManager(StageManager):
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
-        bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        if self.autocenter_manager:
+            bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
 
         bind_preference(self, 'render_with_markup', '{}.render_with_markup'.format(pref_id))
         bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')
@@ -176,7 +177,7 @@ class VideoStageManager(StageManager):
     def autocenter(self, *args, **kw):
         return self._autocenter(*args, **kw)
 
-    def snapshot(self, path=None, name=None, auto=False, inform=True):
+    def snapshot(self, path=None, name=None, auto=False, inform=True, return_blob=False):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -192,8 +193,14 @@ class VideoStageManager(StageManager):
 
                 if name is None:
                     name = 'snapshot'
-                path, _cnt = unique_path(root=paths.snapshot_dir, base=name,
-                                         extension='jpg')
+                path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
+                                         extension='.jpg')
+            elif name is not None:
+                if not os.path.isdir(os.path.dirname(name)):
+                    path,_ = unique_path2(root=paths.snapshot_dir, base=name, extension='.jpg')
+                else:
+                    path = name
+
             else:
                 path = self.save_file_dialog()
 
@@ -206,8 +213,11 @@ class VideoStageManager(StageManager):
             upath = self._upload(path)
             if inform:
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
-
-            return path, upath
+            if return_blob:
+                with open(path, 'rb') as fp:
+                    return path, upath, fp.read()
+            else:
+                return path, upath
 
     def kill(self):
         """
@@ -235,6 +245,9 @@ class VideoStageManager(StageManager):
         if self.use_video_archiver:
             self.info('Cleaning video directory')
             self.video_archiver.clean()
+
+    def is_auto_correcting(self):
+        return self._auto_correcting
 
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
@@ -312,9 +325,6 @@ class VideoStageManager(StageManager):
             renderer = self._render_snapshot
 
         self.video.start_recording(path, renderer)
-
-    def is_auto_correcting(self):
-        return self._auto_correcting
 
     def _move_to_hole_hook(self, holenum, correct):
         if correct and self.use_autocenter:

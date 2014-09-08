@@ -211,7 +211,12 @@ class AutomatedRunPersister(Loggable):
         self.rundate = d.date()
         self.info('Analysis started at {}'.format(self.runtime))
 
-    def post_extraction_save(self, rblob, oblob):
+    def post_extraction_save(self, rblob, oblob, snapshots):
+        """
+            rblob: response blob. binary time, value. time versus measured output
+            oblob: output blob. binary time, value. time versus requested output
+            snapshots: list of snapshot paths
+        """
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
@@ -226,7 +231,8 @@ class AutomatedRunPersister(Loggable):
 
                 ext = self._save_extraction(db, loadtable=loadtable,
                                             response_blob=rblob,
-                                            output_blob=oblob)
+                                            output_blob=oblob,
+                                            snapshots=snapshots)
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:
@@ -535,7 +541,11 @@ class AutomatedRunPersister(Loggable):
 
         return meas
 
-    def _save_extraction(self, db, analysis=None, loadtable=None, output_blob=None, response_blob=None):
+    def _save_extraction(self, db, analysis=None, loadtable=None,
+                         output_blob=None, response_blob=None, snapshots=None):
+        """
+            snapshots: list of tuples, (local_path, remote_path, imageblob)
+        """
         self.info('saving extraction')
 
         spec = self.run_spec
@@ -589,6 +599,11 @@ class AutomatedRunPersister(Loggable):
             if loadtable and dbpos:
                 dbpos.load_identifier = loadtable.name
 
+        if snapshots:
+            for lpath,rpath,image in snapshots:
+                dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
+                                              image=image)
+                ext.snapshots.append(dbsnap)
         return ext
 
     def _save_spectrometer_info(self, db, meas):

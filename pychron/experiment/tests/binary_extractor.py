@@ -50,6 +50,23 @@ class Expected(object):
     isokeys=['Ar40', 'Ar39', 'Ar38', 'Ar36', 'Ar37']
     runday=8462.0
     ncnts=[48, 72, 24, 120, 24]
+    isotopes = {'Ar40':{'background':0.016390634700655937,
+                        'background_err':0.0001810772664612159,
+                        'intercept':1,
+                        'intercept_err':1,
+                        'counts_per_cycle':0},
+                'Ar39':{'background':0.00033566050115041435,
+                        'background_err':1.5215453458949924e-05,
+                        'intercept':1,
+                        'intercept_err':1,
+                        'counts_per_cycle':0},
+                'Ar36':{'background':7.502062362618744e-05,
+                        'background_err':4.699999863078119e-06,
+                        'intercept':1,
+                        'intercept_err':1,
+                        'counts_per_cycle':0},}
+
+    baselines=[{'ncnts':42}]
 
 class MassSpecBinaryExtractorTestCase(unittest.TestCase):
     @classmethod
@@ -180,6 +197,83 @@ class MassSpecBinaryExtractorTestCase(unittest.TestCase):
 
     def test_ncnts(self):
         self._test_spec_attr('ncnts')
+
+   #=================Ar40====================
+    def test_ar40_intercept(self):
+        self._test_intercept('Ar40')
+
+    def test_ar40_intercept_err(self):
+        self._test_intercept('Ar40', True)
+
+    def test_ar40_background(self):
+        self._test_background('Ar40')
+
+    def test_ar40_background_err(self):
+        self._test_background('Ar40', True)
+
+    def test_ar40_counts_per_cycle(self):
+        self._test_counts_per_cycle('Ar40')
+
+    #=================Ar39====================
+    def test_ar39_intercept(self):
+        self._test_intercept('Ar39')
+
+    def test_ar39_intercept_err(self):
+        self._test_intercept('Ar39', True)
+
+    def test_ar39_background(self):
+        self._test_background('Ar39')
+        
+    def test_ar39_background(self):
+        self._test_background('Ar39')
+
+    def test_ar39_background_err(self):
+        self._test_background('Ar39', True)
+
+    def test_ar39_counts_per_cycle(self):
+        self._test_counts_per_cycle('Ar39')
+
+    #=================Ar36====================
+    def test_ar36_background(self):
+        self._test_background('Ar36')
+
+    def test_ar36_background_err(self):
+        self._test_background('Ar36', True)
+
+    def test_ar36_counts_per_cycle(self):
+        self._test_counts_per_cycle('Ar36')
+    
+    def test_ar36_intercept(self):
+        self._test_intercept('Ar36')
+
+    def test_ar36_intercept_err(self):
+        self._test_intercept('Ar36', True)
+    
+    def test_baseline_ncnts(self):
+        spec=self.specs[0]
+        baseline=spec.baselines[0]
+        self.assertEqual(baseline.ncnts, self.expected.baselines[0]['ncnts'])
+
+    def _test_counts_per_cycle(self, iso, idx=0):
+        spec=self.specs[idx]
+        iidx=spec.isokeys.index(iso)
+        isotope=spec.isotopes[iidx]
+        self.assertEqual(isotope['counts_per_cycle'],
+                         self.expected.isotopes[iso]['counts_per_cycle'])
+
+    def _test_background(self, iso, is_err=False, idx=0):
+        attr='background_err' if is_err else 'background'
+        self._test_isotope_attr(iso, attr, idx)
+
+    def _test_intercept(self, iso, is_err=False, idx=0):
+        attr='intercept_err' if is_err else 'intercept'
+        self._test_isotope_attr(iso, attr, idx)
+
+    def _test_isotope_attr(self, iso, attr, idx):
+        spec=self.specs[idx]
+        iidx=spec.isokeys.index(iso)
+        isotope=spec.isotopes[iidx]
+        self.assertEqual(isotope[attr], self.expected.isotopes[iso][attr])
 
     def _test_spec_attr(self, attr, idx=0):
         self.assertEqual(getattr(self.specs[idx], attr),

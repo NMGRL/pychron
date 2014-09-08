@@ -28,21 +28,20 @@ class BinarySpec(object):
     pass
 
 
-class MassSpecBinaryExtractor(Extractor):
-    # def _get_next_str(self, fp):
-    #     def _gen():
-    #         while 1:
-    #             t = ''
-    #             while 1:
-    #                 a = fp.read(1)
-    #                 if a == '\t':
-    #                     yield t.strip()
-    #                     t = ''
-    #                 t += a
-    #
-    #     g = _gen()
-    #     return lambda: g.next()
+class MeasurementObject(object):
+    name=''
+    xs=None
+    ys=None
+    ncnts=0
 
+class Baseline(MeasurementObject):
+    pass
+
+class Isotope(MeasurementObject):
+    pass
+
+
+class MassSpecBinaryExtractor(Extractor):
     def _get_next_str(self, fp):
         def _gen():
             t = ''
@@ -77,6 +76,13 @@ class MassSpecBinaryExtractor(Extractor):
 
         return _gen
 
+    def _get_double(self, fp):
+        def _gen():
+            t = struct.unpack('>d', fp.read(8))[0]
+            return t
+
+        return _gen
+
     def import_file(self, p):
         """
             clone of RunData.Binary_Read from MassSpec 7.875
@@ -106,6 +112,7 @@ class MassSpecBinaryExtractor(Extractor):
         gshort = self._get_short(fp)
         gsingle = self._get_single(fp)
         glong = self._get_long(fp)
+        gdouble = self._get_double(fp)
 
         bspec.runid = gns()
 
@@ -181,8 +188,9 @@ class MassSpecBinaryExtractor(Extractor):
             mol_ref_iso = gsingle()
             mol_ref_iso_special = mol_ref_iso < 0
             mol_ref_iso = abs(mol_ref_iso)
-
             system_number = gshort()
+            if bspec.runday<1800:
+                system_number=1
 
         bspec.mol_ref_iso = mol_ref_iso
         bspec.system_number = system_number
@@ -323,19 +331,96 @@ class MassSpecBinaryExtractor(Extractor):
 
         isotopes = []
         for i in range(niso):
-            iso, v = self._extract_isotope(ver, bspec.runday, ncnts[i], gsingle)
+            iso, v = self._extract_isotope(ver, bspec.runday, ncnts[i], gsingle, gshort)
             isotopes.append(iso)
             isobsln.append(v)
         bspec.ncnts=ncnts
         bspec.isotopes=isotopes
+
+        if bspec.calc_with_ratio:
+            self._extract_ratios(ver, bspec, gsingle)
+
+        self._extract_deleted_points(ver, bspec, gshort)
+        if bspec.runday>515 and ver>1 and ver<2.995:
+            x=gsingle()
+
+        self._extract_baselines(ver, bspec, gns, gshort, gsingle, glong, gdouble)
         return bspec
 
-    def _extract_isotope(self, ver, runday, ncnts, gsingle):
+    def _extract_baselines(self, ver, bspec, gns, gshort, gsingle, glong, gdouble):
+        bspec.baselines=[]
+        if bspec.runday>545.67 and ver>1.03:
+            if ver>2.994:
+                n=gshort()
+                for i in xrange(int(n)):
+                    label=gns()
+                    bs = self._extract_baseline1(label, gshort, gsingle, gdouble)
+                    bspec.baselines.append(bs)
+            else:
+                self._extract_baseline2(ver,gshort, gsingle, glong)
+
+        self._extract_baseline_data(bspec, gsingle)
+
+    def _extract_baseline_data(self, bspec, gsingle):
+        for bs in bspec.baselines:
+            xs,ys = self._extract_data(bs.ncnts, gsingle)
+            bs.xs,bs.ys=xs,ys
+
+    def _extract_baseline2(self, ver, gshort, gsingle, glong):
+        ncnts=gshort()
+        if ver>2.68:
+            fit=gshort()
+            nsegments=gshort()
+            intercept=gsingle()
+            intercept_err=gsingle()
+            for i in xrange(4):
+                for j in xrange(nsegments):
+                    glong()
+            for i in xrange(nsegments):
+                glong()
+        else:
+            intercept=gsingle()
+            slope = gsingle()
+            if ver>2.0999:
+                intercept_err=0 if ver<2.67 else gsingle()
+        return ncnts
+
+    def _extract_baseline1(self, label, gshort, gsingle, gdouble):
+        baseline=Baseline()
+        baseline.label=label
+        ncnts = gshort()
+        nRpts = gshort()
+        npos = gshort()
+        for i in xrange(npos):
+            gsingle()
+
+        nsegments=gshort()
+        for i in xrange(nsegments):
+            gsingle()
+            for j in xrange(4):
+                gdouble()
+            gsingle()
+
+        baseline.ncnts=ncnts
+        return baseline
+
+    def _extract_deleted_points(self, ver, bspec, gshort):
+        if ver>2.61:
+            niso, nratio=bspec.niso, bspec.nratio
+            for i in xrange(gshort()):
+                j=gshort()
+                k=gshort()
+                # if j>niso+nratio:
+                #     j=j-niso-nratio
+
+    def _extract_ratios(self,ver, bspec, gsingle):
+        for i in xrange(bspec.nratio):
+            if not (ver<2.41 and i==1):
+                b=gsingle()
+                c=gsingle()
+
+    def _extract_isotope(self, ver, runday, ncnts, gsingle, gshort):
         """
-        gns: get_next_string
-        gh: get_short
-        gs: get_single
-        gl: get_long
         """
 
         isodict = {'background': gsingle(),
@@ -349,10 +434,10 @@ class MassSpecBinaryExtractor(Extractor):
         bsln_n = 0
         c = -1
         if ver > 2.994:
-            bsln_n = gsingle()
+            bsln_n = gshort()
             if runday<=543:
                 bsln_n=0
-            c = gsingle()
+            c = gshort()
 
         isodict['counts_per_cycle'] = c
 

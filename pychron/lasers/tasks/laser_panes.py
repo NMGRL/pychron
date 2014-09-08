@@ -199,22 +199,7 @@ class OpticsPane(TraitsDockPane):
                        show_border=True))
         return v
 
-
-class ClientPane(TraitsTaskPane):
-    def traits_view(self):
-        v = View(
-            Item('test_connection_button', show_label=False),
-            HGroup(
-                UItem('enabled_led', editor=LEDEditor()),
-                UItem('enable', editor=ButtonEditor(label_value='enable_label'))),
-            Item('position'),
-            Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-            Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-            Item('z', editor=RangeEditor(low=-25.0, high=25.0)))
-        return v
-
-
-class ClientDockPane(TraitsDockPane):
+class ClientMixin(object):
     name = Property(depends_on='model')
     id = 'pychron.lasers.client'
 
@@ -239,24 +224,36 @@ class ClientDockPane(TraitsDockPane):
 
         tgrp = Group(cgrp,
                      ogrp,
-                     #cgrp,
                      pos_grp, layout='tabbed')
-
-        #add_grp = self._get_additional_grp()
-        #if add_grp:
-        #    pos_grp.label = 'Positioning'
-        #    tgrp = Group(pos_grp, add_grp,pos_grp, layout='tabbed')
-        #else:
-        #    tgrp = pos_grp
 
         egrp = HGroup(UItem('enabled_led', editor=LEDEditor()),
                       UItem('enable', editor=ButtonEditor(label_value='enable_label')),
                       spring,
+                      icon_button_editor('snapshot_button', 'camera'),
                       icon_button_editor('test_connection_button',
-                                         'connect', tooltip='Test Connection'),
-        )
+                                         'connect', tooltip='Test Connection'))
         v = View(VGroup(egrp, tgrp))
         return v
+
+class ClientPane(TraitsTaskPane, ClientMixin):
+    pass
+    # def traits_view(self):
+    #     v = View(
+    #         Item('test_connection_button', show_label=False),
+    #         HGroup(
+    #             UItem('enabled_led', editor=LEDEditor()),
+    #             UItem('enable', editor=ButtonEditor(label_value='enable_label'))),
+    #         Item('position'),
+    #         UItem('snapshot_button'),
+    #         Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
+    #         Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
+    #         Item('z', editor=RangeEditor(low=-25.0, high=25.0)))
+    #     return v
+
+
+class ClientDockPane(TraitsDockPane, ClientMixin):
+    pass
+
 
 
 class AuxilaryGraphPane(TraitsDockPane):

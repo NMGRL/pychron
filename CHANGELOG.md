@@ -34,3 +34,4 @@ CHANGELOG
 * added default snapshot name (RunID_Pos) when used from pyscript, e.g. 12345-01A_3
 * added note, last_modified to irrad_ProductionTable
 * updated editing default_fits
+* added snapshot view to recall

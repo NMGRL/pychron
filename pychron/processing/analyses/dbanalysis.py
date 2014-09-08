@@ -15,8 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
+
 
 #============= standard library imports ========================
 from datetime import datetime
@@ -26,10 +28,10 @@ import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
-
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
+from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
@@ -79,6 +81,7 @@ class DBAnalysis(Analysis):
     extract_device = Str
     position = Str
     xyz_position = Str
+    snapshots = List
 
     extract_value = Float
     extract_units = Str
@@ -253,11 +256,8 @@ class DBAnalysis(Analysis):
             self._sync_experiment(meas_analysis)
             self._sync_script_blobs(meas_analysis)
 
-
         self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
-
-
 
     def _sync_data_reduction_tag(self, meas_analysis):
         tag = meas_analysis.data_reduction_tag
@@ -321,6 +321,13 @@ class DBAnalysis(Analysis):
                 if v is None:
                     v = ''
                 setattr(self, attr, v)
+
+            snapshots = extraction.snapshots
+            if snapshots:
+                self.snapshots=[Snapshot(path=si.path,
+                                         name=os.path.basename(si.path),
+                                         remote_path=si.remote_path,
+                                         image=si.image) for si in snapshots]
 
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:

@@ -238,7 +238,6 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self.commands_pane.commands = self.active_editor.commands.script_commands
 
             self.script_browser_pane.root=os.path.dirname(self.active_editor.path)
-            print 'asdf', self.active_editor.context_editor
             self.context_editor_pane.editor = self.active_editor.context_editor
 
     @on_trait_change('_current_script:trace_line')
