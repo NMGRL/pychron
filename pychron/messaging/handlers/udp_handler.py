@@ -19,47 +19,26 @@
 #============= enthought library imports =======================
 
 #============= standard library imports ========================
-import socket
 #============= local library imports  ==========================
 from messaging_handler import MessagingHandler
 
 class UDPHandler(MessagingHandler):
     def get_packet(self):
-        '''
-        '''
+        """
+        """
         data = self.request[0].strip()
         return data
 
     def send_packet(self, response):
-        '''
+        """
 
-        '''
+        """
         sock = self.request[1]
+        send=lambda x: sock.sendto(x, self.client_address)
 
-        response = '{}\n'.format(response)
-        mlen = len(response)
-        totalsent = 0
-        gen = self._response_blocks(response)
-        while totalsent < mlen:
-            try:
-                msg = gen.next()
-            except StopIteration:
-                break
+        self._send_packet(response, send)
 
-            try:
-                totalsent += sock.sendto(msg, self.client_address)
-                #print 'totalsent={} total={}'.format(totalsent, mlen)
-            except socket.error, e:
-                print e
-                continue
 
-    def _response_blocks(self, resp, blocksize=512):
-        s = 0
-        n = len(resp)
-        while s < n:
-            yield resp[s:s + blocksize]
-            s = s + blocksize
 
-            #sock.sendto(response + '\n', self.client_address)
 
 #============= EOF ====================================

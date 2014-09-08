@@ -15,9 +15,8 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-
 #============= standard library imports ========================
-
+import socket
 #============= local library imports  ==========================
 from SocketServer import BaseRequestHandler
 
@@ -25,8 +24,8 @@ from SocketServer import BaseRequestHandler
 class MessagingHandler(BaseRequestHandler):
     _verbose = False
     def handle(self):
-        '''
-        '''
+        """
+        """
         data = self.get_packet()
 
         if data is not None:
@@ -59,12 +58,38 @@ class MessagingHandler(BaseRequestHandler):
             self.server.increment_packets_sent()
 
     def get_packet(self):
-        '''
-        '''
-        pass
+        """
+        """
+        raise NotImplementedError
 
-    def send_packet(self):
-        '''
-        '''
-        pass
+    def send_packet(self, resp):
+        """
+        """
+        raise NotImplementedError
+
+    def _response_blocks(self, resp, blocksize=1024):
+        s = 0
+        n = len(resp)
+        while s < n:
+            yield resp[s:s + blocksize]
+            s += blocksize
+
+    def _send_packet(self, response, send):
+        response = '{}\n'.format(response)
+        mlen = len(response)
+        totalsent = 0
+        gen = self._response_blocks(response)
+        while totalsent < mlen:
+            try:
+                msg = gen.next()
+            except StopIteration:
+                break
+
+            try:
+                totalsent += send(msg)
+                # totalsent += sock.sendto(msg, self.client_address)
+                #print 'totalsent={} total={}'.format(totalsent, mlen)
+            except socket.error, e:
+                print e
+                continue
 #============= EOF ====================================

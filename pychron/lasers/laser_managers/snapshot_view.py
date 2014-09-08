@@ -39,7 +39,8 @@ class SnapshotView(HasTraits):
             try:
                 img = Image.open(buf)
                 self.image = img.convert('RGBA')
-            except IOError:
+            except IOError, e:
+                print 'snapshot view {}'.format(e)
                 pass
 
     def traits_view(self):

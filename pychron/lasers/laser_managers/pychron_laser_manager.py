@@ -311,17 +311,27 @@ class PychronLaserManager(BaseLaserManager):
     def _view_snapshot(self, local_path, remote_path, image):
         from pychron.lasers.laser_managers.snapshot_view import SnapshotView
 
+        open_required=False
         try:
             sv = self.application.snapshot_view
         except AttributeError:
             sv = None
+            open_required=True
 
         if sv is None:
             sv = SnapshotView()
             self.application.snapshot_view = sv
 
         sv.set_image(local_path, remote_path, image)
-        self.application.open_view(sv)
+        if open_required:
+            info = self.application.open_view(sv)
+            self.application.snapshot_view_info=info
+        else:
+            if self.application.snapshot_view_info.control:
+                self.application.snapshot_view_info.control.raise_()
+            else:
+                info = self.application.open_view(sv)
+                self.application.snapshot_view_info=info
 
     def _convert_snapshot_response(self, ps):
         """
