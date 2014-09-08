@@ -66,7 +66,6 @@ class CommandRepeater(ConfigLoadable):
             kind = socket.SOCK_DGRAM
 
         sock = socket.socket(socket.AF_UNIX, kind)
-
         sock.settimeout(2)
         self._sock = sock
 
@@ -178,11 +177,17 @@ class CommandRepeater(ConfigLoadable):
     def _read_(self, count=0, verbose=True):
         try:
             ss=[]
+            sum = 0
+            msg_len=0
             while 1:
                 s = self._sock.recv(2048)
-                if not s:
-                    break
+                if not msg_len:
+                    msg_len = int(s[:4],16)
+
+                sum+=len(s)
                 ss.append(s)
+                if sum==msg_len:
+                    break
 
             rd=''.join(ss)
             success = True

@@ -47,12 +47,21 @@ class TCPHandler(Handler):
     def get_packet(self, cmd):
         try:
             ss=[]
+            sum = 0
+            msg_len=0
             while 1:
-                s = self.sock.recv(self.datasize)
-                if not s:
+                s = self._sock.recv(2048)
+                if not msg_len:
+                    msg_len = int(s[:4],16)
+
+                sum+=len(s)
+                ss.append(s)
+                if sum==msg_len:
                     break
-                ss.append()
-            return ''.join(ss)
+            data = ''.join(ss)
+
+            #trim off header
+            return data[4:]
 
         except socket.timeout:
             return
