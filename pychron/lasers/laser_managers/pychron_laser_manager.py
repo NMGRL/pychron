@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ from threading import Thread
 #============= local library imports  ==========================
 from pychron.globals import globalv
 from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
-from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient,\
+from pychron.lasers.laser_managers.client import UVLaserOpticsClient, UVLaserControlsClient, \
     LaserOpticsClient, LaserControlsClient
 from pychron.lasers.laser_managers.laser_manager import BaseLaserManager
 from pychron.core.helpers.filetools import to_bool
@@ -90,7 +90,7 @@ class PychronLaserManager(BaseLaserManager):
         port = self.port
 
         self.communicator = ec = EthernetCommunicator(host=host,
-                                                       port=port)
+                                                      port=port)
         r = ec.open()
         if r:
             self.connected = True
@@ -120,10 +120,9 @@ class PychronLaserManager(BaseLaserManager):
     def stop_pattern(self):
         self._ask('AbortPattern')
 
-
     def get_pattern_names(self):
-    # get contents of local pattern_dir
-    #         ps = super(PychronLaserManager, self).get_pattern_names()
+        # get contents of local pattern_dir
+        #         ps = super(PychronLaserManager, self).get_pattern_names()
 
         ps = []
         # get contents of remote pattern_dir
@@ -146,11 +145,11 @@ class PychronLaserManager(BaseLaserManager):
         return self._ask('GetOutputBlob')
 
     def get_achieved_output(self):
-        rv=0
-        v=self._ask('GetAchievedOutput')
+        rv = 0
+        v = self._ask('GetAchievedOutput')
         if v is not None:
             try:
-                rv=float(v)
+                rv = float(v)
             except ValueError:
                 pass
         return rv
@@ -311,34 +310,36 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     def _view_snapshot(self, local_path, remote_path, image):
         from pychron.lasers.laser_managers.snapshot_view import SnapshotView
+
         try:
             sv = self.application.snapshot_view
         except AttributeError:
-            sv=None
+            sv = None
 
         if sv is None:
             sv = SnapshotView()
-            self.application.snapshot_view=sv
+            self.application.snapshot_view = sv
 
         sv.set_image(local_path, remote_path, image)
         self.application.open_view(sv)
 
     def _convert_snapshot_response(self, ps):
         """
-        #ps = XXlpathYYrpathimageblob
-        #where XX,YY is the len of the following path
-        #convert ps to a tuple
+            ps = XXlpathYYrpathimageblob
+            where XX,YY is the len of the following path
+            convert ps to a tuple
         """
-        l=int(ps[:2],16)
-        e1=2+l
-        s1=ps[2:e1]
+        l = int(ps[:2], 16)
+        e1 = 2 + l
+        s1 = ps[2:e1]
 
-        e2 = e1+2
-        e3=e2+int(ps[e1:e2], 16)
-        s2=ps[e2:e3]
+        e2 = e1 + 2
+        e3 = e2 + int(ps[e1:e2], 16)
+        s2 = ps[e2:e3]
 
-        s3=ps[e3:]
-        return s1,s2,s3
+        s3 = ps[e3:]
+        self.debug('image len {}'.format(len(s3)))
+        return s1, s2, s3
 
     def _move_to_position(self, pos, autocenter):
         cmd = 'GoToHole {} {}'.format(pos, autocenter)
@@ -518,7 +519,7 @@ class PychronUVLaserManager(PychronLaserManager):
         self._ask('Fire {}'.format(mode))
 
     def _stop_fired(self):
-        self.firing=False
+        self.firing = False
         self._ask('Fire stop')
 
     @on_trait_change('mask, attenuator, zoom')
@@ -526,6 +527,7 @@ class PychronUVLaserManager(PychronLaserManager):
         if new is not None:
             t = Thread(target=self.set_motor, args=(name, new))
             t.start()
+
     #===============================================================================
     #
     #===============================================================================

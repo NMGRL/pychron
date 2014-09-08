@@ -45,6 +45,14 @@ class TCPHandler(MessagingHandler):
         '''
         if response is None:
             response = 'error'
-        self.request.send(response + '\n')
+
+        totalsent = 0
+        mlen = len(response)
+        s = '{}\n'.format(response)
+
+        sock=self.request
+        while totalsent < mlen:
+            sent = sock.send(s[totalsent:])
+            totalsent += sent
 
 #============= EOF ====================================

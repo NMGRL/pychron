@@ -176,9 +176,15 @@ class CommandRepeater(ConfigLoadable):
         return success, e
 
     def _read_(self, count=0, verbose=True):
-        rd = None
         try:
-            rd = self._sock.recv(2048)
+            ss=[]
+            while 1:
+                s = self._sock.recv(2048)
+                if not s:
+                    break
+                ss.append(s)
+
+            rd=''.join(ss)
             success = True
         except socket.error, e:
             success, rd = self._handle_socket_read_error(e, count, verbose)
