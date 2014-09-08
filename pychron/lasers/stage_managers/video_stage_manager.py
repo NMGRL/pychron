@@ -87,7 +87,8 @@ class VideoStageManager(StageManager):
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
-        bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        if self.autocenter_manager:
+            bind_preference(self.autocenter_manager, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
 
         bind_preference(self, 'render_with_markup', '{}.render_with_markup'.format(pref_id))
         bind_preference(self, 'auto_upload', 'pychron.media_server.auto_upload')

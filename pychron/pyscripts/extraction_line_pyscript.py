@@ -26,6 +26,7 @@ from traits.api import List
 
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -253,12 +254,9 @@ class ExtractionPyScript(ValvePyScript):
             name = '{}_{}'.format(self.run_identifier, pos)
 
         name = '{}{}'.format(prefix, name)
-        ps = self._extraction_action([('take_snapshot', (), {'name': name})])
+        ps = self._extraction_action([('take_snapshot', (), {'name': name, 'view_snapshot':view_snapshot})])
         if ps:
-            nps=self._convert_snapshot_response(ps[0])
-            if view_snapshot:
-                self._view_snapshot(*nps)
-            self.snapshots.append(nps)
+            self.snapshots.append(ps)
 
     @command_register
     def video_recording(self, name='video'):
@@ -588,37 +586,6 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
-
-    def _view_snapshot(self, local_path, remote_path, image):
-        from snapshot_view import SnapshotView
-        try:
-            sv = self.application.snapshot_view
-        except AttributeError:
-            sv=None
-
-        if sv is None:
-            sv = SnapshotView()
-            self.application.snapshot_view=sv
-
-        sv.set_image(local_path, remote_path, image)
-        self.application.open_view(sv)
-
-    def _convert_snapshot_response(self, ps):
-        """
-        #ps = XXlpathYYrpathimageblob
-        #where XX,YY is the len of the following path
-        #convert ps to a tuple
-        """
-        l=int(ps[:2],16)
-        e1=2+l
-        s1=ps[2:e1]
-
-        e2 = e1+2
-        e3=e2+int(ps[e1:e2], 16)
-        s2=ps[e2:e3]
-
-        s3=ps[e3:]
-        return s1,s2,s3
     #===============================================================================
     # properties
     #===============================================================================

@@ -33,11 +33,11 @@ class SnapshotView(HasTraits):
     def set_image(self, l, r, im):
         self.local_path=l
         self.remote_path=r
-
-        buf = cStringIO.StringIO(im)
-        buf.seek(0)
-        img = Image.open(buf)
-        self.image = img.convert('RGBA')
+        if im:
+            buf = cStringIO.StringIO(im)
+            buf.seek(0)
+            img = Image.open(buf)
+            self.image = img.convert('RGBA')
 
     def traits_view(self):
         v=View(VGroup(VGroup(Readonly('local_path'),

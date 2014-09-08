@@ -16,8 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import CInt, Str, String, on_trait_change, Button, Float, \
-    Property, Bool, Instance
-from traitsui.api import View, Item, VGroup, HGroup, RangeEditor, EnumEditor
+    Property, Bool, Instance, Event, Enum, Int, Either, Range, cached_property
 import apptools.sweet_pickle as pickle
 from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
@@ -71,6 +70,7 @@ class PychronLaserManager(BaseLaserManager):
     _z = Float
     connected = Bool
     test_connection_button = Button('Test Connection')
+    snapshot_button = Button('Test Snapshot')
     use_autocenter = Bool(False)
 
     mode = 'client'
@@ -94,9 +94,11 @@ class PychronLaserManager(BaseLaserManager):
         r = ec.open()
         if r:
             self.connected = True
+            self.opened()
+
         return r
 
-    def opened(self, ui):
+    def opened(self):
         self.update_position()
         self._opened_hook()
 
@@ -168,9 +170,15 @@ class PychronLaserManager(BaseLaserManager):
         self.info('Stop Video Recording')
         self._ask('StopVideoRecording')
 
-    def take_snapshot(self, name):
+    def take_snapshot(self, name, view_snapshot=False):
         self.info('Take snapshot')
-        return self._ask('Snapshot {}'.format(name))
+        resp = self._ask('Snapshot {}'.format(name))
+        if resp:
+            args = self._convert_snapshot_response(resp)
+            if view_snapshot:
+                self._view_snapshot(*args)
+
+            return args
 
     def prepare(self):
         self.info('Prepare laser')
@@ -254,10 +262,13 @@ class PychronLaserManager(BaseLaserManager):
         """
         self._cancel_blocking = True
 
+    def _snapshot_button_fired(self):
+        self.take_snapshot('test', view_snapshot=True)
+
     def _test_connection_button_fired(self):
         self.test_connection()
         if self.connected:
-            self.opened(None)
+            self.opened()
 
     def _position_changed(self):
         if self.position is not None:
@@ -298,6 +309,37 @@ class PychronLaserManager(BaseLaserManager):
     #===============================================================================
     # pyscript private
     #===============================================================================
+    def _view_snapshot(self, local_path, remote_path, image):
+        from pychron.lasers.laser_managers.snapshot_view import SnapshotView
+        try:
+            sv = self.application.snapshot_view
+        except AttributeError:
+            sv=None
+
+        if sv is None:
+            sv = SnapshotView()
+            self.application.snapshot_view=sv
+
+        sv.set_image(local_path, remote_path, image)
+        self.application.open_view(sv)
+
+    def _convert_snapshot_response(self, ps):
+        """
+        #ps = XXlpathYYrpathimageblob
+        #where XX,YY is the len of the following path
+        #convert ps to a tuple
+        """
+        l=int(ps[:2],16)
+        e1=2+l
+        s1=ps[2:e1]
+
+        e2 = e1+2
+        e3=e2+int(ps[e1:e2], 16)
+        s2=ps[e2:e3]
+
+        s3=ps[e3:]
+        return s1,s2,s3
+
     def _move_to_position(self, pos, autocenter):
         cmd = 'GoToHole {} {}'.format(pos, autocenter)
         if isinstance(pos, tuple):
@@ -415,6 +457,19 @@ class PychronLaserManager(BaseLaserManager):
 class PychronUVLaserManager(PychronLaserManager):
     optics_client = Instance(UVLaserOpticsClient)
     controls_client = Instance(UVLaserControlsClient)
+    fire = Event
+    stop = Event
+    fire_mode = Enum('Burst', 'Continuous')
+    nburst = Property(depends_on='_nburst')
+    _nburst = Int
+    mask = Property(String(enter_set=True, auto_set=False),
+                    depends_on='_mask')
+    _mask = Either(Str, Float)
+
+    masks = Property
+    attenuator = String(enter_set=True, auto_set=False)
+    #attenuators = Property
+    zoom = Range(0.0, 100.0)
 
     def set_reprate(self, v):
         self._ask('SetReprate {}'.format(v))
@@ -453,18 +508,24 @@ class PychronUVLaserManager(PychronLaserManager):
     #
     #===============================================================================
     def _fire_fired(self):
-        if self.firing:
-            mode = 'stop'
-            self.firing = False
+
+        if self.fire_mode == 'Continuous':
+            mode = 'continuous'
         else:
-            if self.fire_mode == 'Continuous':
-                mode = 'continuous'
-            else:
-                mode = 'burst'
-            self.firing = True
+            mode = 'burst'
+        self.firing = True
 
         self._ask('Fire {}'.format(mode))
 
+    def _stop_fired(self):
+        self.firing=False
+        self._ask('Fire stop')
+
+    @on_trait_change('mask, attenuator, zoom')
+    def _motor_changed(self, name, new):
+        if new is not None:
+            t = Thread(target=self.set_motor, args=(name, new))
+            t.start()
     #===============================================================================
     #
     #===============================================================================
@@ -475,6 +536,8 @@ class PychronUVLaserManager(PychronLaserManager):
         mb = self._ask('GetBurstMode')
         if mb is not None:
             self.fire_mode = 'Burst' if mb == '1' else 'Continuous'
+
+        self._mask = 0
 
     def _move_to_position(self, pos, autocenter):
 
@@ -499,26 +562,6 @@ class PychronUVLaserManager(PychronLaserManager):
             r = self._block()
             self.update_position()
             return r
-
-    def traits_view(self):
-        v = View(Item('test_connection_button', show_label=False),
-                 VGroup(
-                     self.get_control_button_group(),
-                     HGroup(self._button_factory('fire', 'fire_label', enabled='enabled'),
-                            Item('fire_mode', show_label=False),
-                            Item('nburst')),
-                     Item('position'),
-                     Item('zoom', style='simple'),
-                     HGroup(Item('mask', editor=EnumEditor(name='masks')), Item('mask', show_label=False)),
-                     HGroup(Item('attenuator', editor=EnumEditor(name='attenuators')),
-                            Item('attenuator', show_label=False)),
-                     Item('x', editor=RangeEditor(low=-25.0, high=25.0)),
-                     Item('y', editor=RangeEditor(low=-25.0, high=25.0)),
-                     Item('z', editor=RangeEditor(low=-25.0, high=25.0)),
-                     enabled_when='connected'),
-                 title='Laser Manager',
-                 handler=self.handler_klass)
-        return v
 
     #===============================================================================
     # property get/set
@@ -547,13 +590,46 @@ class PychronUVLaserManager(PychronLaserManager):
     def _get_nburst(self):
         return self._nburst
 
-    def _get_fire_label(self):
-        return 'Stop' if self.firing else 'Fire'
+    def _set_mask(self, m):
+        self._mask = m
+
+    def _get_mask(self):
+        return self._mask
+
+    def _validate_mask(self, m):
+        if m in self.masks:
+            return m
+        else:
+            try:
+                return float(m)
+            except ValueError:
+                pass
+
+    @cached_property
+    def _get_masks(self):
+        return self._get_motor_values('mask_names')
+
+    #@cached_property
+    #def _get_attenuators(self):
+    #    return self._get_motor_values('attenuators')
+
+    def _get_motor_values(self, name):
+        p = os.path.join(paths.device_dir, 'fusions_uv', '{}.txt'.format(name))
+        values = []
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                for lin in fp:
+                    lin = lin.strip()
+                    if not lin or lin.startswith('#'):
+                        continue
+                    values.append(lin)
+
+        return values
 
     def _controls_client_default(self):
-        return UVLaserControlsClient(parent=self)
+        return UVLaserControlsClient(model=self)
 
     def _optics_client_default(self):
-        return UVLaserOpticsClient(parent=self)
+        return UVLaserOpticsClient(model=self)
 
 #============= EOF =============================================
