@@ -64,6 +64,28 @@ def make():
             elif name == 'remote_hardware_server':
                 template.icon_name = 'remote_hardware_server_icon.icns'
                 template.bundle_name = name
+                template.packages = ['pychron.messaging',
+                                     'pychron.messaging.handlers',
+                                     'pychron.remote_hardware',
+                                     'pychron.remote_hardware.errors',
+                                     'pychron.core',
+                                     'pychron.core.helpers',
+                                     'pychron.core.ui','pychron.core.ui.qt',
+                                     'pychron.core.xml',
+                                     'pychron.displays']
+                template.modules = ['pychron.managers.remote_hardware_server_manager',
+                                    'pychron.managers.manager',
+                                    'pychron.paths',
+                                    'pychron.globals',
+                                    'pychron.config_loadable',
+                                    'pychron.version',
+                                    'pychron.initialization_parser',
+                                    'pychron.loggable',
+                                    'pychron.viewable',
+                                    'pychron.saveable',
+                                    'pychron.rpc.rpcable',
+                                    'pychron.utils',
+                                    'pychron.application_controller']
             else:
                 #                template = Template()
 
@@ -83,7 +105,8 @@ class Template(object):
     root = None
     bundle_name = None
     version = None
-
+    packages = None
+    modules = None
     def build(self):
         root = os.path.realpath(self.root)
 
@@ -104,7 +127,7 @@ class Template(object):
         # build
         #=======================================================================
         ins.build_app(op)
-        ins.make_egg()
+        ins.make_egg(self.packages, self.modules)
         # ins.make_migrate_repos()
         ins.make_argv()
 
@@ -196,11 +219,11 @@ class Maker(object):
         p = os.path.join(root, 'pychron', 'database', 'migrate')
         shutil.copytree(p, self._resource_path('migrate_repositories'))
 
+    def make_egg(self, pkgs=None, modules=None):
 
-    def make_egg(self):
         from setuptools import setup, find_packages
-
-        pkgs = find_packages(self.root,
+        if pkgs is None:
+            pkgs = find_packages(self.root,
                              exclude=('launchers',
                                       'tests',
                                       'test',
@@ -209,9 +232,12 @@ class Maker(object):
                                       'sandbox.*',
                                       '*.sandbox',
                                       'app_utils'))
+        if modules is None:
+            modules=[]
 
         setup(name='pychron',
               script_args=('bdist_egg',),
+              py_modules=modules,
               #                           '-b','/Users/argonlab2/Sandbox'),
               version=self.version,
               packages=pkgs)

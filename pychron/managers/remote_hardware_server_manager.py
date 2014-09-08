@@ -28,14 +28,14 @@ import ConfigParser
 #============= local library imports  ==========================
 from pychron.messaging.command_repeater import CommandRepeater
 from pychron.messaging.remote_command_server import RemoteCommandServer
+from pychron.messaging.directory_server import DirectoryServer
 from pychron.managers.manager import Manager, AppHandler
 from pychron.paths import paths
 from pychron.core.helpers.timer import Timer
-from pychron.messaging.directory_server import DirectoryServer
 
 class RemoteHardwareServerManager(Manager):
-    '''
-    '''
+    """
+    """
 #    display = Any
     servers = List(RemoteCommandServer)
     selected = Instance(RemoteCommandServer)
