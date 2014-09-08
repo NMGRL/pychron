@@ -61,6 +61,8 @@ class FactoryView(HasTraits):
                         editor=EnumEditor(name='extract_units_names')),
                    Item('ramp_duration', label='Ramp Dur. (s)'), ),
             HGroup(
+                Item('use_cdd_warming', label='CDD Warm',
+                     tooltip='Use the CDD warming routine at end of measurement'),
                 Item('collection_time_zero_offset',
                      label='T_o offset (s)',
                      tooltip='# of seconds afer inlet opens to set time zero'),

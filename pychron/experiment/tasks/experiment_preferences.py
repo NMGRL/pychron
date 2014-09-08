@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color, Property
+    Bool, Password, Color, Property, Float
 from traitsui.api import View, Item, Group, VGroup
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
@@ -52,16 +52,18 @@ class ExperimentPreferences(BasePreferencesHelper):
     sniff_color = Color
     signal_color = Color
 
-    # filter_outliers = Bool(False)
-    # fo_iterations = Int(1)
-    # fo_std_dev = Int(2)
-
     min_ms_pumptime = Int
 
     use_memory_check = Bool
     memory_threshold = Property(PositiveInteger,
                                 depends_on='_memory_threshold')
     _memory_threshold = Int
+
+    use_analysis_grouping = Bool
+    grouping_threshold = Float
+    grouping_suffix = Str
+
+    use_automated_run_monitor = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -125,13 +127,20 @@ class ExperimentPreferencesPane(PreferencesPane):
                             Item('signal_color', label='Signal'),
                             label='Colors')
 
-        # filter_grp = Group(Item('filter_outliers'),
-        #                    VGroup(Item('fo_iterations', label='N. Iterations'),
-        #                           Item('fo_std_dev', label='N. standard deviations'),
-        #                           enabled_when='filter_outliers',
-        #                           show_border=True),
-        #                    label='Post Fit Filtering')
-
+        analysis_grouping_grp = Group(Item('use_analysis_grouping',
+                                             label='Auto group analyses',
+                                             tooltip=''),
+                                        Item('grouping_suffix',
+                                             label='Suffix',
+                                             tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
+                                                     'where Suffix=autogen'),
+                                        Item('grouping_threshold',
+                                             label='Grouping Threshold (hrs)',
+                                             tooltip='Associate Reference analyses with the project of an analysis that '
+                                                     'is within X hours of the current run',
+                                             enabled_when='use_analysis_grouping'),
+                                        label='Analysis Grouping'
+                                        )
         overlap_grp = Group(Item('min_ms_pumptime', label='Min. Mass Spectrometer Pumptime (s)'),
                             label='Overlap')
         memory_grp = Group(Item('use_memory_check', label='Check Memory',
@@ -140,11 +149,15 @@ class ExperimentPreferencesPane(PreferencesPane):
                                 enabled_when='use_memory_check',
                                 tooltip='Do not continue experiment if available memory less than "Threshold"'),
                            label='Memory')
+        monitor_grp = Group(Item('use_automated_run_monitor',
+                                 label='Use AutomatedRun Monitor',
+                                 tooltip='Use the automated run monitor'),
+                            label='Monitor')
 
         return View(color_group, notification_grp,
                     editor_grp, irradiation_grp,
-                    # filter_grp,
-                    overlap_grp, memory_grp)
+                    analysis_grouping_grp,
+                    overlap_grp, memory_grp, monitor_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):

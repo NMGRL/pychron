@@ -15,16 +15,14 @@
 #===============================================================================
 
 
-
 #============= enthought library imports =======================
 from pyface.action.api import Action
-# from pychron.envisage.core.action_helper import open_manager
-
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
 
-SPECTROMETER_PROTOCOL = 'pychron.spectrometer.spectrometer_manager.SpectrometerManager'
+
+SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
 ION_OPTICS_PROTOCOL = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
 SCAN_PROTOCOL = 'pychron.spectrometer.scan_manager.ScanManager'
 
@@ -71,7 +69,7 @@ class PeakCenterAction(Action):
     def perform(self, event):
         man = get_manager(event, ION_OPTICS_PROTOCOL)
         if man.setup_peak_center():
-            man.do_peak_center(confirm_save=True, warn=True)
+            man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
 class CoincidenceScanAction(Action):
@@ -113,15 +111,16 @@ class MagnetFieldTableHistoryAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
-            from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
             import os
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
             if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
-                gh = GitArchiveHistory(archive_root, mft.mftable_path)
+                # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
+                from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
+                gh = LocalMFTableHistory(archive_root, mft.mftable_path)
                 gh.load_history(os.path.basename(mft.mftable_path))
-                ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
+                ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
                 ghv.edit_traits(kind='livemodal')
             else:
                 man.warning_dialog('No MFTable History')

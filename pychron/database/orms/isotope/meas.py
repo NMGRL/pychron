@@ -30,6 +30,7 @@ from sqlalchemy.sql.expression import func
 
 
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -55,6 +56,7 @@ class meas_AnalysisTable(Base, BaseMixin):
     experiment_id = foreignkey('meas_ExperimentTable')
     import_id = foreignkey('gen_ImportTable')
     user_id = foreignkey('gen_UserTable')
+    data_reduction_tag_id = foreignkey('proc_DataReductionTagTable')
 
     uuid = stringcolumn(40, default=lambda: str(uuid.uuid4()))
     analysis_timestamp = Column(DateTime, default=func.now())
@@ -104,6 +106,8 @@ class meas_AnalysisTable(Base, BaseMixin):
     notes = relationship('proc_NotesTable', backref='analysis')
     group_sets = relationship('proc_AnalysisGroupSetTable', backref='analysis')
     monitors = relationship('meas_MonitorTable', backref='analysis')
+    dr_sets = relationship('proc_DataReductionTagSetTable', backref='analysis')
+
 
     @property
     def timestamp(self):
@@ -113,6 +117,9 @@ class meas_AnalysisTable(Base, BaseMixin):
     def record_id(self):
         return make_runid(self.labnumber.identifier, self.aliquot, self.increment)
 
+    @property
+    def project_name(self):
+        return self.labnumber.sample.project.name
 
 class meas_ExperimentTable(Base, NameMixin):
     analyses = relationship('meas_AnalysisTable', backref='experiment')

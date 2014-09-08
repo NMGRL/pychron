@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,8 @@
 
 #=============enthought library imports=======================
 from traits.api import Str, Float, Any, Button, Int, List, Bool
-from traitsui.api import  Item, HGroup, VGroup, \
-    RangeEditor, ButtonEditor, ScrubberEditor, Label, spring
+from traitsui.api import Item, HGroup, VGroup, \
+    RangeEditor, ButtonEditor, ScrubberEditor, spring
 from traitsui.menu import Action, Menu, MenuBar
 from pyface.api import FileDialog, OK, DirectoryDialog
 #=============standard library imports ========================
@@ -31,41 +31,46 @@ from pychron.rpc.rpcable import RPCable
 from pychron.saveable import SaveableHandler
 from pychron.hardware.core.i_core_device import ICoreDevice
 
+
 class MassSpecParam(object):
     _value = None
+
     def __init__(self, value):
         self._value = value
 
     def get(self):
         return self._value
 
+
 class ManagerHandler(ViewableHandler):
     '''
         
     '''
+
     def init(self, info):
         info.object.initialized = True
         super(ManagerHandler, self).init(info)
 
-#    def closed(self, info, is_ok):
-#        '''
-#        '''
-#        super(ManagerHandler, self).closed(info, is_ok)
-#        info.object.kill()
-#        try:
-#            MANAGERS.remove(info.object)
-#            info.object.application.uis.remove(info.ui)
-#        except ValueError:
-#            pass
-#
-# #        import gc
-# #        gc.collect()
-#
-#        return True
+    #    def closed(self, info, is_ok):
+    #        '''
+    #        '''
+    #        super(ManagerHandler, self).closed(info, is_ok)
+    #        info.object.kill()
+    #        try:
+    #            MANAGERS.remove(info.object)
+    #            info.object.application.uis.remove(info.ui)
+    #        except ValueError:
+    #            pass
+    #
+    # #        import gc
+    # #        gc.collect()
+    #
+    #        return True
 
     def close(self, info, isok):
         info.object.close(isok)
         return True
+
 
 class AppHandler(ManagerHandler):
     def closed(self, info, isok):
@@ -79,8 +84,8 @@ class SaveableManagerHandler(SaveableHandler, ManagerHandler):
 
 
 class Manager(Viewable, RPCable):
-    '''
-    '''
+    """
+    """
 
     test = Button
 
@@ -110,21 +115,10 @@ class Manager(Viewable, RPCable):
 
     error_code = None
 
-
-#    def __init__(self, *args, **kw):
-#        '''
-#
-#        '''
-#        super(Manager, self).__init__(*args, **kw)
-#
-#        if self.name is None:
-#            self.name = self.__class__.__name__
-
     def finish_loading(self):
-        '''
-        '''
+        """
+        """
         pass
-
 
     def opened(self, ui):
         def _loop():
@@ -132,7 +126,7 @@ class Manager(Viewable, RPCable):
             self.info('Window set to close after {} min'.format(self.close_after_minutes))
 
             now = time.time()
-            while  now - start < (self.close_after_minutes * 60) and not self._killed:
+            while now - start < (self.close_after_minutes * 60) and not self._killed:
                 time.sleep(1)
                 now = time.time()
 
@@ -148,42 +142,41 @@ class Manager(Viewable, RPCable):
 
         self.add_window(ui)
 
-#    def add_window(self, ui):
-#
-#        try:
-#            if self.application is not None:
-#                self.application.uis.append(ui)
-#        except AttributeError:
-#            pass
-#
-#    def open_view(self, obj, **kw):
-#        def _open_():
-#            ui = obj.edit_traits(**kw)
-#            self.add_window(ui)
-#
-#        do_after(1, _open_)
+    #    def add_window(self, ui):
+    #
+    #        try:
+    #            if self.application is not None:
+    #                self.application.uis.append(ui)
+    #        except AttributeError:
+    #            pass
+    #
+    #    def open_view(self, obj, **kw):
+    #        def _open_():
+    #            ui = obj.edit_traits(**kw)
+    #            self.add_window(ui)
+    #
+    #        do_after(1, _open_)
 
+    #    def close_ui(self):
+    #        if self.ui is not None:
+    #            #disposes 50 ms from now
+    #            do_after(1, self.ui.dispose)
+    #            #sleep a little so everything has time to update
+    #            #time.sleep(0.05)
 
-#    def close_ui(self):
-#        if self.ui is not None:
-#            #disposes 50 ms from now
-#            do_after(1, self.ui.dispose)
-#            #sleep a little so everything has time to update
-#            #time.sleep(0.05)
-
-#    def close(self, is_ok):
-# #        print self.name, 'close', is_ok
-#        return True
-#    def close(self, *args, **kw):
-#        return True
+    #    def close(self, is_ok):
+    # #        print self.name, 'close', is_ok
+    #        return True
+    #    def close(self, *args, **kw):
+    #        return True
 
     def _kill_hook(self):
         pass
 
     def kill(self, **kw):
-        '''
+        """
 
-        '''
+        """
 
         if not self._killed:
             self.info('killing')
@@ -196,21 +189,21 @@ class Manager(Viewable, RPCable):
                     if hasattr(man, 'kill'):
                         man.kill()
 
-#        return not self._killed
+                        #        return not self._killed
 
-#    def warning_dialog(self, msg):
-#        '''
-#        '''
-#        warning(None, msg)
+                        #    def warning_dialog(self, msg):
+                        #        '''
+                        #        '''
+                        #        warning(None, msg)
 
     def open_file_dialog(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._file_dialog_('open', **kw)
 
     def save_file_dialog(self, **kw):
-        '''
-        '''
+        """
+        """
         return self._file_dialog_('save as', **kw)
 
     def open_directory_dialog(self, **kw):
@@ -229,23 +222,15 @@ class Manager(Viewable, RPCable):
         self.error_code = None
         return str(e)
 
-#     def _set_error_code(self, e):
-#         self.error_code = e
-#
-#     def _get_error_code(self):
-#         return self.error_code
-#
-
-
     def get_managers(self):
 
         return [(ma, getattr(self, ma)) for ma in self.traits()
-                    if ma.endswith('_manager')
-                        and getattr(self, ma) is not None]
+                if ma.endswith('_manager')
+                and getattr(self, ma) is not None]
 
     def get_device(self, device_name):
-        '''
-        '''
+        """
+        """
         dev = None
         if hasattr(self, device_name):
             dev = getattr(self, device_name)
@@ -270,7 +255,7 @@ class Manager(Viewable, RPCable):
         return []
 
     def get_manager_factory(self, package, klass, warn=True):
-#        print package, klass
+        #        print package, klass
         class_factory = None
         try:
             m = __import__(package, globals(), locals(), [klass], -1)
@@ -285,11 +270,12 @@ class Manager(Viewable, RPCable):
 
         return class_factory
 
-#===============================================================================
-#  flags
-#===============================================================================
+    #===============================================================================
+    #  flags
+    #===============================================================================
     def add_flag(self, f):
         from pychron.hardware.flag import Flag
+
         ff = Flag(f)
         self.flags.append(ff)
         if self.application:
@@ -298,8 +284,9 @@ class Manager(Viewable, RPCable):
                 fm.add_flag(ff)
 
     def add_valve_flag(self, f, v):
-#         from pychron.hardware.flag import TimedFlag
+        #         from pychron.hardware.flag import TimedFlag
         from pychron.hardware.flag import ValveFlag
+
         ff = ValveFlag(f, valves=v, manager=self)
         self.flags.append(ff)
         if self.application:
@@ -309,6 +296,7 @@ class Manager(Viewable, RPCable):
 
     def add_timed_flag(self, f):
         from pychron.hardware.flag import TimedFlag
+
         ff = TimedFlag(f)
         self.flags.append(ff)
         if self.application:
@@ -318,6 +306,7 @@ class Manager(Viewable, RPCable):
 
     def get_mass_spec_param(self, name):
         from pychron.paths import paths
+
         cp = self._mass_spec_params
         if cp is None:
             # open the mass spec parameters file
@@ -328,9 +317,9 @@ class Manager(Viewable, RPCable):
             return MassSpecParam(v)
         except Exception:
             pass
-#        return
+            #        return
 
-#        return next((f for f in self.flags if f.name == name), None)
+            #        return next((f for f in self.flags if f.name == name), None)
 
     def get_flag(self, name):
         return next((f for f in self.flags if f.name == name), None)
@@ -346,24 +335,25 @@ class Manager(Viewable, RPCable):
         if flag is not None:
             flag.set(val)
             return True
-#    def get_flag_state(self, name):
-#        return self._flag(name, 'get')
-#
-#    def set_flag(self, name):
-#        self._flag(name, 'set')
-#
-#    def clear_flag(self, name):
-#        self._flag(name, 'clear')
+            #    def get_flag_state(self, name):
+            #        return self._flag(name, 'get')
+            #
+            #    def set_flag(self, name):
+            #        self._flag(name, 'set')
+            #
+            #    def clear_flag(self, name):
+            #        self._flag(name, 'clear')
 
-#    def _flag(self, name, func):
-#        f = next(([f for f in self.flags if f == name]), None)
-#        if f is not None:
-#            getattr(f, func)()
-#        else:
-#            self.warning('Invalid flag {}'.format(name))
-#===============================================================================
-#
-#===============================================================================
+            #    def _flag(self, name, func):
+            #        f = next(([f for f in self.flags if f == name]), None)
+            #        if f is not None:
+            #            getattr(f, func)()
+            #        else:
+            #            self.warning('Invalid flag {}'.format(name))
+            #===============================================================================
+            #
+            #===============================================================================
+
     def create_manager(self, manager, **kw):
 
         '''
@@ -413,6 +403,7 @@ class Manager(Viewable, RPCable):
 
         else:
             from pychron.hardware import HW_PACKAGE_MAP
+
             try:
                 package = HW_PACKAGE_MAP[klass]
                 m = __import__(package, globals(), locals(), [klass], -1)
@@ -420,6 +411,7 @@ class Manager(Viewable, RPCable):
 
             except ImportError:
                 import traceback
+
                 traceback.print_exc()
                 self.warning('Invalid device class {}'.format(klass))
                 return
@@ -427,32 +419,31 @@ class Manager(Viewable, RPCable):
         device = class_factory(name=device_name)
         if obj is not None:
             device.copy_traits(obj, traits=['configuration_dir_name',
-                                            ])
+            ])
 
         if device is not None:
             if prefix:
                 device_name = ''.join((prefix, device_name))
 
-
             if device_name in self.traits():
-                self.trait_set(**{device_name:device})
+                self.trait_set(**{device_name: device})
             else:
                 self.add_trait(device_name, device)
 
         return device
 
-#     def get_file_list(self, p, extension=None):
-#         if os.path.isdir(p):
-#             ps = os.listdir(p)
-#             if extension is not None:
-#                 ps = [pi for pi in ps if pi.endswith(extension)]
-#
-#             return ps
+    #     def get_file_list(self, p, extension=None):
+    #         if os.path.isdir(p):
+    #             ps = os.listdir(p)
+    #             if extension is not None:
+    #                 ps = [pi for pi in ps if pi.endswith(extension)]
+    #
+    #             return ps
 
     def _file_dialog_(self, action, **kw):
         '''
         '''
-#         print 'file_dialog', kw
+        #         print 'file_dialog', kw
         dlg = FileDialog(action=action, **kw)
         if dlg.open() == OK:
             return dlg.path
@@ -465,31 +456,31 @@ class Manager(Viewable, RPCable):
         i = Item(name, show_label=False)
         return i
 
-    def _switch_factory(self, name, label=False, enabled=None):
-        '''
-        '''
-        if label == True:
-            label = '{}_label'.format(name)
-
-        v = VGroup(HGroup(spring, Label(name.upper()), spring),
-                 HGroup(spring, self._led_factory('{}_led'.format(name)), spring),
-                 self._button_factory(name, label, enabled)
-                 )
-        return v
-
-    def _switch_group_factory(self, switches, orientation='h', **kw):
-        '''
-
-        '''
-        if orientation == 'h':
-            g = HGroup(**kw)
-        else:
-            g = VGroup(**kw)
-
-        for s, label, enabled in switches:
-            sw = self._switch_factory(s, label=label, enabled=enabled)
-            g.content.append(sw)
-        return g
+    # def _switch_factory(self, name, label=False, enabled=None):
+    #     '''
+    #     '''
+    #     if label == True:
+    #         label = '{}_label'.format(name)
+    #
+    #     v = VGroup(HGroup(spring, Label(name.upper()), spring),
+    #              HGroup(spring, self._led_factory('{}_led'.format(name)), spring),
+    #              self._button_factory(name, label, enabled)
+    #              )
+    #     return v
+    #
+    # def _switch_group_factory(self, switches, orientation='h', **kw):
+    #     '''
+    #
+    #     '''
+    #     if orientation == 'h':
+    #         g = HGroup(**kw)
+    #     else:
+    #         g = VGroup(**kw)
+    #
+    #     for s, label, enabled in switches:
+    #         sw = self._switch_factory(s, label=label, enabled=enabled)
+    #         g.content.append(sw)
+    #     return g
 
     def _scrubber_factory(self, name, range_dict):
         '''
@@ -513,19 +504,20 @@ class Manager(Viewable, RPCable):
         
         '''
         return self._slider_factory(
-                                    enabled_when='0',
-                                    *args, **kw)
-    def _slider_factory(self, name, prefix, mode='slider', ** kw):
+            enabled_when='0',
+            *args, **kw)
+
+    def _slider_factory(self, name, prefix, mode='slider', **kw):
         '''
         '''
         return Item(name, editor=RangeEditor(mode=mode,
-                                            low_name='%smin' % prefix,
-                                            high_name='%smax' % prefix,
+                                             low_name='%smin' % prefix,
+                                             high_name='%smax' % prefix,
 
-                                            format='%0.2f'
-                                            ),
+                                             format='%0.2f'
+        ),
 
-                                            **kw)
+                    **kw)
 
     def _update_slider_factory(self, name, prefix, **kw):
         '''
@@ -574,15 +566,11 @@ class Manager(Viewable, RPCable):
         if label is None:
             label = '{}_label'.format(name)
 
-
         if label is not None:
             b.editor = ButtonEditor(label_value=label)
 
         if enabled is not None:
             b.enabled_when = enabled
-
-
-
 
         if align is not None:
             if align == 'right':
@@ -591,8 +579,6 @@ class Manager(Viewable, RPCable):
                 b = HGroup(spring, b, spring)
             else:
                 b = HGroup(b, spring)
-
-
 
         return b
 
@@ -621,7 +607,7 @@ class Manager(Viewable, RPCable):
         '''
         menus = self.get_menus()
         if menus:
-            return [self._menu_factory(m, actions) for m, actions in menus ]
+            return [self._menu_factory(m, actions) for m, actions in menus]
 
     def _menubar_factory(self):
         '''

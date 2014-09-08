@@ -58,6 +58,14 @@ class LocalLaserAction(BaseLaserAction):
         self.manager = manager
 
 
+class ExecutePatternAction(LocalLaserAction):
+    name = 'Execute Pattern'
+    def perform(self, event):
+        manager = self._get_manager(event)
+        if manager is not None:
+            manager.execute_pattern()
+
+
 class OpenScannerAction(LocalLaserAction):
     name = 'Open Scanner...'
     accelerator = 'Ctrl+T'
@@ -130,10 +138,12 @@ class TestDegasAction(LaserTaskAction):
 
 class OpenPatternAction(Action):
     name = 'Open Pattern...'
+
     def perform(self, event=None):
         pm = PatternMakerView()
         if pm.load_pattern():
             event.task.window.application.open_view(pm)
+
 
 class NewPatternAction(Action):
     name = 'New Pattern...'
@@ -195,8 +205,10 @@ class PyrometerCalibrationAction(LaserCalibrationAction):
 
 
 class PIDTuningAction(LaserCalibrationAction):
-    name='PID Tuning'
+    name = 'PID Tuning'
+
     def perform(self, event):
         task = self._get_task(event)
         task.new_pid_tuner()
+
 #============= EOF =============================================

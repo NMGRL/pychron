@@ -114,13 +114,13 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     def _add_run(self, *args, **kw):
         # egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
         # eg = max(egs) if egs else 0
-
+        rf = self.run_factory
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
 
         load_name = self.queue_factory.load_name
 
         q = self.queue
-        new_runs, freq = self.run_factory.new_runs(q, positions=positions,
+        new_runs, freq = rf.new_runs(q, positions=positions,
                                                    auto_increment_position=self.auto_increment_position,
                                                    auto_increment_id=self.auto_increment_id)
 
@@ -130,12 +130,14 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         else:
             idx = len(aruns) - 1
 
-        runs = q.add_runs(new_runs, freq)
+        runs = q.add_runs(new_runs, freq, freq_before=rf.freq_before,
+                          freq_after=rf.freq_after)
+
         self.undoer.push('add runs', runs)
 
         idx += len(runs)
 
-        with self.run_factory.update_selected_ctx():
+        with rf.update_selected_ctx():
             q.select_run_idx(idx)
 
 
@@ -271,6 +273,9 @@ extract_device, delay_+, tray, username, load_name, email]''')
     def _db_changed(self):
         self.queue_factory.db = self.db
         self.run_factory.db = self.db
+
+    def _application_changed(self):
+        self.run_factory.application=self.application
 
     def _default_mass_spectrometer_changed(self):
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)

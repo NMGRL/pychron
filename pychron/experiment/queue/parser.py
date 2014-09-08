@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-
     def parse(self, header, line, meta, delim='\t'):
         params = dict()
         if not isinstance(line, list):
@@ -55,11 +54,11 @@ class RunParser(Loggable):
         # load scripts
         for attr in ['measurement', 'extraction',
                      ('script_options', 's_opt'),
-                     ('post_measurement','post_meas'),
-                     ('post_equilibration','post_eq'),]:
-            v=self._get_attr_value(header, args, attr)
+                     ('post_measurement', 'post_meas'),
+                     ('post_equilibration', 'post_eq'), ]:
+            v = self._get_attr_value(header, args, attr)
             if v is not None:
-                script_info[v[0]]=v[1]
+                script_info[v[0]] = v[1]
 
         return script_info
 
@@ -70,7 +69,7 @@ class RunParser(Loggable):
             #print hi, ai, idx
             if idx:
                 try:
-                    v=args[idx]
+                    v = args[idx]
                     if v.strip():
                         return hi, cast(v) if cast else v
                 except IndexError, e:
@@ -84,48 +83,50 @@ class RunParser(Loggable):
             'comment',
             'syn_extraction',
             'overlap',
-            ('truncate_condition','truncate'),
+            ('truncate_condition', 'truncate'),
             ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
             if v is not None:
-                params[v[0]]=v[1]
+                params[v[0]] = v[1]
 
-    def _load_numbers(self,header, args, params):
+    def _load_numbers(self, header, args, params):
         for attr in ['duration',
                      'cleanup',
                      'ramp_duration',
                      'weight',
                      ('time_zero_offset', 't_o'),
                      ('extract_value', 'e_value'),
-                     ('beam_diameter', 'beam_diam')]:
+                     ('beam_diameter', 'beam_diam'),
+                     'frequency_group', ]:
 
-            v=self._get_attr_value(header, args, attr, cast=float)
+            v = self._get_attr_value(header, args, attr, cast=float)
             if v is not None:
-                params[v[0]]=v[1]
+                params[v[0]] = v[1]
 
     def _load_booleans(self, header, args, params):
 
         for attr in [
-                     'autocenter',
-                     ('disable_between_positions', 'dis_btw_pos')]:
-            v=self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
+            'autocenter',
+            'use_cdd_warming',
+            ('disable_between_positions', 'dis_btw_pos')]:
+            v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:
-                params[v[0]]=v[1]
+                params[v[0]] = v[1]
 
-#     def _validate_truncate_condition(self, t):
-#         if t.endswith('.yaml'):
-#             return True
-#
-#         try:
-#             c, start = t.split(',')
-#             pat = '<=|>=|[<>=]'
-#             attr, value = re.split(pat, c)
-#             m = re.search(pat, c)
-#             comp = m.group(0)
-# #             self.py_add_truncation(attr, comp, value, int(start))
-#             return True
-#         except Exception, e:
-#             self.debug('truncate_condition parse failed {} {}'.format(e, t))
+            #     def _validate_truncate_condition(self, t):
+            #         if t.endswith('.yaml'):
+            #             return True
+            #
+            #         try:
+            #             c, start = t.split(',')
+            #             pat = '<=|>=|[<>=]'
+            #             attr, value = re.split(pat, c)
+            #             m = re.search(pat, c)
+            #             comp = m.group(0)
+            # #             self.py_add_truncation(attr, comp, value, int(start))
+            #             return True
+            #         except Exception, e:
+            #             self.debug('truncate_condition parse failed {} {}'.format(e, t))
 
     def _get_attr(self, attr):
         if isinstance(attr, tuple):
@@ -139,6 +140,7 @@ class RunParser(Loggable):
             return header.index(attr)
         except ValueError:
             pass
+
 
 class UVRunParser(RunParser):
     def parse(self, header, line, meta, delim='\t'):
@@ -164,4 +166,4 @@ class UVRunParser(RunParser):
 
         return script_info, params
 
-    #============= EOF =============================================
+        #============= EOF =============================================

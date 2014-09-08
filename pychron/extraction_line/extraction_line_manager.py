@@ -15,7 +15,7 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int
+from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict
 from apptools.preferences.preference_binding import bind_preference
 #=============standard library imports ========================
 import os
@@ -86,6 +86,7 @@ class ExtractionLineManager(Manager):
     volume_key = Str
 
     sample_changer = Instance(SampleChanger)
+    link_valve_actuation_dict = Dict
 
     def bind_preferences(self):
 
@@ -96,26 +97,17 @@ class ExtractionLineManager(Manager):
         bind_preference(self.network, 'inherit_state',
                         'pychron.extraction_line.inherit_state')
 
-        bind_preference(self, 'display_volume', 'pychron.extraction_line.display_volume')
-        bind_preference(self, 'volume_key', 'pychron.extraction_line.volume_key')
-
-        bind_preference(self, 'use_status_monitor', 'pychron.extraction_line.use_status_monitor')
-
-    def _use_status_monitor_changed(self):
-        if self.mode == 'client':
-            if self.use_status_monitor:
-                #start
-                bind_preference(self.status_monitor, 'state_freq',
-                                'pychron.extraction_line.valve_state_frequency')
-                bind_preference(self.status_monitor, 'lock_freq',
-                                'pychron.extraction_line.valve_lock_frequency')
-                bind_preference(self.status_monitor, 'owner_freq',
-                                'pychron.extraction_line.valve_owner_frequency')
-                bind_preference(self.status_monitor, 'update_period',
-                                'pychron.extraction_line.update_period')
-            else:
-                if self.status_monitor.isAlive():
-                    self.status_monitor.stop()
+    def link_valve_actuation(self, name, func, remove=False):
+        if remove:
+            try:
+                del self.link_valve_actuation_dict[name]
+            except KeyError:
+                self.debug('could not remove "{}". not in dict {}'.format(name,
+                                                                          ','.join(
+                                                                              self.link_valve_actuation_dict.keys())))
+        else:
+            self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.func_name))
+            self.link_valve_actuation_dict[name] = func
 
     def isolate_chamber(self):
         #get chamber name
@@ -379,9 +371,9 @@ class ExtractionLineManager(Manager):
 
             self.explanation.selected = selected
 
-    #===============================================================================
-    # private
-    #===============================================================================
+        #===============================================================================
+        # private
+        #===============================================================================
     def _enable_valve(self, description, state):
         if self.valve_manager:
             valve = self.valve_manager.get_valve_by_description(description)
@@ -398,13 +390,31 @@ class ExtractionLineManager(Manager):
                           description=None, address=None, mode='remote', **kw):
         vm = self.valve_manager
         if vm is not None:
+            oname = name
             if address:
                 name = vm.get_name_by_address(address)
 
             if description and description != '---':
                 name = vm.get_name_by_description(description)
 
+            #check if specified valve is in the valves.xml file
+            if not name:
+                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                return False
+
             result = self._change_valve_state(name, mode, action, **kw)
+            if result:
+                vm.actuate_children(name, action, mode)
+
+                ld = self.link_valve_actuation_dict
+                if ld:
+                    try:
+                        func = ld[name]
+                        func(name, action)
+                    except KeyError:
+                        self.debug('name="{}" not in '
+                                   'link_valve_actuation_dict. keys={}'.format(name, ','.join(ld.keys())))
+
             return result
 
     def _change_valve_state(self, name, mode, action, sender_address=None):
@@ -431,16 +441,18 @@ class ExtractionLineManager(Manager):
             set check_master_owner=True
             
         """
+        ret = True
         if self.mode == 'client' or self.check_master_owner:
             if requestor is None:
                 requestor = gethostbyname(gethostname())
 
             self.debug('checking ownership. requestor={}'.format(requestor))
-            if name in self.valve_manager.valves:
+            try:
                 v = self.valve_manager.valves[name]
-                return not (v.owner and v.owner != requestor)
-
-        return True
+                ret = not (v.owner and v.owner != requestor)
+            except KeyError:
+                pass
+        return ret
 
     def _set_pipette_counts(self, name, value):
         for c in self._canvases:
@@ -496,6 +508,22 @@ class ExtractionLineManager(Manager):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _use_status_monitor_changed(self):
+        if self.mode == 'client':
+            if self.use_status_monitor:
+                #start
+                bind_preference(self.status_monitor, 'state_freq',
+                                'pychron.extraction_line.valve_state_frequency')
+                bind_preference(self.status_monitor, 'lock_freq',
+                                'pychron.extraction_line.valve_lock_frequency')
+                bind_preference(self.status_monitor, 'owner_freq',
+                                'pychron.extraction_line.valve_owner_frequency')
+                bind_preference(self.status_monitor, 'update_period',
+                                'pychron.extraction_line.update_period')
+            else:
+                if self.status_monitor.isAlive():
+                    self.status_monitor.stop()
+
     def _valve_manager_changed(self):
         if self.valve_manager is not None:
             self.status_monitor.valve_manager = self.valve_manager

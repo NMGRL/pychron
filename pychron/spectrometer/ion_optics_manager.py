@@ -25,7 +25,7 @@ from pychron.managers.manager import Manager
 from pychron.graph.graph import Graph
 from pychron.spectrometer.jobs.peak_center import PeakCenter
 # from threading import Thread
-from pychron.spectrometer.detector import Detector
+from pychron.spectrometer.thermo.detector import Detector
 from pychron.pychron_constants import NULL_STR, QTEGRA_INTEGRATION_TIMES
 from pychron.core.ui.thread import Thread
 from pychron.paths import paths
@@ -163,13 +163,14 @@ class IonOpticsManager(Manager):
                        save=True,
                        confirm_save=False,
                        warn=False,
-                       new_thread=True):
+                       new_thread=True,
+                       message=''):
         self.debug('doing pc')
 
         self.canceled = False
         self.alive = True
 
-        args = (save, confirm_save, warn)
+        args = (save, confirm_save, warn, message)
         if new_thread:
             t = Thread(name='ion_optics.peak_center', target=self._peak_center,
                        args=args)
@@ -263,7 +264,7 @@ class IonOpticsManager(Manager):
             graph.window_height = 250
             self.open_view(graph)
 
-    def _peak_center(self, save, confirm_save, warn):
+    def _peak_center(self, save, confirm_save, warn, message):
 
         pc = self.peak_center
         spec = self.spectrometer
@@ -296,7 +297,7 @@ class IonOpticsManager(Manager):
                     msg = 'Update Magnet Field Table with new peak center- {} ({}) @ RefDetUnits= {}'.format(*args)
                     save = self.confirmation_dialog(msg)
                 if save:
-                    spec.magnet.update_field_table(det, isotope, dac_a)
+                    spec.magnet.update_field_table(det, isotope, dac_a, message)
                     spec.magnet.set_dac(self.peak_center_result)
 
         elif not self.canceled:

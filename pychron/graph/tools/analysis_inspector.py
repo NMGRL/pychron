@@ -108,19 +108,21 @@ class AnalysisPointInspector(PointInspector):
                         if self.value_format:
                             y = self.value_format(y)
 
-                        #                 if analysis.status == 0 and analysis.temp_status != 0:
-                        #                     status = 'Temp. Omitted'
-                        #                 else:
-                    status = analysis.status_text
                     tag = analysis.tag
+                    info = ['Analysis= {}'.format(rid),
+                            'Tag= {}'.format(tag),
+                            '{}= {}'.format(name, y)]
 
-                    lines.extend(['Analysis= {}'.format(rid),
-                             'Status= {}'.format(status),
-                             'Tag= {}'.format(tag),
-                             '{}= {}'.format(name, y)])
+                    if hasattr(analysis, 'status_text'):
+                        info.insert(1, 'Status= {}'.format(analysis.status_text))
+                    lines.extend(info)
 
                     if self.additional_info is not None:
-                        lines.append(self.additional_info(analysis))
+                        ad = self.additional_info(analysis)
+                        if isinstance(ad, (list, tuple)):
+                            lines.extend(ad)
+                        else:
+                            lines.append(ad)
 
                     if i < n - 1:
                         lines.append('--------')

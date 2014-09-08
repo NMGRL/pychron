@@ -22,8 +22,8 @@ from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
-
-from pychron.processing.analyses.view.experiment_view import ExperimentView, ExtractionView, MeasurementView
+from pychron.processing.analyses.view.snapshot_view import SnapshotView
+from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
@@ -55,16 +55,18 @@ class AnalysisView(HasTraits):
 
     refresh_needed = Event
 
-    main_view = None
+    main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     _experiment_view = None
     _history_view = None
     _interference_view = None
     _measurement_view = None
     _extraction_view = None
+    _snapshot_view = None
 
     def load(self, an):
         analysis_type = an.analysis_type
         analysis_id = an.record_id
+
         self.analysis_id = analysis_id
 
         history_view = self._history_view
@@ -81,6 +83,11 @@ class AnalysisView(HasTraits):
         if extraction_view is None:
             extraction_view = ExtractionView(an)
             self._extraction_view = extraction_view
+
+        snapshot_view=self._snapshot_view
+        if snapshot_view is None and an.snapshots:
+            snapshot_view = SnapshotView(an.snapshots)
+            self._snapshot_view=snapshot_view
 
         measurement_view = self._measurement_view
         if measurement_view is None:
@@ -104,8 +111,7 @@ class AnalysisView(HasTraits):
                     interference_view,
                     experiment_view,
                     measurement_view,
-                    extraction_view,
-                    ]
+                    extraction_view]
 
         if analysis_type in ('unknown', 'cocktail'):
             subviews.append(ErrorComponentsView(an))
@@ -113,6 +119,9 @@ class AnalysisView(HasTraits):
         pch = PeakCenterView()
         if pch.load(an):
             subviews.append(pch)
+
+        if snapshot_view:
+            subviews.append(snapshot_view)
 
         self.selection_tool = ViewSelection(subviews=subviews,
                                             selected_view=main_view)

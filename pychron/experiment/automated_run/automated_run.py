@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.automated_run.hop_util import parse_hops
-from pychron.experiment.utilities.position_regex import XY_REGEX
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
@@ -43,7 +42,7 @@ from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import convert_identifier, \
-    make_runid, get_analysis_type, convert_extract_device
+    make_runid, get_analysis_type
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
@@ -180,26 +179,35 @@ class AutomatedRun(Loggable):
             fits = dict([f.split(':') for f in fits])
 
         for k, iso in isotopes.iteritems():
-            if k in fits:
+            try:
                 fi = fits[k]
-            else:
+            except KeyError:
                 fi = 'linear'
-                self.warning('Invalid fit "{}". '
-                             'check the measurement script "{}"'.format(k, self.measurement_script.name))
+                self.warning('No fit for "{}". defaulting to {}. '
+                             'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
             iso.set_fit_blocks(fi)
-
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
+
         if not fits:
             fits = self._get_default_fits(is_baseline=True)
         elif len(fits) == 1:
-            fits = {i: fits for i in isotopes}
+            fits = {i.detector: fits[0] for i in isotopes.itervalues()}
+        elif isinstance(fits, str):
+            fits = {i.detector: fits for i in isotopes.itervalues()}
         else:
             fits = dict([f.split(':') for f in fits])
 
         for k, iso in isotopes.iteritems():
-            iso.baseline.set_fit_blocks(fits[iso.detector])
+            try:
+                fi = fits[iso.detector]
+            except KeyError:
+                fi = ('average','SEM')
+                self.warning('No fit for "{}". defaulting to {}. '
+                             'check the measurement script "{}"'.format(iso.detector, fi, self.measurement_script.name))
+
+            iso.baseline.set_fit_blocks(fi)
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -243,6 +251,7 @@ class AutomatedRun(Loggable):
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
+                         close_inlet=True,
                          delay=None):
         evt = TEvent()
         if not self._alive:
@@ -255,12 +264,21 @@ class AutomatedRun(Loggable):
                                inlet=inlet,
                                outlet=outlet,
                                delay=delay,
+                               close_inlet=close_inlet,
                                do_post_equilibration=do_post_equilibration))
         t.start()
 
         return evt
 
-    def py_sniff(self, ncounts, starttime, starttime_offset, series=0):
+    def py_sniff(self, ncounts, starttime, starttime_offset, series=0, block=True):
+        if block:
+            return self._sniff(ncounts, starttime, starttime_offset, series)
+        else:
+            t = Thread(target=self._sniff, args=(ncounts, starttime, starttime_offset, series))
+            t.start()
+            return True
+
+    def _sniff(self, ncounts, starttime, starttime_offset, series):
         self.debug('py_sniff')
 
         if not self._alive:
@@ -472,7 +490,7 @@ class AutomatedRun(Loggable):
                                        **kw)
             self.peak_center = pc
 
-            ion.do_peak_center(new_thread=False, save=save)
+            ion.do_peak_center(new_thread=False, save=save, message='automated run peakcenter')
 
             if pc.result:
                 self.persister.save_peak_center_to_file(pc)
@@ -799,7 +817,7 @@ class AutomatedRun(Loggable):
                                  save_as_peak_hop=False,
                                  run_spec=self.spec,
                                  arar_age=self.arar_age,
-                                 positions=self.get_position_list(),
+                                 positions=self.spec.get_position_list(),
                                  extraction_positions=ext_pos,
                                  sensitivity_multiplier=sens,
                                  experiment_queue_name=eqn,
@@ -812,8 +830,7 @@ class AutomatedRun(Loggable):
                                  runscript_name=script_name,
                                  runscript_blob=script_blob,
                                  signal_fods=sfods,
-                                 baseline_fods=bsfods
-        )
+                                 baseline_fods=bsfods)
 
     #===============================================================================
     # doers
@@ -868,8 +885,9 @@ class AutomatedRun(Loggable):
 
             rblob = self.extraction_script.get_response_blob()
             oblob = self.extraction_script.get_output_blob()
+            snapshots = self.extraction_script.snapshots
 
-            self.persister.post_extraction_save(rblob, oblob)
+            self.persister.post_extraction_save(rblob, oblob, snapshots)
             self.info('======== Extraction Finished ========')
             self.info_color = None
 
@@ -1035,8 +1053,6 @@ anaylsis_type={}
             d[k] = iso.get_baseline_corrected_value()
         return d
 
-    def get_position_list(self):
-        return self._make_iterable(self.spec.position)
 
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
@@ -1095,6 +1111,7 @@ anaylsis_type={}
 
             #set the interpolation path
             self.measurement_script.interpolation_path = ip
+            self.measurement_script.use_cdd_warming = self.spec.use_cdd_warming
 
         for si in ('extraction', 'post_measurement', 'post_equilibration'):
             script = getattr(self, '{}_script'.format(si))
@@ -1117,11 +1134,12 @@ anaylsis_type={}
 
     def _get_default_fits_file(self):
         p = self._get_measurement_parameter('default_fits')
-        dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
-        if os.path.isfile(dfp):
-            return dfp
-        else:
-            self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
+        if p:
+            dfp = os.path.join(paths.fits_dir, add_extension(p, '.yaml'))
+            if os.path.isfile(dfp):
+                return dfp
+            else:
+                self.warning_dialog('Cannot open default fits file: {}'.format(dfp))
 
     def _get_default_fits(self, is_baseline=False):
         """
@@ -1292,23 +1310,6 @@ anaylsis_type={}
 
                 self.py_add_truncation(attr, c, int(start), freq, acr)
 
-
-    def _make_iterable(self, pos):
-        # if '(' in pos and ')' in pos and ',' in pos:
-        #     # interpret as (x,y)
-        #     pos = pos.strip()[1:-1]
-        #     ps = [map(float, pos.split(','))]
-        if XY_REGEX[0].match(pos):
-            ps = XY_REGEX[1](pos)
-
-        elif ',' in pos:
-            # interpert as list of holenumbers
-            ps = list(pos.split(','))
-        else:
-            ps = [pos]
-
-        return ps
-
     def _get_measurement_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.measurement_script, key, default)
 
@@ -1351,21 +1352,35 @@ anaylsis_type={}
 
         return plot_panel
 
+    def _convert_valve(self, valve):
+        if valve and not isinstance(valve, (tuple, list)):
+            if ',' in valve:
+                valve = map(str.strip, valve.split(','))
+            else:
+                valve = (valve, )
+        return valve
+
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
-                     do_post_equilibration=True):
+                     do_post_equilibration=True, close_inlet=True):
+
+        inlet = self._convert_valve(inlet)
+        outlet = self._convert_valve(outlet)
 
         elm = self.extraction_line_manager
         if elm:
             if outlet:
                 # close mass spec ion pump
-                elm.close_valve(outlet, mode='script')
+                for o in outlet:
+                    elm.close_valve(o, mode='script')
 
             if inlet:
                 self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
                 time.sleep(delay)
+
                 # open inlet
-                elm.open_valve(inlet, mode='script')
+                for i in inlet:
+                    elm.open_valve(i, mode='script')
 
         #set the passed in event
         evt.set()
@@ -1374,8 +1389,9 @@ anaylsis_type={}
         time.sleep(eqtime)
         if self._alive:
             self.info('======== Equilibration Finished ========')
-            if elm and inlet:
-                elm.close_valve(inlet)
+            if elm and inlet and close_inlet:
+                for i in inlet:
+                    elm.close_valve(i, mode='script')
 
             if do_post_equilibration:
                 self.do_post_equilibration()
@@ -1463,8 +1479,7 @@ anaylsis_type={}
         def gen():
             spec = self.spectrometer_manager.spectrometer
             while 1:
-                v = spec.get_intensities(tagged=True)
-                yield v
+                yield spec.get_intensities(tagged=True)
 
         return gen()
 
@@ -1744,28 +1759,32 @@ anaylsis_type={}
         name = '{}_{}'.format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, '.py')
 
+
     def _setup_context(self, script):
         """
             setup_context to expose variables to the pyscript
         """
-        spec = self.spec
-        hdn = convert_extract_device(spec.extract_device)
-        #hdn = spec.extract_device.replace(' ', '_').lower()
-        an = spec.analysis_type.split('_')[0]
-        script.setup_context(tray=spec.tray,
-                             position=self.get_position_list(),
-                             disable_between_positions=spec.disable_between_positions,
-                             duration=spec.duration,
-                             extract_value=spec.extract_value,
-                             extract_units=spec.extract_units,
-                             cleanup=spec.cleanup,
-                             extract_device=hdn,
-                             analysis_type=an,
-                             ramp_rate=spec.ramp_rate,
-                             pattern=spec.pattern,
-                             beam_diameter=spec.beam_diameter,
-                             ramp_duration=spec.ramp_duration,
-                             is_last=self.is_last)
+        ctx = self.spec.make_script_context()
+        script.setup_context(is_last=self.is_last, **ctx)
+
+        # spec = self.spec
+        # hdn = convert_extract_device(spec.extract_device)
+        # #hdn = spec.extract_device.replace(' ', '_').lower()
+        # an = spec.analysis_type.split('_')[0]
+        # script.setup_context(tray=spec.tray,
+        # position=self.get_position_list(),
+        #                      disable_between_positions=spec.disable_between_positions,
+        #                      duration=spec.duration,
+        #                      extract_value=spec.extract_value,
+        #                      extract_units=spec.extract_units,
+        #                      cleanup=spec.cleanup,
+        #                      extract_device=hdn,
+        #                      analysis_type=an,
+        #                      ramp_rate=spec.ramp_rate,
+        #                      pattern=spec.pattern,
+        #                      beam_diameter=spec.beam_diameter,
+        #                      ramp_duration=spec.ramp_duration,
+        #                      is_last=self.is_last)
 
     def _get_yaml_parameter(self, script, key, default):
         if not script:

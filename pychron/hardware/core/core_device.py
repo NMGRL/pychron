@@ -128,6 +128,13 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
         if self._communicator:
             return not self._communicator.simulation
 
+    def test_connection(self):
+        if self._communicator:
+            return self._communicator.test_connection()
+
+    def set_simulation(self, tf):
+        if self._communicator:
+            self._communicator.simulation=tf
     #==============================================================================================================
     def _communicate_hook(self, cmd, r):
         self.last_command = cmd
@@ -171,10 +178,12 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
     def load_additional_args(self, config):
         """
+            remember to return a boolean in any subclass that overrides this method.
+            if True bootstraping of this device will continue. otherwise device will not fully initialize
         """
         return True
 
-    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None):
+    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None, script=None):
         """
             repeatedly ask func at 1/period rate
             if func returns true return True
@@ -189,6 +198,8 @@ class CoreDevice(ScanableDevice, RPCable, HasCommunicator, ConsumerMixin):
 
         st = time.time()
         while 1:
+            if script and script.canceled():
+                return
             if func(*args, **kwargs):
                 return True
             elif timeout:

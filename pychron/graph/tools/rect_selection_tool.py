@@ -52,6 +52,11 @@ class RectSelectionTool(BaseTool):
     _end_pos = None
     group_id = 0
 
+    def select_key_pressed(self, event):
+        if event.character=='Esc':
+            self._end_select(event)
+
+
     def normal_mouse_move(self, event):
         if event.handled:
             return

@@ -14,6 +14,7 @@
 # limitations under the License.
 #===============================================================================
 #============= enthought library imports =======================
+import os
 
 from envisage.core_plugin import CorePlugin
 from envisage.api import Plugin
@@ -52,7 +53,8 @@ PACKAGE_DICT = dict(
 
     #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
 
-    SpectrometerPlugin='pychron.spectrometer.tasks.spectrometer_plugin',
+    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
+    MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
 
     #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
 
@@ -123,6 +125,9 @@ def get_plugin(pname):
     if pname in PACKAGE_DICT:
         package = PACKAGE_DICT[pname]
         klass = get_klass(package, pname)
+    else:
+        logger.warning('****** {} not a valid plugin name******'.format(pname),
+                       extra={'threadName_': 'Launcher'})
 
     if klass is not None:
         plugin = klass()
@@ -191,17 +196,17 @@ def check_dependencies():
 
     try:
         mod = __import__('uncertainties',
-                         fromlist=['__version__'])
-        __version__ = mod.__version__
+                         fromlist=['ver'])
+        ver = mod.__version__
     except ImportError:
         warning(None, 'Install "{}" package. required version>={} '.format('uncertainties', '2.1'))
         return
 
-    vargs = __version__.split('.')
+    vargs = ver.split('.')
     maj = vargs[0]
     if int(maj) < 2:
         warning(None, 'Update "{}" package. your version={}. required version>={} '.format('uncertainties',
-                                                                                           __version__,
+                                                                                           ver,
                                                                                            '2.1'))
         return
 
@@ -241,6 +246,7 @@ def launch(klass):
 
     finally:
         app.exit()
+        os._exit(0)
 
     return
 

@@ -108,8 +108,7 @@ sem={}
         uy = fy + e
         return ly, uy
 
-    def tostring(self, sig_figs=3, error_sig_figs=4):
-        # fmt = 'mean={{}} std={{:0.{}f}} ({{:0.2f}}%), sem={{:0.{}f}} ({{:0.2f}}%)'.format(sig_figs, error_sig_figs)
+    def tostring(self, sig_figs=3):
 
         m = self.mean
         std = self.std

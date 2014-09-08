@@ -24,8 +24,6 @@ import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
-from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
-    MeasurementFitsSelectorView
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
@@ -105,7 +103,7 @@ def increment_position(pos):
 
 
 def generate_positions(pos):
-    for regex, func, ifunc in (SLICE_REGEX, SSLICE_REGEX,
+    for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
                                PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
@@ -119,13 +117,18 @@ class AutomatedRunFactory(Loggable):
     undoer = Any
     edit_event = Event
 
-    default_fits_button = Button
+    #============== scripts =============
     extraction_script = Instance(Script)
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+
     script_options = Instance(ScriptOptions, ())
-    load_defaults_button = Button('Defaults')
+    load_defaults_button = Button('Default')
+
+    default_fits_button = Button
+    default_fits_enabled = Property(depends_on='measurement_script.name')
+    #===================================
 
     human_error_checker = Instance(HumanErrorChecker, ())
     factory_view = Instance(FactoryView)
@@ -169,7 +172,12 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
+    #===========================================================================
+    # measurement
+    #===========================================================================
+    use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
+
     #===========================================================================
     # extract
     #===========================================================================
@@ -232,7 +240,8 @@ class AutomatedRunFactory(Loggable):
     # frequency
     #===========================================================================
     frequency = Int
-
+    freq_before = Bool(True)
+    freq_after = Bool(False)
     #===========================================================================
     # readonly
     #===========================================================================
@@ -262,6 +271,7 @@ class AutomatedRunFactory(Loggable):
     extract_device = Str
 
     _default_attrs = ('collection_time_zero_offset',)
+    _no_clear_labnumber = False
 
     def activate(self):
         self.load_truncations()
@@ -435,9 +445,12 @@ class AutomatedRunFactory(Loggable):
             self.irrad_hole = str(hole)
             self.irrad_level = str(level.name)
 
+            self._no_clear_labnumber = True
             self.selected_level = self.irrad_level
             self.selected_irradiation = irrad.name
+            self._no_clear_labnumber = False
 
+            # self.trait_setq(selected_level=self.irrad_level, selected_irradiation=irrad.name)
             il = '{} {}:{}'.format(irrad.name, level.name, hole)
         return il
 
@@ -501,7 +514,7 @@ class AutomatedRunFactory(Loggable):
             setattr(arv, name, s.name)
 
     def _clone_run(self, run, excludes=None, set_labnumber=True, set_position=True):
-        self.debug('cloning run {}'.format(run))
+        self.debug('cloning run {}. set_labnumber={}, set_position={}'.format(run.runid, set_labnumber, set_position))
         if excludes is None:
             excludes = []
 
@@ -515,12 +528,17 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
+                     'use_cdd_warming',
                      'weight', 'comment'):
 
             if attr in excludes:
                 continue
-
-            setattr(self, attr, getattr(run, attr))
+            try:
+                v = getattr(run, attr)
+                # self.debug('setting {}={}'.format(attr, v))
+                setattr(self, attr, v)
+            except TraitError, e:
+                self.debug(e)
 
         if run.user_defined_aliquot:
             self.aliquot = int(run.aliquot)
@@ -597,8 +615,9 @@ class AutomatedRunFactory(Loggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
-        self.labnumber = ''
-        self._labnumber = NULL_STR
+        if not self._no_clear_labnumber:
+            self.labnumber = ''
+            self._labnumber = NULL_STR
 
     def _template_closed(self):
         invoke_in_main_thread(self.load_templates)
@@ -713,7 +732,8 @@ class AutomatedRunFactory(Loggable):
                     new_script_name = default_scripts.get(skey) or ''
 
                     new_script_name = self._remove_file_extension(new_script_name)
-                    if labnumber in ('u', 'bu') and self.extract_device != NULL_STR:
+                    if labnumber in ('u', 'bu') and \
+                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -748,6 +768,9 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # property get/set
     #===============================================================================
+    def _get_default_fits_enabled(self):
+        return self.measurement_script.name not in ('None', '')
+
     def _get_edit_mode_label(self):
         return 'Editing' if self.edit_mode else ''
 
@@ -953,23 +976,36 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # handlers
     #===============================================================================
-    @on_trait_change('[measurement_script, post_measurement_script, post_equilibration_script, extraction]:edit_event')
+    @on_trait_change('[measurement_script, post_measurement_script, '
+                     'post_equilibration_script, extraction_script]:edit_event')
     def _handle_edit_script(self, new):
         app = self.application
         task = app.open_task('pychron.pyscript')
         path, kind = new
         task.kind = kind
-        task.open(path=new)
+        task.open(path=path)
 
     def _load_defaults_button_fired(self):
         if self.labnumber:
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
+        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+            MeasurementFitsSelectorView
+        from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
+        from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
         m = MeasurementFitsSelector()
-        m.open(self.measurement_script.script_path())
+        sp =self.measurement_script.script_path()
+        m.open(sp)
         f = MeasurementFitsSelectorView(model=m)
-        f.edit_traits()
+        info = f.edit_traits(kind='livemodal')
+        if info.result:
+            #update the default_fits entry in the docstr
+            ed = PyScriptEdit()
+            ed.context_editor=MeasurementContextEditor()
+            ed.open_script(sp)
+            ed.context_editor.default_fits = str(m.name)
+            ed.update_docstr()
 
     def _new_truncation_button_fired(self):
 
@@ -1025,7 +1061,9 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+collection_time_zero_offset,
+use_cdd_warming,
 extract_units,
 pattern,
 position,
@@ -1096,7 +1134,7 @@ post_equilibration_script:name''')
                     with db.session_ctx():
                         ms = db.get_mass_spectrometer(self.mass_spectrometer)
                         ed = db.get_extraction_device(self.extract_device)
-                        if ln in SPECIAL_KEYS:
+                        if ln in SPECIAL_KEYS and not ln.startswith('bu'):
                             ln = make_standard_identifier(ln, '##', ms.name[0].capitalize())
                         else:
                             msname = ms.name[0].capitalize()
@@ -1117,14 +1155,14 @@ post_equilibration_script:name''')
             self._frequency_enabled = False
 
     def _labnumber_changed(self, old, labnumber):
-
+        self.debug('old={}, new={}. {}'.format(old, labnumber, not labnumber or labnumber == NULL_STR))
         if not labnumber or labnumber == NULL_STR:
             return
 
         db = self.db
         if not db:
             return
-        self.update_labnumber = labnumber
+        # self.update_labnumber = labnumber
 
         special = False
         try:

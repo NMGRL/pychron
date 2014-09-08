@@ -75,7 +75,7 @@ class HardwarePlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
                                                       factory=OpenFlagManagerAction,
-                                                      path='MenuBar/Tools'), ])]
+                                                      path='MenuBar/tools.menu'), ])]
 
     def _tasks_default(self):
         return [TaskFactory(id='tasks.hardware',

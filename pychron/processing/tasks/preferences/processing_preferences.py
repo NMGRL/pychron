@@ -28,6 +28,9 @@ class ProcessingPreferences(BasePreferencesHelper):
     recent_hours = Property(Int, depends_on='_recent_hours')
     preferences_path = 'pychron.processing'
     _recent_hours=Int
+
+    graphical_filtering_max_days = Int
+
     def _get_recent_hours(self):
         return self._recent_hours
 
@@ -49,10 +52,10 @@ class ProcessingPreferencesPane(PreferencesPane):
         recent_grp = Group(
             Item('recent_hours', label='Hours',
                  tooltip='Number of hours a "Recent" database search will include'),
-            label='Recent',
-            show_border=True)
-
-        v = View(recent_grp)
+            label='Recent', )
+        graphical_filter_grp = Group(Item('graphical_filtering_max_days', label='Max. Days'),
+                                     label='Graphical Filter')
+        v = View(recent_grp, graphical_filter_grp)
         return v
 
 
@@ -66,7 +69,7 @@ class EasyPreferencesPane(PreferencesPane):
     category = 'Processing'
 
     def traits_view(self):
-        easy_grp = Group(Item('use_easy'), label='Easy')
+        easy_grp = Group(Item('use_easy'), label='Easy', show_border=True)
         v = View(easy_grp)
         return v
 

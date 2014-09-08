@@ -27,11 +27,10 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
 from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
-    CommandEditorPane, ControlPane, ScriptBrowserPane
+    CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane
 from pychron.paths import paths
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.execute_mixin import ExecuteMixin
-
 
 
 class PyScriptTask(EditorTask, ExecuteMixin):
@@ -40,6 +39,8 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     kinds = List(['Extraction', 'Measurement'])
     commands_pane = Instance(CommandsPane)
     script_browser_pane = Instance(ScriptBrowserPane)
+    command_editor_pane = Instance(CommandEditorPane)
+    context_editor_pane = Instance(ContextEditorPane)
 
     wildcard = '*.py'
     _default_extension= '.py'
@@ -162,17 +163,17 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
-        # self.editor_pane = EditorPane()
         self.control_pane = ControlPane(model=self)
         self.script_browser_pane=ScriptBrowserPane()
 
+        self.context_editor_pane = ContextEditorPane()
         return [
                 self.commands_pane,
                 self.command_editor_pane,
-                # self.editor_pane,
                 self.control_pane,
                 DescriptionPane(model=self),
-                self.script_browser_pane
+                self.script_browser_pane,
+                self.context_editor_pane,
                 ]
 
     def _save_file(self, path):
@@ -219,6 +220,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         super(PyScriptTask, self)._open_editor(editor)
 
+    @on_trait_change('command_editor_pane:insert_button')
+    def _insert_fired(self):
+        self.active_editor.insert_command(self.command_editor_pane.command_object)
+
     @on_trait_change('commands_pane:command_object')
     def _update_selected(self, new):
         self.command_editor_pane.command_object = new
@@ -233,7 +238,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self.commands_pane.commands = self.active_editor.commands.script_commands
 
             self.script_browser_pane.root=os.path.dirname(self.active_editor.path)
-            # self.editor_pane.editor = self.active_editor.editor
+            self.context_editor_pane.editor = self.active_editor.context_editor
 
     @on_trait_change('_current_script:trace_line')
     def _handle_lineno(self, new):
@@ -290,9 +295,10 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         return ''
 
     def _default_layout_default(self):
-        left=Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=500, width=125),
-                             PaneItem('pychron.pyscript.script_browser')),
-                      PaneItem('pychron.pyscript.commands_editor', height=200, width=125),
+        left = Splitter(Tabbed(PaneItem('pychron.pyscript.commands', height=300, width=125),
+                               PaneItem('pychron.pyscript.script_browser'),
+                               PaneItem('pychron.pyscript.context_editor')),
+                        PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
                       orientation='vertical')
         bottom=PaneItem('pychron.pyscript.description')
         return TaskLayout(id='pychron.pyscript',

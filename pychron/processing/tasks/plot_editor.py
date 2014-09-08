@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -200,7 +200,6 @@ class PlotEditor(HasTraits):
     selected_renderer_name = Str
     selected_renderer = Instance('RendererEditor')
     renderer_names = List
-
 
     def _selected_renderer_name_changed(self):
         self.selected_renderer = self._get_selected_renderer()

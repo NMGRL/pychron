@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,13 +38,17 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
-    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction
+    DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
+    SplitEditorActionVert, ConfigureRecallAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
-    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction
+    BatchEditAction, TagAction, DatabaseSaveAction, DiscriminationAction, DataReductionTagAction, \
+    SelectDataReductionTagAction
+from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
+from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
 from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
@@ -93,6 +97,7 @@ Install to enable MS Excel export''')
                 MenuManager(IdeogramFromFile(),
                             SpectrumFromFile(),
                             name='From File'),
+                RefreshActiveEditorAction(),
                 name='Figures')
 
         def data_menu():
@@ -104,9 +109,9 @@ Install to enable MS Excel export''')
         def grouping_group():
             return SMenu(Group(GroupSelectedAction(),
                                GroupbyAliquotAction(),
-                         GroupbyLabnumberAction(),
-                         GroupbySampleAction(),
-                         ClearGroupAction()),
+                               GroupbyLabnumberAction(),
+                               GroupbySampleAction(),
+                               ClearGroupAction()),
                          Group(GraphGroupSelectedAction(),
                                GraphGroupbySampleAction()),
                          name='Grouping')
@@ -134,14 +139,20 @@ Install to enable MS Excel export''')
 
         def recall_group():
             return Group(RecallAction(),
-                         OpenAdvancedQueryAction())
+                         OpenAdvancedQueryAction(),
+                         ConfigureRecallAction())
 
         def misc_group():
             return Group(TagAction(),
+                         DataReductionTagAction(),
+                         SelectDataReductionTagAction(),
                          DatabaseSaveAction(),
                          ClearAnalysisCacheAction(),
                          MakeTASAction(),
-                         ModifyK3739Action(), name='misc')
+                         ModifyK3739Action(),
+                         CalculationViewAction(),
+                         SummaryLabnumberAction(),
+                         name='misc')
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
@@ -171,6 +182,8 @@ Install to enable MS Excel export''')
                            # ('modify_k3739', ModifyK3739Action, 'MenuBar/data.menu'),
 
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
+                           # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
+                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')
         ]
 
         exts = [self._make_task_extension(default_actions)]

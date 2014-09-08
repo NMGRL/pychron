@@ -21,11 +21,13 @@ import weakref
 import os
 from numpy.core.numeric import Inf
 #============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.canvas_parser import get_volume
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.primitives.primitives import RoundedRectangle, \
     Label, BorderLine, Rectangle, Line, Image, ValueLabel
 from pychron.core.helpers.filetools import to_bool
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
+from pychron.extraction_line.valve_parser import ValveParser
 from pychron.paths import paths
 
 
@@ -84,6 +86,7 @@ class ExtractionLineScene(Scene):
                                 name=key,
                                 border_width=bw,
                                 display_name=display_name,
+                                volume=get_volume(elem),
                                 default_color=c,
                                 type_tag=type_tag,
                                 fill=fill)
@@ -202,40 +205,42 @@ class ExtractionLineScene(Scene):
 
     def _new_image(self, image):
         path = image.text.strip()
-        #         sp = ''
-        #         name = path
         if not os.path.isfile(path):
             for di in (paths.app_resources, paths.icons, paths.resources):
-                npath = os.path.join(di, path)
-                if os.path.isfile(npath):
-                    path = npath
-                    break
+                if di:
+                    npath = os.path.join(di, path)
+                    if os.path.isfile(npath):
+                        path = npath
+                        break
 
         if os.path.isfile(path):
             x, y = self._get_floats(image, 'translation')
-            scale = 1, 1
+            scale = None
             if image.find('scale') is not None:
                 scale = self._get_floats(image, 'scale')
 
-            im = Image(x, y,
-                       path=path,
-                       scale=scale
-            )
+            im = Image(x, y, path=path, scale=scale)
             self.add_item(im, 0)
 
-    def load(self, pathname, configpath, canvas):
-        self.reset_layers()
-
-        origin, color_dict = self._load_config(configpath, canvas)
+    def _load_valves(self, cp, origin, vpath):
         ox, oy = origin
-
-        cp = self._get_canvas_parser(pathname)
-
         ndict = dict()
+        vp = ValveParser(vpath)
+
         for v in cp.get_elements('valve'):
             key = v.text.strip()
             x, y = self._get_floats(v, 'translation')
-            v = Valve(x + ox, y + oy, name=key,
+
+            #get the description from valves.xml
+            vv = vp.get_valve(key)
+            desc = ''
+            if vv is not None:
+                desc = vv.find('description')
+                desc = desc.text.strip() if desc is not None else ''
+
+            v = Valve(x + ox, y + oy,
+                      name=key,
+                      description=desc,
                       border_width=3)
 
             v.translate = x + ox, y + oy
@@ -256,6 +261,15 @@ class ExtractionLineScene(Scene):
             ndict[key] = v
 
         self.valves = ndict
+
+    def load(self, pathname, configpath, valvepath, canvas):
+        self.reset_layers()
+
+        origin, color_dict = self._load_config(configpath, canvas)
+
+        cp = self._get_canvas_parser(pathname)
+
+        self._load_valves(cp, origin, valvepath)
         self._load_rects(cp, origin, color_dict)
 
         xv = canvas.view_x_range
@@ -352,7 +366,7 @@ class ExtractionLineScene(Scene):
         if legend is not None:
             lox, loy = self._get_floats(legend, 'origin')
             for b in legend.findall('rect'):
-            #                 print b
+                #                 print b
                 rect = self._new_rectangle(b, c, bw=5, origin=(ox + lox, oy + loy),
                                            type_tag='rect',
                                            layer='legend')

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +63,16 @@ class TagAction(TaskAction):
     accelerator = 'Ctrl+Shift+t'
     method = 'set_tag'
     image = icon('tag-blue-add.png')
+
+
+class DataReductionTagAction(TaskAction):
+    name = 'Data Reduction Tag...'
+    method = 'set_data_reduction_tag'
+
+
+class SelectDataReductionTagAction(TaskAction):
+    name = 'Select Data Reduction Tag...'
+    method ='select_data_reduction_tag'
 
 
 class FluxAction(AnalysisEditAction):

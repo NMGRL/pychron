@@ -147,7 +147,7 @@ class FusionsPlugin(BaseLaserPlugin):
                             task_group='hardware',
                             factory=self._calibration_task_factory,
                             name='Laser Calibration',
-                            accelerator='Ctrl+2')]
+                            accelerator='Ctrl+Shift+2')]
 
     def _calibration_task_factory(self):
         t = LaserCalibrationTask(manager=self._get_manager())

@@ -20,6 +20,7 @@ from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.processing.tasks.actions.processing_actions import myTaskAction
 
 
 class AddIsoEvoAction(TaskAction):
@@ -40,4 +41,28 @@ class EditDataAction(TaskAction):
     method = 'edit_data'
     image = icon('edit_diff.png')
 
+
+class RatioEditorAction(TaskAction):
+    name='Ratio'
+    method = 'open_ratio_editor'
+    image = icon('window-new')
 #============= EOF =============================================
+class SummaryLabnumberAction(myTaskAction):
+    name = 'Summary L# View'
+    method = 'new_summary_labnumber_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+
+
+class CalculationViewAction(myTaskAction):
+    name = 'Calculation View'
+    task_ids = ['pychron.recall', ]
+    method = 'open_calculation_view'
+    image = icon('window-new')
+
+
+class SummaryProjectAction(myTaskAction):
+    name = 'Summary Project View'
+    method = 'new_summary_project_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')

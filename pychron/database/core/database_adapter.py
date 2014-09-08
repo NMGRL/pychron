@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -118,6 +118,7 @@ class DatabaseAdapter(Loggable):
     datasource_url = Property(depends_on='connection_parameters_changed')
 
     path = Str
+    echo = False
 
     def __init__(self, *args, **kw):
         super(DatabaseAdapter, self).__init__(*args, **kw)
@@ -125,7 +126,6 @@ class DatabaseAdapter(Loggable):
         #
         # logging.basicConfig()
         # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
 
     def create_all(self, metadata):
         if self.kind == 'sqlite':
@@ -169,7 +169,7 @@ class DatabaseAdapter(Loggable):
                 url = self.url
                 if url is not None:
                     self.info('connecting to database {}'.format(url))
-                    engine = create_engine(url, echo=False)
+                    engine = create_engine(url, echo=self.echo)
                     #                     Session.configure(bind=engine)
 
                     self.session_factory = sessionmaker(bind=engine, autoflush=False)
@@ -243,9 +243,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                 return
 
             if password is not None:
-                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=3'.format(driver, user, password, host, name)
+                url = 'mysql+{}://{}:{}@{}/{}?connect_timeout=5'.format(driver, user, password, host, name)
             else:
-                url = 'mysql+{}://{}@{}/{}?connect_timeout=3'.format(driver, user, host, name)
+                url = 'mysql+{}://{}@{}/{}?connect_timeout=5'.format(driver, user, host, name)
         else:
             url = 'sqlite:///{}'.format(self.path)
 
@@ -322,6 +322,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             sess.add(obj)
             try:
                 sess.flush()
+                return obj
             except SQLAlchemyError, e:
                 import traceback
                 # traceback.print_exc()
@@ -500,7 +501,6 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             ntries = 3
             import traceback
-
             for i in range(ntries):
                 try:
                     return q.one()

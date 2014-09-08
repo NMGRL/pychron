@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,22 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Str, TraitError, Button, Bool, Event
+from traits.api import HasTraits, List, Str, TraitError, \
+    Button, Bool, Event, Color, Range
 from traitsui.api import View, HGroup, spring
 
 import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 import os
-#============= local library imports  ==========================
 import yaml
+#============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotters.options.option import AuxPlotOptions
 from pychron.pychron_constants import NULL_STR
 
+
 class BasePlotterOptions(HasTraits):
-    aux_plots  = List
+    aux_plots = List
     name = Str
     initialized = True
     refresh_plot_needed = Event
@@ -37,6 +39,12 @@ class BasePlotterOptions(HasTraits):
         super(BasePlotterOptions, self).__init__(*args, **kw)
         if not clean:
             self._load(root)
+
+    def set_aux_plot_height(self, name, height):
+        plot = next((ai for ai in self.aux_plots
+                     if ai.name == name), None)
+        if plot:
+            plot.height = height
 
     def dump(self, root):
         self._dump(root)
@@ -87,7 +95,6 @@ class BasePlotterOptions(HasTraits):
 
 
 class FigurePlotterOptions(BasePlotterOptions):
-
     plot_option_klass = AuxPlotOptions
     plot_option_name = None
 
@@ -98,6 +105,10 @@ class FigurePlotterOptions(BasePlotterOptions):
     initialized = True
     auto_generate_title = Bool(False)
     index_attr = Str
+
+    bgcolor = Color
+    plot_bgcolor = Color
+    plot_spacing = Range(0, 50)
 
     def deinitialize(self):
         for po in self.aux_plots:
@@ -168,59 +179,10 @@ class FigurePlotterOptions(BasePlotterOptions):
     # persistence
     #===============================================================================
     def _get_dump_attrs(self):
-        return ['auto_refresh', 'aux_plots']
+        return ['auto_refresh', 'aux_plots',
+                'bgcolor', 'plot_bgcolor',
+                'plot_spacing']
 
-    # def dump(self, root):
-    #     self._dump(root)
-
-    # def _make_dir(self, root):
-    #     if os.path.isdir(root):
-    #         return
-    #     else:
-    #         self._make_dir(os.path.dirname(root))
-    #         os.mkdir(root)
-
-    # def _dump(self, root):
-    #     if not self.name:
-    #         return
-    #     p = os.path.join(root, self.name)
-    #     #         print root, self.name
-    #     self._make_dir(root)
-    #     with open(p, 'w') as fp:
-    #         d = dict()
-    #         attrs = self._get_dump_attrs()
-    #         for t in attrs:
-    #             d[t] = v = getattr(self, t)
-    #
-    #         try:
-    #             pickle.dump(d, fp)
-    #         except (pickle.PickleError, TypeError, EOFError, TraitError), e:
-    #             print 'error dumping {}'.format(self.name), e
-
-    # def _load(self, root):
-    #     p = os.path.join(root, self.name)
-    #     if os.path.isfile(p):
-    #         with open(p, 'r') as fp:
-    #             try:
-    #                 obj = pickle.load(fp)
-    #                 self.trait_set(**obj)
-    #             except (pickle.PickleError, TypeError, EOFError, TraitError), e:
-    #                 print 'error loading {}'.format(self.name), e
-    #
-    #     klass = self.plot_option_klass
-    #     name = self.plot_option_name
-    #     if name:
-    #
-    #         pp = next((p for p in self.aux_plots if p.name == name), None)
-    #         if not pp:
-    #             po = klass(height=0)
-    #             po.trait_set(name=name,
-    #                          use=True,
-    #                          trait_change_notfiy=False)
-    #             self.aux_plots.append(po)
-    #
-    #     self.initialize()
-    #
     def _load_hook(self):
         klass = self.plot_option_klass
         name = self.plot_option_name
@@ -235,7 +197,6 @@ class FigurePlotterOptions(BasePlotterOptions):
                 self.aux_plots.append(po)
 
         self.initialize()
-
 
 
 #============= EOF =============================================

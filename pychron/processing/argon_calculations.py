@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,30 @@ from pychron.processing.arar_constants import ArArConstants
 from pychron.core.stats.core import calculate_weighted_mean
 
 
+
+
+
+
+
 #============= local library imports  ==========================
+
+
+def calculate_F_ratio(m4039, m3739, m3639, pr):
+    """
+    required ratios
+    (40/39)m
+    (36/39)m
+    (37/39)m
+
+
+    """
+
+    atm4036 = 295.5
+    n = m4039 - atm4036 * m3639 + atm4036 * pr.get('ca3637') * m3739
+    d = 1 - pr.get('ca3937') * m3739
+    F = n / d - pr.get('k4039')
+    return F
+
 
 def extract_isochron_xy(analyses):
     ans = [(ai.get_interference_corrected_value('Ar39'),
@@ -99,7 +122,7 @@ def isochron_regressor(xs, xes, ys, yes,
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
+def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method='fleck 1977'):
     """
         ages: list of ages
         errors: list of corresponding  1sigma errors
@@ -118,8 +141,9 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance'):
     from pychron.processing.plateau import Plateau
 
     p = Plateau(ages=ages,
-                errors=errors, signals=k39)
-    pidx = p.find_plateaus()
+                errors=errors,
+                signals=k39)
+    pidx = p.find_plateaus(method)
     # pidx = find_plateaus(ages, errors, k39,
     #                      overlap_sigma=2)
     if pidx:
@@ -336,7 +360,8 @@ def calculate_F(isotopes,
 
     rf = deepcopy(f)
     # f = ufloat(f.nominal_value, f.std_dev, tag='F')
-    non_ar_isotopes = dict(ca39=ca39,
+    non_ar_isotopes = dict(k40=k40,
+                           ca39=ca39,
                            k38=k38,
                            ca38=ca38,
                            k37=k37,
@@ -350,7 +375,7 @@ def calculate_F(isotopes,
         rp = ufloat(0, 0)
 
     computed = dict(rad40=rad40, rad40_percent=rp,
-                    k39=k39)
+                    k39=k39, atm40=atm40)
     #print 'Ar40', a40-k40, a40, k40
     #print 'Ar39', a39-k39, a39, k39
     interference_corrected = dict(Ar40=a40 - k40,

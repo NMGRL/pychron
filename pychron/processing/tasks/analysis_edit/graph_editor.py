@@ -15,7 +15,6 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from reportlab.lib.pagesizes import letter
 from traits.api import Any, List, on_trait_change, Property, Event, File
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor
@@ -208,7 +207,7 @@ class GraphEditor(BaseUnknownsEditor):
         if refiso.isotope_keys:
             if self.tool:
                 self.tool.load_fits(refiso.isotope_keys,
-                                    refiso.isotope_fits)
+                                    refiso.get_isotope_fits())
             self.load_tool()
 
     def _set_name(self):
@@ -273,6 +272,7 @@ class GraphEditor(BaseUnknownsEditor):
             chaco becomes less responsive after saving if 
             use_backbuffer is false and using pdf 
         '''
+        from reportlab.lib.pagesizes import letter
         c.do_layout(size=letter, force=force_layout)
 
         _, tail = os.path.splitext(path)

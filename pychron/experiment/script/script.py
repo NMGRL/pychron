@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
+from pychron.core.ui import set_qt
 
+set_qt()
 #============= enthought library imports =======================
 from traits.api import Str, Property, Button, cached_property, \
     String, HasTraits, Event, List
@@ -66,13 +68,15 @@ class Script(Loggable):
     mass_spectrometer = String
 
     name = Str
-    names = Property(depends_on='mass_spectrometer')
+    names = Property(depends_on='mass_spectrometer, directory')
     edit = Button
     kind = 'ExtractionLine'
     shared_logger = True
 
+    directory = Str(NULL_STR)
+    directories = Property
+
     def get_parameter(self, key, default=None):
-        # p = os.path.join(self._get_root(), '{}_{}.py'.format(self.mass_spectrometer.lower(), self.name))
         p = self.script_path()
         if os.path.isfile(p):
             with open(p, 'r') as fp:
@@ -102,6 +106,9 @@ class Script(Loggable):
         return View(HGroup(
             Label(self.label),
             spring,
+            UItem('directory',
+                  width=-100,
+                  editor=EnumEditor(name='directories')),
             UItem('name',
                   width=-200,
                   editor=EnumEditor(name='names')),
@@ -116,8 +123,8 @@ class Script(Loggable):
         if name is NULL_STR:
             return NULL_STR
 
-        if name.endswith('.py'):
-            name = name[:-3]
+        if name.endswith(ext):
+            name, _ = os.path.splitext(name)
 
         return name
 
@@ -129,25 +136,39 @@ class Script(Loggable):
     def _get_root(self):
         d = self.label.lower().replace(' ', '_')
         p = os.path.join(paths.scripts_dir, d)
+        if self.directory != NULL_STR:
+            p = os.path.join(p, self.directory)
+
         return p
 
     def _load_script_names(self):
-
         p = self._get_root()
         if os.path.isdir(p):
             return [s for s in os.listdir(p)
-                    if not s.startswith('.') and s.endswith('.py')]
+                    if not s.startswith('.') and s.endswith('.py') and s != '__init__.py']
         else:
             self.warning_dialog('{} script directory does not exist!'.format(p))
 
     @cached_property
+    def _get_directories(self):
+        p = self._get_root()
+        return [NULL_STR] + [s for s in os.listdir(p)
+                           if os.path.isdir(os.path.join(p, s)) and s != 'zobs']
+
+    @cached_property
     def _get_names(self):
-        names = ['None']
+        names = [NULL_STR]
         ms = self._load_script_names()
         if ms:
             msn = '{}_'.format(self.mass_spectrometer.lower())
             names.extend([self._clean_script_name(ei) for ei in ms if ei.startswith(msn)])
-
         return names
+
+
+if __name__ == '__main__':
+    s = Script()
+    s.label = 'extraction'
+    s.mass_spectrometer = 'jan'
+    s.configure_traits()
 
 #============= EOF =============================================

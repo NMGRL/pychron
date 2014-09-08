@@ -95,8 +95,11 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
-            _p, upath = sm.snapshot(name=name)
-            return upath
+            lpath, upath, imageblob = sm.snapshot(name=name, return_blob=True)
+
+            s = '{:02X}{}{:02x}{}{}>'.format(len(lpath),
+                                             lpath, len(upath), upath, imageblob)
+            return s
 
     def PrepareLaser(self, manager, *args):
         result = 'OK'
@@ -187,15 +190,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         return self.error_response(err)
 
-    def _set_axis(self, manager, axis, value):
-        try:
-            d = float(value)
-        except (ValueError, TypeError), err:
-            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
-
-        err = manager.stage_manager.single_axis_move(axis, d)
-        return self.error_response(err)
-
     def SetX(self, manager, data, *args):
         return self._set_axis(manager, 'x', data)
 
@@ -256,13 +250,6 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
     def SetHomeZ(self, manager, *args):
         return self._set_home_(manager, axis='z')
-
-    def _set_home_(self, manager, **kw):
-        """
-        """
-        err = manager.stage_manager.define_home(**kw)
-        return self.error_response(err)
-
 
     def GoToHole(self, manager, hole, autocenter, *args):
         try:
@@ -442,6 +429,26 @@ class LaserHandler(BaseRemoteHardwareHandler):
     def IsReady(self, manager, *args):
         result = manager.is_ready()
         return result
+
+    def SetLight(self,manager, value, *args):
+        manager.set_light(value)
+        return 'OK'
+
+    def _set_axis(self, manager, axis, value):
+        try:
+            d = float(value)
+        except (ValueError, TypeError), err:
+            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
+
+        err = manager.stage_manager.single_axis_move(axis, d)
+        return self.error_response(err)
+
+    def _set_home_(self, manager, **kw):
+        """
+        """
+        err = manager.stage_manager.define_home(**kw)
+        return self.error_response(err)
+
 #===============================================================================
 #
 #===============================================================================

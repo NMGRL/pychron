@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import csv
 import math
 #=============local library imports  ==========================
 from pychron.core.helpers.color_generators import colorname_generator as color_generator
+from pychron.core.helpers.filetools import add_extension
 from pychron.graph.minor_tick_overlay import MinorTicksOverlay
 # from editors.plot_editor import PlotEditor
 from guide_overlay import GuideOverlay
@@ -51,6 +52,7 @@ from pychron.viewable import Viewable
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
 from chaco.array_data_source import ArrayDataSource
+
 # from chaco.tools.pan_tool import PanTool
 VALID_FONTS = [
     #                'Helvetica',
@@ -317,13 +319,13 @@ class Graph(Viewable, ContextMenuMixin):
         """
         self._save_(path=path)
 
-    #     def export_raw_data(self, path=None, header=None, plotid=0):
-    #         '''
-    #         '''
-    #         if path is None:
-    #             path = self._path_factory()
-    #         if path is not None:
-    #             self._export_raw_data(path, header, plotid)
+    # def export_raw_data(self, path=None, header=None, plotid=0):
+    #     """
+    #     """
+    #     if path is None:
+    #         path = self._path_factory()
+    #     if path is not None:
+    #         self._export_raw_data(path, header, plotid)
 
     def export_data(self, path=None, plotid=None):
         """
@@ -332,6 +334,7 @@ class Graph(Viewable, ContextMenuMixin):
             path = self._path_factory()
 
         if path is not None:
+            path = add_extension(path, '.csv')
             self._export_data(path, plotid)
 
     def _path_factory(self):
@@ -708,21 +711,21 @@ class Graph(Viewable, ContextMenuMixin):
         self.redraw()
 
     def get_x_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('y_axis', plotid)
 
     def get_y_title(self, plotid=0):
-        '''
-        '''
+        """
+        """
         return self._get_title('x_axis', plotid)
 
-    def set_x_title(self, title, plotid=0, **font):
-        '''
-        '''
+    def set_x_title(self, title, plotid=None, **font):
+        """
+        """
         self._set_title('x_axis', title, plotid, **font)
 
-    def set_y_title(self, title, plotid=0, **font):
+    def set_y_title(self, title, plotid=None, **font):
         """
         """
         self._set_title('y_axis', title, plotid, **font)
@@ -745,8 +748,8 @@ class Graph(Viewable, ContextMenuMixin):
 
 
     def add_data_label(self, x, y, plotid=0):
-        '''
-        '''
+        """
+        """
         # print self.plots, plotid
         plot = self.plots[plotid]
         label = DataLabel(component=plot, data_point=(x, y),
@@ -1516,14 +1519,17 @@ class Graph(Viewable, ContextMenuMixin):
     #            wx.TheClipboard.Close()
 
     def _get_title(self, axis, plotid):
-        '''
-        '''
+        """
+        """
         axis = getattr(self.plots[plotid], axis)
         return axis.title
 
     def _set_title(self, axis, title, plotid, font=None, size=None):
-        '''
-        '''
+        """
+        """
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
         axis = getattr(self.plots[plotid], axis)
         params = dict(title=title)
         if font is not None or size is not None:

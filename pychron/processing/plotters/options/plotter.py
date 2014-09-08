@@ -98,7 +98,8 @@ class PlotterOptions(FigurePlotterOptions):
         rref, ctx = None, {}
         material_map = {'Groundmass concentrate': 'GMC',
                         'Kaersutite': 'Kaer',
-                        'Plagioclase': 'Plag'}
+                        'Plagioclase': 'Plag',
+                        'Sanidine': 'San'}
 
         for gid, ais in groupby(analyses, key=lambda x: x.group_id):
             ref = ais.next()
@@ -111,7 +112,10 @@ class PlotterOptions(FigurePlotterOptions):
                 else:
                     v = getattr(ref, ai)
                     if ai == 'material':
-                        v = material_map[v]
+                        try:
+                            v = material_map[v]
+                        except KeyError:
+                            pass
                 d[ai] = v
 
             if not rref:
@@ -174,8 +178,7 @@ class PlotterOptions(FigurePlotterOptions):
                   'ytick_font_name',
                   'ytitle_font_size',
                   'ytitle_font_name',
-                  'x_filter_str'
-        ]
+                  'x_filter_str']
 
         return attrs
 
@@ -257,6 +260,7 @@ class PlotterOptions(FigurePlotterOptions):
 
     def _get_main_group(self):
         main_grp = VGroup(self._get_aux_plots_group(),
+                          HGroup(Item('plot_spacing', label='Spacing')),
                           # HGroup(Item('x_filter_str', label='X Filter')),
                           label='Plots')
         return main_grp
@@ -285,15 +289,22 @@ class PlotterOptions(FigurePlotterOptions):
                                                 reorderable=False))
         return aux_plots_grp
 
+    def _get_bg_group(self):
+        grp = Group(Item('bgcolor', label='Figure'),
+                    Item('plot_bgcolor', label='Plot'),
+                    label='Background')
+        return grp
+
     def traits_view(self):
         main_grp = self._get_main_group()
-
+        bg_grp = self._get_bg_group()
         grps = self._get_groups()
         if grps:
             g = Group(main_grp,
+                      bg_grp,
                       layout='fold', *grps)
         else:
-            g = main_grp
+            g = Group(main_grp, bg_grp)
 
         v = View(VGroup(self._get_refresh_group(), g),
                  scrollable=True)

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 
 from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
+
 
 #============= standard library imports ========================
 from datetime import datetime
@@ -25,14 +27,36 @@ import struct
 import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.helpers.filetools import remove_extension
-
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
+from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
+
+
+def get_xyz_position(extraction):
+    def g():
+        for pp in extraction.positions:
+            x, y, z = pp.x, pp.y, pp.z
+            if x is not None and y is not None:
+                if z is not None:
+                    rr = '{:0.3f},{:0.3f},{:0.3f}'.format(x, y, z)
+                else:
+                    rr = '{:0.3f},{:0.3f}'.format(x, y)
+                yield rr
+
+    return ';'.join(list(g()))
+
+
+def get_position(extraction):
+    def g():
+        for pi in extraction.positions:
+            pii = pi.position
+            if pii:
+                yield str(pii)
+    return ','.join(list(g()))
 
 
 class DBAnalysis(Analysis):
@@ -56,6 +80,9 @@ class DBAnalysis(Analysis):
     #extraction
     extract_device = Str
     position = Str
+    xyz_position = Str
+    snapshots = List
+
     extract_value = Float
     extract_units = Str
     cleanup_duration = Float
@@ -90,6 +117,10 @@ class DBAnalysis(Analysis):
     extraction_script_blob = Str
     measurement_script_blob = Str
 
+    def set_ic_factor(self, det, v, e):
+        for iso in self.get_isotopes(det):
+            iso.ic_factor=ufloat(v,e)
+
     def set_temporary_ic_factor(self, k, v, e):
         iso = self.get_isotope(detector=k)
         if iso:
@@ -122,15 +153,16 @@ class DBAnalysis(Analysis):
 
         return r
 
-    def get_db_fit(self, meas_analysis, name, kind):
+    def get_db_fit(self, meas_analysis, name, kind, selected_histories):
         try:
-            sel_hist = meas_analysis.selected_histories
-            sel_fithist = sel_hist.selected_fits
+            if selected_histories is None:
+                selected_histories = meas_analysis.selected_histories
+
+            sel_fithist = selected_histories.selected_fits
             fits = sel_fithist.fits
             return next((fi for fi in fits
                          if fi.isotope.kind == kind and \
-                            fi.isotope.molecular_weight.name == name
-                        ), None)
+                         fi.isotope.molecular_weight.name == name), None)
 
         except AttributeError, e:
             print e
@@ -203,17 +235,19 @@ class DBAnalysis(Analysis):
             self.sample = sample
             self.project = project
             if material:
-                self.material = material.name
+                self.material = material
 
         self._sync_meas_analysis_attributes(meas_analysis)
-        # self._sync_analysis_info(meas_analysis)
         self._sync_irradiation(lab)
 
+        #sync the dr tag first so we can set selected_histories
+        sh = self._sync_data_reduction_tag(meas_analysis)
+
         #this is the dominant time sink
-        # self._sync_isotopes(meas_analysis, isos,
-        #                     unpack, load_peak_center=load_changes)
-        timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
-                 kwargs={'load_peak_center': load_changes})
+        self._sync_isotopes(meas_analysis, isos,
+                            unpack, load_peak_center=load_changes, selected_histories=sh)
+        # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
+        #          kwargs={'load_peak_center': load_changes})
 
         self._sync_detector_info(meas_analysis)
         if load_changes:
@@ -225,14 +259,28 @@ class DBAnalysis(Analysis):
         self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
 
-    def _sync_script_blobs(self, meas_analysis):
-        meas = meas_analysis.measurement.script
-        if meas:
-            self.measurement_script_blob = meas.blob
+    def _sync_data_reduction_tag(self, meas_analysis):
+        tag = meas_analysis.data_reduction_tag
+        if tag:
+            self.data_reduction_tag = tag.name
 
-        ext = meas_analysis.extraction.script
+            #get the data_reduction_tag_set entry associated with this analysis
+            drentry = next((ai for ai in tag.analyses if ai.analysis_id==meas_analysis.id),None)
+            print drentry.selected_histories
+            # return drentry.selected_histories
+
+    def _sync_script_blobs(self, meas_analysis):
+        meas = meas_analysis.measurement
+        if meas:
+            script = meas.script
+            if script:
+                self.measurement_script_blob = script.blob
+
+        ext = meas_analysis.extraction
         if ext:
-            self.extraction_script_blob = ext.blob
+            script = ext.script
+            if script:
+                self.extraction_script_blob = script.blob
 
     def _sync_extraction(self, meas_analysis):
         extraction = meas_analysis.extraction
@@ -257,7 +305,8 @@ class DBAnalysis(Analysis):
 
             self.cleanup = extraction.cleanup_duration
             self.duration = extraction.extract_duration
-            self.position = self._get_position(extraction)
+            self.position = get_position(extraction)
+            self.xyz_position = get_xyz_position(extraction)
 
             for attr in ('beam_diameter', 'pattern',
                          'ramp_rate', 'ramp_duration'):
@@ -273,15 +322,23 @@ class DBAnalysis(Analysis):
                     v = ''
                 setattr(self, attr, v)
 
+            snapshots = extraction.snapshots
+            if snapshots:
+                self.snapshots=[Snapshot(path=si.path,
+                                         name=os.path.basename(si.path),
+                                         remote_path=si.remote_path,
+                                         image=si.image) for si in snapshots]
+
     def _sync_measurement(self, meas_analysis):
         if meas_analysis:
             meas = meas_analysis.measurement
-            if meas.script:
-                self.measurement_script_name = remove_extension(meas.script.name)
+            if meas:
+                if meas.script:
+                    self.measurement_script_name = remove_extension(meas.script.name)
 
-            self.analysis_type = meas.analysis_type.name
-            self.mass_spectrometer = meas.mass_spectrometer.name.lower()
-            self.collection_time_zero_offset = meas.time_zero_offset or 0
+                self.analysis_type = meas.analysis_type.name
+                self.mass_spectrometer = meas.mass_spectrometer.name.lower()
+                self.collection_time_zero_offset = meas.time_zero_offset or 0
 
     def _sync_meas_analysis_attributes(self, meas_analysis):
         # copy meas_analysis attrs
@@ -311,10 +368,11 @@ class DBAnalysis(Analysis):
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
-        exp = ext.experiment
-        self.debug('syncing experiment, {}'.format(exp))
-        if exp:
-            self.experiment_txt = exp.blob
+        if ext:
+            exp = ext.experiment
+            self.debug('syncing experiment, {}'.format(exp))
+            if exp:
+                self.experiment_txt = exp.blob
 
     def _sync_irradiation(self, ln):
         """
@@ -387,7 +445,11 @@ class DBAnalysis(Analysis):
     def _sync_view(self, av=None):
         if av is None:
             av = self.analysis_view
-        av.load(self)
+        try:
+            av.load(self)
+        except BaseException, e:
+            print 'sync view {}'.format(e)
+
         # av.load(weakref.ref(self)())
 
     def _sync_detector_info(self, meas_analysis, **kw):
@@ -421,14 +483,12 @@ class DBAnalysis(Analysis):
             iso.discrimination = idisc
 
     def _sync_isotopes(self, meas_analysis, isos,
-                       unpack, load_peak_center=False):
-
+                       unpack, load_peak_center=False, selected_histories=None):
         # self.isotopes = timethis(self._get_isotopes, args=(meas_analysis, isos),
         #                          kwargs=dict(unpack=unpack))
 
-        self.isotopes = self._get_isotopes(meas_analysis, isos,
-                                           unpack=unpack)
-        self.isotope_fits = self._get_isotope_fits()
+        self._make_isotopes(meas_analysis, isos, unpack, selected_histories)
+
         if load_peak_center:
             pc, data = self._get_peak_center(meas_analysis)
             self.peak_center = pc
@@ -453,34 +513,7 @@ class DBAnalysis(Analysis):
 
         return icfs
 
-    def _get_position(self, extraction):
-        r = ''
-        pos = extraction.positions
-
-        pp = []
-        for pi in pos:
-            pii = pi.position
-
-            if pii:
-                pp.append(pii)
-            else:
-                ppp = []
-                x, y, z = pi.x, pi.y, pi.z
-                if x is not None and y is not None:
-                    ppp.append(x)
-                    ppp.append(y)
-                if z is not None:
-                    ppp.append(z)
-
-                if ppp:
-                    pp.append('({})'.format(','.join(ppp)))
-
-        if pp:
-            r = ','.join(map(str, pp))
-
-        return r
-
-    def _get_isotope_fits(self):
+    def get_isotope_fits(self):
         keys = self.isotope_keys
         isos = self.isotopes
         fs, bs = [], []
@@ -490,41 +523,130 @@ class DBAnalysis(Analysis):
             iso = iso.baseline
             bs.append((iso.fit, iso.error_type, iso.filter_outliers_dict))
 
-        # fs = [(isos[ki].fit,
-        #        isos[ki].error_type,
-        #        isos[ki].filter_outliers_dict)
-        #       for ki in keys]
-        # bs = [(isos[ki].baseline.fit,
-        #        isos[ki].baseline.error_type,
-        #        isos[ki].baseline.filter_outliers_dict)
-        #       for ki in keys]
-
         return fs + bs
 
-    def _get_isotopes(self, meas_analysis, dbisos,
-                      unpack):
-        isotopes = dict()
+    def _make_isotopes(self, meas_analysis, dbisos, unpack, selected_histories):
+        # isotopes = dict()
 
         # timethis(self._get_signals, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_baselines, args=(isotopes, meas_analysis, dbisos, unpack))
         # timethis(self._get_blanks, args=(isotopes, meas_analysis))
 
-        self._get_signals(isotopes, meas_analysis, dbisos, unpack)
-        self._get_baselines(isotopes, meas_analysis, dbisos, unpack)
-        self._get_blanks(isotopes, meas_analysis)
+        self._get_signals(meas_analysis, dbisos, unpack, selected_histories)
+        self._get_baselines(meas_analysis, dbisos, unpack, selected_histories)
 
-        return isotopes
+        self._get_blanks(meas_analysis, selected_histories)
 
-    def _get_blanks(self, isodict, meas_analysis):
-        selected_histories = meas_analysis.selected_histories
+    def _get_signals(self, meas_analysis, dbisos, unpack, selected_histories):
+        d = self.isotopes
+        default_fit = self._default_fit_factory('linear', 'SEM')
+        for iso in dbisos:
+            mw = iso.molecular_weight
+            if not iso.kind == 'signal' or not mw:
+                continue
+
+            name = mw.name
+            if name in d:
+                continue
+
+            if not iso.detector:
+                continue
+
+            det = iso.detector.name
+
+            # todo: this needs to be fixed to handle data_reduction_tag
+            # if analysis has a dr tag then get its associated select_histories entry
+            # the get the select_fits then the associated results
+            if selected_histories is None:
+                try:
+                    result = iso.results[-1]
+                except IndexError:
+                    result = None
+
+            r = Isotope(mass=mw.mass,
+                        dbrecord=iso,
+                        dbresult=result,
+                        name=name,
+                        detector=det,
+                        unpack=unpack)
+            if r.unpack_error:
+                self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
+                self.temp_status = 1
+            else:
+                fit = self.get_db_fit(meas_analysis, name, 'signal', selected_histories)
+                if fit is None:
+                    fit = default_fit()
+                r.set_fit(fit, notify=False)
+                d[name] = r
+
+    def _get_baselines(self, meas_analysis, dbisos, unpack, selected_histories):
+        isotopes = self.isotopes
+        default_fit = self._default_fit_factory('average', 'SEM')
+        for dbiso in dbisos:
+            mw = dbiso.molecular_weight
+            if not mw:
+                continue
+
+            name = mw.name
+            try:
+                iso = isotopes[name]
+            except KeyError:
+                continue
+
+            det = dbiso.detector.name
+            kw = dict(dbrecord=dbiso,
+                      name=name,
+                      detector=det,
+                      unpack=unpack)
+
+            kind = dbiso.kind
+            if kind == 'baseline':
+                if selected_histories is None:
+                    # todo: this needs to be fixed to handle data_reduction_tag
+                    try:
+                        result = dbiso.results[-1]
+                    except IndexError:
+                        result = None
+
+                kw['name'] = '{} bs'.format(name)
+                r = Baseline(dbresult=result, **kw)
+                fit = self.get_db_fit(meas_analysis, name, 'baseline', selected_histories)
+                if fit is None:
+                    fit = default_fit()
+
+                r.set_fit(fit, notify=False)
+                iso.baseline = r
+            elif kind == 'sniff' and unpack:
+                r = Sniff(**kw)
+                iso.sniff = r
+
+    def _default_fit_factory(self, fit, error):
+        def factory():
+            return Fit(fit=fit,
+                       error_type=error,
+                       filter_outliers=False,
+                       filter_outlier_iterations=1,
+                       filter_outlier_std_devs=2,
+                       include_baseline_error=False,
+                       time_zero_offset=0)
+
+        return factory
+
+    # def _get_blanks(self, selected_histories):
+    def _get_blanks(self, meas_analysis, selected_histories):
+        isotopes = self.isotopes
+
+        if selected_histories is None:
+            selected_histories = meas_analysis.selected_histories
+
         if selected_histories:
             history = selected_histories.selected_blanks
-            keys = isodict.keys()
+            keys = isotopes.keys()
             if history:
                 for ba in history.blanks:
                     isok = ba.isotope
-                    if isok in keys:
-                        blank = isodict[isok].blank
+                    try:
+                        blank = isotopes[isok].blank
                         blank.name = n = '{} bk'.format(isok)
                         blank.set_uvalue((ba.user_value,
                                           ba.user_error), dirty=False)
@@ -533,102 +655,15 @@ class DBAnalysis(Analysis):
                         keys.remove(isok)
                         if not keys:
                             break
+                    except KeyError:
+                        pass
 
             # set names for isotopes with no blank
             for k in keys:
-                blank = isodict[k].blank
+                blank = isotopes[k].blank
                 n = '{} bk'.format(k)
                 blank.uvalue.tag = n
                 blank.name = n
-
-    def _get_signals(self, isodict, meas_analysis, dbisos, unpack):
-
-        for iso in dbisos:
-            mw = iso.molecular_weight
-            if not iso.kind == 'signal' or not mw:
-                continue
-
-            name = mw.name
-            if name in isodict:
-                continue
-
-            if not iso.detector:
-                continue
-
-            det = iso.detector.name
-
-            try:
-                result = iso.results[-1]
-                # result = timethis(lambda: iso.results[-1])
-            except IndexError:
-                result = None
-
-            r = Isotope(mass=mw.mass,
-                        dbrecord=iso,
-                        dbresult=result,
-                        name=name,
-                        detector=det,
-                        unpack=unpack)
-
-            if r.unpack_error:
-                self.warning('Bad isotope {} {}. error: {}'.format(self.record_id, name, r.unpack_error))
-                self.temp_status = 1
-            else:
-                fit = self.get_db_fit(meas_analysis, name, 'signal')
-                if fit is None:
-                    fit = Fit(fit='linear',
-                              error_type='SEM',
-                              filter_outliers=False,
-                              filter_outlier_iterations=1,
-                              filter_outlier_std_devs=2,
-                              include_baseline_error=False,
-                              time_zero_offset=0)
-                r.set_fit(fit, notify=False)
-                isodict[name] = r
-
-    def _get_baselines(self, isotopes, meas_analysis, dbisos, unpack):
-
-        for dbiso in dbisos:
-            mw = dbiso.molecular_weight
-            if not mw:
-                continue
-
-            name = mw.name
-            if not name in isotopes:
-                continue
-
-            det = dbiso.detector.name
-            iso = isotopes[name]
-
-            kw = dict(dbrecord=dbiso,
-                      name=name,
-                      detector=det,
-                      unpack=unpack)
-
-            kind = dbiso.kind
-            if kind == 'baseline':
-                try:
-                    result = dbiso.results[-1]
-                except IndexError:
-                    result = None
-
-                kw['name'] = '{} bs'.format(name)
-                r = Baseline(dbresult=result, **kw)
-                fit = self.get_db_fit(meas_analysis, name, 'baseline')
-                if fit is None:
-                    fit = Fit(fit='average',
-                              error_type='SEM',
-                              filter_outliers=False,
-                              filter_outlier_iterations=0,
-                              filter_outlier_std_devs=0,
-                              include_baseline_error=False,
-                              time_zero_offset=0)
-
-                r.set_fit(fit, notify=False)
-                iso.baseline = r
-            elif kind == 'sniff':
-                r = Sniff(**kw)
-                iso.sniff = r
 
     def _get_peak_center(self, meas_analysis):
 
@@ -660,15 +695,16 @@ class DBAnalysis(Analysis):
         """
             discriminations should be saved as 1amu not 4amu
         """
-        selected_hist = meas_analysis.selected_histories.selected_detector_param
         d = dict()
-        if selected_hist:
-            for dp in selected_hist.detector_params:
-                self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
-                d[dp.detector.name] = (disc, dp.refmass)
-                #d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
-                #dp=selected_hist.detector_param
-                #return ufloat(dp.disc, dp.disc_error)
+        if meas_analysis.selected_histories:
+            selected_hist = meas_analysis.selected_histories.selected_detector_param
+            if selected_hist:
+                for dp in selected_hist.detector_params:
+                    self.discrimination = disc = ufloat(dp.disc, dp.disc_error)
+                    d[dp.detector.name] = (disc, dp.refmass)
+                    # d[dp.detector.name] = (ufloat(1.004, 0.000145), dp.refmass)
+                    #dp=selected_hist.detector_param
+                    #return ufloat(dp.disc, dp.disc_error)
         return d
 
     def _get_sample(self, meas_analysis):

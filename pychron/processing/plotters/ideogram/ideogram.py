@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -238,8 +238,8 @@ class Ideogram(BaseArArFigure):
         plot.value_range.tight_bounds = True
         # ly, uh = po.ylimits
         # if uh < my:
-        self._set_y_limits(0, my, min_=0, pid=pid)
-
+        self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
+        print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
 
@@ -350,8 +350,7 @@ class Ideogram(BaseArArFigure):
         text = ''
         if self.options.display_mean:
             text = self._build_label_text(wm, we, mswd, valid_mswd, len(self.xs),
-                                          value_sig_figs=self.options.mean_sig_figs,
-                                          error_sig_figs=self.options.mean_error_sig_figs,
+                                          sig_figs=self.options.mean_sig_figs,
                                           percent_error=self.options.display_percent_error)
 
         m = MeanIndicatorOverlay(component=line,
@@ -468,8 +467,7 @@ class Ideogram(BaseArArFigure):
                     if ov.label:
                         ov.label.text = self._build_label_text(wm, we, mswd, valid_mswd, n,
                                                                percent_error=self.options.display_percent_error,
-                                                               value_sig_figs=self.options.mean_sig_figs,
-                                                               error_sig_figs=self.options.mean_error_sig_figs)
+                                                               sig_figs=self.options.mean_sig_figs)
 
             # update the data label position
             #for ov in sp.overlays:

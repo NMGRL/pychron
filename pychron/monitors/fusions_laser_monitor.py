@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,10 +25,11 @@ from pychron.monitors.laser_monitor import LaserMonitor
 
 NFAILURES = 3
 NTRIES = 3
+
+
 class FusionsLaserMonitor(LaserMonitor):
     '''
     '''
-
 
     max_coolant_temp = Float(25)
     max_coolant_temp_tries = Int(3)
@@ -50,7 +51,7 @@ class FusionsLaserMonitor(LaserMonitor):
         '''
         super(FusionsLaserMonitor, self).load_additional_args(self)
         self.set_attribute(config, 'max_coolant_temp',
-                       'General', 'max_coolant_temp', cast='float', optional=True)
+                           'General', 'max_coolant_temp', cast='float', optional=True)
 
     def _fcheck_interlocks(self):
         '''
@@ -63,20 +64,20 @@ class FusionsLaserMonitor(LaserMonitor):
         if interlocks:
             inter = ' '.join(interlocks)
             manager.emergency_shutoff(inter)
-#        elif interlocks is None:
-#            manager.emergency_shutoff(reason='failed checking interlocks')
+        #        elif interlocks is None:
+        #            manager.emergency_shutoff(reason='failed checking interlocks')
 
 
     def _fcheck_coolant_temp(self):
-        '''
-        '''
+        """
+        """
         manager = self.manager
 
         self.info('Check laser coolant temperature')
         ct = manager.get_coolant_temperature(verbose=False)
         if ct is None:
-#            self._invalid_checks.append('_FusionsLaserMonitor_check_coolant_temp')
-#            pass
+            #            self._invalid_checks.append('_FusionsLaserMonitor_check_coolant_temp')
+            #            pass
             self._chiller_unavailable()
         else:
             self._unavailable_cnt = 0
@@ -133,9 +134,6 @@ class FusionsLaserMonitor(LaserMonitor):
             self._cur_setpoints = []
 
     setpoint = property(fget=_get_setpoint, fset=_set_setpoint)
-
-
-
 
 
 #============= EOF ====================================

@@ -26,18 +26,15 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
-from pychron.processing.k3739_edit import K3739EditModel, K3739EditView
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
 from pychron.processing.tasks.actions.edit_actions import TagAction
 from pychron.processing.tasks.actions.processing_actions import SetInterpretedAgeTBAction, BrowseInterpretedAgeTBAction, \
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.analysis_edit.tags import Tag
+from pychron.processing.tagging.analysis_tags import Tag
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
@@ -54,7 +51,6 @@ from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
-from pychron.processing.utils.grouping import group_analyses_by_key
 
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
@@ -123,7 +119,7 @@ class FigureTask(AnalysisEditTask):
             # all_idxs = range(len(self.unknowns_pane.items))
             # selection = list(set(all_idxs) - set(idxs))
 
-            self.clear_grouping(refresh=False, selection=idxs)
+            self.clear_grouping(refresh=False, selection_idxs=idxs)
             self.active_editor.set_graph_group(
                 idxs,
                 self._get_unique_graph_id())
@@ -144,42 +140,27 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # grouping
     #===============================================================================
-
     def group_by_aliquot(self):
-        key = lambda x: x.aliquot
-        self._group_by(key)
+        if self.unknowns_pane and self.unknowns_pane.items:
+            self.unknowns_pane.group_by_aliquot()
 
     def group_by_labnumber(self):
-        key = lambda x: x.labnumber
-
-        self._group_by(key)
+        if self.unknowns_pane and self.unknowns_pane.items:
+            self.unknowns_pane.group_by_labnumber()
 
     def group_selected(self):
-        if self.unknowns_pane.selected:
-            self.active_editor.set_group(
-                self._get_selected_indices(),
-                self._get_unique_group_id())
-            self.refresh_active_editor()
+        if self.unknowns_pane and self.unknowns_pane.items:
+            self.unknowns_pane.group_by_selected()
 
-    def clear_grouping(self, refresh=True, selection=None):
+    def clear_grouping(self, refresh=True, selection_idxs=None):
         """
             if selected then set selected group_id to 0
             else set all to 0
         """
-        if self.active_editor:
-            if selection is None:
-                sel = self.unknowns_pane.selected
-                if sel:
-                    idx = self._get_selected_indices()
-                else:
-                    idx = range(len(self.unknowns_pane.items))
-            else:
-                idx = selection
 
-            self.active_editor.set_group(idx, 0)
-            if refresh:
-                self.unknowns_pane.refresh_needed = True
-
+        if self.unknowns_pane and self.unknowns_pane.items:
+            self.unknowns_pane.clear_grouping(refresh_plot=refresh,
+                                              idxs=selection_idxs)
     #===============================================================================
     # figures
     #===============================================================================
@@ -258,6 +239,7 @@ class FigureTask(AnalysisEditTask):
     def new_ideogram_from_file(self):
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/interpreted_ages/gee_sample_ages7.txt'
         p = '/Users/ross/Programming/git/dissertation/data/minnabluff/dryvalleys_comp.txt'
+        p = '/Users/ross/Programming/git/dissertation/data/minnabluff/dryvalleys_comp2.txt'
         if not os.path.isfile(p):
             self.open_file_dialog(default_directory=paths.data_dir)
 
@@ -277,18 +259,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
-    def modify_k3739(self):
-        if self.has_active_editor():
-            ans = self.unknowns_pane.selected
-            if not ans:
-                self.information_dialog('Please select a set of analyses from the Unknowns.')
-            else:
-                m = K3739EditModel(analyses=ans)
-                v = K3739EditView(model=m)
-                info = v.edit_traits()
-                if info.result:
-                    self.active_editor.clear_aux_plot_limits()
-                    self.active_editor.rebuild()
 
 
     def refresh_active_editor(self):
@@ -408,15 +378,6 @@ class FigureTask(AnalysisEditTask):
         self.editor_area.activate_editor(editor)
         return editor
 
-    def _group_by(self, key):
-
-        editor = self.active_editor
-        if editor:
-            items = self.unknowns_pane.items
-            group_analyses_by_key(editor, items, key)
-            self.unknowns_pane.refresh_needed = True
-            editor.rebuild()
-
     def _add_editor(self, editor, ans):
         ed = None
         if ans:
@@ -437,16 +398,17 @@ class FigureTask(AnalysisEditTask):
 
     def _add_unknowns_hook(self, *args, **kw):
         if self.active_editor:
-            if hasattr(self.active_editor, 'auto_group'):
-                if self.active_editor.auto_group:
-                    self.group_by_labnumber()
-                    for ai in self.active_editor.associated_editors:
-                        if isinstance(ai, FigureEditor):
-                            ai.rebuild_graph()
+            # if hasattr(self.active_editor, 'auto_group'):
+            # if self.active_editor.auto_group:
+            if self.unknowns_pane.auto_group and self.active_editor.auto_group:
+                self.group_by_labnumber()
+                    # for ai in self.active_editor.associated_editors:
+                    # if isinstance(ai, FigureEditor):
+                    #         ai.rebuild_graph()
 
-    def _get_unique_group_id(self):
-        gids = {i.group_id for i in self.unknowns_pane.items}
-        return max(gids) + 1
+    # def _get_unique_group_id(self):
+    # gids = {i.group_id for i in self.unknowns_pane.items}
+    #     return max(gids) + 1
 
     def _get_unique_graph_id(self):
         gids = {i.graph_id for i in self.unknowns_pane.items}
@@ -609,9 +571,9 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # handlers
     #===============================================================================
-    def _selected_projects_changed(self, new):
-        # self._load_project_figures(new)
-        super(FigureTask, self)._selected_projects_changed(new)
+    # def _selected_projects_changed(self, old, new):
+    #     # self._load_project_figures(new)
+    #     super(FigureTask, self)._selected_projects_changed(new)
 
     def _selected_samples_changed(self, new):
         self._load_sample_figures(new)
@@ -698,8 +660,9 @@ class FigureTask(AnalysisEditTask):
             if name == 'refresh_plot_needed':
                 # if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
                 print 'plotter options rebuild'
-                self.active_editor.rebuild()
-                self.active_editor.dump_tool()
+                if not isinstance(self.active_editor, RecallEditor):
+                    self.active_editor.rebuild()
+                    self.active_editor.dump_tool()
 
     def _active_editor_changed(self, new):
         if self.active_editor:

@@ -16,9 +16,11 @@
 
 #============= enthought library imports =======================
 from datetime import datetime
+
 from traits.api import List
 from pyface.api import SplashScreen
 from pyface.image_resource import ImageResource
+
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
@@ -84,6 +86,8 @@ class PychronApplication(BaseTasksApplication):
 
         return '{} {}'.format(self.name, version.__version__)
 
+    def get_service_by_name(self, protocol, name):
+        return self.get_service(protocol, 'name=="{}"'.format(name))
 
 #============= views ===================================
 #============= EOF ====================================

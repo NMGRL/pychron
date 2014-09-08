@@ -60,7 +60,7 @@ class LabnumberEntryTask(BaseManagerTask, BrowserMixin):
             message = 'You have unsaved changes. Save changes to Database?'
             ret = self._handle_prompt_for_save(message)
             if ret == 'save':
-                self.manager.save()
+                return self.manager.save()
             return ret
         return True
 

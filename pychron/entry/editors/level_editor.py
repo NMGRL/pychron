@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import datetime
 import os
 import struct
 
@@ -24,6 +25,8 @@ from pyface.file_dialog import FileDialog
 from traits.api import List, Instance, Str, Float, Any, Button, Property, HasTraits
 from traitsui.api import View, Item, TabularEditor, HGroup, UItem, VSplit, Group, VGroup, \
     HSplit
+
+
 
 
 #============= standard library imports ========================
@@ -60,14 +63,13 @@ class NewProduction(HasTraits):
         v = View(HGroup('name', 'reactor'),
                  buttons=['OK', 'Cancel', 'Revert'],
                  title='New Production Ratio',
-                 kind='livemodal'
-        )
+                 kind='livemodal')
         return v
 
 
 class ProductionAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Reactor', 'reactor')]
-    font = 'arial 10'
+    columns = [('Name', 'name'), ('Reactor', 'reactor'), ('Last Modified', 'last_modified')]
+    font = '10'
 
 
 class TrayAdapter(TabularAdapter):
@@ -155,6 +157,7 @@ class LevelEditor(Loggable):
             if level.production:
                 self.selected_production = next((p for p in self.productions
                                                  if p.name == level.production.name), None)
+            original_tray = None
             if level.holder:
                 self.selected_tray = next((t for t in self.trays if t == level.holder.name), None)
                 original_tray=self.selected_tray
@@ -302,6 +305,9 @@ class LevelEditor(Loggable):
                         self.debug('setting {}={}'.format(k, v))
                         setattr(ip, k, v)
 
+                    ip.note = prod.note
+                    ip.last_modified = datetime.now()
+
     def _add_production(self):
         pr = NewProduction()
         info = pr.edit_traits()
@@ -320,7 +326,7 @@ class LevelEditor(Loggable):
                         else:
                             pp=IrradiationProduction()
 
-                        db.add_irradiation_production(name=pr.name)
+                        db.add_irradiation_production(name=pr.name, last_modified=datetime.now())
                         pp.name=pr.name
                         self.productions.append(pp)
 

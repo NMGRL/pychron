@@ -175,8 +175,8 @@ class SystemMonitorTask(FigureTask):
 
     def activated(self):
         self._make_connections()
-        #editor = self.add_system_monitor()
-        self._setup_dashboard_client()
+        # editor = self.add_system_monitor()
+        # self._setup_dashboard_client()
 
         #if editor:
         #    ideo = self.new_ideogram(add_table=False, add_iso=False)

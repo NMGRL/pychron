@@ -22,6 +22,7 @@ from pychron.processing.plotters.graph_panel_info import GraphPanelInfo
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -70,7 +71,7 @@ class FigureContainer(HasTraits):
                                bgcolor='white',
                                fill_padding=True,
                                use_backbuffer=True,
-                               padding_top=10)
+                               padding_top=0)
         return op, r, c
 
 

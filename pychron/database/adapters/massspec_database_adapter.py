@@ -159,6 +159,9 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                         a = a or 0
                         return int(a), s
 
+    def get_analysis_rid(self, rid):
+        return self._retrieve_item(AnalysesTable, rid, key='RID')
+
     def get_analysis(self, value, aliquot=None, step=None):
         #        key = 'RID'
         key = 'IrradPosition'

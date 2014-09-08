@@ -326,7 +326,7 @@ class SystemMonitorEditor(SeriesEditor):
                 ai.calculate_age()
 
         editor.set_items(ans, update_graph=False)
-        group_analyses_by_key(editor, editor.analyses, 'labnumber')
+        group_analyses_by_key(editor.analyses, 'labnumber')
 
         editor.clear_aux_plot_limits()
         do_later(editor.rebuild)

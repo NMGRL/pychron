@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,16 +40,12 @@ class ControlPane(TraitsDockPane):
         v = View(
             VGroup(
                 UItem('execute',
-                      editor=ButtonEditor(label_value='execute_label')
-                ),
+                      editor=ButtonEditor(label_value='execute_label')),
                 VGroup(
                     UItem('use_trace'),
                     UItem('trace_delay', label='Delay (ms)'),
                     show_border=True,
-                    label='Trace'
-                )
-            )
-        )
+                    label='Trace')))
         return v
 
 
@@ -60,8 +56,7 @@ class DescriptionPane(TraitsDockPane):
     def traits_view(self):
         v = View(
             UItem('description',
-                  style='readonly'
-            )
+                  style='readonly')
 
             #                 'object.selected_command_object',
             #                 show_label=False,
@@ -79,22 +74,24 @@ class ExamplePane(TraitsDockPane):
     def traits_view(self):
         v = View(
             UItem('example',
-                  style='readonly'
-            )
-
-            #                 'object.selected_command_object',
-            #                 show_label=False,
-            #                 style='custom',
-            #                 height=0.25,
-            #                 editor=InstanceEditor(view='help_view')
-        )
+                  style='readonly'))
         return v
 
 
-class EditorPane(TraitsDockPane):
-    name = 'Editor'
-    id = 'pychron.pyscript.editor'
-    editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+# class EditorPane(TraitsDockPane):
+# name = 'Editor'
+#     id = 'pychron.pyscript.editor'
+#     editor = Instance('pychron.pyscripts.parameter_editor.ParameterEditor')
+#
+#     def traits_view(self):
+#         v = View(UItem('editor', style='custom'))
+#         return v
+
+
+class ContextEditorPane(TraitsDockPane):
+    name = 'Context'
+    id = 'pychron.pyscript.context_editor'
+    editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
 
     def traits_view(self):
         v = View(UItem('editor', style='custom'))
@@ -104,7 +101,6 @@ class EditorPane(TraitsDockPane):
 class CommandsAdapter(TabularAdapter):
     columns = [('Name', 'name')]
     name_text = Property
-    #
     def _get_name_text(self, *args, **kw):
         return self.item
 
@@ -113,12 +109,15 @@ class CommandEditorPane(TraitsDockPane):
     name = 'Commands Editor'
     id = 'pychron.pyscript.commands_editor'
     command_object = Any
+    insert_button = Button
 
     def traits_view(self):
-        v = View(UItem('command_object',
-                       width=-275,
-                       editor=InstanceEditor(),
-                       style='custom'))
+        v = View(
+            UItem('insert_button', enabled_when='command_object'),
+            UItem('command_object',
+                  width=-275,
+                  editor=InstanceEditor(),
+                  style='custom'))
         return v
 
 
@@ -143,7 +142,6 @@ class CommandsPane(TraitsDockPane):
             s = s[:-1]
             self.command_object.load_str(s)
 
-
     def _selected_command_changed(self):
         if self.selected_command:
             obj = next((ci for ci in self.command_objects
@@ -163,11 +161,8 @@ class CommandsPane(TraitsDockPane):
                       editor=myTabularEditor(operations=['move'],
                                              adapter=CommandsAdapter(),
                                              editable=True,
-                                             selected='selected_command'
-                      ),
-                      width=200,
-        )
-        )
+                                             selected='selected_command'),
+                      width=200, ))
         return v
 
 

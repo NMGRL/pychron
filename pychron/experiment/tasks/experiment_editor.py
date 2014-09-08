@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,12 +21,17 @@ from traitsui.api import View, UItem
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
-
+from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter
+from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
+    ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.core.helpers.filetools import add_extension
+
+
+class ExperimentEditorHandler(TabularEditorHandler):
+    refresh_name = 'refresh_table_needed'
 
 
 class ExperimentEditor(BaseTraitsEditor):
@@ -38,6 +43,7 @@ class ExperimentEditor(BaseTraitsEditor):
 
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
+    executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
@@ -66,8 +72,9 @@ class ExperimentEditor(BaseTraitsEditor):
         arun_grp = UItem('automated_runs',
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
-                                                            'move'],
+                                                            'move', 'edit'],
                                                 editable=True,
+                                                show_row_titles=True,
                                                 dclicked='dclicked',
                                                 selected='selected',
                                                 paste_function='paste_function',
@@ -78,10 +85,13 @@ class ExperimentEditor(BaseTraitsEditor):
                          height=200)
 
         executed_grp = UItem('executed_runs',
-                             editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
+                             editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
                                                     editable=False,
                                                     auto_update=True,
                                                     selectable=True,
+                                                    pastable=False,
+                                                    link_copyable=False,
+                                                    paste_function='executed_paste_function',
                                                     copy_cache='linked_copy_cache',
                                                     selected='executed_selected',
                                                     multi_select=True,
@@ -92,6 +102,7 @@ class ExperimentEditor(BaseTraitsEditor):
         v = View(
             executed_grp,
             arun_grp,
+            handler=ExperimentEditorHandler(),
             resizable=True)
         return v
 
@@ -140,7 +151,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
             err = hec.check_queue(qi)
             if err:
-                self.warning_dialog(err)
                 break
 
         else:
@@ -175,8 +185,6 @@ class ExperimentEditor(BaseTraitsEditor):
         if self.path:
             name = os.path.basename(self.path)
             name, _ = os.path.splitext(name)
-        #             if self.merge_id:
-        #                 name = '{}-{:02n}'.format(name, self.merge_id)
         else:
             name = 'Untitled'
         return name
@@ -184,5 +192,6 @@ class ExperimentEditor(BaseTraitsEditor):
 
 class UVExperimentEditor(ExperimentEditor):
     tabular_adapter_klass = UVAutomatedRunSpecAdapter
+    executed_tabular_adapter_klass = ExecutedUVAutomatedRunSpecAdapter
 
 #============= EOF =============================================

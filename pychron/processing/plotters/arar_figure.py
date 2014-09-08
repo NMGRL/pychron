@@ -1,29 +1,30 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-import re
 
 from chaco.array_data_source import ArrayDataSource
-from numpy import Inf, inf
 from traits.api import HasTraits, Any, Int, Str, Tuple, Property, \
     Event, Bool, cached_property, on_trait_change
 from chaco.tools.data_label_tool import DataLabelTool
-
+from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
+from numpy import Inf, inf
+import re
+from uncertainties import std_dev, nominal_value
 #============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
@@ -32,7 +33,6 @@ from pychron.processing.plotters.points_label_overlay import PointsLabelOverlay
 from pychron.processing.plotters.sparse_ticks import SparseLogTicks, SparseTicks
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.processing.plotters.flow_label import FlowDataLabel
-from chaco.tools.broadcaster import BroadcasterTool
 from pychron.graph.tools.rect_selection_tool import RectSelectionOverlay, \
     RectSelectionTool
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
@@ -69,6 +69,8 @@ class BaseArArFigure(HasTraits):
     xpad = None
 
     title = Str
+
+    bgcolor = None
 
     def _add_limit_tool(self, plot, orientation):
         t = LimitsTool(component=plot,
@@ -108,6 +110,8 @@ class BaseArArFigure(HasTraits):
 
             pp.y_axis.title_font = options.ytitle_font
             pp.y_axis.tick_label_font = options.ytick_font
+
+            pp.bgcolor = options.plot_bgcolor
 
             if po:
                 pp.value_scale = po.scale
@@ -219,11 +223,10 @@ class BaseArArFigure(HasTraits):
             def gen():
                 for ai in self.sorted_analyses:
                     r = ai.get_ratio(attr)
-                    if r is not None:
-                        yield r
-                        # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
-                        # if n is not None and d is not None:
-                        #     yield nv/dv
+                    yield r or 0
+                    # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
+                    # if n is not None and d is not None:
+                    #     yield nv/dv
         else:
             def gen():
                 # f = lambda x: x
@@ -231,9 +234,10 @@ class BaseArArFigure(HasTraits):
                 #     f = lambda x: x.get_intensity()
 
                 for ai in self.sorted_analyses:
-                    v= ai.get_value(attr)
-                    if v is not None:
-                        yield v
+                    v = ai.get_value(attr)
+                    yield v or 0
+                    # if v is not None:
+                    #     yield v
                     # yield f(ai.get_value(attr))
         return gen()
 
@@ -243,13 +247,13 @@ class BaseArArFigure(HasTraits):
         mi, ma = self.graph.get_y_limits(plotid=pid)
 
         # print pid, self.group_id, mi, ma, a, b
-        mi = min(mi, a)
-        ma = max(ma, b)
+        # mi = min(mi, a)
+        # ma = max(ma, b)
 
-        if min_ is not None:
-            mi = min_
-        if max_ is not None:
-            ma = max_
+        mi = min_ if min_ is not None else min(mi, a)
+
+        ma = max_ if max_ is not None else max(ma, b)
+
         self.graph.set_y_limits(min_=mi, max_=ma, pad=pad, plotid=pid)
 
     def update_options_limits(self, pid):
@@ -274,25 +278,28 @@ class BaseArArFigure(HasTraits):
         return omits
 
     def _plot_radiogenic_yield(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('rad40_percent')])
-        return self._plot_aux('%40Ar*', 'rad40_percent', ys, po, plot, pid, es, **kw)
+        k = 'rad40_percent'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('%40Ar*', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kcl(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('kcl')])
-        return self._plot_aux('K/Cl', 'kcl', ys, po, plot, pid, es, **kw)
+        k = 'kcl'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Cl', k, ys, po, plot, pid, es, **kw)
 
     def _plot_kca(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('kca')])
-        return self._plot_aux('K/Ca', 'kca', ys, po, plot, pid, es, **kw)
+        k = 'kca'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K/Ca', k, ys, po, plot, pid, es, **kw)
 
     def _plot_moles_k39(self, po, plot, pid, **kw):
-        ys, es = zip(*[(ai.nominal_value, ai.std_dev)
-                       for ai in self._unpack_attr('k39')])
+        k = 'k39'
+        ys, es = self._get_aux_plot_data(k)
+        return self._plot_aux('K39(fA)', k, ys, po, plot, pid, es, **kw)
 
-        return self._plot_aux('K39(fA)', 'k39', ys, po, plot, pid, es, **kw)
+    def _get_aux_plot_data(self, k):
+        vs = self._unpack_attr(k)
+        return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
     #===============================================================================
     #
@@ -316,8 +323,7 @@ class BaseArArFigure(HasTraits):
         ov = PointsLabelOverlay(component=scatter,
                                 labels=labels,
                                 label_box=self.options.label_box,
-                                font='modern {}'.format(self.options.label_fontsize)
-        )
+                                font='modern {}'.format(self.options.label_fontsize))
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
@@ -401,9 +407,7 @@ class BaseArArFigure(HasTraits):
 
     def _build_label_text(self, x, we, mswd, valid_mswd, n,
                           percent_error=False,
-                          value_sig_figs=3,
-                          error_sig_figs=4
-    ):
+                          sig_figs=3):
         display_n = True
         display_mswd = n >= 2
         if display_n:
@@ -417,8 +421,8 @@ class BaseArArFigure(HasTraits):
         else:
             mswd = ''
 
-        sx = floatfmt(x, value_sig_figs)
-        swe = floatfmt(we, error_sig_figs)
+        sx = floatfmt(x, sig_figs)
+        swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ('uF', 'Ar40/Ar36'):
             me = '{} +/-{}'.format(sx, swe)

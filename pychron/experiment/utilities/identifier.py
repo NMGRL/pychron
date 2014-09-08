@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +73,16 @@ if differed:
 SPECIAL_KEYS = map(str.lower, SPECIAL_MAPPING.values())
 
 
+def convert_identifier_to_int(ln):
+    m = {'ba':1,'bc':2,'bu':3,'bg':4,'u':5,'c':6}
+
+    try:
+        return int(ln)
+    except ValueError:
+        return m[ln]
+
+
+
 def convert_special_name(name, output='shortname'):
     """
         input name output shortname
@@ -125,6 +135,9 @@ def convert_identifier(identifier):
 
 
 def get_analysis_type(idn):
+    """
+        idn: str like 'a-...' or '43513'
+    """
     idn = idn.lower()
 
     #     if '-' in idn:
@@ -135,10 +148,10 @@ def get_analysis_type(idn):
         return 'background'
     elif idn.startswith('ba'):
         return 'blank_air'
-    elif idn.startswith('bu'):
-        return 'blank_unknown'
     elif idn.startswith('bc'):
         return 'blank_cocktail'
+    elif idn.startswith('b'):
+        return 'blank_unknown'
     elif idn.startswith('a'):
         return 'air'
     elif idn.startswith('c'):

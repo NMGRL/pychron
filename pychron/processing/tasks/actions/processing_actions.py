@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -224,6 +224,17 @@ class RecallAction(Action):
         task = app.get_task('pychron.recall')
 
 
+class ConfigureRecallAction(myTaskAction):
+    name = 'Configure Recall'
+    method = 'configure_recall'
+    image = icon('cog.png')
+    task_ids = List(['pychron.recall', 'pychron.processing.figures',
+                     'pychron.processing.blanks',
+                     'pychron.processing.isotope_evolution',
+                     'pychron.processing.ic_factor',
+                     'pychron.processing.discrimination'])
+
+
 class OpenInterpretedAgeAction(Action):
     name = 'Browse Interpreted Ages'
 
@@ -281,11 +292,23 @@ class ExportAnalysesAction(Action):
         app.open_task('pychron.export')
 
 
-class ModifyK3739Action(FigureTaskAction):
+class ModifyK3739Action(myTaskAction):
     name = 'Modify (37/39)K...'
     method = 'modify_k3739'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall', 'pychron.processing.isotope_evolution'])
 
 
+class SplitEditorActionHor(myTaskAction):
+    name = 'Split Editor Horizontal'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_hor'
+
+
+class SplitEditorActionVert(myTaskAction):
+    name = 'Split Editor Vertical'
+    task_ids = List(['pychron.processing.figures', 'pychron.recall'])
+    method = 'split_editor_area_vert'
+    image = icon('split_vertical')
 
 
 #============= EOF =============================================

@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@
 # ETSConfig.toolkit = 'qt4'
 
 from pychron.core.ui import set_qt
+
 set_qt()
 
 import os
@@ -39,9 +40,9 @@ class PatternMakerView(Saveable, Patternable):
                          'LineSpiral',
                          'SquareSpiral',
                          'Random',
-                         'CircularContour'),
+                         'CircularContour', 'Trough', 'Rubberband', 'RasterRubberband'),
                     depends_on='_kind')
-    _kind = Str('Polygon')
+    _kind = Str('Rubberband')
 
     def load_pattern(self, path=None):
         if path is None:
@@ -92,9 +93,9 @@ class PatternMakerView(Saveable, Patternable):
                  show_label=False),
             handler=self.handler_klass,
             buttons=SaveableButtons,
+            height=425,
             title='Pattern Editor',
-            resizable=True,
-        )
+            resizable=True)
         return v
 
     #===============================================================================

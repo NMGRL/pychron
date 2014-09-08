@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,9 @@ import re
 
 from traits.api import HasTraits, Str, Float, Property, Instance, \
     Array, String, Either, Dict, cached_property, Event, List, Bool
+
+
+
 
 
 #============= standard library imports ========================
@@ -54,6 +57,8 @@ class BaseMeasurement(HasTraits):
     reverse_unpack = False
     time_zero_offset = Float
     offset_xs = Property
+
+    # __slots__ = ['xs', 'ys', 'n', 'name', 'mass', 'detector', 'time_zero_offset']
 
     def __init__(self, dbrecord=None, unpack=False, unpacker=None, *args, **kw):
         super(BaseMeasurement, self).__init__(*args, **kw)
@@ -137,6 +142,13 @@ class IsotopicMeasurement(BaseMeasurement):
     _oerror = None
     _ovalue = None
 
+    # __slots__ = ['_fit', '_value', '_error', 'filter_outliers_dict',
+    # 'include_baseline_error',
+    #              '_ovalue', '_oerror',
+    #              'include_baseline_error', 'use_static',
+    #              'user_defined_value',
+    #              'user_defined_error', 'fit_blocks', 'error_type']
+
     def __init__(self, dbresult=None, *args, **kw):
 
         if dbresult:
@@ -209,15 +221,18 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def set_fit(self, fit, notify=True):
         if fit is not None:
-            self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
-                                             iterations=int(fit.filter_outlier_iterations or 0),
-                                             std_devs=int(fit.filter_outlier_std_devs or 0))
-            # self.error_type=fit.error_type or 'SEM'
-            self.trait_set(fit=fit.fit,
-                           time_zero_offset=fit.time_zero_offset or 0,
-                           error_type=fit.error_type or 'SEM',
-                           trait_change_notify=notify)
-            self.include_baseline_error = fit.include_baseline_error or False
+            if isinstance(fit, (int, str)):
+                self.trait_set(fit=fit, trait_change_notify=notify)
+            else:
+                self.filter_outliers_dict = dict(filter_outliers=bool(fit.filter_outliers),
+                                                 iterations=int(fit.filter_outlier_iterations or 0),
+                                                 std_devs=int(fit.filter_outlier_std_devs or 0))
+                # self.error_type=fit.error_type or 'SEM'
+                self.trait_set(fit=fit.fit,
+                               time_zero_offset=fit.time_zero_offset or 0,
+                               error_type=fit.error_type or 'SEM',
+                               trait_change_notify=notify)
+                self.include_baseline_error = fit.include_baseline_error or False
 
     def set_uvalue(self, v, dirty=True):
         if isinstance(v, tuple):
@@ -354,8 +369,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
 
 class CorrectionIsotopicMeasurement(IsotopicMeasurement):
-    pass
-
     def __init__(self, dbrecord=None, *args, **kw):
         if dbrecord:
             self._value = dbrecord.user_value if dbrecord.user_value is not None else 0
@@ -379,6 +392,7 @@ class Sniff(BaseMeasurement):
 class BaseIsotope(IsotopicMeasurement):
     baseline = Instance(Baseline, ())
     baseline_fit_abbreviation = Property(depends_on='baseline:fit')
+    # __slots__ = ['baseline']
 
     def get_baseline_corrected_value(self):
         b = self.baseline.uvalue
@@ -409,15 +423,33 @@ class Isotope(BaseIsotope):
 
     age_error_component = Float(0.0)
     temporary_ic_factor = None
+    decay_corrected = None
 
     discrimination = Either(Variable, AffineScalarFunc)
 
     interference_corrected_value = Either(Variable, AffineScalarFunc)
 
+    # __slots__ = ['interference_corrected_value',
+    # 'discrimination', 'ic_factor',
+    #              'sniff', 'blank', 'background'
+    #                                'age_error_component']
+
+    def get_filtered_data(self):
+        return self.regressor.calculate_filtered_data()
+
+    def get_filtered_data(self):
+        return self.regressor.calculate_filtered_data()
+
     def revert_user_defined(self):
         self.blank._revert_user_defined()
         self.baseline._revert_user_defined()
         self._revert_user_defined()
+
+    def get_decay_corrected_value(self):
+        if self.decay_corrected is not None:
+            return self.decay_corrected
+        else:
+            return self.get_interference_corrected_value()
 
     def get_interference_corrected_value(self):
         if self.interference_corrected_value is not None:

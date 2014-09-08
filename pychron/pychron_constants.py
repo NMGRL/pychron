@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,10 +62,14 @@ ALPHAS = [a for a in seeds] + ['{}{}'.format(a, b)
                                for b in seeds]
 
 
+def alpha_to_int(s):
+    return ALPHAS.index(s)
+
+
 def alphas(idx):
-    '''
+    """
         idx should be 0-base ie. idx=0 ==>A
-    '''
+    """
     if idx < 26:
         return seeds[idx]
     else:

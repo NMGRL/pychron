@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +17,10 @@
 #============= enthought library imports =======================
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
-from pyface.tasks.task_window_layout import TaskWindowLayout
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
+from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
 
 class HopsEditorAction(Action):
@@ -60,46 +60,36 @@ class NewHopsEditorAction(HopsEditorAction):
         m.new()
 
 
-class OpenPyScriptAction(Action):
+class OpenPyScriptAction(FileOpenAction):
     """
     """
     description = 'Open pyscript'
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
-
-    def perform(self, event):
-        if event.task.id == 'pychron.pyscript':
-            task = event.task
-            task.open()
-        else:
-            application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.pyscript',
-                                                             size=(1200, 100)))
-            task = win.active_task
-            test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
-            # test_path='/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
-            if task.open(path=test_path):
-                win.open()
+    task_id = 'pychron.pyscript'
+    # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
+    test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
 
 
-class NewPyScriptAction(Action):
+class NewPyScriptAction(NewAction):
     """
     """
     description = 'New pyscript'
     name = 'New Script'
+    task_id = 'pychron.pyscript'
     #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
-    def perform(self, event):
-        if event.task.id == 'pychron.pyscript':
-            task = event.task
-            task.new()
-        else:
-            application = event.task.window.application
-            win = application.create_window(TaskWindowLayout('pychron.pyscript'))
-            task = win.active_task
-            if task.new():
-                win.open()
+    # def perform(self, event):
+    #     if event.task.id == 'pychron.pyscript':
+    #         task = event.task
+    #         task.new()
+    #     else:
+    #         application = event.task.window.application
+    #         win = application.create_window(TaskWindowLayout('pychron.pyscript'))
+    #         task = win.active_task
+    #         if task.new():
+    #             win.open()
 
 
 class JumpToGosubAction(TaskAction):

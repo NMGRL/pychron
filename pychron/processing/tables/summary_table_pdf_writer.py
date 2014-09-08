@@ -135,9 +135,7 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
             age_err *= 1000
 
         age_sig_figs = self.options.age_sig_figs
-        age_err_sig_figs = self.options.age_err_sig_figs
         kca_sig_figs = self.options.kca_sig_figs
-        kca_err_sig_figs = self.options.kca_err_sig_figs
 
         row = Row(height=self.options.default_row_height)
         row.add_item(value=interpreted_age.sample)
@@ -155,9 +153,9 @@ class SummaryPDFTableWriter(BasePDFTableWriter):
         row.add_item(value=floatfmt(interpreted_age.kca,
                                     n=kca_sig_figs))
         row.add_item(value=floatfmt(interpreted_age.kca_err * kca_nsigma,
-                                    n=kca_err_sig_figs))
+                                    n=kca_sig_figs))
         row.add_item(value=floatfmt(age, n=age_sig_figs))
-        row.add_item(value=floatfmt(age_err * age_nsigma, n=age_err_sig_figs))
+        row.add_item(value=floatfmt(age_err * age_nsigma, n=age_sig_figs))
 
         return row
 

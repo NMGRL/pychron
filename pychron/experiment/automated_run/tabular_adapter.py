@@ -1,23 +1,26 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports=======================
+# ============= enthought library imports=======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Property, Int
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 #============= standard library imports ========================
+from pychron.core.helpers.filetools import to_bool
 from pychron.experiment.utilities.identifier import make_aliquot_step
 from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
     SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
@@ -33,7 +36,7 @@ COLORS = {'success': SUCCESS_COLOR,
           'invalid': 'red'}
 
 
-class AutomatedRunSpecAdapter(TabularAdapter):
+class ExecutedAutomatedRunSpecAdapter(TabularAdapter):
     font = 'arial 10'
     #===========================================================================
     # widths
@@ -58,6 +61,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     measurement_script_width = Int(90)
     truncate_condition_width = Int(80)
     syn_extraction_width = Int(80)
+    use_cdd_warming_width = Int(80)
     post_measurement_script_width = Int(90)
     post_equilibration_script_width = Int(90)
 
@@ -70,9 +74,20 @@ class AutomatedRunSpecAdapter(TabularAdapter):
     beam_diameter_text = Property
     duration_text = Property
     cleanup_text = Property
-    # labnumber_text = Property
+
     aliquot_text = Property
     overlap_text = Property
+
+    # ===========================================================================
+    # non cell editable
+    # ===========================================================================
+    labnumber_text = Property
+    extraction_script_text = Property
+    measurement_script_text = Property
+    post_measurement_script_text = Property
+    post_equilibration_script_text = Property
+    sample_text = Property
+    use_cdd_warming_text = Property
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
@@ -93,6 +108,44 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
         return color
 
+    # ============ non cell editable ============
+    def _get_labnumber_text(self, trait, item):
+        return self.item.labnumber
+
+    def _set_labnumber_text(self, v):
+        pass
+
+    def _set_sample_text(self, v):
+        pass
+
+    def _get_sample_text(self):
+        return self.item.sample
+
+    def _get_extraction_script_text(self, trait, item):
+        return self.item.extraction_script
+
+    def _get_measurement_script_text(self, trait, item):
+        return self.item.measurement_script
+
+    def _get_post_measurement_script_text(self, trait, item):
+        return self.item.post_measurement_script
+
+    def _get_post_equilibration_script_text(self, trait, item):
+        return self.item.post_equilibration_script
+
+    def _set_extraction_script_text(self, v):
+        pass
+
+    def _set_measurement_script_text(self, v):
+        pass
+
+    def _set_post_measurement_script_text(self, v):
+        pass
+
+    def _set_post_equilibration_script_text(self, v):
+        pass
+
+    #============================================
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:
@@ -101,10 +154,6 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             if int(o):
                 return '{}'.format(o)
         return ''
-
-        # return '{},{}'.format
-
-    #     return self._get_number('overlap', fmt='{:n}')
 
     def _get_aliquot_text(self, trait, item):
         al = ''
@@ -128,6 +177,58 @@ class AutomatedRunSpecAdapter(TabularAdapter):
 
     def _get_cleanup_text(self, trait, item):
         return self._get_number('cleanup')
+
+    def _get_use_cdd_warming_text(self, trait, item):
+        return 'Yes' if self.item.use_cdd_warming else 'No'
+
+    # ===============set================
+    def _set_ramp_duration_text(self, v):
+        self._set_number(v, 'ramp_duration')
+
+    def _set_beam_diameter_text(self, v):
+        self._set_number(v, 'beam_diameter')
+
+    def _set_extract_value_text(self, v):
+        self._set_number(v, 'extract_value')
+
+    def _set_duration_text(self, v):
+        self._set_number(v, 'duration')
+
+    def _set_cleanup_text(self, v):
+        self._set_number(v, 'cleanup')
+
+    def _set_use_cdd_warming_text(self, v):
+        self.item.use_cdd_warming = to_bool(v)
+
+    # ==============validate================
+    def _validate_extract_value_text(self, v):
+        return self._validate_number(v, 'extract_value')
+
+    def _validate_ramp_duration_text(self, v):
+        return self._validate_number(v, 'ramp_duration')
+
+    def _validate_beam_diameter_text(self, v):
+        return self._validate_number(v, 'beam_diameter')
+
+    def _validate_extract_value_text(self, v):
+        return self._validate_number(v, 'extract_value')
+
+    def _validate_duration_text(self, v):
+        return self._validate_number(v, 'duration')
+
+    def _validate_cleanup_text(self, v):
+        return self._validate_number(v, 'cleanup')
+
+    #==========helpers==============
+    def _set_number(self, v, attr):
+        setattr(self.item, attr, v)
+
+    def _validate_number(self, v, attr):
+        try:
+            return float(v)
+        except ValueError:
+            return getattr(self.item, attr)
+
 
     def _get_number(self, attr, fmt='{:0.2f}'):
         """
@@ -169,6 +270,7 @@ class AutomatedRunSpecAdapter(TabularAdapter):
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
             ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Options', 'script_options'),
@@ -178,10 +280,29 @@ class AutomatedRunSpecAdapter(TabularAdapter):
         return cols
 
 
-class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
+class AutomatedRunMixin(object):
+    """
+        mixin for table of automated runs that have not yet been executed
+    """
+
+    def get_menu(self, *args):
+        return MenuManager(Action(name='Move to Start', action='move_to_start'),
+                           Action(name='Move to End', action='move_to_end'),
+                           Action(name='Move to ...', action='move_to_row'),
+                           Action(name='Unselect', action='unselect'))
+
+    def get_row_label(self, section, obj=None):
+        return section + 1
+
+
+class AutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedAutomatedRunSpecAdapter, ):
+    pass
+
+
+class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     def _columns_factory(self):
         cols = [
-            #                ('', 'state'),
+            # ('', 'state'),
             ('Labnumber', 'labnumber'),
             ('Aliquot', 'aliquot'),
             ('Sample', 'sample'),
@@ -197,11 +318,16 @@ class UVAutomatedRunSpecAdapter(AutomatedRunSpecAdapter):
             ('Measurement', 'measurement_script'),
             ('Truncate', 'truncate_condition'),
             ('SynExtraction', 'syn_extraction'),
+            ('CDDWarm', 'use_cdd_warming'),
             ('Post Eq.', 'post_equilibration_script'),
             ('Post Meas.', 'post_measurement_script'),
             ('Comment', 'comment')
         ]
 
         return cols
+
+
+class UVAutomatedRunSpecAdapter(AutomatedRunMixin, ExecutedUVAutomatedRunSpecAdapter):
+    pass
 
 #============= EOF =============================================

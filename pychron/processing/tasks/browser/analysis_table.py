@@ -29,6 +29,10 @@ class AnalysisTable(HasTraits):
     selected = Any
     dclicked = Any
 
+    # replace_event = Event
+    # append_event = Event
+    context_menu_event = Event
+
     analysis_filter = Str
     analysis_filter_values = List
     analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
@@ -59,7 +63,98 @@ class AnalysisTable(HasTraits):
     refresh_needed = Event
     tabular_adapter = Any
 
-    # def load(self):
+    def set_analyses(self, ans, tc=None, page=None, reset_page=False):
+        self.analyses = ans
+        self.oanalyses = ans
+        if tc is None:
+            tc = len(ans)
+
+        # self.n_all_analyses = tc
+        # if reset_page:
+        #     self.no_update = True
+        #     if page<0:
+        #         self.page=self.npages
+        #         self.scroll_to_row=self.page_width
+        #     else:
+        #         self.page = 1
+        #     self.no_update = False
+        # self.analysis_filter_values = vs
+        self._analysis_filter_parameter_changed(True)
+
+        #self.selected = ans[-1:]
+        #invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
+
+    #handlers
+    def _tabular_adapter_changed(self):
+        self.table_configurer.adapter = self.tabular_adapter
+        self.table_configurer.load()
+
+    @cached_property
+    def _get_analysis_filter_parameters(self):
+        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
+
+    def _analysis_filter_changed(self, new):
+        if new:
+            # self.analyses=[]
+            name = self.analysis_filter_parameter
+            # comp = self.analysis_filter_comparator
+            # if name == 'Step':
+            #     new = new.upper()
+
+            self.analyses = filter(filter_func(new, name), self.oanalyses)
+        else:
+            self.analyses = self.oanalyses
+
+    def _configure_analysis_table_fired(self):
+        self.table_configurer.edit_traits()
+
+    # def _get_npages(self):
+    #     try:
+    #         return int(math.ceil(self.n_all_analyses / float(self.page_width)))
+    #     except ZeroDivisionError:
+    #         return 0
+
+    def _analysis_filter_comparator_changed(self):
+        self._analysis_filter_changed(self.analysis_filter)
+
+    def _analysis_filter_parameter_changed(self, new):
+        if new:
+            vs = []
+            p = self._get_analysis_filter_parameter()
+            for si in self.oanalyses:
+                v = getattr(si, p)
+                if not v in vs:
+                    vs.append(v)
+
+            self.analysis_filter_values = vs
+
+    def _get_analysis_filter_parameter(self):
+        p = self.analysis_filter_parameter
+        return p.lower()
+
+    #defaults
+    def _table_configurer_default(self):
+        return AnalysisTableConfigurer(id='analysis.table',
+                                       title='Configure Analysis Table')
+
+    def _analysis_filter_parameter_default(self):
+        return 'record_id'
+#============= EOF =============================================
+#def filter_invalid(self, ans):
+#    if self.omit_invalid:
+#        ans = filter(self._omit_invalid_filter, ans)
+#    return ans
+
+#def _omit_invalid_filter(self, x):
+#    return x.tag != 'invalid'
+
+#def _omit_invalid_changed(self, new):
+#    if new:
+#        self._
+#        self.analyses = filter(self._omit_invalid_filter, self.oanalyses)
+#    else:
+#        self.analyses = self.oanalyses
+# def load(self):
     #     p = os.path.join(paths.hidden_dir, 'analysis_table')
     #     if os.path.isfile(p):
     #         d={}
@@ -86,102 +181,3 @@ class AnalysisTable(HasTraits):
     #     p = self.page
     #     p -= 1
     #     self.page = max(1, p)
-
-
-    def _tabular_adapter_changed(self):
-        self.table_configurer.adapter = self.tabular_adapter
-        self.table_configurer.load()
-
-    def _analysis_filter_parameter_default(self):
-        return 'record_id'
-
-    # def _analysis_filter_comparator_default(self):
-    #     return 'startswith'
-
-    @cached_property
-    def _get_analysis_filter_parameters(self):
-        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
-
-    def set_analyses(self, ans, tc=None, page=None, reset_page=False):
-        self.analyses = ans
-        self.oanalyses = ans
-        if tc is None:
-            tc = len(ans)
-
-        # self.n_all_analyses = tc
-        # if reset_page:
-        #     self.no_update = True
-        #     if page<0:
-        #         self.page=self.npages
-        #         self.scroll_to_row=self.page_width
-        #     else:
-        #         self.page = 1
-        #     self.no_update = False
-        # self.analysis_filter_values = vs
-        self._analysis_filter_parameter_changed(True)
-
-        #self.selected = ans[-1:]
-        #invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
-
-    def _analysis_filter_changed(self, new):
-        if new:
-            # self.analyses=[]
-            name = self.analysis_filter_parameter
-            # comp = self.analysis_filter_comparator
-            # if name == 'Step':
-            #     new = new.upper()
-
-            self.analyses = filter(filter_func(new, name), self.oanalyses)
-        else:
-            self.analyses = self.oanalyses
-
-    def _configure_analysis_table_fired(self):
-        # c = TableConfigurer(adapter=self.tabular_adapter,
-        #                     id='analysis.table',
-        #                     title='Configure Analysis Table')
-        self.table_configurer.edit_traits()
-        # c.edit_traits()
-
-    def _table_configurer_default(self):
-        return AnalysisTableConfigurer(id='analysis.table',
-                                       title='Configure Analysis Table')
-
-    # def _get_npages(self):
-    #     try:
-    #         return int(math.ceil(self.n_all_analyses / float(self.page_width)))
-    #     except ZeroDivisionError:
-    #         return 0
-
-    def _get_analysis_filter_parameter(self):
-        p = self.analysis_filter_parameter
-        return p.lower()
-
-    def _analysis_filter_comparator_changed(self):
-        self._analysis_filter_changed(self.analysis_filter)
-
-    def _analysis_filter_parameter_changed(self, new):
-        if new:
-            vs = []
-            p = self._get_analysis_filter_parameter()
-            for si in self.oanalyses:
-                v = getattr(si, p)
-                if not v in vs:
-                    vs.append(v)
-
-            self.analysis_filter_values = vs
-
-            #============= EOF =============================================
-            #def filter_invalid(self, ans):
-            #    if self.omit_invalid:
-            #        ans = filter(self._omit_invalid_filter, ans)
-            #    return ans
-
-            #def _omit_invalid_filter(self, x):
-            #    return x.tag != 'invalid'
-
-            #def _omit_invalid_changed(self, new):
-            #    if new:
-            #        self._
-            #        self.analyses = filter(self._omit_invalid_filter, self.oanalyses)
-            #    else:
-            #        self.analyses = self.oanalyses

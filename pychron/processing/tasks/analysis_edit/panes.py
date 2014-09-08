@@ -25,6 +25,7 @@ import shelve
 import hashlib
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.analysis_edit.table_filter import TableFilter
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -34,19 +35,21 @@ from pychron.paths import paths
 # from pychron.processing.analysis import Marker
 from pychron.processing.selection.previous_selection import PreviousSelection
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.processing.utils.grouping import group_analyses_by_key
 
 
 class TablePane(TraitsDockPane):
     append_button = Button
     replace_button = Button
     clear_button = Button
+    auto_group = Bool(True)
 
     items = List
 
     _no_update = False
     update_needed = Event
     refresh_needed = Event
-    refresh_editor_needed=Event
+    refresh_editor_needed = Event
 
     selected = Any
     dclicked = Any
@@ -114,6 +117,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             self._load()
         except BaseException:
             import traceback
+
             traceback.print_exc()
             self._remove_shelve()
 
@@ -122,6 +126,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
             self._dump_selection()
         except BaseException:
             import traceback
+
             traceback.print_exc()
             self._remove_shelve()
 
@@ -154,18 +159,18 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         def make_name(rec):
             s = rec[0]
             e = rec[-1]
-            samples=set((r.sample for r in rec))
-            sname=','.join(samples)
-            if len(sname)>20:
-                sname='{}...'.format(sname[:20])
+            samples = set((r.sample for r in rec))
+            sname = ','.join(samples)
+            if len(sname) > 20:
+                sname = '{}...'.format(sname[:20])
 
             if s != e:
-                if s.labnumber==e.labnumber:
-                    start=s.record_id
-                    end=e.aliquot_step_str
+                if s.labnumber == e.labnumber:
+                    start = s.record_id
+                    end = e.aliquot_step_str
                 else:
-                    start=s.record_id
-                    end=e.record_id
+                    start = s.record_id
+                    end = e.record_id
                 return '{} ({} - {})'.format(sname, start, end)
             else:
                 return '{} {}'.format(sname, s.record_id)
@@ -215,7 +220,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         return os.path.join(paths.hidden_dir, '{}_stored_selections'.format(self.id.split('.')[-1]))
 
     def _open_shelve(self):
-        p =self._get_shelve_path()
+        p = self._get_shelve_path()
         d = shelve.open(p)
         return d
 
@@ -233,6 +238,7 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                       tooltip=self._replace_tooltip),
                    icon_button_editor('clear_button', 'delete',
                                       tooltip=self._clear_tooltip),
+                   Item('auto_group'),
                    icon_button_editor('configure_filter_button', 'filter',
                                       tooltip='Configure/Apply a filter',
                                       enabled_when='items')),
@@ -249,7 +255,8 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
                                                   dclicked='dclicked',
                                                   refresh='refresh_needed',
                                                   multi_select=True,
-                                                  column_clicked='column_clicked'))))
+                                                  column_clicked='column_clicked'))),
+                 handler=UnknownsHandler())
         return v
 
     def configure_view(self):
@@ -263,7 +270,10 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         return v
 
     def _clear_button_fired(self):
-        self.items=[]
+        for it in self.items:
+            it.group_id = 0
+            it.graph_id = 0
+        self.items = []
 
     def _clear_history_button_fired(self):
         self._remove_shelve()
@@ -273,20 +283,80 @@ class HistoryTablePane(TablePane, ColumnSorterMixin):
         self.edit_traits(view='configure_view', kind='livemodal')
 
     def _configure_filter_button_fired(self):
-        tf=TableFilter(items=self.items)
-        info=tf.edit_traits(kind='livemodal')
+        tf = TableFilter(items=self.items)
+        info = tf.edit_traits(kind='livemodal')
         if info.result:
             if not tf.filtered:
                 tf.apply_filter()
 
             self.trait_set(items=tf.items, trait_change_notify=False)
-            self.refresh_needed=True
-            self.refresh_editor_needed=True
+            self.refresh_needed = True
+            self.refresh_editor_needed = True
 
+
+class UnknownsHandler(UnselectTabularEditorHandler):
+    def group_by_selected(self, info, obj):
+        obj.group_by_selected()
+
+    def clear_grouping(self, info, obj):
+        obj.clear_grouping()
+
+    def group_by_labnumber(self, info, obj):
+        obj.group_by_labnumber()
 
 class UnknownsPane(HistoryTablePane):
     id = 'pychron.processing.unknowns'
     name = 'Unknowns'
+
+    def _append_button_fired(self):
+        if self.auto_group:
+            self.group_appended()
+
+    def refresh(self):
+        self.refresh_editor_needed = True
+        self.refresh_needed = True
+
+    def group_by_labnumber(self):
+        self.group_by(key=lambda x: x.labnumber)
+
+    def group_by_aliquot(self):
+        self.group_by(key=lambda x: x.labnumber)
+
+    def group_by(self, key):
+        group_analyses_by_key(self.items, key)
+        self.refresh()
+
+    def group_by_selected(self):
+        max_gid = max([si.group_id for si in self.selected]) + 1
+
+        for si in self.selected:
+            si.group_id = max_gid
+
+        self.refresh()
+
+    def group_appended(self):
+        print len(self.items)
+
+
+    def clear_grouping(self, refresh_plot=True, idxs=None):
+        if idxs is None:
+            if self.selected and len(self.selected) > 1:
+                items = self.selected
+            else:
+                items = self.items
+        else:
+            items = (self.items[i] for i in idxs)
+
+        self._clear_grouping(items)
+
+        if refresh_plot:
+            self.refresh()
+        else:
+            self.refresh_needed = True
+
+    def _clear_grouping(self, items):
+        for si in items:
+            si.group_id = 0
 
 
 class ReferencesPane(HistoryTablePane):

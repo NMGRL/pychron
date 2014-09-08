@@ -25,11 +25,12 @@ from pychron.managers.manager import Manager
 
 
 class InvalidPipetteError(BaseException):
-    def __init__(self, name):
+    def __init__(self, name, av):
+        self.available = '\n'.join(av)
         self.name = name
 
     def __repr__(self):
-        return 'Invalid Pipette name={}'.format(self.name)
+        return 'Invalid Pipette name={} av={}'.format(self.name, self.available)
 
     def __str__(self):
         return repr(self)
@@ -51,8 +52,13 @@ class SimpleApisManager(Manager):
     available_pipettes = List
     available_blanks = List
 
+    mode = 'client'
+
     #for unittesting
     _timeout_flag = False
+
+    def test_connection(self):
+        return self.controller.test_connection()
 
     def set_extract_state(self, state):
         pass
@@ -61,46 +67,91 @@ class SimpleApisManager(Manager):
         blanks = self.controller.get_available_blanks()
         airs = self.controller.get_available_airs()
         if blanks:
-            self.available_blanks = blanks.split(',')
+            self.available_blanks = blanks.split('[13]')
         if airs:
-            self.available_pipettes = airs.split(',')
+            self.available_pipettes = airs.split('[13]')
+
+        #setup linking
+            # v = self.controller.isolation_valve
+            # elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+            # print elm
+            # print v
+            # if elm:
+            #     elm.link_valve_actuation(v, self.isolation_valve_state_change)
+            # else:
+            #     self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
+
+    # def isolation_valve_state_change(self, name, action):
+    #     self.controller.set_external_pumping(action == 'open')
 
     def bind_preferences(self, prefid):
         pass
 
+    def load_pipette_non_blocking(self, *args, **kw):
+        func = 'load_pipette'
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_pipettes, func, block=False, *args, **kw)
+        # self.controller.set_external_pumping()
+
+        return ret
+
+    def load_blank_non_blocking(self, *args, **kw):
+        func = 'load_blank'
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_blanks, func, block=False, *args, **kw)
+        # self.controller.set_external_pumping()
+        return ret
+
     def load_pipette(self, *args, **kw):
         func = 'load_pipette'
-        return self._load_pipette(self.available_pipettes, func, *args, **kw)
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_pipettes, func, *args, **kw)
+        # self.controller.set_external_pumping()
+
+        return ret
 
     def load_blank(self, *args, **kw):
         func = 'load_blank'
-        return self._load_pipette(self.available_blanks, func, *args, **kw)
+        # self.controller.set_external_pumping()
+        ret = self._load_pipette(self.available_blanks, func, *args, **kw)
+        # self.controller.set_external_pumping()
+        return ret
 
     #private
-    def _load_pipette(self, av, func, name, timeout=10, period=1):
+    def _load_pipette(self, av, func, name, script=None, block=True, timeout=10, period=1):
+        if script is None:
+            self.debug('Script is none. check ExtractionPyScript.extract_pipette')
+            raise NotImplementedError
+
         name = str(name)
         if not name in av:
-            raise InvalidPipetteError(name)
+            raise InvalidPipetteError(name, av)
 
         func = getattr(self.controller, func)
         func(name)
 
-        #wait for completion
-        return self._loading_complete(timeout=timeout, period=period)
+        if block:
+            #wait for completion
+            return self._loading_complete(script, timeout=timeout, period=period)
+        else:
+            return True
 
-    def _loading_complete(self, **kw):
+    def _loading_complete(self, script, **kw):
         if self._timeout_flag:
             return True
         else:
-            return self.controller.blocking_poll('get_loading_complete', **kw)
+            return self.controller.script_loading_block(script, **kw)
 
     def _test_script_button_fired(self):
         self.testing = True
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         e = ExtractionPyScript(manager=self)
-        e.setup_context(extract_device='')
-        e.extract_pipette(self.available_pipettes[0], timeout=3)
+        e.setup_context(extract_device='',
+                        analysis_type='blank')
+        # e.extract_pipette('Blank AC pt1 cc', timeout=120)
+        e.extract_pipette('Blank Air pt1 cc', timeout=120)
+        # e.extract_pipette(self.available_pipettes[0], timeout=3)
         self.testing = False
 
     def _test_commmand_changed(self):

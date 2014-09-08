@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,14 +105,14 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                 if idx % 2 == 0:
                     style.add('BACKGROUND', (0, idx), (-1, idx), self.options.alternating_background)
 
-        auto_col_widths = True
-        if auto_col_widths:
-            self._calculate_col_widths(data[2:])
-
         idx = len(data) - 1
         self._new_line(style, idx)
         s = self._make_summary_rows(group, idx + 1, style)
         data.extend(s)
+
+        auto_col_widths = True
+        if auto_col_widths:
+            self._calculate_col_widths(data[2:])
 
         t = self._new_table(style, data, repeatRows=4)
 
@@ -169,7 +169,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
             ('kca', error(n=2, s=1)),
             ('rad40_percent', value(n=1)),
             ('uage', value(n=2)),
-            ('age_err_wo_j', error(n=4)),
+            ('age_err_wo_j', error(n=2)),
         )
         default_fontsize = 6
 
@@ -240,52 +240,52 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
     def _make_summary_rows(self, agroup, idx, style):
         span = 14
-        wtd_mean_row = Row(fontsize=7, height=0.2)
-        wtd_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=span)
+        height = 0.12
+        fontsize = 6
+
+        wtd_mean_row = Row(fontsize=fontsize, height=height)
+        wtd_mean_row.add_item(value='<b>Weighted Mean Age</b>', span=span, include_width_calc=False)
         #wtd_mean_row.add_blank_item(n=10)
 
         wa = agroup.weighted_age
-        s = u'{} \u00b1{}'.format(self._value()(wa), self._error()(wa))
-        wtd_mean_row.add_item(value=s, span=-1)
+        s = u'{} \u00b1{}'.format(self._value(n=2)(wa), self._error(n=2)(wa))
+        wtd_mean_row.add_item(value=s, span=-1, include_width_calc=False)
 
         inta = agroup.integrated_age
-        int_row = Row(fontsize=7, height=0.2)
-        int_row.add_item(value='<b>Integrated</b>', span=span)
+        int_row = Row(fontsize=fontsize, height=height)
+        int_row.add_item(value='<b>Integrated</b>', span=span, include_width_calc=False)
 
-        s = u'{} \u00b1{}'.format(self._value()(inta), self._error()(inta))
-        int_row.add_item(value=s, span=-1)
+        s = u'{} \u00b1{}'.format(self._value(n=2)(inta), self._error(n=2)(inta))
+        int_row.add_item(value=s, span=-1, include_width_calc=False)
         #int_row.add_item(value=self._value()(inta))
         #int_row.add_item(value=u' \u00b1{}'.format(self._error()(inta)))
 
-        plat_row = Row(fontsize=7, height=0.2)
-        plat_row.add_item(value='<b>Plateau</b>', span=span - 2)
+        plat_row = Row(fontsize=fontsize, height=height)
+        plat_row.add_item(value='<b>Plateau</b>', span=span - 2, include_width_calc=False)
 
         s = ''
         pa = agroup.plateau_age
 
-        plat_row.add_item(value='<b>Steps</b>')
-        plat_row.add_item(value=agroup.plateau_steps_str)
-
         if agroup.plateau_steps:
-            s = u'{} \u00b1{}'.format(self._value()(pa), self._error()(pa))
-            #pv=self._value()(pa)
-            #pe=u' \u00b1{}'.format(self._error()(pa))
+            plat_row.add_item(value='<b>Steps</b>')
+            plat_row.add_item(value=agroup.plateau_steps_str)
 
-        #wtd_mean_row.add_blank_item(n=10)
-        plat_row.add_item(value=s, span=-1)
-        #plat_row.add_item(value=pv)
-        #plat_row.add_item(value=pe)
+            s = u'{} \u00b1{}'.format(self._value(n=2)(pa), self._error(n=2)(pa))
 
-        iso_row = Row(fontsize=7, height=0.2)
-        iso_row.add_item(value='<b>Isochron</b>', span=span)
+        plat_row.add_item(value=s, span=-1, include_width_calc=False)
 
-        isoa = agroup.isochron_age
-        s = u'{} \u00b1{}'.format(self._value()(isoa), self._error()(isoa))
-        iso_row.add_item(value=s, span=-1)
-        #iso_row.add_item(value=self._value()(wa))
-        #iso_row.add_item(value=u' \u00b1{}'.format(self._error()(wa)))
+        rows = [wtd_mean_row, int_row, plat_row]
+        include_isochron = False
+        if include_isochron:
+            iso_row = Row(fontsize=fontsize, height=height)
+            iso_row.add_item(value='<b>Isochron</b>', span=span, include_width_calc=False)
 
-        return [wtd_mean_row, int_row, plat_row, iso_row]
+            isoa = agroup.isochron_age
+            s = u'{} \u00b1{}'.format(self._value(n=2)(isoa), self._error(n=2)(isoa))
+            iso_row.add_item(value=s, span=-1, include_width_calc=False)
+            rows.append(iso_row)
+
+        return rows
 
     #===============================================================================
     # blanks
@@ -319,6 +319,8 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
     def _make_footnote_rows(self, data, style):
         data.append(Row(height=0.1))
         blanks = self._get_average_blanks()
+        fontsize = 6
+        height = self.footnote_height
         if blanks:
             co2_blanks, furnace_blanks = blanks
             average_furnace_blanks = 'Average blanks for Furnace: ({Ar40:0.3f}, {Ar39:0.3f}, {Ar38:0.3f}, ' \
@@ -328,11 +330,11 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
                                      'Ar<super>38</super>, Ar<super>37</super>, Ar<super>36</super> ' \
                                      'respectively'.format(**furnace_blanks)
 
-            frow = FooterRow(fontsize=6)
+            frow = FooterRow(fontsize=fontsize, height=height)
             frow.add_item(span=-1, value=self._new_paragraph(average_furnace_blanks))
             data.append(frow)
 
-        fr = FootNoteRow(fontsize=6)
+        fr = FootNoteRow(fontsize=fontsize, height=height)
 
         self._footnotes.append(self._new_paragraph('P: plateau step'))
         txt = ', '.join([fi.text for fi in self._footnotes])
@@ -357,7 +359,7 @@ class StepHeatPDFTableWriter(IsotopePDFTableWriter):
 
 
         #    def factory(f):
-        #        r = FootNoteRow(fontsize=6)
+        #        r = FootNoteRow(fontsize=fontsize)
         #        r.add_item(value=f)
         #        return r
         #

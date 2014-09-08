@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 
 
 #=============enthought library imports=======================
+from Image import Image
 from traits.api import Any, Bool, Event, Str
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -25,6 +26,7 @@ from pyface.image_resource import ImageResource
 from traitsui.ui_traits import convert_bitmap as traitsui_convert_bitmap
 
 from pychron.core.ui.gui import invoke_in_main_thread
+
 
 
 #=============standard library imports ========================
@@ -39,17 +41,20 @@ def convert_bitmap(image, width=None, height=None):
     pix = None
     if isinstance(image, ImageResource):
         pix = traitsui_convert_bitmap(image)
+    elif isinstance(image, Image):
+        # image = image.convert('RGBA')
+        data = image.tostring('raw', 'RGBA')
+        im = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
+        pix = QPixmap.fromImage(QImage.rgbSwapped(im))
     else:
         s = image.shape
         if len(s) >= 2:
             im = QImage(image.tostring(),
-                         s[1], s[0],
-                        QImage.Format_RGB888
-    #                      QImage.Format_RGB16
-                         )
-
+                        s[1], s[0],
+                        QImage.Format_RGB888)
             pix = QPixmap.fromImage(QImage.rgbSwapped(im))
-
+        else:
+            pix = QPixmap()
     if pix:
         if width > 0 and height > 0:
             pix = pix.scaled(width, height)
@@ -59,6 +64,7 @@ def convert_bitmap(image, width=None, height=None):
             pix = pix.scaledToHeight(height)
 
     return pix
+
 
 class _ImageEditor(Editor):
     image_ctrl = Any
@@ -71,18 +77,12 @@ class _ImageEditor(Editor):
 
         image_ctrl = QLabel()
 
-#         w = self.item.width
-#        if self.factory.scale:
-#            w *= self.factory.scale
+        #         w = self.item.width
+        #        if self.factory.scale:
+        #            w *= self.factory.scale
         if image is not None:
-            image_ctrl.setPixmap(convert_bitmap(image,
-#                                             width=w,
-#                                            height=self.item.height
-                                            )
-                             )
+            image_ctrl.setPixmap(convert_bitmap(image))
         self.image_ctrl = image_ctrl
-#        self.image_ctrl.setMinimumWidth(self.item.width)
-#        self.image_ctrl.setMinimumHeight(self.item.height)
 
         if self.factory.scrollable:
             scroll_area = QScrollArea()
@@ -115,17 +115,19 @@ class _ImageEditor(Editor):
             w = None
 
         invoke_in_main_thread(self.set_pixmap, image, w)
-#         self.control.setPixmap(convert_bitmap(image, qsize.width()))
 
     def set_pixmap(self, image, w):
-        im = convert_bitmap(image, w)
-        if im:
-            self.image_ctrl.setPixmap(im)
+        if image is not None:
+            im = convert_bitmap(image, w)
+            if im:
+                self.image_ctrl.setPixmap(im)
+            else:
+                self.image_ctrl.setText('No Image')
 
 
 class ImageEditor(BasicEditorFactory):
-    '''
-    '''
+    """
+    """
     klass = _ImageEditor
     image = Any
     scrollable = Bool(False)
