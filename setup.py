@@ -10,7 +10,7 @@ multiprocessing
 from setuptools import setup
 
 setup(name='pychron',
-      version='2.0.5',
+      version='2.0.4',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
                   'pychron.processing.plateau',
