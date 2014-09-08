@@ -23,7 +23,7 @@ import shutil
 
 
 def make():
-    flavors = 'diode', 'co2', 'valve', 'uv', 'experiment', 'view', 'bakedpy'
+    flavors = 'diode', 'co2', 'valve', 'uv', 'experiment', 'view', 'bakedpy', 'remote_hardware_server'
     flavorstr = ', '.join(map(lambda x: '"{}"'.format(x), flavors))
 
     parser = argparse.ArgumentParser(description='Make a pychron application')
@@ -60,6 +60,9 @@ def make():
                 #                template.version = args.version[0]
                 #                template.name = name
                 template.icon_name = '{}_icon.icns'.format(name)
+                template.bundle_name = name
+            elif name == 'remote_hardware_server':
+                template.icon_name = 'remote_hardware_server_icon.icns'
                 template.bundle_name = name
             else:
                 #                template = Template()

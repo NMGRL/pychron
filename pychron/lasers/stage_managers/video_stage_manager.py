@@ -29,7 +29,6 @@ from pychron.core.helpers.filetools import unique_path, unique_path2
 from pychron.paths import paths
 from pychron.image.video import Video
 from pychron.canvas.canvas2D.camera import Camera
-from pychron.core.ui.media.sounds import play_sound
 from stage_manager import StageManager
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 
@@ -207,17 +206,22 @@ class VideoStageManager(StageManager):
         if path:
             self.info('saving snapshot {}'.format(path))
             # play camera shutter sound
-            play_sound('shutter')
+            # play_sound('shutter')
 
             self._render_snapshot(path)
             upath = self._upload(path)
+            if upath is None:
+                upath = ''
+
             if inform:
                 self.information_dialog('Snapshot save to {}. Uploaded to'.format(path, upath))
-            if return_blob:
-                with open(path, 'rb') as fp:
-                    return path, upath, fp.read()
-            else:
-                return path, upath
+
+            return path, upath
+            #if return_blob:
+            #    with open(path, 'rb') as fp:
+            #        return path, upath, 'abc' #fp.read()
+            #else:
+            #    return path, upath
 
     def kill(self):
         """
