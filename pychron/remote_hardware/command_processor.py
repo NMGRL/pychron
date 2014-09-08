@@ -300,7 +300,7 @@ class CommandProcessor(ConfigLoadable):
         if isinstance(data, ErrorCode):
             data = str(data)
 
-        data='{:04X}{}'.format(len(data), data)
+        data = '{:04X}{}'.format(len(data) + 4, data)
         if globalv.use_ipc:
             try:
                 if globalv.ipc_dgram:

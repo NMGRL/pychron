@@ -186,6 +186,7 @@ class CommandRepeater(ConfigLoadable):
 
                 sum+=len(s)
                 ss.append(s)
+                self.debug('msg_len={} sum={}'.format(msg_len, sum))
                 if sum==msg_len:
                     break
 
