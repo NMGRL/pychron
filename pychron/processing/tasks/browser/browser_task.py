@@ -85,6 +85,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     graphical_filtering_max_days = Int
 
     _activated = False
+    update_on_level_change = True
 
     def prepare_destroy(self):
         self.dump_browser()
@@ -224,7 +225,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         pass
 
     def _level_changed(self):
-        self._find_by_irradiation_fired()
+        if self.update_on_level_change:
+            self._find_by_irradiation_fired()
 
     def __analysis_include_types_changed(self, new):
         if new:

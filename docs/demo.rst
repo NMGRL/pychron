@@ -58,12 +58,9 @@ ideogram
         - [x] info labels
         - [x] move weighted means
 
-
-
-
 Flux
-    - Irradiation, Level
-    - [] fit tray
+    - Irradiation, Level (NM-265E)
+    - [x] fit tray
 
 
 

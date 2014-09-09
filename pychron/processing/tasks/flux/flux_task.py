@@ -27,6 +27,7 @@ from pyface.tasks.task_layout import TaskLayout, HSplitter, VSplitter, PaneItem,
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import ufloat, nominal_value, std_dev
@@ -91,6 +92,7 @@ class FluxTask(InterpolationTask):
 
     analyses = List
     tool_bars = [SToolBar(DatabaseSaveAction())]
+    update_on_level_change = False
 
     def find_associated_analyses(self):
         pass
@@ -268,7 +270,7 @@ class FluxTask(InterpolationTask):
 
                     ident = ref.labnumber.identifier
 
-                    aa = proc.make_analyses(ais, progress=prog)
+                    aa = proc.make_analyses(ais, progress=prog, calculate_age=True)
                     n = len(aa)
 
                     dev = 100
