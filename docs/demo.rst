@@ -51,12 +51,12 @@ ideogram
         - [x] spacing
         - [x] background colors
         - [x] fill
-        - [] title
+        - [x] title
         - [x] adjust limits
         - [x] inset
         - [x] labels
-        - [] info labels
-        - [] move weighted means
+        - [x] info labels
+        - [x] move weighted means
 
 
 
