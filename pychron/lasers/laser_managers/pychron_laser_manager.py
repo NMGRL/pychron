@@ -169,9 +169,9 @@ class PychronLaserManager(BaseLaserManager):
         self.info('Stop Video Recording')
         self._ask('StopVideoRecording')
 
-    def take_snapshot(self, name, view_snapshot=False):
+    def take_snapshot(self, name, pic_format, view_snapshot=False):
         self.info('Take snapshot')
-        resp = self._ask('Snapshot {}'.format(name))
+        resp = self._ask('Snapshot {} {}'.format(name, pic_format))
         if resp:
             args = self._convert_snapshot_response(resp)
             if view_snapshot:

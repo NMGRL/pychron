@@ -95,7 +95,14 @@ class LaserHandler(BaseRemoteHardwareHandler):
 
         sm = manager.stage_manager
         if hasattr(sm, 'video'):
-            lpath, upath, imageblob = sm.snapshot(name=name, return_blob=True, inform=False)
+            pic_format = args[0]
+            if pic_format not in ('.jpg','.png'):
+                pic_format='.jpg'
+
+            lpath, upath, imageblob = sm.snapshot(name=name,
+                                                  return_blob=True,
+                                                  inform=False,
+                                                  pic_format=pic_format)
 
             s = '{:02X}{}{:02x}{}{}'.format(len(lpath),
                                              lpath, len(upath), upath, imageblob)
