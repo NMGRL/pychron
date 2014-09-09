@@ -292,9 +292,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             at = self.analysis_table
             # lp, hp, lim = at.low_post, at.high_post, at.limit
             lp, hp, lim = self.low_post, self.high_post, at.limit
-            if self._recent_low_post:
-                lp = self._recent_low_post
-                hp = None
+            # if self._recent_low_post:
+            #     lp = self._recent_low_post
+            #     hp = None
 
             # lp = self.low_post if self.use_low_post else None
             # hp = self.high_post if self.use_high_post else None

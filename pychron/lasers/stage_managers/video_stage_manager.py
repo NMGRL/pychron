@@ -176,7 +176,8 @@ class VideoStageManager(StageManager):
     def autocenter(self, *args, **kw):
         return self._autocenter(*args, **kw)
 
-    def snapshot(self, path=None, name=None, auto=False, inform=True, return_blob=False):
+    def snapshot(self, path=None, name=None, auto=False,
+                 inform=True, return_blob=False, pic_format='.jpg'):
         """
             path: abs path to use
             name: base name to use if auto saving in default dir
@@ -193,10 +194,11 @@ class VideoStageManager(StageManager):
                 if name is None:
                     name = 'snapshot'
                 path, _cnt = unique_path2(root=paths.snapshot_dir, base=name,
-                                         extension='.jpg')
+                                         extension=pic_format)
             elif name is not None:
                 if not os.path.isdir(os.path.dirname(name)):
-                    path,_ = unique_path2(root=paths.snapshot_dir, base=name, extension='.jpg')
+                    path,_ = unique_path2(root=paths.snapshot_dir, base=name,
+                                          extension=pic_format)
                 else:
                     path = name
 

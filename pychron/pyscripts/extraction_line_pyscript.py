@@ -27,6 +27,7 @@ from traits.api import List
 
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -245,7 +246,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def snapshot(self, name='', prefix='', view_snapshot=False):
+    def snapshot(self, name='', prefix='', view_snapshot=False, pic_format='.jpg'):
         """
             if name not specified use RID_Position e.g 12345-01A_3
         """
@@ -254,7 +255,8 @@ class ExtractionPyScript(ValvePyScript):
             name = '{}_{}'.format(self.run_identifier, pos)
 
         name = '{}{}'.format(prefix, name)
-        ps = self._extraction_action([('take_snapshot', (), {'name': name, 'view_snapshot':view_snapshot})])
+        ps = self._extraction_action([('take_snapshot', (name, pic_format),
+                                       {'view_snapshot':view_snapshot})])
         if ps:
             self.snapshots.append(ps)
 

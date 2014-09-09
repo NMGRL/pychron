@@ -323,6 +323,7 @@ class BrowserMixin(ColumnSorterMixin):
                                            self.high_post,
                                            self.analysis_include_types,
                                            mass_spectrometers=mass_spectrometers)
+
             # prog = None
             # n = len(ls)
             # if n > 50:
@@ -360,6 +361,7 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.manager.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
+            self.debug('retrieving identifiers={}'.format(','.join(lns)))
             if low_post is None:
                 lps = [si.low_post for si in samples if si.low_post is not None]
 
@@ -371,7 +373,7 @@ class BrowserMixin(ColumnSorterMixin):
                                                 exclude_uuids=exclude_uuids,
                                                 include_invalid=include_invalid,
                                                 mass_spectrometers=mass_spectrometers)
-
+            self.debug('retrieved analyses n={}'.format(tc))
             if make_records:
                 def func(xi, prog, i, n):
                     if prog:
@@ -461,6 +463,7 @@ class BrowserMixin(ColumnSorterMixin):
             self._filter_by_button_fired()
 
     def _filter_by_button_fired(self):
+        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
         s = self._retrieve_samples()
         self.set_samples(s, [])
 
