@@ -26,6 +26,8 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -659,7 +661,7 @@ class FigureTask(AnalysisEditTask):
         if self.has_active_editor():
             if name == 'refresh_plot_needed':
                 # if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
-                print 'plotter options rebuild'
+                # print 'plotter options rebuild'
                 if not isinstance(self.active_editor, RecallEditor):
                     self.active_editor.rebuild()
                     self.active_editor.dump_tool()
