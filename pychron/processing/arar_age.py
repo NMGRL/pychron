@@ -326,6 +326,10 @@ class ArArAge(Loggable):
 
         self.isotopes[iso].baseline.set_uvalue(v)
 
+    def calculate_F(self):
+        self.calculate_decay_factors()
+        self._calculate_F()
+
     # @caller
     def calculate_age(self, force=False, **kw):
         """
@@ -418,12 +422,24 @@ class ArArAge(Loggable):
 
         return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
-    def _calculate_age(self, include_decay_error=None):
-        """
-            approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
-            Isotope.get_intensity takes about 5ms.
-        """
-        # self.debug('calculate age')
+    def _calculate_F(self, iso_intensities=None):
+        if iso_intensities is None:
+            iso_intensities = self._assemble_isotope_intensities()
+
+        if iso_intensities:
+            ifc = self.interference_corrections
+            f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
+                                                                                  decay_time=self.decay_days,
+                                                                                  interferences=ifc,
+                                                                                  arar_constants=self.arar_constants,
+                                                                                  fixed_k3739=self.fixed_k3739)
+            self.uF = f
+            self.F = f.nominal_value
+            self.F_err = f.std_dev
+            self.F_err_wo_irrad = f_wo_irrad.std_dev
+            return f, f_wo_irrad, non_ar, computed, interference_corrected
+
+    def _assemble_isotope_intensities(self):
         iso_intensities = self._assemble_ar_ar_isotopes()
         if not iso_intensities:
             self.debug('failed assembling isotopes')
@@ -436,6 +452,15 @@ class ArArAge(Loggable):
         #non gettered hydrocarbons will have a multiplicative systematic influence
         iso_intensities[1] *= self.ar39decayfactor
         iso_intensities[3] *= self.ar37decayfactor
+        return iso_intensities
+
+    def _calculate_age(self, include_decay_error=None):
+        """
+            approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
+            Isotope.get_intensity takes about 5ms.
+        """
+        # self.debug('calculate age')
+        iso_intensities = self._assemble_isotope_intensities()
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 
@@ -449,12 +474,8 @@ class ArArAge(Loggable):
                                           Ar37=iso_intensities[3],
                                           Ar36=iso_intensities[4])
 
-        ifc = self.interference_corrections
-        f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
-                                                                              decay_time=self.decay_days,
-                                                                              interferences=ifc,
-                                                                              arar_constants=self.arar_constants,
-                                                                              fixed_k3739=self.fixed_k3739)
+        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities)
+
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']
@@ -463,18 +484,14 @@ class ArArAge(Loggable):
         for k, v in interference_corrected.iteritems():
             isotopes[k].interference_corrected_value = v
 
-        self.uF = f
-        self.F = f.nominal_value
-        self.F_err = f.std_dev
-        self.F_err_wo_irrad = f_wo_irrad.std_dev
-
         if self.j is not None:
             j = copy(self.j)
         else:
             j = ufloat(1e-4, 1e-7)
 
+        arc = self.arar_constants
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
         self.uage = age
 
         self.age = age.nominal_value
@@ -487,7 +504,7 @@ class ArArAge(Loggable):
 
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
 
         self.age_err_wo_j = float(age.std_dev)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
@@ -498,7 +515,7 @@ class ArArAge(Loggable):
             j = ufloat(1e-4, 1e-7)
 
         age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
 
         self.age_err_wo_irrad = age.std_dev
         j.std_dev = 0

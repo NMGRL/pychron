@@ -227,10 +227,10 @@ class DBAnalysis(Analysis):
         ms, ls, isos, samples, projects, materials = izip(*dbrecord_tuple)
         meas_analysis = ms[0]
         lab = ls[0]
+
         sample = samples[0]
         project = projects[0]
         material = materials[0]
-
         if sample:
             self.sample = sample
             self.project = project
@@ -267,7 +267,7 @@ class DBAnalysis(Analysis):
             #get the data_reduction_tag_set entry associated with this analysis
             drentry = next((ai for ai in tag.analyses if ai.analysis_id==meas_analysis.id),None)
             print drentry.selected_histories
-            # return drentry.selected_histories
+            return drentry.selected_histories
 
     def _sync_script_blobs(self, meas_analysis):
         meas = meas_analysis.measurement
