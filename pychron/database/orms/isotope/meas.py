@@ -31,6 +31,7 @@ from sqlalchemy.sql.expression import func
 
 
 
+
 #============= local library imports  ==========================
 from pychron.database.orms.isotope.util import foreignkey, stringcolumn
 from pychron.database.core.base_orm import BaseMixin, NameMixin
@@ -197,8 +198,8 @@ class meas_IsotopeTable(Base, BaseMixin):
 
     fits = relationship('proc_FitTable',
                         backref='isotope')
+
     results = relationship('proc_IsotopeResultsTable',
-                           lazy="dynamic",
                            backref='isotope')
 
 
