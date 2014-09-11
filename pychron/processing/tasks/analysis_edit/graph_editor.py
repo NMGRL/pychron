@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,8 @@ import os
 from itertools import groupby
 import pickle
 #============= local library imports  ==========================
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.paths import paths
 from pychron.processing.fits.fit_selector import FitSelector
-from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.editor import BaseUnknownsEditor
 
 
@@ -156,14 +154,17 @@ class GraphEditor(BaseUnknownsEditor):
         #                                    **kw)
         #
 
-        def func():
-            return self.processor.make_analyses(unks,
-                                                calculate_age=self.calculate_age,
-                                                unpack=self.unpack_peaktime,
-                                                **kw)
+        # def func():
+        #     return self.processor.make_analyses(unks,
+        #                                         calculate_age=self.calculate_age,
+        #                                         unpack=self.unpack_peaktime,
+        #                                         **kw)
 
-        ans = timethis(func)
+        # ans = timethis(func)
         # print 'pre', all(map(lambda x: isinstance(x, DBAnalysis), ans))
+        ans = self.processor.make_analyses(unks, calculate_age=self.calculate_age,
+                                           unpack=self.unpack_peaktime,
+                                           **kw)
         if is_append:
             pans = self.analyses
             # print 'pans', all(map(lambda x: isinstance(x, DBAnalysis), pans))
@@ -248,6 +249,7 @@ class GraphEditor(BaseUnknownsEditor):
         return self._graph_factory()
 
     def _graph_factory(self, **kw):
+        from pychron.graph.stacked_regression_graph import StackedRegressionGraph
         g = StackedRegressionGraph(container_dict=dict(stack_order='top_to_bottom',
                                                        use_backbuffer=True,
                                                        spacing=5), **kw)
@@ -273,6 +275,7 @@ class GraphEditor(BaseUnknownsEditor):
             use_backbuffer is false and using pdf 
         '''
         from reportlab.lib.pagesizes import letter
+
         c.do_layout(size=letter, force=force_layout)
 
         _, tail = os.path.splitext(path)

@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 #============= standard library imports ========================
-from numpy import zeros, vstack, percentile, array, random
+from numpy import zeros, percentile, array
 from scipy.stats import norm
 #============= local library imports  ==========================
 
@@ -54,47 +54,47 @@ def perturb(pred, exog, nominal_ys, y_es, ga, yp):
     return nominal_ys - pys
 
 
-if __name__ == '__main__':
-    from pychron.core.regression.flux_regressor import PlaneFluxRegressor
-    from pychron.core.codetools.simple_timeit import timethis
-    import csv
-
-    random.seed(123456789)
-
-    x = []
-    y = []
-    j = []
-    je = []
-    p = '/Users/ross/Sandbox/monte_carlo.txt'
-    with open(p, 'r') as fp:
-        reader = csv.reader(fp)
-        for l in reader:
-            if not l[0][0] == '#':
-                a, b, c, d = map(float, l)
-                x.append(a)
-                y.append(b)
-                j.append(c)
-                je.append(d)
-                # break
-
-    x = array(x)
-    y = array(y)
-    xy = vstack((x, y)).T
-
-    j = array(j)
-
-    for ni in (10, 100, 1000, 10000, 20000):
-        # for n in (10, 20, 100, 1000):
-        r = PlaneFluxRegressor(xs=xy, ys=j, yserr=je, error_calc_type='SD')
-        r.calculate(filtering=True)
-        errors = timethis(monte_carlo_error_estimation, args=(r, r.predict(xy), xy),
-                          kwargs=dict(ntrials=ni))
-        print ni, errors
-
-'''
-timethis $$$$$$$$$$$$$$$$$$$$ 0.00164294242859s
-timethis $$$$$$$$$$$$$$$$$$$$ 0.0126359462738s
-timethis $$$$$$$$$$$$$$$$$$$$ 0.119521141052s
-timethis $$$$$$$$$$$$$$$$$$$$ 1.32541584969s
-'''
+# if __name__ == '__main__':
+#     from pychron.core.regression.flux_regressor import PlaneFluxRegressor
+#     from pychron.core.codetools.simple_timeit import timethis
+#     import csv
+#
+#     random.seed(123456789)
+#
+#     x = []
+#     y = []
+#     j = []
+#     je = []
+#     p = '/Users/ross/Sandbox/monte_carlo.txt'
+#     with open(p, 'r') as fp:
+#         reader = csv.reader(fp)
+#         for l in reader:
+#             if not l[0][0] == '#':
+#                 a, b, c, d = map(float, l)
+#                 x.append(a)
+#                 y.append(b)
+#                 j.append(c)
+#                 je.append(d)
+#                 # break
+#
+#     x = array(x)
+#     y = array(y)
+#     xy = vstack((x, y)).T
+#
+#     j = array(j)
+#
+#     for ni in (10, 100, 1000, 10000, 20000):
+#         # for n in (10, 20, 100, 1000):
+#         r = PlaneFluxRegressor(xs=xy, ys=j, yserr=je, error_calc_type='SD')
+#         r.calculate(filtering=True)
+#         errors = timethis(monte_carlo_error_estimation, args=(r, r.predict(xy), xy),
+#                           kwargs=dict(ntrials=ni))
+#         print ni, errors
+#
+# '''
+# timethis $$$$$$$$$$$$$$$$$$$$ 0.00164294242859s
+# timethis $$$$$$$$$$$$$$$$$$$$ 0.0126359462738s
+# timethis $$$$$$$$$$$$$$$$$$$$ 0.119521141052s
+# timethis $$$$$$$$$$$$$$$$$$$$ 1.32541584969s
+# '''
 #============= EOF =============================================

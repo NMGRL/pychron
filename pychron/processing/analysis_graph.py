@@ -20,8 +20,8 @@ from traits.api import Event
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.graph.stacked_graph import StackedGraph
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class AnalysisGraph(Graph):

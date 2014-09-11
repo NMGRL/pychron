@@ -20,8 +20,8 @@ from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
 from uncertainties import nominal_value
 # ============= local library imports  ==========================
-from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class RatioEditor(BaseTraitsEditor):
