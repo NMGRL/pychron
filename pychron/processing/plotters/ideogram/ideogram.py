@@ -66,7 +66,7 @@ class Ideogram(BaseArArFigure):
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
         except (ValueError, AttributeError), e:
-            print 'asdfasdf', e
+            print 'asdfasdf', e, index_attr
             return
 
         omit = self._get_omitted(self.sorted_analyses,

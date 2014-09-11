@@ -470,6 +470,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             atype = rec.analysis_type
 
         if prog:
+            m=''
             if calculate_age:
                 show_age = atype in ('unknown', 'cocktail')
                 m = 'calculating age' if show_age else ''
