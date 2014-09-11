@@ -24,7 +24,7 @@ from chaco.tools.broadcaster import BroadcasterTool
 #============= standard library imports ========================
 from numpy import Inf, inf
 import re
-from uncertainties import std_dev, nominal_value
+from uncertainties import std_dev, nominal_value, ufloat
 #============= local library imports  ==========================
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.tools.limits_tool import LimitsTool, LimitOverlay
@@ -223,7 +223,7 @@ class BaseArArFigure(HasTraits):
             def gen():
                 for ai in self.sorted_analyses:
                     r = ai.get_ratio(attr)
-                    yield r or 0
+                    yield r or ufloat(0,0)
                     # nv, dv = ai.isotopes[n].get_intensity() , ai.isotopes[d].get_intensity()
                     # if n is not None and d is not None:
                     #     yield nv/dv
@@ -235,7 +235,7 @@ class BaseArArFigure(HasTraits):
 
                 for ai in self.sorted_analyses:
                     v = ai.get_value(attr)
-                    yield v or 0
+                    yield v or ufloat(0,0)
                     # if v is not None:
                     #     yield v
                     # yield f(ai.get_value(attr))
