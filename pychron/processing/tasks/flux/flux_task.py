@@ -89,17 +89,10 @@ class FluxTask(InterpolationTask):
     def find_associated_analyses(self):
         pass
 
-    def _default_layout_default(self):
-        return TaskLayout(
-            id='pychron.processing',
-            left=HSplitter(
-                VSplitter(
-                    PaneItem('pychron.processing.irradiation'),
-                    Tabbed(
-                        PaneItem('pychron.processing.unknowns'),
-                        PaneItem('pychron.processing.references'),
-                        PaneItem('pychron.processing.analyses')),
-                    PaneItem('pychron.processing.controls'))))
+    def activated(self):
+        """
+            no need to do BaseBrowserTask.activated
+        """
 
     def create_dock_panes(self):
         panes = super(FluxTask, self).create_dock_panes()
@@ -374,4 +367,15 @@ class FluxTask(InterpolationTask):
         # prog.close()
         return True
 
+    def _default_layout_default(self):
+        return TaskLayout(
+            id='pychron.processing',
+            left=HSplitter(
+                VSplitter(
+                    PaneItem('pychron.processing.irradiation'),
+                    Tabbed(
+                        PaneItem('pychron.processing.unknowns'),
+                        PaneItem('pychron.processing.references'),
+                        PaneItem('pychron.processing.analyses')),
+                    PaneItem('pychron.processing.controls'))))
 #============= EOF =============================================
