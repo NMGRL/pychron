@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str
+from traits.api import HasTraits, Str, Int
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -26,7 +26,7 @@ from pychron.core.ui.text_editor import myTextEditor
 class TextView(HasTraits):
     text = Str
     attribute = Str
-
+    fontsize = Int(10)
     def __init__(self, analysis, *args, **kw):
         super(TextView, self).__init__(*args, **kw)
         self._load(analysis)
@@ -37,6 +37,7 @@ class TextView(HasTraits):
     def traits_view(self):
         editor = myTextEditor(bgcolor='#F7F6D0',
                               fontsize=10,
+                              fontsize_name='fontsize',
                               wrap=False,
                               tab_width=15)
         v = View(UItem('text', style='custom', editor=editor))

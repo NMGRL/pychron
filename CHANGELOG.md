@@ -31,3 +31,4 @@ CHANGELOG
 * added note, last_modified to irrad_ProductionTable
 * updated editing default_fits
 * added snapshot view to recall
+* added fontsize control to recall

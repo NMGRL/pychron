@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from PySide import QtCore, QtGui
-from traits.api import Bool, Int, Color
+from traits.api import Bool, Int, Color, Str
 from traits.trait_errors import TraitError
 
 #============= standard library imports ========================
@@ -26,6 +26,7 @@ from traitsui.qt4.editor import Editor
 
 
 class _TextEditor(Editor):
+    fontsize = Int
     def init(self, parent):
         """ Finishes initializing the editor by creating the underlying toolkit
             widget.
@@ -55,10 +56,16 @@ class _TextEditor(Editor):
             f = ctrl.font()
             f.setPointSize(self.factory.fontsize)
             ctrl.setFont(f)
+        self.sync_value(self.factory.fontsize_name, 'fontsize', mode='from')
 
     #---------------------------------------------------------------------------
     #  Handles the user changing the contents of the edit control:
     #---------------------------------------------------------------------------
+    def _fontsize_changed(self):
+        ctrl = self.control
+        f = ctrl.font()
+        f.setPointSize(self.fontsize)
+        ctrl.setFont(f)
 
     def update_object(self):
         """ Handles the user changing the contents of the edit control.
@@ -79,5 +86,6 @@ class myTextEditor(BasicEditorFactory):
     editable = Bool
     bgcolor = Color
     fontsize = Int
+    fontsize_name = Str
 
 #============= EOF =============================================

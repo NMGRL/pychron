@@ -164,6 +164,11 @@ class AnalysisEditTask(BaseBrowserTask):
                     e.close()
                     self.recall(e.model)
 
+            for e in self.editor_area.editors:
+                tc.set_fonts(e.analysis_view)
+
+
+
     def recall(self, records, open_copy=False):
         """
             if analysis is already open activate the editor
@@ -209,6 +214,8 @@ class AnalysisEditTask(BaseBrowserTask):
                 mv.isotope_adapter = self.isotope_adapter
                 mv.intermediate_adapter = self.intermediate_adapter
                 mv.show_intermediate = self.recall_configurer.show_intermediate
+
+                self.recall_configurer.set_fonts(av)
 
                 editor = RecallEditor(analysis_view=av,
                                       model=rec,
