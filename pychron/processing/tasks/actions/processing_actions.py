@@ -70,25 +70,24 @@ class FigureTaskAction(myTaskAction):
     task_ids = List(['pychron.processing.figures', ])
 
 
+class GraphGroupSelectedAction(FigureTaskAction):
+    name = 'Graph Group Selected'
+    method = 'graph_group_selected'
+
+
+class GraphGroupbySampleAction(FigureTaskAction):
+    name = 'Graph Group by Sample'
+    method = 'graph_group_by_sample'
+
+
 class GroupAction(FigureTaskAction):
-    pass
+    image = icon('blockdevice-3')
 
 
 class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
-    image = icon('placeholder')
-
-
-class GraphGroupSelectedAction(GroupAction):
-    name = 'Graph Group Selected'
-    method = 'graph_group_selected'
-
-
-class GraphGroupbySampleAction(GroupAction):
-    name = 'Graph Group by Sample'
-    method = 'graph_group_by_sample'
-
+    # image = icon('placeholder')
 
 #     def perform(self, event):
 #         task = event.task
@@ -98,25 +97,25 @@ class GraphGroupbySampleAction(GroupAction):
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
     method = 'group_by_sample'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class GroupbyLabnumberAction(GroupAction):
     name = 'Group by Labnumber'
     method = 'group_by_labnumber'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class GroupbyAliquotAction(GroupAction):
     name = 'Group by Aliquot'
     method = 'group_by_aliquot'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class ClearGroupAction(GroupAction):
     name = 'Clear Grouping'
     method = 'clear_grouping'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class AnalysisAction(myTaskAction):
