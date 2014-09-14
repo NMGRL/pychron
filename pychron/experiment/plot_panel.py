@@ -23,10 +23,10 @@ from threading import Event
 import time
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
-from pychron.graph.regression_graph import StackedRegressionGraph
 from pychron.core.ui.text_table import MultiTextTableAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.analyses.view.automated_run_view import AutomatedRunAnalysisView
 from pychron.processing.arar_age import ArArAge
 from pychron.pychron_constants import PLUSMINUS

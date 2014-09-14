@@ -24,12 +24,12 @@ from numpy import where
 #============= local library imports  ==========================
 # from pychron.pychron_constants import FIT_TYPES
 # from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
-from pychron.graph.regression_graph import StackedRegressionGraph
 # from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 # from pychron.core.regression.ols_regressor import OLSRegressor
 # from pychron.core.regression.mean_regressor import MeanRegressor
 # from pychron.core.helpers.datetime_tools import convert_timestamp
 # from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
 

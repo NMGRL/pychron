@@ -63,6 +63,11 @@ class AnalysisView(HasTraits):
     _extraction_view = None
     _snapshot_view = None
 
+    def update_fontsize(self, view, size):
+        v=getattr(self,'_{}_view'.format(view))
+        if v is not None:
+            v.fontsize=size
+
     def load(self, an):
         analysis_type = an.analysis_type
         analysis_id = an.record_id

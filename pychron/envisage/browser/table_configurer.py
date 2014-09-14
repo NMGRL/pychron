@@ -16,23 +16,25 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import HasTraits, List, Any, Bool, Int, Instance
+from traits.api import HasTraits, List, Any, Bool, Int, Instance, Enum
 from traits.trait_errors import TraitError
-from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup
+from traitsui.api import View, Item, UItem, CheckListEditor, VGroup, Handler, HGroup, Tabbed
 import apptools.sweet_pickle as pickle
-
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from datetime import datetime
 import os
 #============= local library imports  ==========================
 from pychron.paths import paths
 
+SIZES = (6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36)
+
 
 class TableConfigurerHandler(Handler):
     def closed(self, info, is_ok):
         if is_ok:
-            info.object.dump()
-            info.object.set_columns()
+            info.object.closed()
+            # info.object.dump()
+            # info.object.set_columns()
 
 
 class TableConfigurer(HasTraits):
@@ -40,6 +42,13 @@ class TableConfigurer(HasTraits):
     available_columns = List
     adapter = Any
     id = 'table'
+    font = Enum(*SIZES)
+
+    def closed(self):
+        self.dump()
+        self.set_columns()
+        self.set_font()
+
 
     def load(self):
         self._load_state()
@@ -60,7 +69,12 @@ class TableConfigurer(HasTraits):
             #set all available columns
             self.available_columns = acols
 
+            self._set_font(adp.font)
             self._load_state()
+
+    def _set_font(self, f):
+        s = f.pointSize()
+        self.font = s
 
     def _load_state(self):
         p = os.path.join(paths.hidden_dir, self.id)
@@ -81,6 +95,10 @@ class TableConfigurer(HasTraits):
 
                 self.columns = ncols
 
+            font = state.get('font', None)
+            if font:
+                self.font = font
+
             self._load_hook(state)
             self.set_columns()
 
@@ -95,11 +113,16 @@ class TableConfigurer(HasTraits):
                 pass
 
     def _get_dump(self):
-        obj = dict(columns=self.columns)
+        obj = dict(columns=self.columns,
+                   font=self.font)
         return obj
 
     def _load_hook(self, state):
         pass
+
+    def set_font(self):
+        if self.adapter:
+            self.adapter.font = 'arial {}'.format(self.font)
 
     def set_columns(self):
         # def _columns_changed(self):
@@ -135,7 +158,6 @@ def str_to_time(lp):
 class AnalysisTableConfigurer(TableConfigurer):
     id = 'analysis.table'
     limit = Int
-
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
@@ -212,6 +234,7 @@ class IsotopeTableConfigurer(TableConfigurer):
         v = View(VGroup(UItem('columns',
                               style='custom',
                               editor=CheckListEditor(name='available_columns', cols=3)),
+                        Item('font'),
                         show_border=True,
                         label='Isotopes'))
         return v
@@ -224,6 +247,7 @@ class IntermediateTableConfigurer(TableConfigurer):
         v = View(VGroup(UItem('columns',
                               style='custom',
                               editor=CheckListEditor(name='available_columns', cols=3)),
+                        Item('font'),
                         show_border=True,
                         label='Intermediate'))
         return v
@@ -233,16 +257,32 @@ class RecallTableConfigurer(TableConfigurer):
     isotope_table_configurer = Instance(IsotopeTableConfigurer, ())
     intermediate_table_configurer = Instance(IntermediateTableConfigurer, ())
     show_intermediate = Bool
+    experiment_fontsize = Enum(*SIZES)
+    measurement_fontsize = Enum(*SIZES)
+    extraction_fontsize = Enum(*SIZES)
+
+    view_names = ('experiment', 'measurement', 'extraction')
+    # def closed(self):
+    #     super(RecallTableConfigurer, self).closed()
+    #     self.experiment_view
 
     def _get_dump(self):
         obj = super(RecallTableConfigurer, self)._get_dump()
         obj['show_intermediate'] = self.show_intermediate
+        for a in self.view_names:
+            a = '{}_fontsize'.format(a)
+            obj[a] = getattr(self, a)
+
         return obj
 
     def _load_hook(self, obj):
         self.show_intermediate = obj.get('show_intermediate', True)
         self.isotope_table_configurer.load()
         self.intermediate_table_configurer.load()
+
+        for a in self.view_names:
+            a = '{}_fontsize'.format(a)
+            setattr(self, a, obj.get(a, 10))
 
     def dump(self):
         super(RecallTableConfigurer, self).dump()
@@ -253,10 +293,34 @@ class RecallTableConfigurer(TableConfigurer):
         self.isotope_table_configurer.set_columns()
         self.intermediate_table_configurer.set_columns()
 
+    def set_font(self):
+        self.isotope_table_configurer.set_font()
+        self.intermediate_table_configurer.set_font()
+
+    def set_fonts(self, av):
+        for a in self.view_names:
+            s = getattr(self, '{}_fontsize'.format(a))
+            av.update_fontsize(a, s)
+
     def traits_view(self):
-        v = View(VGroup(UItem('isotope_table_configurer', style='custom'),
-                        HGroup(Item('show_intermediate', label='Show Intermediate Table')),
-                        UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate')),
+        main_view = VGroup(UItem('isotope_table_configurer', style='custom'),
+                           HGroup(Item('show_intermediate', label='Show Intermediate Table')),
+                           UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
+                           label='Main')
+
+        experiment_view = VGroup(Item('experiment_fontsize',label='Size'),
+                                 show_border=True,
+                                 label='Experiment')
+        measurement_view = VGroup(Item('measurement_fontsize', label='Size'),
+                                  show_border=True,
+                                  label='Measurement')
+        extraction_view = VGroup(Item('extraction_fontsize', label='Size'),
+                                 show_border=True,
+                                 label='Extraction')
+        v = View(Tabbed(main_view,
+                        VGroup(experiment_view,
+                        measurement_view,
+                        extraction_view, label='Text')),
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='modal',
                  title='Configure Table',
@@ -265,66 +329,4 @@ class RecallTableConfigurer(TableConfigurer):
                  width=300)
         return v
 
-
-        #============= EOF =============================================
-
-        # named_date_range = Enum('this month', 'this week', 'yesterday')
-        # low_post = Property(Date, depends_on='_low_post')
-        # high_post = Property(Date, depends_on='_high_post')
-        # use_low_post = Bool
-        # use_high_post = Bool
-        # use_named_date_range = Bool
-        # _low_post = Date
-        # _high_post = Date
-        #
-        # def _set_low_post(self, v):
-        # self._low_post = v
-        #
-        # # def _validate_low_post(self, v):
-        # #     v = v.replace('/', '-')
-        # #     if v.count('-') < 3:
-        # #         map(int, v.split('-'))
-        #
-        # def _set_high_post(self, v):
-        #     self._high_post = v
-        #
-        # # def _validate_high_post(self,v):
-        # #     v=v.replace('/','-')
-        # #     if v.count('-')<3:
-        # #         map(int, v.split('-'))
-        #
-        # def _get_high_post(self):
-        #     hp = None
-        #
-        #     tdy = datetime.today()
-        #     if self.use_named_date_range:
-        #         if self.named_date_range in ('this month', 'today', 'this week'):
-        #             hp = tdy
-        #         elif self.named_date_range == 'yesterday':
-        #             hp = tdy - timedelta(days=1)
-        #     elif self.use_high_post:
-        #         hp = self._high_post
-        #         if not hp:
-        #             hp = tdy
-        #
-        #     return hp
-        #
-        # def _get_low_post(self):
-        #     lp = None
-        #     tdy = datetime.today()
-        #     if self.use_named_date_range:
-        #         if self.named_date_range == 'this month':
-        #             lp = tdy - timedelta(days=tdy.day,
-        #                                  seconds=tdy.second,
-        #                                  hours=tdy.hour,
-        #                                  minutes=tdy.minute)
-        #         elif self.named_date_range == 'this week':
-        #             days = datetime.today().weekday()
-        #             lp = tdy - timedelta(days=days)
-        #
-        #     elif self.use_low_post:
-        #         lp = self._low_post
-        #         if not lp:
-        #             lp = tdy
-        #
-        #     return lp
+#============= EOF =============================================

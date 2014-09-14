@@ -23,10 +23,10 @@ Processing
 
 recall
     - demo browser
-    - (Recent Jan, 23466, 23466-01, NM-265E)
-        - [x] add snapshots 23466-01
+    - (Recent Jan, 23446, 23446-01, NM-265E)
+        - [x] add snapshots 23446-01
     - demo summary views
-        - [x] sample (23466)
+        - [x] sample (23446)
         - [] project (X)
     - [x] demo edit data
     - [x] demo individual iso fits
@@ -37,7 +37,7 @@ iso fits
     - [x] plot editor
 
 blanks
-    - Analyses (23466-02, 23466-03)
+    - Analyses (23446-02, 23446-03)
 
 ideogram
     - Analyses (23467-01, 03)

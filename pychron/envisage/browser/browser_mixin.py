@@ -284,20 +284,23 @@ class BrowserMixin(ColumnSorterMixin):
         db = self.manager.db
         with db.session_ctx():
             hpost = datetime.now()
-            lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
 
-            # self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
-            # lns = db.get_recent_labnumbers(lpost, ms)
-            self._recent_low_post = lpost
+            #use users low_post if set
+            if not self.use_low_post:
+                lpost = hpost - timedelta(hours=self.search_criteria.recent_hours)
+                self.use_low_post = True
+                self._low_post = lpost.date()
+
+                # self.debug('RECENT HOURS {} {}'.format(self.search_criteria.recent_hours, lpost))
+                # lns = db.get_recent_labnumbers(lpost, ms)
+                self._recent_low_post = lpost
+
             self._recent_mass_spectrometers.append(ms)
 
             # sams = [LabnumberRecordView(li, low_post=lpost)
             # for li in lns if li.sample]
 
             self.use_high_post = True
-            self.use_low_post = True
-
-            self._low_post = lpost.date()
             self._high_post = hpost.date()
 
             sams = self._retrieve_samples()
