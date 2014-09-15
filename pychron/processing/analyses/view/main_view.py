@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any
+from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property,cached_property
 from traitsui.api import View, UItem, HSplit, VSplit, Handler
 
 #============= standard library imports ========================
@@ -52,6 +52,10 @@ class MainView(HasTraits):
 
     isotope_adapter = Instance(IsotopeTabularAdapter, ())
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
+    measurement_adapter = Instance(MeasurementTabularAdapter, ())
+    extraction_adapter = Instance(ExtractionTabularAdapter, ())
+    computed_adapter = Property(depends_on='analysis_type')
+
     show_intermediate = Bool(True)
 
     selected = Any
@@ -359,6 +363,15 @@ class MainView(HasTraits):
                         ci.value = nominal_value(v)
                         ci.error = std_dev(v)
 
+    @cached_property
+    def _get_computed_adapter(self):
+        adapter = ComputedValueTabularAdapter
+        if self.analysis_type in ('air', 'cocktail',
+                                  'blank_unknown', 'blank_air',
+                                  'blank_cocktail'):
+            adapter = DetectorRatioTabularAdapter
+        return adapter()
+
     def _get_editors(self):
         teditor = myTabularEditor(adapter=self.isotope_adapter,
                                   drag_enabled=False,
@@ -367,12 +380,7 @@ class MainView(HasTraits):
                                   selected='selected',
                                   refresh='refresh_needed')
 
-        adapter = ComputedValueTabularAdapter
-        if self.analysis_type in ('air', 'cocktail',
-                                  'blank_unknown', 'blank_air',
-                                  'blank_cocktail'):
-            adapter = DetectorRatioTabularAdapter
-        ceditor = myTabularEditor(adapter=adapter(),
+        ceditor = myTabularEditor(adapter=self.computed_adapter,
                                   editable=False,
                                   drag_enabled=False,
                                   refresh='refresh_needed')
@@ -383,12 +391,15 @@ class MainView(HasTraits):
                                   stretch_last_section=False,
                                   refresh='refresh_needed')
 
-        eeditor = myTabularEditor(adapter=ExtractionTabularAdapter(),
+        eeditor = myTabularEditor(adapter=self.extraction_adapter,
                                   drag_enabled=False,
-                                  editable=False, )
-        meditor = myTabularEditor(adapter=MeasurementTabularAdapter(),
+                                  editable=False,
+                                  refresh='refresh_needed')
+
+        meditor = myTabularEditor(adapter=self.measurement_adapter,
                                   drag_enabled=False,
-                                  editable=False)
+                                  editable=False,
+                                  refresh='refresh_needed')
 
         return teditor, ieditor, ceditor, eeditor, meditor
 

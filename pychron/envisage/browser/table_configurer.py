@@ -44,11 +44,12 @@ class TableConfigurer(HasTraits):
     id = 'table'
     font = Enum(*SIZES)
 
+    fontsize_enabled=Bool(True)
+
     def closed(self):
         self.dump()
         self.set_columns()
         self.set_font()
-
 
     def load(self):
         self._load_state()
@@ -234,7 +235,7 @@ class IsotopeTableConfigurer(TableConfigurer):
         v = View(VGroup(UItem('columns',
                               style='custom',
                               editor=CheckListEditor(name='available_columns', cols=3)),
-                        Item('font'),
+                        Item('font', enabled_when='fontsize_enabled'),
                         show_border=True,
                         label='Isotopes'))
         return v
@@ -247,7 +248,7 @@ class IntermediateTableConfigurer(TableConfigurer):
         v = View(VGroup(UItem('columns',
                               style='custom',
                               editor=CheckListEditor(name='available_columns', cols=3)),
-                        Item('font'),
+                        Item('font', enabled_when='fontsize_enabled'),
                         show_border=True,
                         label='Intermediate'))
         return v
@@ -260,8 +261,15 @@ class RecallTableConfigurer(TableConfigurer):
     experiment_fontsize = Enum(*SIZES)
     measurement_fontsize = Enum(*SIZES)
     extraction_fontsize = Enum(*SIZES)
+    main_measurement_fontsize =Enum(*SIZES)
+    main_extraction_fontsize=Enum(*SIZES)
+    main_computed_fontsize=Enum(*SIZES)
 
-    view_names = ('experiment', 'measurement', 'extraction')
+    subview_names = ('experiment', 'measurement', 'extraction')
+    main_names=('measurement','extraction','computed')
+    bind_fontsizes=Bool(False)
+    global_fontsize=Enum(*SIZES)
+
     # def closed(self):
     #     super(RecallTableConfigurer, self).closed()
     #     self.experiment_view
@@ -269,9 +277,16 @@ class RecallTableConfigurer(TableConfigurer):
     def _get_dump(self):
         obj = super(RecallTableConfigurer, self)._get_dump()
         obj['show_intermediate'] = self.show_intermediate
-        for a in self.view_names:
+        for a in self.subview_names:
             a = '{}_fontsize'.format(a)
             obj[a] = getattr(self, a)
+
+        for a in self.main_names:
+            a = 'main_{}_fontsize'.format(a)
+            obj[a] = getattr(self, a)
+
+        for attr in ('global_fontsize', 'bind_fontsizes'):
+            obj[attr]=getattr(self, attr)
 
         return obj
 
@@ -280,9 +295,19 @@ class RecallTableConfigurer(TableConfigurer):
         self.isotope_table_configurer.load()
         self.intermediate_table_configurer.load()
 
-        for a in self.view_names:
+        for a in self.subview_names:
             a = '{}_fontsize'.format(a)
             setattr(self, a, obj.get(a, 10))
+
+        for a in self.main_names:
+            a = 'main_{}_fontsize'.format(a)
+            setattr(self, a, obj.get(a, 10))
+
+        for attr in ('global_fontsize', 'bind_fontsizes'):
+            try:
+                setattr(self, attr, obj[attr])
+            except KeyError:
+                pass
 
     def dump(self):
         super(RecallTableConfigurer, self).dump()
@@ -298,12 +323,42 @@ class RecallTableConfigurer(TableConfigurer):
         self.intermediate_table_configurer.set_font()
 
     def set_fonts(self, av):
-        for a in self.view_names:
+        self.set_font()
+
+        for a in self.subview_names:
             s = getattr(self, '{}_fontsize'.format(a))
             av.update_fontsize(a, s)
 
+        for a in self.main_names:
+            av.update_fontsize('main.{}'.format(a),
+                               getattr(self,'main_{}_fontsize'.format(a)))
+
+        av.main_view.refresh_needed=True
+
+    def _bind_fontsizes_changed(self, new):
+        if new:
+            self._global_fontsize_changed()
+        self.isotope_table_configurer.fontsize_enabled=not new
+        self.intermediate_table_configurer.fontsize_enabled=not new
+
+    def _global_fontsize_changed(self):
+        gf =self.global_fontsize
+        self.isotope_table_configurer.font=gf
+        self.intermediate_table_configurer.font=gf
+
+        self.main_measurement_fontsize =gf
+        self.main_extraction_fontsize = gf
+        self.main_computed_fontsize = gf
+
     def traits_view(self):
-        main_view = VGroup(UItem('isotope_table_configurer', style='custom'),
+        main_grp = VGroup(HGroup(Item('bind_fontsizes'),
+                                         Item('global_fontsize', enabled_when='bind_fontsizes')),
+                           Item('main_extraction_fontsize', enabled_when='not bind_fontsizes'),
+                           Item('main_measurement_fontsize', enabled_when='not bind_fontsizes'),
+                           Item('main_computed_fontsize', enabled_when='not bind_fontsizes'))
+
+        main_view = VGroup(main_grp,
+                           UItem('isotope_table_configurer', style='custom'),
                            HGroup(Item('show_intermediate', label='Show Intermediate Table')),
                            UItem('intermediate_table_configurer', style='custom', enabled_when='show_intermediate'),
                            label='Main')
@@ -320,7 +375,8 @@ class RecallTableConfigurer(TableConfigurer):
         v = View(Tabbed(main_view,
                         VGroup(experiment_view,
                         measurement_view,
-                        extraction_view, label='Text')),
+                        extraction_view, label='Scripts')),
+
                  buttons=['OK', 'Cancel', 'Revert'],
                  kind='modal',
                  title='Configure Table',

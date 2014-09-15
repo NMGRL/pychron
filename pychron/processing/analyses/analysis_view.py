@@ -64,9 +64,15 @@ class AnalysisView(HasTraits):
     _snapshot_view = None
 
     def update_fontsize(self, view, size):
-        v=getattr(self,'_{}_view'.format(view))
-        if v is not None:
-            v.fontsize=size
+        if 'main' in view:
+            v=self.main_view
+            view=view.split('.')[-1]
+            adapter = getattr(v, '{}_adapter'.format(view))
+            adapter.font = 'arial {}'.format(size)
+        else:
+            v=getattr(self,'_{}_view'.format(view))
+            if v is not None:
+                v.fontsize=size
 
     def load(self, an):
         analysis_type = an.analysis_type

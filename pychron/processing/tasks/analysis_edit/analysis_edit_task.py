@@ -167,8 +167,6 @@ class AnalysisEditTask(BaseBrowserTask):
             for e in self.editor_area.editors:
                 tc.set_fonts(e.analysis_view)
 
-
-
     def recall(self, records, open_copy=False):
         """
             if analysis is already open activate the editor

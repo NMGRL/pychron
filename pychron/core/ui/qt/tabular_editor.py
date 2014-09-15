@@ -102,6 +102,18 @@ class _myTableView(_TableView, ConsumerMixin):
             vheader.setFont(fnt)
             hheader.setFont(fnt)
 
+    def set_vertical_header_font(self, fnt):
+        fnt = QtGui.QFont(fnt)
+        vheader=self.verticalHeader()
+        vheader.setFont(fnt)
+        size = QtGui.QFontMetrics(fnt)
+        vheader.setDefaultSectionSize(size.height() + 6)
+
+    def set_horizontal_header_font(self, fnt):
+        fnt = QtGui.QFont(fnt)
+        vheader=self.horizontalHeader()
+        vheader.setFont(fnt)
+
     def set_drag_enabled(self, d):
         if d:
             self.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
@@ -513,6 +525,9 @@ class _TabularEditor(qtTabularEditor):
 
     def refresh_editor(self):
         if self.control:
+            self.control.set_vertical_header_font(self.adapter.font)
+            self.control.set_horizontal_header_font(self.adapter.font)
+
             super(_TabularEditor, self).refresh_editor()
 
     def _on_column_resize(self, idx, old, new):
