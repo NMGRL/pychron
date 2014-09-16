@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Date, Str
+from traits.api import HasTraits, Date, Str, List
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -29,10 +29,21 @@ class Change(HasTraits):
         self._make_summary(dbrecord)
 
 
+class History(HasTraits):
+    isotope = Str
+    fit = Str
+
+
 class BlankChange(Change):
+    histories=List
     def _make_summary(self, dbrecord):
         s = ', '.join([bi.make_summary() for bi in dbrecord.blanks])
         self.summary=s
+        self.histories = [History(isotope=bi.isotope, fit=bi.fit or '') for bi in dbrecord.blanks]
+    # def traits_view(self):
+    #     v=View()
+    #     return v
+
 
 
 class FitChange(Change):

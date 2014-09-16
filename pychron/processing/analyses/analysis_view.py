@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance, Event
+from traits.api import HasTraits, List, Property, Any, Instance, Event, Str
 from traitsui.api import View, UItem, InstanceEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -54,6 +54,7 @@ class AnalysisView(HasTraits):
     selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
 
     refresh_needed = Event
+    analysis_id = Str
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
     _experiment_view = None
@@ -84,7 +85,8 @@ class AnalysisView(HasTraits):
         if history_view is None:
             history_view = HistoryView(an)
             self._history_view = history_view
-        
+            history_view.on_trait_change(self.handle_blank_right_clicked, 'blank_right_clicked')
+
         experiment_view = self._experiment_view
         if experiment_view is None:
             experiment_view = ExperimentView(an)
@@ -141,6 +143,9 @@ class AnalysisView(HasTraits):
         v = View(UItem('object.selection_tool.selected_view', style='custom',
                        editor=InstanceEditor()))
         return v
+
+    def handle_blank_right_clicked(self, new):
+        print 'asdf', new
 
 
 class DBAnalysisView(AnalysisView):
