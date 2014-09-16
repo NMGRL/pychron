@@ -448,7 +448,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def ramp(self, start=0, end=0, duration=0, rate=0, period=1):
+    def ramp(self, start=0, setpoint=0, duration=0, rate=0, period=1):
         def func(i, ramp_step):
             if self._cancel:
                 return
@@ -464,7 +464,7 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         rmp = Ramper()
-        rmp.ramp(func, start, end, duration, rate, period)
+        rmp.ramp(func, start, setpoint, duration, rate, period)
         return time.time() - st
 
     @verbose_skip
