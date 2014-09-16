@@ -83,7 +83,7 @@ class UserNotifierPreferences(BasePreferencesHelper):
 
 class ConsolePreferences(BaseConsolePreferences):
     preferences_path = 'pychron.experiment'
-
+    use_message_colormapping = Bool
 
 class SysLoggerPreferences(BasePreferencesHelper):
     use_syslogger = Bool
