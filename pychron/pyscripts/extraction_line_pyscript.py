@@ -28,6 +28,7 @@ from traits.api import List
 
 
 
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -449,6 +450,8 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def ramp(self, start=0, setpoint=0, duration=0, rate=0, period=1):
+        self.debug('ramp parameters start={}, '
+                   'setpoint={}, duration={}, rate={}, period={}'.format(start, setpoint, duration, rate, period))
         def func(i, ramp_step):
             if self._cancel:
                 return

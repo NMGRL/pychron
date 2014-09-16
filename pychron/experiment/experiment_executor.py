@@ -132,7 +132,7 @@ class ExperimentExecutor(Loggable):
     use_auto_save = Bool(True)
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
-
+    use_message_colormapping = Bool(True)
     use_memory_check = Bool(True)
     memory_threshold = Int
 
@@ -180,14 +180,8 @@ class ExperimentExecutor(Loggable):
 
         self.console_updated = '{}|{}'.format(color, msg)
 
-    def info_marker(self, char='=', color=None):
-        if color is None:
-            color = 'green'
-        if self.console_display:
-            self.console_display.add_marker(char, color=color)
-
     def info(self, msg, log=True, color=None, *args, **kw):
-        if color is None:
+        if color is None or not self.use_message_colormapping:
             color = 'green'
 
         if self.console_display:
@@ -197,6 +191,19 @@ class ExperimentExecutor(Loggable):
             super(ExperimentExecutor, self).info(msg, *args, **kw)
 
         self.console_updated = '{}|{}'.format(color, msg)
+
+    def info_marker(self, char='=', color=None):
+        if color is None:
+            color = 'green'
+        if self.console_display:
+            self.console_display.add_marker(char, color=color)
+
+    def info_heading(self, msg):
+        self.info('')
+        self.info_marker('=')
+        self.info(msg)
+        self.info_marker('=')
+        self.info('')
 
     def bind_preferences(self):
         # super(ExperimentExecutor, self).bind_preferences()
@@ -229,6 +236,9 @@ class ExperimentExecutor(Loggable):
         bind_preference(self, 'use_memory_check', '{}.use_memory_check'.format(prefid))
         bind_preference(self, 'memory_threshold', '{}.memory_threshold'.format(prefid))
 
+        #console
+        bind_preference(self, 'use_message_colormapping', '{}.use_message_colormapping'.format(prefid))
+
     def isAlive(self):
         return self._alive
 
@@ -241,12 +251,6 @@ class ExperimentExecutor(Loggable):
     def set_extract_state(self, state, flash=0.75, color='green', period=1.5):
         self._set_extract_state(state, flash, color, period)
 
-    def info_heading(self, msg):
-        self.info('')
-        self.info_marker('=')
-        self.info(msg)
-        self.info_marker('=')
-        self.info('')
 
     def execute(self):
 
