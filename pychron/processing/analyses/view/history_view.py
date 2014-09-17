@@ -12,17 +12,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Int, Any
-from traitsui.api import View, UItem, TabularEditor, VGroup, Heading, VSplit, Handler, InstanceEditor
+from traitsui.api import View, UItem, TabularEditor, VGroup, VSplit, \
+    Handler, InstanceEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.helpers.isotope_utils import sort_isotopes
+from pychron.graph.stacked_graph import StackedGraph
 
 
 class ChangeAdapter(TabularAdapter):
@@ -41,9 +44,7 @@ class FitAdapter(ChangeAdapter):
     columns = [('Date', 'create_date'), ('Summary', 'summary')]
 
 
-class BlankAdapter(TabularAdapter):
-    font = 'arial 10'
-    columns = [('Isotope', 'isotope'), ('Fit', 'fit')]
+
 
 
 class HistoryHandler(Handler):
@@ -65,27 +66,46 @@ class HistoryView(HasTraits):
         self._load(an)
 
     def show_blank_time_series(self):
-        print 'asfdsdfsadf', self.blank_selected
+        g=StackedGraph()
+        isotopes=self.blank_selected.isotopes
+        keys= sort_isotopes([iso.isotope for iso in isotopes], reverse=False)
+
+        for k in keys:
+            iso=next((i for i in isotopes if i.isotope==k))
+            # print iso.analyses
+            g.new_plot(padding_right=10)
+            g.set_time_xaxis()
+            g.set_y_title(iso.isotope)
+
+            vs=iso.values
+            if vs:
+                g.new_series([vi.timestamp for vi in vs],
+                             [vi.value for vi in vs])
+            g.new_series([self.timestamp], [iso.value], type='scatter')
+
+        g.set_x_limits(self.timestamp-86400, self.timestamp+86400)
+        g.set_x_title('Time', plotid=0)
+        g.edit_traits()
 
     def _load(self, an):
         self.blank_changes = an.blank_changes
         self.fit_changes = an.fit_changes
         self.blank_selected = self.blank_changes[-1]
+        self.timestamp = an.timestamp
 
     def traits_view(self):
-        v = View(VSplit(VGroup(Heading('Blanks'),
+        v = View(VSplit(VGroup(
                                UItem('blank_changes', editor=TabularEditor(adapter=BlankHistoryAdapter(),
                                                                            selected='blank_selected',
 
                                                                            editable=False)),
-                               UItem('object.blank_selected.histories', editor=TabularEditor(adapter=BlankAdapter()))
-        ),
-
-                        VGroup(Heading('Fits'),
-                               UItem('fit_changes', editor=TabularEditor(adapter=FitAdapter(),
-                                                                         editable=False)))),
-                 handler=HistoryHandler()
-        )
+                               UItem('blank_selected', style='custom', editor=InstanceEditor())),
+                        label='Blanks'),
+                 VGroup(
+                        UItem('fit_changes', editor=TabularEditor(adapter=FitAdapter(),
+                                                                  editable=False)),
+                        label='Iso. Fits'),
+                 handler=HistoryHandler())
         return v
 
 #============= EOF =============================================

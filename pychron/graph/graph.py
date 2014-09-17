@@ -17,6 +17,8 @@
 #=============enthought library imports=======================
 import os
 
+from chaco.scales.time_scale import CalendarScaleSystem
+from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Instance, Any, Bool, \
     List, Str, Property, Dict, Callable
 from traitsui.api import View, Item
@@ -29,6 +31,7 @@ from chaco.tools.api import ZoomTool, LineInspector, RangeSelection, \
 from chaco.axis import PlotAxis
 from pyface.api import FileDialog, OK
 from pyface.timer.api import do_after as do_after_timer
+
 
 #=============standard library imports ========================
 # import numpy as np
@@ -1523,6 +1526,13 @@ class Graph(Viewable, ContextMenuMixin):
         """
         axis = getattr(self.plots[plotid], axis)
         return axis.title
+
+    def set_time_xaxis(self, plotid=None):
+        if plotid is None:
+            plotid = len(self.plots) - 1
+
+        p=self.plots[plotid]
+        p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
 
     def _set_title(self, axis, title, plotid, font=None, size=None):
         """

@@ -197,6 +197,13 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
+class proc_BlanksSetValueTable(Base, BaseMixin):
+    blanks_id = foreignkey('proc_BlanksTable')
+    value = Column(Float(32))
+    error = Column(Float(32))
+    analysis_id = foreignkey('meas_AnalysisTable')
+    # set_id = foreignkey('proc_BlanksSetTable')
+
 
 class proc_BlanksSetTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
@@ -221,8 +228,12 @@ class proc_BlanksTable(Base, BaseMixin):
     fit = stringcolumn()
     error_type = stringcolumn(default='SD')
 
-    set_id = Column(Integer)
+    # set_id = Column(Integer)
+    # set_id = foreignkey('proc_BlanksSetTable')
     preceding_id = foreignkey('meas_AnalysisTable')
+
+    analysis_set = relationship('proc_BlanksSetTable')
+    value_set = relationship('proc_BlanksSetValueTable')
 
     def make_summary(self):
         s = 'Pr'
