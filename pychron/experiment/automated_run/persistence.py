@@ -18,15 +18,15 @@
 import binascii
 
 from traits.api import Instance, Bool, Int, Float, Str, \
-    Dict, List, Time, Date, Any
+    Dict, List, Time, Date, Any, Long
 
 #============= standard library imports ========================
 import os
 import struct
 import time
 import math
-#============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+#============= local library imports  ==========================
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -82,6 +82,7 @@ class AutomatedRunPersister(Loggable):
     defl_dict = Dict
     active_detectors = List
 
+    previous_blank_id = Long
     previous_blanks = Dict
     secondary_database_fail = False
     use_secondary_database = True
@@ -312,6 +313,8 @@ class AutomatedRunPersister(Loggable):
                                     increment=self.run_spec.increment,
                                     comment=self.run_spec.comment)
                 sess.flush()
+                self.run_spec.analysis_dbid = a.id
+
                 experiment = db.get_experiment(self.experiment_identifier, key='id')
                 if experiment is not None:
                     # added analysis to experiment
@@ -645,9 +648,10 @@ class AutomatedRunPersister(Loggable):
 
     def _save_blank_info(self, db, analysis):
         self.info('saving blank info')
-        self._save_history_info(db, analysis, 'blanks', self.previous_blanks)
+        self._save_history_info(db, analysis, 'blanks', self.previous_blanks,
+                                preceding_id=self.previous_blank_id)
 
-    def _save_history_info(self, db, analysis, name, values):
+    def _save_history_info(self, db, analysis, name, values, preceding_id=None):
         if not values:
             self.debug('no previous {} to save {}'.format(name, values))
             return
@@ -671,8 +675,12 @@ class AutomatedRunPersister(Loggable):
         for isotope, v in values.iteritems():
             uv = v.nominal_value
             ue = float(v.std_dev)
-            func(history, user_value=uv, user_error=ue,
-                 isotope=isotope)
+            if preceding_id:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope, preceding_id=preceding_id)
+            else:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope)
 
     def _save_monitor_info(self, db, analysis):
         if self.monitor:

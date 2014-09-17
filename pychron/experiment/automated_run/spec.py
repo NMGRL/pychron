@@ -15,12 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime
 
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr
+    Enum, on_trait_change, CStr, Long
 
 #============= standard library imports ========================
+from datetime import datetime
 import uuid
 import weakref
 #============= local library imports  ==========================
@@ -70,6 +70,7 @@ class AutomatedRunSpec(Loggable):
     step = Property(depends_on='_step')
     _step = Int(-1)
 
+    analysis_dbid = Long
     #===========================================================================
     # scripts
     #===========================================================================

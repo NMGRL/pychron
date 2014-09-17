@@ -165,7 +165,7 @@ class ExperimentExecutor(Loggable):
         return self._prev_baselines
 
     def get_prev_blanks(self):
-        return self._prev_blanks
+        return self._prev_blank_id, self._prev_blanks
 
     def warning(self, msg, log=True, color=None, *args, **kw):
 
@@ -478,6 +478,7 @@ class ExperimentExecutor(Loggable):
             if spec.analysis_type.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
+                    self._prev_blank_id = run.spec.analysis_dbid
                     self._prev_blanks = pb
                     self.debug('previous blanks ={}'.format(pb))
 
@@ -554,6 +555,7 @@ class ExperimentExecutor(Loggable):
         if run.analysis_type.startswith('blank'):
             pb = run.get_baseline_corrected_signals()
             if pb is not None:
+                self._prev_blank_id = run.spec.analysis_dbid
                 self._prev_blanks = pb
         self._report_execution_state(run)
         run.teardown()
@@ -1078,6 +1080,7 @@ class ExperimentExecutor(Loggable):
                     return
                 else:
                     self.info('using {} as the previous blank'.format(dbr.record_id))
+                    self._prev_blank_id = dbr.id
                     self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
                     self._prev_baselines = dbr.get_baseline_dict()
 
