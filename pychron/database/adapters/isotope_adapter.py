@@ -75,7 +75,8 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
-    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
+    proc_BlanksSetValueTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
@@ -434,6 +435,12 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_blanks_set(self, blank, analysis, **kw):
         return self._add_set('Blanks', 'blank', blank, analysis, **kw)
+
+    def add_blank_set_value_table(self, v, e, blank):
+        item = proc_BlanksSetValueTable(value=v, error=e)
+        dbitem = self._add_item(item)
+        dbitem.blank = blank
+        return dbitem
 
     def add_backgrounds_history(self, analysis, **kw):
         return self._add_history('Backgrounds', analysis, **kw)

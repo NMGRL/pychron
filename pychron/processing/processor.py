@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
-from uncertainties import ufloat
+from uncertainties import ufloat, std_dev, nominal_value
 from pychron.database.core.query import compile_query
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
@@ -209,6 +209,13 @@ class Processor(IsotopeDatabaseManager):
                      fit=prev.fit,
                      user_value=uv,
                      user_error=ue)
+
+    def add_predictor_valueset(self, vs, dbblank):
+        db = self.db
+        # with db.session_ctx():
+        for vi in vs:
+            db.add_blank_set_value_table(nominal_value(vi),
+                                         std_dev(vi), dbblank)
 
     def apply_correction(self, history, analysis, fit_obj, set_id, kind):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)

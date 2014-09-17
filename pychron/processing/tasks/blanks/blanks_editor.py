@@ -83,6 +83,8 @@ class BlanksEditor(InterpolationEditor):
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
                         dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
+                        self.processor.add_predictor_valueset(self._get_reference_values(si.name), dbblank)
+
                         if si.fit == 'preceding':
                             dbid = self._get_preceding_analysis(db, unk, refs)
                             if dbid:

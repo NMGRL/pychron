@@ -228,12 +228,12 @@ class proc_BlanksTable(Base, BaseMixin):
     fit = stringcolumn()
     error_type = stringcolumn(default='SD')
 
-    # set_id = Column(Integer)
+    set_id = Column(Integer)
     # set_id = foreignkey('proc_BlanksSetTable')
     preceding_id = foreignkey('meas_AnalysisTable')
 
     analysis_set = relationship('proc_BlanksSetTable')
-    value_set = relationship('proc_BlanksSetValueTable')
+    value_set = relationship('proc_BlanksSetValueTable', backref='blank')
 
     def make_summary(self):
         s = 'Pr'
