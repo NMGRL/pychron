@@ -381,13 +381,16 @@ class proc_FitTable(Base, BaseMixin):
     include_baseline_error = Column(Boolean)
     time_zero_offset = Column(Float)
 
-    def make_summary(self):
-        f = self.fit[:1].upper()
-
+    @property
+    def isotope_label(self):
         name = self.isotope.molecular_weight.name
         if self.isotope.kind=='baseline':
             name='{}bs'.format(name)
+        return name
 
+    def make_summary(self):
+        f = self.fit[:1].upper()
+        name = self.isotope_label
         s = '{}{}'.format(name, f)
         return s
 

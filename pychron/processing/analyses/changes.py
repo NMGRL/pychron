@@ -14,13 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import HasTraits, Date, Str, List, Long, Property, Any, Float
-from traitsui.api import View, HGroup, UItem
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from traitsui.editors import TabularEditor
-from traitsui.tabular_adapter import TabularAdapter
 
 
 class Change(HasTraits):
@@ -53,14 +50,9 @@ class ValueRecord(HasTraits):
     timestamp = Float
 
 
-class IsotopeBlankAdapter(TabularAdapter):
-    font = 'arial 10'
-    columns = [('Isotope', 'isotope'), ('Fit', 'fit')]
-
-
-class AnalysesAdapter(TabularAdapter):
-    font = 'arial 10'
-    columns = [('Run ID', 'record_id')]
+class FitRecord(HasTraits):
+    isotope = Str
+    fit = Str
 
 
 class BlankChange(Change):
@@ -88,20 +80,13 @@ class BlankChange(Change):
                                             fit=bi.fit or 'Pr') for bi in dbrecord.blanks]
         self.selected = next((hi for hi in self.isotopes if hi.isotope == 'Ar40'), self.isotopes[-1])
 
-    def traits_view(self):
-        v = View(HGroup(UItem('isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
-                                                               selected='selected',
-                                                               editable=False)),
-                        UItem('object.selected.analyses',
-                              editor=TabularEditor(adapter=AnalysesAdapter(),
-                                                   editable=False))))
-        return v
-
 
 class FitChange(Change):
     def _make_summary(self, dbrecord):
         s = ', '.join([fi.make_summary() for fi in dbrecord.fits])
         self.summary = s
+        self.fits = [FitRecord(isotope=fi.isotope_label, fit=fi.fit) for fi in dbrecord.fits]
+
 
 #============= EOF =============================================
 

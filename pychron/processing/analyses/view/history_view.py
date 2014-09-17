@@ -14,16 +14,15 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Int, Any
 from traitsui.api import View, UItem, TabularEditor, VGroup, VSplit, \
-    Handler, InstanceEditor
+    Handler, InstanceEditor, HGroup
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
-
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.graph.stacked_graph import StackedGraph
 
@@ -37,14 +36,32 @@ class BlankHistoryAdapter(ChangeAdapter):
     columns = [('Date', 'create_date'), ('Summary', 'summary')]
 
     def get_menu(self, obj, trait, row, column):
-        return MenuManager(Action(name='Show Time Series', action='show_blank_time_series'))
+        enabled = True
+        if self.item.selected:
+            enabled = bool(self.item.selected.values)
+
+        return MenuManager(Action(name='Show Time Series',
+                                  action='show_blank_time_series',
+                                  enabled=enabled))
 
 
-class FitAdapter(ChangeAdapter):
+class FitHistoryAdapter(ChangeAdapter):
     columns = [('Date', 'create_date'), ('Summary', 'summary')]
 
 
+class FitAdapter(TabularAdapter):
+    font = 'arial 10'
+    columns = [('Isotope', 'isotope'), ('Fit', 'fit')]
 
+
+class IsotopeBlankAdapter(TabularAdapter):
+    font = 'arial 10'
+    columns = [('Isotope', 'isotope'), ('Fit', 'fit')]
+
+
+class AnalysesAdapter(TabularAdapter):
+    font = 'arial 10'
+    columns = [('Run ID', 'record_id')]
 
 
 class HistoryHandler(Handler):
@@ -60,53 +77,62 @@ class HistoryView(HasTraits):
 
     blank_selected = Any
     blank_right_clicked = Any
+    fit_selected = Any
 
     def __init__(self, an, *args, **kw):
         super(HistoryView, self).__init__(*args, **kw)
         self._load(an)
 
     def show_blank_time_series(self):
-        g=StackedGraph()
-        isotopes=self.blank_selected.isotopes
-        keys= sort_isotopes([iso.isotope for iso in isotopes], reverse=False)
+        g = StackedGraph()
+        isotopes = self.blank_selected.isotopes
+        keys = sort_isotopes([iso.isotope for iso in isotopes], reverse=False)
 
         for k in keys:
-            iso=next((i for i in isotopes if i.isotope==k))
+            iso = next((i for i in isotopes if i.isotope == k))
             # print iso.analyses
             g.new_plot(padding_right=10)
             g.set_time_xaxis()
             g.set_y_title(iso.isotope)
 
-            vs=iso.values
+            g.new_series([self.timestamp], [iso.value], type='scatter', marker_color='black')
+            vs = iso.values
             if vs:
                 g.new_series([vi.timestamp for vi in vs],
-                             [vi.value for vi in vs])
-            g.new_series([self.timestamp], [iso.value], type='scatter')
+                             [vi.value for vi in vs], type='scatter', marker_color='red')
 
-        g.set_x_limits(self.timestamp-86400, self.timestamp+86400)
+        g.set_x_limits(self.timestamp - 86400, self.timestamp + 86400)
         g.set_x_title('Time', plotid=0)
         g.edit_traits()
 
     def _load(self, an):
         self.blank_changes = an.blank_changes
         self.fit_changes = an.fit_changes
+
+        self.fit_selected = self.fit_changes[-1]
         self.blank_selected = self.blank_changes[-1]
         self.timestamp = an.timestamp
 
     def traits_view(self):
-        v = View(VSplit(VGroup(
-                               UItem('blank_changes', editor=TabularEditor(adapter=BlankHistoryAdapter(),
-                                                                           selected='blank_selected',
-
-                                                                           editable=False)),
-                               UItem('blank_selected', style='custom', editor=InstanceEditor())),
+        v = View(VSplit(UItem('blank_changes', editor=TabularEditor(adapter=BlankHistoryAdapter(),
+                                                                    selected='blank_selected',
+                                                                    editable=False)),
+                        HGroup(
+                            UItem('object.blank_selected.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
+                                                                                         editable=False)),
+                            UItem('object.blank_selected.selected.analyses',
+                                  editor=TabularEditor(adapter=AnalysesAdapter(),
+                                                       editable=False))),
                         label='Blanks'),
-                 VGroup(
-                        UItem('fit_changes', editor=TabularEditor(adapter=FitAdapter(),
-                                                                  editable=False)),
-                        label='Iso. Fits'),
+                 VSplit(
+                     UItem('fit_changes', editor=TabularEditor(adapter=FitHistoryAdapter(),
+                                                               selected='fit_selected',
+                                                               editable=False)),
+                     UItem('object.fit_selected.fits', editor=TabularEditor(adapter=FitAdapter(),
+                                                                            editable=False)),
+                     label='Iso. Fits'),
                  handler=HistoryHandler())
         return v
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
