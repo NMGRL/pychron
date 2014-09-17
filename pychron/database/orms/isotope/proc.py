@@ -225,17 +225,19 @@ class proc_BlanksTable(Base, BaseMixin):
     preceding_id = foreignkey('meas_AnalysisTable')
 
     def make_summary(self):
-        s = ''
+        s = 'Pr'
         f = self.fit
         if f:
             if not f in INTERPOLATE_TYPES:
                 f = f[:1].upper()
 
             s = '{}{}'.format(self.isotope, f)
-            if self.preceding_id:
-                p = self.preceding_analysis
-                rid = make_runid(p.labnumber.identifier, p.aliquot, p.step)
-                s = '{} ({})'.format(s, rid)
+
+        if self.preceding_id:
+            p = self.preceding_analysis
+            rid = make_runid(p.labnumber.identifier, p.aliquot, p.step)
+            s = '{} ({})'.format(s, rid)
+
         return s
 
 
@@ -370,7 +372,12 @@ class proc_FitTable(Base, BaseMixin):
 
     def make_summary(self):
         f = self.fit[:1].upper()
-        s = '{}{}'.format(self.isotope.molecular_weight.name, f)
+
+        name = self.isotope.molecular_weight.name
+        if self.isotope.kind=='baseline':
+            name='{}bs'.format(name)
+
+        s = '{}{}'.format(name, f)
         return s
 
 
