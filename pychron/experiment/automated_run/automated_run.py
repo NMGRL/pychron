@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Any, Str, List, Property, \
-    Event, Instance, Bool, HasTraits, Float, Int
+    Event, Instance, Bool, HasTraits, Float, Int, Long
 #============= standard library imports ========================
 import os
 from itertools import groupby
@@ -100,6 +100,7 @@ class AutomatedRun(Loggable):
     uuid = Str
     extract_device = Str
     analysis_type = Property
+    analysis_id = Long
     fits = List
     eqtime = Float
 
@@ -203,7 +204,7 @@ class AutomatedRun(Loggable):
             try:
                 fi = fits[iso.detector]
             except KeyError:
-                fi = ('average','SEM')
+                fi = ('average', 'SEM')
                 self.warning('No fit for "{}". defaulting to {}. '
                              'check the measurement script "{}"'.format(iso.detector, fi, self.measurement_script.name))
 
@@ -738,6 +739,7 @@ class AutomatedRun(Loggable):
                                          active_detectors=self._active_detectors)
 
             self.persister.post_measurement_save()
+
             if self.persister.secondary_database_fail:
                 if self.experiment_executor:
                     self.experiment_executor.cancel(cancel_run=True,
@@ -745,11 +747,11 @@ class AutomatedRun(Loggable):
             else:
                 return True
 
-
     def get_previous_blanks(self):
         blanks = None
+        pid = 0
         if self.experiment_executor:
-            blanks = self.experiment_executor.get_prev_blanks()
+            pid, blanks = self.experiment_executor.get_prev_blanks()
 
         if not blanks:
             blanks = dict(Ar40=ufloat(0, 0),
@@ -758,7 +760,7 @@ class AutomatedRun(Loggable):
                           Ar37=ufloat(0, 0),
                           Ar36=ufloat(0, 0))
 
-        return blanks
+        return pid, blanks
 
     def set_previous_blanks(self, pb):
         if self.experiment_executor:
@@ -826,7 +828,8 @@ class AutomatedRun(Loggable):
                                  extraction_blob=ext_blob,
                                  measurement_name=ms_name,
                                  measurement_blob=ms_blob,
-                                 previous_blanks=pb,
+                                 previous_blank_id=pb[0],
+                                 previous_blanks=pb[1],
                                  runscript_name=script_name,
                                  runscript_blob=script_blob,
                                  signal_fods=sfods,
@@ -1252,7 +1255,7 @@ anaylsis_type={}
             #
             #if not blanks:
             #    blanks = dict(Ar40=(0, 0), Ar39=(0, 0), Ar38=(0, 0), Ar37=(0, 0), Ar36=(0, 0))
-            blanks = self.get_previous_blanks()
+            pid,blanks = self.get_previous_blanks()
 
             for iso, v in blanks.iteritems():
                 self.arar_age.set_blank(iso, v)
