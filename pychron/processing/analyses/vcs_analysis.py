@@ -43,7 +43,7 @@ class VCSAnalysis(DBAnalysis):
                 return yaml.load(fp)
 
 
-    def _sync(self, meas_analysis, unpack=False, load_changes=False):
+    def _sync(self, meas_analysis, unpack=False, load_aux=False):
         """
             if unpack is true load original signal data from db
         """
@@ -70,7 +70,7 @@ class VCSAnalysis(DBAnalysis):
             super(VCSAnalysis, self)._sync_isotopes(meas_analysis, unpack)
             super(VCSAnalysis, self)._sync_detector_info(meas_analysis)
 
-        if load_changes:
+        if load_aux:
             self._sync_changes(meas_analysis)
 
     def _sync_irradiation(self, yd, ln):

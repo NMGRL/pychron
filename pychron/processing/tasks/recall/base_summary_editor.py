@@ -52,6 +52,8 @@ class BaseSummaryEditor(BaseTraitsEditor):
     ideogram_options = Instance(IdeogramOptionsManager)
     ideogram_panel = Instance(IdeogramPanel)
 
+    basename = 'Summary'
+
     def _create_ideogram(self):
         self.ideogram_options = IdeogramOptionsManager()
         model = IdeogramModel(analyses=self.analyses,

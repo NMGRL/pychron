@@ -28,6 +28,7 @@ import time
 from uncertainties import ufloat
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import remove_extension
+from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
@@ -217,8 +218,19 @@ class DBAnalysis(Analysis):
     #
     #         d['age_err_wo_j'] = result.age_err_wo_j
     #         self.arar_result.update(d)
+    def sync_aux(self, dbrecord_tuple):
+        if isinstance(dbrecord_tuple, meas_AnalysisTable):
+            meas_analysis=dbrecord_tuple
+        else:
+            args = izip(*dbrecord_tuple)
+            meas_analysis = args.next()[0]
 
-    def _sync(self, dbrecord_tuple, unpack=True, load_changes=False, load_meta=True):
+        self._sync_changes(meas_analysis)
+        self._sync_experiment(meas_analysis)
+        self._sync_script_blobs(meas_analysis)
+        self.has_changes = True
+
+    def _sync(self, dbrecord_tuple, unpack=True, load_aux=False, load_meta=True):
         """
             copy values from meas_AnalysisTable
             and other associated tables
@@ -245,16 +257,13 @@ class DBAnalysis(Analysis):
 
         #this is the dominant time sink
         self._sync_isotopes(meas_analysis, isos,
-                            unpack, load_peak_center=load_changes, selected_histories=sh)
+                            unpack, load_peak_center=load_aux, selected_histories=sh)
         # timethis(self._sync_isotopes, args=(meas_analysis, isos, unpack),
-        #          kwargs={'load_peak_center': load_changes})
+        #          kwargs={'load_peak_center': load_aux})
 
         self._sync_detector_info(meas_analysis)
-        if load_changes:
-            self._sync_measurement(meas_analysis)
-            self._sync_changes(meas_analysis)
-            self._sync_experiment(meas_analysis)
-            self._sync_script_blobs(meas_analysis)
+        if load_aux:
+            self.sync_aux(meas_analysis)
 
         self._sync_extraction(meas_analysis)
         self._sync_measurement(meas_analysis)
