@@ -20,6 +20,7 @@ from traits.api import Str
 #============= standard library imports ========================
 from numpy import where
 #============= local library imports  ==========================
+from uncertainties import std_dev, nominal_value
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
@@ -50,12 +51,13 @@ class BlanksEditor(InterpolationEditor):
             n = len(self.analyses)
             if n > 1:
                 if progress is None:
-                    progress = self.processor.open_progress(n)
+                    progress = self.processor.open_progress(n+1)
                 else:
-                    progress.increase_max(n)
+                    progress.increase_max(n+1)
 
             refs = self._clean_references()
-            set_id = self.processor.add_predictor_set(refs)
+            set_id = self.processor.add_predictor_set(refs, 'blanks')
+            print set_id
 
             for unk in self.analyses:
                 if progress:
@@ -74,7 +76,7 @@ class BlanksEditor(InterpolationEditor):
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
 
                         dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
-                        self.processor.add_predictor_valueset(self._get_reference_values(si.name), dbblank)
+                        self.processor.add_predictor_valueset(refs, self._get_reference_values(si.name), dbblank)
 
                         if si.fit == 'preceding':
                             dbid = self._get_preceding_analysis(db, unk, refs)
@@ -86,9 +88,9 @@ class BlanksEditor(InterpolationEditor):
             # if self.auto_plot:
             self.rebuild_graph()
 
-            fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
-            self.processor.update_vcs_analyses(self.analyses,
-                                               'Update blanks fits={}'.format(fits))
+            # fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
+            # self.processor.update_vcs_analyses(self.analyses,
+            #                                    'Update blanks fits={}'.format(fits))
 
             if progress:
                 progress.soft_close()
@@ -118,7 +120,7 @@ class BlanksEditor(InterpolationEditor):
         if k in analysis.isotopes:
             iso = analysis.isotopes[k]
             v = iso.get_baseline_corrected_value()
-            return v.nominal_value, v.std_dev
+            return nominal_value(v), std_dev(v)
         else:
             return 0, 0
 

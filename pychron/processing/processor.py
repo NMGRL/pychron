@@ -210,12 +210,15 @@ class Processor(IsotopeDatabaseManager):
                      user_value=uv,
                      user_error=ue)
 
-    def add_predictor_valueset(self, vs, dbblank):
+    def add_predictor_valueset(self, refs, vs, dbblank):
         db = self.db
         # with db.session_ctx():
-        for vi in vs:
-            db.add_blank_set_value_table(nominal_value(vi),
-                                         std_dev(vi), dbblank)
+        # refs = [db.get_analysis_uuid(ri.uuid) for ri in refs]
+
+        ss, es = vs
+        for ri, vi, ei in zip(refs,ss, es):
+            dbri = db.get_analysis_uuid(ri.uuid)
+            db.add_blank_set_value_table(vi, ei, dbblank, dbri)
 
     def apply_correction(self, history, analysis, fit_obj, set_id, kind):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)
@@ -251,7 +254,7 @@ class Processor(IsotopeDatabaseManager):
                                          fit=fit_obj.fit,
                                          set_id=set_id)
 
-    def add_predictor_set(self, predictors):
+    def add_predictor_set(self, predictors, kind):
         set_id = 0
         if predictors:
             db = self.db
@@ -259,8 +262,10 @@ class Processor(IsotopeDatabaseManager):
             dbrs = [db.get_analysis_uuid(p.uuid) for p in predictors]
             set_id = hash(tuple((ai.id for ai in dbrs)))
 
+            func = getattr(db, 'add_{}_set'.format(kind))
             for dbr in dbrs:
-                db.add_detector_intercalibration_set(dbr, set_id=set_id)
+                func(dbr, set_id=set_id)
+                # db.add_detector_intercalibration_set(dbr, set_id=set_id)
 
         return set_id
 

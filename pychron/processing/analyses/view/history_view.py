@@ -15,6 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.array_data_source import ArrayDataSource
+from chaco.array_plot_data import ArrayPlotData
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, List, Int, Any
 from traitsui.api import View, UItem, TabularEditor, VGroup, VSplit, \
@@ -25,6 +27,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.graph.stacked_graph import StackedGraph
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class ChangeAdapter(TabularAdapter):
@@ -42,7 +45,8 @@ class BlankHistoryAdapter(ChangeAdapter):
 
         return MenuManager(Action(name='Show Time Series',
                                   action='show_blank_time_series',
-                                  enabled=enabled))
+                                  enabled=enabled),
+                           Action(name='Apply Change', action='apply_blank_change'))
 
 
 class FitHistoryAdapter(ChangeAdapter):
@@ -68,6 +72,9 @@ class HistoryHandler(Handler):
     def show_blank_time_series(self, info, obj):
         obj.show_blank_time_series()
 
+    def apply_blank_change(self, info, obj):
+        obj.apply_blank_change()
+
 
 class HistoryView(HasTraits):
     name = 'History'
@@ -83,10 +90,14 @@ class HistoryView(HasTraits):
         super(HistoryView, self).__init__(*args, **kw)
         self._load(an)
 
+    def apply_blank_change(self):
+        print 'apply blank change'
+
     def show_blank_time_series(self):
-        g = StackedGraph()
+        g = StackedRegressionGraph(window_height=0.75)
         isotopes = self.blank_selected.isotopes
         keys = sort_isotopes([iso.isotope for iso in isotopes], reverse=False)
+        _mi, _ma = None, None
 
         for k in keys:
             iso = next((i for i in isotopes if i.isotope == k))
@@ -95,13 +106,28 @@ class HistoryView(HasTraits):
             g.set_time_xaxis()
             g.set_y_title(iso.isotope)
 
-            g.new_series([self.timestamp], [iso.value], type='scatter', marker_color='black')
+            g.new_series([self.timestamp], [iso.value],
+                         marker_size=3,
+                         fit=False,
+                         type='scatter', marker_color='black')
             vs = iso.values
             if vs:
-                g.new_series([vi.timestamp for vi in vs],
-                             [vi.value for vi in vs], type='scatter', marker_color='red')
+                ts = [vi.timestamp for vi in vs]
+                _mi = min(ts)
+                _ma = max(ts)
+                g.new_series(ts,
+                             [vi.value for vi in vs],
+                             yerror=ArrayDataSource([vi.error for vi in vs]),
+                             marker_size=3,
+                             fit=(iso.fit, 'SD'),
+                             type='scatter', marker_color='red')
 
-        g.set_x_limits(self.timestamp - 86400, self.timestamp + 86400)
+        if not _mi:
+            _mi, _ma = self.timestamp - 86400, self.timestamp + 86400
+
+        g.set_x_limits(_mi, _ma, pad='0.1')
+        g.refresh()
+
         g.set_x_title('Time', plotid=0)
         g.edit_traits()
 

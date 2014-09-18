@@ -433,13 +433,14 @@ class IsotopeAdapter(DatabaseAdapter):
     def add_blanks(self, history, **kw):
         return self._add_series_item('Blanks', 'blanks', history, **kw)
 
-    def add_blanks_set(self, blank, analysis, **kw):
-        return self._add_set('Blanks', 'blank', blank, analysis, **kw)
+    def add_blanks_set(self, analysis, **kw):
+        return self._add_set('Blanks', 'blank', analysis, **kw)
 
-    def add_blank_set_value_table(self, v, e, blank):
-        item = proc_BlanksSetValueTable(value=v, error=e)
+    def add_blank_set_value_table(self, v, e, blank, analysis):
+        item = proc_BlanksSetValueTable(value=float(v), error=float(e))
         dbitem = self._add_item(item)
         dbitem.blank = blank
+        dbitem.analysis = analysis
         return dbitem
 
     def add_backgrounds_history(self, analysis, **kw):

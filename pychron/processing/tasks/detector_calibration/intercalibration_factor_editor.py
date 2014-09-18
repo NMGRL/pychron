@@ -53,7 +53,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
-            set_id = self.processor.add_predictor_set(self._clean_references())
+            set_id = self.processor.add_predictor_set(self._clean_references(), 'detector_intercalibration')
 
             for unk in self.analyses:
                 if progress:
