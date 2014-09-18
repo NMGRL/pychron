@@ -403,7 +403,7 @@ class AutomatedRunSpec(Loggable):
         if isinstance(v, str):
             v = v.upper()
             if v in ALPHAS:
-                self._step = list(ALPHAS).index(v)
+                self._step = ALPHAS.index(v)
         else:
             self._step = v
 
