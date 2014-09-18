@@ -69,7 +69,9 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+
     has_raw_data = False
+    has_changes = False
 
     recall_event = Event
     tag_event = Event

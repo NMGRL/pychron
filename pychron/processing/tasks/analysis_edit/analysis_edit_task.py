@@ -155,11 +155,15 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
+    def get_recall_editors(self):
+        es=self.editor_area.editors
+        return [e for e in es if isinstance(e, RecallEditor)]
+
     def configure_recall(self):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
-            for e in self.editor_area.editors[:]:
+            for e in self.get_recall_editors()[:]:
                 if tc.show_intermediate != e.analysis_view.main_view.show_intermediate:
                     e.close()
                     self.recall(e.model)
@@ -184,10 +188,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
-                ans = self.manager.make_analyses(records, calculate_age=True, load_changes=True)
+                ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
                 self._open_recall_editors(ans)
         else:
-            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_changes=True)
+            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
             self._open_recall_editors(ans)
 
     def _open_existing_recall_editors(self, records):
@@ -204,7 +208,9 @@ class AnalysisEditTask(BaseBrowserTask):
         return records
 
     def _open_recall_editors(self, ans):
-        existing = [e.basename for e in self.editor_area.editors]
+        # existing = [e.basename for e in self.editor_area.editors if isinstance(e, RecallEditor)]
+        # existing = [e.basename for e in self.editor_area.editors if isinstance(e, RecallEditor)]
+        existing = [e.basename for e in self.get_recall_editors()]
         if ans:
             for rec in ans:
                 av = rec.analysis_view

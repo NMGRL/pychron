@@ -267,6 +267,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 for ca in ans:
                     ca.calculate_age()
 
+    def _load_aux_cached_analyses(self, ans):
+        db_ans = []
+        no_db_ans = []
+        for ca in ans:
+            if not ca.has_changes:
+                no_db_ans.append(ca)
+            else:
+                db_ans.append(ca)
+        return db_ans, no_db_ans
+
     def _unpack_cached_analyses(self, ans, calculate_age, calculate_F):
         no_db_ans = []
         db_ans = []
@@ -317,6 +327,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                       unpack=False,
                       calculate_age=False,
                       calculate_F=False,
+                      load_aux=False,
                       **kw):
         """
             loading the analysis' signals appears to be the most expensive operation.
@@ -341,6 +352,13 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                         no_db_ans.append(di)
                         db_ans.remove(di)
 
+            if load_aux:
+                for di in db_ans:
+                    if not di.has_changes:
+                        if di not in no_db_ans:
+                            no_db_ans.append(di)
+                        db_ans.remove(di)
+
             if no_db_ans:
                 if use_cache:
                     # partition into cached and non cached analyses
@@ -352,10 +370,15 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     cns = [ANALYSIS_CACHE[ci.uuid] for ci in cached_ans]
 
                     # if unpack is true make sure cached analyses have raw data
-                    if unpack:
-                        a, b = self._unpack_cached_analyses(cns, calculate_age, calculate_F)
-                        db_ans.extend(a)
-                        no_db_ans.extend(b)
+                    if unpack or load_aux:
+                        if unpack:
+                            a, b = self._unpack_cached_analyses(cns, calculate_age, calculate_F)
+                            db_ans.extend(a)
+                            no_db_ans.extend(b)
+                        if load_aux:
+                            a, b = self._load_aux_cached_analyses(cns)
+                            db_ans.extend(a)
+                            no_db_ans.extend(b)
                     else:
                         self._calculate_cached_ages(cns, calculate_age, calculate_F)
                         #add analyses from cache to db_ans
@@ -368,11 +391,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 n = len(no_db_ans)
                 if n:
                     # self._clone_vcs_repos(no_db_ans)
-
                     progress = self._setup_progress(n, progress, use_progress)
                     db_ans, new_ans = self._construct_analyses(no_db_ans, db_ans, progress,
                                                                calculate_age, calculate_F,
-                                                               unpack, use_cache, **kw)
+                                                               unpack, use_cache,
+                                                               load_aux=load_aux, **kw)
                     db_ans.extend(new_ans)
 
                     # self.debug('use vcs {}'.format(self.use_vcs))
@@ -447,7 +470,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             return [], []
 
     def _construct_analysis(self, rec, group, prog, calculate_age=True, calculate_F=False,
-                            unpack=False, load_changes=False):
+                            unpack=False, load_aux=False):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
@@ -480,23 +503,35 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             msg = 'loading {}. {}'.format(rid, m)
             prog.change_message(msg)
 
-        klass = DBAnalysis  # if not self.use_vcs else VCSAnalysis
-        ai = klass(group_id=group_id,
-                   graph_id=graph_id)
+        if isinstance(rec, DBAnalysis):
+            ai = rec
+            if load_aux:
+                ai.sync_aux(group)
+            else:
+                ai.sync(group, unpack=unpack, load_aux=load_aux)
+        else:
+            ai = DBAnalysis()  # if not self.use_vcs else VCSAnalysis
+            ai.sync(group, unpack=unpack, load_aux=load_aux)
+
+            # ai = klass(group_id=group_id,
+            #        graph_id=graph_id)
+
+        ai.trait_set(group_id=group_id,
+                     graph_id=graph_id)
 
         # if not self.use_vcs:
-        ai.sync(group, unpack=unpack, load_changes=load_changes)
+        #
         # timethis(ai.sync, args=(group,),
-        #          kwargs=dict(unpack=unpack, load_changes=load_changes))
+        #          kwargs=dict(unpack=unpack, load_aux=load_aux))
 
         if atype in ('unknown', 'cocktail'):
             if calculate_age:
                 # timethis(ai.sync, args=(meas_analysis, ),
-                #          kwargs=dict(unpack=unpack, load_changes=load_changes))
+                #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age, kwargs=dict(force=not self.use_vcs))
                 ai.calculate_age()  #force=not self.use_vcs)
                 # timethis(ai.sync, args=(meas_analysis,),
-                #          kwargs=dict(unpack=unpack, load_changes=load_changes))
+                #          kwargs=dict(unpack=unpack, load_aux=load_aux))
                 # timethis(ai.calculate_age)
 
                 # synced = True
@@ -504,7 +539,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             ai.calculate_F()
 
         # if not synced:
-        #     ai.sync(group, unpack=unpack, load_changes=load_changes)
+        #     ai.sync(group, unpack=unpack, load_aux=load_aux)
 
         return ai
 
