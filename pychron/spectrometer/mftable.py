@@ -97,8 +97,7 @@ class MagnetFieldTable(Loggable):
         """
         det = get_detector_name(det)
 
-        self.info('update mftable {} {}'.format(isotope, dac))
-
+        self.info('update mftable {} {} {} message={}'.format(det, isotope, dac, message))
         d = self._get_mftable()
 
         isos, xs, ys = map(array, d[det][:3])

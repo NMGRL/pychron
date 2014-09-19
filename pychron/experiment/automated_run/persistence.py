@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -304,6 +304,10 @@ class AutomatedRunPersister(Loggable):
                     self.debug('user= {} does not existing. adding to database now'.format(un))
                     dbuser = db.add_user(un)
 
+                self.debug('adding analysis identifier={}, aliquot={}, '
+                           'step={}, increment'.format(ln, aliquot,
+                                                       self.run_spec.step,
+                                                       self.run_spec.increment))
                 a = db.add_analysis(lab,
                                     user=dbuser,
                                     uuid=self.uuid,
@@ -421,7 +425,7 @@ class AutomatedRunPersister(Loggable):
 
             if self._temp_analysis_buffer:
                 for p, uuid in self._temp_analysis_buffer:
-                    if p!=prj:
+                    if p != prj:
                         analysis = db.get_analysis_uuid(uuid)
                         self._add_to_project_group(db, prj, analysis)
 
@@ -603,7 +607,7 @@ class AutomatedRunPersister(Loggable):
                 dbpos.load_identifier = loadtable.name
 
         if snapshots:
-            for lpath,rpath,image in snapshots:
+            for lpath, rpath, image in snapshots:
                 dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
                                               image=image)
                 ext.snapshots.append(dbsnap)

@@ -25,6 +25,8 @@ from pychron.loggable import Loggable
 class Handler(Loggable):
     sock = None
     datasize=2**12
+
+    use_message_len_checking =False
     def get_packet(self):
         pass
 
@@ -37,7 +39,12 @@ class Handler(Loggable):
     def _recvall(self, recv):
         ss=[]
         sum = 0
-        msg_len=0
+
+        #disable message len checking
+        msg_len=1
+        if self.use_message_len_checking:
+            msg_len=0
+
         while 1:
             s = recv(self.datasize)#self._sock.recv(2048)
             if not msg_len:
@@ -48,8 +55,11 @@ class Handler(Loggable):
                 break
         data = ''.join(ss)
 
-        #trim off header
-        return data[4:]
+        if self.use_message_len_checking:
+            #trim off header
+            data=data[4:]
+        return data
+
 
 class TCPHandler(Handler):
     # datasize = 2 ** 10
