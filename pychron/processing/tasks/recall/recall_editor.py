@@ -20,6 +20,7 @@ from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.processing.analyses.changes import AnalysisRecord
 
 
 class RecallEditor(BaseTraitsEditor):
@@ -30,6 +31,15 @@ class RecallEditor(BaseTraitsEditor):
     name = Property(depends_on='analysis_view.analysis_id')
     basename = Property(depends_on='analysis_view.analysis_id')
     instance_id = 0
+
+
+    @on_trait_change('analysis_view:history_view:blank_selected:selected')
+    def handle_load_analyses(self, obj):
+        db=self.manager.db
+        with db.session_ctx():
+            dbblank = db.get_blank(obj.id)
+            obj.analyses = [AnalysisRecord(id=ai.analysis.id,
+                            record_id=ai.analysis.record_id) for ai in dbblank.analysis_set]
 
     @on_trait_change('analysis_view:history_view:apply_blank_change_needed')
     def handle_apply_blank_change(self, obj):

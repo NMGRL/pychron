@@ -173,7 +173,7 @@ class HistoryView(HasTraits):
                                                                     editable=False)),
                         HGroup(
                             UItem('object.blank_selected.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
-
+                                                                                         selected='object.blank_selected.selected',
                                                                                          editable=False)),
                             UItem('object.blank_selected.selected.analyses',
                                   editor=TabularEditor(adapter=AnalysesAdapter(),

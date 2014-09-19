@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool
+from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -61,6 +61,7 @@ class BlankChange(Change):
     isotopes = List
     # analyses = Property(List, depends_on='selected')
     selected = Any
+    load_analyses_needed = Event
 
     def _make_summary(self, dbrecord):
         s = ', '.join([bi.make_summary() for bi in dbrecord.blanks])
@@ -75,13 +76,18 @@ class BlankChange(Change):
                                 timestamp=ai.analysis.timestamp) for ai in b.value_set]
 
         self.isotopes = [IsotopeBlankRecord(id=bi.id, isotope=bi.isotope,
-                                            analyses=afactory(bi),
+                                            # analyses=afactory(bi),
                                             value=bi.user_value,
                                             error=bi.user_error,
                                             values=vfactory(bi),
                                             fit=bi.fit or 'Pr') for bi in dbrecord.blanks]
         self.selected = next((hi for hi in self.isotopes if hi.isotope == 'Ar40'), self.isotopes[-1])
 
+        b = next((bi for bi in dbrecord.blanks if bi.isotope=='Ar40'), dbrecord.blanks[-1])
+        self.selected.analyses=afactory(b)
+
+    def _selected_changed(self):
+        self.load_analyses_needed=self.selected
 
 class FitChange(Change):
     def _make_summary(self, dbrecord):

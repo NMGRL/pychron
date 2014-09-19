@@ -1637,8 +1637,8 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
 
-    def get_blank(self, value):
-        return self._retrieve_item(proc_BlanksTable, value)
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
 
     def get_blanks_history(self, value):
         return self._retrieve_item(proc_BlanksHistoryTable, value)
