@@ -30,7 +30,7 @@ from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
-from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center
+from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center, PeakCenterError
 from pychron.core.ui.gui import invoke_in_main_thread
 
 DELTA_TOOLTIP = """The minimum difference between a peak and
@@ -171,15 +171,19 @@ class MassCalibratorScan(MagnetScan):
         xs = line.index.get_data()
         ys = line.value.get_data()
 
-        center = calculate_peak_center(xs, ys)
-        if not isinstance(center, str):
+        try:
+            center = calculate_peak_center(xs, ys)
+
+        # if not isinstance(center, str):
             [lx, cx, hx], [ly, cy, hy], mx, my = center
             self.graph.add_vertical_rule(cx, plotid=1)
             self.info('new peak center. {} nominal={} dx={}'.format(cp.isotope, cp.dac, cx))
             cp.dac += cx
             self._redraw()
-        else:
-            self.warning(center)
+        except PeakCenterError,e:
+            self.warning(e)
+        # else:
+        #     self.warning(center)
 
     def _update_graph_data(self, *args, **kw):
         """
