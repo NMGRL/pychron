@@ -652,6 +652,8 @@ class AutomatedRunPersister(Loggable):
 
     def _save_blank_info(self, db, analysis):
         self.info('saving blank info')
+        self.debug('preceding blank id={}'.format(self.previous_blank_id))
+
         self._save_history_info(db, analysis, 'blanks', self.previous_blanks,
                                 preceding_id=self.previous_blank_id)
 
