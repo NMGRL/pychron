@@ -21,6 +21,7 @@ from traits.api import Str
 from numpy import where
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
@@ -74,9 +75,14 @@ class BlanksEditor(InterpolationEditor):
                         self.processor.apply_fixed_value_correction(phistory, history, si, cname)
                     else:
                         self.debug('saving {} {}'.format(unk.record_id, si.name))
+                        ys,es = self._get_reference_values(si.name, ans=refs)
+                        xs = [ri.timestamp for ri in refs]
 
+                        reg = self._get_regressor(si.fit, si.error_type, xs, ys, es)
+
+                        self.set_interpolated_values(si.name, reg, None)
                         dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
-                        self.processor.add_predictor_valueset(refs, self._get_reference_values(si.name), dbblank)
+                        self.processor.add_predictor_valueset(refs, ys, es, dbblank)
 
                         if si.fit == 'preceding':
                             dbid = self._get_preceding_analysis(db, unk, refs)
@@ -94,6 +100,17 @@ class BlanksEditor(InterpolationEditor):
 
             if progress:
                 progress.soft_close()
+
+    def _get_regressor(self, fit, error_type, xs, ys, es):
+        print fit
+        if fit in ('linear','parabolic','cubic'):
+            klass=WeightedPolynomialRegressor
+
+        mi= min(xs)
+        xs=[xi-mi for xi in xs]
+        return klass(fit=fit,
+                     error_type=error_type,
+                     xs=xs, ys=ys, yserr=es)
 
     def _get_preceding_analysis(self, db, unk, refs):
         xs = [ri.timestamp for ri in refs]

@@ -16,17 +16,15 @@
 
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
-from chaco.array_plot_data import ArrayPlotData
 from pyface.action.menu_manager import MenuManager
-from traits.api import HasTraits, List, Int, Any
-from traitsui.api import View, UItem, TabularEditor, VGroup, VSplit, \
-    Handler, InstanceEditor, HGroup
+from traits.api import HasTraits, List, Int, Any, Str, Event
+from traitsui.api import View, UItem, TabularEditor, VSplit, \
+    Handler, HGroup
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
-from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
@@ -37,6 +35,12 @@ class ChangeAdapter(TabularAdapter):
 
 class BlankHistoryAdapter(ChangeAdapter):
     columns = [('Date', 'create_date'), ('Summary', 'summary')]
+
+    def get_bg_color( self, object, trait, row, column = 0):
+        color='white'
+        if self.item.active:
+            color='#B0C4DE'
+        return color
 
     def get_menu(self, obj, trait, row, column):
         enabled = True
@@ -86,12 +90,21 @@ class HistoryView(HasTraits):
     blank_right_clicked = Any
     fit_selected = Any
 
+    analysis_uuid = Str
+    apply_blank_change_needed =Event
+    refresh_needed=Event
+
     def __init__(self, an, *args, **kw):
         super(HistoryView, self).__init__(*args, **kw)
         self._load(an)
 
+    def load(self, an):
+        self._load(an)
+
     def apply_blank_change(self):
         print 'apply blank change'
+        self.apply_blank_change_needed = self.blank_selected
+        # self.refresh_needed=True
 
     def show_blank_time_series(self):
         g = StackedRegressionGraph(window_height=0.75)
@@ -132,16 +145,25 @@ class HistoryView(HasTraits):
         g.edit_traits()
 
     def _load(self, an):
+        self.analysis_uuid = an.uuid
+
         self.blank_changes = an.blank_changes
         self.fit_changes = an.fit_changes
 
         self.fit_selected = self.fit_changes[-1]
-        self.blank_selected = self.blank_changes[-1]
+
+        # bid=an.selected_histories.selected_blanks_id
+        # print an, an.selected_histories
+        # bid=31263
+        self.blank_selected = next((bi for bi in self.blank_changes if bi.id==an.selected_blanks_id),
+                                   self.blank_changes[-1])
+
         self.timestamp = an.timestamp
 
     def traits_view(self):
         v = View(VSplit(UItem('blank_changes', editor=TabularEditor(adapter=BlankHistoryAdapter(),
                                                                     selected='blank_selected',
+                                                                    refresh='refresh_needed',
                                                                     editable=False)),
                         HGroup(
                             UItem('object.blank_selected.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),

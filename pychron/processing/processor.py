@@ -24,8 +24,7 @@ from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 
 #============= local library imports  ==========================
-from uncertainties import ufloat, std_dev, nominal_value
-from pychron.database.core.query import compile_query
+from uncertainties import ufloat
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
     gen_ExtractionDeviceTable
@@ -146,41 +145,41 @@ class Processor(IsotopeDatabaseManager):
                 q = q.limit(limit)
 
             return self._make_analyses_from_query(q)
-
-    def save_arar(self, analysis, meas_analysis):
-        with self.db.session_ctx():
-            hist = meas_analysis.selected_histories.selected_arar
-            if not hist:
-                hist = self.db.add_arar_history(meas_analysis)
-                arar = self.db.add_arar(hist)
-            else:
-                arar = hist.arar_result
-
-            #force analysis to recalculate age
-            #potentially redundant
-            analysis.calculate_age(force=True)
-
-            units = analysis.arar_constants.age_scalar
-
-            attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                    'rad40', 'cl36', 'ca37', 'k39')
-            for ai in attr:
-                a = getattr(analysis, ai)
-                v, e = float(a.nominal_value), float(a.std_dev)
-                setattr(arar, ai, v)
-                setattr(arar, '{}_err'.format(ai), e)
-
-            age = analysis.age * units
-            v, e = age.nominal_value, age.std_dev
-
-            je = analysis.age_error_wo_j * units
-
-            arar.age = float(v)
-            arar.age_err = float(e)
-            arar.age_err_wo_j = je
-
-            #update arar_history timestamp
-            arar.history.create_date = datetime.now()
+    #
+    # def save_arar(self, analysis, meas_analysis):
+    #     with self.db.session_ctx():
+    #         hist = meas_analysis.selected_histories.selected_arar
+    #         if not hist:
+    #             hist = self.db.add_arar_history(meas_analysis)
+    #             arar = self.db.add_arar(hist)
+    #         else:
+    #             arar = hist.arar_result
+    #
+    #         #force analysis to recalculate age
+    #         #potentially redundant
+    #         analysis.calculate_age(force=True)
+    #
+    #         units = analysis.arar_constants.age_scalar
+    #
+    #         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+    #                 'rad40', 'cl36', 'ca37', 'k39')
+    #         for ai in attr:
+    #             a = getattr(analysis, ai)
+    #             v, e = float(a.nominal_value), float(a.std_dev)
+    #             setattr(arar, ai, v)
+    #             setattr(arar, '{}_err'.format(ai), e)
+    #
+    #         age = analysis.age * units
+    #         v, e = age.nominal_value, age.std_dev
+    #
+    #         je = analysis.age_error_wo_j * units
+    #
+    #         arar.age = float(v)
+    #         arar.age_err = float(e)
+    #         arar.age_err_wo_j = je
+    #
+    #         #update arar_history timestamp
+    #         arar.history.create_date = datetime.now()
 
     #===============================================================================
     # corrections
@@ -210,12 +209,23 @@ class Processor(IsotopeDatabaseManager):
                      user_value=uv,
                      user_error=ue)
 
-    def add_predictor_valueset(self, refs, vs, dbblank):
+    def apply_blank_history(self, analysis, hist_id):
+        db=self.db
+        with db.session_ctx():
+            an = db.get_analysis_uuid(analysis.uuid)
+            self.debug('setting {} blank history_id to {}. '
+                       'table=proc_BlanksHistoryTable'.format(an.record_id, hist_id))
+            cid =an.selected_histories.selected_blanks_id
+            self.debug('current blank id={} >> {}'.format(cid, hist_id))
+            an.selected_histories.selected_blanks_id=hist_id
+
+            analysis.sync_blanks(an)
+
+    def add_predictor_valueset(self, refs, ss, es, dbblank):
         db = self.db
         # with db.session_ctx():
         # refs = [db.get_analysis_uuid(ri.uuid) for ri in refs]
 
-        ss, es = vs
         for ri, vi, ei in zip(refs,ss, es):
             dbri = db.get_analysis_uuid(ri.uuid)
             db.add_blank_set_value_table(vi, ei, dbblank, dbri)

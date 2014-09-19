@@ -15,12 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-
-from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
-
-
+from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
 #============= standard library imports ========================
+import os
 from datetime import datetime
 from itertools import izip
 import struct
@@ -118,6 +115,8 @@ class DBAnalysis(Analysis):
     extraction_script_blob = Str
     measurement_script_blob = Str
 
+    selected_blanks_id = Long
+
     def set_ic_factor(self, det, v, e):
         for iso in self.get_isotopes(det):
             iso.ic_factor=ufloat(v,e)
@@ -128,6 +127,7 @@ class DBAnalysis(Analysis):
             iso.temporary_ic_factor = (v, e)
 
     def set_temporary_blank(self, k, v, e):
+        self.debug('setting temporary blank iso={}, v={}, e={}'.format(k, v, e))
         if self.isotopes.has_key(k):
             iso = self.isotopes[k]
             iso.temporary_blank = Blank(value=v, error=e)
@@ -372,8 +372,14 @@ class DBAnalysis(Analysis):
             self.set_tag(tag)
 
     def _sync_changes(self, meas_analysis):
-        self.blank_changes = [BlankChange(bi) for bi in meas_analysis.blanks_histories]
+        bid=None
+        if meas_analysis.selected_histories:
+            bid=meas_analysis.selected_histories.selected_blanks_id
+
+        self.blank_changes = [BlankChange(bi, active=bi.id==bid) for bi in meas_analysis.blanks_histories]
         self.fit_changes = [FitChange(fi) for fi in meas_analysis.fit_histories]
+
+        self.selected_blanks_id = bid
 
     def _sync_experiment(self, meas_analysis):
         ext = meas_analysis.extraction
@@ -641,8 +647,31 @@ class DBAnalysis(Analysis):
 
         return factory
 
+    def sync_blanks(self, meas_analysis):
+        self.debug('syncing blanks age={}'.format(self.uage))
+        av = self.analysis_view
+        hv=av.history_view
+        mv=av.main_view
+
+        bid = meas_analysis.selected_histories.selected_blanks_id
+        self.selected_blanks_id = bid
+        hv.selected_blanks_id = bid
+
+        for bi in self.blank_changes:
+            bi.active = bi.id==bid
+
+        hv.blank_changes=self.blank_changes
+        hv.refresh_needed=True
+
+        self._get_blanks(meas_analysis)
+        self.calculate_age(force=True)
+        self.debug('post sync blanks age={}'.format(self.uage))
+
+        mv.load_computed(self, new_list=False)
+        mv.refresh_needed=True
+
     # def _get_blanks(self, selected_histories):
-    def _get_blanks(self, meas_analysis, selected_histories):
+    def _get_blanks(self, meas_analysis, selected_histories=None):
         isotopes = self.isotopes
 
         if selected_histories is None:
@@ -657,6 +686,8 @@ class DBAnalysis(Analysis):
                     try:
                         blank = isotopes[isok].blank
                         blank.name = n = '{} bk'.format(isok)
+                        # if isok=='Ar40':
+                        #     print ba.user_value
                         blank.set_uvalue((ba.user_value,
                                           ba.user_error), dirty=False)
                         blank.uvalue.tag = n

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Date, Str, List, Long, Property, Any, Float
+from traits.api import HasTraits, Date, Str, List, Long, Property, Any, Float, Bool
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -23,10 +23,12 @@ from traits.api import HasTraits, Date, Str, List, Long, Property, Any, Float
 class Change(HasTraits):
     create_date = Date
     summary = Str
-
+    id = Long
+    active = Bool(False)
     def __init__(self, dbrecord, *args, **kw):
         super(Change, self).__init__(*args, **kw)
         self.create_date = dbrecord.create_date
+        self.id = dbrecord.id
         self._make_summary(dbrecord)
 
 

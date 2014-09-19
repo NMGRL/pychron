@@ -31,6 +31,11 @@ class RecallEditor(BaseTraitsEditor):
     basename = Property(depends_on='analysis_view.analysis_id')
     instance_id = 0
 
+    @on_trait_change('analysis_view:history_view:apply_blank_change_needed')
+    def handle_apply_blank_change(self, obj):
+        self.manager.apply_blank_history(self.model,
+                                         obj.id)
+
     @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
     def handle_show_iso_evo(self, obj):
         from pychron.graph.regression_graph import RegressionGraph

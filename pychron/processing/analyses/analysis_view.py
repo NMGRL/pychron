@@ -57,8 +57,8 @@ class AnalysisView(HasTraits):
     analysis_id = Str
 
     main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
+    history_view = Instance('pychron.processing.analyses.view.history_view.HistoryView')
     _experiment_view = None
-    _history_view = None
     _interference_view = None
     _measurement_view = None
     _extraction_view = None
@@ -81,10 +81,10 @@ class AnalysisView(HasTraits):
 
         self.analysis_id = analysis_id
 
-        history_view = self._history_view
+        history_view = self.history_view
         if history_view is None:
             history_view = HistoryView(an)
-            self._history_view = history_view
+            self.history_view = history_view
             history_view.on_trait_change(self.handle_blank_right_clicked, 'blank_right_clicked')
 
         experiment_view = self._experiment_view

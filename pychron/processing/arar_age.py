@@ -420,6 +420,9 @@ class ArArAge(Loggable):
         else:
             self._missing_isotope_warned = False
 
+        iso= isotopes['Ar40']
+        print '{},{}'.format(iso.get_intensity(), iso.blank.value)
+
         return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
     def _calculate_F(self, iso_intensities=None):
