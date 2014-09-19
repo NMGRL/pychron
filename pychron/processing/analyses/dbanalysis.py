@@ -655,20 +655,22 @@ class DBAnalysis(Analysis):
 
         bid = meas_analysis.selected_histories.selected_blanks_id
         self.selected_blanks_id = bid
-        hv.selected_blanks_id = bid
 
         for bi in self.blank_changes:
             bi.active = bi.id==bid
 
-        hv.blank_changes=self.blank_changes
-        hv.refresh_needed=True
+        if hv:
+            hv.selected_blanks_id = bid
+
+            hv.blank_changes=self.blank_changes
+            hv.refresh_needed=True
 
         self._get_blanks(meas_analysis)
         self.calculate_age(force=True)
         self.debug('post sync blanks age={}'.format(self.uage))
-
-        mv.load_computed(self, new_list=False)
-        mv.refresh_needed=True
+        if mv:
+            mv.load_computed(self, new_list=False)
+            mv.refresh_needed=True
 
     # def _get_blanks(self, selected_histories):
     def _get_blanks(self, meas_analysis, selected_histories=None):

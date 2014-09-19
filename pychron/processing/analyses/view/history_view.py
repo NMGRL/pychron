@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
 from pyface.action.menu_manager import MenuManager
-from traits.api import HasTraits, List, Int, Any, Str, Event
+from traits.api import HasTraits, List, Int, Any, Str, Event, on_trait_change, Instance
 from traitsui.api import View, UItem, TabularEditor, VSplit, \
     Handler, HGroup
 from traitsui.menu import Action
@@ -26,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
+from pychron.processing.analyses.changes import BlankChange
 
 
 class ChangeAdapter(TabularAdapter):
@@ -36,10 +37,10 @@ class ChangeAdapter(TabularAdapter):
 class BlankHistoryAdapter(ChangeAdapter):
     columns = [('Date', 'create_date'), ('Summary', 'summary')]
 
-    def get_bg_color( self, object, trait, row, column = 0):
-        color='white'
+    def get_bg_color(self, object, trait, row, column=0):
+        color = 'white'
         if self.item.active:
-            color='#B0C4DE'
+            color = '#B0C4DE'
         return color
 
     def get_menu(self, obj, trait, row, column):
@@ -52,8 +53,8 @@ class BlankHistoryAdapter(ChangeAdapter):
                                   enabled=enabled),
                            Action(name='Apply Change', action='apply_blank_change'),
                            Action(name='Apply Change to Session', action='apply_session_blank_change'),
-
-                           )
+                           Action(name='Diff Selected', action='diff_blank_histories')
+        )
 
 
 class FitHistoryAdapter(ChangeAdapter):
@@ -81,11 +82,14 @@ class HistoryHandler(Handler):
 
     def apply_blank_change(self, info, obj):
         # obj.apply_blank_change()
-         obj.apply_blank_change_needed = (False, obj.blank_selected)
+        obj.apply_blank_change_needed = (False, obj.blank_selected)
 
     def apply_session_blank_change(self, info, obj):
         # obj.apply_session_blank_change()
         obj.apply_blank_change_needed = (True, obj.blank_selected)
+
+    def diff_blank_histories(self, info, obj):
+        obj.diff_blank_histories()
 
 
 class HistoryView(HasTraits):
@@ -94,13 +98,21 @@ class HistoryView(HasTraits):
     blank_changes = List
     fit_changes = List
 
-    blank_selected = Any
+    blank_selected = List
     blank_right_clicked = Any
     fit_selected = Any
 
     analysis_uuid = Str
-    apply_blank_change_needed =Event
-    refresh_needed=Event
+    apply_blank_change_needed = Event
+    refresh_needed = Event
+    update_blank_selected = Event
+    blank_selected_=Instance(BlankChange)
+    # blank_selected_ = Property(depends_on='update_blank_selected')
+
+    @on_trait_change('blank_selected[]')
+    def _handle_blank_selected(self):
+        # print self.blank_selected
+        self.blank_selected_=self.blank_selected[0]
 
     def __init__(self, an, *args, **kw):
         super(HistoryView, self).__init__(*args, **kw)
@@ -109,11 +121,15 @@ class HistoryView(HasTraits):
     def load(self, an):
         self._load(an)
 
-    # def apply_blank_change(self):
-    #     self.apply_blank_change_needed = (False, self.blank_selected)
-    #
-    # def apply_session_blank_change(self):
-    #     self.apply_blank_change_needed = (True, self.blank_selected)
+    def diff_blank_histories(self):
+        from pychron.processing.analyses.view.blank_diff_view import BlankDiffView
+
+        c = BlankDiffView()
+
+        left, right = self.blank_selected
+        print left, right
+        # c.set_values()
+        # c.edit_traits()
 
     def show_blank_time_series(self):
         g = StackedRegressionGraph(window_height=0.75)
@@ -161,8 +177,8 @@ class HistoryView(HasTraits):
 
         self.fit_selected = self.fit_changes[-1]
 
-        self.blank_selected = next((bi for bi in self.blank_changes if bi.id==an.selected_blanks_id),
-                                   self.blank_changes[-1])
+        self.blank_selected = next(([bi] for bi in self.blank_changes if bi.id == an.selected_blanks_id),
+                                   self.blank_changes[-1:])
 
         self.timestamp = an.timestamp
 
@@ -170,13 +186,16 @@ class HistoryView(HasTraits):
         v = View(VSplit(UItem('blank_changes', editor=TabularEditor(adapter=BlankHistoryAdapter(),
                                                                     selected='blank_selected',
                                                                     refresh='refresh_needed',
+                                                                    multi_select=True,
                                                                     editable=False)),
                         HGroup(
-                            UItem('object.blank_selected.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
-                                                                                         selected='object.blank_selected.selected',
-                                                                                         editable=False)),
-                            UItem('object.blank_selected.selected.analyses',
+                            UItem('object.blank_selected_.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
+                                                                                          refresh='refresh_needed',
+                                                                                          selected='object.blank_selected_.selected',
+                                                                                          editable=False)),
+                            UItem('object.blank_selected_.selected.analyses',
                                   editor=TabularEditor(adapter=AnalysesAdapter(),
+                                                       refresh='refresh_needed',
                                                        editable=False))),
                         label='Blanks'),
                  VSplit(

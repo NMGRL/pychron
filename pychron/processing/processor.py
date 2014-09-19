@@ -24,6 +24,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 from uncertainties import ufloat
+
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
@@ -288,17 +289,21 @@ class Processor(IsotopeDatabaseManager):
                                          set_id=set_id)
 
     def add_predictor_set(self, predictors, kind):
-        set_id = 0
+        set_id = None
         if predictors:
             db = self.db
 
             #make set_id
             dbrs = db.get_analyses_uuid([p.uuid for p in predictors], analysis_only=True)
+
             # set_id = hash(tuple((ai.id for ai in dbrs)))
             set_id = self.unique_id([ai.id for ai in dbrs])
-            func = getattr(db, 'add_{}_set'.format(kind))
-            for dbr in dbrs:
-                func(dbr, set_id=set_id)
+
+            gfunc=getattr(db, 'get_{}_set'.format(kind))
+            if not gfunc(set_id):
+                func = getattr(db, 'add_{}_set'.format(kind))
+                for dbr in dbrs:
+                    func(dbr, set_id=set_id)
 
         return set_id
 

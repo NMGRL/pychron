@@ -76,7 +76,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
-    proc_BlanksSetValueTable, proc_ActionTable
+    proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
@@ -1636,6 +1636,9 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
+
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
 
     def get_blank(self, value, key='id'):
         return self._retrieve_item(proc_BlanksTable, value, key=key)
