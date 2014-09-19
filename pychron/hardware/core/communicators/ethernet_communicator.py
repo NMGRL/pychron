@@ -47,8 +47,12 @@ class Handler(Loggable):
 
         while 1:
             s = recv(self.datasize)#self._sock.recv(2048)
+            if not s:
+                break
+
             if not msg_len:
                 msg_len = int(s[:4],16)
+
             sum+=len(s)
             ss.append(s)
             if sum>=msg_len:
@@ -103,7 +107,7 @@ class TCPHandler(Handler):
 class UDPHandler(Handler):
     # datasize = 2 ** 10
 
-    def open_socket(self, addr, timeout=20.0):
+    def open_socket(self, addr, timeout=3.0):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # self.sock.connect(addr)

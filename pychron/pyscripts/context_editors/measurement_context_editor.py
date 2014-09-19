@@ -15,7 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, on_trait_change, Str, Property, cached_property, Float, Bool, HasTraits, Instance
+from traits.api import Int, on_trait_change, Str, Property, cached_property, \
+    Float, Bool, HasTraits, Instance, TraitError
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 # ============= standard library imports ========================
 import ast
@@ -34,7 +35,7 @@ class YamlObject(HasTraits):
         try:
             for k, v in ctx[self.name].items():
                 setattr(self, k, v)
-        except KeyError:
+        except (KeyError, TraitError):
             pass
 
     def dump(self):

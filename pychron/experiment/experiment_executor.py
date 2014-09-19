@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import Event, Button, String, \
-    Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change
+    Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change, Long
 # from traitsui.api import View, Item
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
@@ -146,6 +146,7 @@ class ExperimentExecutor(Loggable):
     _prev_blanks = Dict
     _prev_baselines = Dict
     _err_message = String
+    _prev_blank_id = Long
 
     baseline_color = Color
     sniff_color = Color

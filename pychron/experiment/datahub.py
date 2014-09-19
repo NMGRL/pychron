@@ -31,6 +31,7 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -111,8 +112,9 @@ class Datahub(Loggable):
         spec.step = self._new_step + step_offset
         spec.conflicts_checked = True
 
-        self.debug('setting AutomatedRunSpec aliquot={}, step={}'.format(spec.aliquot,
-                                                                         spec.step))
+        self.debug('setting AutomatedRunSpec aliquot={}, step={}, increment={}'.format(spec.aliquot,
+                                                                         spec.step,
+                                                                         spec.increment))
 
     def load_analysis_backend(self, ln, arar_age):
         db = self.mainstore.db
