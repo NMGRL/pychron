@@ -43,7 +43,11 @@ class myMessageMixin(object):
         """
             open the confirmation dialog on the GUI thread but wait for return
         """
-        invoke_in_main_thread(self._open, timeout)
+        evt=Event()
+        invoke_in_main_thread(self._open, timeout, evt)
+        while not evt.is_set():
+            time.sleep(0.25)
+
         return self.return_code
 
     def _set_return_code(self):
@@ -51,7 +55,7 @@ class myMessageMixin(object):
         if clicked_button in self._button_result_map:
             self.return_code = self._button_result_map[clicked_button]
 
-    def _open(self, timeout):
+    def _open(self, timeout, evt):
 
         if self.control is None:
             self._create()
@@ -85,6 +89,7 @@ class myMessageMixin(object):
             self.show(True)
             self.return_code = OK
 
+        evt.set()
         return self.return_code
 
 class myMessageDialog(myMessageMixin, MessageDialog):
@@ -112,13 +117,14 @@ class _ConfirmationDialog(ConfirmationDialog):
         return True
 
     def _show_modal(self):
-        self.control.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.control.setModal(True)
+        # self.control.setWindowModality(QtCore.Qt.ApplicationModal)
         retval = self.control.exec_()
         clicked_button = self.control.clickedButton()
         if clicked_button in self._button_result_map:
             retval = self._button_result_map[clicked_button]
-        # else:
-        #     retva
+            # else:
+            #     retva
             # retval = _RESULT_MAP[retval]
         return retval
 

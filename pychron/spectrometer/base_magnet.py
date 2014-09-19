@@ -56,12 +56,12 @@ class BaseMagnet(HasTraits):
 
     _suppress_mass_update = False
 
-    def update_field_table(self, det, isotope, dac):
+    def update_field_table(self, *args):
         """
 
             dac needs to be in axial units
         """
-        self.mftable.update_field_table(det, isotope, dac)
+        self.mftable.update_field_table(*args)
 
     #===============================================================================
     # persistence

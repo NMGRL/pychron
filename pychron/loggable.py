@@ -51,12 +51,12 @@ def confirmation_dialog(msg, return_retval=False,
         dlg.timeout_return_code = timeout_ret
 
     retval = dlg.open(timeout)
+    from pyface.api import YES, OK
     if return_retval:
         return retval
     else:
-        from pyface.api import YES
 
-        return retval == YES
+        return retval in (YES, OK)
 
 
 __gloggers__ = dict()
