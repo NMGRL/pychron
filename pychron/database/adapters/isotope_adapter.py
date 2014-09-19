@@ -440,7 +440,11 @@ class IsotopeAdapter(DatabaseAdapter):
         item = proc_BlanksSetValueTable(value=float(v), error=float(e))
         dbitem = self._add_item(item)
         dbitem.blank = blank
-        dbitem.analysis = analysis
+        if isinstance(analysis, (int, long)):
+            dbitem.analysis_id = analysis
+        else:
+            dbitem.analysis=analysis
+
         return dbitem
 
     def add_backgrounds_history(self, analysis, **kw):
@@ -1542,17 +1546,27 @@ class IsotopeAdapter(DatabaseAdapter):
             except NoResultFound:
                 return
 
-    def get_analyses_uuid(self, uuids):
+    def get_analyses_uuid(self, uuids, attr=None, analysis_only=False):
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable,
+
+            if analysis_only or attr:
+                if attr is None:
+                    attr=meas_AnalysisTable
+                else:
+                    attr=getattr(meas_AnalysisTable, attr)
+
+                q= sess.query(attr)
+            else:
+                q = sess.query(meas_AnalysisTable,
                            gen_LabTable,
                            meas_IsotopeTable,
                            gen_SampleTable.name,
                            gen_ProjectTable.name,
                            gen_MaterialTable.name)
-            q = q.join(meas_IsotopeTable)
-            q = q.join(gen_LabTable)
-            q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+                q = q.join(meas_IsotopeTable)
+                q = q.join(gen_LabTable)
+                q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
 

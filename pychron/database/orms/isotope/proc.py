@@ -206,7 +206,7 @@ class proc_BlanksSetValueTable(Base, BaseMixin):
 
 
 class proc_BlanksSetTable(Base, BaseMixin):
-    # blanks_id = foreignkey('proc_BlanksTable')
+    blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
     set_id = Column(Integer)
     # blanks = relationship('proc_BlanksTable', backref='analysis_set')
@@ -230,12 +230,15 @@ class proc_BlanksTable(Base, BaseMixin):
     error_type = stringcolumn(default='SD')
 
     set_id = Column(Integer, ForeignKey('proc_BlanksSetTable.set_id'))
+    # set_id = Column(Integer)
     # set_id = foreignkey('proc_BlanksSetTable')
     preceding_id = foreignkey('meas_AnalysisTable')
 
     analysis_set = relationship('proc_BlanksSetTable',
                                 primaryjoin='proc_BlanksTable.set_id==proc_BlanksSetTable.set_id',
                                 uselist=True)
+
+    # analysis_set = relationship('proc_BlanksSetTable')
     value_set = relationship('proc_BlanksSetValueTable', backref='blank')
 
     def make_summary(self):

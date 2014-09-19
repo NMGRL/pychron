@@ -152,9 +152,6 @@ class HistoryView(HasTraits):
 
         self.fit_selected = self.fit_changes[-1]
 
-        # bid=an.selected_histories.selected_blanks_id
-        # print an, an.selected_histories
-        # bid=31263
         self.blank_selected = next((bi for bi in self.blank_changes if bi.id==an.selected_blanks_id),
                                    self.blank_changes[-1])
 
@@ -167,6 +164,7 @@ class HistoryView(HasTraits):
                                                                     editable=False)),
                         HGroup(
                             UItem('object.blank_selected.isotopes', editor=TabularEditor(adapter=IsotopeBlankAdapter(),
+
                                                                                          editable=False)),
                             UItem('object.blank_selected.selected.analyses',
                                   editor=TabularEditor(adapter=AnalysesAdapter(),

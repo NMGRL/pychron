@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Date, Str, List, Long, Property, Any, Float, Bool
+from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -59,7 +59,7 @@ class FitRecord(HasTraits):
 
 class BlankChange(Change):
     isotopes = List
-    analyses = Property(List, depends_on='selected')
+    # analyses = Property(List, depends_on='selected')
     selected = Any
 
     def _make_summary(self, dbrecord):

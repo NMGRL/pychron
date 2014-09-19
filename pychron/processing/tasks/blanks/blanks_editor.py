@@ -21,6 +21,7 @@ from traits.api import Str
 from numpy import where
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
+from pychron.core.regression.interpolation_regressor import InterpolationRegressor
 from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
@@ -52,13 +53,20 @@ class BlanksEditor(InterpolationEditor):
             n = len(self.analyses)
             if n > 1:
                 if progress is None:
-                    progress = self.processor.open_progress(n+1)
+                    progress = self.processor.open_progress(n*len(self.tool.fits))
                 else:
                     progress.increase_max(n+1)
 
             refs = self._clean_references()
             set_id = self.processor.add_predictor_set(refs, 'blanks')
-            print set_id
+
+            for si in self.tool.fits:
+                if si.use:
+                    ys,es = self._get_reference_values(si.name, ans=refs)
+                    xs = [ri.timestamp for ri in refs]
+
+                    reg = self._get_regressor(si.fit, si.error_type, xs, ys, es)
+                    self.set_interpolated_values(si.name, reg, None)
 
             for unk in self.analyses:
                 if progress:
@@ -70,17 +78,24 @@ class BlanksEditor(InterpolationEditor):
                 phistory = histories[-1] if histories else None
                 history = self.processor.add_history(meas_analysis, cname)
                 for si in self.tool.fits:
+                    if not si.fit:
+                        msg = 'Skipping {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
+
                     if not si.use:
-                        self.debug('using previous value {} {}'.format(unk.record_id, si.name))
+                        msg = 'Using previous value {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
                         self.processor.apply_fixed_value_correction(phistory, history, si, cname)
                     else:
-                        self.debug('saving {} {}'.format(unk.record_id, si.name))
-                        ys,es = self._get_reference_values(si.name, ans=refs)
-                        xs = [ri.timestamp for ri in refs]
+                        msg ='Saving {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
 
-                        reg = self._get_regressor(si.fit, si.error_type, xs, ys, es)
-
-                        self.set_interpolated_values(si.name, reg, None)
                         dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
                         self.processor.add_predictor_valueset(refs, ys, es, dbblank)
 
@@ -102,15 +117,18 @@ class BlanksEditor(InterpolationEditor):
                 progress.soft_close()
 
     def _get_regressor(self, fit, error_type, xs, ys, es):
-        print fit
         if fit in ('linear','parabolic','cubic'):
-            klass=WeightedPolynomialRegressor
+            reg = WeightedPolynomialRegressor(fit=fit)
+        efit = fit[0]
+        if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            reg = InterpolationRegressor(kind=efit)
 
         mi= min(xs)
         xs=[xi-mi for xi in xs]
-        return klass(fit=fit,
-                     error_type=error_type,
-                     xs=xs, ys=ys, yserr=es)
+        reg.trait_set(error_type=error_type,
+                             xs=xs, ys=ys, yserr=es)
+        reg.calculate()
+        return reg
 
     def _get_preceding_analysis(self, db, unk, refs):
         xs = [ri.timestamp for ri in refs]
