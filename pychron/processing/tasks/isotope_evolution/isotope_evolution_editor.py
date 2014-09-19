@@ -98,15 +98,11 @@ class IsotopeEvolutionEditor(GraphEditor):
 
             for unk, meas_analysis in zip(ans, ms):
                 progress.change_message('Saving Fits {}'.format(unk.record_id))
-
-                # meas_analysis = db.get_analysis_uuid(unk.uuid)
                 if fits and filters:
                     self._save_fit_dict(unk, meas_analysis, fits, filters, dbaction)
                 else:
                     self._save_fit(unk, meas_analysis)
 
-                    #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
-                    #proc.save_arar(unk, meas_analysis)
                 proc.remove_from_cache(unk)
 
         progress.soft_close()
