@@ -18,7 +18,6 @@ def upgrade():
     op.add_column('proc_BlanksHistoryTable', sa.Column('session', sa.String(40)))
     op.add_column('proc_FitHistoryTable', sa.Column('session', sa.String(40)))
 
-
 def downgrade():
     op.drop_column('proc_BlanksHistoryTable','session')
     op.drop_column('proc_FitHistoryTable','session')

@@ -76,7 +76,7 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
-    proc_BlanksSetValueTable
+    proc_BlanksSetValueTable, proc_ActionTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int
 
@@ -250,6 +250,10 @@ class IsotopeAdapter(DatabaseAdapter):
         obj.tag = dbtag
         obj.analysis = an
         obj.selected_histories_id = sh_id
+
+    def add_proc_action(self, msg, **kw):
+        obj=proc_ActionTable(action=msg, **kw)
+        return self._add_item(obj)
 
     def add_mftable(self, specname, blob):
         spec = self.get_mass_spectrometer(specname)

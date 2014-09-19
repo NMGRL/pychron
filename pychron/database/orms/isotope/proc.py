@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -197,6 +197,16 @@ class proc_InterpretedAgeTable(Base, BaseMixin):
 
     sets = relationship('proc_InterpretedAgeSetTable', backref='analyses')
 
+
+class proc_ActionTable(Base, BaseMixin):
+    create_date = Column(DateTime, default=func.now())
+    session = stringcolumn()
+    user_id = foreignkey('gen_UserTable')
+    action = Column(BLOB)
+    blank_histories = relationship('proc_BlanksHistoryTable', backref='action')
+    fit_histories = relationship('proc_FitHistoryTable', backref='action')
+
+
 class proc_BlanksSetValueTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
     value = Column(Float(32))
@@ -208,13 +218,14 @@ class proc_BlanksSetValueTable(Base, BaseMixin):
 class proc_BlanksSetTable(Base, BaseMixin):
     blanks_id = foreignkey('proc_BlanksTable')
     blank_analysis_id = foreignkey('meas_AnalysisTable')
-    set_id = Column(Integer)
+    # set_id = Column(Integer)
+    set_id = stringcolumn()
     # blanks = relationship('proc_BlanksTable', backref='analysis_set')
 
 
 class proc_BlanksHistoryTable(Base, HistoryMixin):
-    session = stringcolumn()
-
+    # session = stringcolumn()
+    action_id = foreignkey('proc_ActionTable')
     blanks = relationship('proc_BlanksTable', backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_blanks',
@@ -231,7 +242,8 @@ class proc_BlanksTable(Base, BaseMixin):
     fit = stringcolumn()
     error_type = stringcolumn(default='SD')
 
-    set_id = Column(Integer, ForeignKey('proc_BlanksSetTable.set_id'))
+    set_id = Column(String(40), ForeignKey('proc_BlanksSetTable.set_id'))
+    # set_id = Column(Integer, ForeignKey('proc_BlanksSetTable.set_id'))
     # set_id = Column(Integer)
     # set_id = foreignkey('proc_BlanksSetTable')
     preceding_id = foreignkey('meas_AnalysisTable')
@@ -261,10 +273,10 @@ class proc_BlanksTable(Base, BaseMixin):
 
 
 class proc_BackgroundsSetTable(Base, BaseMixin):
-    backgrounds_id = foreignkey('proc_BackgroundsTable')
+    # backgrounds_id = foreignkey('proc_BackgroundsTable')
     background_analysis_id = foreignkey('meas_AnalysisTable')
-    set_id = Column(Integer)
-
+    # set_id = Column(Integer)
+    set_id=stringcolumn()
 
 class proc_BackgroundsHistoryTable(Base, HistoryMixin):
     backgrounds = relationship('proc_BackgroundsTable',
@@ -282,7 +294,8 @@ class proc_BackgroundsTable(Base, BaseMixin):
     isotope = stringcolumn()
     fit = stringcolumn()
     error_type = stringcolumn(default='SD')
-    set_id = Column(Integer)
+    set_id = Column(String(40), ForeignKey('proc_BackgroundsSetTable.set_id'))
+    # set_id = Column(Integer)
 
 
 class proc_DetectorIntercalibrationHistoryTable(Base, HistoryMixin):
@@ -303,13 +316,14 @@ class proc_DetectorIntercalibrationTable(Base, BaseMixin):
     user_error = Column(Float)
     fit = stringcolumn()
     error_type = stringcolumn(default='SD')
-    set_id = Column(Integer)
-
+    # set_id = Column(Integer)
+    set_id = Column(String(40), ForeignKey('proc_DetectorIntercalibrationSetTable.set_id'))
 
 class proc_DetectorIntercalibrationSetTable(Base, BaseMixin):
-    intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
+    # intercalibration_id = foreignkey('proc_DetectorIntercalibrationTable')
     ic_analysis_id = foreignkey('meas_AnalysisTable')
-    set_id = Column(Integer)
+    # set_id = Column(Integer)
+    set_id = stringcolumn()
 
 
 class proc_DetectorParamHistoryTable(Base, HistoryMixin):
@@ -378,6 +392,7 @@ class proc_FitHistoryTable(Base, HistoryMixin):
                             backref='selected_fits',
                             uselist=False)
 
+
 class proc_FitTable(Base, BaseMixin):
     history_id = foreignkey('proc_FitHistoryTable')
     isotope_id = foreignkey('meas_IsotopeTable')
@@ -393,8 +408,8 @@ class proc_FitTable(Base, BaseMixin):
     @property
     def isotope_label(self):
         name = self.isotope.molecular_weight.name
-        if self.isotope.kind=='baseline':
-            name='{}bs'.format(name)
+        if self.isotope.kind == 'baseline':
+            name = '{}bs'.format(name)
         return name
 
     def make_summary(self):
@@ -415,6 +430,7 @@ class proc_SelectedHistoriesTable(Base, BaseMixin):
     selected_sensitivity_id = foreignkey('proc_SensitivityHistoryTable')
 
     dr_sets = relationship('proc_DataReductionTagSetTable', backref='selected_histories')
+
 
 class proc_IsotopeResultsTable(Base, BaseMixin):
     signal_ = Column(Float(32))

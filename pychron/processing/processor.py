@@ -18,13 +18,13 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 from datetime import datetime, timedelta
+from hashlib import sha1
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
-
-#============= local library imports  ==========================
 from uncertainties import ufloat
+#============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
     gen_ExtractionDeviceTable
@@ -38,6 +38,11 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_Measurem
 from pychron.core.helpers.iterfuncs import partition
 # from pychron.processing.plotters import plotter_options
 
+def unique_id(vs, *args):
+    h=sha1()
+    for ai in vs+list(args):
+        h.update(str(ai))
+    return h.hexdigest()
 
 class IrradiationPositionRecord(HasTraits):
     position = Int
@@ -53,6 +58,10 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
+
+    def unique_id(self,vs, *args):
+        return unique_id(vs, *args)
+
     def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
         """
             find atype analyses +/- delta hours (12 hours default)
@@ -213,14 +222,15 @@ class Processor(IsotopeDatabaseManager):
         db=self.db
         with db.session_ctx():
             hist = db.get_blank_history(hist_id)
-            session=hist.session
-            if session:
-                histories = db.get_session_blank_histories(session)
-                if histories:
-                    for hi in histories:
-                        an=hi.analysis
-                        an.selected_histories.selected_blanks_id=hi
-                        self.remove_from_cache(an)
+            if hist.action:
+                session=hist.action.session
+                if session:
+                    histories = db.get_session_blank_histories(session)
+                    if histories:
+                        for hi in histories:
+                            an=hi.analysis
+                            an.selected_histories.selected_blanks_id=hi
+                            self.remove_from_cache(an)
 
     def apply_blank_history(self, analysis, hist_id):
         db=self.db
@@ -284,8 +294,8 @@ class Processor(IsotopeDatabaseManager):
 
             #make set_id
             dbrs = db.get_analyses_uuid([p.uuid for p in predictors], analysis_only=True)
-            set_id = hash(tuple((ai.id for ai in dbrs)))
-
+            # set_id = hash(tuple((ai.id for ai in dbrs)))
+            set_id = self.unique_id([ai.id for ai in dbrs])
             func = getattr(db, 'add_{}_set'.format(kind))
             for dbr in dbrs:
                 func(dbr, set_id=set_id)

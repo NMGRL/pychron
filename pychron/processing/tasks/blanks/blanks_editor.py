@@ -22,7 +22,6 @@ from traits.api import Str
 
 #============= standard library imports ========================
 from numpy import where
-from hashlib import sha1
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
@@ -30,11 +29,7 @@ from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
-def unique_id(vs, *args):
-    h=sha1()
-    for ai in vs+list(args):
-        h.update(str(ai))
-    return h.hexdigest()
+
 
 class BlanksEditor(InterpolationEditor):
     name = Str
@@ -81,8 +76,15 @@ class BlanksEditor(InterpolationEditor):
             ms = db.get_analyses_uuid([unk.uuid for unk in ans], analysis_only=True)
 
             args = [mi.id for mi in ms]
-            sid = unique_id(args, time.time())
+            sid = self.processor.unique_id(args, time.time())
 
+            fit_summary = ','.join(['{}{}'.format(si.name,si.fit)
+                                    for si in self.tool.fits if si.use])
+
+            dbaction = db.add_proc_action('Set Blanks for {} to {}. Fits={}'.format(ans[0].record_id,
+                                                                                    ans[-1].record_id,
+                                                                                    fit_summary),
+                                          session=sid)
             for unk, meas_analysis in zip(ans, ms):
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
@@ -92,7 +94,9 @@ class BlanksEditor(InterpolationEditor):
                 histories = getattr(meas_analysis, '{}_histories'.format(cname))
                 phistory = histories[-1] if histories else None
 
-                history = self.processor.add_history(meas_analysis, cname, session=sid)
+                history = self.processor.add_history(meas_analysis, cname)
+                history.action = dbaction
+
                 for si in self.tool.fits:
                     if not si.fit:
                         msg = 'Skipping {} {}'.format(unk.record_id, si.name)
@@ -121,7 +125,9 @@ class BlanksEditor(InterpolationEditor):
                                 dbblank.preceding_id = dbid.id
 
                                 # unk.sync(meas_analysis)
-
+                unk.sync_blanks(meas_analysis)
+                unk.calculate_age(force=True)
+                
             # if self.auto_plot:
             self.rebuild_graph()
 

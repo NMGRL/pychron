@@ -36,11 +36,10 @@ class RecallEditor(BaseTraitsEditor):
 
         apply_to_session, obj = obj
         if apply_to_session:
+            self.manager.apply_session_blank_history(self.model, obj.id)
+        else:
             self.manager.apply_blank_history(self.model,
                                              obj.id)
-        else:
-            self.manager.apply_session_blank_history(self.model, obj.id)
-
     @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
     def handle_show_iso_evo(self, obj):
         from pychron.graph.regression_graph import RegressionGraph
