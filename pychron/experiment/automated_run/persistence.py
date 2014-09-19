@@ -305,7 +305,7 @@ class AutomatedRunPersister(Loggable):
                     dbuser = db.add_user(un)
 
                 self.debug('adding analysis identifier={}, aliquot={}, '
-                           'step={}, increment'.format(ln, aliquot,
+                           'step={}, increment={}'.format(ln, aliquot,
                                                        self.run_spec.step,
                                                        self.run_spec.increment))
                 a = db.add_analysis(lab,
@@ -652,6 +652,8 @@ class AutomatedRunPersister(Loggable):
 
     def _save_blank_info(self, db, analysis):
         self.info('saving blank info')
+        self.debug('preceding blank id={}'.format(self.previous_blank_id))
+
         self._save_history_info(db, analysis, 'blanks', self.previous_blanks,
                                 preceding_id=self.previous_blank_id)
 
