@@ -962,6 +962,15 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # getters
     #===========================================================================
+    def get_session_blank_histories(self, s):
+        with self.session_ctx() as sess:
+
+            q=sess.query(proc_BlanksHistoryTable)
+            q=q.filter(proc_BlanksHistoryTable.session==s)
+            return self._query_all(q)
+
+    def get_blanks_history(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksHistoryTable, value, key=key)
 
     def get_mftables(self, spec, **kw):
         return self._retrieve_items(spec_MFTableTable,
