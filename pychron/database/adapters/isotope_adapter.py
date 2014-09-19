@@ -291,9 +291,9 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(obj)
         return obj
 
-    def add_history(self, dbrecord, kind):
+    def add_history(self, dbrecord, kind, **kw):
         func = getattr(self, 'add_{}_history'.format(kind))
-        history = func(dbrecord, user=self.save_username)
+        history = func(dbrecord, user=self.save_username, **kw)
         #        history = db.add_blanks_history(dbrecord, user=db.save_username)
 
         # set analysis' selected history

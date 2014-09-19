@@ -213,6 +213,8 @@ class proc_BlanksSetTable(Base, BaseMixin):
 
 
 class proc_BlanksHistoryTable(Base, HistoryMixin):
+    session = stringcolumn()
+
     blanks = relationship('proc_BlanksTable', backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_blanks',
@@ -368,12 +370,13 @@ class proc_FigureAnalysisTable(Base, BaseMixin):
 
 
 class proc_FitHistoryTable(Base, HistoryMixin):
+    session = stringcolumn()
+
     fits = relationship('proc_FitTable', backref='history')
     results = relationship('proc_IsotopeResultsTable', backref='history')
     selected = relationship('proc_SelectedHistoriesTable',
                             backref='selected_fits',
                             uselist=False)
-
 
 class proc_FitTable(Base, BaseMixin):
     history_id = foreignkey('proc_FitHistoryTable')

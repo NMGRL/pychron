@@ -184,9 +184,9 @@ class Processor(IsotopeDatabaseManager):
     #===============================================================================
     # corrections
     #===============================================================================
-    def add_history(self, dbrecord, kind):
+    def add_history(self, dbrecord, kind, **kw):
         db = self.db
-        return db.add_history(dbrecord, kind)
+        return db.add_history(dbrecord, kind, **kw)
 
     def apply_fixed_correction(self, history, isotope, value, error, correction_name):
         func = getattr(self.db, 'add_{}'.format(correction_name))
@@ -208,6 +208,19 @@ class Processor(IsotopeDatabaseManager):
                      fit=prev.fit,
                      user_value=uv,
                      user_error=ue)
+
+    def apply_session_blank_history(self, analysis, hist_id):
+        db=self.db
+        with db.session_ctx():
+            hist = db.get_blank_history(hist_id)
+            session=hist.session
+            if session:
+                histories = db.get_session_blank_histories(session)
+                if histories:
+                    for hi in histories:
+                        an=hi.analysis
+                        an.selected_histories.selected_blanks_id=hi
+                        self.remove_from_cache(an)
 
     def apply_blank_history(self, analysis, hist_id):
         db=self.db

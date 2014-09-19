@@ -15,10 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import time
+
 from chaco.legend import Legend
 from traits.api import Str
+
 #============= standard library imports ========================
 from numpy import where
+from hashlib import sha1
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value
 from pychron.core.regression.interpolation_regressor import InterpolationRegressor
@@ -26,6 +30,11 @@ from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
 
+def unique_id(vs, *args):
+    h=sha1()
+    for ai in vs+list(args):
+        h.update(str(ai))
+    return h.hexdigest()
 
 class BlanksEditor(InterpolationEditor):
     name = Str
@@ -68,15 +77,22 @@ class BlanksEditor(InterpolationEditor):
                     reg = self._get_regressor(si.fit, si.error_type, xs, ys, es)
                     self.set_interpolated_values(si.name, reg, None)
 
-            for unk in self.analyses:
+            ans = self.analyses
+            ms = db.get_analyses_uuid([unk.uuid for unk in ans], analysis_only=True)
+
+            args = [mi.id for mi in ms]
+            sid = unique_id(args, time.time())
+
+            for unk, meas_analysis in zip(ans, ms):
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
 
-                meas_analysis = db.get_analysis_uuid(unk.uuid)
+                # meas_analysis = db.get_analysis_uuid(unk.uuid)
 
                 histories = getattr(meas_analysis, '{}_histories'.format(cname))
                 phistory = histories[-1] if histories else None
-                history = self.processor.add_history(meas_analysis, cname)
+
+                history = self.processor.add_history(meas_analysis, cname, session=sid)
                 for si in self.tool.fits:
                     if not si.fit:
                         msg = 'Skipping {} {}'.format(unk.record_id, si.name)

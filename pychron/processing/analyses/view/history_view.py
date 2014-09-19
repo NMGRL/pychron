@@ -50,7 +50,10 @@ class BlankHistoryAdapter(ChangeAdapter):
         return MenuManager(Action(name='Show Time Series',
                                   action='show_blank_time_series',
                                   enabled=enabled),
-                           Action(name='Apply Change', action='apply_blank_change'))
+                           Action(name='Apply Change', action='apply_blank_change'),
+                           Action(name='Apply Change to Session', action='apply_session_blank_change'),
+
+                           )
 
 
 class FitHistoryAdapter(ChangeAdapter):
@@ -77,7 +80,12 @@ class HistoryHandler(Handler):
         obj.show_blank_time_series()
 
     def apply_blank_change(self, info, obj):
-        obj.apply_blank_change()
+        # obj.apply_blank_change()
+         obj.apply_blank_change_needed = (False, obj.blank_selected)
+
+    def apply_session_blank_change(self, info, obj):
+        # obj.apply_session_blank_change()
+        obj.apply_blank_change_needed = (True, obj.blank_selected)
 
 
 class HistoryView(HasTraits):
@@ -101,10 +109,11 @@ class HistoryView(HasTraits):
     def load(self, an):
         self._load(an)
 
-    def apply_blank_change(self):
-        print 'apply blank change'
-        self.apply_blank_change_needed = self.blank_selected
-        # self.refresh_needed=True
+    # def apply_blank_change(self):
+    #     self.apply_blank_change_needed = (False, self.blank_selected)
+    #
+    # def apply_session_blank_change(self):
+    #     self.apply_blank_change_needed = (True, self.blank_selected)
 
     def show_blank_time_series(self):
         g = StackedRegressionGraph(window_height=0.75)
