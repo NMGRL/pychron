@@ -396,7 +396,7 @@ class PyScript(Loggable):
 
         self._exp_obj.update(kw)
         # self._exp_obj.__dict__.update(**kw)
-        self._ctx['exp'] = self._exp_obj
+        self._ctx['ex'] = self._exp_obj
 
         #for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
@@ -420,7 +420,7 @@ class PyScript(Loggable):
 
         if self._exp_obj:
             self._exp_obj.update(exp_ctx)
-            ctx['exp'] = self._exp_obj
+            ctx['ex'] = self._exp_obj
 
         if self._ctx:
             ctx.update(self._ctx)
