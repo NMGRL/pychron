@@ -48,13 +48,15 @@ class BlankHistoryAdapter(ChangeAdapter):
         if self.item.selected:
             enabled = bool(self.item.selected.values)
 
+        diffable=len(obj.blank_selected)==2
+
         return MenuManager(Action(name='Show Time Series',
                                   action='show_blank_time_series',
                                   enabled=enabled),
                            Action(name='Apply Change', action='apply_blank_change'),
                            Action(name='Apply Change to Session', action='apply_session_blank_change'),
-                           Action(name='Diff Selected', action='diff_blank_histories')
-        )
+                           Action(name='Diff Selected', action='diff_blank_histories',
+                                  enabled=diffable))
 
 
 class FitHistoryAdapter(ChangeAdapter):
@@ -125,11 +127,9 @@ class HistoryView(HasTraits):
         from pychron.processing.analyses.view.blank_diff_view import BlankDiffView
 
         c = BlankDiffView()
-
         left, right = self.blank_selected
-        print left, right
-        # c.set_values()
-        # c.edit_traits()
+        c.load(left, right)
+        c.edit_traits()
 
     def show_blank_time_series(self):
         g = StackedRegressionGraph(window_height=0.75)

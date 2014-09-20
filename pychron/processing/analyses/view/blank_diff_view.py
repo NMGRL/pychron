@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Float, Property, List, Str
-from traitsui.api import View, TabularEditor, UItem
+from traits.api import HasTraits, Float, Property, List, Str, Int, Instance
+from traitsui.api import View, TabularEditor, UItem, VGroup, Item
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
 
@@ -36,15 +36,72 @@ class BlankDiffAdapter(TabularAdapter):
     columns = [('Name', 'name'), ('Left', 'left'),
                ('Right', 'right'), ('Diff', 'diff')]
 
+    name_width = Int(80)
+    left_width = Int(200)
+    right_width = Int(200)
+    diff_width = Int(160)
+
+    def get_bg_color(self, object, trait, row, column=0):
+        color = 'white'
+        if abs(self.item.diff) > 1e-7:
+            color = '#FF9999'
+        return color
+
 
 class BlankDiffView(HasTraits):
     values = List(BlankDiffValue)
-    def set_values(self, ks, ls, rs):
-        self.values=[BlankDiffValue(nam=n, left=l, right=r) for n,l,r in zip(ks, ls, rs)]
+    adapter=Instance(BlankDiffAdapter, ())
+    left_summary = Str
+    right_summary =Str
+
+    def load(self, left, right):
+        values=[]
+        names = []
+        for liso in left.isotopes:
+            ison=liso.isotope
+            isoerr='{}Err'.format(ison)
+
+            riso=next((ri for ri in right.isotopes if ri.isotope==ison), None)
+            rv,re = (0,0) if not riso else (riso.value, riso.error)
+
+            values.append(BlankDiffValue(name=ison, left=liso.value, right=rv))
+            values.append(BlankDiffValue(name=isoerr, left=liso.error, right=re))
+            names.append(ison)
+
+        for riso in right.isotopes:
+            ison=riso.isotope
+            if ison in names:
+                continue
+
+            isoerr='{}Err'.format(ison)
+            liso=next((li for li in left.isotopes if li.isotope==ison), None)
+            lv,le = (0,0) if not liso else (liso.value, liso.error)
+
+            values.append(BlankDiffValue(name=ison, left=lv, right=riso.value))
+            values.append(BlankDiffValue(name=isoerr, left=le, right=riso.error))
+
+        self.values=values
+        ln=left.create_date.strftime('%m/%d/%Y %H:%M')
+        rn=right.create_date.strftime('%m/%d/%Y %H:%M')
+
+        self.adapter.columns[1]=('Left ({})'.format(ln), 'left')
+        self.adapter.columns[2]=('Right ({})'.format(rn), 'right')
+
+        self.left_summary=left.summary
+        self.right_summary=right.summary
+
 
     def traits_view(self):
-        v = View(UItem('values', editor=TabularEditor(adapter=BlankDiffAdapter(),
-                                                      editable=False)))
+        v = View(VGroup(
+            VGroup(Item('left_summary', label='Left', style='readonly'),
+                    Item('right_summary', label='Right', style='readonly')),
+            UItem('values', editor=TabularEditor(adapter=self.adapter,
+                                                      editable=False))),
+                 kind='modal',
+                 title='Blank Diff',
+                 width=700,
+                 height=400,
+                 resizable=True)
         return v
 
 #============= EOF =============================================
