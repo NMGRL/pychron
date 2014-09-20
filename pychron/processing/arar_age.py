@@ -493,7 +493,6 @@ class ArArAge(Loggable):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
         self.uage = age
-
         self.age = age.nominal_value
         self.age_err = age.std_dev
 

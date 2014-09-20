@@ -2,6 +2,8 @@ CHANGELOG
 ============
 2.0.5
 ------------------
+* added switching between blank histories
+* added BlankDiffView
 
 2.0.4
 ------------------

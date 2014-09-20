@@ -84,11 +84,11 @@ class HistoryHandler(Handler):
 
     def apply_blank_change(self, info, obj):
         # obj.apply_blank_change()
-        obj.apply_blank_change_needed = (False, obj.blank_selected)
+        obj.apply_blank_change_needed = (False, obj.blank_selected[0])
 
     def apply_session_blank_change(self, info, obj):
         # obj.apply_session_blank_change()
-        obj.apply_blank_change_needed = (True, obj.blank_selected)
+        obj.apply_blank_change_needed = (True, obj.blank_selected[0])
 
     def diff_blank_histories(self, info, obj):
         obj.diff_blank_histories()
@@ -107,7 +107,8 @@ class HistoryView(HasTraits):
     analysis_uuid = Str
     apply_blank_change_needed = Event
     refresh_needed = Event
-    update_blank_selected = Event
+    load_ages_needed=Event
+    # update_blank_selected = Event
     blank_selected_=Instance(BlankChange)
     # blank_selected_ = Property(depends_on='update_blank_selected')
 
@@ -128,6 +129,8 @@ class HistoryView(HasTraits):
 
         c = BlankDiffView()
         left, right = self.blank_selected
+
+        self.load_ages_needed = left, right
         c.load(left, right)
         c.edit_traits()
 

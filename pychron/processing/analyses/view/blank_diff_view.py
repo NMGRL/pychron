@@ -80,6 +80,7 @@ class BlankDiffView(HasTraits):
             values.append(BlankDiffValue(name=ison, left=lv, right=riso.value))
             values.append(BlankDiffValue(name=isoerr, left=le, right=riso.error))
 
+        values.append(BlankDiffValue(name='Age', left=left.age, right=right.age))
         self.values=values
         ln=left.create_date.strftime('%m/%d/%Y %H:%M')
         rn=right.create_date.strftime('%m/%d/%Y %H:%M')

@@ -33,7 +33,27 @@ class RecallEditor(BaseTraitsEditor):
     instance_id = 0
 
 
-    @on_trait_change('analysis_view:history_view:blank_selected:selected')
+    @on_trait_change('analysis_view:history_view:load_ages_needed')
+    def handle_load_ages(self, obj):
+        left, right = obj
+
+        oid=self.model.selected_blanks_id
+
+        self.manager.apply_blank_history(self.model, left.id)
+        left.age=self.model.uage.nominal_value
+
+        self.manager.apply_blank_history(self.model, right.id)
+        right.age=self.model.uage.nominal_value
+
+        self.manager.apply_blank_history(self.model, oid)
+
+        # meas_analysis=db.get_analysis_uuid(self.model.uuid)
+        # orig = meas_analysis.selected_histories.selected_blanks_id
+        # meas_analysis.selected_histories.selected_blanks_id = orig
+        # self.model.sync_blanks(meas_analysis)
+
+
+    @on_trait_change('analysis_view:history_view:blank_selected_:selected')
     def handle_load_analyses(self, obj):
         db=self.manager.db
         with db.session_ctx():
