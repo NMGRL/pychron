@@ -32,8 +32,10 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.experiment.utilities.identifier import make_aliquot_step, make_step
 from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
@@ -89,12 +91,16 @@ class Datahub(Loggable):
         else:
             k = 'Fusion'
             self.debug('get greatest aliquots')
-            ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
+            try:
+                ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
 
-            print 'b', ps, ns, vs, spec.identifier
-            mv = max(vs)
-            self._new_runid = make_aliquot_step(mv + 1, '')
-            self._new_aliquot = mv + 1
+                # print 'b', ps, ns, vs, spec.identifier
+                mv = max(vs)
+                self._new_runid = make_aliquot_step(mv + 1, '')
+                self._new_aliquot = mv + 1
+            except MissingAliquotPychronException:
+                self.warning('secondary db analyses missing aliquot_pychron')
+                return 'secondary db analyses missing aliquot_pychron'
 
         self.debug('{} conflict args. precedence={}, names={}, values={}'.format(k, ps, ns, vs))
         if not checkEqual6502(list(vs)):
@@ -149,10 +155,13 @@ class Datahub(Loggable):
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))
         # return store.get_greatest_aliquot(identifier)
-        ps, ns, vs = self._get_greatest_aliquots(identifier)
-        # print 'b',ps, ns, vs, spec.identifier
-        mv = max(vs)
-        return mv
+        try:
+            ps, ns, vs = self._get_greatest_aliquots(identifier)
+            # print 'b',ps, ns, vs, spec.identifier
+            mv = max(vs)
+            return mv
+        except MissingAliquotPychronException:
+            pass
 
     def _get_greatest_aliquots(self, identifier):
         return zip(*[(store.precedence, store.db.name,
