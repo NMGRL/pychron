@@ -76,7 +76,9 @@ class _TextEditor(Editor):
             pass
 
     def update_editor(self):
-        pass
+        new_value = self.str_value
+        if self.control.toPlainText() != new_value:
+            self.control.setPlainText( new_value )
 
 
 class myTextEditor(BasicEditorFactory):
