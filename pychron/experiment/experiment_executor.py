@@ -809,6 +809,10 @@ class ExperimentExecutor(Loggable):
             # self.info('No response from user. Canceling run')
             # do_later(self.information_dialog,
             #          'Databases are in conflict. No response from user. Canceling experiment')
+
+        if self._canceled:
+            self.cancel()
+
         return ret
 
     def _delay(self, delay, message='between'):

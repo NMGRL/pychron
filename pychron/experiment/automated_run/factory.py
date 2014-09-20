@@ -580,16 +580,18 @@ class AutomatedRunFactory(Loggable):
         self.debug('rendering template {}'.format(template.name))
 
         al = self.datahub.get_greatest_aliquot(self.labnumber)
-        c = exp_queue.count_labnumber(self.labnumber)
+        if al:
+            c = exp_queue.count_labnumber(self.labnumber)
+            for st in template.steps:
+                if st.value or st.duration or st.cleanup:
+                    arv = self._new_run(position=position,
+                                        excludes=['position'])
 
-        for st in template.steps:
-            if st.value or st.duration or st.cleanup:
-                arv = self._new_run(position=position,
-                                    excludes=['position'])
-
-                arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
-                              **st.make_dict(self.duration, self.cleanup))
-                arvs.append(arv)
+                    arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
+                                  **st.make_dict(self.duration, self.cleanup))
+                    arvs.append(arv)
+        else:
+            self.debug('missing aliquot_pychron in mass spec secondary db')
 
         return arvs
 

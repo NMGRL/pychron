@@ -40,6 +40,10 @@ from pychron.database.core.functions import delete_one
 from pychron.database.selectors.massspec_selector import MassSpecSelector
 
 
+class MissingAliquotPychronException(BaseException):
+    pass
+
+
 class MassSpecDatabaseAdapter(DatabaseAdapter):
     selector_klass = MassSpecSelector
     test_func = 'get_database_version'
@@ -119,16 +123,20 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #       'FROM `AnalysesTable` ' \
                 #       'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
                 #       'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
-                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
-                      'FROM `AnalysesTable` ' \
-                      'WHERE `AnalysesTable`.`RID` LIKE "{}-{:02n}%" ' \
-                      'ORDER BY `AnalysesTable`.`AnalysisID` DESC LIMIT 1'.format(labnumber, aliquot)
+                sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
+                      'FROM AnalysesTable ' \
+                      'WHERE AnalysesTable.RID LIKE "{}-{:02n}%" ' \
+                      'ORDER BY AnalysesTable.AnalysisID DESC LIMIT 1'.format(labnumber, aliquot)
                 v = sess.execute(sql)
                 if v is not None:
                     r = v.fetchone()
                     if r:
                         a, s = r
-                        return int(a), s
+                        try:
+                            a = int(a)
+                            return a, s
+                        except ValueError:
+                            raise MissingAliquotPychronException()
             else:
                 #!!!!!
                 #this is an issue. mass spec stores the aliquot as an varchar instead of an integer
@@ -140,18 +148,12 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 #!!!!!
                 #q = q.order_by(cast(AnalysesTable.Aliquot, INTEGER).desc())
 
-                #need to add Aliquot_pychron to AnalysesTable. Mass spec modifying Aliquot after original save
-                # sql = 'SELECT `AnalysesTable`.`Aliquot`, `AnalysesTable`.`Increment` ' \
-                #       'FROM `AnalysesTable` ' \
-                #       'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
-                #       'ORDER BY CAST(`AnalysesTable`.`Aliquot` AS UNSIGNED INTEGER) DESC LIMIT 1'.format(labnumber)
-                sql = 'SELECT `AnalysesTable`.`Aliquot_pychron`, `AnalysesTable`.`Increment` ' \
-                      'FROM `AnalysesTable` ' \
-                      'WHERE `AnalysesTable`.`RID` LIKE "{}%" ' \
-                      'ORDER BY `AnalysesTable`.`Aliquot_pychron` DESC LIMIT 1'.format(labnumber)
+                sql = 'SELECT AnalysesTable.Aliquot_pychron, AnalysesTable.Increment ' \
+                      'FROM AnalysesTable ' \
+                      'WHERE AnalysesTable.RID LIKE "{}%" ' \
+                      'ORDER BY AnalysesTable.Aliquot_pychron DESC LIMIT 1'.format(labnumber)
 
                 v = sess.execute(sql)
-
                 if v is not None:
                     r = v.fetchone()
                     if r:
