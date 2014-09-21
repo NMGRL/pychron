@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem, DirectoryEditor, HGroup, VGroup, ListStrEditor
+from traitsui.api import View, Item, UItem, DirectoryEditor, HGroup, VGroup, ListStrEditor, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.paths import paths
@@ -25,7 +25,8 @@ from pychron.paths import paths
 
 class WorkspaceCentralPane(TraitsTaskPane):
     def traits_view(self):
-        return View(VGroup(Item('path', style='readonly'),
+        return View(VGroup(HGroup(UItem('selected_branch', editor=EnumEditor(name='branches')),
+                                  Item('path', style='readonly')),
                           Item('nanalyses', style='readonly'),
                     HGroup(UItem('path', style='custom',
                           editor=DirectoryEditor(root_path=paths.workspace_root_dir,

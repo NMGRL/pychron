@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Property, \
-    cached_property, Event, List
+    cached_property, Event, List, Str
 # ============= standard library imports ========================
 import shutil
 from git import GitCommandError
@@ -69,10 +69,11 @@ class WorkspaceManager(RepoManager):
     dclicked = Event
     repo_updated=Event
     commits = List
+    branches = List
+    selected_branch = Str
 
     def open_repo(self, name, root=None):
         super(WorkspaceManager, self).open_repo(name, root)
-
 
         e = Manifest.exists(self.path)
         #init manifest object
@@ -82,6 +83,14 @@ class WorkspaceManager(RepoManager):
 
         self.create_branch('develop')
         self.checkout_branch('develop')
+        self.selected_branch = 'develop'
+
+    def load_branches(self):
+        self.branches=[bi.name for bi in self._repo.branches]
+
+    def create_branch(self, name):
+        super(WorkspaceManager, self).create_branch(name)
+        self.load_branches()
 
     def find_existing(self, names):
         return [ni for ni in self._manifest.names if ni in names]
@@ -216,6 +225,9 @@ class WorkspaceManager(RepoManager):
         if new:
             self._load_file_history(new)
 
+    def _selected_branch_changed(self, new):
+        if new:
+            self.checkout_branch(new)
 
 class ArArWorkspaceManager(WorkspaceManager):
     nanalyses = Property(depends_on='path, repo_updated')
