@@ -168,7 +168,7 @@ class RepoManager(Loggable):
 
     def _get_branch_history(self):
         repo=self._repo
-        hexshas = repo.git.log('--pretty=%H', '--follow', '--', '.').split('\n')
+        hexshas = repo.git.log('--pretty=%H').split('\n')
         return hexshas
 
     @property

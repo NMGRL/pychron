@@ -15,10 +15,16 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str
-from traitsui.api import View, UItem
+from traits.api import HasTraits, Str, Bool, List, Button
+from traitsui.api import View, UItem, TableEditor, HGroup, spring
+from traitsui.extras.checkbox_column import CheckboxColumn
+from traitsui.table_column import ObjectColumn
+
 #============= standard library imports ========================
+import os
 #============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
+
 
 class NewBranchView(HasTraits):
     name = Str
@@ -35,6 +41,47 @@ class NewTagView(HasTraits):
         v=View(UItem('tag_name'),
                kind='livemodal',
                buttons=['OK','Cancel'], title='Tag Branch {}'.format(self.branch))
+        return v
+
+
+class Existing(HasTraits):
+    name = Str
+    recheckout =Bool
+
+class ChooseReheckoutAnalysesView(HasTraits):
+    existing=List
+    toggle_recheckout = Button
+    _toggle_recheckout_state = Bool
+
+    def _toggle_recheckout_fired(self):
+        s = self._toggle_recheckout_state
+        self._toggle_recheckout_state = s = not s
+        for e in self.existing:
+            e.recheckout = s
+
+    def get_analyses_to_checkout(self):
+        return [e.name for e in self.existing if e.recheckout]
+
+    def get_analyses_to_skip(self):
+        return [e.name for e in self.existing if not e.recheckout]
+
+    def __init__(self, existing, *args, **kw):
+        self.existing = [Existing(name=os.path.splitext(n)[0]) for n in existing]
+        super(ChooseReheckoutAnalysesView, self).__init__(*args, **kw)
+
+    def traits_view(self):
+        cols=[CheckboxColumn(name='recheckout',label='Recheckout'),
+              ObjectColumn(name='name', editable=False)]
+        editor=TableEditor(columns=cols, sortable=False)
+
+        v=View(UItem('existing', editor=editor),
+               HGroup(icon_button_editor('toggle_recheckout', 'tick', tooltip='Toggle recheckout for all analyses'),
+                      spring),
+               width=300,
+               resizable=True,
+               title='Choose analyses to recheckout',
+               kind='livemodal',
+               buttons=['OK','Cancel'])
         return v
 #============= EOF =============================================
 

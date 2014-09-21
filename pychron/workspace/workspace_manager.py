@@ -43,12 +43,17 @@ class Manifest(object):
         return os.path.join(p, 'MANIFEST')
 
     def add(self, name):
-        with open(self.path, 'a') as fp:
-            fp.write('{}\n'.format(name))
+        with open(self.path, 'r') as fp:
+            exists = next((line for line in fileiter(fp, strip=True)
+                           if line==name), None)
+
+        if not exists:
+            with open(self.path, 'a') as fp:
+                fp.write('{}\n'.format(name))
 
     def remove(self, name):
         with open(self.path, 'w') as fp:
-            for line in fileiter(self.path):
+            for line in fileiter(self.path, strip=True):
                 if line == name:
                     continue
                 else:
@@ -93,7 +98,7 @@ class WorkspaceManager(RepoManager):
         self.load_branches()
 
     def find_existing(self, names):
-        return [ni for ni in self._manifest.names if ni in names]
+        return [os.path.splitext(ni)[0] for ni in self._manifest.names if ni in names]
 
     def add_to_manifest(self, path):
         self._manifest.add(os.path.basename(path))

@@ -30,6 +30,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
     AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction, CommitChangesAction
 from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane
+from pychron.workspace.tasks.views import ChooseReheckoutAnalysesView
 from pychron.workspace.workspace_manager import ArArWorkspaceManager
 
 
@@ -92,10 +93,32 @@ class WorkspaceTask(BaseBrowserTask):
         #check for existing
         #ask user to selected which files to overwrite
         existing =self.workspace.find_existing(['{}.yaml'.format(ai.record_id) for ai in ans])
+        recheckout=None
         if existing:
             self.debug('Analyses exist in workspace')
+            ce = ChooseReheckoutAnalysesView(existing)
+            info=ce.edit_traits()
+            if info.result:
+                recheckout = ce.get_analyses_to_checkout()
+            else:
+                return
+
+        if recheckout:
+            recheckout = [ai for ai in ans if ai.record_id in recheckout]
+        ans = [ai for ai in ans if not ai.record_id in existing]
+
+        if not ans and not recheckout:
+            self.info('no analyses to checkout')
             return
 
+        if ans:
+            self.debug('checkout {}'.format(','.join([ai.record_id for ai in ans])))
+            self._checkout_analyses(ans)
+        if recheckout:
+            self.debug('recheckout {}'.format(','.join([ai.record_id for ai in recheckout])))
+            self._checkout_analyses(recheckout, 'Recheckout')
+
+    def _checkout_analyses(self, ans, msg='Added'):
         #make dbanalyses
         ans = self.manager.make_analyses(ans, unpack=True, calculate_age=True)
 
@@ -120,11 +143,11 @@ class WorkspaceTask(BaseBrowserTask):
             #          kwargs={'commit':False},
             #          msg='add to git')
             if prog:
-                prog.change_message('Added {} to workspace'.format(ai.record_id))
+                prog.change_message('{} {} to workspace'.format(msg, ai.record_id))
 
         self.workspace.checkout_branch('master')
         progress_iterator(ans, func, threshold=1)
-        self.workspace.commit('Added Analyses {} to {}'.format(ans[0].record_id,
+        self.workspace.commit('{} Analyses {} to {}'.format(msg, ans[0].record_id,
                                                                ans[-1].record_id))
         self.workspace.merge('master', 'develop')
         self.workspace.checkout_branch('develop')
