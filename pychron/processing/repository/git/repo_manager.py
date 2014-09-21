@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Any, Directory
+from traits.api import Any, Str
 #============= standard library imports ========================
 from cStringIO import StringIO
 import os
@@ -33,23 +33,70 @@ class RepoManager(Loggable):
     """
 
     _repo=Any
-    root=Directory
+    # root=Directory
+    path = Str
 
-    def add_repo(self, localpath):
+    def open_repo(self, name, root=None):
         """
-            add a blank repo at ``localpath``
+            name: name of repo
+            root: root directory to create new repo
+            index: path to sqlite index
+
+            create master and working branches
         """
-        repo, existed=self._add_repo(localpath)
-        self._repo=repo
-        self.root=localpath
-        return existed
+        if root is None:
+            p = name
+        else:
+            p = os.path.join(root, name)
+
+        self.path = p
+
+        if os.path.isdir(p):
+            self.init_repo(p)
+        else:
+            os.mkdir(p)
+            repo = Repo.init(p)
+            self.debug('created new repo {}'.format(p))
+            self._repo = repo
+
+    def init_repo(self, path):
+        """
+            path: absolute path to repo
+
+            return True if git repo exists
+        """
+        if os.path.isdir(path):
+            g = os.path.join(path, '.git')
+            if os.path.isdir(g):
+                self.debug('initialzied repo {}'.format(path))
+                self._repo = Repo(path)
+            else:
+                self.debug('{} is not a valid repo'.format(path))
+                self._repo = Repo.init(path)
+
+            return True
+    # def add_repo(self, localpath):
+    #     """
+    #         add a blank repo at ``localpath``
+    #     """
+    #     repo, existed=self._add_repo(localpath)
+    #     self._repo=repo
+    #     self.root=localpath
+    #     return existed
+
+    def create_branch(self, name, repo=None):
+        repo = self._get_repo(repo)
+        if not name in repo.branches:
+            branch = repo.create_head(name)
+            branch.commit = repo.head.commit
+            branch.checkout()
 
     def create_remote(self, url, name='origin', repo=None):
         repo=self._get_repo(repo)
         if repo:
             #only create remote if doesnt exist
             if not hasattr(repo.remotes, name):
-            #     url='{}:jir812@{}:{}.git'.format(user, host, repo_name)
+            #     url='{}:jir812@{}:{}.git'.format(user, host, repo_name
                 repo.create_remote(name, url)
                 pass
 

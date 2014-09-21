@@ -15,35 +15,28 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
+import os
+
+from traits.api import Instance
+
+#============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.resources import icon
+import yaml
+from pychron.processing.export.destinations import YamlDestination
+from pychron.processing.export.exporter import Exporter
 
 
-class NewWorkspaceAction(TaskAction):
-    name = 'New Workspace'
-    method = 'new_workspace'
-    image = icon('add')
+class YamlAnalysisExporter(Exporter):
+    destination = Instance(YamlDestination, ())
 
+    def add(self, dbanalysis):
+        self._ctx=dict()
 
-class OpenWorkspaceAction(TaskAction):
-    name = 'Open Workspace'
-    method = 'open_workspace'
-    image = icon('document-open')
-
-
-class CheckoutAnalysesAction(TaskAction):
-    name = 'Checkout Analyses'
-    method = 'checkout_analyses'
-    image = icon('database_go')
-
-
-class AddBranchAction(TaskAction):
-    name = 'Add Branch'
-    method = 'add_branch'
-    image = icon('add')
-
+    def export(self, *args, **kw):
+        p=self.destination.destination
+        if os.path.isdir(os.path.dirname(p)):
+            with open(p, 'w') as fp:
+                fp.write(yaml.dump(self._ctx, default_flow_style=False))
 #============= EOF =============================================
 
 

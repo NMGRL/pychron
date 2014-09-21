@@ -15,35 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.action.task_action import TaskAction
-# ============= standard library imports ========================
+from traits.api import HasTraits, Str
+from traitsui.api import View, UItem
+#============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.resources import icon
 
-
-class NewWorkspaceAction(TaskAction):
-    name = 'New Workspace'
-    method = 'new_workspace'
-    image = icon('add')
-
-
-class OpenWorkspaceAction(TaskAction):
-    name = 'Open Workspace'
-    method = 'open_workspace'
-    image = icon('document-open')
-
-
-class CheckoutAnalysesAction(TaskAction):
-    name = 'Checkout Analyses'
-    method = 'checkout_analyses'
-    image = icon('database_go')
-
-
-class AddBranchAction(TaskAction):
-    name = 'Add Branch'
-    method = 'add_branch'
-    image = icon('add')
-
+class NewBranchView(HasTraits):
+    name = Str
+    def traits_view(self):
+        v=View(UItem('name'),
+               kind='livemodal',
+               buttons=['OK','Cancel'], title='New Branch')
+        return v
 #============= EOF =============================================
 
 

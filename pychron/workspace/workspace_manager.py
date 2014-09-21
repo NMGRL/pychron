@@ -15,71 +15,66 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Button, Instance, Str, Property,\
-    cached_property, Event,List
+from traits.api import Property, \
+    cached_property, Event, List
 # ============= standard library imports ========================
 import shutil
-from git import Repo, GitCommandError
+from git import GitCommandError
 import yaml
 import os
-#============= local library imports  ==========================
-from pychron.core.helpers.filetools import list_directory2
-from pychron.loggable import Loggable
-from pychron.workspace.index import IndexAdapter
+# ============= local library imports  ==========================
+from pychron.core.helpers.filetools import list_directory2, fileiter
+from pychron.processing.repository.git.repo_manager import RepoManager
 
 
-class WorkspaceManager(Loggable):
-    _repo = None
-    index_db = Instance(IndexAdapter)
-    test = Button
-    path = Str
-
-    dclicked=Event
-
-    commits=List
-
-    def init_repo(self, path):
-        """
-            path: absolute path to repo
-
-            return True if git repo exists
-        """
-        if os.path.isdir(path):
-            g = os.path.join(path, '.git')
-            if os.path.isdir(g):
-                self.debug('initialzied repo {}'.format(path))
-                self._repo = Repo(path)
-            else:
-                self.debug('{} is not a valid repo'.format(path))
-                self._repo = Repo.init(path)
-
-            return True
-
-    def create_repo(self, name, root=None):
-        """
-            name: name of repo
-            root: root directory to create new repo
-            index: path to sqlite index
-
-            create master and working branches
-        """
-        if root is None:
-            p = name
-        else:
-            p = os.path.join(root, name)
-
+class Manifest(object):
+    def __init__(self, p):
+        p = os.path.join(p, 'MANIFEST')
+        if not os.path.isfile(p):
+            with open(p, 'w'):
+                pass
         self.path = p
 
-        if os.path.isdir(p):
-            self.init_repo(p)
-            return
+    def add(self, name):
+        with open(self.path, 'a') as fp:
+            fp.write('{}\n'.format(name))
 
-        os.mkdir(p)
-        repo = Repo.init(p)
-        self.debug('created new repo {}'.format(p))
-        self._repo = repo
+    def remove(self, name):
+        with open(self.path, 'w') as fp:
+            for line in fileiter(self.path):
+                if line == name:
+                    continue
+                else:
+                    fp.write('{}\n'.format(line))
 
-    def add_record(self, path, commit=True, message=None, **kw):
+    @property
+    def names(self):
+        with open(self.path, 'r') as fp:
+            return list(fileiter(fp, strip=True))
+
+
+class WorkspaceManager(RepoManager):
+
+    # index_db = Instance(IndexAdapter)
+    # test = Button
+
+    dclicked = Event
+    repo_updated=Event
+    commits = List
+
+    def open_repo(self, name, root=None):
+        super(WorkspaceManager, self).open_repo(name, root)
+
+        #init manifest object
+        self._manifest = Manifest(self.path)
+
+    def find_existing(self, names):
+        return [ni for ni in self._manifest.names if ni in names]
+
+    def add_to_manifest(self, path):
+        self._manifest.add(os.path.basename(path))
+
+    def add_analysis(self, path, commit=True, message=None, **kw):
         """
             path: absolute path to flat file
             commit: commit changes
@@ -95,7 +90,8 @@ class WorkspaceManager(Loggable):
 
         #copy file to repo
         dest = os.path.join(repo.working_dir, os.path.basename(path))
-        shutil.copyfile(path, dest)
+        if not os.path.isfile(dest):
+            shutil.copyfile(path, dest)
 
         #add to master changeset
         index = repo.index
@@ -105,16 +101,17 @@ class WorkspaceManager(Loggable):
                 message = 'added record {}'.format(path)
             index.commit(message)
 
-            if 'working' in repo.branches:
-                working = repo.heads.working
-            else:
-                working = repo.create_head('working')
+            # if 'working' in repo.branches:
+            #     working = repo.heads.working
+            # else:
+            #     working = repo.create_head('working')
+            #
+            # working.commit = repo.head.commit
 
-            working.commit = repo.head.commit
-
+        self.repo_updated=True
         #add to sqlite index
-        im = self.index_db
-        im.add(repo=repo.working_dir, **kw)
+        # im = self.index_db
+        # im.add(repo=repo.working_dir, **kw)
 
     def modify_record(self, path, message=None):
         """
@@ -187,7 +184,7 @@ class WorkspaceManager(Loggable):
             cs = [repo.rev_parse(c).message for c in hexshas]
             self.commits = cs
         except GitCommandError:
-            self.commits=[]
+            self.commits = []
 
     def _dclicked_fired(self, new):
         if new:
@@ -195,7 +192,7 @@ class WorkspaceManager(Loggable):
 
 
 class ArArWorkspaceManager(WorkspaceManager):
-    nanalyses = Property(depends_on='path')
+    nanalyses = Property(depends_on='path, repo_updated')
 
     @cached_property
     def _get_nanalyses(self):

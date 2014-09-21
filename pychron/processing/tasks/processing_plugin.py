@@ -49,13 +49,11 @@ from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
 from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
-from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
 from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane, EasyPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
-from pychron.processing.tasks.preferences.vcs_preferences import VCSPreferencesPane
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -103,8 +101,8 @@ Install to enable MS Excel export''')
         def data_menu():
             return SMenu(id='data.menu', name='Data')
 
-        def vcs_menu():
-            return SMenu(id='vcs.menu', name='VCS')
+        # def vcs_menu():
+        #     return SMenu(id='vcs.menu', name='VCS')
 
         def grouping_group():
             return SMenu(Group(GroupSelectedAction(),
@@ -183,16 +181,15 @@ Install to enable MS Excel export''')
 
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
                            # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
-                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')
-        ]
+                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
 
         exts = [self._make_task_extension(default_actions)]
 
-        use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
-        if use_vcs:
-            exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-                                                   ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-                                                   ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+        # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+        # if use_vcs:
+        #     exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+        #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+        #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
 
         use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
         if use_easy:
@@ -270,8 +267,8 @@ Install to enable MS Excel export''')
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
-            ('pychron.processing.vcs',
-             self._vcs_data_task_factory, 'VCS', '', ''),
+            # ('pychron.processing.vcs',
+            #  self._vcs_data_task_factory, 'VCS', '', ''),
             ('pychron.export',
              self._export_task_factory, 'Export', '', '')]
 
@@ -344,10 +341,9 @@ Install to enable MS Excel export''')
 
         return InterpretedAgeTask(manager=self._processor_factory())
 
-    def _vcs_data_task_factory(self):
-        from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
-
-        return VCSDataTask(manager=self._processor_factory())
+    # def _vcs_data_task_factory(self):
+    #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+    #     return VCSDataTask(manager=self._processor_factory())
 
     def _export_task_factory(self):
         from pychron.processing.tasks.export.export_task import ExportTask
@@ -357,7 +353,7 @@ Install to enable MS Excel export''')
     def _preferences_panes_default(self):
         return [
             ProcessingPreferencesPane,
-            VCSPreferencesPane,
+            # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
 
         #============= EOF =============================================
