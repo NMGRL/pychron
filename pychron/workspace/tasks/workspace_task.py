@@ -98,7 +98,7 @@ class WorkspaceTask(BaseBrowserTask):
             return
 
         #make dbanalyses
-        ans = self.manager.make_analyses(ans)
+        ans = self.manager.make_analyses(ans, unpack=True, calculate_age=True)
 
         #export to yaml files
         exp=YamlAnalysisExporter()

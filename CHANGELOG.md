@@ -4,6 +4,7 @@ CHANGELOG
 ------------------
 * added switching between blank histories
 * added BlankDiffView
+* started Workspace
 
 2.0.4
 ------------------
