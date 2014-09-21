@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem, DirectoryEditor, HGroup, VGroup, ListStrEditor, EnumEditor
+from traitsui.api import View, Item, UItem, HGroup, VGroup, ListStrEditor, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.directory_editor import myDirectoryEditor
+from pychron.core.ui.text_editor import myTextEditor
 from pychron.paths import paths
 
 
@@ -29,9 +31,12 @@ class WorkspaceCentralPane(TraitsTaskPane):
                                   Item('path', style='readonly')),
                           Item('nanalyses', style='readonly'),
                     HGroup(UItem('path', style='custom',
-                          editor=DirectoryEditor(root_path=paths.workspace_root_dir,
-                                                 dclick_name='dclicked',
-                                                 root_path_name='path')),
+                          editor=myDirectoryEditor(root_path=paths.workspace_root_dir,
+                                                   dclick_name='dclicked',
+                                                   selected_name='selected',
+                                                   root_path_name='path')),
+                        UItem('selected_text',
+                              editor=myTextEditor()),
                         VGroup(UItem('selected_path_commits', editor=ListStrEditor()),
                                UItem('commits', editor=ListStrEditor())))))
 

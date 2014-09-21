@@ -34,6 +34,7 @@ class RepoManager(Loggable):
     _repo = Any
     # root=Directory
     path = Str
+    selected_branch =Str
 
     def open_repo(self, name, root=None):
         """
@@ -87,6 +88,8 @@ class RepoManager(Loggable):
         repo=self._repo
         branch = getattr(repo.heads, name)
         branch.checkout()
+
+        self.selected_branch=name
         self._load_branch_history()
 
     def create_branch(self, name):
@@ -94,7 +97,7 @@ class RepoManager(Loggable):
         if not name in repo.branches:
             branch = repo.create_head(name)
             branch.commit = repo.head.commit
-            branch.checkout()
+            self.checkout_branch(name)
 
     def create_remote(self, url, name='origin'):
         repo=self._repo

@@ -126,6 +126,7 @@ class WorkspaceTask(BaseBrowserTask):
         self.workspace.commit('Added Analyses {} to {}'.format(ans[0].record_id,
                                                                ans[-1].record_id))
         self.workspace.merge('master', 'develop')
+        self.workspace.checkout_branch('develop')
 
     def new_workspace(self):
         self.debug('new workspace')

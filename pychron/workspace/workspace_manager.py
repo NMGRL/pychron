@@ -20,7 +20,6 @@ from traits.api import Property, \
 # ============= standard library imports ========================
 import shutil
 from git import GitCommandError
-import yaml
 import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, fileiter
@@ -65,14 +64,14 @@ class WorkspaceManager(RepoManager):
 
     # index_db = Instance(IndexAdapter)
     # test = Button
-
+    selected = Event
     dclicked = Event
     repo_updated=Event
-    current_commit = Str
+
+    branches = List
     commits = List
     selected_path_commits = List
-    branches = List
-    selected_branch = Str
+    selected_text = Str
 
     def open_repo(self, name, root=None):
         super(WorkspaceManager, self).open_repo(name, root)
@@ -85,9 +84,6 @@ class WorkspaceManager(RepoManager):
 
         self.create_branch('develop')
         self.checkout_branch('develop')
-        self.selected_branch = 'develop'
-
-
 
     def load_branches(self):
         self.branches=[bi.name for bi in self._repo.branches]
@@ -128,13 +124,6 @@ class WorkspaceManager(RepoManager):
                 message = 'added record {}'.format(path)
             index.commit(message)
 
-            # if 'working' in repo.branches:
-            #     working = repo.heads.working
-            # else:
-            #     working = repo.create_head('working')
-            #
-            # working.commit = repo.head.commit
-
         self.repo_updated=True
         #add to sqlite index
         # im = self.index_db
@@ -151,45 +140,6 @@ class WorkspaceManager(RepoManager):
             message = 'modified record {}'.format(os.path.relpath(path, self.path))
         index.commit(message)
 
-    def schema_diff(self, attrs):
-        """
-            show the diff for the given schema keyword `attr` between the working and master
-        """
-        repo = self._repo
-        master_commit = repo.heads.master.commit
-        working_commit = repo.heads.working.commit
-
-        ds = working_commit.diff(master_commit, create_patch=True)
-        # ds = working_commit.diff(master_commit)
-
-        if not isinstance(attrs, (tuple, list)):
-            attrs = (attrs, )
-
-        attr_diff = {}
-        for ci in ds.iter_change_type('M'):
-            a = ci.a_blob.data_stream
-
-            ayd = yaml.load(a)
-            # print 'a', a.read()
-            b = ci.b_blob.data_stream
-
-            byd = yaml.load(b)
-            for attr in attrs:
-
-                try:
-                    av = ayd[attr]
-                except KeyError:
-                    av = None
-
-                try:
-                    bv = byd[attr]
-                except KeyError:
-                    bv = None
-
-                attr_diff[attr] = av == bv, av, bv
-
-        return attr_diff
-
     def _load_branch_history(self):
         repo = self._repo
         hexshas = self._get_branch_history()
@@ -203,6 +153,15 @@ class WorkspaceManager(RepoManager):
             self.selected_path_commits = cs
         except GitCommandError:
             self.selected_path_commits = []
+
+    def _load_file_text(self, new):
+        with open(new,'r') as fp:
+            self.selected_text = fp.read()
+
+    def _selected_fired(self, new):
+        if new:
+            self._load_file_text(new)
+            self._load_file_history(new)
 
     def _dclicked_fired(self, new):
         if new:
@@ -220,3 +179,41 @@ class ArArWorkspaceManager(WorkspaceManager):
         return len(list_directory2(self.path, extension='.yaml'))
 
 #============= EOF =============================================
+    # def schema_diff(self, attrs):
+    #     """
+    #         show the diff for the given schema keyword `attr` between the working and master
+    #     """
+    #     repo = self._repo
+    #     master_commit = repo.heads.master.commit
+    #     working_commit = repo.heads.working.commit
+    #
+    #     ds = working_commit.diff(master_commit, create_patch=True)
+    #     # ds = working_commit.diff(master_commit)
+    #
+    #     if not isinstance(attrs, (tuple, list)):
+    #         attrs = (attrs, )
+    #
+    #     attr_diff = {}
+    #     for ci in ds.iter_change_type('M'):
+    #         a = ci.a_blob.data_stream
+    #
+    #         ayd = yaml.load(a)
+    #         # print 'a', a.read()
+    #         b = ci.b_blob.data_stream
+    #
+    #         byd = yaml.load(b)
+    #         for attr in attrs:
+    #
+    #             try:
+    #                 av = ayd[attr]
+    #             except KeyError:
+    #                 av = None
+    #
+    #             try:
+    #                 bv = byd[attr]
+    #             except KeyError:
+    #                 bv = None
+    #
+    #             attr_diff[attr] = av == bv, av, bv
+    #
+    #     return attr_diff
