@@ -15,30 +15,59 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from traits.api import Int
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem, HGroup, VGroup, ListStrEditor, EnumEditor
+from traitsui.api import View, Item, UItem, HGroup, VGroup, EnumEditor, TabularEditor, HSplit
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.directory_editor import myDirectoryEditor
 from pychron.core.ui.text_editor import myTextEditor
 from pychron.paths import paths
 
 
+class CommitAdapter(TabularAdapter):
+    columns = [('Commit', 'message'), ('Date', 'date')]
+    font = '10'
+    date_width = Int(100)
+
+
 class WorkspaceCentralPane(TraitsTaskPane):
     def traits_view(self):
-        return View(VGroup(HGroup(UItem('selected_branch', editor=EnumEditor(name='branches')),
-                                  Item('path', style='readonly')),
-                          Item('nanalyses', style='readonly'),
-                    HGroup(UItem('path', style='custom',
-                          editor=myDirectoryEditor(root_path=paths.workspace_root_dir,
-                                                   dclick_name='dclicked',
-                                                   selected_name='selected',
-                                                   root_path_name='path')),
-                        UItem('selected_text',
-                              editor=myTextEditor()),
-                        VGroup(UItem('selected_path_commits', editor=ListStrEditor()),
-                               UItem('commits', editor=ListStrEditor())))))
+        info_grp = HGroup(UItem('selected_branch', editor=EnumEditor(name='branches')),
+                          Item('path', style='readonly'))
+        # Item('nanalyses', style='readonly')
+
+        dir_grp = UItem('path', style='custom',
+                        editor=myDirectoryEditor(root_path=paths.workspace_root_dir,
+                                                 dclick_name='dclicked',
+                                                 selected_name='selected',
+                                                 root_path_name='path'))
+
+        # top = Tabbed(VGroup(UItem('selected_text',
+        #                           editor=myTextEditor()),
+        #                     label='Text'),
+        #              VGroup(UItem('selected_path_commits',
+        #                           editor=TabularEditor(adapter=CommitAdapter())),
+        #                     label='Commits'))
+
+        right = VGroup(UItem('selected_text',editor=myTextEditor()),
+                       VGroup(UItem('selected_path_commits',editor=TabularEditor(editable=False,
+                                                                          adapter=CommitAdapter())),
+                            show_border=True, label='File Log'))
+
+        bot = VGroup(UItem('commits',
+                           editor=TabularEditor(editable=False,
+                                                adapter=CommitAdapter())),
+                     show_border=True,
+                     label='Branch Log')
+        left = VGroup(dir_grp, bot)
+
+        return View(VGroup(info_grp,
+                           HSplit(left,
+                                  right)))
+
 
 
 class WorkspaceControlPane(TraitsDockPane):
@@ -47,7 +76,7 @@ class WorkspaceControlPane(TraitsDockPane):
     def traits_view(self):
         return View()
 
-#============= EOF =============================================
+    # ============= EOF =============================================
 
 
 

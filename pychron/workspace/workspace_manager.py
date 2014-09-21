@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import time
+
 from traits.api import Property, \
-    cached_property, Event, List, Str
+    cached_property, Event, List, Str, HasTraits
+
 # ============= standard library imports ========================
 import shutil
 from git import GitCommandError
@@ -24,6 +27,11 @@ import os
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, fileiter
 from pychron.processing.repository.git.repo_manager import RepoManager
+
+
+class Commit(HasTraits):
+    message = Str
+    date = Str
 
 
 class Manifest(object):
@@ -45,7 +53,7 @@ class Manifest(object):
     def add(self, name):
         with open(self.path, 'r') as fp:
             exists = next((line for line in fileiter(fp, strip=True)
-                           if line==name), None)
+                           if line == name), None)
 
         if not exists:
             with open(self.path, 'a') as fp:
@@ -66,12 +74,11 @@ class Manifest(object):
 
 
 class WorkspaceManager(RepoManager):
-
     # index_db = Instance(IndexAdapter)
     # test = Button
     selected = Event
     dclicked = Event
-    repo_updated=Event
+    repo_updated = Event
 
     branches = List
     commits = List
@@ -82,16 +89,16 @@ class WorkspaceManager(RepoManager):
         super(WorkspaceManager, self).open_repo(name, root)
 
         e = Manifest.exists(self.path)
-        #init manifest object
+        # init manifest object
         self._manifest = Manifest(self.path)
         if not e:
-            self.add(self._manifest.path,msg='Added manifest file')
+            self.add(self._manifest.path, msg='Added manifest file')
 
         self.create_branch('develop')
         self.checkout_branch('develop')
 
     def load_branches(self):
-        self.branches=[bi.name for bi in self._repo.branches]
+        self.branches = [bi.name for bi in self._repo.branches]
 
     def create_branch(self, name):
         super(WorkspaceManager, self).create_branch(name)
@@ -102,6 +109,15 @@ class WorkspaceManager(RepoManager):
 
     def add_to_manifest(self, path):
         self._manifest.add(os.path.basename(path))
+
+    def add_manifest_to_index(self):
+        p=self._manifest.path
+        index=self.index
+        index.add([p])
+
+    def commit_manifest(self):
+        p=self._manifest.path
+        self._add_to_repo(p, msg='Updated manifest')
 
     def add_analysis(self, path, commit=True, message=None, **kw):
         """
@@ -116,7 +132,7 @@ class WorkspaceManager(RepoManager):
         """
 
         repo = self._repo
-        #copy file to repo
+        # copy file to repo
         dest = os.path.join(repo.working_dir, os.path.basename(path))
         if not os.path.isfile(dest):
             shutil.copyfile(path, dest)
@@ -129,7 +145,7 @@ class WorkspaceManager(RepoManager):
                 message = 'added record {}'.format(path)
             index.commit(message)
 
-        self.repo_updated=True
+        self.repo_updated = True
         #add to sqlite index
         # im = self.index_db
         # im.add(repo=repo.working_dir, **kw)
@@ -139,7 +155,7 @@ class WorkspaceManager(RepoManager):
         commit the modification to path to the working branch
         """
         self.checkout_branch(branch)
-        index=self.index
+        index = self.index
         index.add([path])
         if message is None:
             message = 'modified record {}'.format(os.path.relpath(path, self.path))
@@ -148,19 +164,30 @@ class WorkspaceManager(RepoManager):
     def _load_branch_history(self):
         repo = self._repo
         hexshas = self._get_branch_history()
-        self.commits = [repo.rev_parse(c).message for c in hexshas]
+        # [repo.rev_parse(c) for c in hexshas]
+        # self.commits = [self.commit_factory(ci) for ci in hexshas]
+        self.commits = self._parse_commits(hexshas)
+
+    def _parse_commits(self, hexshas):
+        def factory(ci):
+            repo = self._repo
+            obj = repo.rev_parse(ci)
+            cx=Commit(message=obj.message, date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
+            return cx
+        return [factory(ci) for ci in hexshas]
 
     def _load_file_history(self, p):
         repo = self._repo
         try:
             hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
-            cs = [repo.rev_parse(c).message for c in hexshas]
-            self.selected_path_commits = cs
+            # cs = [repo.rev_parse(c).message for c in hexshas]
+            # self.selected_path_commits = cs
+            self.selected_path_commits = self._parse_commits(hexshas)
         except GitCommandError:
             self.selected_path_commits = []
 
     def _load_file_text(self, new):
-        with open(new,'r') as fp:
+        with open(new, 'r') as fp:
             self.selected_text = fp.read()
 
     def _selected_fired(self, new):
@@ -176,6 +203,7 @@ class WorkspaceManager(RepoManager):
         if new:
             self.checkout_branch(new)
 
+
 class ArArWorkspaceManager(WorkspaceManager):
     nanalyses = Property(depends_on='path, repo_updated')
 
@@ -183,42 +211,42 @@ class ArArWorkspaceManager(WorkspaceManager):
     def _get_nanalyses(self):
         return len(list_directory2(self.path, extension='.yaml'))
 
-#============= EOF =============================================
-    # def schema_diff(self, attrs):
-    #     """
-    #         show the diff for the given schema keyword `attr` between the working and master
-    #     """
-    #     repo = self._repo
-    #     master_commit = repo.heads.master.commit
-    #     working_commit = repo.heads.working.commit
-    #
-    #     ds = working_commit.diff(master_commit, create_patch=True)
-    #     # ds = working_commit.diff(master_commit)
-    #
-    #     if not isinstance(attrs, (tuple, list)):
-    #         attrs = (attrs, )
-    #
-    #     attr_diff = {}
-    #     for ci in ds.iter_change_type('M'):
-    #         a = ci.a_blob.data_stream
-    #
-    #         ayd = yaml.load(a)
-    #         # print 'a', a.read()
-    #         b = ci.b_blob.data_stream
-    #
-    #         byd = yaml.load(b)
-    #         for attr in attrs:
-    #
-    #             try:
-    #                 av = ayd[attr]
-    #             except KeyError:
-    #                 av = None
-    #
-    #             try:
-    #                 bv = byd[attr]
-    #             except KeyError:
-    #                 bv = None
-    #
-    #             attr_diff[attr] = av == bv, av, bv
-    #
-    #     return attr_diff
+        # ============= EOF =============================================
+        # def schema_diff(self, attrs):
+        #     """
+        #         show the diff for the given schema keyword `attr` between the working and master
+        #     """
+        #     repo = self._repo
+        #     master_commit = repo.heads.master.commit
+        #     working_commit = repo.heads.working.commit
+        #
+        #     ds = working_commit.diff(master_commit, create_patch=True)
+        #     # ds = working_commit.diff(master_commit)
+        #
+        #     if not isinstance(attrs, (tuple, list)):
+        #         attrs = (attrs, )
+        #
+        #     attr_diff = {}
+        #     for ci in ds.iter_change_type('M'):
+        #         a = ci.a_blob.data_stream
+        #
+        #         ayd = yaml.load(a)
+        #         # print 'a', a.read()
+        #         b = ci.b_blob.data_stream
+        #
+        #         byd = yaml.load(b)
+        #         for attr in attrs:
+        #
+        #             try:
+        #                 av = ayd[attr]
+        #             except KeyError:
+        #                 av = None
+        #
+        #             try:
+        #                 bv = byd[attr]
+        #             except KeyError:
+        #                 bv = None
+        #
+        #             attr_diff[attr] = av == bv, av, bv
+        #
+        #     return attr_diff

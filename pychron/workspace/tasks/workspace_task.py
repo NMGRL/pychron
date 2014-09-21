@@ -111,12 +111,16 @@ class WorkspaceTask(BaseBrowserTask):
             self.info('no analyses to checkout')
             return
 
+        self.workspace.checkout_branch('master')
         if ans:
             self.debug('checkout {}'.format(','.join([ai.record_id for ai in ans])))
             self._checkout_analyses(ans)
         if recheckout:
             self.debug('recheckout {}'.format(','.join([ai.record_id for ai in recheckout])))
             self._checkout_analyses(recheckout, 'Recheckout')
+
+        self.workspace.merge('master', 'develop')
+        self.workspace.checkout_branch('develop')
 
     def _checkout_analyses(self, ans, msg='Added'):
         #make dbanalyses
@@ -145,13 +149,10 @@ class WorkspaceTask(BaseBrowserTask):
             if prog:
                 prog.change_message('{} {} to workspace'.format(msg, ai.record_id))
 
-        self.workspace.checkout_branch('master')
         progress_iterator(ans, func, threshold=1)
+        self.workspace.add_manifest_to_index()
         self.workspace.commit('{} Analyses {} to {}'.format(msg, ans[0].record_id,
                                                                ans[-1].record_id))
-        self.workspace.merge('master', 'develop')
-        self.workspace.checkout_branch('develop')
-
     def new_workspace(self):
         self.debug('new workspace')
 

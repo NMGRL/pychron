@@ -20,7 +20,7 @@ from traitsui.api import View, UItem, TableEditor, HGroup, spring
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 #============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
@@ -28,28 +28,32 @@ from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 class NewBranchView(HasTraits):
     name = Str
+
     def traits_view(self):
-        v=View(UItem('name'),
-               kind='livemodal',
-               buttons=['OK','Cancel'], title='New Branch')
+        v = View(UItem('name'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'], title='New Branch')
         return v
+
 
 class NewTagView(HasTraits):
     tag_name = Str
     branch = Str
+
     def traits_view(self):
-        v=View(UItem('tag_name'),
-               kind='livemodal',
-               buttons=['OK','Cancel'], title='Tag Branch {}'.format(self.branch))
+        v = View(UItem('tag_name'),
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'], title='Tag Branch {}'.format(self.branch))
         return v
 
 
 class Existing(HasTraits):
     name = Str
-    recheckout =Bool
+    recheckout = Bool
+
 
 class ChooseReheckoutAnalysesView(HasTraits):
-    existing=List
+    existing = List
     toggle_recheckout = Button
     _toggle_recheckout_state = Bool
 
@@ -70,19 +74,20 @@ class ChooseReheckoutAnalysesView(HasTraits):
         super(ChooseReheckoutAnalysesView, self).__init__(*args, **kw)
 
     def traits_view(self):
-        cols=[CheckboxColumn(name='recheckout',label='Recheckout'),
-              ObjectColumn(name='name', editable=False)]
-        editor=TableEditor(columns=cols, sortable=False)
+        cols = [CheckboxColumn(name='recheckout', label='Recheckout'),
+                ObjectColumn(name='name', editable=False)]
+        editor = TableEditor(columns=cols, sortable=False)
 
-        v=View(UItem('existing', editor=editor),
-               HGroup(icon_button_editor('toggle_recheckout', 'tick', tooltip='Toggle recheckout for all analyses'),
-                      spring),
-               width=300,
-               resizable=True,
-               title='Choose analyses to recheckout',
-               kind='livemodal',
-               buttons=['OK','Cancel'])
+        v = View(UItem('existing', editor=editor),
+                 HGroup(icon_button_editor('toggle_recheckout', 'tick', tooltip='Toggle recheckout for all analyses'),
+                        spring),
+                 width=300,
+                 resizable=True,
+                 title='Choose analyses to recheckout',
+                 kind='livemodal',
+                 buttons=['OK', 'Cancel'])
         return v
+
 #============= EOF =============================================
 
 
