@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,45 +34,29 @@ except ImportError:
     UpdatePlugin = None
 
 PACKAGE_DICT = dict(
-    ExperimentPlugin='pychron.experiment.tasks.experiment_plugin',
-    LoadingPlugin='pychron.loading.loading_plugin',
-    ExtractionLinePlugin='pychron.extraction_line.tasks.extraction_line_plugin',
-    VideoPlugin='pychron.image.tasks.video_plugin',
-    #                   CanvasDesignerPlugin='pychron.canvas.plugins.canvas_designer_plugin',
-    #                   MDDModelerPlugin='pychron.modeling.plugins.mdd_modeler_plugin',
-
-    #                   SVNPlugin='pychron.svn.plugins.svn_plugin',
-
-    FusionsDiodePlugin='pychron.lasers.tasks.plugins.diode',
-    FusionsCO2Plugin='pychron.lasers.tasks.plugins.co2',
-    FusionsUVPlugin='pychron.lasers.tasks.plugins.uv',
-    CoreLaserPlugin='pychron.lasers.tasks.plugins.laser_plugin',
-    #                   FusionsDiodePlugin='pychron.lasers.plugins.fusions.diode.plugin',
-    #                   FusionsCO2Plugin='pychron.lasers.plugins.fusions.co2.plugin',
-    #                   FusionsUVPlugin='pychron.lasers.plugins.fusions.uv.plugin',
-
-    #                   SynradCO2Plugin='pychron.lasers.plugins.synrad_co2_plugin',
-
-    ArgusSpectrometerPlugin='pychron.spectrometer.tasks.argus_spectrometer_plugin',
-    MapSpectrometerPlugin='pychron.spectrometer.tasks.map_spectrometer_plugin',
-
-    #                   GraphPlugin='pychron.graph.plugins.graph_plugin',
-
-    #                   TwitterPlugin='pychron.social.plugins.twitter_plugin',
-
-    EmailPlugin='pychron.social.tasks.email_plugin',
-    ProcessingPlugin='pychron.processing.tasks.processing_plugin',
-
-    MediaServerPlugin='pychron.media_server.tasks.media_server_plugin',
-    PyScriptPlugin='pychron.pyscripts.tasks.pyscript_plugin',
-    DatabasePlugin='pychron.database.tasks.database_plugin',
-    CanvasDesignerPlugin='pychron.canvas.tasks.canvas_plugin',
-    ArArConstantsPlugin='pychron.constants.tasks.arar_constants_plugin',
-    EntryPlugin='pychron.entry.tasks.entry_plugin',
-    SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
-    DashboardServerPlugin='pychron.dashboard.tasks.server.plugin',
-    GeoPlugin='pychron.geo.tasks.geo_plugin',
-    ExternalPipettePlugin='pychron.external_pipette.tasks.external_pipette_plugin')
+    CanvasDesignerPlugin=    'pychron.canvas.tasks.canvas_plugin',
+    ArArConstantsPlugin=     'pychron.constants.tasks.arar_constants_plugin',
+    DashboardServerPlugin=   'pychron.dashboard.tasks.server.plugin',
+    DatabasePlugin=          'pychron.database.tasks.database_plugin',
+    EntryPlugin=             'pychron.entry.tasks.entry_plugin',
+    ExperimentPlugin=        'pychron.experiment.tasks.experiment_plugin',
+    ExternalPipettePlugin=   'pychron.external_pipette.tasks.external_pipette_plugin',
+    ExtractionLinePlugin=    'pychron.extraction_line.tasks.extraction_line_plugin',
+    GeoPlugin=               'pychron.geo.tasks.geo_plugin',
+    VideoPlugin=             'pychron.image.tasks.video_plugin',
+    FusionsDiodePlugin=      'pychron.lasers.tasks.plugins.diode',
+    FusionsCO2Plugin=        'pychron.lasers.tasks.plugins.co2',
+    FusionsUVPlugin=         'pychron.lasers.tasks.plugins.uv',
+    LoadingPlugin=           'pychron.loading.loading_plugin',
+    CoreLaserPlugin=         'pychron.lasers.tasks.plugins.laser_plugin',
+    MediaServerPlugin=       'pychron.media_server.tasks.media_server_plugin',
+    ProcessingPlugin=        'pychron.processing.tasks.processing_plugin',
+    PyScriptPlugin=          'pychron.pyscripts.tasks.pyscript_plugin',
+    ArgusSpectrometerPlugin= 'pychron.spectrometer.tasks.argus_spectrometer_plugin',
+    MapSpectrometerPlugin=   'pychron.spectrometer.tasks.map_spectrometer_plugin',
+    EmailPlugin=             'pychron.social.tasks.email_plugin',
+    SystemMonitorPlugin=     'pychron.system_monitor.tasks.system_monitor_plugin',
+    WorkspacePlugin=         'pychron.workspace.tasks.workspace_plugin')
 
 
 def get_module_name(klass):
