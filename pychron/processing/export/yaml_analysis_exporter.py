@@ -31,6 +31,9 @@ class YamlAnalysisExporter(Exporter):
     destination = Instance(YamlDestination, ())
     _ctx = None
 
+    def clear(self):
+        self._ctx = dict()
+
     def add(self, dbanalysis):
         if not self._ctx:
             self._ctx = dict()

@@ -23,7 +23,6 @@ from traits.api import Instance
 #============= standard library imports ========================
 #============= local library imports  ==========================
 import yaml
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
 from pychron.processing.export.yaml_analysis_exporter import YamlAnalysisExporter
@@ -106,18 +105,20 @@ class WorkspaceTask(BaseBrowserTask):
             exp.add(ai)
             p= os.path.join(self.workspace.path,'{}.yaml'.format(ai.record_id))
             exp.destination.destination = p
-            # exp.export()
-            timethis(exp.export, msg='export')
+
+            exp.export()
+            # timethis(exp.export, msg='export')
+            exp.clear()
 
             #update manifest
             self.workspace.add_to_manifest(p)
             # timethis(self.workspace.add_to_manifest, args=(p,), msg='a')
 
             #add to repositiory
-            #self.workspace.add_analysis(p, commit=False)
-            timethis(self.workspace.add_analysis, args=(p,),
-                     kwargs={'commit':False},
-                     msg='add to git')
+            self.workspace.add_analysis(p, commit=False)
+            # timethis(self.workspace.add_analysis, args=(p,),
+            #          kwargs={'commit':False},
+            #          msg='add to git')
             if prog:
                 prog.change_message('Added {} to workspace'.format(ai.record_id))
 
