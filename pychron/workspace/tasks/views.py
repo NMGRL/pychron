@@ -27,6 +27,15 @@ class NewBranchView(HasTraits):
                kind='livemodal',
                buttons=['OK','Cancel'], title='New Branch')
         return v
+
+class NewTagView(HasTraits):
+    tag_name = Str
+    branch = Str
+    def traits_view(self):
+        v=View(UItem('tag_name'),
+               kind='livemodal',
+               buttons=['OK','Cancel'], title='Tag Branch {}'.format(self.branch))
+        return v
 #============= EOF =============================================
 
 

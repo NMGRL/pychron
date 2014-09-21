@@ -44,6 +44,28 @@ class AddBranchAction(TaskAction):
     method = 'add_branch'
     image = icon('add')
 
+
+class TestModificationAction(TaskAction):
+    name = 'Test'
+    method = 'test_modification'
+
+
+class TagBranchAction(TaskAction):
+    name = 'Tag Branch'
+    method = 'tag_branch'
+
+
+class PullAction(TaskAction):
+    name = 'Pull'
+    method = 'pull'
+    image = icon('arrow_down')
+
+
+class PushAction(TaskAction):
+    name = 'Push'
+    method = 'push'
+    image = icon('arrow_up')
+
 #============= EOF =============================================
 
 

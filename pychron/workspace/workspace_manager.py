@@ -29,11 +29,19 @@ from pychron.processing.repository.git.repo_manager import RepoManager
 
 class Manifest(object):
     def __init__(self, p):
-        p = os.path.join(p, 'MANIFEST')
+        p = self.filename(p)
         if not os.path.isfile(p):
             with open(p, 'w'):
                 pass
         self.path = p
+
+    @classmethod
+    def exists(cls, p):
+        return os.path.isfile(cls.filename(p))
+
+    @classmethod
+    def filename(cls, p):
+        return os.path.join(p, 'MANIFEST')
 
     def add(self, name):
         with open(self.path, 'a') as fp:
@@ -65,8 +73,15 @@ class WorkspaceManager(RepoManager):
     def open_repo(self, name, root=None):
         super(WorkspaceManager, self).open_repo(name, root)
 
+
+        e = Manifest.exists(self.path)
         #init manifest object
         self._manifest = Manifest(self.path)
+        if not e:
+            self.add(self._manifest.path,msg='Added manifest file')
+
+        self.create_branch('develop')
+        self.checkout_branch('develop')
 
     def find_existing(self, names):
         return [ni for ni in self._manifest.names if ni in names]
@@ -87,7 +102,6 @@ class WorkspaceManager(RepoManager):
         """
 
         repo = self._repo
-
         #copy file to repo
         dest = os.path.join(repo.working_dir, os.path.basename(path))
         if not os.path.isfile(dest):
@@ -113,20 +127,32 @@ class WorkspaceManager(RepoManager):
         # im = self.index_db
         # im.add(repo=repo.working_dir, **kw)
 
-    def modify_record(self, path, message=None):
+    def modify_analysis(self, path, message=None, branch='develop', repo=None):
         """
-            commit the modification to path to the working branch
+        commit the modification to path to the working branch
         """
-        repo = self._repo
-
-        repo.heads.working.checkout()
-
-        index = repo.index
+        self.checkout_branch(branch, repo)
+        index =self._get_repo_index(repo)
         index.add([path])
 
         if message is None:
             message = 'modified record {}'.format(path)
         index.commit(message)
+
+    # def modify_record(self, path, message=None):
+    #     """
+    #         commit the modification to path to the working branch
+    #     """
+    #     repo = self._repo
+    #
+    #     repo.heads.working.checkout()
+    #
+    #     index = repo.index
+    #     index.add([path])
+    #
+    #     if message is None:
+    #         message = 'modified record {}'.format(path)
+    #     index.commit(message)
 
     def commit_modification(self):
         """

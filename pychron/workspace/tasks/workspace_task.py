@@ -22,13 +22,14 @@ from traits.api import Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+import yaml
 from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.progress import progress_iterator
 from pychron.paths import paths
 from pychron.processing.export.yaml_analysis_exporter import YamlAnalysisExporter
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
-    AddBranchAction
+    AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction
 from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane
 from pychron.workspace.workspace_manager import ArArWorkspaceManager
 
@@ -38,12 +39,38 @@ class WorkspaceTask(BaseBrowserTask):
     tool_bars = [SToolBar(NewWorkspaceAction(),
                           OpenWorkspaceAction()),
                  SToolBar(CheckoutAnalysesAction(),
-                          AddBranchAction())]
+                          AddBranchAction(),
+                          TagBranchAction(),
+                          TestModificationAction()),
+                 SToolBar(PullAction(), PushAction())]
 
     workspace = Instance(ArArWorkspaceManager, ())
 
+    def pull(self):
+        self.debug('pull')
+
+    def push(self):
+        self.debug('push')
+
+    def tag_branch(self):
+        from pychron.workspace.tasks.views import NewTagView
+        b = self.workspace.get_current_branch()
+        self.debug('tag branch={}'.format(b))
+        nt = NewTagView(branch=b)
+        info = nt.edit_traits()
+        if info.result:
+            self.info('tagging {} as {}'.format(b, nt.tag_name))
+            self.workspace.tag_branch(nt.tag_name)
+
+    def test_modification(self):
+        p=os.path.join(self.workspace.path, '23446-01.yaml')
+        with open(p, 'w') as fp:
+            fp.write(yaml.dump({'foo':'bar'}))
+
+        self.workspace.modify_analysis(p)
+
     def add_branch(self):
-        from pychron.workspace.tasks.new_branch_view import NewBranchView
+        from pychron.workspace.tasks.views import NewBranchView
         nb = NewBranchView()
         info = nb.edit_traits()
         if info.result:
@@ -68,7 +95,6 @@ class WorkspaceTask(BaseBrowserTask):
 
         #export to yaml files
         exp=YamlAnalysisExporter()
-
         def func(ai, prog, i, n):
             exp.add(ai)
             p= os.path.join(self.workspace.path,'{}.yaml'.format(ai.record_id))
@@ -88,9 +114,11 @@ class WorkspaceTask(BaseBrowserTask):
             if prog:
                 prog.change_message('Added {} to workspace'.format(ai.record_id))
 
+        self.workspace.checkout_branch('master')
         progress_iterator(ans, func, threshold=1)
         self.workspace.commit('Added Analyses {} to {}'.format(ans[0].record_id,
                                                                ans[-1].record_id))
+        self.workspace.merge('master', 'develop')
 
     def new_workspace(self):
         self.debug('new workspace')
