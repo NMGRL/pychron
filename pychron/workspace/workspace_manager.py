@@ -68,7 +68,9 @@ class WorkspaceManager(RepoManager):
 
     dclicked = Event
     repo_updated=Event
+    current_commit = Str
     commits = List
+    selected_path_commits = List
     branches = List
     selected_branch = Str
 
@@ -84,6 +86,8 @@ class WorkspaceManager(RepoManager):
         self.create_branch('develop')
         self.checkout_branch('develop')
         self.selected_branch = 'develop'
+
+
 
     def load_branches(self):
         self.branches=[bi.name for bi in self._repo.branches]
@@ -136,42 +140,16 @@ class WorkspaceManager(RepoManager):
         # im = self.index_db
         # im.add(repo=repo.working_dir, **kw)
 
-    def modify_analysis(self, path, message=None, branch='develop', repo=None):
+    def modify_analysis(self, path, message=None, branch='develop'):
         """
         commit the modification to path to the working branch
         """
-        self.checkout_branch(branch, repo)
-        index =self._get_repo_index(repo)
+        self.checkout_branch(branch)
+        index=self.index
         index.add([path])
-
         if message is None:
-            message = 'modified record {}'.format(path)
+            message = 'modified record {}'.format(os.path.relpath(path, self.path))
         index.commit(message)
-
-    # def modify_record(self, path, message=None):
-    #     """
-    #         commit the modification to path to the working branch
-    #     """
-    #     repo = self._repo
-    #
-    #     repo.heads.working.checkout()
-    #
-    #     index = repo.index
-    #     index.add([path])
-    #
-    #     if message is None:
-    #         message = 'modified record {}'.format(path)
-    #     index.commit(message)
-
-    def commit_modification(self):
-        """
-            set the current working commit to the master head
-        """
-        repo = self._repo
-
-        master = repo.heads.master
-        master.commit = repo.head.commit
-        master.checkout()
 
     def schema_diff(self, attrs):
         """
@@ -212,14 +190,19 @@ class WorkspaceManager(RepoManager):
 
         return attr_diff
 
+    def _load_branch_history(self):
+        repo = self._repo
+        hexshas = self._get_branch_history()
+        self.commits = [repo.rev_parse(c).message for c in hexshas]
+
     def _load_file_history(self, p):
         repo = self._repo
         try:
             hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
             cs = [repo.rev_parse(c).message for c in hexshas]
-            self.commits = cs
+            self.selected_path_commits = cs
         except GitCommandError:
-            self.commits = []
+            self.selected_path_commits = []
 
     def _dclicked_fired(self, new):
         if new:

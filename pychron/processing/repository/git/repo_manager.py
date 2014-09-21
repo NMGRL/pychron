@@ -87,6 +87,7 @@ class RepoManager(Loggable):
         repo=self._repo
         branch = getattr(repo.heads, name)
         branch.checkout()
+        self._load_branch_history()
 
     def create_branch(self, name):
         repo=self._repo
@@ -158,6 +159,14 @@ class RepoManager(Loggable):
     def _get_remote(self, remote):
         repo=self._repo
         return getattr(repo.remotes, remote)
+
+    def _load_branch_history(self):
+        pass
+
+    def _get_branch_history(self):
+        repo=self._repo
+        hexshas = repo.git.log('--pretty=%H', '--follow', '--', '.').split('\n')
+        return hexshas
 
     @property
     def index(self):

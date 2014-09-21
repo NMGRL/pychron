@@ -66,6 +66,11 @@ class PushAction(TaskAction):
     method = 'push'
     image = icon('arrow_up')
 
+
+class CommitChangesAction(TaskAction):
+    name = 'Commit Changes'
+    method = 'commit_changes'
+    # image = icon('arrow_up')
 #============= EOF =============================================
 
 

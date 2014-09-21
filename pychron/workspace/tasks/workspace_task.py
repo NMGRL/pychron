@@ -29,7 +29,7 @@ from pychron.paths import paths
 from pychron.processing.export.yaml_analysis_exporter import YamlAnalysisExporter
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
-    AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction
+    AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction, CommitChangesAction
 from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane
 from pychron.workspace.workspace_manager import ArArWorkspaceManager
 
@@ -42,9 +42,15 @@ class WorkspaceTask(BaseBrowserTask):
                           AddBranchAction(),
                           TagBranchAction(),
                           TestModificationAction()),
-                 SToolBar(PullAction(), PushAction())]
+                 SToolBar(PullAction(),
+                          PushAction(),
+                          CommitChangesAction())]
 
     workspace = Instance(ArArWorkspaceManager, ())
+
+    def commit_changes(self):
+        self.debug('merging develop into master')
+        self.workspace.merge('develop', 'master')
 
     def pull(self):
         self.debug('pull')
@@ -63,9 +69,10 @@ class WorkspaceTask(BaseBrowserTask):
             self.workspace.tag_branch(nt.tag_name)
 
     def test_modification(self):
+        import random
         p=os.path.join(self.workspace.path, '23446-01.yaml')
         with open(p, 'w') as fp:
-            fp.write(yaml.dump({'foo':'bar'}))
+            fp.write(yaml.dump({'foo':random.random()}))
 
         self.workspace.modify_analysis(p)
 

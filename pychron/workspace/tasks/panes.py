@@ -32,7 +32,8 @@ class WorkspaceCentralPane(TraitsTaskPane):
                           editor=DirectoryEditor(root_path=paths.workspace_root_dir,
                                                  dclick_name='dclicked',
                                                  root_path_name='path')),
-                        UItem('commits', editor=ListStrEditor()))))
+                        VGroup(UItem('selected_path_commits', editor=ListStrEditor()),
+                               UItem('commits', editor=ListStrEditor())))))
 
 
 class WorkspaceControlPane(TraitsDockPane):
