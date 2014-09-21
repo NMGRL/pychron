@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.directory_dialog import DirectoryDialog
 
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later
@@ -433,6 +434,24 @@ class BaseManagerTask(BaseTask):
         # except OSError:
         #     self.debug('failed opening {} using {}'.format(p, app_path))
         #     subprocess.call(['open', p])
+
+    def open_directory_dialog(self, **kw):
+        if 'default_directory' not in kw:
+            kw['default_directory'] = self.default_directory
+
+        if 'wildcard' not in kw:
+            if self.wildcard:
+                kw['wildcard'] = self.wildcard
+
+        dialog = DirectoryDialog(
+            #parent=self.window.control,
+            action='open',
+            **kw)
+        if dialog.open() == OK:
+            r = dialog.path
+            # if action == 'open files':
+            #     r = dialog.paths
+            return r
 
     def open_file_dialog(self, action='open', **kw):
         if 'default_directory' not in kw:

@@ -15,32 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.tasks.action.task_action import TaskAction
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from envisage.ui.tasks.task_factory import TaskFactory
-
-from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+from pychron.envisage.resources import icon
 
 
-class WorkspacePlugin(BaseTaskPlugin):
-    def _tasks_default(self):
-        wt = TaskFactory(factory=self._workspace_task_factory, name='Workspace',
-                         # task_group=task_group,
-                         # accelerator=accelerator,
-                         # image=image,
-                         # include_view_menu=include_view_menu or accelerator
-                        )
-        tasks = [wt,]
-        return tasks
+class NewWorkspaceAction(TaskAction):
+    name='New Workspace'
+    method = 'new_workspace'
+    image = icon('add')
 
-    def _workspace_task_factory(self):
-        from pychron.workspace.tasks.workspace_task import WorkspaceTask
-        central_db = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
-        return WorkspaceTask(manager=central_db)
+class OpenWorkspaceAction(TaskAction):
+    name='Open Workspace'
+    method = 'open_workspace'
+    image = icon('document-open')
 
-    def _preferences_panes_default(self):
-        return []
 
+class CheckoutAnalysesAction(TaskAction):
+    name = 'Checkout Analyses'
+    method = 'checkout_analyses'
+    image = icon('database_go')
 #============= EOF =============================================
 
 

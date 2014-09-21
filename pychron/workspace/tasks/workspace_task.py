@@ -15,13 +15,49 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+
+from pyface.tasks.action.schema import SToolBar
+from traits.api import Instance
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.base_task import BaseTask
+from pychron.paths import paths
+from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction
+from pychron.workspace.tasks.panes import WorkspaceCentralPane, WorkspaceControlPane
+from pychron.workspace.workspace_manager import ArArWorkspaceManager
 
 
-class WorkspaceTask(BaseTask):
-    pass
+class WorkspaceTask(BaseBrowserTask):
+
+    tool_bars = [SToolBar(NewWorkspaceAction(),
+                          OpenWorkspaceAction(),
+                          CheckoutAnalysesAction())]
+    workspace = Instance(ArArWorkspaceManager, ())
+
+    def checkout_analyses(self):
+        self.debug('checking out analyses')
+        print self.analysis_table.analyses
+
+    def new_workspace(self):
+        self.debug('new workspace')
+
+    def open_workspace(self):
+        self.debug('open workspace')
+        p='/Users/ross/Pychrondata_dev/data/workspaces/test'
+        if not os.path.isdir(p):
+            p = self.open_directory_dialog(default_directory=paths.workspace_root_dir)
+
+        if p:
+            self.workspace.create_repo(p)
+
+    def create_central_pane(self):
+        return WorkspaceCentralPane(model=self.workspace)
+
+    def create_dock_panes(self):
+        return [WorkspaceControlPane(),
+                self._create_browser_pane()]
 #============= EOF =============================================
 
 
