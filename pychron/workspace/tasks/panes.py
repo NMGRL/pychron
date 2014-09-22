@@ -15,12 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.api import Int
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, Item, UItem, HGroup, VGroup, EnumEditor, TabularEditor, HSplit
+from traitsui.api import View, Item, UItem, HGroup, VGroup, EnumEditor, TabularEditor, HSplit, Handler
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.directory_editor import myDirectoryEditor
 from pychron.core.ui.text_editor import myTextEditor
@@ -31,6 +33,12 @@ class CommitAdapter(TabularAdapter):
     columns = [('Commit', 'message'), ('Date', 'date')]
     font = '10'
     date_width = Int(100)
+    def get_menu( self, object, trait, row, column ):
+        return MenuManager(Action(name='Diff', action='on_diff'))
+
+class CentralPaneHandler(Handler):
+    def on_diff(self, info, obj):
+        obj.diff_selected()
 
 
 class WorkspaceCentralPane(TraitsTaskPane):
@@ -46,16 +54,18 @@ class WorkspaceCentralPane(TraitsTaskPane):
                                                  root_path_name='path'))
 
         # top = Tabbed(VGroup(UItem('selected_text',
-        #                           editor=myTextEditor()),
+        # editor=myTextEditor()),
         #                     label='Text'),
         #              VGroup(UItem('selected_path_commits',
         #                           editor=TabularEditor(adapter=CommitAdapter())),
         #                     label='Commits'))
 
-        right = VGroup(UItem('selected_text',editor=myTextEditor()),
-                       VGroup(UItem('selected_path_commits',editor=TabularEditor(editable=False,
-                                                                          adapter=CommitAdapter())),
-                            show_border=True, label='File Log'))
+        right = VGroup(UItem('selected_text', editor=myTextEditor()),
+                       VGroup(UItem('selected_path_commits', editor=TabularEditor(editable=False,
+                                                                                  multi_select=True,
+                                                                                  selected='selected_commits',
+                                                                                  adapter=CommitAdapter())),
+                              show_border=True, label='File Log'))
 
         bot = VGroup(UItem('commits',
                            editor=TabularEditor(editable=False,
@@ -66,8 +76,8 @@ class WorkspaceCentralPane(TraitsTaskPane):
 
         return View(VGroup(info_grp,
                            HSplit(left,
-                                  right)))
-
+                                  right)),
+                    handler = CentralPaneHandler())
 
 
 class WorkspaceControlPane(TraitsDockPane):
@@ -76,7 +86,7 @@ class WorkspaceControlPane(TraitsDockPane):
     def traits_view(self):
         return View()
 
-    # ============= EOF =============================================
+        # ============= EOF =============================================
 
 
 

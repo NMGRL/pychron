@@ -15,7 +15,10 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import shutil
+
 from traits.api import Any, Str
+
 #============= standard library imports ========================
 import os
 from git.exc import GitCommandError
@@ -25,7 +28,7 @@ from git import Repo
 from pychron.loggable import Loggable
 
 
-class RepoManager(Loggable):
+class GitRepoManager(Loggable):
     """
         manage a local git repository
 
@@ -75,6 +78,10 @@ class RepoManager(Loggable):
                 self._repo = Repo.init(path)
 
             return True
+
+    def get_commit(self, hexsha):
+        repo=self._repo
+        return repo.commit(hexsha)
 
     def tag_branch(self, tagname):
         repo = self._repo
@@ -141,15 +148,21 @@ class RepoManager(Loggable):
         if index:
             index.commit(msg)
 
-    def add(self, p, msg=None, **kw):
+    def add(self, p, msg=None, msg_prefix=None, **kw):
+        repo=self._repo
+        bp = os.path.basename(p)
+        dest = os.path.join(repo.working_dir, bp)
+        dest_exists = os.path.isfile(dest)
+        if msg_prefix is None:
+            msg_prefix = 'modified' if dest_exists else 'added'
+
+        if not dest_exists:
+            shutil.copyfile(p, dest)
+
         if msg is None:
-            name = p.replace(self.root, '')
-            if name.startswith('/'):
-                name = name[1:]
-
-            msg = 'added {}'.format(name)
-
-        self._add_to_repo(p, msg, **kw)
+            msg = '{}'.format(bp)
+        msg = '{} - {}'.format(msg_prefix, msg)
+        self._add_to_repo(dest, msg, **kw)
 
     #private
     def _add_to_repo(self, p, msg, commit=True):

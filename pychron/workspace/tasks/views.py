@@ -15,15 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, List, Button
-from traitsui.api import View, UItem, TableEditor, HGroup, spring
+from traits.api import HasTraits, Str, Bool, List, Button, Float, Property, Int, Either
+from traitsui.api import View, UItem, TableEditor, HGroup, spring, TabularEditor, VGroup, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 import os
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
+from pychron.pychron_constants import LIGHT_RED_COLOR
 
 
 class NewBranchView(HasTraits):
@@ -88,7 +91,101 @@ class ChooseReheckoutAnalysesView(HasTraits):
                  buttons=['OK', 'Cancel'])
         return v
 
-#============= EOF =============================================
+
+class DiffAdapter(TabularAdapter):
+    columns = [('Name', 'name'), ('Left', 'left'),
+               ('Right', 'right'), ('Diff', 'diff'), ('%', 'percent_diff')]
+
+    diff_text = Property
+    percent_diff_text = Property
+    left_text = Property
+    right_text = Property
+
+    percent_diff_width = Int(60)
+
+    font = '10'
+
+    def get_bg_color(self, object, trait, row, column=0):
+        color = 'white'
+        if self.item.diff:
+            color = LIGHT_RED_COLOR
+        return color
+
+    def _get_left_text(self):
+        v = self._floatfmt(self.item.left, n=7)
+        return v if v is not None else ''
+
+    def _get_right_text(self):
+        v = self._floatfmt(self.item.right, n=7)
+        return v if v is not None else ''
+
+    def _get_diff_text(self):
+        if self.item.diff:
+            return self._floatfmt(self.item.diff)
+        else:
+            return ''
+
+    def _get_percent_diff_text(self):
+        if self.item.percent_diff:
+            return self._floatfmt(self.item.percent_diff, n=2)
+        else:
+            return ''
+
+    def _floatfmt(self, v, n=4):
+        return floatfmt(v, n=n)
+
+
+class DiffRecord(HasTraits):
+    name = Str
+    left = None
+    right = None
+    diff = Either(Float, Bool)
+    percent_diff = Float
+
+    def __init__(self, name, left, right, *args, **kw):
+        self.right = right
+        self.left = left
+        self.name = name
+        if left is not None and right is not None:
+            try:
+                self.diff = left - right
+                try:
+                    self.percent_diff = self.diff / self.left * 100
+                except ZeroDivisionError:
+                    self.percent_diff = 0
+
+            except TypeError:
+                self.diff = left!=right
+
+        super(DiffRecord, self).__init__(*args, **kw)
+
+
+class DiffView(HasTraits):
+    left_summary = Str
+    right_summary = Str
+    diffs = List
+
+    def __init__(self, left_summary, right_summary, diffs, *args, **kw):
+        self.left_summary = left_summary
+        self.right_summary = right_summary
+        self.diffs = [DiffRecord(*di) for di in diffs]
+        super(DiffView, self).__init__(*args, **kw)
+
+    def traits_view(self):
+        v = View(VGroup(
+            VGroup(Item('left_summary', label='Left', style='readonly'),
+                   Item('right_summary', label='Right', style='readonly')),
+            UItem('diffs',
+                  editor=TabularEditor(
+                      editable=False,
+                      adapter=DiffAdapter()))),
+                 width=600,
+                 height=800,
+                 title='Diff',
+                 resizable=True)
+        return v
+
+# ============= EOF =============================================
 
 
 

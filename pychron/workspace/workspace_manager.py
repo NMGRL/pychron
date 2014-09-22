@@ -18,20 +18,26 @@
 import time
 
 from traits.api import Property, \
-    cached_property, Event, List, Str, HasTraits
+    Event, List, Str, HasTraits, Any, cached_property
 
 # ============= standard library imports ========================
 import shutil
 from git import GitCommandError
 import os
 # ============= local library imports  ==========================
+import yaml
 from pychron.core.helpers.filetools import list_directory2, fileiter
-from pychron.processing.repository.git.repo_manager import RepoManager
+from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.workspace.tasks.views import DiffView
 
 
 class Commit(HasTraits):
     message = Str
     date = Str
+    hexsha = Str
+    summary = Property
+    def _get_summary(self):
+        return '{} {}'.format(self.date, self.message)
 
 
 class Manifest(object):
@@ -73,10 +79,10 @@ class Manifest(object):
             return list(fileiter(fp, strip=True))
 
 
-class WorkspaceManager(RepoManager):
+class WorkspaceManager(GitRepoManager):
     # index_db = Instance(IndexAdapter)
     # test = Button
-    selected = Event
+    selected = Any
     dclicked = Event
     repo_updated = Event
 
@@ -84,6 +90,91 @@ class WorkspaceManager(RepoManager):
     commits = List
     selected_path_commits = List
     selected_text = Str
+    selected_commits = List
+
+    def diff_selected(self):
+        if self.selected.endswith('.yaml'):
+            if len(self.selected_commits) == 2:
+                l, r = self.selected_commits
+                dd = self._calculate_diff_dict(l, r)
+                dv = DiffView(l.summary, r.summary, dd)
+                self.application.open_view(dv)
+
+    def _calculate_diff_dict(self, left, right):
+        left = self.get_commit(left.hexsha)
+        right =self.get_commit(right.hexsha)
+
+        ds = left.diff(right, create_patch=True)
+
+        attrs = ['age','age_err',
+                 'age_err_wo_j', 'age_err_wo_j_irrad',
+                 'ar39decayfactor',
+                 'ar37decayfactor',
+                 'j','j_err',
+                 'tag',
+                 'material','sample',
+                 ('constants', 'abundance_sensitivity','atm4036','lambda_k'),
+                 ('production_ratios','Ca_K','Cl_K')
+                 ]
+
+        if not isinstance(attrs, (tuple, list)):
+            attrs = (attrs, )
+
+        attr_diff = []
+        for ci in ds.iter_change_type('M'):
+            try:
+                a = ci.a_blob.data_stream
+            except Exception,e:
+                print 'a',e
+                continue
+
+            try:
+                b = ci.b_blob.data_stream
+            except Exception, e:
+                print 'b',e
+                continue
+
+            ayd = yaml.load(a)
+            byd = yaml.load(b)
+
+            #use the first analysis only
+            ayd = ayd[ayd.keys()[0]]
+            byd = byd[byd.keys()[0]]
+
+            def func(ad,bd,attr):
+                try:
+                    av = ad[attr]
+                except KeyError:
+                    av = None
+
+                try:
+                    bv = bd[attr]
+                except KeyError:
+                    bv = None
+
+                attr_diff.append((attr, av, bv))
+
+            for attr in attrs:
+                if isinstance(attr, (list, tuple)):
+                    subdict=attr[0]
+                    sa,sb=ayd[subdict], byd[subdict]
+                    for ai in attr[1:]:
+                        func(sa, sb, ai)
+                else:
+                    func(ayd, byd, attr)
+
+            aisos = ayd['isotopes']
+            bisos = byd['isotopes']
+            for aisod in aisos:
+                name=aisod['name']
+                av = aisod['value']
+
+                bisod = next((b for b in bisos if b['name']==name), None)
+                bv= bisod['value'] if bisod else 0
+
+                attr_diff.append((name, av, bv))
+
+        return attr_diff
 
     def open_repo(self, name, root=None):
         super(WorkspaceManager, self).open_repo(name, root)
@@ -111,12 +202,12 @@ class WorkspaceManager(RepoManager):
         self._manifest.add(os.path.basename(path))
 
     def add_manifest_to_index(self):
-        p=self._manifest.path
-        index=self.index
+        p = self._manifest.path
+        index = self.index
         index.add([p])
 
     def commit_manifest(self):
-        p=self._manifest.path
+        p = self._manifest.path
         self._add_to_repo(p, msg='Updated manifest')
 
     def add_analysis(self, path, commit=True, message=None, **kw):
@@ -137,7 +228,7 @@ class WorkspaceManager(RepoManager):
         if not os.path.isfile(dest):
             shutil.copyfile(path, dest)
 
-        #add to master changeset
+        # add to master changeset
         index = repo.index
         index.add([dest])
         if commit:
@@ -172,8 +263,11 @@ class WorkspaceManager(RepoManager):
         def factory(ci):
             repo = self._repo
             obj = repo.rev_parse(ci)
-            cx=Commit(message=obj.message, date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
+            cx = Commit(message=obj.message,
+                        hexsha=obj.hexsha,
+                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
             return cx
+
         return [factory(ci) for ci in hexshas]
 
     def _load_file_history(self, p):
@@ -213,7 +307,7 @@ class ArArWorkspaceManager(WorkspaceManager):
 
         # ============= EOF =============================================
         # def schema_diff(self, attrs):
-        #     """
+        # """
         #         show the diff for the given schema keyword `attr` between the working and master
         #     """
         #     repo = self._repo

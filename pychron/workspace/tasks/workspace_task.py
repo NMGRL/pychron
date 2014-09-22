@@ -46,7 +46,7 @@ class WorkspaceTask(BaseBrowserTask):
                           PushAction(),
                           CommitChangesAction())]
 
-    workspace = Instance(ArArWorkspaceManager, ())
+    workspace = Instance(ArArWorkspaceManager)
 
     def commit_changes(self):
         self.debug('merging develop into master')
@@ -70,9 +70,15 @@ class WorkspaceTask(BaseBrowserTask):
 
     def test_modification(self):
         import random
-        p=os.path.join(self.workspace.path, '23446-01.yaml')
+        p=os.path.join(self.workspace.path, '23447-02.yaml')
+
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+
+        yd['23447-02']['age'] = random.random()
+
         with open(p, 'w') as fp:
-            fp.write(yaml.dump({'foo':random.random()}))
+            fp.write(yaml.dump(yd, default_flow_style=False))
 
         self.workspace.modify_analysis(p)
 
@@ -171,6 +177,10 @@ class WorkspaceTask(BaseBrowserTask):
     def create_dock_panes(self):
         return [WorkspaceControlPane(),
                 self._create_browser_pane()]
+
+    def _workspace_default(self):
+        w = ArArWorkspaceManager(application=self.application)
+        return w
 #============= EOF =============================================
 
 

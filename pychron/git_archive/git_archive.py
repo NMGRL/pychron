@@ -17,49 +17,47 @@
 
 #============= standard library imports ========================
 import os
-import shutil
-
-from git import Repo
 
 
 #============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.git_archive.repo_manager import GitRepoManager
 
 
-class GitArchive(Loggable):
+class GitArchive(GitRepoManager):
     def __init__(self, root, *args, **kw):
         super(GitArchive, self).__init__(*args, **kw)
-        self.create_repo(root)
+        # self.create_repo(root)
+        self.open_repo(root)
 
     def close(self):
         del self._repo
 
-    def create_repo(self, p):
-        if os.path.isdir(p):
-            self._repo = Repo(p)
-            return
+    # def create_repo(self, p):
+    #     if os.path.isdir(p):
+    #         self._repo = Repo(p)
+    #         return
+    #
+    #     os.mkdir(p)
+    #     repo = Repo.init(p)
+    #     self._repo = repo
 
-        os.mkdir(p)
-        repo = Repo.init(p)
-        self._repo = repo
-
-    def add(self, p, commit=True, message=None, message_prefix=None):
-        repo = self._repo
-        bp = os.path.basename(p)
-        dest = os.path.join(repo.working_dir, bp)
-        if message_prefix is None:
-            message_prefix = 'modified' if os.path.isfile(dest) else 'added'
-
-        shutil.copyfile(p, dest)
-
-        index = repo.index
-        index.add([dest])
-        if commit:
-            if message is None:
-                message = '{}'.format(bp)
-
-            message = '{} - {}'.format(message_prefix, message)
-            index.commit(message)
+    # def add(self, p, commit=True, message=None, message_prefix=None):
+    #     repo = self._repo
+    #     bp = os.path.basename(p)
+    #     dest = os.path.join(repo.working_dir, bp)
+    #     if message_prefix is None:
+    #         message_prefix = 'modified' if os.path.isfile(dest) else 'added'
+    #
+    #     shutil.copyfile(p, dest)
+    #
+    #     index = repo.index
+    #     index.add([dest])
+    #     if commit:
+    #         if message is None:
+    #             message = '{}'.format(bp)
+    #
+    #         message = '{} - {}'.format(message_prefix, message)
+    #         index.commit(message)
 
             # def get_history(self, p):
             #     return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')

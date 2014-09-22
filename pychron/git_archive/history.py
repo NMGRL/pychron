@@ -132,7 +132,7 @@ class GitArchiveHistory(HasTraits):
             fp.write(self.selected.blob)
 
         self._archive.add(self._checkout_path,
-                          message_prefix='checked out')
+                          msg_prefix='checked out')
         self.load_history()
         self.selected = self.items[0]
 
