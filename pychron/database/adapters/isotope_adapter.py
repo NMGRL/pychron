@@ -15,25 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime, timedelta
 
-from sqlalchemy import Date, distinct
-from sqlalchemy.sql.functions import count
-from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
+from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, Interface, provides
 from traitsui.api import View, Item, HGroup
 
 #============= standard library imports ========================
+from datetime import datetime, timedelta
 from cStringIO import StringIO
 import hashlib
-
+from sqlalchemy import Date, distinct
+from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
-
 #============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
+from pychron.database.i_browser import IBrowser
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
 #spec_
@@ -143,6 +142,7 @@ class InterpretedAge(HasTraits):
                                 style='readonly', label='MSWD')))
 
 
+@provides(IBrowser)
 class IsotopeAdapter(DatabaseAdapter):
     """
         new style adapter

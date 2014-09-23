@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
@@ -227,7 +227,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     @cached_property
     def _get_datasource_url(self):
-        return '{}:{}'.format(self.host, self.name)
+        if self.kind == 'sqlite':
+            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
+                                 os.path.basename(self.path))
+        else:
+            url = '{}:{}'.format(self.host, self.name)
+        return url
 
     @cached_property
     def _get_url(self):
@@ -501,6 +506,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             ntries = 3
             import traceback
+
             for i in range(ntries):
                 try:
                     return q.one()

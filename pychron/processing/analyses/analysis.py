@@ -77,6 +77,10 @@ class Analysis(ArArAge):
     tag_event = Event
     invalid_event = Event
 
+    irradiation_level = Str
+    irradiation = Str
+    irradiation_pos = Str
+
     def trigger_recall(self):
         self.recall_event = self
 

@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
+from pyface.constant import OK
+from pyface.directory_dialog import DirectoryDialog
 from traits.api import Property, \
     Event, List, Str, HasTraits, Any, cached_property, Instance
 # ============= standard library imports ========================
@@ -25,6 +27,7 @@ import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, fileiter
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.paths import paths
 from pychron.workspace.index import IndexAdapter, Base
 from pychron.workspace.tasks.views import DiffView
 
@@ -90,6 +93,22 @@ class WorkspaceManager(GitRepoManager):
     selected_path_commits = List
     selected_text = Str
     selected_commits = List
+    active = False
+
+    def _open_directory_dialog(self, **kw):
+        dialog = DirectoryDialog(action='open', **kw)
+        if dialog.open() == OK:
+            r = dialog.path
+            return r
+
+    def open_workspace(self):
+        self.debug('open workspace')
+        p = os.path.join(paths.workspace_root_dir, 'test')
+        if not os.path.isdir(p):
+            p = self._open_directory_dialog(default_directory=paths.workspace_root_dir)
+
+        if p:
+            self.open_repo(p)
 
     def diff_selected(self):
         if self.selected.endswith('.yaml'):
@@ -100,6 +119,8 @@ class WorkspaceManager(GitRepoManager):
                 self.application.open_view(dv)
 
     def open_repo(self, name, root=None):
+
+        self.active = True
         super(WorkspaceManager, self).open_repo(name, root)
 
         e = Manifest.exists(self.path)
@@ -169,6 +190,7 @@ class WorkspaceManager(GitRepoManager):
     def add_analysis_to_index(self, ai):
         # add to sqlite index
         im = self.index_db
+        print 'aaa {} {} {}'.format(ai, ai.analysis_timestamp,ai.tag)
         im.add(repo=self._repo.working_dir,
                identifier=ai.identifier,
                aliquot=ai.aliquot,
@@ -180,7 +202,15 @@ class WorkspaceManager(GitRepoManager):
                measurement_script=ai.measurement_script_name,
                extraction_script=ai.extraction_script_name,
                mass_spectrometer=ai.mass_spectrometer,
-               extract_device=ai.extract_device)
+               extract_device=ai.extract_device,
+               material=ai.material,
+               sample=ai.sample,
+               project=ai.project,
+               irradiation=ai.irradiation,
+               irradiation_level=ai.irradiation_level,
+               irradiation_position=ai.irradiation_pos,
+               tag = ai.tag,
+               analysis_timestamp = ai.analysis_timestamp)
 
     def modify_analysis(self, path, message=None, branch='develop'):
         """
@@ -194,10 +224,7 @@ class WorkspaceManager(GitRepoManager):
         index.commit(message)
 
     def _load_branch_history(self):
-        repo = self._repo
         hexshas = self._get_branch_history()
-        # [repo.rev_parse(c) for c in hexshas]
-        # self.commits = [self.commit_factory(ci) for ci in hexshas]
         self.commits = self._parse_commits(hexshas)
 
     def _parse_commits(self, hexshas):
@@ -334,8 +361,8 @@ class ArArWorkspaceManager(WorkspaceManager):
         # show the diff for the given schema keyword `attr` between the working and master
         # """
         # repo = self._repo
-        #     master_commit = repo.heads.master.commit
-        #     working_commit = repo.heads.working.commit
+        # master_commit = repo.heads.master.commit
+        # working_commit = repo.heads.working.commit
         #
         #     ds = working_commit.diff(master_commit, create_patch=True)
         #     # ds = working_commit.diff(master_commit)

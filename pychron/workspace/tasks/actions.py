@@ -17,8 +17,17 @@
 # ============= enthought library imports =======================
 from pyface.tasks.action.task_action import TaskAction
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
+from traitsui.menu import Action
 from pychron.envisage.resources import icon
+
+
+class ActivateWorkspaceAction(Action):
+    name = 'Activate Workspace'
+    def perform(self, event):
+        app = event.task.application
+        man = app.get_service('pychron.workspace.workspace_manager.WorkspaceManager')
+        man.open_workspace()
 
 
 class NewWorkspaceAction(TaskAction):
@@ -71,6 +80,7 @@ class CommitChangesAction(TaskAction):
     name = 'Commit Changes'
     method = 'commit_changes'
     # image = icon('arrow_up')
+
 #============= EOF =============================================
 
 

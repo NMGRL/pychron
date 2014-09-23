@@ -362,6 +362,7 @@ class DBAnalysis(Analysis):
             ('comment', 'comment', str),
             ('uuid', 'uuid', str),
             ('rundate', 'analysis_timestamp', nocast),
+            ('analysis_timestamp', 'analysis_timestamp', nocast),
             ('timestamp', 'analysis_timestamp',
              lambda x: time.mktime(x.timetuple()))]
         for key, attr, cast in attrs:

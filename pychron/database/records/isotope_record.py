@@ -133,13 +133,21 @@ class IsotopeRecordView(object):
             if sam:
                 self.sample = sam.name
                 if sam.project:
-                    self.project = sam.project.name.lower()
+                    if isinstance(sam.project, (str, unicode)):
+                        self.project = sam.project.lower()
+                    else:
+                        self.project = sam.project.name.lower()
 
             irp = ln.irradiation_position
             if irp is not None:
                 irl = irp.level
                 ir = irl.irradiation
                 self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
+
+            try:
+                self.mass_spectrometer = dbrecord.mass_spectrometer
+            except AttributeError:
+                pass
 
             meas = dbrecord.measurement
             if meas is not None:

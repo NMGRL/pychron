@@ -7,7 +7,7 @@
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
 '''
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ class ProXRADC(NCDDevice):
         resp = self.ask(cmdstr, nchars=5)
         return resp
 
-    def read_bank(self, bank=0, nbits=8):
+    def read_bank(self, bank=0, nbits=8, verbose=True):
         """
             return voltages (V) measured on channels in "bank"
             nbits= 8 or 12 resolution of measurement
@@ -82,8 +82,11 @@ class ProXRADC(NCDDevice):
 
         idx = bank_idxs[bank]
         cmdstr = self._make_cmdstr(254, idx)
-        resp = self.ask(cmdstr, nchars=nbytes)
-        return self._map_to_voltage(resp, nbits, nbytes)
+        resp = self.ask(cmdstr, nchars=nbytes, verbose=False)
+        vs = self._map_to_voltage(resp, nbits, nbytes)
+        if verbose:
+            self.debug('bank={} nbits={} values={}'.format(bank, nbits, ','.join(map(str, vs))))
+        return vs
 
     def read_channel(self, channel, nbits=8, verbose=False):
         """
@@ -130,13 +133,23 @@ class ProXRADC(NCDDevice):
 
 
 if __name__ == '__main__':
+    from pychron.core.helpers.logger_setup import logging_setup
+
+    logging_setup('adc')
+    from pychron.paths import paths
+
+    paths.build('_dev')
+
     a = ProXRADC(name='ProXRADC')
     #a = MultiBankADCExpansion(name='proxr_adc')
     a.bootstrap()
-    print a.read_bank()
-    print a.read_bank(nbits=12)
+    #print 'read bank', a.read_bank()
+    a.read_bank(nbits=12)
+    a.read_bank(1, nbits=12)
+    a.read_bank(2, nbits=12)
+
     #print a._communicator.handle
     #a.read_device_info()
-    print a.read_channel(0, nbits=8)
-    print a.read_channel(0, nbits=12)
+    #print 'read channel 0',a.read_channel(0, nbits=8)
+    #print 'read channel 0 12bit',a.read_channel(0, nbits=12)
 #============= EOF =============================================

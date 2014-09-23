@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import List, Str, Bool, Any, String, \
-    on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo
+    on_trait_change, Date, Int, Time, Instance, Button, DelegatesTo, Property
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -54,10 +54,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     analysis_filter = String(enter_set=True, auto_set=False)
 
-    irradiations = DelegatesTo('manager')
-    irradiation = DelegatesTo('manager')
-    levels = DelegatesTo('manager')
-    level = DelegatesTo('manager')
+    irradiations = List  # Property #DelegatesTo('manager')
+    irradiation = Str  # Property # DelegatesTo('manager')
+    levels = List  # Property #DelegatesTo('manager')
+    level = Str  # Property #DelegatesTo('manager')
 
     auto_select_analysis = Bool(False)
 
@@ -87,16 +87,50 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     _activated = False
     update_on_level_change = True
 
+    initialize_workspace = True
+
+    @on_trait_change('irradiation,level')
+    def _handle_irradiation_change(self, name, new):
+        if self.use_workspace:
+            obj = self.workspace.index_db
+        else:
+            obj = self.manager
+
+        setattr(obj, name, new)
+
     def prepare_destroy(self):
         self.dump_browser()
         self._activated = False
 
+    def activate_workspace(self):
+        if self.initialize_workspace:
+            workspace = self.application.get_service('pychron.workspace.workspace_manager.WorkspaceManager')
+            if workspace:
+                self.use_workspace = workspace.active
+                self.workspace = workspace
+
+    def load_irradiation(self):
+        if self.use_workspace:
+            obj = self.workspace.index_db
+        else:
+            obj = self.manager
+
+        self.irradiations = irs = obj.irradiations
+        if irs:
+            self.irradiation = irs[0]
+            self.levels = ls = obj.levels
+            if ls:
+                self.level = ls[0]
+
     def activated(self):
 
         self.load_browser_date_bounds()
+
+        self.activate_workspace()
+        self.load_irradiation()
         self.load_projects()
 
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             self._load_mass_spectrometers()
             self._load_analysis_types()
@@ -117,7 +151,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             if self.analysis_table.selected:
                 return self.analysis_table.selected
             else:
-                selection=self.selected_samples
+                selection = self.selected_samples
 
         if selection:
             iv = not self.analysis_table.omit_invalid
@@ -131,17 +165,17 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             return s
 
     def _load_mass_spectrometers(self):
-        db = self.manager.db
+        db = self.db
         ms = [mi.name for mi in db.get_mass_spectrometers()]
         self.mass_spectrometers = ['Spectrometer', 'None'] + ms
 
     def _load_analysis_types(self):
-        db = self.manager.db
+        db = self.db
         ms = [mi.name for mi in db.get_analysis_types()]
         self.analysis_types = ['Analysis Type', 'None'] + ms
 
     def _load_extraction_devices(self):
-        db = self.manager.db
+        db = self.db
         ms = [mi.name for mi in db.get_extraction_devices()]
         self.extraction_devices = ['Extraction Device', 'None'] + ms
 
@@ -170,7 +204,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if not sams:
             sams = self.samples
 
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             if sams:
                 lns = [si.identifier for si in sams]
@@ -246,7 +280,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         sam = []
         man = self.manager
-        db = man.db
+        db = self.db
         with db.session_ctx():
             level = man.get_level(self.level)
             if level:
@@ -295,7 +329,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # lp, hp, lim = at.low_post, at.high_post, at.limit
             lp, hp, lim = self.low_post, self.high_post, at.limit
             # if self._recent_low_post:
-            #     lp = self._recent_low_post
+            # lp = self._recent_low_post
             #     hp = None
 
             # lp = self.low_post if self.use_low_post else None
@@ -313,7 +347,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.dump_browser()
 
     def _analysis_table_default(self):
-        at = AnalysisTable(db=self.manager.db)
+        at = AnalysisTable(db=self.db)
         return at
 
 # ============= EOF =============================================

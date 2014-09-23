@@ -35,7 +35,7 @@ from pychron.workspace.workspace_manager import ArArWorkspaceManager
 
 
 class WorkspaceTask(BaseBrowserTask):
-
+    id = 'pychron.workspace'
     tool_bars = [SToolBar(NewWorkspaceAction(),
                           OpenWorkspaceAction()),
                  SToolBar(CheckoutAnalysesAction(),
@@ -47,6 +47,8 @@ class WorkspaceTask(BaseBrowserTask):
                           CommitChangesAction())]
 
     workspace = Instance(ArArWorkspaceManager)
+
+    initialize_workspace = False
 
     def activated(self):
         self.open_workspace()
@@ -169,13 +171,8 @@ class WorkspaceTask(BaseBrowserTask):
         self.debug('new workspace')
 
     def open_workspace(self):
-        self.debug('open workspace')
-        p='/Users/ross/Pychrondata_dev/data/workspaces/test'
-        if not os.path.isdir(p):
-            p = self.open_directory_dialog(default_directory=paths.workspace_root_dir)
+        self.workspace.open_workspace()
 
-        if p:
-            self.workspace.open_repo(p)
 
     def create_central_pane(self):
         return WorkspaceCentralPane(model=self.workspace)

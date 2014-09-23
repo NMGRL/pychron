@@ -83,19 +83,26 @@ class LabnumberRecordView(RecordView):
 
         pos = dbrecord.irradiation_position
         if pos:
-            level = pos.level
-            irrad = level.irradiation
-
             self.irradiation_pos = str(pos.position)
-            self.irradiation_level = level.name
-            self.irradiation = irrad.name
+            level = pos.level
+            if level:
+                irrad = level.irradiation
+                self.irradiation_level = level.name
+                if irrad:
+                    self.irradiation = irrad.name
 
         sample = dbrecord.sample
 
         if sample.material:
-            self.material = sample.material.name
+            if isinstance(sample.material,(str, unicode)):
+                self.material = sample.material
+            else:
+                self.material = sample.material.name
         if sample.project:
-            self.project = sample.project.name
+            if isinstance(sample.material, (str, unicode)):
+                self.project = sample.project
+            else:
+                self.project = sample.project.name
 
         for attr in ('name', 'lat', ('lon', 'long'),
                      'elevation', 'lithology', 'location', 'igsn'):
@@ -103,10 +110,12 @@ class LabnumberRecordView(RecordView):
                 attr, dbattr = attr
             else:
                 dbattr = attr
-
-            v = getattr(sample, dbattr)
-            if v is not None:
-                setattr(self, attr, v)
+            try:
+                v = getattr(sample, dbattr)
+                if v is not None:
+                    setattr(self, attr, v)
+            except AttributeError:
+                pass
 
     #mirror labnumber as identifier
     def _get_identifier(self):

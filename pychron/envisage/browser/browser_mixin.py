@@ -128,6 +128,16 @@ class BrowserMixin(ColumnSorterMixin):
     _analysis_include_types = List(['Unknown'])
     available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail', 'Monitors'])
 
+    use_workspace = False
+    workspace = None
+
+    db = Property
+    def _get_db(self):
+        if self.use_workspace:
+            return self.workspace.index_db
+        else:
+            return self.manager.db
+        
     def dump_browser(self):
         self.dump_browser_selection()
         self.dump_browser_options()
@@ -206,7 +216,7 @@ class BrowserMixin(ColumnSorterMixin):
         self.trait_set(selected_samples=sel)
 
     def load_projects(self):
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             ps = db.get_projects(order=gen_ProjectTable.name.asc())
             ms = db.get_mass_spectrometers()
@@ -224,10 +234,10 @@ class BrowserMixin(ColumnSorterMixin):
             self.oprojects = ad
 
     def get_analysis_groups(self, names):
-        if not isinstance(names[0], str):
+        if not isinstance(names[0], (str,unicode)):
             names = [ni.name for ni in names]
 
-        db = self.manager.db
+        db = self.db
 
         with db.session_ctx():
             gs = db.get_analysis_groups(projects=names)
@@ -256,7 +266,7 @@ class BrowserMixin(ColumnSorterMixin):
         """
             names: list of project names
         """
-        db = self.manager.db
+        db = self.db
         sams = []
         with db.session_ctx():
             self._recent_mass_spectrometers = []
@@ -281,7 +291,7 @@ class BrowserMixin(ColumnSorterMixin):
     def _retrieve_recent_samples(self, recent_name):
         ms = extract_mass_spectrometer_name(recent_name)
 
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             hpost = datetime.now()
 
@@ -308,7 +318,7 @@ class BrowserMixin(ColumnSorterMixin):
         return sams
 
     def _retrieve_samples(self):
-        db = self.manager.db
+        db = self.db
         # dont query if analysis_types enabled but not analysis type specified
         if self.use_analysis_type_filtering and not self.analysis_include_types:
             self.warning_dialog('Specify Analysis Types or disable Analysis Type Filtering')
@@ -361,7 +371,7 @@ class BrowserMixin(ColumnSorterMixin):
                                   include_invalid=False,
                                   mass_spectrometers=None,
                                   make_records=True):
-        db = self.manager.db
+        db = self.db
         with db.session_ctx():
             lns = [si.labnumber for si in samples]
             self.debug('retrieving identifiers={}'.format(','.join(lns)))
