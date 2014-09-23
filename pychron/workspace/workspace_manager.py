@@ -116,9 +116,9 @@ class WorkspaceManager(GitRepoManager):
                  'material', 'sample',
                  ('constants', 'abundance_sensitivity', 'atm4036', 'lambda_k'),
                  ('production_ratios', 'Ca_K', 'Cl_K'),
-                 ('interference_corrections','ca3637','ca3637_err','ca3837','ca3837_err','ca3937','ca3937_err',
-                  'cl3638','cl3638_err',
-                  'k3739','k3739_err','k3839','k3839_err','k4039','k4039_err')]
+                 ('interference_corrections', 'ca3637', 'ca3637_err', 'ca3837', 'ca3837_err', 'ca3937', 'ca3937_err',
+                  'cl3638', 'cl3638_err',
+                  'k3739', 'k3739_err', 'k3839', 'k3839_err', 'k4039', 'k4039_err')]
 
         if not isinstance(attrs, (tuple, list)):
             attrs = (attrs, )
@@ -315,7 +315,7 @@ class ArArWorkspaceManager(WorkspaceManager):
         # def schema_diff(self, attrs):
         # """
         # show the diff for the given schema keyword `attr` between the working and master
-        #     """
+        # """
         #     repo = self._repo
         #     master_commit = repo.heads.master.commit
         #     working_commit = repo.heads.working.commit
