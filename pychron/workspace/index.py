@@ -15,13 +15,13 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance
 #============= standard library imports ========================
-import os
 #============= local library imports  ==========================
 from sqlalchemy import Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
+
 from pychron.database.core.database_adapter import DatabaseAdapter
+
 
 Base = declarative_base()
 
@@ -57,7 +57,7 @@ class AnalysisIndex(WorkspaceIndex, Base):
 
 
 class IndexAdapter(DatabaseAdapter):
-    schema = None
+    schema = AnalysisIndex
     kind = 'sqlite'
 
     def add(self, **kw):

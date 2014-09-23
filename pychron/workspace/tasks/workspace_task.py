@@ -50,6 +50,7 @@ class WorkspaceTask(BaseBrowserTask):
 
     def activated(self):
         self.open_workspace()
+        super(WorkspaceTask, self).activated()
 
     def commit_changes(self):
         # self.workspace.commit('generic commit')
@@ -153,6 +154,7 @@ class WorkspaceTask(BaseBrowserTask):
 
             #add to repositiory
             self.workspace.add_analysis(p, commit=False)
+            self.workspace.add_analysis_to_index(ai)
             # timethis(self.workspace.add_analysis, args=(p,),
             #          kwargs={'commit':False},
             #          msg='add to git')

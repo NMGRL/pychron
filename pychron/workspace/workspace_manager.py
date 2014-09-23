@@ -13,21 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
 # ============= enthought library imports =======================
-import time
-
 from traits.api import Property, \
-    Event, List, Str, HasTraits, Any, cached_property
-
+    Event, List, Str, HasTraits, Any, cached_property, Instance
 # ============= standard library imports ========================
 import shutil
+import time
 from git import GitCommandError
 import os
-# ============= local library imports  ==========================
 import yaml
+# ============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2, fileiter
 from pychron.git_archive.repo_manager import GitRepoManager
+from pychron.workspace.index import IndexAdapter, Base
 from pychron.workspace.tasks.views import DiffView
 
 
@@ -55,7 +53,7 @@ class Manifest(object):
 
     @classmethod
     def filename(cls, p):
-        return os.path.join(p, 'MANIFEST')
+        return os.path.join(p, '.MANIFEST')
 
     def add(self, name):
         with open(self.path, 'r') as fp:
@@ -81,7 +79,7 @@ class Manifest(object):
 
 
 class WorkspaceManager(GitRepoManager):
-    # index_db = Instance(IndexAdapter)
+    index_db = Instance(IndexAdapter)
     # test = Button
     selected = Any
     dclicked = Event
@@ -100,6 +98,132 @@ class WorkspaceManager(GitRepoManager):
                 dd = self._calculate_diff_dict(l, r)
                 dv = DiffView(l.summary, r.summary, dd)
                 self.application.open_view(dv)
+
+    def open_repo(self, name, root=None):
+        super(WorkspaceManager, self).open_repo(name, root)
+
+        e = Manifest.exists(self.path)
+        # init manifest object
+        self._manifest = Manifest(self.path)
+        if not e:
+            self.add(self._manifest.path, msg='Added manifest file')
+
+        self.update_gitignore('.index.db')
+        self.index_db = IndexAdapter(path=os.path.join(self.path, '.index.db'))
+        self.index_db.connect()
+        self.index_db.create_all(Base.metadata)
+
+        self.create_branch('develop')
+        self.checkout_branch('develop')
+
+    def load_branches(self):
+        self.branches = [bi.name for bi in self._repo.branches]
+
+    def create_branch(self, name):
+        super(WorkspaceManager, self).create_branch(name)
+        self.load_branches()
+
+    def find_existing(self, names):
+        return [os.path.splitext(ni)[0] for ni in self._manifest.names if ni in names]
+
+    def add_to_manifest(self, path):
+        self._manifest.add(os.path.basename(path))
+
+    def add_manifest_to_index(self):
+        p = self._manifest.path
+        index = self.index
+        index.add([p])
+
+    def commit_manifest(self):
+        p = self._manifest.path
+        self._add_to_repo(p, msg='Updated manifest')
+
+    def add_analysis(self, path, commit=True, message=None, **kw):
+        """
+            path: absolute path to flat file
+            commit: commit changes
+            message: message to use for commit
+
+
+            1. copy file at path to the repository
+            2. add record to index
+
+        """
+
+        repo = self._repo
+        # copy file to repo
+        dest = os.path.join(repo.working_dir, os.path.basename(path))
+        if not os.path.isfile(dest):
+            shutil.copyfile(path, dest)
+
+        # add to master changeset
+        index = repo.index
+        index.add([dest])
+        if commit:
+            if message is None:
+                message = 'added record {}'.format(path)
+            index.commit(message)
+
+        self.repo_updated = True
+
+    def add_analysis_to_index(self, ai):
+        # add to sqlite index
+        im = self.index_db
+        im.add(repo=self._repo.working_dir,
+               identifier=ai.identifier,
+               aliquot=ai.aliquot,
+               increment=ai.increment,
+               cleanup=ai.cleanup,
+               duration=ai.duration,
+               extract_value=ai.extract_value,
+               uuid=ai.uuid,
+               measurement_script=ai.measurement_script_name,
+               extraction_script=ai.extraction_script_name,
+               mass_spectrometer=ai.mass_spectrometer,
+               extract_device=ai.extract_device)
+
+    def modify_analysis(self, path, message=None, branch='develop'):
+        """
+        commit the modification to path to the working branch
+        """
+        self.checkout_branch(branch)
+        index = self.index
+        index.add([path])
+        if message is None:
+            message = 'modified record {}'.format(os.path.relpath(path, self.path))
+        index.commit(message)
+
+    def _load_branch_history(self):
+        repo = self._repo
+        hexshas = self._get_branch_history()
+        # [repo.rev_parse(c) for c in hexshas]
+        # self.commits = [self.commit_factory(ci) for ci in hexshas]
+        self.commits = self._parse_commits(hexshas)
+
+    def _parse_commits(self, hexshas):
+        def factory(ci):
+            repo = self._repo
+            obj = repo.rev_parse(ci)
+            cx = Commit(message=obj.message,
+                        hexsha=obj.hexsha,
+                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
+            return cx
+
+        return [factory(ci) for ci in hexshas]
+
+    def _load_file_history(self, p):
+        repo = self._repo
+        try:
+            hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
+            # cs = [repo.rev_parse(c).message for c in hexshas]
+            # self.selected_path_commits = cs
+            self.selected_path_commits = self._parse_commits(hexshas)
+        except GitCommandError:
+            self.selected_path_commits = []
+
+    def _load_file_text(self, new):
+        with open(new, 'r') as fp:
+            self.selected_text = fp.read()
 
     def _calculate_diff_dict(self, left, right):
         left = self.get_commit(left.hexsha)
@@ -182,114 +306,7 @@ class WorkspaceManager(GitRepoManager):
 
         return attr_diff
 
-    def open_repo(self, name, root=None):
-        super(WorkspaceManager, self).open_repo(name, root)
-
-        e = Manifest.exists(self.path)
-        # init manifest object
-        self._manifest = Manifest(self.path)
-        if not e:
-            self.add(self._manifest.path, msg='Added manifest file')
-
-        self.create_branch('develop')
-        self.checkout_branch('develop')
-
-    def load_branches(self):
-        self.branches = [bi.name for bi in self._repo.branches]
-
-    def create_branch(self, name):
-        super(WorkspaceManager, self).create_branch(name)
-        self.load_branches()
-
-    def find_existing(self, names):
-        return [os.path.splitext(ni)[0] for ni in self._manifest.names if ni in names]
-
-    def add_to_manifest(self, path):
-        self._manifest.add(os.path.basename(path))
-
-    def add_manifest_to_index(self):
-        p = self._manifest.path
-        index = self.index
-        index.add([p])
-
-    def commit_manifest(self):
-        p = self._manifest.path
-        self._add_to_repo(p, msg='Updated manifest')
-
-    def add_analysis(self, path, commit=True, message=None, **kw):
-        """
-            path: absolute path to flat file
-            commit: commit changes
-            message: message to use for commit
-
-
-            1. copy file at path to the repository
-            2. add record to index
-
-        """
-
-        repo = self._repo
-        # copy file to repo
-        dest = os.path.join(repo.working_dir, os.path.basename(path))
-        if not os.path.isfile(dest):
-            shutil.copyfile(path, dest)
-
-        # add to master changeset
-        index = repo.index
-        index.add([dest])
-        if commit:
-            if message is None:
-                message = 'added record {}'.format(path)
-            index.commit(message)
-
-        self.repo_updated = True
-        # add to sqlite index
-        # im = self.index_db
-        # im.add(repo=repo.working_dir, **kw)
-
-    def modify_analysis(self, path, message=None, branch='develop'):
-        """
-        commit the modification to path to the working branch
-        """
-        self.checkout_branch(branch)
-        index = self.index
-        index.add([path])
-        if message is None:
-            message = 'modified record {}'.format(os.path.relpath(path, self.path))
-        index.commit(message)
-
-    def _load_branch_history(self):
-        repo = self._repo
-        hexshas = self._get_branch_history()
-        # [repo.rev_parse(c) for c in hexshas]
-        # self.commits = [self.commit_factory(ci) for ci in hexshas]
-        self.commits = self._parse_commits(hexshas)
-
-    def _parse_commits(self, hexshas):
-        def factory(ci):
-            repo = self._repo
-            obj = repo.rev_parse(ci)
-            cx = Commit(message=obj.message,
-                        hexsha=obj.hexsha,
-                        date=time.strftime("%m/%d/%Y %H:%M", time.gmtime(obj.committed_date)))
-            return cx
-
-        return [factory(ci) for ci in hexshas]
-
-    def _load_file_history(self, p):
-        repo = self._repo
-        try:
-            hexshas = repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
-            # cs = [repo.rev_parse(c).message for c in hexshas]
-            # self.selected_path_commits = cs
-            self.selected_path_commits = self._parse_commits(hexshas)
-        except GitCommandError:
-            self.selected_path_commits = []
-
-    def _load_file_text(self, new):
-        with open(new, 'r') as fp:
-            self.selected_text = fp.read()
-
+    # handlers
     def _selected_fired(self, new):
         if new:
             self._load_file_text(new)
@@ -316,7 +333,7 @@ class ArArWorkspaceManager(WorkspaceManager):
         # """
         # show the diff for the given schema keyword `attr` between the working and master
         # """
-        #     repo = self._repo
+        # repo = self._repo
         #     master_commit = repo.heads.master.commit
         #     working_commit = repo.heads.working.commit
         #

@@ -25,6 +25,7 @@ from git.exc import GitCommandError
 from git import Repo
 # from dulwich.repo import Repo
 #============= local library imports  ==========================
+from pychron.core.helpers.filetools import fileiter
 from pychron.loggable import Loggable
 
 
@@ -78,6 +79,22 @@ class GitRepoManager(Loggable):
                 self._repo = Repo.init(path)
 
             return True
+
+    def update_gitignore(self, *args):
+        p=os.path.join(self.path, '.gitignore')
+        # mode = 'a' if os.path.isfile(p) else 'w'
+        args=list(args)
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                for line in fileiter(fp, strip=True):
+                    for i,ai in enumerate(args):
+                        if line==ai:
+                            args.pop(i)
+        if args:
+            with open(p,'a') as fp:
+                for ai in args:
+                    fp.write('{}\n'.format(ai))
+            self.commit('updated .gitignore')
 
     def get_commit(self, hexsha):
         repo=self._repo
@@ -187,6 +204,13 @@ class GitRepoManager(Loggable):
     @property
     def index(self):
         return self._repo.index
+
+    # @property
+    # def path(self):
+    #     if self._repo:
+    #         return self._repo.working_dir
+    #     else:
+    #         return ''
 #============= EOF =============================================
         #repo manager protocol
     # def get_local_changes(self, repo=None):
