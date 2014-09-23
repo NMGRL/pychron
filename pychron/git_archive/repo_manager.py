@@ -94,7 +94,7 @@ class GitRepoManager(Loggable):
             with open(p,'a') as fp:
                 for ai in args:
                     fp.write('{}\n'.format(ai))
-            self.commit('updated .gitignore')
+            self._add_to_repo(p, msg='updated .gitignore')
 
     def get_commit(self, hexsha):
         repo=self._repo
