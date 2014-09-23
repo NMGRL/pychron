@@ -26,7 +26,7 @@ class WorkspacePlugin(BaseTaskPlugin):
     def _tasks_default(self):
         wt = TaskFactory(factory=self._workspace_task_factory, name='Workspace',
                          # task_group=task_group,
-                         # accelerator=accelerator,
+                         accelerator='Ctrl+5',
                          # image=image,
                          # include_view_menu=include_view_menu or accelerator
                         )

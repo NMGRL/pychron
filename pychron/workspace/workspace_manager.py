@@ -36,6 +36,7 @@ class Commit(HasTraits):
     date = Str
     hexsha = Str
     summary = Property
+
     def _get_summary(self):
         return '{} {}'.format(self.date, self.message)
 
@@ -102,20 +103,22 @@ class WorkspaceManager(GitRepoManager):
 
     def _calculate_diff_dict(self, left, right):
         left = self.get_commit(left.hexsha)
-        right =self.get_commit(right.hexsha)
+        right = self.get_commit(right.hexsha)
 
         ds = left.diff(right, create_patch=True)
 
-        attrs = ['age','age_err',
+        attrs = ['age', 'age_err',
                  'age_err_wo_j', 'age_err_wo_j_irrad',
                  'ar39decayfactor',
                  'ar37decayfactor',
-                 'j','j_err',
+                 'j', 'j_err',
                  'tag',
-                 'material','sample',
-                 ('constants', 'abundance_sensitivity','atm4036','lambda_k'),
-                 ('production_ratios','Ca_K','Cl_K')
-                 ]
+                 'material', 'sample',
+                 ('constants', 'abundance_sensitivity', 'atm4036', 'lambda_k'),
+                 ('production_ratios', 'Ca_K', 'Cl_K'),
+                 ('interference_corrections','ca3637','ca3637_err','ca3837','ca3837_err','ca3937','ca3937_err',
+                  'cl3638','cl3638_err',
+                  'k3739','k3739_err','k3839','k3839_err','k4039','k4039_err')]
 
         if not isinstance(attrs, (tuple, list)):
             attrs = (attrs, )
@@ -124,24 +127,24 @@ class WorkspaceManager(GitRepoManager):
         for ci in ds.iter_change_type('M'):
             try:
                 a = ci.a_blob.data_stream
-            except Exception,e:
-                print 'a',e
+            except Exception, e:
+                print 'a', e
                 continue
 
             try:
                 b = ci.b_blob.data_stream
             except Exception, e:
-                print 'b',e
+                print 'b', e
                 continue
 
             ayd = yaml.load(a)
             byd = yaml.load(b)
 
-            #use the first analysis only
+            # use the first analysis only
             ayd = ayd[ayd.keys()[0]]
             byd = byd[byd.keys()[0]]
 
-            def func(ad,bd,attr):
+            def func(ad, bd, attr):
                 try:
                     av = ad[attr]
                 except KeyError:
@@ -156,8 +159,8 @@ class WorkspaceManager(GitRepoManager):
 
             for attr in attrs:
                 if isinstance(attr, (list, tuple)):
-                    subdict=attr[0]
-                    sa,sb=ayd[subdict], byd[subdict]
+                    subdict = attr[0]
+                    sa, sb = ayd[subdict], byd[subdict]
                     for ai in attr[1:]:
                         func(sa, sb, ai)
                 else:
@@ -166,13 +169,16 @@ class WorkspaceManager(GitRepoManager):
             aisos = ayd['isotopes']
             bisos = byd['isotopes']
             for aisod in aisos:
-                name=aisod['name']
+                name = aisod['name']
+
+                bisod = next((b for b in bisos if b['name'] == name), None)
                 av = aisod['value']
-
-                bisod = next((b for b in bisos if b['name']==name), None)
-                bv= bisod['value'] if bisod else 0
-
+                bv = bisod['value'] if bisod else 0
                 attr_diff.append((name, av, bv))
+                for a in ('baseline', 'baseline_err', 'blank',
+                          'blank_err', 'ic_factor', 'ic_factor_err', 'fit'):
+                    av, bv = aisod[a], bisod[a]
+                    attr_diff.append(('{} {}'.format(name, a), av, bv))
 
         return attr_diff
 
@@ -237,7 +243,7 @@ class WorkspaceManager(GitRepoManager):
             index.commit(message)
 
         self.repo_updated = True
-        #add to sqlite index
+        # add to sqlite index
         # im = self.index_db
         # im.add(repo=repo.working_dir, **kw)
 
@@ -308,7 +314,7 @@ class ArArWorkspaceManager(WorkspaceManager):
         # ============= EOF =============================================
         # def schema_diff(self, attrs):
         # """
-        #         show the diff for the given schema keyword `attr` between the working and master
+        # show the diff for the given schema keyword `attr` between the working and master
         #     """
         #     repo = self._repo
         #     master_commit = repo.heads.master.commit

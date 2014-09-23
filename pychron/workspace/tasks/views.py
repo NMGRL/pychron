@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Bool, List, Button, Float, Property, Int, Either
+from traits.api import HasTraits, Str, Bool, List, Button, Float, Property, Int, Any
 from traitsui.api import View, UItem, TableEditor, HGroup, spring, TabularEditor, VGroup, Item
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -107,16 +107,24 @@ class DiffAdapter(TabularAdapter):
 
     def get_bg_color(self, object, trait, row, column=0):
         color = 'white'
-        if self.item.diff:
+        if not object.show_diffs_only and self.item.diff:
             color = LIGHT_RED_COLOR
+
         return color
 
     def _get_left_text(self):
-        v = self._floatfmt(self.item.left, n=7)
+        if self.item.name=='lambda_k':
+            v = self._floatfmt(self.item.left, use_scientific=True)
+        else:
+            v = self._floatfmt(self.item.left, n=7)
         return v if v is not None else ''
 
     def _get_right_text(self):
-        v = self._floatfmt(self.item.right, n=7)
+        if self.item.name=='lambda_k':
+            v = self._floatfmt(self.item.right, use_scientific=True)
+        else:
+            v = self._floatfmt(self.item.right, n=7)
+
         return v if v is not None else ''
 
     def _get_diff_text(self):
@@ -131,15 +139,18 @@ class DiffAdapter(TabularAdapter):
         else:
             return ''
 
-    def _floatfmt(self, v, n=4):
-        return floatfmt(v, n=n)
+    def _floatfmt(self, v, n=4, **kw):
+        if isinstance(v, bool):
+            return 'X' if v else ''
+        else:
+            return floatfmt(v, n=n, **kw)
 
 
 class DiffRecord(HasTraits):
     name = Str
     left = None
     right = None
-    diff = Either(Float, Bool)
+    diff = Any
     percent_diff = Float
 
     def __init__(self, name, left, right, *args, **kw):
@@ -155,7 +166,7 @@ class DiffRecord(HasTraits):
                     self.percent_diff = 0
 
             except TypeError:
-                self.diff = left!=right
+                self.diff = bool(left!=right)
 
         super(DiffRecord, self).__init__(*args, **kw)
 
@@ -163,19 +174,47 @@ class DiffRecord(HasTraits):
 class DiffView(HasTraits):
     left_summary = Str
     right_summary = Str
+
     diffs = List
+    filtered_diffs = List
+
+    filter_str = Str
+    show_diffs_only = Bool
 
     def __init__(self, left_summary, right_summary, diffs, *args, **kw):
         self.left_summary = left_summary
         self.right_summary = right_summary
         self.diffs = [DiffRecord(*di) for di in diffs]
+        self.filtered_diffs = self.diffs[:]
         super(DiffView, self).__init__(*args, **kw)
+
+    def _filter_str_changed(self, new):
+        def func(di, sdo):
+            try:
+                v = getattr(di, 'name')
+                r=v.startswith(new)
+                if sdo and not di.diff:
+                    r=None
+                return r
+            except AttributeError:
+                pass
+
+        sdo=self.show_diffs_only
+        self.filtered_diffs = [fi for fi in self.diffs if func(fi, sdo)]
+
+    def _show_diffs_only_changed(self, new):
+        if new:
+            self.filtered_diffs = [fi for fi in self.filtered_diffs if fi.diff]
+        else:
+            self._filter_str_changed(self.filter_str)
 
     def traits_view(self):
         v = View(VGroup(
             VGroup(Item('left_summary', label='Left', style='readonly'),
-                   Item('right_summary', label='Right', style='readonly')),
-            UItem('diffs',
+                   Item('right_summary', label='Right', style='readonly'),
+                   HGroup(Item('filter_str',label='Filter'),
+                          Item('show_diffs_only'))),
+            UItem('filtered_diffs',
                   editor=TabularEditor(
                       editable=False,
                       adapter=DiffAdapter()))),

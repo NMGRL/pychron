@@ -48,7 +48,11 @@ class WorkspaceTask(BaseBrowserTask):
 
     workspace = Instance(ArArWorkspaceManager)
 
+    def activated(self):
+        self.open_workspace()
+
     def commit_changes(self):
+        # self.workspace.commit('generic commit')
         self.debug('merging develop into master')
         self.workspace.merge('develop', 'master')
 
@@ -76,7 +80,7 @@ class WorkspaceTask(BaseBrowserTask):
             yd = yaml.load(fp)
 
         yd['23447-02']['age'] = random.random()
-
+        yd['23447-02']['tag'] = 'omit'
         with open(p, 'w') as fp:
             fp.write(yaml.dump(yd, default_flow_style=False))
 
