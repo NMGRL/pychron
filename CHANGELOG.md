@@ -37,3 +37,5 @@ CHANGELOG
 * updated editing default_fits
 * added snapshot view to recall
 * added fontsize control to recall
+* added task switching
+* added time view tow browser

@@ -73,7 +73,7 @@ class ExportTask(AnalysisEditTask, BrowserMixin):
         return ExportCentralPane(model=self)
 
     def _default_layout_default(self):
-        return TaskLayout(left=Tabbed(PaneItem('pychron.browser'),
+        return TaskLayout(left=Tabbed(PaneItem('pychron.browser',width=300),
                                       PaneItem('pychron.export.destination')))
 
 

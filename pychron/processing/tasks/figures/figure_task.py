@@ -28,6 +28,7 @@ from pyface.tasks.action.schema import SToolBar
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.paths import paths
@@ -37,6 +38,7 @@ from pychron.processing.tasks.actions.processing_actions import SetInterpretedAg
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tagging.analysis_tags import Tag
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
@@ -701,7 +703,7 @@ class FigureTask(AnalysisEditTask):
         return TaskLayout(
             id='pychron.processing',
             left=HSplitter(
-                PaneItem('pychron.browser'),
+                browser_pane_item(),
                 Tabbed(
                     PaneItem('pychron.processing.figures.saved_figures'),
                     PaneItem('pychron.processing.unknowns'),
