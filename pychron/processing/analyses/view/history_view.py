@@ -136,7 +136,7 @@ class HistoryView(HasTraits):
 
     def show_blank_time_series(self):
         g = StackedRegressionGraph(window_height=0.75)
-        isotopes = self.blank_selected.isotopes
+        isotopes = self.blank_selected[0].isotopes
         keys = sort_isotopes([iso.isotope for iso in isotopes], reverse=False)
         _mi, _ma = None, None
 

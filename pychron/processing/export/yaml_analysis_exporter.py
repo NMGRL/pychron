@@ -26,6 +26,19 @@ import yaml
 from pychron.processing.export.destinations import YamlDestination
 from pychron.processing.export.exporter import Exporter
 
+ANALYSIS_ATTRS = ('labnumber',
+                  'aliquot',
+                  'uuid',
+                  'step', 'timestamp', 'tag',
+                  'cleanup', 'duration', 'extract_value',
+                  'sample', 'project', 'material', 'mass_spectrometer',
+                  'extract_device',
+                  'comment',
+                  'position',
+                  'irradiation', 'irradiation_pos', 'irradiation_level',
+                  'age', 'age_err', 'age_err_wo_j', 'age_err_wo_j_irrad',
+                  'ar39decayfactor', 'ar37decayfactor',)
+
 
 class YamlAnalysisExporter(Exporter):
     destination = Instance(YamlDestination, ())
@@ -51,35 +64,33 @@ class YamlAnalysisExporter(Exporter):
             convert types to float,int,dict,list, etc
         """
 
-        meta_attr = ('labnumber',
-                     'aliquot',
-                     'uuid',
-                     'step', 'timestamp', 'tag',
-                     'cleanup','duration','extract_value',
-                     'sample', 'project', 'material', 'mass_spectrometer',
-                     'comment',
-                     'position',
-                     'irradiation','irradiation_pos','irradiation_level',
-                     ('age', float),
-                     ('age_err', float),
-                     ('age_err_wo_j', float),
-                     ('age_err_wo_j_irrad', float),
-                     ('ar37decayfactor', float),
-                     ('ar39decayfactor',float))
+        # meta_attr = (
+        # ('age', float),
+        #              ('age_err', float),
+        #              ('age_err_wo_j', float),
+        #              ('age_err_wo_j_irrad', float),
+        #              ('ar37decayfactor', float),
+        #              ('ar39decayfactor',float))
 
         def func(args):
-            cast=None
-            if len(args)==2:
-                k,cast=args
+            cast = None
+            if len(args) == 2:
+                k, cast = args
             else:
-                k=args
+                k = args
 
-            v=getattr(ai, k)
+            v = getattr(ai, k)
             if cast:
-                v=cast(v)
+                v = cast(v)
+
+            if k.startswith('age'):
+                v=float(v)
+            # if not isinstance(v, (float, str, int)):
+            #     v = float(v)
+
             return k, v
 
-        d = dict([func(args) for args in meta_attr])
+        d = dict([func(args) for args in ANALYSIS_ATTRS])
 
         # d = {k: getattr(ai, k) for k in meta_attr}
 
@@ -130,7 +141,7 @@ class YamlAnalysisExporter(Exporter):
         d['isotopes'] = [func(ii) for ii in ai.isotopes.itervalues()]
 
 
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

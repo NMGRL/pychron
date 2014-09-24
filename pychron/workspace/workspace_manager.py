@@ -201,7 +201,6 @@ class WorkspaceManager(GitRepoManager):
     def add_analysis_to_index(self, ai):
         # add to sqlite index
         im = self.index_db
-        print 'aaa {} {} {}'.format(ai, ai.analysis_timestamp,ai.tag)
         im.add(repo=self._repo.working_dir,
                identifier=ai.identifier,
                aliquot=ai.aliquot,

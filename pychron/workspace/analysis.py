@@ -21,47 +21,48 @@ from datetime import datetime
 from traits.api import Str, List
 
 
-#============= standard library imports ========================
+
+# ============= standard library imports ========================
 import yaml
 #============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.export.yaml_analysis_exporter import ANALYSIS_ATTRS
 from pychron.processing.isotope import Isotope
 
 
 class WorkspaceAnalysis(FileAnalysis):
     path = Str
-    blank_changes=List
+    blank_changes = List
     fit_changes = List
 
-    def _sync(self, obj, *args, **kw):
-        self.path = obj
+    def _sync(self, path, *args, **kw):
+        self.path = path
 
-        yd = self._load_yaml(obj)
-        attrs=('labnumber','aliquot','step','sample','material','project','comment',
-               'uuid',
-               'irradiation','irradiation_pos','irradiation_level',
-               'age','age_err','age_err_wo_j','age_err_wo_j_irrad',
-               'timestamp','ar39decayfactor','ar37decayfactor',
-               'cleanup','extract_value','duration','position','mass_spectrometer')
+        yd = self._load_yaml(path)
+        attrs = ANALYSIS_ATTRS + ()
         for attr in attrs:
             if isinstance(attr, tuple):
-                attr, ydattr=attr
+                attr, ydattr = attr
             else:
-                attr,ydattr = attr, attr
+                attr, ydattr = attr, attr
             setattr(self, attr, yd[ydattr])
 
         self.analysis_type = 'unknown'
         self.rundate = datetime.fromtimestamp(self.timestamp)
-        self.set_j(yd['j'],yd['j_err'])
-        self.record_id=make_runid(self.labnumber, self.aliquot, self.step)
+        self.set_j(yd['j'], yd['j_err'])
+        self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
+
+        self.interference_corrections = yd['interference_corrections']
+        self.production_ratios = yd['production_ratios']
+
         self._sync_isotopes(yd)
 
     def _sync_isotopes(self, yd):
         isos = {}
         for iso in yd['isotopes']:
-            io=Isotope(name=iso['name'])
-            for attr in ('value','error','detector', 'fit'):
+            io = Isotope(name=iso['name'])
+            for attr in ('value', 'error', 'detector', 'fit'):
                 setattr(io, attr, iso[attr])
 
             baseline, blank = io.baseline, io.blank
@@ -69,12 +70,12 @@ class WorkspaceAnalysis(FileAnalysis):
             baseline.error = iso['baseline_err']
             blank.value = iso['blank']
             blank.error = iso['blank_err']
-            isos[iso['name']]=io
+            isos[iso['name']] = io
 
         self.isotopes = isos
 
     def _load_yaml(self, path):
-        runid=os.path.splitext(os.path.basename(path))[0]
+        runid = os.path.splitext(os.path.basename(path))[0]
         with open(path, 'r') as fp:
             return yaml.load(fp)[runid]
 
