@@ -21,10 +21,11 @@
 import os
 
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import TaskLayout, PaneItem
+from pyface.tasks.task_layout import TaskLayout
 import yaml
 
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.interpreted_age.actions import SaveInterpretedAgeGroupAction, \
     OpenInterpretedAgeGroupAction, SaveAsInterpretedAgeGroupAction, MakeGroupFromFileAction, \
     DeleteInterpretedAgeGroupAction, \
@@ -224,7 +225,7 @@ class InterpretedAgeTask(BaseBrowserTask):
         self.active_editor.set_samples(self.selected_samples)
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.browser'))
+        return TaskLayout(left=browser_pane_item())
 
 #============= EOF =============================================
 

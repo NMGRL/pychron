@@ -28,6 +28,7 @@ from pychron.processing.tasks.analysis_edit.interpolation_task import Interpolat
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class BlanksTask(InterpolationTask):
@@ -41,7 +42,7 @@ class BlanksTask(InterpolationTask):
             id='pychron.processing.blanks',
             left=HSplitter(
                 Tabbed(
-                    PaneItem('pychron.browser'),
+                    browser_pane_item(),
                     PaneItem('pychron.search.query')),
                 Tabbed(
                     PaneItem('pychron.processing.unknowns'),

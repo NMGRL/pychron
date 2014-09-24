@@ -16,15 +16,18 @@
 
 #============= enthought library imports =======================
 import os
+
 from traits.api import on_trait_change
 from pyface.tasks.task_layout import TaskLayout, VSplitter, PaneItem, \
     HSplitter, Tabbed
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import r_mkdir
 from pychron.processing.tasks.analysis_edit.interpolation_editor import bin_analyses
 from pychron.processing.tasks.analysis_edit.interpolation_task import InterpolationTask, no_auto_ctx
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class IntercalibrationFactorTask(InterpolationTask):
@@ -36,7 +39,7 @@ class IntercalibrationFactorTask(InterpolationTask):
         return TaskLayout(
             id='pychron.processing.ic_factor',
             left=HSplitter(
-                PaneItem('pychron.browser'),
+                browser_pane_item(),
                 VSplitter(
                     Tabbed(PaneItem('pychron.processing.unknowns'),
                            PaneItem('pychron.processing.references')),

@@ -21,6 +21,7 @@ from pyface.tasks.action.schema import SToolBar
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
     SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
@@ -161,7 +162,7 @@ class RecallTask(AnalysisEditTask):
         return TaskLayout(
             id='pychron.recall',
             left=HSplitter(Tabbed(
-                PaneItem('pychron.browser')),
+                browser_pane_item()),
                            PaneItem('pychron.processing.controls')))
         #============= EOF =============================================
         # def activated(self, load=False):
