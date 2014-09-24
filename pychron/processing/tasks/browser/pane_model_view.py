@@ -15,14 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from pyface.tasks.task_layout import PaneItem
+from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-
-def browser_pane_item(width=300):
-    return PaneItem('pychron.browser', width=width)
+from traitsui.handler import Controller
 
 
+class PaneModelView(Controller):
+    pane = Any
+    def trait_context ( self ):
+        """ Returns the default context to use for editing or configuring
+            traits.
+        """
+        return { 'object': self.model, 'controller': self,
+                 'handler': self, 'pane':self.pane}
 
 #============= EOF =============================================
 

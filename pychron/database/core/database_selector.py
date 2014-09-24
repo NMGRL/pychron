@@ -402,7 +402,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     @on_trait_change('db.[name,host]')
     def _id_string_change(self):
         if self.db.kind == 'mysql':
-            self.id_string = 'Database: {} at {}'.format(self.db.name, self.db.host)
+            self.id_string = 'Database: {}:{}'.format(self.db.host,self.db.name)
         else:
             self.id_string = 'Database: {}'.format(self.db.name)
 

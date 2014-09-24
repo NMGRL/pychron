@@ -28,6 +28,7 @@ from pychron.database.records.isotope_record import GraphicalRecordView
 from pychron.envisage.browser.record_views import LabnumberRecordView
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.envisage.browser.browser_mixin import BrowserMixin
+from pychron.processing.selection.data_selector import DataSelector
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
@@ -81,11 +82,22 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     browser_pane = Any
     advanced_query = Button
 
+    data_selector=Instance(DataSelector)
+
     graphical_filter_button = Button
     graphical_filtering_max_days = Int
 
     _activated = False
     update_on_level_change = True
+
+    toggle_view = Button
+    sample_view_active = Bool(True)
+
+    def _toggle_view_fired(self):
+        self.sample_view_active = not self.sample_view_active
+        if not self.sample_view_active:
+            selector = self.manager.db.selector
+            selector.load_recent()
 
     def prepare_destroy(self):
         self.dump_browser()
@@ -267,7 +279,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.set_samples(sam, [])
 
     def _advanced_query_fired(self):
-
         app = self.window.application
         win, task, is_open = app.get_open_task('pychron.advanced_query')
         task.set_append_replace_enabled(True)
@@ -315,6 +326,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)
         return at
+
+    def _data_selector_default(self):
+        return DataSelector(database_selector=self.manager.db.selector)
 
 # ============= EOF =============================================
 
