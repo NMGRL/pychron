@@ -280,14 +280,14 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
     image = icon('application_view_list.png')
 
 
-class OpenAdvancedQueryAction(Action):
-    name = 'Find Analysis...'
-    image = icon('edit-find.png')
-
-    def perform(self, event):
-        app = event.task.window.application
-        task = app.open_task('pychron.advanced_query')
-        task.set_append_replace_enabled(False)
+# class OpenAdvancedQueryAction(Action):
+#     name = 'Find Analysis...'
+#     image = icon('edit-find.png')
+#
+#     def perform(self, event):
+#         app = event.task.window.application
+#         task = app.open_task('pychron.advanced_query')
+#         task.set_append_replace_enabled(False)
 
 
 class ClearAnalysisCacheAction(Action):

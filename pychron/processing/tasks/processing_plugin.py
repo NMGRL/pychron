@@ -35,7 +35,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
+    SeriesAction, SetInterpretedAgeAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
@@ -139,7 +139,7 @@ Install to enable MS Excel export''')
 
         def recall_group():
             return Group(RecallAction(),
-                         OpenAdvancedQueryAction(),
+                         # OpenAdvancedQueryAction(),
                          ConfigureRecallAction())
 
         def misc_group():
@@ -160,7 +160,7 @@ Install to enable MS Excel export''')
                          ActivateIdeogramAction())
 
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
-                           ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
@@ -247,8 +247,8 @@ Install to enable MS Excel export''')
         tasks = [
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
-            ('pychron.advanced_query',
-             self._advanced_query_task_factory, 'Advanced Query'),
+            # ('pychron.advanced_query',
+            #  self._advanced_query_task_factory, 'Advanced Query'),
 
             ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
@@ -299,10 +299,10 @@ Install to enable MS Excel export''')
 
         return FluxTask(manager=self._processor_factory())
 
-    def _advanced_query_task_factory(self):
-        from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-
-        return AdvancedQueryTask(manager=self._processor_factory())
+    # def _advanced_query_task_factory(self):
+    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+    #
+    #     return AdvancedQueryTask(manager=self._processor_factory())
 
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask

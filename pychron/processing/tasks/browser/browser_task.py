@@ -80,7 +80,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # clear_selection_button = Button
 
     browser_pane = Any
-    advanced_query = Button
+    # advanced_query = Button
 
     data_selector=Instance(DataSelector)
 
@@ -278,14 +278,14 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                            if li.sample]
         self.set_samples(sam, [])
 
-    def _advanced_query_fired(self):
-        app = self.window.application
-        win, task, is_open = app.get_open_task('pychron.advanced_query')
-        task.set_append_replace_enabled(True)
-        if is_open:
-            win.activate()
-        else:
-            win.open()
+    # def _advanced_query_fired(self):
+    #     app = self.window.application
+    #     win, task, is_open = app.get_open_task('pychron.advanced_query')
+    #     task.set_append_replace_enabled(True)
+    #     if is_open:
+    #         win.activate()
+    #     else:
+    #         win.open()
 
     @on_trait_change('analysis_table:selected')
     def _selected_analysis_changed(self, new):
