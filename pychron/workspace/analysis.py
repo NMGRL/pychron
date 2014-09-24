@@ -20,11 +20,13 @@ from datetime import datetime
 
 from traits.api import Str, List
 
+
 #============= standard library imports ========================
 import yaml
 #============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.isotope import Isotope
 
 
 class WorkspaceAnalysis(FileAnalysis):
@@ -53,7 +55,24 @@ class WorkspaceAnalysis(FileAnalysis):
         self.rundate = datetime.fromtimestamp(self.timestamp)
         self.set_j(yd['j'],yd['j_err'])
         self.record_id=make_runid(self.labnumber, self.aliquot, self.step)
-        self.irradi
+        self._sync_isotopes(yd)
+
+    def _sync_isotopes(self, yd):
+        isos = {}
+        for iso in yd['isotopes']:
+            io=Isotope(name=iso['name'])
+            for attr in ('value','error','detector', 'fit'):
+                setattr(io, attr, iso[attr])
+
+            baseline, blank = io.baseline, io.blank
+            baseline.value = iso['baseline']
+            baseline.error = iso['baseline_err']
+            blank.value = iso['blank']
+            blank.error = iso['blank_err']
+            isos[iso['name']]=io
+
+        self.isotopes = isos
+
     def _load_yaml(self, path):
         runid=os.path.splitext(os.path.basename(path))[0]
         with open(path, 'r') as fp:
