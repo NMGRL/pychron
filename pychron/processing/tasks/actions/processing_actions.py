@@ -66,6 +66,24 @@ class myTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
+class ActivateBlankAction(myTaskAction):
+    name= 'Activate Blanks'
+    task_ids = ['pychron.processing.figures', 'pychron.recall']
+    method = 'activate_blank_task'
+
+
+class ActivateRecallAction(myTaskAction):
+    name= 'Activate Recall'
+    task_ids = ['pychron.processing.figures', 'pychron.processing.blanks']
+    method = 'activate_recall_task'
+
+
+class ActivateIdeogramAction(myTaskAction):
+    name= 'Activate Ideogram'
+    task_ids = ['pychron.processing.blanks','pychron.recall']
+    method = 'activate_ideogram_task'
+
+
 class FigureTaskAction(myTaskAction):
     task_ids = List(['pychron.processing.figures', ])
 

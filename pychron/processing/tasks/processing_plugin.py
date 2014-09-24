@@ -39,7 +39,7 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
-    SplitEditorActionVert, ConfigureRecallAction
+    SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -154,6 +154,11 @@ Install to enable MS Excel export''')
                          SummaryLabnumberAction(),
                          name='misc')
 
+        def activate_group():
+            return Group(ActivateBlankAction(),
+                         ActivateRecallAction(),
+                         ActivateIdeogramAction())
+
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
                            ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
@@ -164,6 +169,7 @@ Install to enable MS Excel export''')
                            ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
 
 
+                           ('activate_group', activate_group, 'MenuBar/view.menu'),
                            ('reduction_group', reduction_group, 'MenuBar/data.menu'),
                            ('figure_group', figure_group, 'MenuBar/data.menu'),
                            ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),

@@ -67,6 +67,25 @@ class AnalysisEditTask(BaseBrowserTask):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     recall_configurer = Instance(RecallTableConfigurer)
 
+    def activate_blank_task(self):
+        tid ='pychron.processing.blanks'
+        self._activate_task(tid)
+
+    def activate_recall_task(self):
+        tid = 'pychron.recall'
+        self._activate_task(tid)
+
+    def activate_ideogram_task(self):
+        tid = 'pychron.processing.figures'
+        task = self._activate_task(tid)
+        task.new_ideogram()
+
+    def _activate_task(self, tid):
+        task = self.application.create_task(tid)
+        self.window.add_task(task)
+        self.window.activate_task(task)
+        return task
+
     def split_editor_area_hor(self):
         """
             horizontal splitting not currently working
