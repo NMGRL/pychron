@@ -107,6 +107,9 @@ class ArArAge(Loggable):
     #     HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
 
+    def set_j(self, s, e):
+        self.j=ufloat(s, std_dev=e)
+
     def clear_isotopes(self):
         for iso in self.isotopes:
             self.isotopes[iso] = Isotope(name=iso)

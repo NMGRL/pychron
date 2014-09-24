@@ -22,7 +22,7 @@ from envisage.ui.tasks.task_factory import TaskFactory
 from pyface.tasks.action.schema import SMenu
 from pyface.tasks.action.schema_addition import SchemaAddition
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.workspace.tasks.actions import ActivateWorkspaceAction
+from pychron.workspace.tasks.actions import ActivateWorkspaceAction, TestWorkspaceAction
 from pychron.workspace.workspace_manager import WorkspaceManager
 
 
@@ -43,7 +43,8 @@ class WorkspacePlugin(BaseTaskPlugin):
             return SMenu(id='workspace.menu', name='Workspace')
 
         actions=[('workspace.menu', workspace_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
-                 ('pychron.workspace.activate', ActivateWorkspaceAction, 'MenuBar/workspace.menu')]
+                 ('pychron.workspace.activate', ActivateWorkspaceAction, 'MenuBar/workspace.menu'),
+            ('pychron.workspace.test',TestWorkspaceAction, 'MenuBar/workspace.menu')]
 
         return [TaskExtension(actions=[make_actions(args) for args in actions])]
 

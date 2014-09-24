@@ -30,6 +30,17 @@ class ActivateWorkspaceAction(Action):
         man.open_workspace()
 
 
+class TestWorkspaceAction(Action):
+    name = 'Test'
+    accelerator = 'Ctrl+t'
+    def perform(self, event):
+        app = event.task.application
+        man = app.get_service('pychron.workspace.workspace_manager.WorkspaceManager')
+        man.open_workspace()
+
+        task = app.open_task('pychron.recall')
+        task.recall(task.analysis_table.analyses[:1])
+
 class NewWorkspaceAction(TaskAction):
     name = 'New Workspace'
     method = 'new_workspace'

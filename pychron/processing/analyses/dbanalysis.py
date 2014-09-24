@@ -58,33 +58,17 @@ def get_position(extraction):
 
 
 class DBAnalysis(Analysis):
-    #analysis_summary_klass = DBAnalysisSummary
     analysis_view_klass = DBAnalysisView
-    #     status = Int
 
-    # record_id = Str
     uuid = Str
 
     persisted_age = None
 
-    sample = Str
-    material = Str
-    project = Str
-    comment = Str
-    mass_spectrometer = Str
-
     experiment_txt = Str
 
-    #extraction
-    extract_device = Str
-    position = Str
     xyz_position = Str
     snapshots = List
 
-    extract_value = Float
-    extract_units = Str
-    cleanup_duration = Float
-    extract_duration = Float
 
     beam_diameter = Either(Float, Str)
     pattern = Str
@@ -94,8 +78,6 @@ class DBAnalysis(Analysis):
     ramp_duration = Either(Float, Str)
     ramp_rate = Either(Float, Str)
     reprate = Either(Float, Str)
-
-    analysis_type = Str
 
     timestamp = Float
     rundate = Date

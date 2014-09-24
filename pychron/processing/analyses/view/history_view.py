@@ -26,7 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
-from pychron.processing.analyses.changes import BlankChange
+from pychron.processing.analyses.changes import BlankChange, FitChange
 
 
 class ChangeAdapter(TabularAdapter):
@@ -177,11 +177,16 @@ class HistoryView(HasTraits):
 
         self.blank_changes = an.blank_changes
         self.fit_changes = an.fit_changes
+        if self.fit_changes:
+            self.fit_selected = self.fit_changes[-1]
+        else:
+            self.fit_selected=FitChange()
 
-        self.fit_selected = self.fit_changes[-1]
-
-        self.blank_selected = next(([bi] for bi in self.blank_changes if bi.id == an.selected_blanks_id),
+        if self.blank_changes:
+            self.blank_selected = next(([bi] for bi in self.blank_changes if bi.id == an.selected_blanks_id),
                                    self.blank_changes[-1:])
+        else:
+            self.blank_selected=[BlankChange()]
 
         self.timestamp = an.timestamp
 

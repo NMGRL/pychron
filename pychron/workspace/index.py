@@ -15,16 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from collections import namedtuple
-from datetime import datetime
-from sqlalchemy.sql.functions import count
 from traits.api import provides, Property, Str, cached_property
 #============= standard library imports ========================
 from sqlalchemy import Column, String, Integer, Float, distinct, DateTime
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 #============= local library imports  ==========================
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.database.core.query import compile_query
 from pychron.database.i_browser import IBrowser
 from pychron.experiment.utilities.identifier import make_step
 
@@ -53,6 +49,8 @@ class AnalysisIndex(WorkspaceIndex, Base):
     duration = Column(Float)
     extract_value = Column(Float)
     uuid = Column(String(36))
+    analysis_type = Column(String(40))
+    position =Column(String(120))
 
     measurement_script = Column(String(80))
     extraction_script = Column(String(80))

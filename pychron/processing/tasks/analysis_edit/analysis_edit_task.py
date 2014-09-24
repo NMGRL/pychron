@@ -188,7 +188,10 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
-                ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
+                if self.use_workspace:
+                    ans = self.workspace.make_analyses(records)
+                else:
+                    ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
                 self._open_recall_editors(ans)
         else:
             ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)

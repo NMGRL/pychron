@@ -53,8 +53,13 @@ class YamlAnalysisExporter(Exporter):
 
         meta_attr = ('labnumber',
                      'aliquot',
+                     'uuid',
                      'step', 'timestamp', 'tag',
+                     'cleanup','duration','extract_value',
                      'sample', 'project', 'material', 'mass_spectrometer',
+                     'comment',
+                     'position',
+                     'irradiation','irradiation_pos','irradiation_level',
                      ('age', float),
                      ('age_err', float),
                      ('age_err_wo_j', float),

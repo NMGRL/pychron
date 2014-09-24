@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Date, Str, List, Long, Any, Float, Bool, Event
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 
 
@@ -25,11 +25,13 @@ class Change(HasTraits):
     summary = Str
     id = Long
     active = Bool(False)
-    def __init__(self, dbrecord, *args, **kw):
+
+    def __init__(self, dbrecord=None, *args, **kw):
         super(Change, self).__init__(*args, **kw)
-        self.create_date = dbrecord.create_date
-        self.id = dbrecord.id
-        self._make_summary(dbrecord)
+        if dbrecord:
+            self.create_date = dbrecord.create_date
+            self.id = dbrecord.id
+            self._make_summary(dbrecord)
 
 
 class IsotopeBlankRecord(HasTraits):
@@ -63,6 +65,9 @@ class BlankChange(Change):
     selected = Any
     load_analyses_needed = Event
 
+    def _selected_default(self):
+        return IsotopeBlankRecord()
+
     def _make_summary(self, dbrecord):
         s = ', '.join([bi.make_summary() for bi in dbrecord.blanks])
         self.summary = s
@@ -81,15 +86,19 @@ class BlankChange(Change):
                                             error=bi.user_error,
                                             values=vfactory(bi),
                                             fit=bi.fit or 'Pr') for bi in dbrecord.blanks]
+
         self.selected = next((hi for hi in self.isotopes if hi.isotope == 'Ar40'), self.isotopes[-1])
 
-        b = next((bi for bi in dbrecord.blanks if bi.isotope=='Ar40'), dbrecord.blanks[-1])
-        self.selected.analyses=afactory(b)
+        b = next((bi for bi in dbrecord.blanks if bi.isotope == 'Ar40'), dbrecord.blanks[-1])
+        self.selected.analyses = afactory(b)
 
     def _selected_changed(self):
-        self.load_analyses_needed=self.selected
+        self.load_analyses_needed = self.selected
+
 
 class FitChange(Change):
+    fits = List
+
     def _make_summary(self, dbrecord):
         s = ', '.join([fi.make_summary() for fi in dbrecord.fits])
         self.summary = s

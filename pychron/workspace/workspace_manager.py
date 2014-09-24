@@ -28,6 +28,7 @@ import yaml
 from pychron.core.helpers.filetools import list_directory2, fileiter
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
+from pychron.workspace.analysis import WorkspaceAnalysis
 from pychron.workspace.index import IndexAdapter, Base
 from pychron.workspace.tasks.views import DiffView
 
@@ -94,6 +95,16 @@ class WorkspaceManager(GitRepoManager):
     selected_text = Str
     selected_commits = List
     active = False
+
+    def make_analyses(self, ans):
+        self.debug('make analyses')
+        def func(ai):
+            p = os.path.join(self.path, '{}.yaml'.format(ai.record_id))
+            w = WorkspaceAnalysis()
+            w.sync(p)
+            return w
+
+        return [func(ai) for ai in ans]
 
     def _open_directory_dialog(self, **kw):
         dialog = DirectoryDialog(action='open', **kw)
@@ -210,7 +221,9 @@ class WorkspaceManager(GitRepoManager):
                irradiation_level=ai.irradiation_level,
                irradiation_position=ai.irradiation_pos,
                tag = ai.tag,
-               analysis_timestamp = ai.analysis_timestamp)
+               position = ai.position,
+               analysis_timestamp = ai.analysis_timestamp,
+               analysis_type = ai.analysis_type)
 
     def modify_analysis(self, path, message=None, branch='develop'):
         """
