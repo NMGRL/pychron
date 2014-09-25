@@ -22,6 +22,8 @@ from traitsui.api import View, Item, \
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.codetools.simple_timeit import timethis
+from pychron.core.progress import progress_loader
 from pychron.database.core.database_adapter import DatabaseAdapter
 
 from pychron.database.core.query import Query, compile_query
@@ -154,8 +156,13 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     def load_recent(self, criterion='this month'):
         with self.db.session_ctx():
-            dbs = self._get_recent(criterion)
-            self.load_records(dbs, load=False)
+
+
+            dbs = timethis(self._get_recent, args=(criterion, ))
+            timethis(self.load_records, args=(dbs, ), kwargs={'load':False})
+
+            # dbs = self._get_recent(criterion)
+            # self.load_records(dbs, load=False)
 
     def load_last(self, n=200):
         with self.db.session_ctx():
@@ -237,8 +244,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
         dbs, query_str = self._get_selector_records(limit=limit,
                                                     queries=queries,
-                                                    use_filters=use_filters,
-        )
+                                                    use_filters=use_filters)
 
         if not self.verbose:
             query_str = str(query_str)
@@ -254,8 +260,12 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             '''
                 using a IsotopeRecordView is significantly faster than loading a IsotopeRecord directly
             '''
-            rs = [self._record_view_factory(di) for di in records]
-            rs = [ri for ri in rs if ri]
+            def func(x, prog, i, n):
+                if prog:
+                    prog.change_message('Loading {}/{} {}'.format(i+1, n, x.record_id))
+                return self._record_view_factory(x)
+
+            rs = progress_loader(records, func)
             self.records.extend(rs)
 
     def _record_closed(self, obj, name, old, new):
@@ -270,7 +280,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def _record_view_factory(self, dbrecord):
         if hasattr(self, 'record_view_klass'):
             d = self.record_view_klass()
-            if d.create(dbrecord):
+            if d.create(dbrecord, fast_load=True):
                 return d
         else:
             return self.record_klass(_dbrecord=dbrecord)
@@ -384,9 +394,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         if self.dclicked and self.dclick_recall_enabled:
             self._open_selected()
 
-    def _open_button_fired(self):
-        self.debug('open button fired')
-        self._open_selected()
+    # def _open_button_fired(self):
+    #     self.debug('open button fired')
+    #     self._open_selected()
 
     def _search_fired(self):
         self.execute_query(load=False)

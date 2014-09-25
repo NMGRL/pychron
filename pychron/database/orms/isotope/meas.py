@@ -21,7 +21,7 @@ import uuid
 
 from sqlalchemy import Column, Integer, String, \
     ForeignKey, BLOB, Float, Time, Boolean, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
 
 
@@ -63,8 +63,8 @@ class meas_AnalysisTable(Base, BaseMixin):
     uuid = stringcolumn(40, default=lambda: str(uuid.uuid4()))
     analysis_timestamp = Column(DateTime, default=func.now())
 
-    endtime = Column(Time)
-    status = Column(Integer, default=0)
+    endtime = deferred(Column(Time))
+    status = deferred(Column(Integer, default=0))
     aliquot = Column(Integer)
     step = stringcolumn(10)
     increment = Column(Integer)
@@ -129,27 +129,27 @@ class meas_ExperimentTable(Base, NameMixin):
 
 
 class meas_ExtractionTable(Base, BaseMixin):
-    extract_value = Column(Float)
-    extract_duration = Column(Float)
-    cleanup_duration = Column(Float)
+    extract_value = deferred(Column(Float))
+    extract_duration = deferred(Column(Float))
+    cleanup_duration = deferred(Column(Float))
 
-    extract_units = stringcolumn(5)
+    extract_units = deferred(stringcolumn(5))
 
-    weight = Column(Float)
-    sensitivity_multiplier = Column(Float)
-    is_degas = Column(Boolean)
+    weight = deferred(Column(Float))
+    sensitivity_multiplier = deferred(Column(Float))
+    is_degas = deferred(Column(Boolean))
 
     beam_diameter = Column(Float)
-    pattern = stringcolumn(100)
-    ramp_rate = Column(Float)
-    ramp_duration = Column(Float)
+    pattern = deferred(stringcolumn(100))
+    ramp_rate = deferred(Column(Float))
+    ramp_duration = deferred(Column(Float))
 
-    mask_position = Column(Float)
-    mask_name = stringcolumn(100)
-    attenuator = Column(Float)
-    reprate = Column(Float)
-    response_blob = Column(BLOB)
-    output_blob = Column(BLOB)
+    mask_position = deferred(Column(Float))
+    mask_name = deferred(stringcolumn(100))
+    attenuator = deferred(Column(Float))
+    reprate = deferred(Column(Float))
+    response_blob = deferred(Column(BLOB))
+    output_blob = deferred(Column(BLOB))
 
     sensitivity_id = foreignkey('gen_SensitivityTable')
     extract_device_id = foreignkey('gen_ExtractionDeviceTable')
@@ -157,7 +157,9 @@ class meas_ExtractionTable(Base, BaseMixin):
     experiment_blob_id = foreignkey('meas_ScriptTable')
     image_id = foreignkey('med_ImageTable')
 
-    analyses = relationship('meas_AnalysisTable', backref='extraction')
+    analysis = relationship('meas_AnalysisTable',
+                            uselist=False,
+                            backref='extraction')
     positions = relationship('meas_PositionTable', backref='extraction')
     snapshots = relationship('med_SnapshotTable', backref='extraction')
 
@@ -206,7 +208,7 @@ class meas_IsotopeTable(Base, BaseMixin):
 
 
 class meas_MeasurementTable(Base, BaseMixin):
-    time_zero_offset = Column(Float)
+    time_zero_offset = deferred(Column(Float))
 
     mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')
     analysis_type_id = foreignkey('gen_AnalysisTypeTable')
@@ -227,8 +229,8 @@ class meas_PeakCenterTable(Base, BaseMixin):
 
 
 class meas_ScriptTable(Base, NameMixin):
-    hash = Column(String(32))
-    blob = Column(BLOB)
+    hash = deferred(Column(String(32)))
+    blob = deferred(Column(BLOB))
     measurements = relationship('meas_MeasurementTable', backref='script')
     extractions = relationship('meas_ExtractionTable',
                                primaryjoin='meas_ExtractionTable.script_id==meas_ScriptTable.id',
