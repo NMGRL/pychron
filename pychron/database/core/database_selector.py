@@ -394,9 +394,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         if self.dclicked and self.dclick_recall_enabled:
             self._open_selected()
 
-    def _open_button_fired(self):
-        self.debug('open button fired')
-        self._open_selected()
+    # def _open_button_fired(self):
+    #     self.debug('open button fired')
+    #     self._open_selected()
 
     def _search_fired(self):
         self.execute_query(load=False)

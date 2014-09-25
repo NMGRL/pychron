@@ -213,6 +213,10 @@ class AnalysisEditTask(BaseBrowserTask):
             ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
             self._open_recall_editors(ans)
 
+    def _selector_dclick(self, new):
+        self.debug('selector {}'.format(new))
+        self.recall(new)
+
     def _open_existing_recall_editors(self, records):
         editor = None
         #check if record already is open

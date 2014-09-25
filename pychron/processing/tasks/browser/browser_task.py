@@ -174,6 +174,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _set_selected_analysis(self, new):
         pass
 
+    def _selector_dclick(self, item):
+        pass
+
+    def _graphical_filter_hook(self, ans, is_append):
+        pass
+
     def _graphical_filter_button_fired(self):
         self.debug('doing graphical filter')
         from pychron.processing.tasks.browser.graphical_filter import GraphicalFilterModel, GraphicalFilterView
@@ -232,9 +238,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ans = gm.get_selection()
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
-
-    def _graphical_filter_hook(self, ans, is_append):
-        pass
 
     def _level_changed(self):
         if self.update_on_level_change:
@@ -322,6 +325,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                        'low={}, high={}, limit={}'.format(lp, hp, lim))
             self.analysis_table.set_analyses(ans)
             self.dump_browser()
+
+    @on_trait_change('data_selector.database_selector.dclicked')
+    def _handle_selector_dclick(self, new):
+        self._selector_dclick(new.item)
 
     def _analysis_table_default(self):
         at = AnalysisTable(db=self.manager.db)
