@@ -60,8 +60,8 @@ def get_flux_fit_status(item):
     return 'X' if labnumber.selected_flux_id else ''
 
 
-def get_selected_history_item(item, key):
-    sh = item.selected_histories
+def get_selected_history_item(sh, key):
+    # sh = item.selected_histories
     return ('X' if getattr(sh, key) else '') if sh else ''
 
 
@@ -101,15 +101,15 @@ class IsotopeRecordView(object):
         self.ic_fit_status = ''
         self.iso_fit_status = ''
 
-        super(IsotopeRecordView, self).__init__(*args, **kw)
+        # super(IsotopeRecordView, self).__init__(*args, **kw)
 
         if dbrecord:
-            self.create(dbrecord)
+            self.create(dbrecord, **kw)
 
     def set_tag(self, tag):
         self.tag = tag.name
 
-    def create(self, dbrecord):
+    def create(self, dbrecord, fast_load=False):
         # print 'asdfsadfsdaf', dbrecord, dbrecord.labnumber, dbrecord.uuid
         try:
             if dbrecord is None or not dbrecord.labnumber:
@@ -122,12 +122,11 @@ class IsotopeRecordView(object):
 
             self.aliquot = dbrecord.aliquot
             self.step = dbrecord.step
+            self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
+
             self.uuid = dbrecord.uuid
             self.tag = dbrecord.tag or ''
             self.rundate = dbrecord.analysis_timestamp
-
-            self.timestamp = time.mktime(self.rundate.timetuple())
-            self.record_id = make_runid(self.labnumber, self.aliquot, self.step)
 
             sam = ln.sample
             if sam:
@@ -141,24 +140,51 @@ class IsotopeRecordView(object):
                 ir = irl.irradiation
                 self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
 
+            # try:
+            #     self.mass_spectrometer = dbrecord.mass_spectrometer
+            # except AttributeError:
+            #     pass
+            ext,meas=None,None
             meas = dbrecord.measurement
-            if meas is not None:
+            if meas:
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
-                if meas.script:
-                    self.meas_script_name = self._clean_script_name(meas.script.name)
-                if meas.analysis_type:
+                try:
                     self.analysis_type = meas.analysis_type.name
+                except AttributeError,e:
+                    print 'IsotopeRecord create meas 1 {}'.format(e)
+            #
             ext = dbrecord.extraction
-            if ext:
-                if ext.script:
-                    self.extract_script_name = self._clean_script_name(ext.script.name)
-                if ext.extraction_device:
-                    self.extract_device = ext.extraction_device.name
+            # if ext:
+            #     try:
+            #         if ext.extraction_device:
+            #             self.extract_device = ext.extraction_device.name
+            #     except AttributeError, e:
+            #         print 'IsotopeRecord create ext 2 {}'.format(e)
 
-            self.flux_fit_status = get_flux_fit_status(dbrecord)
-            self.blank_fit_status = get_selected_history_item(dbrecord, 'selected_blanks_id')
-            self.ic_fit_status = get_selected_history_item(dbrecord, 'selected_det_intercal_id')
-            self.iso_fit_status = get_selected_history_item(dbrecord, 'selected_fits_id')
+            if not fast_load:
+                self.timestamp = time.mktime(self.rundate.timetuple())
+                if meas:
+                    try:
+                        self.meas_script_name = self._clean_script_name(meas.script.name)
+                    except AttributeError, e:
+                        print 'IsotopeRecord create meas 2 {}'.format(e)
+                else:
+                    print 'measurment is None'
+
+                if ext is not None:
+                    try:
+                        self.extract_script_name = self._clean_script_name(ext.script.name)
+                    except AttributeError, e:
+                        print 'IsotopeRecord create ext 1 {}'.format(e)
+                else:
+                    print 'extraction is None'
+
+                self.flux_fit_status = get_flux_fit_status(dbrecord)
+
+                sh = dbrecord.selected_histories
+                self.blank_fit_status = get_selected_history_item(sh, 'selected_blanks_id')
+                self.ic_fit_status = get_selected_history_item(sh, 'selected_det_intercal_id')
+                self.iso_fit_status = get_selected_history_item(sh, 'selected_fits_id')
 
             return True
         except Exception, e:

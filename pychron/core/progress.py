@@ -62,10 +62,14 @@ def progress_loader(xs, func, threshold=50, progress=None, reraise_cancel=False)
                     raise CancelLoadingError
                 elif prog.accepted:
                     break
-                yield func(x, prog, i, n)
+                r = func(x, prog, i, n)
+                if r:
+                    yield r
         else:
             for x in xs:
-                yield func(x, None, 0, 0)
+                r = func(x, None, 0, 0)
+                if r:
+                    yield r
 
     try:
         return list(gen(progress))

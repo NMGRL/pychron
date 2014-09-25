@@ -83,7 +83,8 @@ class BrowserSampleView(PaneModelView):
                                       date_grp)
 
         grp = VSplit(top_level_filter_grp,
-                     UItem('controller.tabletools', height=0.1),
+                     UItem('controller.tabletools',
+                           style='custom', height=0.1),
                      UItem('controller.tableview',
                            height=0.6,
                            style='custom'))
