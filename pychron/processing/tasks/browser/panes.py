@@ -31,7 +31,7 @@ from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
-from pychron.processing.tasks.browser.time_view import BrowserTimeView
+from pychron.processing.tasks.browser.query_view import BrowserQueryView
 
 
 class AnalysisGroupAdapter(BrowserAdapter):
@@ -90,16 +90,15 @@ class BrowserPane(TraitsDockPane):
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
     sample_view = Instance(BrowserSampleView)
-    time_view = Instance(BrowserTimeView)
+    query_view = Instance(BrowserQueryView)
 
     def _get_browser_group(self):
         grp = Group(UItem('pane.sample_view',
                           style='custom',
                           visible_when='sample_view_active'),
-                    UItem('pane.time_view',
+                    UItem('pane.query_view',
                           style='custom',
                           visible_when='not sample_view_active'))
-
         return grp
 
     def traits_view(self):
@@ -111,7 +110,7 @@ class BrowserPane(TraitsDockPane):
                        # icon_button_editor('advanced_query', 'application_form_magnify',
                        #                    tooltip='Advanced Query'),
                        icon_button_editor('filter_by_button',
-                                          'edit-find',
+                                          'find',
                                           tooltip='Filter analyses using defined criteria'),
                        icon_button_editor('graphical_filter_button',
                                           'chart_curve_go',
@@ -131,8 +130,8 @@ class BrowserPane(TraitsDockPane):
     def _sample_view_default(self):
         return BrowserSampleView(model=self.model, pane=self)
 
-    def _time_view_default(self):
-        return BrowserTimeView(model=self.model.data_selector, pane=self)
+    def _query_view_default(self):
+        return BrowserQueryView(model=self.model.data_selector, pane=self)
         # ============= EOF =============================================
         # def _get_browser_group(self):
         # project_grp = VGroup(

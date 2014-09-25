@@ -15,14 +15,16 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import datetime, timedelta
+
 from traits.api import Button, List, Any, Dict, Bool, Int, Enum, Event, \
     on_trait_change, Str, Instance, Property
 from traitsui.api import View, Item, \
     HGroup, spring, ListEditor, InstanceEditor, Handler, VGroup, VSplit
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.progress import progress_loader
 from pychron.database.core.database_adapter import DatabaseAdapter
 
@@ -39,8 +41,7 @@ from pychron.column_sorter_mixin import ColumnSorterMixin
 
 class BaseTabularAdapter(TabularAdapter):
     columns = [('ID', 'record_id'),
-               ('Timestamp', 'timestamp')
-    ]
+               ('Timestamp', 'timestamp')]
 
 # class ColumnSorterMixin(HasTraits):
 #     _sort_field = None
@@ -112,6 +113,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     add_query_button = Button('+')
     delete_query_button = Button('-')
+    load_recent_button = Button('Load Recent')
+    recent_days = Int(1)
 
     queries = List(Query)
     lookup = Dict
@@ -125,7 +128,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         super(DatabaseSelector, self).__init__(*args, **kw)
         self._load_hook()
 
-    def load_records(self, dbs, load=True, append=False):
+    def load_records(self, dbs, append=False):
         if not append:
             self.records = []
 
@@ -156,25 +159,23 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     def load_recent(self, criterion='this month'):
         with self.db.session_ctx():
+            # dbs = timethis(self._get_recent, args=(criterion, ))
+            # timethis(self.load_records, args=(dbs, ), kwargs={'load':False})
 
-
-            dbs = timethis(self._get_recent, args=(criterion, ))
-            timethis(self.load_records, args=(dbs, ), kwargs={'load':False})
-
-            # dbs = self._get_recent(criterion)
-            # self.load_records(dbs, load=False)
+            dbs = self._get_recent(criterion)
+            self.load_records(dbs)
 
     def load_last(self, n=200):
         with self.db.session_ctx():
             dbs, _stmt = self._get_selector_records(limit=n)
-            self.load_records(dbs, load=False)
+            self.load_records(dbs)
 
             #    def execute_query(self, filter_str=None):
 
-    def execute_query(self, queries=None, load=True, use_filters=True):
+    def execute_query(self, queries=None, use_filters=True):
         with self.db.session_ctx():
             dbs = self._execute_query(queries, use_filters=use_filters)
-            self.load_records(dbs, load=load)
+            self.load_records(dbs)
 
     def get_last(self, n):
         dbs, _stmt = self._get_selector_records(limit=n)
@@ -207,7 +208,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         q = self.queries[0]
         q.parameter = self.date_str
         q.comparator = '>'
-        q.trait_set(criterion=criterion, trait_change_notify=False)
+        q.trait_set(criterion=criterion)
 
         return self._execute_query(queries=[q])
 
@@ -383,6 +384,13 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _load_recent_button_fired(self):
+        criterion = 'this month'
+        if self.recent_days:
+            t = datetime.now()- timedelta(days=self.recent_days)
+            criterion = t.strftime('%m/%d/%Y')
+        self.load_recent(criterion=criterion)
+
     def _delete_query_button_fired(self):
         self.remove_query(self.selected_query)
 
@@ -399,7 +407,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #     self._open_selected()
 
     def _search_fired(self):
-        self.execute_query(load=False)
+        self.execute_query()
 
     #        if self.records:
     #            self.selected = self.records[-1:]
@@ -407,7 +415,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #            print self.records.index(self.selected[0])
 
     def _limit_changed(self):
-        self.execute_query(load=False)
+        self.execute_query()
 
     @on_trait_change('db.[name,host]')
     def _id_string_change(self):

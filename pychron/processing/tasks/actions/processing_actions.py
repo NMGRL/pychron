@@ -282,7 +282,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 # class OpenAdvancedQueryAction(Action):
 #     name = 'Find Analysis...'
-#     image = icon('edit-find.png')
+#     image = icon('find.png')
 #
 #     def perform(self, event):
 #         app = event.task.window.application
