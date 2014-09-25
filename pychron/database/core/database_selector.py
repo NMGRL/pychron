@@ -144,14 +144,19 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def query_factory(self, *args, **kw):
         return self._query_factory(**kw)
 
-    def add_query(self, parent_query, parameter, criterion, add=True):
+    def add_query(self, parent_query, parameter, comparator, criterion, add=True):
+        print parent_query.parent_parameters + [parameter]
+        print parent_query.parent_criterions + [criterion]
+
         q = self._query_factory(
             parent_parameters=parent_query.parent_parameters + [parameter],
-            parent_criterions=parent_query.parent_criterions + [criterion])
+            parent_criterions=parent_query.parent_criterions + [criterion],
+            parent_comparators=parent_query.parent_comparators + [comparator],)
         if add:
             self.queries.append(q)
-        parent_query.on_trait_change(q._update_parent_parameter, 'parameter')
-        parent_query.on_trait_change(q._update_parent_criterion, 'criterion')
+        parent_query.on_trait_change(q.update_parent_parameter, 'parameter')
+        parent_query.on_trait_change(q.update_parent_criterion, 'criterion')
+        parent_query.on_trait_change(q.update_parent_comparator, 'comparator')
 
     def remove_query(self, q):
         if q in self.queries:
@@ -202,7 +207,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             if add:
                 self.queries.append(q)
         else:
-            self.add_query(pq, pq.parameter, pq.criterion, add=add)
+            self.add_query(pq, pq.parameter, pq.comparator, pq.criterion, add=add)
 
     def _get_recent(self, criterion):
         q = self.queries[0]

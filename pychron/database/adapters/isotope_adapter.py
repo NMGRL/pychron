@@ -1834,6 +1834,12 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_materials(self, **kw):
         return self._retrieve_items(gen_MaterialTable, **kw)
 
+    def get_years_active(self):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(func.year(meas_AnalysisTable.analysis_timestamp)))
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return [i[0] for i in self._query_all(q)]
+
     def get_recent_labnumbers(self, lpost, spectrometer=None):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
@@ -1923,6 +1929,15 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_flux_monitors(self, **kw):
         return self._retrieve_items(flux_MonitorTable, **kw)
 
+    def get_irradiations_join_analysis(self, order_func='desc', **kw):
+        joins=kw.get('joins') or []
+        joins.extend((irrad_LevelTable, irrad_PositionTable,
+                      gen_LabTable, meas_AnalysisTable))
+
+        kw['joins']=joins
+        return self._retrieve_items(irrad_IrradiationTable,
+                                    order=getattr(irrad_IrradiationTable.name, order_func)(),
+                                    **kw)
     def get_irradiations(self, names=None, order_func='desc', **kw):
         """
             if names is callable should take from of F(irradiationTable)
