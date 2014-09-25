@@ -140,11 +140,6 @@ class IsotopeRecordView(object):
                 ir = irl.irradiation
                 self.irradiation_info = '{}{} {}'.format(ir.name, irl.name, irp.position)
 
-            # try:
-            #     self.mass_spectrometer = dbrecord.mass_spectrometer
-            # except AttributeError:
-            #     pass
-            ext,meas=None,None
             meas = dbrecord.measurement
             if meas:
                 self.mass_spectrometer = meas.mass_spectrometer.name.lower()
@@ -152,14 +147,14 @@ class IsotopeRecordView(object):
                     self.analysis_type = meas.analysis_type.name
                 except AttributeError,e:
                     print 'IsotopeRecord create meas 1 {}'.format(e)
-            #
+
             ext = dbrecord.extraction
-            # if ext:
-            #     try:
-            #         if ext.extraction_device:
-            #             self.extract_device = ext.extraction_device.name
-            #     except AttributeError, e:
-            #         print 'IsotopeRecord create ext 2 {}'.format(e)
+            if ext:
+                try:
+                    if ext.extraction_device:
+                        self.extract_device = ext.extraction_device.name
+                except AttributeError, e:
+                    print 'IsotopeRecord create ext 2 {}'.format(e)
 
             if not fast_load:
                 self.timestamp = time.mktime(self.rundate.timetuple())

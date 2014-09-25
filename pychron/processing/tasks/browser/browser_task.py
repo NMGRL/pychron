@@ -84,6 +84,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     data_selector=Instance(DataSelector)
 
+    filter_by_button = Button
     graphical_filter_button = Button
     graphical_filtering_max_days = Int
 
@@ -91,56 +92,74 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     update_on_level_change = True
 
     toggle_view = Button
-    sample_view_active = Bool(True)
 
     def _toggle_view_fired(self):
         self.sample_view_active = not self.sample_view_active
         if not self.sample_view_active:
-            selector = self.manager.db.selector
-            selector.load_recent()
+            self._activate_query_browser()
+        else:
+            self._activate_sample_browser()
+
+        self.dump_browser_options()
 
     def prepare_destroy(self):
         self.dump_browser()
         self._activated = False
 
     def activated(self):
-
-        self.load_browser_date_bounds()
-        self.load_projects()
-
-        db = self.manager.db
-        with db.session_ctx():
-            self._load_mass_spectrometers()
-            self._load_analysis_types()
-            self._load_extraction_devices()
-
-        self.datasource_url = db.datasource_url
-
-        bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
-        bind_preference(self, 'graphical_filtering_max_days', 'pychron.processing.graphical_filtering_max_days')
-        self.load_browser_selection()
         self.load_browser_options()
-        self._activated = True
+        if self.sample_view_active:
+            self._activate_sample_browser()
+        else:
+            self._activate_query_browser()
 
+    def _activate_query_browser(self):
+        selector = self.data_selector
+        if not selector.active:
+            selector.load_recent()
+        selector.active=True
+        self.browser_pane.name = 'Browser/Query'
+
+    def _activate_sample_browser(self):
+        if not self._activated:
+            self.load_browser_date_bounds()
+            self.load_projects()
+
+            db = self.manager.db
+            with db.session_ctx():
+                self._load_mass_spectrometers()
+                self._load_analysis_types()
+                self._load_extraction_devices()
+
+            self.datasource_url = db.datasource_url
+
+            bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
+            bind_preference(self, 'graphical_filtering_max_days', 'pychron.processing.graphical_filtering_max_days')
+            self.load_browser_selection()
+
+        self.browser_pane.name = 'Browser/Sample'
+        self._activated = True
     def _get_selected_analyses(self, unks=None, selection=None, make_records=True):
         """
         """
         if selection is None:
             if self.analysis_table.selected:
-                return self.analysis_table.selected
+                ret = self.analysis_table.selected
+            elif self.data_selector.selector.selected:
+                ret = self.data_selector.selector.selected
             else:
                 selection=self.selected_samples
 
         if selection:
             iv = not self.analysis_table.omit_invalid
             uuids = [x.uuid for x in unks] if unks else None
-            s = [ai for ai in self._retrieve_sample_analyses(selection,
+            ret = [ai for ai in self._retrieve_sample_analyses(selection,
                                                              exclude_uuids=uuids,
                                                              include_invalid=iv,
                                                              low_post=self.start_date,
                                                              high_post=self.end_date,
                                                              make_records=make_records)]
-            return s
+        return ret
 
     def _load_mass_spectrometers(self):
         db = self.manager.db
@@ -251,6 +270,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 self._find_by_irradiation_fired()
         else:
             self.samples = []
+
+    def _filter_by_button_fired(self):
+        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
+        if self.sample_view_active:
+            self._filter_by_hook()
+        else:
+            self.data_selector.execute_query()
 
     def _find_by_irradiation_fired(self):
         if not (self.level and self._activated):

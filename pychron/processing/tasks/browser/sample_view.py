@@ -41,7 +41,7 @@ class BrowserSampleView(PaneModelView):
                            # Item('include_monitors', label='Monitors'),
                            # Item('include_unknowns', label='Unknowns')),
                            icon_button_editor('find_by_irradiation',
-                                              'edit-find',
+                                              'find',
                                               tooltip='Filter Samples by Irradiation/Level', ),
                            enabled_when='not selected_projects',
                            show_border=True,

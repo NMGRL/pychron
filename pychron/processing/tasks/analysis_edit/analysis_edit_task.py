@@ -799,7 +799,7 @@ class AnalysisEditTask(BaseBrowserTask):
         self._set_previous_selection(obj, new)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
-    def _handle_unknowns_events(self, obj, name, old, new):
+    def _handle_unknowns_events(self, name, new):
         is_append = name == 'append_button'
         self._append_replace_unknowns(is_append)
 

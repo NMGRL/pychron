@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, Property
-from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, TableEditor,spring,VSplit
-#============= standard library imports ========================
+from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, TableEditor, spring, VSplit
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -30,11 +30,11 @@ from pychron.processing.tasks.browser.pane_model_view import PaneModelView
 
 class ResultsAdapter(TabularAdapter):
     columns = [('Identifier', 'labnumber'),
-        ('Aliquot', 'aliquot'),
-        ('Analysis Time', 'rundate'),
-        ('Irradiation', 'irradiation_info'),
-        ('Spec.', 'mass_spectrometer'),
-        ('Type', 'analysis_type')]
+               ('Aliquot', 'aliquot'),
+               ('Analysis Time', 'rundate'),
+               ('Irradiation', 'irradiation_info'),
+               ('Spec.', 'mass_spectrometer'),
+               ('Type', 'analysis_type')]
     font = '10'
     labnumber_width = Int(60)
     mass_spectrometer_width = Int(50)
@@ -52,7 +52,7 @@ def selector_name(name):
     return 'object.selector.{}'.format(name)
 
 
-class BrowserTimeView(PaneModelView):
+class BrowserQueryView(PaneModelView):
     def _results_group(self):
         grp = VGroup(
             CustomLabel(selector_name('id_string'), color='maroon'),
@@ -122,45 +122,42 @@ class BrowserTimeView(PaneModelView):
                          editor=editor,
                          visible_when='kind=="Database"',
                          height=-200)
-
-
-        return VGroup(query_itm)
-        # return query_itm
+        button_grp = HGroup(icon_button_editor(selector_name('add_query_button'),
+                                               'add',
+                                               tooltip='Add query',
+                                               visible_when='kind=="Database"'),
+                            icon_button_editor(selector_name('delete_query_button'),
+                                               'delete',
+                                               tooltip='Delete query',
+                                               visible_when='kind=="Database"'),
+                            UItem(selector_name('load_recent_button')),
+                            Item(selector_name('recent_days')),spring)
+        return VGroup(button_grp, query_itm)
 
     def _filter_grp(self):
         filter_grp = HGroup(
-            UItem(selector_name('search')),
+            icon_button_editor(selector_name('search'), 'find'),
             UItem(selector_name('mass_spectrometer'),
                   label='Spec.',
                   editor=EnumEditor(name=selector_name('mass_spectrometers'))),
             UItem(selector_name('analysis_type'),
                   editor=EnumEditor(name=selector_name('analysis_types'))),
-            icon_button_editor(selector_name('add_query_button'),
-                               'add.png',
-                               tooltip='Add query',
-                               visible_when='kind=="Database"'),
-            icon_button_editor(selector_name('delete_query_button'),
-                               'delete.png',
-                               tooltip='Add query',
-                               visible_when='kind=="Database"'),
             visible_when='kind=="Database"')
         return VGroup(filter_grp)
 
     def traits_view(self):
-
-
         # results_grp = VSplit(self._results_group(),
         #                      VGroup(self._query_group(), filter_grp))
         grp = VSplit(self._results_group(),
                      VGroup(self._query_group(),
-                     self._filter_grp()))
+                            self._filter_grp()))
         # button_grp = HGroup(icon_button_editor('append_button', 'add',
         #                                        visible_when='append_enabled', tooltip='Append'),
         #                     icon_button_editor('replace_button', 'arrow_refresh',
         #                                        visible_when='replace_enabled', tooltip='Replace'))
         # v = View(VGroup(button_grp, results_grp))
         # v = View(VGroup(results_grp))
-        v=View(grp)
+        v = View(grp)
         return v
 
 #============= EOF =============================================

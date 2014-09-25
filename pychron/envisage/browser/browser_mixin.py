@@ -82,7 +82,6 @@ class BrowserMixin(ColumnSorterMixin):
     sample_filter = Str
 
     date_configure_button = Button
-    filter_by_button = Button
 
     selected_projects = Any
     selected_samples = Any
@@ -128,6 +127,8 @@ class BrowserMixin(ColumnSorterMixin):
     _analysis_include_types = List(['Unknown'])
     available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail', 'Monitors'])
 
+    sample_view_active = Bool(True)
+
     def dump_browser(self):
         self.dump_browser_selection()
         self.dump_browser_options()
@@ -135,7 +136,8 @@ class BrowserMixin(ColumnSorterMixin):
     # persistence
     def dump_browser_options(self):
         d = {'include_monitors': self.include_monitors,
-             'include_unknowns': self.include_unknowns}
+             'include_unknowns': self.include_unknowns,
+             'sample_view_active': self.sample_view_active}
         p = os.path.join(paths.hidden_dir, 'browser_options')
         with open(p, 'w') as fp:
             pickle.dump(d, fp)
@@ -155,7 +157,8 @@ class BrowserMixin(ColumnSorterMixin):
     def load_browser_date_bounds(self):
         obj = self._get_browser_persistence()
         if obj:
-            for attr in ('use_low_post', 'use_high_post', 'use_named_date_range', 'named_date_range',
+            for attr in ('use_low_post', 'use_high_post',
+                         'use_named_date_range', 'named_date_range',
                          'low_post', 'high_post', ):
                 sd = obj.get(attr)
                 if sd:
@@ -463,10 +466,9 @@ class BrowserMixin(ColumnSorterMixin):
         ds = DateSelector(model=self)
         info = ds.edit_traits()
         if info.result:
-            self._filter_by_button_fired()
+            self._filter_by_hook()
 
-    def _filter_by_button_fired(self):
-        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
+    def _filter_by_hook(self):
         s = self._retrieve_samples()
         self.set_samples(s, [])
 
