@@ -1891,6 +1891,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_items(gen_UserTable, **kw)
 
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, **kw):
+
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
             if 'filters' in kw:
@@ -1929,14 +1930,30 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_flux_monitors(self, **kw):
         return self._retrieve_items(flux_MonitorTable, **kw)
 
-    def get_irradiations_join_analysis(self, order_func='desc', **kw):
-        joins=kw.get('joins') or []
-        joins.extend((irrad_LevelTable, irrad_PositionTable,
-                      gen_LabTable, meas_AnalysisTable))
+    def get_labnumbers_join_analysis(self, **kw):
+        joins = kw['joins']
 
-        kw['joins']=joins
+        if not joins:
+            joins.append(meas_AnalysisTable)
+        elif irrad_IrradiationTable in joins:
+            joins.extend([j for j in [irrad_LevelTable, irrad_PositionTable, meas_AnalysisTable] if not j in joins])
+
+        return self.get_labnumbers(
+            order=gen_LabTable.identifier.desc(),
+            distinct_=gen_LabTable.identifier,
+            **kw)
+
+    def get_irradiations_join_analysis(self, order_func='desc', **kw):
+        # joins=kw.get('joins') or []
+        # print joins
+        # # joins.append(meas_AnalysisTable)
+        # joins.insert(0, meas_AnalysisTable)
+        # joins.reverse()
+        kw['joins'] = [irrad_LevelTable,irrad_PositionTable,gen_LabTable,meas_AnalysisTable]
+
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
+                                    distinct_=irrad_IrradiationTable.name,
                                     **kw)
     def get_irradiations(self, names=None, order_func='desc', **kw):
         """

@@ -179,6 +179,7 @@ class Query(HasTraits):
             elif c == 'yesterday':
                 ret = today - timedelta(days=1)
         else:
+            c=c.replace('/','-')
             if c.count('-') == 2:
                 y = c.split('-')[-1]
                 y = 'y' if len(y) == 2 else 'Y'
@@ -200,11 +201,11 @@ class Query(HasTraits):
         criterion = self.criterion
         comp = self.comparator
         comp = self._convert_comparator(comp)
-        c = criterion.replace('/', '-')
-        if c in ('this month', 'yesterday', 'this week'):
-            return self._named_date_query(q, attr, comp, c)
+        # c = criterion.replace('/', '-')
+        if criterion in ('this month', 'yesterday', 'this week'):
+            return self._named_date_query(q, attr, comp, criterion)
         else:
-            d, fmt = self._convert_named_date(c, comp)
+            d, fmt = self._convert_named_date(criterion, comp)
             if comp == 'between':
                 d = (d, datetime.strptime(self.rcriterion, fmt))
             else:
@@ -279,35 +280,50 @@ class Query(HasTraits):
             cs = ys + ['this month', 'yesterday', 'this week']
         else:
             kw = {}
+            func=None
+            display_name = 'name'
+            def extract(ci, _):
+                return ci[0]
+
             if param =='irradiation':
                 funcname='get_irradiations_join_analysis'
+                func=extract
+            elif param =='labnumber':
+                funcname = 'get_labnumbers_join_analysis'
+                display_name='idenfifier'
+                func=extract
+            elif param == 'aliquot':
+                    display_name = 'aliquot'
+            elif param == 'step':
+                display_name = 'step'
             else:
                 funcname = 'get_{}s'.format(param)
 
             if hasattr(db, funcname):
-                display_name = 'name'
                 if param == 'labnumber':
                     display_name = 'identifier'
-                elif param == 'aliquot':
-                    display_name = 'aliquot'
-                elif param == 'step':
-                    display_name = 'step'
 
                 cj = self._cumulate_joins()
                 cf = self._cumulate_filters()
                 cs = getattr(db, funcname)(joins=cj,
                                            filters=cf,
+                                           # distinct_=True,
                                            debug_query=True,
                                            **kw)
-                cs = list(set([getattr(ci, display_name) for ci in cs]))
+                if func is None:
+                    func=getattr
+                # cs = list(set([getattr(ci, display_name) for ci in cs]))
+                cs = [func(ci, display_name) for ci in cs]
                 # cs.sort()
                 cs = map(str, cs)
         return cs
 
     def _cumulate_joins(self):
-        if self.parent_parameters:
+        ps = self.parent_parameters#+[self.parameter]
+        if ps:
             tjs = []
-            for pi in self.parent_parameters:
+
+            for pi in ps:
                 if pi in self.selector.lookup:
                     js = self.selector.lookup[pi][0]
                     for ji in js:
@@ -316,11 +332,14 @@ class Query(HasTraits):
             return tjs
 
     def _cumulate_filters(self):
-        if self.parent_parameters:
+        ps = self.parent_parameters#+[self.parameter]
+        pc = self.parent_comparators#+[self.comparator]
+        pr = self.parent_criterions#+[self.criterion]
+        if ps:
             tfs = []
-            for pi, co, ci in zip(self.parent_parameters,
-                                  self.parent_comparators,
-                                  self.parent_criterions):
+            for pi, co, ci in zip(ps,
+                                  pc,
+                                  pr):
 
                 co=self._convert_comparator(co)
                 if pi=='Run Date/Time':

@@ -145,9 +145,6 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
         return self._query_factory(**kw)
 
     def add_query(self, parent_query, parameter, comparator, criterion, add=True):
-        print parent_query.parent_parameters + [parameter]
-        print parent_query.parent_criterions + [criterion]
-
         q = self._query_factory(
             parent_parameters=parent_query.parent_parameters + [parameter],
             parent_criterions=parent_query.parent_criterions + [criterion],

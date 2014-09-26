@@ -17,7 +17,7 @@
 #=============enthought library imports=======================
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 #=============standard library imports ========================
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError
@@ -385,6 +385,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         joins=None,
                         filters=None,
                         limit=None, order=None,
+                        distinct_ =False,
                         reraise=False,
                         debug_query=False):
 
@@ -397,7 +398,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             #         print 'get items', sess, self.session_factory
             #         sess = self.get_session()
             #    if sess is not None:
-            q = sess.query(table)
+            if distinct_:
+                if isinstance(distinct_, bool):
+                    q = sess.query(distinct(table))
+                else:
+                    q = sess.query(distinct(distinct_))
+            else:
+                q = sess.query(table)
 
             if joins:
                 try:
