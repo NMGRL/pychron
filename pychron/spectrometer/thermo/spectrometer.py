@@ -222,7 +222,8 @@ class Spectrometer(SpectrometerDevice):
             d.load_deflection_coefficients()
 
     def finish_loading(self):
-        self.name = self.microcontroller.name
+        if self.microcontroller:
+            self.name = self.microcontroller.name
 
         self.magnet.finish_loading()
 
@@ -258,14 +259,17 @@ class Spectrometer(SpectrometerDevice):
     #===============================================================================
     # signals
     #===============================================================================
-    def get_intensities(self, tagged=True):
-        keys, signals = None, None
-        if self.microcontroller:
-            if self.microcontroller.simulation:
-                from numpy.random import random
+    def _get_simulation_data(self):
+        from numpy.random import random
+        signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
+        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        return keys,signals
 
-                signals = [1, 100, 3, 0.01, 0.01, 0.01] + random(6)
-                keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+    def get_intensities(self, tagged=True):
+
+        if self.microcontroller:
+            if not self.microcontroller.simulation:
+                keys, signals = self._get_simulation_data()
             else:
                 datastr = self.microcontroller.ask('GetData', verbose=False)
                 keys = []
@@ -282,9 +286,12 @@ class Spectrometer(SpectrometerDevice):
 
                     signals = map(float, signals)
 
-        for k, v in zip(keys, signals):
-            det = self.get_detector(k)
-            det.set_intensity(v)
+            for k, v in zip(keys, signals):
+                det = self.get_detector(k)
+                det.set_intensity(v)
+
+        else:
+            keys, signals = self._get_simulation_data()
 
         return keys, signals
 
