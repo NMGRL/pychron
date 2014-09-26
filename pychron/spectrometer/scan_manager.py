@@ -434,7 +434,7 @@ class ScanManager(Manager):
                           ytitle='Signal',
                           scale=self.graph_scale,
                           bgcolor='whitesmoke',
-                          zoom=True)
+                          zoom=False)
 
         plot.x_grid.visible = False
 
