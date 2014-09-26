@@ -17,12 +17,13 @@
 #=============enthought library imports=======================
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 #=============standard library imports ========================
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError
 import os
 #=============local library imports  ==========================
+from pychron.database.core.query import compile_query
 
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
@@ -388,7 +389,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
     def _retrieve_items(self, table,
                         joins=None,
                         filters=None,
-                        limit=None, order=None, reraise=False):
+                        limit=None, order=None,
+                        distinct_ =False,
+                        reraise=False,
+                        debug_query=False):
 
         sess = self.sess
         if sess is None:
@@ -399,7 +403,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             #         print 'get items', sess, self.session_factory
             #         sess = self.get_session()
             #    if sess is not None:
-            q = sess.query(table)
+            if distinct_:
+                if isinstance(distinct_, bool):
+                    q = sess.query(distinct(table))
+                else:
+                    q = sess.query(distinct(distinct_))
+            else:
+                q = sess.query(table)
 
             if joins:
                 try:
@@ -419,6 +429,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             if limit is not None:
                 q = q.limit(limit)
+
+            if debug_query:
+                self.debug(compile_query(q))
 
             r = self._query_all(q, reraise)
             return r

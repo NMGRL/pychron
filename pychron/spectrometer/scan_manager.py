@@ -18,7 +18,7 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    HasTraits, Range, Float
+    HasTraits, Range, Float, Str
 #============= standard library imports ========================
 import random
 import os
@@ -33,6 +33,7 @@ from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
+from pychron.spectrometer.spectrometer_scan_graph import SpectrometerScanGraph
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
@@ -79,6 +80,11 @@ class ScanManager(Manager):
                                  height=22,
                                  width=45)
 
+    snapshot_button = Button
+    snapshot_output = Enum('png','pdf')
+
+    add_visual_marker_button = Button('Add Visual Marker')
+    marker_text = Str
     add_marker_button = Button('Add Marker')
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)
@@ -361,6 +367,16 @@ class ScanManager(Manager):
             self._start_recording()
             self._recording = True
 
+    def _snapshot_button_fired(self):
+        self.debug('snapshot button fired')
+        self.graph.save()
+
+    def _add_visual_marker_button_fired(self):
+        self.graph.add_visual_marker()
+
+    def _marker_text_changed(self, new):
+        self.graph.marker_text= new
+
     def _add_marker_button_fired(self):
         xs = self.graph.plots[0].data.get_data('x0')
 
@@ -406,7 +422,9 @@ class ScanManager(Manager):
         return Timer(self.integration_time * mult, func)
 
     def _graph_factory(self):
-        g = TimeSeriesStreamGraph(container_dict=dict(bgcolor='lightgray',
+        # g = TimeSeriesStreamGraph(container_dict=dict(bgcolor='lightgray',
+        #                                               padding=5))
+        g = SpectrometerScanGraph(container_dict=dict(bgcolor='lightgray',
                                                       padding=5))
 
         n = self.graph_scan_width * 60

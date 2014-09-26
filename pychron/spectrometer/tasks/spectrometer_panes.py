@@ -110,6 +110,9 @@ class ControlsPane(TraitsDockPane):
                 icon_button_editor('add_marker_button',
                                    'flag',
                                    enabled_when='_recording')),
+            icon_button_editor('snapshot_button','camera'),
+            HGroup(UItem('add_visual_marker_button'),
+                   Item('marker_text')),
             label='Graph')
 
         control_grp = Group(

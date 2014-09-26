@@ -1417,7 +1417,7 @@ class Graph(Viewable, ContextMenuMixin):
                 self.status_text = 'Image Saved: %s' % path
 
         if path is not None:
-            if type_ == 'pdf':
+            if type_ == 'pdf' or path.endswith('.pdf'):
                 self._render_to_pdf(filename=path)
             else:
                 # auto add an extension to the filename if not present
@@ -1453,8 +1453,9 @@ class Graph(Viewable, ContextMenuMixin):
         from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 
         if filename:
-            if not filename.endswith('.pdf'):
-                filename += '.pdf'
+            # if not filename.endswith('.pdf'):
+            #     filename += '.pdf'
+            filename=add_extension(filename, ext='.pdf')
 
         gc = PdfPlotGraphicsContext(filename=filename,
                                     pdf_canvas=canvas,
