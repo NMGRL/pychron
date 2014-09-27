@@ -33,19 +33,24 @@ class MarkerLabel(Label):
     component_height = 100
     x = Float
     y= Float
+    vertical = False
 
     def draw(self, gc, component_height):
         if not self.text:
-            self.text = '     '
+            self.text = ''
 
         if self.bgcolor != "transparent":
             gc.set_fill_color(self.bgcolor_)
 
         #draw tag border
-        ox = self.x + self.xoffset
         with gc:
-            gc.translate_ctm(ox, self.y)
-            self._draw_tag_border(gc)
+            if self.vertical:
+                self.rotate_angle=90
+                width, height = self.get_bounding_box(gc)
+                gc.translate_ctm(self.x, self.zero_y_vert-35-height)
+            else:
+                gc.translate_ctm(self.x+self.xoffset, self.y)
+                self._draw_tag_border(gc)
             super(MarkerLabel, self).draw(gc)
 
         with gc:

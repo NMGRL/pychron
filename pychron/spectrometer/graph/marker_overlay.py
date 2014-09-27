@@ -27,26 +27,35 @@ class MarkerOverlay(AbstractOverlay):
     labels = List
     _cached_labels = List
     indicator_height = 10
-
+    use_vertical_markers = False
     @on_trait_change('_cached_labels:[text, visible]')
     def _handle_text_change(self):
         self.request_redraw()
 
-    def add_marker(self, x, y, text, bgcolor='white'):
+    def add_marker(self, x, y, text, bgcolor='white', vertical_marker=False):
         m = MarkerLabel(data_x=self.component.index_mapper.map_data(x),
                         indicator_height=self.indicator_height,
                         zero_y=self.component.y - self.indicator_height / 2.0,
+                        zero_y_vert = self.component.padding_bottom,
                         bgcolor=bgcolor,
-                        x=x,
-                        y=y, text=text)
+                        x=x, y=y, text=text,
+                        vertical=vertical_marker)
         self.labels.append(m)
         self._layout_needed = True
+        self.do_layout()
+
         return m
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.clip_to_rect(other_component.x, other_component.y - self.indicator_height / 2.0,
-                            other_component.width, other_component.height + self.indicator_height)
+            h = other_component.height + self.indicator_height
+            y = other_component.y - self.indicator_height / 2.0
+            if self.use_vertical_markers:
+                h = other_component.height+self.indicator_height+other_component.padding_bottom
+                y = other_component.y - other_component.padding_bottom
+
+            gc.clip_to_rect(other_component.x, y,
+                            other_component.width, h)
 
             # self._load_cached_labels()
             self._draw_labels(gc)

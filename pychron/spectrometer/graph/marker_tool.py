@@ -27,7 +27,7 @@ class MarkerTool(BaseTool):
     text = ''
 
     marker_added = Event
-
+    use_vertical_markers =False
     def hittest(self, event):
         tol = 10
         for label in self.overlay.labels:
@@ -54,13 +54,14 @@ class MarkerTool(BaseTool):
             event.window.set_pointer('arrow')
 
     def normal_left_dclick(self, event):
-        m = self.overlay.add_marker(event.x, event.y, self.text)
+        m = self.overlay.add_marker(event.x, event.y, self.text,
+                                    vertical_marker=self.use_vertical_markers)
         l = self.underlay.add_marker_line(event.x)
 
         m.on_trait_change(l.set_visible, 'visible')
         m.on_trait_change(l.set_x, 'x')
 
-        self.component.invalidate_and_redraw()
         self.marker_added = m
+        self.component.invalidate_and_redraw()
 
 # ============= EOF =============================================

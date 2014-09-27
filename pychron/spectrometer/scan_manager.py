@@ -88,6 +88,7 @@ class ScanManager(Manager):
     marker_text = Str
     add_marker_button = Button('Add Marker')
     clear_all_markers_button = Button
+    use_vertical_markers = Bool
 
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)
@@ -99,7 +100,7 @@ class ScanManager(Manager):
     queue = None
     timer = None
 
-    use_log_events = Bool(True)
+    use_log_events = Bool
     _log_events_enabled = False
     _valve_event_list = List
 
@@ -140,6 +141,7 @@ class ScanManager(Manager):
         pref_id = 'pychron.spectrometer'
         bind_preference(self, 'use_detector_safety', '{}.use_detector_safety'.format(pref_id))
         bind_preference(self, 'use_log_events', '{}.use_log_events'.format(pref_id))
+        bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
 
     def setup_scan(self):
         self.graph = self._graph_factory()
@@ -473,10 +475,15 @@ class ScanManager(Manager):
         # g = TimeSeriesStreamGraph(container_dict=dict(bgcolor='lightgray',
         #                                               padding=5))
         g = SpectrometerScanGraph(container_dict=dict(bgcolor='lightgray',
-                                                      padding=5))
+                                                      padding=5),
+                                  use_vertical_markers = self.use_vertical_markers)
 
         n = self.graph_scan_width * 60
-        plot = g.new_plot(padding=[55, 5, 5, 50],
+        bottom_pad = 50
+        if self.use_vertical_markers:
+            bottom_pad = 120
+
+        plot = g.new_plot(padding=[55, 5, 5, bottom_pad],
                           data_limit=n,
                           xtitle='Time',
                           ytitle='Signal',

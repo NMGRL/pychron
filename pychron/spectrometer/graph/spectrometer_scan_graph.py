@@ -28,6 +28,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     marker_text = Str
     visual_marker_counter = 0
     markers = List
+    use_vertical_markers = False
 
     def _x_limits_changed_changed(self):
         self.invalidate_markers()
@@ -58,7 +59,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
                         self.visual_marker_counter = -1
                         y = p.y2 - 20
 
-                    m = t.add_marker(x, y, text, bgcolor)
+                    m = t.add_marker(x, y, text, bgcolor, vertical_marker=self.use_vertical_markers)
                     self.visual_marker_counter += 1
                     self.markers.append(m)
                     for u in p.underlays:
@@ -71,10 +72,11 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     def new_plot(self, *args, **kw):
         p = super(SpectrometerScanGraph, self).new_plot(*args, **kw)
 
-        mo = MarkerOverlay(component=p)
+        mo = MarkerOverlay(component=p, use_vertical_markers=self.use_vertical_markers)
         mu = MarkerLineOverlay(component=p)
 
-        mt = MarkerTool(component=p, overlay=mo, underlay=mu)
+        mt = MarkerTool(component=p, overlay=mo, underlay=mu,
+                        use_vertical_markers=self.use_vertical_markers)
         mt.on_trait_change(self._update_markers, 'marker_added')
 
         p.tools.append(mt)
