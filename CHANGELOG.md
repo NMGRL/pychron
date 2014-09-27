@@ -38,4 +38,6 @@ CHANGELOG
 * added snapshot view to recall
 * added fontsize control to recall
 * added task switching
-* added time view tow browser
+* added time view to browser
+* added ability to add event markers to spectrometer scan graph
+* added snapshot to spectrometer scan
