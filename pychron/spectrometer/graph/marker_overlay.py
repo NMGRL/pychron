@@ -32,14 +32,16 @@ class MarkerOverlay(AbstractOverlay):
     def _handle_text_change(self):
         self.request_redraw()
 
-    def add_marker(self, x, y, text, bgcolor='white', vertical_marker=False):
+    def add_marker(self, x, y, text, bgcolor='white',
+                   vertical_marker=False, **kw):
         m = MarkerLabel(data_x=self.component.index_mapper.map_data(x),
+                        data_y=self.component.value_mapper.map_data(y),
                         indicator_height=self.indicator_height,
                         zero_y=self.component.y - self.indicator_height / 2.0,
                         zero_y_vert = self.component.padding_bottom,
                         bgcolor=bgcolor,
                         x=x, y=y, text=text,
-                        vertical=vertical_marker)
+                        vertical=vertical_marker, **kw)
         self.labels.append(m)
         self._layout_needed = True
         self.do_layout()

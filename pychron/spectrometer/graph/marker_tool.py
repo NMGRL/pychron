@@ -16,18 +16,21 @@
 
 # ============= enthought library imports =======================
 from enable.base_tool import BaseTool
-from traits.trait_types import Event
+from traits.trait_types import Event, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class MarkerTool(BaseTool):
+    label_with_intensity = Bool(True)
+
     overlay = None
     underlay = None
     text = ''
 
     marker_added = Event
     use_vertical_markers =False
+
     def hittest(self, event):
         tol = 10
         for label in self.overlay.labels:
@@ -38,14 +41,19 @@ class MarkerTool(BaseTool):
         self.token = token = self.hittest(event)
         if token:
             self.event_state = 'select'
+            token.horizontal_line_visible=True
         else:
             self.event_state = 'normal'
 
     def select_mouse_move(self, event):
-        self.token.y = event.y
+        y=event.y
+        self.token.y = y
+        self.token.data_y = self.component.value_mapper.map_data(y)
 
     def select_left_up(self, event):
         self.event_state = 'normal'
+        self.token.horizontal_line_visible=False
+        self.component.request_redraw()
 
     def normal_mouse_move(self, event):
         if self.hittest(event):
@@ -54,8 +62,15 @@ class MarkerTool(BaseTool):
             event.window.set_pointer('arrow')
 
     def normal_left_dclick(self, event):
-        m = self.overlay.add_marker(event.x, event.y, self.text,
-                                    vertical_marker=self.use_vertical_markers)
+        x,y=event.x, event.y
+        text =self.text
+        # if self.label_with_intensity:
+        #     text = '{:0.4f}'.format(self.component.value_mapper.map_data(y))
+
+        m = self.overlay.add_marker(x, y, text,
+                                    vertical_marker=self.use_vertical_markers,
+                                    label_with_intensity=self.label_with_intensity)
+
         l = self.underlay.add_marker_line(event.x)
 
         m.on_trait_change(l.set_visible, 'visible')

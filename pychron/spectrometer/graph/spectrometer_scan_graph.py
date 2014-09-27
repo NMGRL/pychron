@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Str, on_trait_change
+from traits.api import List, Str, on_trait_change, Button, Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
@@ -29,6 +29,16 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     visual_marker_counter = 0
     markers = List
     use_vertical_markers = False
+
+    add_visual_marker_button = Button('Add Visual Marker')
+    marker_text = Str
+    marker_tool = Instance(MarkerTool)
+
+    def _add_visual_marker_button_fired(self):
+        self.add_visual_marker()
+
+    def _marker_text_changed(self, new):
+        self.graph.marker_text = new
 
     def _x_limits_changed_changed(self):
         self.invalidate_markers()
@@ -78,7 +88,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
         mt = MarkerTool(component=p, overlay=mo, underlay=mu,
                         use_vertical_markers=self.use_vertical_markers)
         mt.on_trait_change(self._update_markers, 'marker_added')
-
+        self.marker_tool = mt
         p.tools.append(mt)
         p.overlays.append(mo)
         p.underlays.append(mu)

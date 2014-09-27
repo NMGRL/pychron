@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from chaco.label import Label
 from kiva import FILL
-from traits.trait_types import Bool, Float
+from traits.trait_types import Bool, Float, Str
+from traits.traits import Property
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -32,8 +33,23 @@ class MarkerLabel(Label):
     visible = Bool(True)
     component_height = 100
     x = Float
-    y= Float
+    y = Float
+    data_y = Float
     vertical = False
+    horizontal_line_visible = False
+    label_with_intensity = False
+
+    text = Property(depends_on='_text, label_with_intensity')
+    _text = Str
+
+    def _set_text(self, text):
+        self._text =text
+
+    def _get_text(self):
+        if self.label_with_intensity:
+            return '{:0.4f}'.format(self.data_y)
+        else:
+            return self._text
 
     def draw(self, gc, component_height):
         if not self.text:
@@ -49,13 +65,28 @@ class MarkerLabel(Label):
                 width, height = self.get_bounding_box(gc)
                 gc.translate_ctm(self.x, self.zero_y_vert-35-height)
             else:
+                if self.horizontal_line_visible:
+                    self._draw_horizontal_line(gc)
+
                 gc.translate_ctm(self.x+self.xoffset, self.y)
                 self._draw_tag_border(gc)
+
             super(MarkerLabel, self).draw(gc)
 
         with gc:
             gc.translate_ctm(self.x - self.indicator_width / 2.0, self.zero_y)
             self._draw_index_indicator(gc, component_height)
+
+    def _draw_horizontal_line(self, gc):
+        with gc:
+            # print self.x, self.y
+            gc.set_stroke_color((0,0,0,1))
+            gc.set_line_width(2)
+            oy = 7 if self.text else 4
+            y=self.y+oy
+            gc.move_to(0, y)
+            gc.line_to(self.x, y)
+            gc.stroke_path()
 
     def _draw_index_indicator(self, gc, component_height):
         # gc.set_fill_color((1, 0, 0, 1))

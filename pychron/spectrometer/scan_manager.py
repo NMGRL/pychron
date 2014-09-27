@@ -18,7 +18,7 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    HasTraits, Range, Float, Str
+    HasTraits, Range, Float
 #============= standard library imports ========================
 import random
 import os
@@ -84,8 +84,8 @@ class ScanManager(Manager):
     snapshot_button = Button
     snapshot_output = Enum('png', 'pdf')
 
-    add_visual_marker_button = Button('Add Visual Marker')
-    marker_text = Str
+    # add_visual_marker_button = Button('Add Visual Marker')
+    # marker_text = Str
     add_marker_button = Button('Add Marker')
     clear_all_markers_button = Button
     use_vertical_markers = Bool
@@ -421,11 +421,12 @@ class ScanManager(Manager):
         self.debug('snapshot button fired')
         self.graph.save()
 
-    def _add_visual_marker_button_fired(self):
-        self.graph.add_visual_marker()
-
-    def _marker_text_changed(self, new):
-        self.graph.marker_text = new
+    # def _add_visual_marker_button_fired(self):
+    #     if self.marker_label_with_intensity:
+    #     self.graph.add_visual_marker()
+    #
+    # def _marker_text_changed(self, new):
+    #     self.graph.marker_text = new
 
     def _add_marker_button_fired(self):
         xs = self.graph.plots[0].data.get_data('x0')

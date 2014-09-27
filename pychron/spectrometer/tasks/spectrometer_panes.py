@@ -101,11 +101,15 @@ class ControlsPane(TraitsDockPane):
         source_grp = UItem('source', style='custom')
 
         cols = [ObjectColumn(name='text', label='Text',
-                             width=0.65,),
+                             width=0.40,),
                 ObjectColumn(name='data_x',
                              format='%0.1f',
                              width = 0.22,
                              label='Time(s)', editable=False),
+                ObjectColumn(name='data_y',
+                             format='%0.4f',
+                             width = 0.22,
+                             label='Intensity', editable=False),
                 CheckboxColumn(name='visible', width=0.12)]
 
         graph_cntrl_grp = VGroup(
@@ -125,8 +129,12 @@ class ControlsPane(TraitsDockPane):
                 show_border=True, label='Snapshot', ),
             VGroup(HGroup(icon_button_editor('clear_all_markers_button', 'delete',
                                              tooltip='Remove all markers'),
-                          icon_button_editor('add_visual_marker_button', 'add'),
-                          Item('marker_text', label='Text')),
+                          icon_button_editor('object.graph.add_visual_marker_button', 'add'),
+                          Item('object.graph.marker_text', label='Text'),
+                          Item('object.graph.marker_tool.label_with_intensity',
+                               tooltip='Label marker with isotopic intensity',
+                               label='Intensity')),
+
                    UItem('object.graph.markers', editor=TableEditor(columns=cols,
                                                                     selection_mode='rows',
                                                                     sortable=False,
