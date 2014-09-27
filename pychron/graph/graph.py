@@ -15,12 +15,11 @@
 #===============================================================================
 
 #=============enthought library imports=======================
-import os
 
 from chaco.scales.time_scale import CalendarScaleSystem
 from chaco.scales_tick_generator import ScalesTickGenerator
 from traits.api import Instance, Any, Bool, \
-    List, Str, Property, Dict, Callable
+    List, Str, Property, Dict, Callable, Event
 from traitsui.api import View, Item
 from enable.component_editor import ComponentEditor
 from chaco.api import OverlayPlotContainer, \
@@ -34,6 +33,7 @@ from pyface.timer.api import do_after as do_after_timer
 
 
 #=============standard library imports ========================
+import os
 # import numpy as np
 from numpy import array, hstack, Inf
 import csv
@@ -144,7 +144,7 @@ class Graph(Viewable, ContextMenuMixin):
     #    ui = Any
 
     close_func = Callable
-
+    x_limits_changed = Event
 
     def __init__(self, *args, **kw):
         """
@@ -641,7 +641,8 @@ class Graph(Viewable, ContextMenuMixin):
         """
         #         invoke_in_main_thread(self._set_limits,
         #                               min_, max_, 'index', plotid, pad, **kw)
-        self._set_limits(min_, max_, 'index', plotid, pad, **kw)
+        if self._set_limits(min_, max_, 'index', plotid, pad, **kw):
+            self.x_limits_changed =True
 
     def set_x_tracking(self, track, plotid=0):
         '''
@@ -1639,7 +1640,9 @@ class Graph(Viewable, ContextMenuMixin):
                     if pad_style in ('symmetric', 'lower'):
                         mi -= pad
 
+        change=False
         if mi is not None:
+            change = ra.low!=mi
             if isinstance(mi, (int, float)):
                 if mi < ra.high:
                     ra.low = mi
@@ -1647,17 +1650,18 @@ class Graph(Viewable, ContextMenuMixin):
                 ra.low = mi
 
         if ma is not None:
+            change = change or ra.high!=ma
             if isinstance(ma, (int, float)):
                 if ma > ra.low:
                     ra.high = ma
             else:
                 ra.high = ma
 
-        self.redraw(force=force)
+        if change:
+            self.redraw(force=force)
+        return change
 
     def _get_selected_plotid(self):
-        '''
-        '''
         r = 0
         if self.selected_plot is not None:
             try:

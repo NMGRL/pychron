@@ -22,6 +22,7 @@ from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn, TableColumn
 from pychron.envisage.tasks.pane_helpers import spacer, icon_button_editor
 
@@ -99,6 +100,10 @@ class ControlsPane(TraitsDockPane):
         rise_grp = UItem('rise_rate', style='custom')
         source_grp = UItem('source', style='custom')
 
+        cols = [ObjectColumn(name='text', label='Message'),
+                ObjectColumn(name='data_x', label='Time(s)', editable=False),
+                CheckboxColumn(name='visible')]
+
         graph_cntrl_grp = VGroup(
             Item('graph_scan_width', label='Scan Width (mins)'),
             Item('graph_scale', label='Scale'),
@@ -107,12 +112,18 @@ class ControlsPane(TraitsDockPane):
             Item('graph_ymin', label='Min', format_str='%0.3f'),
             HGroup(
                 UItem('record_button'),
-                icon_button_editor('add_marker_button',
-                                   'flag',
-                                   enabled_when='_recording')),
-            icon_button_editor('snapshot_button','camera'),
-            HGroup(UItem('add_visual_marker_button'),
-                   Item('marker_text')),
+                icon_button_editor('add_marker_button','flag',
+                                   enabled_when='_recording'),
+                show_border=True,
+                label='Record Scan'),
+            HGroup(
+                icon_button_editor('snapshot_button','camera'),
+                show_border=True, label='Snapshot',),
+            VGroup(HGroup(icon_button_editor('add_visual_marker_button', 'add'),
+                   Item('marker_text', label='Text')),
+                   UItem('object.graph.markers', editor=TableEditor(columns=cols, sortable=False,
+                                                                    deletable=True)),
+                   show_border=True, label='Markers'),
             label='Graph')
 
         control_grp = Group(
