@@ -96,6 +96,9 @@ class ScanManager(Manager):
     queue = None
     timer = None
 
+    use_log_events = Bool(True)
+    _log_events_enabled = False
+
     def stop_scan(self):
         self.dump_settings()
         self._stop_timer()
@@ -132,6 +135,7 @@ class ScanManager(Manager):
 
         # force position update
         self._set_position()
+        self._log_events_enabled =True
 
     def load_settings(self):
         self.info('load scan settings')
@@ -184,6 +188,11 @@ class ScanManager(Manager):
         self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
+    def add_spec_event_marker(self, msg, bgcolor='white'):
+        if self._log_events_enabled:
+            self.debug('add spec event marker. {}'.format(msg))
+            self.graph.add_visual_marker(msg, bgcolor)
+
     #private
     def _update_graph_limits(self, name, new):
         if 'high' in name:
@@ -203,7 +212,13 @@ class ScanManager(Manager):
             if not iso in self.isotopes:
                 iso = NULL_STR
 
-            self.trait_set(isotope=iso, trait_change_notify=False)
+            if self.use_log_events:
+                if iso ==NULL_STR:
+                    self.add_spec_event_marker('Magnet DAC={}'.format(new), bgcolor='red')
+                else:
+                    self.add_spec_event_marker('Magnet Iso={}({:0.5f})'.format(iso, self.magnet.dac))
+
+            self.trait_setq(isotope=iso)
 
     def _update(self, data):
         keys, signals = data
@@ -433,7 +448,7 @@ class ScanManager(Manager):
                           xtitle='Time',
                           ytitle='Signal',
                           scale=self.graph_scale,
-                          bgcolor='whitesmoke',
+                          bgcolor='lightgoldenrodyellow',
                           zoom=False)
 
         plot.x_grid.visible = False

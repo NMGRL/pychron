@@ -49,6 +49,9 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     def _factory_ion_optics(self):
         return self.ion_optics_manager
 
+    def _factory_scan_manager(self):
+        return self.scan_manager
+
     def _tasks_default(self):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
@@ -72,7 +75,11 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
             protocol=IonOpticsManager,
             factory=self._factory_ion_optics)
 
-        return [so, so1]
+        so2 = self.service_offer_factory(
+            protocol=ScanManager,
+            factory=self._factory_scan_manager)
+
+        return [so, so1, so2]
 
     def _managers_default(self):
         """
