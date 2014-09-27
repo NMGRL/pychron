@@ -32,6 +32,7 @@ class SpectrometerPreferences(BasePreferencesHelper):
     use_db_mftable_archive = Bool
     confirmation_threshold_mass = Int
     use_detector_safety = Bool
+    use_log_events = Bool
 
 
 class SpectrometerPreferencesPane(PreferencesPane):
@@ -58,6 +59,8 @@ class SpectrometerPreferencesPane(PreferencesPane):
                                label='Detector Safety',
                                tooltip='Abort magnet moves '
                                        'if move will place an intensity greater than X on the current detector'),
+                          Item('use_log_events',label='Event Logging',
+                               tooltip='Display events such as valve open/close, magnet moves on Scan graph'),
                           label='Scan',
                           show_border=True)
 

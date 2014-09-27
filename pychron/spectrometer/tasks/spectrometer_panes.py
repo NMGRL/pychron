@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,9 +100,13 @@ class ControlsPane(TraitsDockPane):
         rise_grp = UItem('rise_rate', style='custom')
         source_grp = UItem('source', style='custom')
 
-        cols = [ObjectColumn(name='text', label='Message'),
-                ObjectColumn(name='data_x', label='Time(s)', editable=False),
-                CheckboxColumn(name='visible')]
+        cols = [ObjectColumn(name='text', label='Text',
+                             width=0.65,),
+                ObjectColumn(name='data_x',
+                             format='%0.1f',
+                             width = 0.22,
+                             label='Time(s)', editable=False),
+                CheckboxColumn(name='visible', width=0.12)]
 
         graph_cntrl_grp = VGroup(
             Item('graph_scan_width', label='Scan Width (mins)'),
@@ -112,16 +116,20 @@ class ControlsPane(TraitsDockPane):
             Item('graph_ymin', label='Min', format_str='%0.3f'),
             HGroup(
                 UItem('record_button'),
-                icon_button_editor('add_marker_button','flag',
+                icon_button_editor('add_marker_button', 'flag',
                                    enabled_when='_recording'),
                 show_border=True,
                 label='Record Scan'),
             HGroup(
-                icon_button_editor('snapshot_button','camera'),
-                show_border=True, label='Snapshot',),
-            VGroup(HGroup(icon_button_editor('add_visual_marker_button', 'add'),
-                   Item('marker_text', label='Text')),
-                   UItem('object.graph.markers', editor=TableEditor(columns=cols, sortable=False,
+                icon_button_editor('snapshot_button', 'camera'),
+                show_border=True, label='Snapshot', ),
+            VGroup(HGroup(icon_button_editor('clear_all_markers_button', 'delete',
+                                             tooltip='Remove all markers'),
+                          icon_button_editor('add_visual_marker_button', 'add'),
+                          Item('marker_text', label='Text')),
+                   UItem('object.graph.markers', editor=TableEditor(columns=cols,
+                                                                    selection_mode='rows',
+                                                                    sortable=False,
                                                                     deletable=True)),
                    show_border=True, label='Markers'),
             label='Graph')

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,12 +28,13 @@ from numpy import Inf
 from threading import Thread
 from Queue import Queue
 #============= local library imports  ==========================
+import yaml
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon
 from pychron.managers.manager import Manager
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
-from pychron.spectrometer.spectrometer_scan_graph import SpectrometerScanGraph
+from pychron.spectrometer.graph.spectrometer_scan_graph import SpectrometerScanGraph
 from pychron.spectrometer.thermo.detector import Detector
 from pychron.spectrometer.jobs.magnet_scan import MagnetScan
 from pychron.spectrometer.jobs.rise_rate import RiseRate
@@ -70,7 +71,7 @@ class ScanManager(Manager):
     graph_ymax = Property(Float, depends_on='_graph_ymax')
     _graph_ymin = Float
     _graph_ymax = Float
-    graph_scan_width = Float  # in minutes
+    graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
 
     # record_button = Event
     record_button = ToggleButton(image_on=icon('media-record'),
@@ -81,11 +82,13 @@ class ScanManager(Manager):
                                  width=45)
 
     snapshot_button = Button
-    snapshot_output = Enum('png','pdf')
+    snapshot_output = Enum('png', 'pdf')
 
     add_visual_marker_button = Button('Add Visual Marker')
     marker_text = Str
     add_marker_button = Button('Add Marker')
+    clear_all_markers_button = Button
+
     record_label = Property(depends_on='_recording')
     _recording = Bool(False)
     record_data_manager = Any
@@ -98,6 +101,7 @@ class ScanManager(Manager):
 
     use_log_events = Bool(True)
     _log_events_enabled = False
+    _valve_event_list = List
 
     def stop_scan(self):
         self.dump_settings()
@@ -112,11 +116,30 @@ class ScanManager(Manager):
 
     def activate(self):
         self.bind_preferences()
+
+        self.load_event_marker_config()
         self.setup_scan()
+
+    def load_event_marker_config(self):
+        if self.use_log_events:
+            p = os.path.join(paths.spectrometer_dir, 'scan.yaml')
+            if not os.path.isfile(p):
+                if self.confirmation_dialog('No scan.yaml file found. '
+                                            'Required to configure which valves trigger adding a marker.\n'
+                                            'Would you like to add a blank scan.yaml file?'):
+                    with open(p, 'w') as fp:
+                        yaml.dump({'valves': []}, fp,
+                                  default_flow_style=False)
+
+            if os.path.isfile(p):
+                with open(p, 'r') as fp:
+                    yd = yaml.load(fp)
+                    self._valve_event_list = yd['valves']
 
     def bind_preferences(self):
         pref_id = 'pychron.spectrometer'
         bind_preference(self, 'use_detector_safety', '{}.use_detector_safety'.format(pref_id))
+        bind_preference(self, 'use_log_events', '{}.use_log_events'.format(pref_id))
 
     def setup_scan(self):
         self.graph = self._graph_factory()
@@ -135,7 +158,7 @@ class ScanManager(Manager):
 
         # force position update
         self._set_position()
-        self._log_events_enabled =True
+        self._log_events_enabled = True
 
     def load_settings(self):
         self.info('load scan settings')
@@ -188,8 +211,13 @@ class ScanManager(Manager):
         self.graph.set_scan_delay(self.integration_time)
         self.timer = self._timer_factory()
 
-    def add_spec_event_marker(self, msg, bgcolor='white'):
-        if self._log_events_enabled:
+    def add_spec_event_marker(self, msg, mode=None, extra=None, bgcolor='white'):
+        if self.use_log_events and self._log_events_enabled:
+            if mode == 'valve' and self._valve_event_list:
+                # check valve name is configured to be displayed
+                if not extra in self._valve_event_list:
+                    return
+
             self.debug('add spec event marker. {}'.format(msg))
             self.graph.add_visual_marker(msg, bgcolor)
 
@@ -213,7 +241,7 @@ class ScanManager(Manager):
                 iso = NULL_STR
 
             if self.use_log_events:
-                if iso ==NULL_STR:
+                if iso == NULL_STR:
                     self.add_spec_event_marker('Magnet DAC={}'.format(new), bgcolor='red')
                 else:
                     self.add_spec_event_marker('Magnet Iso={}({:0.5f})'.format(iso, self.magnet.dac))
@@ -281,20 +309,21 @@ class ScanManager(Manager):
 
         """
         if self.use_detector_safety and self.detector:
-            threshold=self.detector.protection_threshold
+            threshold = self.detector.protection_threshold
             if threshold:
                 for di in self.detectors:
                     print di, di.isotope
 
                 #find detector that the desired isotope is being measured on
                 det = next((di for di in self.detectors
-                            if di.isotope==self.isotope), None)
+                            if di.isotope == self.isotope), None)
                 if det:
                     #check that the intensity is less than threshold
-                    abort = det.intensity>threshold
+                    abort = det.intensity > threshold
                     if abort:
                         if not self.confirmation_dialog('Are you sure you want to make this move.\n'
-                                                    'This will place {} fA on {}'.format(det.intensity, self.detector)):
+                                                        'This will place {} fA on {}'.format(det.intensity,
+                                                                                             self.detector)):
 
                             self.debug('aborting magnet move {} intensity {} > {}'.format(det, det.intensity,
                                                                                           threshold))
@@ -314,6 +343,7 @@ class ScanManager(Manager):
     #===============================================================================
     # handlers
     #===============================================================================
+
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
 
@@ -345,7 +375,7 @@ class ScanManager(Manager):
                     if abs(mw - mass) > 0.1:
                         self.isotope = NULL_STR
                     else:
-                        mass =self.isotope
+                        mass = self.isotope
 
                 self.info('set position {} on {}'.format(mass, self.detector))
 
@@ -374,6 +404,9 @@ class ScanManager(Manager):
         g.data_limits[0] = 1.8 * mins
         g.scan_widths[0] = mins
 
+    def _clear_all_markers_button_fired(self):
+        self.graph.clear_markers()
+
     def _record_button_fired(self):
         if self._recording:
             self._stop_recording()
@@ -390,7 +423,7 @@ class ScanManager(Manager):
         self.graph.add_visual_marker()
 
     def _marker_text_changed(self, new):
-        self.graph.marker_text= new
+        self.graph.marker_text = new
 
     def _add_marker_button_fired(self):
         xs = self.graph.plots[0].data.get_data('x0')
@@ -531,6 +564,7 @@ class ScanManager(Manager):
                 'graph_ymax',
                 'graph_y_auto',
                 'graph_scan_width']
+
     #===============================================================================
     # defaults
     #===============================================================================
@@ -609,7 +643,7 @@ if __name__ == '__main__':
         spectrometer=DummySpectrometer(detectors=detectors))
     #    sm.load_detectors()
     sm.configure_traits()
-#============= EOF =============================================
+    #============= EOF =============================================
     # def _check_detector_protection1(self, prev):
     #     """
     #         used when detector changes
@@ -623,7 +657,7 @@ if __name__ == '__main__':
     #         return True if magnet move should be aborted
     #     """
     #     return self._check_detector_protection(prev, False)
-#    def _graph_ymin_auto_changed(self, new):
+    #    def _graph_ymin_auto_changed(self, new):
     #        p = self.graph.plots[0]
     #        if new:
     #            p.value_range.low_setting = 'auto'

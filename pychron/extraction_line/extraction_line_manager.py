@@ -375,11 +375,14 @@ class ExtractionLineManager(Manager):
         # private
         #===============================================================================
 
-    def _log_spec_event(self, name, mode, action):
+    def _log_spec_event(self, name, action):
         sm = self.application.get_service('pychron.spectrometer.scan_manager.ScanManager')
         if sm:
             color = 0x98FF98 if action=='open' else 0xFF9A9A
-            sm.add_spec_event_marker('{} ({})'.format(name, action), bgcolor=color)
+            sm.add_spec_event_marker('{} ({})'.format(name, action),
+                                     mode='valve',
+                                     extra=name,
+                                     bgcolor=color)
 
     def _enable_valve(self, description, state):
         if self.valve_manager:
@@ -411,7 +414,7 @@ class ExtractionLineManager(Manager):
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
-                self._log_spec_event(name, mode, action)
+                self._log_spec_event(name, action)
 
                 vm.actuate_children(name, action, mode)
                 ld = self.link_valve_actuation_dict
