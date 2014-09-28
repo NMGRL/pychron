@@ -25,7 +25,6 @@ import time
 from threading import Event
 #============= local library imports  ==========================
 from spectrometer_task import SpectrometerTask
-from pychron.globals import globalv
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
@@ -69,17 +68,15 @@ class MagnetScan(SpectrometerTask):
     verbose = False
 
     def _scan_dac(self, values):
-
         if self.spectrometer.simulation:
-            self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
-            #self._peak_generator= multi_peak_generator(values)
+            # self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
+            self._peak_generator= multi_peak_generator(values)
 
         gen = (vi for vi in values)
         evt = Event()
         intensities = []
-        mag = self.spectrometer.magnet
 
-        invoke_in_main_thread(self._iter_dac, mag, gen.next(),
+        invoke_in_main_thread(self._iter_dac, gen.next(),
                               gen, evt, intensities)
 
         while not evt.isSet():
@@ -87,14 +84,14 @@ class MagnetScan(SpectrometerTask):
 
         return True
 
-    def _iter_dac(self, mag, di, gen, evt, intensities):
-
+    def _iter_dac(self, di, gen, evt, intensities):
+        # self.debug('iter dac {}'.format(di))
+        mag = self.spectrometer.magnet
         mag.set_dac(di, verbose=self.verbose)
 
         d = self._magnet_step_hook()
 
         self._graph_hook(di, d)
-
         intensities.append(d)
 
         try:
@@ -104,7 +101,7 @@ class MagnetScan(SpectrometerTask):
 
         if di is not None and self.isAlive():
             p=int(self.integration_time*1000*0.9)
-            do_after(p, self._iter_dac, mag, di, gen, evt, intensities)
+            do_after(p, self._iter_dac, di, gen, evt, intensities)
         else:
             evt.set()
 
@@ -112,7 +109,6 @@ class MagnetScan(SpectrometerTask):
         """
             add and scale scans
         """
-
         def set_data(k, v):
             plot.data.set_data(k, v)
 
@@ -165,21 +161,21 @@ class MagnetScan(SpectrometerTask):
         intensity = spec.get_intensity(ds)
 
         # debug
-        if globalv.experiment_debug:
-            from numpy import array, random, ones
+        # if globalv.experiment_debug:
+        from numpy import array, ones
 
-            v = self._peak_generator.next()
-            v = array([v])
+        v = self._peak_generator.next()
+        v = array([v])
 
-            r = ones(len(ds))
-            r = r * v
-            if len(r) > 1:
-                r[1] *= 0.5
-                if len(r) > 2:
-                    r[2] *= 0.1
+        r = ones(len(ds))
+        r = r * v
+        if len(r) > 1:
+            r[1] *= 0.5
+            if len(r) > 2:
+                r[2] *= 0.1
 
-            intensity = r
-
+        intensity = r
+        # intensity=[random.random()]
         return intensity
 
     def _execute(self):
@@ -239,7 +235,6 @@ class MagnetScan(SpectrometerTask):
             if di == -1:
                 sm, em = em, sm
             values = self._calc_step_values(sm, em, stm)
-
             if not self._scan_dac(values):
                 return
 
