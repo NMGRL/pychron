@@ -37,6 +37,7 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     # ##positioning
     #===============================================================================
     def set_dac(self, v, verbose=False):
+        self.debug('setting dac {}'.format(v))
         micro = self.microcontroller
         unprotect = False
         unblank=False
@@ -69,9 +70,11 @@ class ArgusMagnet(BaseMagnet, SpectrometerDevice):
                         micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
                 if unblank:
                     micro.ask('BlankBeam False', verbose=verbose)
+
         change = v != self._dac
-        self._dac = v
-        self.dac_changed = True
+        if change:
+            self._dac = v
+            self.dac_changed = True
         return change
 
     @get_float

@@ -104,6 +104,11 @@ class ScanManager(Manager):
     _log_events_enabled = False
     _valve_event_list = List
 
+
+    def prepare_destroy(self):
+        self.stop_scan()
+        self._log_events_enabled=False
+
     def stop_scan(self):
         self.dump_settings()
         self._stop_timer()
@@ -234,6 +239,7 @@ class ScanManager(Manager):
         self.graph.set_series_visiblity(new, series=obj.name)
 
     def _update_magnet(self, obj, name, old, new):
+        # print obj, name, old, new
         if new:
             # covnert dac into a mass
             # convert mass to isotope
@@ -244,9 +250,10 @@ class ScanManager(Manager):
 
             if self.use_log_events:
                 if iso == NULL_STR:
-                    self.add_spec_event_marker('Magnet DAC={}'.format(new), bgcolor='red')
+                    self.add_spec_event_marker('DAC={:0.5f}'.format(self.magnet.dac), bgcolor='red')
                 else:
-                    self.add_spec_event_marker('Magnet Iso={}({:0.5f})'.format(iso, self.magnet.dac))
+                    self.add_spec_event_marker('{}:{} ({:0.5f})'.format(self.detector,
+                                                                              iso, self.magnet.dac))
 
             self.trait_setq(isotope=iso)
 

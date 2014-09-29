@@ -15,13 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, VSplitter
-from traits.api import HasTraits, Any, Instance
-from traitsui.api import View, Item
+from pyface.tasks.task_layout import TaskLayout, PaneItem, VSplitter
+from traits.api import Any, Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.tasks.base_task import BaseManagerTask
+from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.envisage.tasks.editor_task import BaseEditorTask
 from pychron.spectrometer.mass_cal.mass_calibrator import MassCalibratorScan
 from pychron.spectrometer.tasks.mass_cal.editor import MassCalibrationEditor
@@ -40,11 +39,12 @@ class MassCalibrationTask(BaseEditorTask):
             self.scanner.graph = self.active_editor.graph
             self.scanner.setup_graph()
 
-
     def _scanner_default(self):
         s = MassCalibratorScan(spectrometer=self.spectrometer_manager.spectrometer,
-                               db=self.spectrometer_manager.db
-        )
+                               integration_time=0.065536,
+                               db=IsotopeDatabaseManager())
+        s.verbose=True
+
         return s
 
     def activated(self):
@@ -54,16 +54,12 @@ class MassCalibrationTask(BaseEditorTask):
     def create_dock_panes(self):
         return [MassCalibrationTablePane(model=self),
                 MassCalibrationsPane(model=self),
-                MassCalibrationControlPane(model=self)
-        ]
+                MassCalibrationControlPane(model=self)]
 
     def _default_layout_default(self):
         return TaskLayout(left=VSplitter(
             PaneItem('pychron.mass_calibration.cal_points'),
-            PaneItem('pychron.mass_calibration.controls'),
-        )
-
-        )
+            PaneItem('pychron.mass_calibration.controls')))
 
 
 #============= EOF =============================================
