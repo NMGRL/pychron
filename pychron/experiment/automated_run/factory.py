@@ -25,6 +25,7 @@ import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -37,7 +38,7 @@ from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension
+from pychron.core.helpers.filetools import list_directory, add_extension, fileiter
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -237,6 +238,12 @@ class AutomatedRunFactory(Loggable):
     new_truncation_button = Button
 
     #===========================================================================
+    # blocks
+    #===========================================================================
+    run_block = Str('RunBlock')
+    run_blocks = List
+
+    #===========================================================================
     # frequency
     #===========================================================================
     frequency = Int
@@ -273,9 +280,16 @@ class AutomatedRunFactory(Loggable):
     _default_attrs = ('collection_time_zero_offset',)
     _no_clear_labnumber = False
 
+    def setup_files(self):
+        self.load_templates()
+        self.load_run_blocks()
+        self.remote_patterns = self._get_patterns(self.extract_device)
+        self.load_patterns()
+
     def activate(self):
         self.load_truncations()
         self.load_defaults()
+        self.load_run_blocks()
 
     def deactivate(self):
         self.dump_defaults()
@@ -301,6 +315,9 @@ class AutomatedRunFactory(Loggable):
             return False
 
         return True
+
+    def load_run_blocks(self):
+        self.run_blocks = self._get_run_blocks()
 
     def load_templates(self):
         self.templates = self._get_templates()
@@ -387,8 +404,10 @@ class AutomatedRunFactory(Loggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
-
-        arvs, freq = self._new_runs(exp_queue, positions=positions)
+        if self.run_block not in ('RunBlock',LINE_STR):
+            arvs, freq = self._new_run_block()
+        else:
+            arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
@@ -405,6 +424,12 @@ class AutomatedRunFactory(Loggable):
     # private
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
+    def _new_run_block(self):
+        p=os.path.join(paths.run_block_dir, self.run_block)
+        block = ExperimentBlock(extract_device = self.extract_device,
+                                mass_spectrometer=self.mass_spectrometer)
+        return block.extract_runs(p), self.frequency
+
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
@@ -893,6 +918,11 @@ class AutomatedRunFactory(Loggable):
 
     def _get_edit_template_label(self):
         return 'Edit' if self._use_template() else 'New'
+
+    def _get_run_blocks(self):
+        p=paths.run_block_dir
+        blocks = list_directory(p,'.txt')
+        return ['RunBlock',LINE_STR]+blocks
 
     def _get_patterns(self):
         p = paths.pattern_dir

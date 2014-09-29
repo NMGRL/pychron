@@ -21,6 +21,7 @@ import yaml
 import os
 import datetime
 #============= local library imports  ==========================
+from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
@@ -43,14 +44,12 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-class BaseExperimentQueue(Loggable):
+class BaseExperimentQueue(ExperimentBlock):
     selected = List
 
     automated_runs = List
     cleaned_automated_runs = Property(depends_on='automated_runs[]')
 
-    mass_spectrometer = String
-    extract_device = String
     username = String
     email = String
 
@@ -158,6 +157,21 @@ class BaseExperimentQueue(Loggable):
 
             return runs
 
+    def _setup_params(self, params):
+        params['extract_device'] = self.extract_device
+        params['tray'] = self.tray
+        params['username'] = self.username
+        params['email'] = self.email
+
+    def _extract_meta(self, f):
+        meta, metastr = extract_meta(f)
+
+        if meta is None:
+            self.warning_dialog('Invalid experiment set file. Poorly formatted metadata {}'.format(metastr))
+            return
+        self._load_meta(meta)
+        return meta
+
     #===============================================================================
     # persistence
     #===============================================================================
@@ -165,7 +179,10 @@ class BaseExperimentQueue(Loggable):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses
         self.stats.delay_before_analyses = self.delay_before_analyses
-        aruns = self._load_runs(txt)
+
+        line_gen=self._get_line_generator(txt)
+        meta = self._extract_meta(line_gen)
+        aruns = self._load_runs(line_gen, meta)
         if aruns:
             # set frequency_added_counter
             self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
@@ -226,69 +243,6 @@ class BaseExperimentQueue(Loggable):
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
-
-    def _load_runs(self, txt):
-        aruns = []
-        f = (l for l in txt.split('\n'))
-        meta, metastr = extract_meta(f)
-
-        if meta is None:
-            self.warning_dialog('Invalid experiment set file. Poorly formatted metadata {}'.format(metastr))
-            return
-
-        self._load_meta(meta)
-
-        delim = '\t'
-
-        header = map(str.strip, f.next().split(delim))
-
-        pklass = RunParser
-        if self.extract_device == 'Fusions UV':
-            pklass = UVRunParser
-        parser = pklass()
-        for linenum, line in enumerate(f):
-            skip = False
-            line = line.rstrip()
-
-            # load commented runs but flag as skipped
-            if line.startswith('##'):
-                continue
-            if line.startswith('#'):
-                skip = True
-                line = line[1:]
-
-            if not line:
-                continue
-
-            try:
-
-                script_info, params = parser.parse(header, line, meta)
-                params['mass_spectrometer'] = self.mass_spectrometer
-                params['extract_device'] = self.extract_device
-                params['tray'] = self.tray
-                params['username'] = self.username
-                params['email'] = self.email
-                params['skip'] = skip
-
-                klass = AutomatedRunSpec
-                if self.extract_device == 'Fusions UV':
-                    klass = UVAutomatedRunSpec
-
-                arun = klass()
-                arun.load(script_info, params)
-                #arun = self._automated_run_factory(script_info, params, klass)
-
-                aruns.append(arun)
-
-            except Exception, e:
-                import traceback
-
-                print traceback.print_exc()
-                self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
-
-                return
-
-        return aruns
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -397,12 +351,9 @@ load: {}
         for ai in self.automated_runs:
             ai.mass_spectrometer = ms
 
-            #===============================================================================
-
-            # property get/set
-
-            #===============================================================================
-
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_cleaned_automated_runs(self):
         return [ci for ci in self.automated_runs
                 if not ci.skip and ci.state == 'not run']

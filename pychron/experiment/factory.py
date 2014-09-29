@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -121,8 +121,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
         q = self.queue
         new_runs, freq = rf.new_runs(q, positions=positions,
-                                                   auto_increment_position=self.auto_increment_position,
-                                                   auto_increment_id=self.auto_increment_id)
+                                     auto_increment_position=self.auto_increment_position,
+                                     auto_increment_id=self.auto_increment_id)
 
         aruns = q.automated_runs
         if q.selected:
@@ -199,11 +199,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
         #         self.run_factory.update_templates_needed = True
-
-        self.run_factory.load_templates()
-
-        self.run_factory.remote_patterns = self._get_patterns(ed)
-        self.run_factory.load_patterns()
+        self.run_factory.setup_files()
 
         if self.queue:
             self.queue.set_extract_device(ed)
@@ -227,11 +223,13 @@ extract_device, delay_+, tray, username, load_name, email]''')
     #===============================================================================
     def _get_ok_add(self):
         """
-            tol should be a user permission
         """
-        return self._username and \
-               not self._mass_spectrometer in ('', 'Spectrometer', LINE_STR) and \
-               self._labnumber
+        uflag = bool(self._username)
+        msflag = not self._mass_spectrometer in ('', 'Spectrometer',LINE_STR)
+        ret = uflag and msflag
+        if self.run_factory.run_block in ('RunBlock',LINE_STR):
+            ret = ret and self._labnumber
+        return ret
 
     #===============================================================================
     #
@@ -275,7 +273,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.run_factory.db = self.db
 
     def _application_changed(self):
-        self.run_factory.application=self.application
+        self.run_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)

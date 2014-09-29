@@ -71,6 +71,7 @@ class Paths():
     #==============================================================================
     scripts_dir = scripts_dir = None
     experiment_dir = None
+    run_block_dir = None
     generic_experiment_dir = None
     backup_experiment_dir = None
     plugins_dir = None
@@ -223,6 +224,7 @@ class Paths():
         self.fits_dir = join(self.measurement_dir, 'fits')
 
         self.experiment_dir = join(root, 'experiments')
+        self.run_block_dir = join(self.experiment_dir, 'blocks')
         self.generic_experiment_dir = join(self.experiment_dir, 'generic')
         self.backup_experiment_dir = join(self.experiment_dir, 'backup')
         self.hidden_dir = join(root, '.hidden')

@@ -578,16 +578,19 @@ class MeasurementPyScript(ValvePyScript):
             mx.counts
 
         """
-        m = ast.parse(self.text)
         try:
-            yd = yaml.load(ast.get_docstring(m))
-            if yd:
-                mx = MeasurementCTXObject()
-                mx.create(yd)
-                self._ctx['mx'] = mx
+            m = ast.parse(self.text)
+            try:
+                yd = yaml.load(ast.get_docstring(m))
+                if yd:
+                    mx = MeasurementCTXObject()
+                    mx.create(yd)
+                    self._ctx['mx'] = mx
 
-        except yaml.YAMLError, e:
-            self.debug('failed loading docstring context. {}'.format(e))
+            except yaml.YAMLError, e:
+                self.debug('failed loading docstring context. {}'.format(e))
+        except AttributeError:
+            pass
 
     @property
     def truncated(self):

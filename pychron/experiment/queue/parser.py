@@ -23,7 +23,7 @@ from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-    def parse(self, header, line, meta, delim='\t'):
+    def parse(self, header, line, delim='\t'):
         params = dict()
         if not isinstance(line, list):
             line = line.split(delim)
@@ -143,8 +143,8 @@ class RunParser(Loggable):
 
 
 class UVRunParser(RunParser):
-    def parse(self, header, line, meta, delim='\t'):
-        script_info, params = super(UVRunParser, self).parse(header, line, meta, delim)
+    def parse(self, header, line, delim='\t'):
+        script_info, params = super(UVRunParser, self).parse(header, line, delim)
         if not isinstance(line, list):
             line = line.split(delim)
 
