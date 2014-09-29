@@ -15,7 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import os
 from pyface.tasks.task_window_layout import TaskWindowLayout
+import sys
 from traits.api import on_trait_change, Any
 from pyface.action.action import Action
 from pyface.tasks.action.task_action import TaskAction
@@ -30,6 +32,12 @@ from pyface.constant import YES
 # help
 #===============================================================================
 from pychron.envisage.resources import icon
+
+
+class RestartAction(Action):
+    name = 'Restart'
+    def perform(self, event):
+        os.execl(sys.executable, *([sys.executable]+sys.argv))
 
 
 class WebAction(Action):

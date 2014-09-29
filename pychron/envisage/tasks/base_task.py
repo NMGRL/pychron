@@ -34,7 +34,7 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction
+    NoteAction, RestartAction
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
@@ -372,6 +372,7 @@ class BaseTask(Task, Loggable):
             IssueAction(),
             NoteAction(),
             AboutAction(),
+            RestartAction(),
             id='help.menu',
             name='Help')
         return menu
