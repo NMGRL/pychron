@@ -1,3 +1,9 @@
+Database
+-----------------
+
+Analysis Objects
+~~~~~~~~~~~~~~~~~~
+
 IsotopeRecordView used for display in tables and fast creation and access.
 
 IsotopeDatabaseManager.make_analyses(list_of_analyses) used to convert a
