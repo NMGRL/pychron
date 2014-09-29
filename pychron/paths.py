@@ -213,7 +213,7 @@ class Paths():
         # root
         #==============================================================================
         self.scripts_dir = scripts_dir = join(root, 'scripts')
-        #        self.procedures_dir = join(scripts_dir, 'procedures')
+        self.procedures_dir = join(scripts_dir, 'procedures')
         self.measurement_dir = join(scripts_dir, 'measurement')
         self.post_measurement_dir = join(scripts_dir, 'post_measurement')
         self.extraction_dir = join(scripts_dir, 'extraction')

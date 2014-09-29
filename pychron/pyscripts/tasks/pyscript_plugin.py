@@ -30,6 +30,7 @@ from pychron.pyscripts.tasks.visual_el_programmer.actions import OpenVisualELScr
 
 
 class PyScriptPlugin(BaseTaskPlugin):
+    id = 'pychron.pyscript.plugin'
     def _my_task_extensions_default(self):
         def _replace_action():
             return TaskAction(name='Replace',
@@ -68,7 +69,7 @@ class PyScriptPlugin(BaseTaskPlugin):
         return exts
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.pyscript',
+        return [TaskFactory(id='pychron.pyscript.task',
                             name='PyScript',
                             factory=self._task_factory,
                             task_group='experiment',

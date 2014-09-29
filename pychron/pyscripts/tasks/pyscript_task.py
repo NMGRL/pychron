@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ from pychron.execute_mixin import ExecuteMixin
 
 
 class PyScriptTask(EditorTask, ExecuteMixin):
+    id = 'pychron.pyscript.task'
     name = 'PyScript'
     kind = String
     kinds = List(['Extraction', 'Measurement'])
@@ -43,16 +44,16 @@ class PyScriptTask(EditorTask, ExecuteMixin):
     context_editor_pane = Instance(ContextEditorPane)
 
     wildcard = '*.py'
-    _default_extension= '.py'
+    _default_extension = '.py'
 
     auto_detab = Bool(True)
     _current_script = Any
     use_trace = Bool(False)
     trace_delay = Int(50)
 
-    description=String
+    description = String
 
-    tool_bars = [SToolBar(JumpToGosubAction()),]
+    tool_bars = [SToolBar(JumpToGosubAction()), ]
 
     def __init__(self, *args, **kw):
         super(PyScriptTask, self).__init__(*args, **kw)
@@ -69,8 +70,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             mode = man.mode
 
         if mode == 'client':
-#            em = self.extraction_line_manager
+            #            em = self.extraction_line_manager
             from pychron.initialization_parser import InitializationParser
+
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')
             runner = elm.find('runner')
@@ -90,9 +92,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                 kind = kind.text  # if kind else 'udp'
 
             from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner
+
             runner = RemotePyScriptRunner(host, port, kind)
         else:
             from pychron.pyscripts.pyscript_runner import PyScriptRunner
+
             runner = PyScriptRunner()
 
         return runner
@@ -102,43 +106,53 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
         return man
 
-    def _do_execute(self):
+    def execute_script(self, name, root, kind='Extraction'):
+        self._do_execute(name, root, kind)
+
+    def _do_execute(self, name=None, root=None, kind=None, new_thread=True):
+        self._start_execute()
+
         self.debug('do execute')
 
         self._current_script = None
-        ae = self.active_editor
-        if isinstance(ae, ExtractionEditor):
-            root, fn = os.path.split(ae.path)
-            kind = self._extract_kind(ae.path)
 
-            from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-
-            klass = ExtractionPyScript
-            if kind == 'Laser':
-                from pychron.pyscripts.laser_pyscript import LaserPyScript
-
-                klass = LaserPyScript
-
-            script = klass(
-                            application=self.window.application,
-                            root=root,
-                            name=fn,
-                            runner=self._runner)
-
-            if script.bootstrap():
-                script.set_default_context()
-                try:
-                    script.test()
-                except Exception, e:
-                    return
-                self._current_script = script
-                script.setup_context(extract_device='fusions_diode')
-                if self.use_trace:
-                    self.active_editor.trace_delay = self.trace_delay
-
-                t = script.execute(trace=self.use_trace)
+        if name and root and kind:
+            self._execute_extraction(name, root, kind, new_thread)
+        else:
+            ae = self.active_editor
+            if isinstance(ae, ExtractionEditor):
+                root, fn = os.path.split(ae.path)
+                kind = self._extract_kind(ae.path)
+                self._execute_extraction(fn, root, kind, new_thread)
 
         self.executing = False
+
+    def _execute_extraction(self, name, root, kind, new_thread):
+        from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
+        klass = ExtractionPyScript
+        if kind == 'Laser':
+            from pychron.pyscripts.laser_pyscript import LaserPyScript
+
+            klass = LaserPyScript
+
+        script = klass(application=self.window.application,
+                       root=root,
+                       name=add_extension(name, '.py'),
+                       runner=self._runner)
+
+        if script.bootstrap():
+            script.set_default_context()
+            try:
+                script.test()
+            except Exception, e:
+                return
+            self._current_script = script
+            script.setup_context(extract_device='fusions_diode')
+            if self.use_trace:
+                self.active_editor.trace_delay = self.trace_delay
+
+            t = script.execute(trace=self.use_trace, new_thread=new_thread)
 
     def _start_execute(self):
         self.debug('start execute')
@@ -164,17 +178,17 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         self.commands_pane = CommandsPane()
         self.command_editor_pane = CommandEditorPane()
         self.control_pane = ControlPane(model=self)
-        self.script_browser_pane=ScriptBrowserPane()
+        self.script_browser_pane = ScriptBrowserPane()
 
         self.context_editor_pane = ContextEditorPane()
         return [
-                self.commands_pane,
-                self.command_editor_pane,
-                self.control_pane,
-                DescriptionPane(model=self),
-                self.script_browser_pane,
-                self.context_editor_pane,
-                ]
+            self.commands_pane,
+            self.command_editor_pane,
+            self.control_pane,
+            DescriptionPane(model=self),
+            self.script_browser_pane,
+            self.context_editor_pane,
+        ]
 
     def _save_file(self, path):
         self.active_editor.dump(path)
@@ -237,7 +251,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
             self.commands_pane.command_objects = self.active_editor.commands.command_objects
             self.commands_pane.commands = self.active_editor.commands.script_commands
 
-            self.script_browser_pane.root=os.path.dirname(self.active_editor.path)
+            self.script_browser_pane.root = os.path.dirname(self.active_editor.path)
             self.context_editor_pane.editor = self.active_editor.context_editor
 
     @on_trait_change('_current_script:trace_line')
@@ -246,9 +260,9 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     @on_trait_change('script_browser_pane:dclicked')
     def _handle_selected_file(self):
-        new=self.script_browser_pane.selected
+        new = self.script_browser_pane.selected
         self.debug('selected file {}'.format(new))
-        root=self.script_browser_pane.root
+        root = self.script_browser_pane.root
         self._open_pyscipt(new, root)
 
     @on_trait_change('active_editor:selected_gosub')
@@ -256,7 +270,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
         self.debug('selected gosub {}'.format(new))
         if new:
-            root=os.path.dirname(self.active_editor.path)
+            root = os.path.dirname(self.active_editor.path)
             self._open_pyscipt(new, root)
             # self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
 
@@ -268,7 +282,7 @@ class PyScriptTask(EditorTask, ExecuteMixin):
 
     def jump_to_gosub(self):
         root = os.path.dirname(self.active_editor.path)
-        name=self.active_editor.get_active_gosub()
+        name = self.active_editor.get_active_gosub()
         if name:
             self._open_pyscipt(name, root)
 
@@ -278,11 +292,11 @@ class PyScriptTask(EditorTask, ExecuteMixin):
         paths = new.split(':')
 
         for editor in self.editor_area.editors:
-            if editor.name==paths[-1]:
+            if editor.name == paths[-1]:
                 self.activate_editor(editor)
                 break
         else:
-            p=os.path.join(root, *paths)
+            p = os.path.join(root, *paths)
 
             if os.path.isfile(p):
                 self._open_file(p)
@@ -299,12 +313,12 @@ class PyScriptTask(EditorTask, ExecuteMixin):
                                PaneItem('pychron.pyscript.script_browser'),
                                PaneItem('pychron.pyscript.context_editor')),
                         PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
-                      orientation='vertical')
-        bottom=PaneItem('pychron.pyscript.description')
+                        orientation='vertical')
+        bottom = PaneItem('pychron.pyscript.description')
         return TaskLayout(id='pychron.pyscript',
                           left=left,
                           bottom=bottom
-                          )
+        )
 
 
         #============= EOF =============================================
