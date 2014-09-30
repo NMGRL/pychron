@@ -782,7 +782,6 @@ class AnalysisEditTask(BaseBrowserTask):
     # @on_trait_change('analysis_table:[append_event,replace_event]')
     @on_trait_change('analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
-        print new
         if new:
             action, modifiers = new
             if action in ('append', 'replace'):
@@ -795,7 +794,6 @@ class AnalysisEditTask(BaseBrowserTask):
 
                     for it in self.analysis_table.selected:
                         self._recall_item(it, open_copy=open_copy)
-
 
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):

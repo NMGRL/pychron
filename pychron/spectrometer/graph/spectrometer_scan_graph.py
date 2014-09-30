@@ -50,10 +50,12 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
         for o in self.get_marker_overlays():
             o._layout_needed = True
             o.do_layout()
+            o.request_redraw()
 
     def get_marker_overlays(self):
         return [o for p in self.plots
-                for o in p.overlays if isinstance(o, MarkerOverlay)]
+                for layer in (p.underlays, p.overlays)
+                    for o in layer if isinstance(o, (MarkerOverlay, MarkerLineOverlay))]
 
     def add_visual_marker(self, text=None, bgcolor='white'):
         if text is None:

@@ -268,7 +268,7 @@ class Spectrometer(SpectrometerDevice):
     def get_intensities(self, tagged=True):
 
         if self.microcontroller:
-            if not self.microcontroller.simulation:
+            if self.microcontroller.simulation:
                 keys, signals = self._get_simulation_data()
             else:
                 datastr = self.microcontroller.ask('GetData', verbose=False)
