@@ -93,7 +93,7 @@ class BaseColumnParser(HasTraits):
                     print 'exep', e
 
 
-class CSVParser(BaseColumnParser):
+class CSVColumnParser(BaseColumnParser):
     def _load(self, p, header_idx):
         with open(p, 'U') as fp:
             reader = csv.reader(fp)

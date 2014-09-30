@@ -17,9 +17,11 @@
 
 #============= enthought library imports =======================
 from pyface.action.api import Action
+from traits.api import Property
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+from pyface.tasks.action.task_action import TaskAction
 
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
@@ -52,6 +54,29 @@ def get_manager(event, protocol):
 #        manager = app.get_service(SPECTROMETER_PROTOCOL)
 #        manager.peak_center(update_mftable=True)
 #
+
+class ToggleSpectrometerTask(TaskAction):
+    name = Property(depends_on='task')
+
+    def _get_name(self):
+        if self.task:
+            return 'Switch to Scan' if self.task.id=='pychron.spectrometer.scan_inspector' \
+                else 'Switch to Inspector'
+        else:
+            return ''
+
+    def perform(self, event):
+        window = event.task.window
+        if event.task.id=='pychron.spectrometer':
+            tid = 'pychron.spectrometer.scan_inspector'
+        else:
+            tid = 'pychron.spectrometer'
+
+        task = window.application.create_task(tid)
+        window.add_task(task)
+        window.activate_task(task)
+
+
 class SpectrometerParametersAction(Action):
     name = 'Spectrometer Parameters...'
     description = 'View/Set spectrometer parameters'

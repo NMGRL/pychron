@@ -31,12 +31,12 @@ from traitsui.api import View, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.csv.csv_parser import CSVParser
+from pychron.core.csv.csv_parser import CSVColumnParser
 
 
 class DeadTimeModel(HasTraits):
     def load(self, p):
-        cp = CSVParser()
+        cp = CSVColumnParser()
         cp.load(p)
         self._cp = cp
 

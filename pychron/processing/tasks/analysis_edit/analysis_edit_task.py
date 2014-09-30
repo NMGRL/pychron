@@ -568,7 +568,6 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
-
     def _recall_item(self, item, open_copy=False):
         if not self.external_recall_window:
             self.recall(item, open_copy=open_copy)

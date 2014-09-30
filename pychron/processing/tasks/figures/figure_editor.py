@@ -27,7 +27,7 @@ from itertools import groupby
 import os
 #============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
-from pychron.core.csv.csv_parser import CSVParser
+from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.processing.analyses.analysis_group import InterpretedAge
 from pychron.processing.plotters.options.isochron import InverseIsochronOptions
 from pychron.processing.plotters.options.spectrum import SpectrumOptions
@@ -78,7 +78,7 @@ class FigureEditor(GraphEditor):
             if p.endswith('.xls'):
                 self.information_dialog('Plotting Spectra from Excel file not yet implemented')
             else:
-                par = CSVParser()
+                par = CSVColumnParser()
                 par.load(p)
                 self.analyses = self._get_items_from_file(par)
                 self._update_analyses()

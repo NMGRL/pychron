@@ -23,7 +23,6 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.scan_manager import ScanManager
-from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 
 
@@ -34,7 +33,13 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     scan_manager = Any
     ion_optics_manager = Any
 
+    def _inspector_task_factory(self):
+        from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
+        t= ScanInspectorTask()
+        return t
+
     def _mass_cal_task_factory(self):
+        from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
         t = MassCalibrationTask(spectrometer_manager=self.spectrometer_manager)
         return t
 
@@ -61,7 +66,10 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
               TaskFactory(id='pychron.mass_calibration',
                           factory=self._mass_cal_task_factory,
                           name='Mass Calibration',
-                          accelerator='Ctrl+Shift+M')]
+                          accelerator='Ctrl+Shift+M'),
+              TaskFactory(id='pychron.spectrometer.scan_inspector',
+                          factory=self._inspector_task_factory,
+                          name='Scan Inspector')]
         return ts
 
     def _service_offers_default(self):
