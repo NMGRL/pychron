@@ -438,6 +438,10 @@ class ExperimentEditorTask(EditorTask):
 
             self.load_pane.load_name = new
 
+    @on_trait_change('active_editor:queue:refresh_blocks_needed')
+    def _update_blocks(self):
+        self.manager.experiment_factory.run_factory.load_run_blocks()
+
     @on_trait_change('active_editor:queue:update_needed')
     def _update_runs(self, new):
         self.manager.update_info()

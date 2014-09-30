@@ -32,6 +32,9 @@ from pychron.core.helpers.filetools import add_extension
 
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
+    def make_block(self, info, obj):
+        print 'make block', info, obj
+        obj.make_run_block()
 
 
 class ExperimentEditor(BaseTraitsEditor):

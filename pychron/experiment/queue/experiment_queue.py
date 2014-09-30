@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,9 +16,13 @@
 
 #============= enthought library imports =======================
 from itertools import groupby
+import os
 
-from traits.api import Any, on_trait_change, Int, List, Bool, Instance, Property
+from traits.api import Any, on_trait_change, Int, List, Bool,\
+    Instance, Property, Str, HasTraits, Event
+from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
+
 
 #============= standard library imports ========================
 
@@ -31,6 +35,19 @@ from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.experiment.queue.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
+from pychron.paths import paths
+
+
+class NewRunBlockView(HasTraits):
+    name = Str
+
+    def traits_view(self):
+        v = View(Item('name'),
+                 kind='modal',
+                 title='New Run Block',
+                 buttons=['OK', 'Cancel'],
+                 width=200)
+        return v
 
 
 class ExperimentQueue(BaseExperimentQueue):
@@ -47,6 +64,17 @@ class ExperimentQueue(BaseExperimentQueue):
 
     human_error_checker = Instance(HumanErrorChecker, ())
     execution_ratio = Property
+
+    refresh_blocks_needed = Event
+
+    def make_run_block(self):
+        nrbv = NewRunBlockView()
+        info = nrbv.edit_traits()
+        if info.result:
+            p = os.path.join(paths.run_block_dir, '{}.txt'.format(nrbv.name))
+            with open(p, 'w') as fp:
+                self.dump(fp, runs=self.selected, include_meta=False)
+            self.refresh_blocks_needed = True
 
     def move_selected_to_row(self):
         e = MoveToRow()

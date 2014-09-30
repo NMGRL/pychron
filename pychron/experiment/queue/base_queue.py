@@ -24,12 +24,8 @@ import datetime
 from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
-from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.stats import ExperimentStats
 from pychron.paths import paths
-from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.loggable import Loggable
-from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.core.helpers.ctx_managers import no_update
 
 
@@ -93,7 +89,7 @@ class BaseExperimentQueue(ExperimentBlock):
                                    if not ri.frequency_group == self._frequency_group_counter]
             self._frequency_group_counter -= 1
 
-    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False):
+    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False, is_run_block=False):
         """
             runspecs: list of runs
             freq: optional inter
@@ -120,19 +116,24 @@ class BaseExperimentQueue(ExperimentBlock):
                 # n = len(runblock)+ (0 if freq_before_or_after else freq)
                 runs = []
 
-                run = runspecs[0]
-                rtype = run.analysis_type
-                if rtype.startswith('blank'):
-                    incrementable_types = ('unknown', 'air', 'cocktail')
-                elif rtype.startswith('air') or rtype.startswith('cocktail'):
+                if is_run_block:
                     incrementable_types = ('unknown',)
+                else:
+                    run = runspecs[0]
+                    rtype = run.analysis_type
+                    incrementable_types = ('unknown',)
+                    if rtype.startswith('blank'):
+                        incrementable_types = ('unknown', 'air', 'cocktail')
+                    elif rtype.startswith('air') or rtype.startswith('cocktail'):
+                        incrementable_types = ('unknown',)
 
                 for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
                                                              freq_before, freq_after, sidx=sidx))):
-                    run = run.clone_traits()
-                    run.frequency_group = fcnt
-                    runs.append(run)
-                    aruns.insert(idx, run)
+                    for ri in reversed(runspecs):
+                        run = ri.clone_traits()
+                        run.frequency_group = fcnt
+                        runs.append(run)
+                        aruns.insert(idx, run)
 
                     # for i, ai in enumerate(runblock):
                     # if cnt == freq:
@@ -182,7 +183,7 @@ class BaseExperimentQueue(ExperimentBlock):
 
         line_gen=self._get_line_generator(txt)
         meta = self._extract_meta(line_gen)
-        aruns = self._load_runs(line_gen, meta)
+        aruns = self._load_runs(line_gen)
         if aruns:
             # set frequency_added_counter
             self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
@@ -192,10 +193,13 @@ class BaseExperimentQueue(ExperimentBlock):
             self.initialized = True
             return True
 
-    def dump(self, stream):
+    def dump(self, stream, runs=None, include_meta=True):
         header, attrs = self._get_dump_attrs()
-
         writeline = lambda m: stream.write(m + '\n')
+        if include_meta:
+            # write metadata
+            self._meta_dumper(stream)
+            writeline('#' + '=' * 80)
 
         def tab(l, comment=False):
             s = '\t'.join(map(str, l))
@@ -203,12 +207,7 @@ class BaseExperimentQueue(ExperimentBlock):
                 s = '#{}'.format(s)
             writeline(s)
 
-        # write metadata
-        self._meta_dumper(stream)
-        writeline('#' + '=' * 80)
-
         tab(header)
-
         def is_not_null(vi):
             if vi and vi != NULL_STR:
                 try:
@@ -219,7 +218,10 @@ class BaseExperimentQueue(ExperimentBlock):
             else:
                 return False
 
-        for arun in self.automated_runs:
+        if runs is None:
+            runs = self.automated_runs
+
+        for arun in runs:
             vs = arun.to_string_attrs(attrs)
             vals = [v if is_not_null(v) else '' for v in vs]
             tab(vals, comment=arun.skip)

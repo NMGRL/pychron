@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
 from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.core.helpers.filetools import list_directory, add_extension, fileiter
+from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 from pychron.core.ui.gui import invoke_in_main_thread
 
@@ -105,7 +105,7 @@ def increment_position(pos):
 
 def generate_positions(pos):
     for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
-                               PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+                                     PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
     else:
@@ -114,7 +114,7 @@ def generate_positions(pos):
 
 class AutomatedRunFactory(Loggable):
     db = Any
-    datahub=Instance(Datahub)
+    datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
 
@@ -283,7 +283,7 @@ class AutomatedRunFactory(Loggable):
     def setup_files(self):
         self.load_templates()
         self.load_run_blocks()
-        self.remote_patterns = self._get_patterns(self.extract_device)
+        self.remote_patterns = self._get_patterns()
         self.load_patterns()
 
     def activate(self):
@@ -404,7 +404,7 @@ class AutomatedRunFactory(Loggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
-        if self.run_block not in ('RunBlock',LINE_STR):
+        if self.run_block not in ('RunBlock', LINE_STR):
             arvs, freq = self._new_run_block()
         else:
             arvs, freq = self._new_runs(exp_queue, positions=positions)
@@ -425,8 +425,8 @@ class AutomatedRunFactory(Loggable):
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
     def _new_run_block(self):
-        p=os.path.join(paths.run_block_dir, self.run_block)
-        block = ExperimentBlock(extract_device = self.extract_device,
+        p = os.path.join(paths.run_block_dir, self.run_block)
+        block = ExperimentBlock(extract_device=self.extract_device,
                                 mass_spectrometer=self.mass_spectrometer)
         return block.extract_runs(p), self.frequency
 
@@ -760,7 +760,7 @@ class AutomatedRunFactory(Loggable):
 
                     new_script_name = self._remove_file_extension(new_script_name)
                     if labnumber in ('u', 'bu') and \
-                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
+                            not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -920,9 +920,9 @@ class AutomatedRunFactory(Loggable):
         return 'Edit' if self._use_template() else 'New'
 
     def _get_run_blocks(self):
-        p=paths.run_block_dir
-        blocks = list_directory(p,'.txt')
-        return ['RunBlock',LINE_STR]+blocks
+        p = paths.run_block_dir
+        blocks = list_directory(p, '.txt')
+        return ['RunBlock', LINE_STR] + blocks
 
     def _get_patterns(self):
         p = paths.pattern_dir
@@ -1026,15 +1026,16 @@ class AutomatedRunFactory(Loggable):
             MeasurementFitsSelectorView
         from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
         from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
+
         m = MeasurementFitsSelector()
-        sp =self.measurement_script.script_path()
+        sp = self.measurement_script.script_path()
         m.open(sp)
         f = MeasurementFitsSelectorView(model=m)
         info = f.edit_traits(kind='livemodal')
         if info.result:
             #update the default_fits entry in the docstr
             ed = PyScriptEdit()
-            ed.context_editor=MeasurementContextEditor()
+            ed.context_editor = MeasurementContextEditor()
             ed.open_script(sp)
             ed.context_editor.default_fits = str(m.name)
             ed.update_docstr()
@@ -1355,10 +1356,14 @@ post_equilibration_script:name''')
         return self.factory_view_klass(model=self)
 
     def _datahub_default(self):
-        dh=Datahub()
+        dh = Datahub()
         dh.bind_preferences()
         dh.secondary_connect()
         return dh
+
+    @property
+    def run_block_enabled(self):
+        return self.run_block not in ('RunBlock', LINE_STR)
 
 #============= EOF =============================================
 #
