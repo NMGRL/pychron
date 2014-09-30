@@ -16,13 +16,14 @@
 
 #============= enthought library imports =======================
 from traits.api import Instance
+
 from pychron.canvas.canvas2D.base_data_canvas import BaseDataCanvas
 from pychron.canvas.canvas2D.scene.scene import Scene
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 class SceneCanvas(BaseDataCanvas):
     scene = Instance(Scene)
-    _frozen = False
 
     def _scene_changed(self, name, old, new):
 
@@ -31,12 +32,6 @@ class SceneCanvas(BaseDataCanvas):
         if old:
             old.on_trait_change(self.request_redraw,
                                 'layout_needed', remove=True)
-
-    def freeze(self):
-        self._frozen = True
-
-    def thaw(self):
-        self._frozen = False
 
     def clear_all(self):
         if self.scene:
