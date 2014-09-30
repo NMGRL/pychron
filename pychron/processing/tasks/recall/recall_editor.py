@@ -20,7 +20,6 @@ from traitsui.api import View, UItem, InstanceEditor
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.processing.analyses.changes import AnalysisRecord
 
 
 class RecallEditor(BaseTraitsEditor):
@@ -72,22 +71,23 @@ class RecallEditor(BaseTraitsEditor):
                                              obj.id)
     @on_trait_change('analysis_view:main_view:show_iso_evo_needed')
     def handle_show_iso_evo(self, obj):
-        from pychron.graph.regression_graph import RegressionGraph
+        from pychron.graph.stacked_regression_graph import StackedRegressionGraph
         self.manager.load_raw_data(self.model)
-        iso = next((i for i in self.model.isotopes.itervalues() if i.name==obj.name),None)
 
-        g=RegressionGraph()
-        g.new_plot(padding=[60,10,10,40])
-        g.new_series(iso.xs, iso.ys,
-                     fit=iso.fit,
-                     filter_outliers_dict=iso.filter_outliers_dict)
-        g.set_x_limits(min_=0, max_=iso.xs[-1]*1.1)
+        g=StackedRegressionGraph()
+        for ni in obj[::-1]:
+            iso = next((i for i in self.model.isotopes.itervalues() if i.name==ni.name),None)
+            g.new_plot(padding=[60,10,10,40])
+            g.new_series(iso.xs, iso.ys,
+                         fit=iso.fit,
+                         filter_outliers_dict=iso.filter_outliers_dict)
+            g.set_x_limits(min_=0, max_=iso.xs[-1]*1.1)
+            g.set_x_title('Time (s)')
+            g.set_y_title(iso.name)
+
         g.refresh()
-        g.set_x_title('Time (s)')
-        g.set_y_title(iso.name)
-        g.window_title='{} {}'.format(self.name, iso.name)
+        g.window_title='{} {}'.format(self.name, ','.join([i.name for i in obj]))
         self.manager.application.open_view(g)
-
 
     def set_items(self, items):
         self.model = items[0]

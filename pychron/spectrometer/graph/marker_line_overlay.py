@@ -23,14 +23,16 @@ from pychron.spectrometer.graph.marker_line import MarkerLine
 
 
 class MarkerLineOverlay(AbstractOverlay):
+    lines = List
     _cached_lines = List
-
     def add_marker_line(self, x, bgcolor='black'):
         l = MarkerLine(data_x=self.component.index_mapper.map_data(x),
                        x=x,
                        bgcolor=bgcolor)
-        self._cached_lines.append(l)
+        self.lines.append(l)
         self._layout_needed = True
+        self.do_layout()
+
         return l
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
@@ -48,6 +50,7 @@ class MarkerLineOverlay(AbstractOverlay):
     def _do_layout(self):
         if self._layout_needed:
             mapper = self.component.index_mapper
+            self._cached_lines = self.lines[:]
             for ci in self._cached_lines:
                 if ci.visible:
                     ci.x = mapper.map_screen(ci.data_x)

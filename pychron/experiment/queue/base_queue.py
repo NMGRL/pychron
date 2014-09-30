@@ -21,14 +21,11 @@ import yaml
 import os
 import datetime
 #============= local library imports  ==========================
+from pychron.experiment.queue.experiment_block import ExperimentBlock
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR
-from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.stats import ExperimentStats
 from pychron.paths import paths
-from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.loggable import Loggable
-from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.core.helpers.ctx_managers import no_update
 
 
@@ -43,14 +40,12 @@ def extract_meta(line_gen):
     return yaml.load(metastr), metastr
 
 
-class BaseExperimentQueue(Loggable):
+class BaseExperimentQueue(ExperimentBlock):
     selected = List
 
     automated_runs = List
     cleaned_automated_runs = Property(depends_on='automated_runs[]')
 
-    mass_spectrometer = String
-    extract_device = String
     username = String
     email = String
 
@@ -94,12 +89,14 @@ class BaseExperimentQueue(Loggable):
                                    if not ri.frequency_group == self._frequency_group_counter]
             self._frequency_group_counter -= 1
 
-    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False):
+    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False,
+                 is_run_block=False, is_repeat_block=False):
         """
             runspecs: list of runs
             freq: optional inter
             freq_before_or_after: if true add before else add after
         """
+        print runspecs, freq, is_repeat_block
         if not runspecs:
             return
 
@@ -107,12 +104,16 @@ class BaseExperimentQueue(Loggable):
             aruns = self.automated_runs
             #        self._suppress_aliquot_update = True
             if freq:
-                if len(self.selected) > 1:
-                    runblock = self.selected
-                    sidx = aruns.index(runblock[0])
+                runblock = self.automated_runs
+                if is_repeat_block:
+                    idx = aruns.index(self.selected[-1])
+                    sidx = idx+freq
                 else:
-                    runblock = self.automated_runs
-                    sidx = 0
+                    if len(self.selected) > 1:
+                        runblock = self.selected
+                        sidx = aruns.index(runblock[0])
+                    else:
+                        sidx = 0
 
                 self._frequency_group_counter += 1
                 fcnt = self._frequency_group_counter
@@ -120,20 +121,26 @@ class BaseExperimentQueue(Loggable):
                 # cnt = 0
                 # n = len(runblock)+ (0 if freq_before_or_after else freq)
                 runs = []
-
-                run = runspecs[0]
-                rtype = run.analysis_type
-                if rtype.startswith('blank'):
-                    incrementable_types = ('unknown', 'air', 'cocktail')
-                elif rtype.startswith('air') or rtype.startswith('cocktail'):
+                print sidx
+                if is_run_block:
                     incrementable_types = ('unknown',)
+                else:
+                    run = runspecs[0]
+                    rtype = run.analysis_type
+                    incrementable_types = ('unknown',)
+                    if rtype.startswith('blank'):
+                        incrementable_types = ('unknown', 'air', 'cocktail')
+                    elif rtype.startswith('air') or rtype.startswith('cocktail'):
+                        incrementable_types = ('unknown',)
 
                 for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
                                                              freq_before, freq_after, sidx=sidx))):
-                    run = run.clone_traits()
-                    run.frequency_group = fcnt
-                    runs.append(run)
-                    aruns.insert(idx, run)
+                    print idx
+                    for ri in reversed(runspecs):
+                        run = ri.clone_traits()
+                        run.frequency_group = fcnt
+                        runs.append(run)
+                        aruns.insert(idx, run)
 
                     # for i, ai in enumerate(runblock):
                     # if cnt == freq:
@@ -158,6 +165,21 @@ class BaseExperimentQueue(Loggable):
 
             return runs
 
+    def _setup_params(self, params):
+        params['extract_device'] = self.extract_device
+        params['tray'] = self.tray
+        params['username'] = self.username
+        params['email'] = self.email
+
+    def _extract_meta(self, f):
+        meta, metastr = extract_meta(f)
+
+        if meta is None:
+            self.warning_dialog('Invalid experiment set file. Poorly formatted metadata {}'.format(metastr))
+            return
+        self._load_meta(meta)
+        return meta
+
     #===============================================================================
     # persistence
     #===============================================================================
@@ -165,7 +187,10 @@ class BaseExperimentQueue(Loggable):
         self.initialized = False
         self.stats.delay_between_analyses = self.delay_between_analyses
         self.stats.delay_before_analyses = self.delay_before_analyses
-        aruns = self._load_runs(txt)
+
+        line_gen=self._get_line_generator(txt)
+        meta = self._extract_meta(line_gen)
+        aruns = self._load_runs(line_gen)
         if aruns:
             # set frequency_added_counter
             self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
@@ -175,10 +200,13 @@ class BaseExperimentQueue(Loggable):
             self.initialized = True
             return True
 
-    def dump(self, stream):
+    def dump(self, stream, runs=None, include_meta=True):
         header, attrs = self._get_dump_attrs()
-
         writeline = lambda m: stream.write(m + '\n')
+        if include_meta:
+            # write metadata
+            self._meta_dumper(stream)
+            writeline('#' + '=' * 80)
 
         def tab(l, comment=False):
             s = '\t'.join(map(str, l))
@@ -186,12 +214,7 @@ class BaseExperimentQueue(Loggable):
                 s = '#{}'.format(s)
             writeline(s)
 
-        # write metadata
-        self._meta_dumper(stream)
-        writeline('#' + '=' * 80)
-
         tab(header)
-
         def is_not_null(vi):
             if vi and vi != NULL_STR:
                 try:
@@ -202,7 +225,10 @@ class BaseExperimentQueue(Loggable):
             else:
                 return False
 
-        for arun in self.automated_runs:
+        if runs is None:
+            runs = self.automated_runs
+
+        for arun in runs:
             vs = arun.to_string_attrs(attrs)
             vals = [v if is_not_null(v) else '' for v in vs]
             tab(vals, comment=arun.skip)
@@ -226,69 +252,6 @@ class BaseExperimentQueue(Loggable):
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
-
-    def _load_runs(self, txt):
-        aruns = []
-        f = (l for l in txt.split('\n'))
-        meta, metastr = extract_meta(f)
-
-        if meta is None:
-            self.warning_dialog('Invalid experiment set file. Poorly formatted metadata {}'.format(metastr))
-            return
-
-        self._load_meta(meta)
-
-        delim = '\t'
-
-        header = map(str.strip, f.next().split(delim))
-
-        pklass = RunParser
-        if self.extract_device == 'Fusions UV':
-            pklass = UVRunParser
-        parser = pklass()
-        for linenum, line in enumerate(f):
-            skip = False
-            line = line.rstrip()
-
-            # load commented runs but flag as skipped
-            if line.startswith('##'):
-                continue
-            if line.startswith('#'):
-                skip = True
-                line = line[1:]
-
-            if not line:
-                continue
-
-            try:
-
-                script_info, params = parser.parse(header, line, meta)
-                params['mass_spectrometer'] = self.mass_spectrometer
-                params['extract_device'] = self.extract_device
-                params['tray'] = self.tray
-                params['username'] = self.username
-                params['email'] = self.email
-                params['skip'] = skip
-
-                klass = AutomatedRunSpec
-                if self.extract_device == 'Fusions UV':
-                    klass = UVAutomatedRunSpec
-
-                arun = klass()
-                arun.load(script_info, params)
-                #arun = self._automated_run_factory(script_info, params, klass)
-
-                aruns.append(arun)
-
-            except Exception, e:
-                import traceback
-
-                print traceback.print_exc()
-                self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
-
-                return
-
-        return aruns
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -397,12 +360,9 @@ load: {}
         for ai in self.automated_runs:
             ai.mass_spectrometer = ms
 
-            #===============================================================================
-
-            # property get/set
-
-            #===============================================================================
-
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_cleaned_automated_runs(self):
         return [ci for ci in self.automated_runs
                 if not ci.skip and ci.state == 'not run']

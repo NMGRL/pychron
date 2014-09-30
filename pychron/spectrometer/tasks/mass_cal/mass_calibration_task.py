@@ -40,9 +40,13 @@ class MassCalibrationTask(BaseEditorTask):
             self.scanner.setup_graph()
 
     def _scanner_default(self):
-        s = MassCalibratorScan(spectrometer=self.spectrometer_manager.spectrometer,
-                               integration_time=0.065536,
+        spec = self.spectrometer_manager.spectrometer
+
+
+        s = MassCalibratorScan(spectrometer=spec,
                                db=IsotopeDatabaseManager())
+        if spec.simulation:
+            s.integration_time =0.065536
         s.verbose=True
 
         return s

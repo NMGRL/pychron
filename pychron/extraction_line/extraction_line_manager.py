@@ -23,6 +23,7 @@ import time
 from threading import Thread
 from socket import gethostbyname, gethostname
 #=============local library imports  ==========================
+from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.sample_changer import SampleChanger
@@ -42,7 +43,7 @@ from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGr
 # play_macro = None
 
 
-class ExtractionLineManager(Manager):
+class ExtractionLineManager(Manager, Consoleable):
     """
     Manager for interacting with the extraction line
     contains 2 interaction canvases, 2D and 3D
@@ -286,6 +287,9 @@ class ExtractionLineManager(Manager):
             else:
                 self.valve_manager.unlock(name)
 
+            description=self.valve_manager.get_valve_by_name(name).description
+            self.info('Valve-{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
+                      color='blue' if lock else 'black')
             self.update_valve_lock_state(name, lock)
 
     def get_valve_owners(self):
@@ -414,8 +418,10 @@ class ExtractionLineManager(Manager):
 
             result = self._change_valve_state(name, mode, action, **kw)
             if result:
+                description=vm.get_valve_by_name(name).description
                 self._log_spec_event(name, action)
-
+                self.info('Valve-{} ({}) {}'.format(name, description, action),
+                          color='red' if action=='close' else 'green')
                 vm.actuate_children(name, action, mode)
                 ld = self.link_valve_actuation_dict
                 if ld:

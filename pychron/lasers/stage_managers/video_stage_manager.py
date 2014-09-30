@@ -256,6 +256,13 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
+    def get_video_database(self):
+        from pychron.database.adapters.video_adapter import VideoAdapter
+
+        db = VideoAdapter(name=self.parent.dbname,
+                          kind='sqlite')
+        return db
+
     def _upload(self, path):
         if self.use_media_server and self.auto_upload:
             client = self.application.get_service('pychron.media_server.client.MediaClient')

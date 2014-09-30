@@ -15,10 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property,cached_property
+from traits.api import HasTraits, Str, List, Event, Instance, Bool, Any, Property, cached_property
 from traitsui.api import View, UItem, HSplit, VSplit, Handler
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
@@ -30,8 +30,8 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 
 class MainViewHandler(Handler):
     def show_isotope_evolution(self, uiinfo, obj):
-        iso=obj.selected
-        obj.show_iso_evo_needed=iso
+        isos = obj.selected
+        obj.show_iso_evo_needed = isos
 
 
 class MainView(HasTraits):
@@ -59,7 +59,7 @@ class MainView(HasTraits):
     show_intermediate = Bool(True)
 
     selected = Any
-    show_iso_evo_needed=Event
+    show_iso_evo_needed = Event
 
     def __init__(self, analysis=None, *args, **kw):
         super(MainView, self).__init__(*args, **kw)
@@ -377,6 +377,7 @@ class MainView(HasTraits):
                                   drag_enabled=False,
                                   stretch_last_section=False,
                                   editable=False,
+                                  multi_select=True,
                                   selected='selected',
                                   refresh='refresh_needed')
 
@@ -430,8 +431,8 @@ class MainView(HasTraits):
                        UItem('corrected_values',
                              height=200,
                              editor=ceditor))),
-            handler = MainViewHandler()
-            )
+            handler=MainViewHandler()
+        )
         return v
 
 

@@ -289,7 +289,9 @@ class AutomatedRunMixin(object):
         return MenuManager(Action(name='Move to Start', action='move_to_start'),
                            Action(name='Move to End', action='move_to_end'),
                            Action(name='Move to ...', action='move_to_row'),
-                           Action(name='Unselect', action='unselect'))
+                           Action(name='Unselect', action='unselect'),
+                           Action(name='Make Block', action='make_block'),
+                           Action(name='Repeat Block', action='repeat_block'))
 
     def get_row_label(self, section, obj=None):
         return section + 1

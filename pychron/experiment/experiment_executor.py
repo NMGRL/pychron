@@ -15,8 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Event, Button, String, \
-    Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change, Long
+from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change, Long
 # from traitsui.api import View, Item
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
@@ -31,14 +30,13 @@ import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
-from pychron.displays.display import DisplayController
+from pychron.envisage.consoleable import Consoleable
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.external_pipette.protocol import IPipetteManager
 from pychron.initialization_parser import InitializationParser
-from pychron.loggable import Loggable
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
 from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
     RemoteAutomatedRunMonitor
@@ -61,7 +59,7 @@ from pychron.core.ui.preference_binding import bind_preference, color_bind_prefe
 from pychron.wait.wait_group import WaitGroup
 
 
-class ExperimentExecutor(Loggable):
+class ExperimentExecutor(Consoleable):
     experiment_queues = List
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
@@ -98,8 +96,7 @@ class ExperimentExecutor(Loggable):
     #===========================================================================
     #
     #===========================================================================
-    console_display = Instance(DisplayController)
-    console_updated = Event
+
     wait_group = Instance(WaitGroup, ())
     stats = Instance(StatsGroup)
 
@@ -132,7 +129,7 @@ class ExperimentExecutor(Loggable):
     use_auto_save = Bool(True)
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
-    use_message_colormapping = Bool(True)
+
     use_memory_check = Bool(True)
     memory_threshold = Int
 
@@ -167,37 +164,6 @@ class ExperimentExecutor(Loggable):
 
     def get_prev_blanks(self):
         return self._prev_blank_id, self._prev_blanks
-
-    def warning(self, msg, log=True, color=None, *args, **kw):
-
-        super(ExperimentExecutor, self).warning(msg, *args, **kw)
-
-        if color is None:
-            color = 'red'
-
-        msg = msg.upper()
-        if self.console_display:
-            self.console_display.add_text(msg, color=color)
-
-        self.console_updated = '{}|{}'.format(color, msg)
-
-    def info(self, msg, log=True, color=None, *args, **kw):
-        if color is None or not self.use_message_colormapping:
-            color = 'green'
-
-        if self.console_display:
-            self.console_display.add_text(msg, color=color)
-
-        if log:
-            super(ExperimentExecutor, self).info(msg, *args, **kw)
-
-        self.console_updated = '{}|{}'.format(color, msg)
-
-    def info_marker(self, char='=', color=None):
-        if color is None:
-            color = 'green'
-        if self.console_display:
-            self.console_display.add_marker(char, color=color)
 
     def info_heading(self, msg):
         self.info('')
@@ -1357,12 +1323,6 @@ Use Last "blank_{}"= {}
     def _datahub_default(self):
         dh = Datahub()
         return dh
-
-    def _console_display_default(self):
-        return DisplayController(
-            bgcolor='black',
-            default_color='limegreen',
-            max_blocks=100)
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':

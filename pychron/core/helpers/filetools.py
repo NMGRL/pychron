@@ -66,7 +66,7 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
             for yi in gen(gfilter):
                 yield yi
     else:
-        for yi in gen(gfilter):
+        for yi in gen('{}/*'.format(gfilter)):
             yield yi
 
 
