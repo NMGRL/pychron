@@ -89,12 +89,14 @@ class BaseExperimentQueue(ExperimentBlock):
                                    if not ri.frequency_group == self._frequency_group_counter]
             self._frequency_group_counter -= 1
 
-    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False, is_run_block=False):
+    def add_runs(self, runspecs, freq=None, freq_before=True, freq_after=False,
+                 is_run_block=False, is_repeat_block=False):
         """
             runspecs: list of runs
             freq: optional inter
             freq_before_or_after: if true add before else add after
         """
+        print runspecs, freq, is_repeat_block
         if not runspecs:
             return
 
@@ -102,12 +104,16 @@ class BaseExperimentQueue(ExperimentBlock):
             aruns = self.automated_runs
             #        self._suppress_aliquot_update = True
             if freq:
-                if len(self.selected) > 1:
-                    runblock = self.selected
-                    sidx = aruns.index(runblock[0])
+                runblock = self.automated_runs
+                if is_repeat_block:
+                    idx = aruns.index(self.selected[-1])
+                    sidx = idx+freq
                 else:
-                    runblock = self.automated_runs
-                    sidx = 0
+                    if len(self.selected) > 1:
+                        runblock = self.selected
+                        sidx = aruns.index(runblock[0])
+                    else:
+                        sidx = 0
 
                 self._frequency_group_counter += 1
                 fcnt = self._frequency_group_counter
@@ -115,7 +121,7 @@ class BaseExperimentQueue(ExperimentBlock):
                 # cnt = 0
                 # n = len(runblock)+ (0 if freq_before_or_after else freq)
                 runs = []
-
+                print sidx
                 if is_run_block:
                     incrementable_types = ('unknown',)
                 else:
@@ -129,6 +135,7 @@ class BaseExperimentQueue(ExperimentBlock):
 
                 for idx in reversed(list(frequency_index_gen(runblock, freq, incrementable_types,
                                                              freq_before, freq_after, sidx=sidx))):
+                    print idx
                     for ri in reversed(runspecs):
                         run = ri.clone_traits()
                         run.frequency_group = fcnt

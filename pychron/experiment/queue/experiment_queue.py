@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from itertools import groupby
 import os
 
-from traits.api import Any, on_trait_change, Int, List, Bool,\
+from traits.api import Any, on_trait_change, Int, List, Bool, \
     Instance, Property, Str, HasTraits, Event
 from traitsui.api import View, Item
 from pyface.timer.do_later import do_later
+
 
 
 #============= standard library imports ========================
@@ -36,6 +37,18 @@ from pychron.experiment.queue.experiment_queue_action import ExperimentQueueActi
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
+
+
+class RepeatRunBlockView(HasTraits):
+    value = Int
+
+    def traits_view(self):
+        v = View(Item('value', label='Repeat'),
+                 kind='modal',
+                 title='Repeat Selected Run Block',
+                 width=300,
+                 buttons=['OK', 'Cancel'])
+        return v
 
 
 class NewRunBlockView(HasTraits):
@@ -66,6 +79,12 @@ class ExperimentQueue(BaseExperimentQueue):
     execution_ratio = Property
 
     refresh_blocks_needed = Event
+
+    def repeat_block(self):
+        rbv = RepeatRunBlockView()
+        info = rbv.edit_traits()
+        if info.result:
+            self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
 
     def make_run_block(self):
         nrbv = NewRunBlockView()
