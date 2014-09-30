@@ -101,9 +101,6 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
                 if isinstance(t, MarkerTool):
                     t.text = new
 
-                    # def add_marker(self, x, y):
-                    #     print x, y
-
     def _update_markers(self, new):
         self.markers.append(new)
 
@@ -115,7 +112,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     @on_trait_change('markers[]')
     def _handle_markers_change(self, obj, name, old, new):
         if len(new)<len(old):
-            clear = not new
+            clear = not self.markers
 
             def _get_underlay(pp):
                 for u in p.underlays:
@@ -123,14 +120,14 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
                         return u
 
             def _remove_lays(o, un):
-                for j, ci in enumerate(o._cached_labels):
-                    if ci not in new:
-                        o._cached_labels.pop(j)
-                        un._cached_lines.pop(j)
+                for j, ci in enumerate(o.labels):
+                    if ci not in self.markers:
+                        o.labels.pop(j)
+                        un.lines.pop(j)
 
             def _clear_lays(o, un):
-                o._cached_labels=[]
-                un._cached_lines = []
+                o.labels=[]
+                un.lines = []
 
             for p in self.plots:
                 un = _get_underlay(p)
