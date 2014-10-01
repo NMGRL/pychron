@@ -179,6 +179,7 @@ class ExperimentEditorTask(EditorTask):
     # generic actions
     #===============================================================================
     def _open_experiment(self, path, **kw):
+
         if path.endswith('.xls'):
             txt, is_uv = self._open_xls(path)
         else:
@@ -243,7 +244,7 @@ class ExperimentEditorTask(EditorTask):
         self.last_experiment_changed = True
 
     def open(self, path=None):
-
+        self.manager.experiment_factory.activate(load_defaults=False)
         #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
         #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
         if not os.path.isfile(path):
@@ -308,9 +309,11 @@ class ExperimentEditorTask(EditorTask):
 
     def new(self):
 
-        ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
+        # ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
+        self.manager.experiment_factory.activate(load_defaults=True)
+
         editor = ExperimentEditor()
-        editor.new_queue(mass_spectrometer=ms)
+        editor.new_queue()#mass_spectrometer=ms)
 
         self._open_editor(editor)
         # self._show_pane(self.experiment_factory_pane)

@@ -300,6 +300,9 @@ class ExperimentExecutor(Consoleable):
 
         for i, exp in enumerate(self.experiment_queues):
             if self.isAlive():
+                if self._pre_queue_check(exp):
+                    break
+
                 self._execute_queue(i, exp)
             else:
                 self.debug('No alive. not starting {},{}'.format(i, exp.name))
@@ -929,30 +932,6 @@ class ExperimentExecutor(Consoleable):
         elif action.action == 'cancel':
             self.cancel(confirm=False)
 
-    def _pre_run_check(self):
-        """
-            return True to stop execution loop
-        """
-        self.debug('pre run check')
-        if self._check_memory():
-            self._err_message = 'Not enough memory'
-            return True
-
-        if not self._check_managers():
-            self._err_message = 'Not all managers available'
-            return True
-
-        if self.monitor:
-            if not self.monitor.check():
-                self._err_message = 'Automated Run Monitor failed'
-                self.warning('automated run monitor failed')
-                return True
-
-        # if the experiment queue has been modified wait until saved or
-        # timed out. if timed out autosave.
-        self._wait_for_save()
-        self.debug('pre run finished')
-
     def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
@@ -1010,6 +989,40 @@ class ExperimentExecutor(Consoleable):
                 else:
                     self.info('canceling experiment queues')
                     self.cancel(confirm=False)
+
+    def _pre_queue_check(self, exp):
+        """
+            return True to stop execution loop
+        """
+        if exp.tray:
+            ed = next((ci for ci in self.connectables if ci.name==exp.extract_device), None)
+            if ed:
+                ed_tray = ed.get_tray()
+                return ed_tray!=exp.tray
+
+    def _pre_run_check(self):
+        """
+            return True to stop execution loop
+        """
+        self.debug('pre run check')
+        if self._check_memory():
+            self._err_message = 'Not enough memory'
+            return True
+
+        if not self._check_managers():
+            self._err_message = 'Not all managers available'
+            return True
+
+        if self.monitor:
+            if not self.monitor.check():
+                self._err_message = 'Automated Run Monitor failed'
+                self.warning('automated run monitor failed')
+                return True
+
+        # if the experiment queue has been modified wait until saved or
+        # timed out. if timed out autosave.
+        self._wait_for_save()
+        self.debug('pre run finished')
 
     def _pre_execute_check(self, inform=True):
         if not self.datahub.secondary_connect():

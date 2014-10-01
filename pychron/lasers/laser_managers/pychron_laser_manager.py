@@ -106,6 +106,9 @@ class PychronLaserManager(BaseLaserManager):
         self.trait_set(**dict(zip(('_x', '_y', '_z'),
                                   self.get_position())))
 
+    def get_tray(self):
+        return self.ask('GetSampleHolder')
+
     #===============================================================================
     # patterning
     #===============================================================================

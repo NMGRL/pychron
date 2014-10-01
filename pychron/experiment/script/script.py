@@ -66,6 +66,7 @@ class Script(Loggable):
     edit_event = Event
     label = Str
     mass_spectrometer = String
+    extract_device = String
 
     name = Str
     names = Property(depends_on='mass_spectrometer, directory')

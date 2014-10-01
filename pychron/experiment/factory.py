@@ -63,7 +63,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     default_mass_spectrometer = Str
 
     #     help_label = String('Select Irradiation/Level or Project')
-
+    _load_defaults_flag = False
     #===========================================================================
     # permisions
     #===========================================================================
@@ -71,6 +71,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     #    can_edit_scripts = Bool(True)
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
+
         self.setup_consumer(self._add_run, main=True)
 
     def undo(self):
@@ -78,15 +79,17 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.undo()
 
     def sync_queue_meta(self):
+        self.debug('syncing queue meta')
         eq = self.queue
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'load_name',
                   'delay_before_analyses', 'delay_between_analyses'):
 
+
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
-
+        self.debug('run factory set mass spec {}'.format(self._mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 
     def _sync_queue_to_factory(self, eq, qf, a):
@@ -94,6 +97,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         if isinstance(v, str):
             v = v.strip()
             if v:
+                self.debug('sync queue to factory {}>>{}'.format(a,v))
                 setattr(qf, a, v)
                 return True
 
@@ -102,11 +106,19 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         if isinstance(v, str):
             v = v.strip()
             if v:
+                self.debug('sync factory to queue {}>>{}'.format(a,v))
                 setattr(eq, a, v)
+
+    def activate(self, load_defaults=True):
+        self._load_defaults_flag=load_defaults
+        if load_defaults:
+            self.run_factory.activate()
+            self.queue_factory.activate()
 
     def destroy(self):
         self._should_consume = False
         self.run_factory.deactivate()
+        self.queue_factory.deactivate()
 
     def set_selected_runs(self, runs):
         self.run_factory.set_selected_runs(runs)
@@ -123,25 +135,24 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
+        if new_runs:
+            aruns = q.automated_runs
+            if q.selected:
+                idx = aruns.index(q.selected[-1])
+            else:
+                idx = len(aruns) - 1
 
-        aruns = q.automated_runs
-        if q.selected:
-            idx = aruns.index(q.selected[-1])
-        else:
-            idx = len(aruns) - 1
+            runs = q.add_runs(new_runs, freq,
+                              freq_before=rf.freq_before,
+                              freq_after=rf.freq_after,
+                              is_run_block=rf.run_block_enabled)
 
-        runs = q.add_runs(new_runs, freq,
-                          freq_before=rf.freq_before,
-                          freq_after=rf.freq_after,
-                          is_run_block=rf.run_block_enabled)
+            self.undoer.push('add runs', runs)
 
-        self.undoer.push('add runs', runs)
+            idx += len(runs)
 
-        idx += len(runs)
-
-        with rf.update_selected_ctx():
-            q.select_run_idx(idx)
-
+            with rf.update_selected_ctx():
+                q.select_run_idx(idx)
 
     #===============================================================================
     # handlers
@@ -177,7 +188,9 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     @on_trait_change('''queue_factory:[mass_spectrometer,
 extract_device, delay_+, tray, username, load_name, email]''')
     def _update_queue(self, name, new):
+        self.debug('update queue {}={}'.format(name,new))
         if name == 'mass_spectrometer':
+            self.debug('_update_queue "{}"'.format(new))
             self._mass_spectrometer = new
             self.run_factory.set_mass_spectrometer(new)
 
@@ -198,10 +211,15 @@ extract_device, delay_+, tray, username, load_name, email]''')
     # private
     #===============================================================================
     def _set_extract_device(self, ed):
+        self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
         #         self.run_factory.update_templates_needed = True
         self.run_factory.setup_files()
+        self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
+
+        if self._load_defaults_flag:
+            self.run_factory.load()
 
         if self.queue:
             self.queue.set_extract_device(ed)
@@ -247,7 +265,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
                    extract_device=self.extract_device,
                    mass_spectrometer=self.default_mass_spectrometer)
 
-        rf.activate()
+        # rf.activate()
         rf.on_trait_change(lambda x: self.trait_set(_labnumber=x), 'labnumber')
         rf.on_trait_change(self._update_end_after, 'end_after')
 
@@ -268,6 +286,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
 
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(db=self.db)
+        # eq.activate()
         return eq
 
     def _db_changed(self):
@@ -278,6 +297,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.run_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
+        self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self._mass_spectrometer = self.default_mass_spectrometer
