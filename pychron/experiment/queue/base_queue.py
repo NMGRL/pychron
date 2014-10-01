@@ -98,7 +98,7 @@ class BaseExperimentQueue(ExperimentBlock):
         """
         print runspecs, freq, is_repeat_block
         if not runspecs:
-            return
+            return []
 
         with no_update(self):
             aruns = self.automated_runs

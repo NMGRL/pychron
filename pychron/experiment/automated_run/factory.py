@@ -607,7 +607,7 @@ class AutomatedRunFactory(Loggable):
         self.debug('rendering template {}'.format(template.name))
 
         al = self.datahub.get_greatest_aliquot(self.labnumber)
-        if al:
+        if al is not None:
             c = exp_queue.count_labnumber(self.labnumber)
             for st in template.steps:
                 if st.value or st.duration or st.cleanup:
@@ -619,6 +619,7 @@ class AutomatedRunFactory(Loggable):
                     arvs.append(arv)
         else:
             self.debug('missing aliquot_pychron in mass spec secondary db')
+            self.warning_dialog('Missing aliquot_pychron in mass spec secondary db. seek help')
 
         return arvs
 

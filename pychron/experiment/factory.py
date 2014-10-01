@@ -123,25 +123,24 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
+        if new_runs:
+            aruns = q.automated_runs
+            if q.selected:
+                idx = aruns.index(q.selected[-1])
+            else:
+                idx = len(aruns) - 1
 
-        aruns = q.automated_runs
-        if q.selected:
-            idx = aruns.index(q.selected[-1])
-        else:
-            idx = len(aruns) - 1
+            runs = q.add_runs(new_runs, freq,
+                              freq_before=rf.freq_before,
+                              freq_after=rf.freq_after,
+                              is_run_block=rf.run_block_enabled)
 
-        runs = q.add_runs(new_runs, freq,
-                          freq_before=rf.freq_before,
-                          freq_after=rf.freq_after,
-                          is_run_block=rf.run_block_enabled)
+            self.undoer.push('add runs', runs)
 
-        self.undoer.push('add runs', runs)
+            idx += len(runs)
 
-        idx += len(runs)
-
-        with rf.update_selected_ctx():
-            q.select_run_idx(idx)
-
+            with rf.update_selected_ctx():
+                q.select_run_idx(idx)
 
     #===============================================================================
     # handlers
