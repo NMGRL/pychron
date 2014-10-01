@@ -385,11 +385,13 @@ class AutomatedRunFactory(Loggable):
             self._end_after = run.end_after
 
     def set_mass_spectrometer(self, new):
+        print 'set mass ', new
         new = new.lower()
         self.mass_spectrometer = new
-        for s in SCRIPT_NAMES:
-            sc = getattr(self, s)
-            sc.mass_spectrometer = new
+        # for s in SCRIPT_NAMES:
+        #     sc = getattr(self, s)
+        #     sc.mass_spectrometer = new
+        #     print sc, sc.mass_spectrometer
 
     def set_extract_device(self, new):
         new = new.lower()
