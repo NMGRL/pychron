@@ -20,6 +20,7 @@ Pychron Develop Guide
   hardware
   database_analysis
   automated_analysis
+  experiment_construction
 
 
 

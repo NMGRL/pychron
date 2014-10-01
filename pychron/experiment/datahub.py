@@ -33,6 +33,7 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
@@ -52,6 +53,8 @@ def checkEqual6502(lst):
 class Datahub(Loggable):
     mainstore = Instance(IsotopeDatabaseManager)
     secondarystore = Instance(MassSpecDatabaseImporter, ())
+
+    bind_mainstore = True
 
     def bind_preferences(self):
         prefid = 'pychron.database'
@@ -148,10 +151,6 @@ class Datahub(Loggable):
             dbexp = db.add_experiment(exp.path)
             exp.database_identifier = int(dbexp.id)
 
-    @property
-    def new_runid(self):
-        return self._new_runid
-
     def get_greatest_aliquot(self, identifier, store='main'):
         # store = getattr(self, '{}store'.format(store))
         # return store.get_greatest_aliquot(identifier)
@@ -174,8 +173,21 @@ class Datahub(Loggable):
                       f(store.get_greatest_step(identifier, aliquot)) if store.is_connected() else -1)
                      for store in self.sorted_stores])
 
-    _sorted_stores = None
+    def _datastores_default(self):
+        return []
 
+    def _mainstore_default(self):
+        mainstore = IsotopeDatabaseManager(precedence=1,
+                                           connect=self.bind_mainstore,
+                                           bind=self.bind_mainstore)
+
+        return mainstore
+
+    @property
+    def new_runid(self):
+        return self._new_runid
+
+    _sorted_stores = None
     @property
     def sorted_stores(self):
         if self._sorted_stores:
@@ -187,19 +199,6 @@ class Datahub(Loggable):
             # r=sorted((self.mainstore, self.secondarystore))
             self._sorted_stores = r
             return r
-
-
-    def _datastores_default(self):
-        return []
-
-    bind_mainstore = True
-
-    def _mainstore_default(self):
-        mainstore = IsotopeDatabaseManager(precedence=1,
-                                           connect=self.bind_mainstore,
-                                           bind=self.bind_mainstore)
-
-        return mainstore
 
 #============= EOF =============================================
 

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 #============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum
-import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
@@ -26,6 +25,7 @@ import os
 from pychron.experiment.action_editor import ActionEditor, ActionModel
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -36,7 +36,6 @@ from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
@@ -112,7 +111,7 @@ def generate_positions(pos):
         return [pos]
 
 
-class AutomatedRunFactory(Loggable):
+class AutomatedRunFactory(PersistenceLoggable):
     db = Any
     datahub = Instance(Datahub)
     undoer = Any
@@ -277,7 +276,13 @@ class AutomatedRunFactory(Loggable):
     mass_spectrometer = String
     extract_device = Str
 
-    _default_attrs = ('collection_time_zero_offset',)
+    pattributes = ('collection_time_zero_offset',
+                   'selected_irradiation', 'selected_level',
+                   'extract_value', 'extract_units','cleanup',
+                   'duration', 'beam_diameter','ramp_duration','overlap',
+                   'pattern', 'labnumber', 'position',
+                   'weight', 'comment', 'template')
+
     _no_clear_labnumber = False
 
     def setup_files(self):
@@ -288,11 +293,11 @@ class AutomatedRunFactory(Loggable):
 
     def activate(self):
         self.load_truncations()
-        self.load_defaults()
         self.load_run_blocks()
+        self.load()
 
     def deactivate(self):
-        self.dump_defaults()
+        self.dump(verbose=True)
 
     def set_end_after(self, v):
         self._update_run_values('end_after', v)
@@ -328,33 +333,33 @@ class AutomatedRunFactory(Loggable):
     def load_truncations(self):
         self.truncations = self._get_truncations()
 
-    def load_defaults(self):
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        if os.path.isfile(p):
-            d = None
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except BaseException, e:
-                    self.debug('could not load defaults Exception: {}'.format(e))
-            if d:
-                for attr in self._default_attrs:
-                    try:
-                        setattr(self, attr, d.get(attr))
-                    except (KeyError, TraitError), e:
-                        self.debug('load automated run factory defaults err={}'.format(e))
-
-    def dump_defaults(self):
-        d = {}
-        for attr in self._default_attrs:
-            d[attr] = getattr(self, attr)
-
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        with open(p, 'w') as fp:
-            try:
-                pickle.dump(d, fp)
-            except BaseException, e:
-                self.debug('failed dumping defaults Exception: {}'.format(e))
+    # def load_defaults(self):
+    #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+    #     if os.path.isfile(p):
+    #         d = None
+    #         with open(p, 'r') as fp:
+    #             try:
+    #                 d = pickle.load(fp)
+    #             except BaseException, e:
+    #                 self.debug('could not load defaults Exception: {}'.format(e))
+    #         if d:
+    #             for attr in self._default_attrs:
+    #                 try:
+    #                     setattr(self, attr, d.get(attr))
+    #                 except (KeyError, TraitError), e:
+    #                     self.debug('load automated run factory defaults err={}'.format(e))
+    #
+    # def dump_defaults(self):
+    #     d = {}
+    #     for attr in self._default_attrs:
+    #         d[attr] = getattr(self, attr)
+    #
+    #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+    #     with open(p, 'w') as fp:
+    #         try:
+    #             pickle.dump(d, fp)
+    #         except BaseException, e:
+    #             self.debug('failed dumping defaults Exception: {}'.format(e))
 
     def use_frequency(self):
         return self.labnumber in ANALYSIS_MAPPING and self.frequency
@@ -385,13 +390,8 @@ class AutomatedRunFactory(Loggable):
             self._end_after = run.end_after
 
     def set_mass_spectrometer(self, new):
-        print 'set mass ', new
         new = new.lower()
         self.mass_spectrometer = new
-        # for s in SCRIPT_NAMES:
-        #     sc = getattr(self, s)
-        #     sc.mass_spectrometer = new
-        #     print sc, sc.mass_spectrometer
 
     def set_extract_device(self, new):
         new = new.lower()
@@ -1367,6 +1367,10 @@ post_equilibration_script:name''')
     @property
     def run_block_enabled(self):
         return self.run_block not in ('RunBlock', LINE_STR)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'run_factory')
 
 #============= EOF =============================================
 #
