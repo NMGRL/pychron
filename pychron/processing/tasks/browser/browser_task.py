@@ -121,7 +121,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             with db.session_ctx():
                 ps = db.get_projects_irradiation(self.irradiation,
                                                  self.level)
-                ps = self._make_project_records(ps)
+                ps = self._make_project_records(ps, include_recent_first=False)
                 self.projects = ps
 
     @on_trait_change('irradiation,level')
@@ -277,15 +277,16 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         man = self.manager
         ls = []
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
+
         if self.project_enabled:
-            if not self.irradiation:
+            if not self.irradiation_enabled:
                 ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
             else:
-                if self.selected_projects and self.irradiation:
+                if self.selected_projects and self.irradiation_enabled and self.irradiation:
                     ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
                                                                self.irradiation,
                                                                self.level,
-                                                               self.filter_non_run_samples,
+                                                               filter_non_run=self.filter_non_run_samples,
                                                                analysis_types=atypes)
                     if atypes:
                         refs, unks = man.group_labnumbers(ls)
@@ -298,6 +299,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         elif self.irradiation_enabled and self.irradiation:
             if not self.level:
                 ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
+                                                   filter_non_run=self.filter_non_run_samples,
                                                    analysis_types=atypes)
             else:
                 # level = man.get_level(self.level)
@@ -315,7 +317,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
                     if xs:
                         lns = [x.identifier for x in xs]
-                        ls = db.get_labnumbers(lns)
+                        ls = db.get_labnumbers(lns, filter_non_run=self.filter_non_run_samples)
 
         return ls
 

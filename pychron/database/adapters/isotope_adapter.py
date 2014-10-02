@@ -1086,12 +1086,13 @@ class IsotopeAdapter(DatabaseAdapter):
                 f = f | gen_AnalysisTypeTable.name.like('blank%')
 
             q = q.filter(f)
+
         if mass_spectrometers:
             q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
         if project_names:
             q = q.filter(gen_ProjectTable.name.in_(project_names))
         if filter_non_run:
-            q = q.group_by(gen_LabTable)
+            q = q.group_by(gen_LabTable.id)
             q = q.having(count(meas_AnalysisTable.id) > 0)
         return q
 
@@ -1121,7 +1122,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
                           analysis_types, filter_non_run, low_post, high_post)
-
+            self.debug(compile_query(q))
             return self._query_all(q)
 
     def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
@@ -1131,8 +1132,12 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_SampleTable)
             q = q.join(gen_ProjectTable)
 
+            q = self._labnumber_join(q, project_names, mass_spectrometers,
+                          analysis_types, filter_non_run, low_post, high_post)
+
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
                           analysis_types, filter_non_run, low_post, high_post)
+            self.debug(compile_query(q))
             return self._query_all(q)
 
     def get_project_analysis_count(self, projects):
@@ -1759,17 +1764,27 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(irrad_LevelTable.name == level)
         return q
 
-    def get_irradiation_labnumbers(self, irrad, level, analysis_types=None):
+    def get_irradiation_labnumbers(self, irrad, level, analysis_types=None, filter_non_run=False):
         with self.session_ctx() as sess:
-            q= sess.query(gen_LabTable)
+            q = sess.query(gen_LabTable)
             q = q.join(irrad_PositionTable)
-            if analysis_types:
-                q = q.join(gen_LabTable, meas_AnalysisTable,meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if filter_non_run:
+                q = q.join(meas_AnalysisTable)
+                if analysis_types:
+                    q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+            elif analysis_types:
+                q = q.join(meas_AnalysisTable, meas_MeasurementTable, gen_AnalysisTypeTable)
+
             q = self._irrad_level(q, irrad, level)
             if analysis_types:
-                print analysis_types
                 q = q.filter(gen_AnalysisTypeTable.name.in_(analysis_types))
 
+            if filter_non_run:
+                q = q.group_by(gen_LabTable.id)
+                q = q.having(count(meas_AnalysisTable.id) > 0)
+
+            self.debug(compile_query(q))
             return self._query_all(q)
 
     def get_labnumber(self, labnum, **kw):
@@ -1969,7 +1984,7 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
-    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, **kw):
+    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, filter_non_run=False, **kw):
 
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
@@ -1993,6 +2008,18 @@ class IsotopeAdapter(DatabaseAdapter):
             else:
                 kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
 
+        if filter_non_run:
+            joins=kw.get('joins',[])
+            if meas_AnalysisTable not in joins:
+                joins.append(meas_AnalysisTable)
+            kw['joins']=joins
+
+            def func(q):
+                q=q.group_by(gen_LabTable.id)
+                q=q.having(count(meas_AnalysisTable.id)>0)
+                return q
+
+            kw['query_hook']=func
         # if low_post:
         # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
         # if high_post:

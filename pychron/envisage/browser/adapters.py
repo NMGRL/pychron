@@ -52,6 +52,7 @@ class SampleAdapter(BrowserAdapter):
     all_columns = [('Sample', 'name'),
                    ('Identifier', 'labnumber'),
                    ('Material', 'material'),
+                   ('Project','project'),
                    ('Irradiation', 'irradiation'),
                    ('Level', 'irradiation_and_level'),
                    ('Irrad. Pos.', 'irradiation_pos')]

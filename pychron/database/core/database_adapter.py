@@ -391,6 +391,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         filters=None,
                         limit=None, order=None,
                         distinct_ =False,
+                        query_hook = None,
                         reraise=False,
                         debug_query=False):
 
@@ -429,6 +430,9 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             if limit is not None:
                 q = q.limit(limit)
+
+            if query_hook:
+                q =query_hook(q)
 
             if debug_query:
                 self.debug(compile_query(q))
