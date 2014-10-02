@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,26 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime, timedelta
-
-from sqlalchemy import cast, Date
-from traits.api import HasTraits, String, Property, Str, List, Button, Any, \
-    Bool, cached_property, Event
-from traitsui.api import View, Item, EnumEditor, HGroup, CheckListEditor, \
-    VGroup
-
+from traits.api import HasTraits, String, Property, Str, List, Any, \
+    Bool, cached_property, Event, Enum
+from traitsui.api import View, Item, EnumEditor
 
 #============= standard library imports ========================
+from datetime import datetime, timedelta
+from sqlalchemy import cast, Date
 #============= local library imports  ==========================
-
-
-class NItem(Item):
-    pass
-    # padding = -15
-
-now =datetime.now()
+now = datetime.now()
 one_year = timedelta(days=365)
-# RECENT_YEARS = [now.year, (now-one_year).year, (now-2*one_year).year]
+
 
 def compile_query(query):
     from sqlalchemy.sql import compiler
@@ -73,8 +64,7 @@ class TableSelector(HasTraits):
             'Material',
             'Sample',
             'Detector',
-            'IrradiationPosition',
-        ]
+            'IrradiationPosition',]
         self.parameter = params[0]
         return params
 
@@ -83,8 +73,7 @@ class TableSelector(HasTraits):
                       show_label=False,
                       editor=EnumEditor(name='parameters')),
                  buttons=['OK', 'Cancel'],
-                 kind='livemodal'
-        )
+                 kind='livemodal')
         return v
 
 
@@ -103,13 +92,17 @@ class Query(HasTraits):
 
     selector = Any
 
-    add = Button('+')
-    remove = Button('-')
+    # add = Button('+')
+    # remove = Button('-')
+
+    chain_rule = Enum('', 'And', 'Or')
     #     removable = Bool(True)
 
     parent_parameters = List(String)
     parent_criterions = List(String)
     parent_comparators = List(String)
+
+    is_last = Bool(False)
 
     def assemble_filter(self, query, attr):
         """
@@ -121,7 +114,7 @@ class Query(HasTraits):
         """
         comp = self.comparator
         if self.parameter == 'Run Date/Time':
-            query = self.date_query(query, attr)
+            ret = self.date_query(query, attr)
         else:
             c = self.criterion
             if comp in ['starts with', 'contains']:
@@ -133,18 +126,25 @@ class Query(HasTraits):
                     c = '%' + c + '%'
 
             comp = self._convert_comparator(comp)
-            query = query.filter(getattr(attr, comp)(c))
+            ret=getattr(attr, comp)(c)
 
-        return query
+        print self.parameter, self.chain_rule
+        return ret, self.chain_rule=='Or'
+            # if self.chain_rule=='Or':
+            #     f = or_(f)
+            # query = query.filter(f)
+
+        # return query
 
     def _named_date_query(self, query, attr, comp, crit):
         today = datetime.today()
         if crit == 'this month':
             d = datetime.today()
             if '=' in comp:
-                d,_ = self._convert_named_date(crit)
-                query = query.filter(attr.between(today, d))
-                return query
+                d, _ = self._convert_named_date(crit)
+                return attr.between(today, d)
+                # query = query.filter(attr.between(today, d))
+                # return query
 
             else:
                 dt = d - timedelta(days=d.day - 1)
@@ -156,8 +156,9 @@ class Query(HasTraits):
         elif crit == 'yesterday':
             dt = today - timedelta(days=1)
 
-        query = query.filter(getattr(attr, comp)(dt))
-        return query
+        return getattr(attr, comp)(dt)
+        # query = query.filter(getattr(attr, comp)(dt))
+        # return query
 
     def _convert_named_date(self, c, comp=None):
         if c in ('this month', 'yesterday', 'this week'):
@@ -179,7 +180,7 @@ class Query(HasTraits):
             elif c == 'yesterday':
                 ret = today - timedelta(days=1)
         else:
-            c=c.replace('/','-')
+            c = c.replace('/', '-')
             if c.count('-') == 2:
                 y = c.split('-')[-1]
                 y = 'y' if len(y) == 2 else 'Y'
@@ -212,8 +213,10 @@ class Query(HasTraits):
                 d = (d, )
 
             attr = cast(attr, Date)
-            q = q.filter(getattr(attr, comp)(*d))
-        return q
+            # q = q.filter(getattr(attr, comp)(*d))
+            return getattr(attr, comp)(*d)
+        # return q
+
     #===============================================================================
     # private
     #===============================================================================
@@ -241,11 +244,11 @@ class Query(HasTraits):
     #===============================================================================
     # handlers
     #===============================================================================
-    def _add_fired(self):
-        self.selector.add_query(self, self.parameter, self.criterion)
-
-    def _remove_fired(self):
-        self.selector.remove_query(self)
+    # def _add_fired(self):
+    #     self.selector.add_query(self, self.parameter, self.criterion)
+    #
+    # def _remove_fired(self):
+    #     self.selector.remove_query(self)
 
     def update_parent_parameter(self, obj, name, old, new):
         if old in self.parent_parameters:
@@ -267,6 +270,7 @@ class Query(HasTraits):
 
         self.parent_comparators.append(new)
         self.criteria_dirty = True
+
     #===============================================================================
     # property get/set
     #===============================================================================
@@ -280,20 +284,21 @@ class Query(HasTraits):
             cs = ys + ['this month', 'yesterday', 'this week']
         else:
             kw = {}
-            func=None
+            func = None
             display_name = 'name'
+
             def extract(ci, _):
                 return ci[0]
 
-            if param =='irradiation':
-                funcname='get_irradiations_join_analysis'
-                func=extract
-            elif param =='labnumber':
+            if param == 'irradiation':
+                funcname = 'get_irradiations_join_analysis'
+                func = extract
+            elif param == 'labnumber':
                 funcname = 'get_labnumbers_join_analysis'
-                display_name='idenfifier'
-                func=extract
+                display_name = 'idenfifier'
+                func = extract
             elif param == 'aliquot':
-                    display_name = 'aliquot'
+                display_name = 'aliquot'
             elif param == 'step':
                 display_name = 'step'
             else:
@@ -308,10 +313,10 @@ class Query(HasTraits):
                 cs = getattr(db, funcname)(joins=cj,
                                            filters=cf,
                                            # distinct_=True,
-                                           debug_query=True,
+                                           # debug_query=True,
                                            **kw)
                 if func is None:
-                    func=getattr
+                    func = getattr
                 # cs = list(set([getattr(ci, display_name) for ci in cs]))
                 cs = [func(ci, display_name) for ci in cs]
                 # cs.sort()
@@ -319,7 +324,7 @@ class Query(HasTraits):
         return cs
 
     def _cumulate_joins(self):
-        ps = self.parent_parameters#+[self.parameter]
+        ps = self.parent_parameters  #+[self.parameter]
         if ps:
             tjs = []
 
@@ -332,23 +337,23 @@ class Query(HasTraits):
             return tjs
 
     def _cumulate_filters(self):
-        ps = self.parent_parameters#+[self.parameter]
-        pc = self.parent_comparators#+[self.comparator]
-        pr = self.parent_criterions#+[self.criterion]
+        ps = self.parent_parameters  #+[self.parameter]
+        pc = self.parent_comparators  #+[self.comparator]
+        pr = self.parent_criterions  #+[self.criterion]
         if ps:
             tfs = []
             for pi, co, ci in zip(ps,
                                   pc,
                                   pr):
 
-                co=self._convert_comparator(co)
-                if pi=='Run Date/Time':
+                co = self._convert_comparator(co)
+                if pi == 'Run Date/Time':
                     ci, _ = self._convert_named_date(ci)
 
                 if pi in self.selector.lookup:
                     fi = self.selector.lookup[pi][1]
                     if co is None:
-                        f = fi==ci
+                        f = fi == ci
                     else:
                         f = getattr(fi, co)(ci)
 
@@ -359,31 +364,31 @@ class Query(HasTraits):
             # views
             #===============================================================================
 
-    def traits_view(self):
-
-        top = HGroup(
-
-            NItem('parameter', editor=EnumEditor(name='parameters')),
-            NItem('comparator',
-                  editor=EnumEditor(name='comparisons')),
-            show_labels=False)
-
-        bottom = HGroup(
-            NItem('add', ),
-            NItem('remove',
-                  visible_when='removable'),
-            NItem('criterion', ),
-            NItem('criterion', width=-30,
-                  editor=CheckListEditor(name='criteria')),
-            NItem('rcriterion', visible_when='comparator=="between"'),
-            NItem('rcriterion', width=-30,
-                  visible_when='comparator=="between"',
-                  editor=CheckListEditor(name='criteria')),
-            show_labels=False)
-
-        v = View(VGroup(top, bottom,
-                        show_border=True))
-        return v
+    # def traits_view(self):
+    #
+    #     top = HGroup(
+    #
+    #         Item('parameter', editor=EnumEditor(name='parameters')),
+    #         Item('comparator',
+    #              editor=EnumEditor(name='comparisons')),
+    #         show_labels=False)
+    #
+    #     bottom = HGroup(
+    #         Item('add', ),
+    #         Item('remove',
+    #              visible_when='removable'),
+    #         Item('criterion', ),
+    #         Item('criterion', width=-30,
+    #              editor=CheckListEditor(name='criteria')),
+    #         Item('rcriterion', visible_when='comparator=="between"'),
+    #         Item('rcriterion', width=-30,
+    #              visible_when='comparator=="between"',
+    #              editor=CheckListEditor(name='criteria')),
+    #         show_labels=False)
+    #
+    #     v = View(VGroup(top, bottom,
+    #                     show_border=True))
+    #     return vs
 
 
 class IsotopeQuery(Query):

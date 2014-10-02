@@ -18,7 +18,7 @@
 from traits.api import Int, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, TableEditor, spring, VSplit
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
@@ -84,8 +84,9 @@ class BrowserQueryView(PaneModelView):
             UItem('criterion'),
             UItem('criterion',
                   width=-25,
-                  editor=EnumEditor(name='criteria'))),
-                 height=125)
+                  editor=EnumEditor(name='criteria')),
+            UItem('chain_rule')),
+            height=125)
         return v
 
     def _table_editor(self):
@@ -103,7 +104,9 @@ class BrowserQueryView(PaneModelView):
             ObjectColumn(name='criterion',
                          editor=EnumEditor(name='criteria'),
                          label='Value',
-                         width=125)]
+                         width=125),
+            ObjectColumn(name='chain_rule',
+                         label='Chain Rule')]
 
         editor = TableEditor(columns=cols,
                              deletable=True,
@@ -131,7 +134,7 @@ class BrowserQueryView(PaneModelView):
                                                tooltip='Delete query',
                                                visible_when='kind=="Database"'),
                             UItem(selector_name('load_recent_button')),
-                            Item(selector_name('recent_days')),spring)
+                            Item(selector_name('recent_days')), spring)
         return VGroup(button_grp, query_itm)
 
     def _filter_grp(self):

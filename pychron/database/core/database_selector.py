@@ -17,10 +17,12 @@
 #============= enthought library imports =======================
 from datetime import datetime, timedelta
 
+from sqlalchemy import and_, or_
 from traits.api import Button, List, Any, Dict, Bool, Int, Enum, Event, \
     on_trait_change, Str, Instance, Property
 from traitsui.api import View, Item, \
     HGroup, spring, ListEditor, InstanceEditor, Handler, VGroup, VSplit
+
 
 
 #============= standard library imports ========================
@@ -90,7 +92,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     title = ''
 
     dclicked = Any
-    selected = Any
+    selected = List
     scroll_to_row = Int
     scroll_to_bottom = True
     key_pressed = Event
@@ -216,6 +218,9 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
 
     def _assemble_query(self, q, queries, lookup):
         joined = []
+
+        ands = []
+        ors = []
         for qi in queries:
             if not qi.use:
                 continue
@@ -230,11 +235,25 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                         joined.append(tab)
                         q = q.join(tab)
                 try:
-                    q = qi.assemble_filter(q, attr)
+                    f, is_or = qi.assemble_filter(q, attr)
                 except ValueError:
                     self.warning_dialog('Invalid query "{}", "{}"'.format(qi.parameter, attr))
                     return
 
+                if is_or:
+                    ors.append(f)
+                else:
+                    ands.append(f)
+
+        if ands:
+            fs = and_(*ands)
+            if ors:
+                fs=or_(fs, *ors)
+        elif ors:
+            fs=or_(*ors)
+
+        q = q.filter(fs)
+        self.debug('Query={}'.format(compile_query(q)))
         return q
 
     def _execute_query(self, queries=None, limit=None, use_filters=True):
@@ -403,6 +422,15 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     #        self.debug('dclicked changed {}'.format(self.dclicked))
         if self.dclicked and self.dclick_recall_enabled:
             self._open_selected()
+
+    @on_trait_change('queries[]')
+    def _handle_queries_change(self):
+        if self.queries:
+            n=len(self.queries)-1
+            for i, q in enumerate(self.queries):
+                ar = q.chain_rule
+                if not ar:
+                    q.chain_rule = '' if i==n else 'And'
 
     # def _open_button_fired(self):
     #     self.debug('open button fired')
