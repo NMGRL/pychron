@@ -25,6 +25,7 @@ from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
 from uncertainties import ufloat
 
+
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
@@ -89,11 +90,16 @@ class Processor(IsotopeDatabaseManager):
         # ar = self._find_analyses(ms, post, delta, atype, **kw)
         # return br + ar
 
+    def group_labnumbers(self, ls):
+        def monitor_filter(pos):
+            return pos.sample.name == 'FC-2'
+
+        return partition(ls, monitor_filter)
+
     def group_level(self, level, irradiation=None, monitor_filter=None, ret_dbrecord=False):
         if monitor_filter is None:
             def monitor_filter(pos):
-                if pos.sample == 'FC-2':
-                    return True
+                return pos.sample == 'FC-2'
 
         db = self.db
         with db.session_ctx():

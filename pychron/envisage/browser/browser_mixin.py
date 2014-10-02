@@ -72,6 +72,7 @@ def extract_mass_spectrometer_name(name):
 class BrowserMixin(ColumnSorterMixin):
     projects = List
     oprojects = List
+    project_enabled = Bool(True)
 
     samples = List
     osamples = List
@@ -101,8 +102,6 @@ class BrowserMixin(ColumnSorterMixin):
     clear_selection_button = Button
 
     find_by_irradiation = Button
-    include_monitors = Bool(True)
-    include_unknowns = Bool(False)
 
     filter_non_run_samples = DelegatesTo('table_configurer')
 
@@ -132,6 +131,7 @@ class BrowserMixin(ColumnSorterMixin):
     use_workspace = False
     workspace = None
     db = Property
+
     def _get_db(self):
         if self.use_workspace:
             return self.workspace.index_db
@@ -143,10 +143,17 @@ class BrowserMixin(ColumnSorterMixin):
         self.dump_browser_options()
 
     # persistence
+    def _browser_options_hook(self, d):
+        pass
+
     def dump_browser_options(self):
-        d = {'include_monitors': self.include_monitors,
-             'include_unknowns': self.include_unknowns,
+        d = {
+             # 'include_monitors': self.include_monitors,
+             # 'include_unknowns': self.include_unknowns,
+             'project_enabled' : self.project_enabled,
              'sample_view_active': self.sample_view_active}
+        self._browser_options_hook(d)
+
         p = os.path.join(paths.hidden_dir, 'browser_options')
         with open(p, 'w') as fp:
             pickle.dump(d, fp)
@@ -207,20 +214,25 @@ class BrowserMixin(ColumnSorterMixin):
             #self.debug('Failed dumping previous browser selection. {}'.format(e))
             return
 
-    def set_projects(self, ps, sel):
+    def set_projects(self, ps, sel=None):
+        if sel is None:
+            sel=[]
+
         self.oprojects = ps
         self.projects = ps
         self.trait_set(selected_projects=sel)
 
-    def set_samples(self, s, sel):
+    def set_samples(self, s, sel=None):
+        if sel is None:
+            sel=[]
+
         self.samples = s
         self.osamples = s
         self.trait_set(selected_samples=sel)
 
-    def load_projects(self):
+    def _make_project_records(self, ps):
         db = self.db
         with db.session_ctx():
-            ps = db.get_projects(order=gen_ProjectTable.name.asc())
             ms = db.get_mass_spectrometers()
             recents = [ProjectRecordView('RECENT {}'.format(mi.name.upper())) for mi in ms]
             pss = [ProjectRecordView(p) for p in ps]
@@ -231,7 +243,13 @@ class BrowserMixin(ColumnSorterMixin):
                 rp = pss.pop(pss.index(p))
                 pss.insert(0, rp)
 
-            ad = recents + pss
+            return recents + pss
+
+    def load_projects(self):
+        db = self.db
+        with db.session_ctx():
+            ps = db.get_projects(order=gen_ProjectTable.name.asc())
+            ad = self._make_project_records(ps)
             self.projects = ad
             self.oprojects = ad
 
@@ -319,6 +337,20 @@ class BrowserMixin(ColumnSorterMixin):
 
         return sams
 
+    def _retrieve_samples_hook(self, db):
+        projects = self.selected_projects
+
+        mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
+        mass_spectrometers = [ms for ms in mass_spectrometers if ms]
+
+        ls = db.get_project_labnumbers([p.name for p in projects if not p.name.startswith('RECENT')],
+                                       self.filter_non_run_samples,
+                                       self.low_post,
+                                       self.high_post,
+                                       self.analysis_include_types,
+                                       mass_spectrometers=mass_spectrometers)
+        return ls
+
     def _retrieve_samples(self):
         db = self.db
         # dont query if analysis_types enabled but not analysis type specified
@@ -327,36 +359,8 @@ class BrowserMixin(ColumnSorterMixin):
             return []
 
         with db.session_ctx():
-            projects = self.selected_projects
-
-            mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
-            mass_spectrometers = [ms for ms in mass_spectrometers if ms]
-
-            ls = db.get_project_labnumbers([p.name for p in projects if not p.name.startswith('RECENT')],
-                                           self.filter_non_run_samples,
-                                           self.low_post,
-                                           self.high_post,
-                                           self.analysis_include_types,
-                                           mass_spectrometers=mass_spectrometers)
-
-            # prog = None
-            # n = len(ls)
-            # if n > 50:
-            # prog = self.manager.open_progress(n=n)
-            # if prog:
-            #     def ln_factory(ll):
-            #         prog.change_message('Loading Labnumber {}'.format(ll.identifier))
-            #         return LabnumberRecordView(ll)
-            # else:
-            #     def ln_factory(ll):
-            #         return LabnumberRecordView(ll)
-
-            # sams = [ln_factory(li) for li in ls]
-            # try:
-            # sams=list(self._make_labnumber_records(ls))
-            # except CancelLoadingError:
-            #     sams=[]
-
+            ls = self._retrieve_samples_hook(db)
+            self.debug('_retrieve_samples n={}'.format(len(ls)))
             def func(li, prog, i, n):
                 if prog:
                     prog.change_message('Loading Labnumber {}'.format(li.identifier))
@@ -436,7 +440,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     # handlers
     def _selected_projects_changed(self, old, new):
-        if new:
+        if new and self.project_enabled:
             self._recent_low_post = None
             self._recent_mass_spectrometers = None
             if old:
@@ -448,7 +452,12 @@ class BrowserMixin(ColumnSorterMixin):
             self.debug('selected projects={}'.format(names))
             self._load_associated_samples(names)
             self._load_associated_groups(names)
+
+            self._selected_projects_change_hook(names)
             self.dump_browser_selection()
+
+    def _selected_projects_change_hook(self, names):
+        pass
 
     def _clear_sample_table_fired(self):
         self.samples = []

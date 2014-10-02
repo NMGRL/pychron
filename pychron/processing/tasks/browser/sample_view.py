@@ -35,19 +35,20 @@ class BrowserSampleView(PaneModelView):
         return TableTools(model=self.model, pane=self.pane)
 
     def traits_view(self):
-        irrad_grp = VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+        irrad_grp = VGroup(
+                Item('irradiation_enabled'),
+                VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
                            UItem('level', editor=EnumEditor(name='levels')),
-                           # VGroup(
-                           # Item('include_monitors', label='Monitors'),
-                           # Item('include_unknowns', label='Unknowns')),
-                           icon_button_editor('find_by_irradiation',
-                                              'find',
-                                              tooltip='Filter Samples by Irradiation/Level', ),
-                           enabled_when='not selected_projects',
+                           # icon_button_editor('find_by_irradiation',
+                           #                    'find',
+                           #                    tooltip='Filter Samples by Irradiation/Level', ),
+                           enabled_when = 'irradiation_enabled',
+                           # enabled_when='not selected_projects',
                            show_border=True,
-                           label='Irradiations')
+                           label='Irradiations'))
 
-        project_grp = VGroup(HGroup(Item('project_filter', label='Filter'),
+        project_grp = VGroup(Item('project_enabled'),
+                             VGroup(HGroup(Item('project_filter', label='Filter'),
                                     icon_button_editor('clear_selection_button',
                                                        'cross',
                                                        tooltip='Clear selected')),
@@ -57,8 +58,10 @@ class BrowserSampleView(PaneModelView):
                                                         selected='selected_projects',
                                                         adapter=ProjectAdapter(),
                                                         multi_select=True)),
+                             enabled_when='project_enabled',
                              show_border=True,
-                             label='Projects')
+                             label='Projects'))
+
         analysis_type_group = HGroup(
             Item('use_analysis_type_filtering', label='Enabled'),
             UItem('_analysis_include_types',
