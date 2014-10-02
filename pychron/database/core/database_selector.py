@@ -157,16 +157,24 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             pp = parent.parent_parameters
             pc = parent.parent_criterions
             pco = parent.parent_comparators
+            parent.chain_rule='And'
 
-        pp = pp + [parameter] if pp else [parameter]
-        pc = pc + [criterion] if pc else [criterion]
-        pco = pco + [comparator] if pc else [comparator]
+        # pp = pp + [parameter] if pp else [parameter]
+        # pc = pc + [criterion] if pc else [criterion]
+        # pco = pco + [comparator] if pc else [comparator]
+        pp = pp or [parameter]
+        pc = pc or [criterion]
+        pco = pco or [comparator]
 
         q = self._query_factory(
+            parameter=parameter,
+            criterion=criterion,
+            comparator=comparator,
             parent_parameters= pp,
             parent_criterions= pc,
             parent_comparators= pco,
             chain_rule=chain_rule)
+
         if add:
             self.queries.append(q)
 
@@ -174,6 +182,7 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             parent.on_trait_change(q.update_parent_parameter, 'parameter')
             parent.on_trait_change(q.update_parent_criterion, 'criterion')
             parent.on_trait_change(q.update_parent_comparator, 'comparator')
+        return q
 
     def remove_query(self, q):
         if q in self.queries:
@@ -228,10 +237,15 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
                            parent=pq, add=add)
 
     def _get_recent(self, criterion):
-        q = self.queries[0]
-        q.parameter = self.date_str
-        q.comparator = '>'
-        q.trait_set(criterion=criterion)
+        parameter=self.date_str
+        comparator='>'
+        if self.queries:
+            q = self.queries[0]
+            q.parameter = self.date_str
+            q.comparator = '>'
+            q.trait_set(criterion=criterion)
+        else:
+            q = self.add_query(parameter, comparator, criterion)
 
         return self._execute_query(queries=[q])
 

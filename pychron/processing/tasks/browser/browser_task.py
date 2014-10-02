@@ -187,12 +187,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         d['irradiation_enabled'] = self.irradiation_enabled
 
     def _activate_query_browser(self):
-        selector = self.data_selector
-        selector.queries=[]
+        psel=self.data_selector
+        selector = self.data_selector.selector
+        selector.queries = []
 
         if self.project_enabled and self.selected_projects:
-            for si in self.selected_projects:
-                selector.add_query('Project', '=', si.name, chain_rule='Or')
+            for i,si in enumerate(self.selected_projects):
+                selector.add_query('Project', '=', si.name, chain_rule='Or' if i>0 else '')
 
         if self.use_analysis_type_filtering and self.analysis_include_types:
             for at in self.analysis_include_types:
@@ -204,10 +205,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             selector.add_query('Run Date/Time', '<', self.high_post)
 
         if not selector.queries:
-            if not selector.active:
+            if not psel.active:
                 selector.load_recent()
+        else:
+            selector.execute_query()
 
-        selector.active = True
+        psel.active = True
         self.browser_pane.name = 'Browser/Query'
 
     def _activate_sample_browser(self):

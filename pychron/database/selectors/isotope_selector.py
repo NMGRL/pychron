@@ -46,7 +46,8 @@ class IsotopeResultsAdapter(BaseResultsAdapter):
         ('Analysis Time', 'rundate'),
         ('Irradiation', 'irradiation_info'),
         ('Mass Spec.', 'mass_spectrometer'),
-        ('Type', 'analysis_type')]
+        ('Type', 'analysis_type'),
+        ('Project', 'project')]
 
     font = '10'
     #    rid_width = Int(50)
