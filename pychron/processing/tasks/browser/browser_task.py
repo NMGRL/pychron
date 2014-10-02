@@ -188,8 +188,25 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     def _activate_query_browser(self):
         selector = self.data_selector
-        if not selector.active:
-            selector.load_recent()
+        selector.queries=[]
+
+        if self.project_enabled and self.selected_projects:
+            for si in self.selected_projects:
+                selector.add_query('Project', '=', si.name, chain_rule='Or')
+
+        if self.use_analysis_type_filtering and self.analysis_include_types:
+            for at in self.analysis_include_types:
+                selector.add_query('Analysis Type', '=', at, chain_rule='Or')
+
+        if self.use_low_post:
+            selector.add_query('Run Date/Time', '>', self.low_post)
+        if self.use_high_post:
+            selector.add_query('Run Date/Time', '<', self.high_post)
+
+        if not selector.queries:
+            if not selector.active:
+                selector.load_recent()
+
         selector.active = True
         self.browser_pane.name = 'Browser/Query'
 
@@ -408,7 +425,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             # def _find_by_irradiation_fired(self):
             # if not (self.level and self._activated):
-            #         return
+            # return
             #     self.refresh_samples()
 
             # atypes=self.analysis_include_types
@@ -443,7 +460,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # def _advanced_query_fired(self):
     # app = self.window.application
     # win, task, is_open = app.get_open_task('pychron.advanced_query')
-    #     task.set_append_replace_enabled(True)
+    # task.set_append_replace_enabled(True)
     #     if is_open:
     #         win.activate()
     #     else:

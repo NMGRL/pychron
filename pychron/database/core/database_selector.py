@@ -146,16 +146,34 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
     def query_factory(self, *args, **kw):
         return self._query_factory(**kw)
 
-    def add_query(self, parent_query, parameter, comparator, criterion, add=True):
+    def add_query(self, parameter, comparator, criterion,
+                  add=True, chain_rule='And', parent=None):
+        pp,pc,pco=None, None, None
+
+        if not parent and self.queries:
+            parent=self.queries[-1]
+
+        if parent:
+            pp = parent.parent_parameters
+            pc = parent.parent_criterions
+            pco = parent.parent_comparators
+
+        pp = pp + [parameter] if pp else [parameter]
+        pc = pc + [criterion] if pc else [criterion]
+        pco = pco + [comparator] if pc else [comparator]
+
         q = self._query_factory(
-            parent_parameters=parent_query.parent_parameters + [parameter],
-            parent_criterions=parent_query.parent_criterions + [criterion],
-            parent_comparators=parent_query.parent_comparators + [comparator],)
+            parent_parameters= pp,
+            parent_criterions= pc,
+            parent_comparators= pco,
+            chain_rule=chain_rule)
         if add:
             self.queries.append(q)
-        parent_query.on_trait_change(q.update_parent_parameter, 'parameter')
-        parent_query.on_trait_change(q.update_parent_criterion, 'criterion')
-        parent_query.on_trait_change(q.update_parent_comparator, 'comparator')
+
+        if parent:
+            parent.on_trait_change(q.update_parent_parameter, 'parameter')
+            parent.on_trait_change(q.update_parent_criterion, 'criterion')
+            parent.on_trait_change(q.update_parent_comparator, 'comparator')
 
     def remove_query(self, q):
         if q in self.queries:
@@ -206,7 +224,8 @@ class DatabaseSelector(Viewable, ColumnSorterMixin):
             if add:
                 self.queries.append(q)
         else:
-            self.add_query(pq, pq.parameter, pq.comparator, pq.criterion, add=add)
+            self.add_query(pq.parameter, pq.comparator, pq.criterion,
+                           parent=pq, add=add)
 
     def _get_recent(self, criterion):
         q = self.queries[0]
