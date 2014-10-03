@@ -99,30 +99,6 @@ class TableView(PaneModelView):
         return v
 
 
-class TimeTableView(PaneModelView):
-    def traits_view(self):
-        def make_name(name):
-            return 'object.analysis_table.{}'.format(name)
-
-        agrp = VGroup(UItem(make_name('analyses'),
-                            width=0.4,
-                            editor=myTabularEditor(
-                                adapter=self.pane.analysis_tabular_adapter,
-                                operations=['move'],
-                                refresh=make_name('refresh_needed'),
-                                selected=make_name('selected'),
-                                dclicked=make_name('dclicked'),
-                                multi_select=self.pane.multi_select,
-                                drag_external=True,
-                                scroll_to_row=make_name('scroll_to_row'),
-                                stretch_last_section=False)),
-                      HGroup(spring, Item(make_name('omit_invalid'))))
-
-        v = View(agrp)
-
-        return v
-
-
 class TableTools(PaneModelView):
     def traits_view(self):
         def make_name(name):

@@ -28,6 +28,7 @@ from sqlalchemy.sql.functions import count
 from sqlalchemy.sql.expression import and_, func, not_, cast
 from sqlalchemy.orm.exc import NoResultFound
 #============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -1996,6 +1997,7 @@ class IsotopeAdapter(DatabaseAdapter):
         t = cast(meas_AnalysisTable.analysis_timestamp, Date)
         return getattr(t, comp)(post)
 
+    @caller
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, filter_non_run=False, **kw):
 
         if identifiers is not None:

@@ -94,7 +94,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     initialize_workspace = True
     _top_level_filter = None
-    _sample_browser_time_view = Bool(False)
 
     def _get_manager(self):
         if self.use_workspace:
@@ -317,7 +316,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         ls = []
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
         if self.project_enabled:
-            self._sample_browser_time_view = False
             if not self.irradiation_enabled:
                 ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
             else:
@@ -333,7 +331,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                         ls = atypes_func(ls)
 
         elif self.irradiation_enabled and self.irradiation:
-            self._sample_browser_time_view = False
             if not self.level:
                 ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
                                                    low_post=low_post,
@@ -354,7 +351,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                         ls = get_labnumbers(ids=lns)
 
         elif low_post or high_post:
-            self._sample_browser_time_view=True
+            ls = get_labnumbers()
             ans = db.get_analyses_date_range(low_post, high_post)
             ans =self._make_records(ans)
             self.analysis_table.set_analyses(ans)

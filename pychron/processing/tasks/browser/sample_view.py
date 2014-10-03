@@ -22,21 +22,18 @@ from traitsui.api import View, Item, UItem, VSplit, VGroup, EnumEditor, HGroup, 
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
-from pychron.processing.tasks.browser.tableview import TableView, TableTools, TimeTableView
+from pychron.processing.tasks.browser.tableview import TableView, TableTools
 
 
 class BrowserSampleView(PaneModelView):
     tableview = Instance(TableView)
     tabletools = Instance(TableTools)
-    timetableview = Instance(TimeTableView)
+
     def _tableview_default(self):
         return TableView(model=self.model, pane=self.pane)
 
     def _tabletools_default(self):
         return TableTools(model=self.model, pane=self.pane)
-
-    def _timetableview_default(self):
-        return TimeTableView(model=self.model, pane=self.pane)
 
     def traits_view(self):
         irrad_grp = VGroup(
@@ -93,12 +90,9 @@ class BrowserSampleView(PaneModelView):
                           style='custom', height=0.1),
                     UItem('controller.tableview',
                           height=0.6,
-                          style='custom'),
-                    visible_when='not _sample_browser_time_view')
+                          style='custom'))
 
-        g2= VGroup(UItem('controller.timetableview', style='custom'),
-                   visible_when='_sample_browser_time_view')
-        grp = VSplit(top_level_filter_grp,g1,g2)
+        grp = VSplit(top_level_filter_grp,g1)
         return View(grp)
 
 #============= EOF =============================================
