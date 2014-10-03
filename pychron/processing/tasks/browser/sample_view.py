@@ -17,50 +17,54 @@
 # ============= enthought library imports =======================
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, VSplit, VGroup, EnumEditor, HGroup, TabularEditor, CheckListEditor
-#============= standard library imports ========================
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
-from pychron.processing.tasks.browser.tables import Tables, TableTools
+from pychron.processing.tasks.browser.tableview import TableView, TableTools, TimeTableView
 
 
 class BrowserSampleView(PaneModelView):
-    tableview = Instance(Tables)
+    tableview = Instance(TableView)
     tabletools = Instance(TableTools)
+    timetableview = Instance(TimeTableView)
     def _tableview_default(self):
-        return Tables(model=self.model, pane=self.pane)
+        return TableView(model=self.model, pane=self.pane)
 
     def _tabletools_default(self):
         return TableTools(model=self.model, pane=self.pane)
 
+    def _timetableview_default(self):
+        return TimeTableView(model=self.model, pane=self.pane)
+
     def traits_view(self):
         irrad_grp = VGroup(
-                Item('irradiation_enabled'),
-                VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-                           UItem('level', editor=EnumEditor(name='levels')),
-                           # icon_button_editor('find_by_irradiation',
-                           #                    'find',
-                           #                    tooltip='Filter Samples by Irradiation/Level', ),
-                           enabled_when = 'irradiation_enabled',
-                           # enabled_when='not selected_projects',
-                           show_border=True,
-                           label='Irradiations'))
+            Item('irradiation_enabled'),
+            VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+                   UItem('level', editor=EnumEditor(name='levels')),
+                   # icon_button_editor('find_by_irradiation',
+                   #                    'find',
+                   #                    tooltip='Filter Samples by Irradiation/Level', ),
+                   enabled_when='irradiation_enabled',
+                   # enabled_when='not selected_projects',
+                   show_border=True,
+                   label='Irradiations'))
 
         project_grp = VGroup(Item('project_enabled'),
                              VGroup(HGroup(Item('project_filter', label='Filter'),
-                                    icon_button_editor('clear_selection_button',
-                                                       'cross',
-                                                       tooltip='Clear selected')),
-                             UItem('projects',
-                                   editor=TabularEditor(editable=False,
-                                                        refresh='refresh_needed',
-                                                        selected='selected_projects',
-                                                        adapter=ProjectAdapter(),
-                                                        multi_select=True)),
-                             enabled_when='project_enabled',
-                             show_border=True,
-                             label='Projects'))
+                                           icon_button_editor('clear_selection_button',
+                                                              'cross',
+                                                              tooltip='Clear selected')),
+                                    UItem('projects',
+                                          editor=TabularEditor(editable=False,
+                                                               refresh='refresh_needed',
+                                                               selected='selected_projects',
+                                                               adapter=ProjectAdapter(),
+                                                               multi_select=True)),
+                                    enabled_when='project_enabled',
+                                    show_border=True,
+                                    label='Projects'))
 
         analysis_type_group = HGroup(
             Item('use_analysis_type_filtering', label='Enabled'),
@@ -85,13 +89,18 @@ class BrowserSampleView(PaneModelView):
                                       analysis_type_group,
                                       date_grp)
 
-        grp = VSplit(top_level_filter_grp,
-                     UItem('controller.tabletools',
-                           style='custom', height=0.1),
-                     UItem('controller.tableview',
-                           height=0.6,
-                           style='custom'))
+        g1 = VGroup(UItem('controller.tabletools',
+                          style='custom', height=0.1),
+                    UItem('controller.tableview',
+                          height=0.6,
+                          style='custom'),
+                    visible_when='not _sample_browser_time_view')
+
+        g2= VGroup(UItem('controller.timetableview', style='custom'),
+                   visible_when='_sample_browser_time_view')
+        grp = VSplit(top_level_filter_grp,g1,g2)
         return View(grp)
+
 #============= EOF =============================================
 
 

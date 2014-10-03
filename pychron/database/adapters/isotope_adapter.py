@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -252,7 +252,7 @@ class IsotopeAdapter(DatabaseAdapter):
         obj.selected_histories_id = sh_id
 
     def add_proc_action(self, msg, **kw):
-        obj=proc_ActionTable(action=msg, **kw)
+        obj = proc_ActionTable(action=msg, **kw)
         return self._add_item(obj)
 
     def add_mftable(self, specname, blob):
@@ -447,7 +447,7 @@ class IsotopeAdapter(DatabaseAdapter):
         if isinstance(analysis, (int, long)):
             dbitem.analysis_id = analysis
         else:
-            dbitem.analysis=analysis
+            dbitem.analysis = analysis
 
         return dbitem
 
@@ -968,9 +968,8 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     def get_session_blank_histories(self, s):
         with self.session_ctx() as sess:
-
-            q=sess.query(proc_BlanksHistoryTable)
-            q=q.filter(proc_BlanksHistoryTable.session==s)
+            q = sess.query(proc_BlanksHistoryTable)
+            q = q.filter(proc_BlanksHistoryTable.session == s)
             return self._query_all(q)
 
     def get_blanks_history(self, value, key='id'):
@@ -1056,13 +1055,13 @@ class IsotopeAdapter(DatabaseAdapter):
             return self._query_all(q)
 
     def _labnumber_join(self, q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post):
+                        analysis_types, filter_non_run, low_post, high_post):
 
         if filter_non_run or low_post or high_post or analysis_types or mass_spectrometers:
             q = q.join(meas_AnalysisTable)
 
         if mass_spectrometers or analysis_types:
-                q = q.join(meas_MeasurementTable)
+            q = q.join(meas_MeasurementTable)
 
         if mass_spectrometers:
             q = q.join(gen_MassSpectrometerTable)
@@ -1077,9 +1076,12 @@ class IsotopeAdapter(DatabaseAdapter):
     def _labnumber_filter(self, q, project_names, mass_spectrometers,
                           analysis_types, filter_non_run, low_post, high_post):
         if low_post:
-            q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            q = q.filter(self._get_post_filter(low_post, '__le__'))
         if high_post:
-            q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+            # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+            q = q.filter(self._get_post_filter(high_post, '__ge__'))
+
         if analysis_types:
             f = gen_AnalysisTypeTable.name.in_(analysis_types)
             if 'blank' in analysis_types:
@@ -1104,7 +1106,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                            high_post=None):
 
         with self.session_ctx() as sess:
-            q =sess.query(gen_LabTable)
+            q = sess.query(gen_LabTable)
             q = q.join(irrad_PositionTable)
             q = q.join(irrad_LevelTable)
             q = q.join(irrad_IrradiationTable)
@@ -1112,16 +1114,16 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_ProjectTable)
 
             q = self._labnumber_join(q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post)
+                                     analysis_types, filter_non_run, low_post, high_post)
 
             q = q.filter(gen_ProjectTable.name.in_(project_names))
-            q = q.filter(irrad_IrradiationTable.name ==irradiation)
+            q = q.filter(irrad_IrradiationTable.name == irradiation)
 
             if level:
-                q = q.filter(irrad_LevelTable.name==level)
+                q = q.filter(irrad_LevelTable.name == level)
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post)
+                                       analysis_types, filter_non_run, low_post, high_post)
             self.debug(compile_query(q))
             return self._query_all(q)
 
@@ -1133,10 +1135,10 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_ProjectTable)
 
             q = self._labnumber_join(q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post)
+                                     analysis_types, filter_non_run, low_post, high_post)
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post)
+                                       analysis_types, filter_non_run, low_post, high_post)
             self.debug(compile_query(q))
             return self._query_all(q)
 
@@ -1417,12 +1419,16 @@ class IsotopeAdapter(DatabaseAdapter):
             if pr:
                 q = q.filter(gen_ProjectTable.name == pr)
 
-            q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
-                              meas_AnalysisTable.analysis_timestamp <= ma))
+            # q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
+            #                   meas_AnalysisTable.analysis_timestamp <= ma))
+            if mi:
+                q = q.filter(self._get_post_filter(mi, '__ge__'))
+            if ma:
+                q = q.filter(self._get_post_filter(ma, '__le__'))
 
             if exclude_invalid:
                 q = q.filter(meas_AnalysisTable.tag != 'invalid')
-            return q.all()
+            return self._query_all(q)
 
     #===========================================================================
     # getters single
@@ -1534,8 +1540,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_AnalysisTypeTable.name == analysis_type)
 
             if hours_limit:
-                lpost = datetime.now()-timedelta(hours=hours_limit)
-                q = q.filter(meas_AnalysisTable.analysis_timestamp>=lpost)
+                lpost = datetime.now() - timedelta(hours=hours_limit)
+                q = q.filter(meas_AnalysisTable.analysis_timestamp >= lpost)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             q = q.limit(1)
@@ -1592,18 +1598,18 @@ class IsotopeAdapter(DatabaseAdapter):
 
             if analysis_only or attr:
                 if attr is None:
-                    attr=meas_AnalysisTable
+                    attr = meas_AnalysisTable
                 else:
-                    attr=getattr(meas_AnalysisTable, attr)
+                    attr = getattr(meas_AnalysisTable, attr)
 
-                q= sess.query(attr)
+                q = sess.query(attr)
             else:
                 q = sess.query(meas_AnalysisTable,
-                           gen_LabTable,
-                           meas_IsotopeTable,
-                           gen_SampleTable.name,
-                           gen_ProjectTable.name,
-                           gen_MaterialTable.name)
+                               gen_LabTable,
+                               meas_IsotopeTable,
+                               gen_SampleTable.name,
+                               gen_ProjectTable.name,
+                               gen_MaterialTable.name)
                 q = q.join(meas_IsotopeTable)
                 q = q.join(gen_LabTable)
                 q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
@@ -1764,12 +1770,14 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(irrad_LevelTable.name == level)
         return q
 
-    def get_irradiation_labnumbers(self, irrad, level, analysis_types=None, filter_non_run=False):
+    def get_irradiation_labnumbers(self, irrad, level, low_post=None,
+                                   high_post=None,
+                                   analysis_types=None, filter_non_run=False):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
             q = q.join(irrad_PositionTable)
 
-            if filter_non_run:
+            if filter_non_run or low_post or high_post:
                 q = q.join(meas_AnalysisTable)
                 if analysis_types:
                     q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
@@ -1874,7 +1882,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if uuids:
                 q = q.join(proc_DataReductionTagSetTable)
                 q = q.join(meas_AnalysisTable)
-                q= q.filter(meas_AnalysisTable.uuid.in_(uuids))
+                q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
 
             q = q.order_by(proc_DataReductionTagTable.create_date.desc())
             return q.all()
@@ -1984,6 +1992,10 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
+    def _get_post_filter(self, post, comp):
+        t = cast(meas_AnalysisTable.analysis_timestamp, Date)
+        return getattr(t, comp)(post)
+
     def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, filter_non_run=False, **kw):
 
         if identifiers is not None:
@@ -1997,29 +2009,35 @@ class IsotopeAdapter(DatabaseAdapter):
             kw['joins'] = [meas_AnalysisTable]
 
         if low_post:
+            f = self._get_post_filter(low_post, '__ge__')
             if 'filters' in kw:
-                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+                # kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+                kw['filters'].append(f)
             else:
-                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post]
+                # kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post]
+                kw['filters'] = [f]
 
         if high_post:
+            f = self._get_post_filter(high_post, '__le__')
             if 'filters' in kw:
-                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post)
+                # kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post)
+                kw['filters'].append(f)
             else:
-                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
+                # kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
+                kw['filters'] = [f]
 
         if filter_non_run:
-            joins=kw.get('joins',[])
+            joins = kw.get('joins', [])
             if meas_AnalysisTable not in joins:
                 joins.append(meas_AnalysisTable)
-            kw['joins']=joins
+            kw['joins'] = joins
 
             def func(q):
-                q=q.group_by(gen_LabTable.id)
-                q=q.having(count(meas_AnalysisTable.id)>0)
+                q = q.group_by(gen_LabTable.id)
+                q = q.having(count(meas_AnalysisTable.id) > 0)
                 return q
 
-            kw['query_hook']=func
+            kw['query_hook'] = func
         # if low_post:
         # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
         # if high_post:
@@ -2031,7 +2049,7 @@ class IsotopeAdapter(DatabaseAdapter):
         #     # q=q.filter(gen_LabTable.identifier=='61551')
         #     return q.all()
         # print identifiers, kw, self.name
-        return self._retrieve_items(gen_LabTable, **kw)
+        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
 
     def get_flux_monitors(self, **kw):
         return self._retrieve_items(flux_MonitorTable, **kw)
@@ -2055,12 +2073,13 @@ class IsotopeAdapter(DatabaseAdapter):
         # # joins.append(meas_AnalysisTable)
         # joins.insert(0, meas_AnalysisTable)
         # joins.reverse()
-        kw['joins'] = [irrad_LevelTable,irrad_PositionTable,gen_LabTable,meas_AnalysisTable]
+        kw['joins'] = [irrad_LevelTable, irrad_PositionTable, gen_LabTable, meas_AnalysisTable]
 
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
                                     distinct_=irrad_IrradiationTable.name,
                                     **kw)
+
     def get_irradiations(self, names=None, order_func='desc', project_names=None, **kw):
         """
             if names is callable should take from of F(irradiationTable)
@@ -2074,13 +2093,13 @@ class IsotopeAdapter(DatabaseAdapter):
             kw['filters'] = f
 
         if project_names:
-            fs = kw.get('filters',[])
+            fs = kw.get('filters', [])
             fs.append(gen_ProjectTable.name.in_(project_names))
             kw['filters'] = fs
-            js = kw.get('joins',[])
+            js = kw.get('joins', [])
             js.extend([irrad_LevelTable, irrad_PositionTable,
                        gen_LabTable, gen_SampleTable, gen_ProjectTable])
-            kw['joins']=js
+            kw['joins'] = js
             #        return self._retrieve_items(irrad_IrradiationTable, order=irrad_IrradiationTable.name, ** kw)
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
@@ -2091,7 +2110,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_projects_irradiation(self, irrad, level):
         with self.session_ctx() as sess:
-            q =sess.query(gen_ProjectTable)
+            q = sess.query(gen_ProjectTable)
             q = q.join(gen_SampleTable,
                        gen_LabTable, irrad_PositionTable)
             q = self._irrad_level(q, irrad, level)

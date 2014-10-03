@@ -94,6 +94,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     initialize_workspace = True
     _top_level_filter = None
+    _sample_browser_time_view = Bool(False)
 
     def _get_manager(self):
         if self.use_workspace:
@@ -187,13 +188,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         d['irradiation_enabled'] = self.irradiation_enabled
 
     def _activate_query_browser(self):
-        psel=self.data_selector
+        psel = self.data_selector
         selector = self.data_selector.selector
         selector.queries = []
 
         if self.project_enabled and self.selected_projects:
-            for i,si in enumerate(self.selected_projects):
-                selector.add_query('Project', '=', si.name, chain_rule='Or' if i>0 else '')
+            for i, si in enumerate(self.selected_projects):
+                selector.add_query('Project', '=', si.name, chain_rule='Or' if i > 0 else '')
 
         if self.use_analysis_type_filtering and self.analysis_include_types:
             for at in self.analysis_include_types:
@@ -294,11 +295,29 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         pass
 
     def _retrieve_samples_hook(self, db):
+        low_post = self.low_post
+        high_post = self.high_post
+
+        def get_labnumbers(ids=None):
+            return db.get_labnumbers(identifiers=ids,
+                                     low_post=low_post,
+                                     high_post=high_post,
+                                     filter_non_run=self.filter_non_run_samples)
+        def atypes_func(obj, func):
+            func = getattr(man, func)
+            refs, unks = func(obj)
+            nls = []
+            if 'monitors' in atypes:
+                nls.extend(refs)
+            if 'unknown' in atypes:
+                nls.extend(unks)
+            return nls
+
         man = self.manager
         ls = []
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
-
         if self.project_enabled:
+            self._sample_browser_time_view = False
             if not self.irradiation_enabled:
                 ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
             else:
@@ -306,19 +325,19 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                     ls = db.get_project_irradiation_labnumbers([si.name for si in self.selected_projects],
                                                                self.irradiation,
                                                                self.level,
+                                                               low_post=low_post,
+                                                               high_post=high_post,
                                                                filter_non_run=self.filter_non_run_samples,
                                                                analysis_types=atypes)
                     if atypes:
-                        refs, unks = man.group_labnumbers(ls)
-                        ls = []
-                        if 'monitors' in atypes:
-                            ls.extend(refs)
-                        if 'unknown' in atypes:
-                            ls.extend(unks)
+                        ls = atypes_func(ls)
 
         elif self.irradiation_enabled and self.irradiation:
+            self._sample_browser_time_view = False
             if not self.level:
                 ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
+                                                   low_post=low_post,
+                                                   high_post=high_post,
                                                    filter_non_run=self.filter_non_run_samples,
                                                    analysis_types=atypes)
             else:
@@ -326,18 +345,19 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 level = db.get_irradiation_level(self.irradiation, self.level)
                 if level:
                     if atypes:
-                        refs, unks = man.group_level(level)
-                        xs = []
-                        if 'monitors' in atypes:
-                            xs.extend(refs)
-                        if 'unknown' in atypes:
-                            xs.extend(unks)
+                        xs = atypes_func(level, 'group_level')
                     else:
                         xs = [p.labnumber for p in level.positions]
 
                     if xs:
                         lns = [x.identifier for x in xs]
-                        ls = db.get_labnumbers(lns, filter_non_run=self.filter_non_run_samples)
+                        ls = get_labnumbers(ids=lns)
+
+        elif low_post or high_post:
+            self._sample_browser_time_view=True
+            ans = db.get_analyses_date_range(low_post, high_post)
+            ans =self._make_records(ans)
+            self.analysis_table.set_analyses(ans)
 
         return ls
 
@@ -429,12 +449,12 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # def _find_by_irradiation_fired(self):
             # if not (self.level and self._activated):
             # return
-            #     self.refresh_samples()
+            # self.refresh_samples()
 
             # atypes=self.analysis_include_types
             # if self.use_analysis_type_filtering and not atypes:
-            #     self.information_dialog('Select analysis types to include')
-            #     return
+            # self.information_dialog('Select analysis types to include')
+            # return
             # if not atypes:
             #     atypes =('monitors','unknown')
             #
@@ -464,9 +484,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # app = self.window.application
     # win, task, is_open = app.get_open_task('pychron.advanced_query')
     # task.set_append_replace_enabled(True)
-    #     if is_open:
-    #         win.activate()
-    #     else:
+    # if is_open:
+    # win.activate()
+    # else:
     #         win.open()
 
     @on_trait_change('analysis_table:selected')

@@ -398,14 +398,17 @@ class BrowserMixin(ColumnSorterMixin):
                                                 mass_spectrometers=mass_spectrometers)
             self.debug('retrieved analyses n={}'.format(tc))
             if make_records:
-                def func(xi, prog, i, n):
-                    if prog:
-                        prog.change_message('Loading {}'.format(xi.record_id))
-                    return IsotopeRecordView(xi)
-
-                return progress_loader(ans, func, threshold=25)
+                return self._make_records(ans)
             else:
                 return ans
+
+    def _make_records(self, ans):
+        def func(xi, prog, i, n):
+            if prog:
+                prog.change_message('Loading {}'.format(xi.record_id))
+            return IsotopeRecordView(xi)
+
+        return progress_loader(ans, func, threshold=25)
 
     def _get_sample_filter_parameter(self):
         p = self.sample_filter_parameter

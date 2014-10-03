@@ -15,8 +15,8 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, Item, HGroup,UItem, VGroup, EnumEditor, HSplit, TabularEditor, spring, Group, Heading
-#============= standard library imports ========================
+from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, TabularEditor, spring, Group, Heading
+# ============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -44,7 +44,7 @@ class TablesHandler(UnselectTabularEditorHandler):
             obj.context_menu_event = ('open', {'open_copy': True})
 
 
-class Tables(PaneModelView):
+class TableView(PaneModelView):
     def traits_view(self):
         group_table = UItem('analysis_groups',
                             label='Groups',
@@ -96,6 +96,30 @@ class Tables(PaneModelView):
         v = View(HSplit(Group(sample_table, group_table,
                               layout='tabbed'), analysis_table),
                  handler=TablesHandler())
+        return v
+
+
+class TimeTableView(PaneModelView):
+    def traits_view(self):
+        def make_name(name):
+            return 'object.analysis_table.{}'.format(name)
+
+        agrp = VGroup(UItem(make_name('analyses'),
+                            width=0.4,
+                            editor=myTabularEditor(
+                                adapter=self.pane.analysis_tabular_adapter,
+                                operations=['move'],
+                                refresh=make_name('refresh_needed'),
+                                selected=make_name('selected'),
+                                dclicked=make_name('dclicked'),
+                                multi_select=self.pane.multi_select,
+                                drag_external=True,
+                                scroll_to_row=make_name('scroll_to_row'),
+                                stretch_last_section=False)),
+                      HGroup(spring, Item(make_name('omit_invalid'))))
+
+        v = View(agrp)
+
         return v
 
 
