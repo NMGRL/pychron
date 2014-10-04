@@ -15,14 +15,51 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import os
+import pickle
+
+from traits.has_traits import HasTraits
+from traits.trait_types import Float
+from traitsui.item import UItem
+from traitsui.view import View
 from pyface.tasks.task_layout import PaneItem
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.paths import paths
+
 
 def browser_pane_item(width=300):
     return PaneItem('pychron.browser', width=width)
 
 
+def get_pad():
+    p=os.path.join(paths.hidden_dir, 'pad_entry')
+    pe =None
+    if os.path.isfile(p):
+        try:
+            with open(p, 'r') as fp:
+                pe = pickle.load(fp)
+        except (pickle.PickleError, OSError, EOFError):
+            pass
+
+    if not pe:
+        pe=PadEntry()
+
+    info=pe.edit_traits()
+    if info.result:
+        with open(p, 'w') as fp:
+            pickle.dump(pe, fp)
+        return pe.pad
+
+class PadEntry(HasTraits):
+    pad = Float
+    def traits_view(self):
+        v=View(UItem('pad'),
+               kind='livemodal',
+               width=300,
+               buttons=['OK','Cancel'])
+        return v
 
 #============= EOF =============================================
 

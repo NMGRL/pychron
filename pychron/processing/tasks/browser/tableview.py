@@ -18,30 +18,11 @@
 from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, TabularEditor, spring, Group, Heading
 # ============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
+# from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
+# from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
-
-
-class TablesHandler(UnselectTabularEditorHandler):
-    def replace_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('replace', None)
-            # obj.replace_event = obj.selected
-
-    def append_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('append', None)
-            # obj.append_event = obj.selected
-
-    def recall_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': False})
-
-    def recall_copies(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': True})
 
 
 class TableView(PaneModelView):
@@ -94,9 +75,35 @@ class TableView(PaneModelView):
                                 defined_when=self.pane.analyses_defined)
 
         v = View(HSplit(Group(sample_table, group_table,
-                              layout='tabbed'), analysis_table),
-                 handler=TablesHandler())
+                              layout='tabbed'), analysis_table))
         return v
+
+    def unselect_analyses(self, info, obj):
+        obj.selected=[]
+
+    def unselect_samples(self, info, obj):
+        obj.selected_samples = []
+
+    def replace_items(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('replace', None)
+            # obj.replace_event = obj.selected
+
+    def append_items(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('append', None)
+            # obj.append_event = obj.selected
+
+    def recall_items(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': False})
+
+    def recall_copies(self, info, obj):
+        if obj.selected:
+            obj.context_menu_event = ('open', {'open_copy': True})
+
+    def on_time_view(self, info, obj):
+        obj.load_time_view()
 
 
 class TableTools(PaneModelView):

@@ -27,7 +27,6 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 # ============= local library imports  ==========================
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
 from pychron.processing.tasks.browser.sample_view import BrowserSampleView
@@ -64,12 +63,18 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-    def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Unselect', action='unselect'),
-                           Action(name='Replace', action='replace_items'),
-                           Action(name='Append', action='append_items'),
-                           Action(name='Open', action='recall_items'),
-                           Action(name='Open Copy', action='recall_copies'))
+    def get_menu(self, obj, trait, row, column):
+        e=obj.append_replace_enabled
+        actions = [Action(name='Unselect', action='unselect_analyses'),
+                   Action(name='Replace', action='replace_items', enabled=e),
+                   Action(name='Append', action='append_items', enabled=e),
+                   Action(name='Open', action='recall_items'),
+                   Action(name='Open Copy', action='recall_copies')]
+        # if obj.id == 'pychron.recall':
+        #     actions.pop(1)
+        #     actions.pop(1)
+
+        return MenuManager(*actions)
 
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
@@ -107,23 +112,25 @@ class BrowserPane(TraitsDockPane):
         v = View(
             VGroup(
                 HGroup(
-                       # icon_button_editor('advanced_query', 'application_form_magnify',
-                       #                    tooltip='Advanced Query'),
-                       icon_button_editor('filter_by_button',
-                                          'find',
-                                          tooltip='Filter analyses using defined criteria'),
-                       icon_button_editor('graphical_filter_button',
-                                          'chart_curve_go',
-                                          # enabled_when='samples',
-                                          tooltip='Filter analyses graphically'),
-                       icon_button_editor('toggle_view',
-                                          'arrow_switch',
-                                          tooltip='Toggle between Sample and Time views'),
-                       spring,
-                       CustomLabel('datasource_url', color='maroon'),
-                       spring),
+                    # icon_button_editor('advanced_query', 'application_form_magnify',
+                    # tooltip='Advanced Query'),
+                    icon_button_editor('filter_by_button',
+                                       'find',
+                                       tooltip='Filter analyses using defined criteria'),
+                    icon_button_editor('graphical_filter_button',
+                                       'chart_curve_go',
+                                       # enabled_when='samples',
+                                       tooltip='Filter analyses graphically'),
+                    icon_button_editor('toggle_view',
+                                       'arrow_switch',
+                                       tooltip='Toggle between Sample and Time views'),
+                    spring,
+                    CustomLabel('datasource_url', color='maroon'),
+                    spring),
                 main_grp),
-            handler=UnselectTabularEditorHandler(selected_name='selected_projects'))
+            # handler=TablesHandler()
+            # handler=UnselectTabularEditorHandler(selected_name='selected_projects')
+        )
 
         return v
 
@@ -139,7 +146,7 @@ class BrowserPane(TraitsDockPane):
         # UItem('project_filter',
         # width=75),
         # icon_button_editor('clear_selection_button',
-        #                                   'cross',
+        # 'cross',
         #                                   tooltip='Clear selected')),
         #         UItem('projects',
         #               editor=TabularEditor(editable=False,

@@ -95,6 +95,11 @@ class BrowserSampleView(PaneModelView):
         grp = VSplit(top_level_filter_grp,g1)
         return View(grp)
 
+    def unselect_projects(self, info, obj):
+        obj.selected_projects=[]
+
+
+
 #============= EOF =============================================
 
 

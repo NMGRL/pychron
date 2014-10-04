@@ -46,6 +46,7 @@ class RecallTask(AnalysisEditTask):
                  SummaryLabnumberAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
+    _append_replace_analyses_enabled = False
 
     def open_ratio_editor(self):
         if self.has_active_editor():

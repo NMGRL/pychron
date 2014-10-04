@@ -62,6 +62,7 @@ class AnalysisTable(HasTraits):
     scroll_to_row = Event
     refresh_needed = Event
     tabular_adapter = Any
+    append_replace_enabled = Bool(True)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):
         self.analyses = ans

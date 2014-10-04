@@ -54,7 +54,7 @@ class EasySensitivity(BaseEasy):
         db=self.db
         with db.session_ctx():
             ans = db.get_analyses_date_range(s, e,
-                                             mass_spectrometer=mi,
+                                             mass_spectrometers=mi,
                                              extract_device=ed,
                                              project=pr)
             ans=filter(lambda x: not x.uuid in self._uuids, ans)

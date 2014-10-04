@@ -31,6 +31,7 @@ from pychron.processing.selection.data_selector import DataSelector
 from pychron.processing.tasks.browser.analysis_table import AnalysisTable
 from pychron.processing.tasks.browser.graphical_filter_selector import GraphicalFilterSelector
 from pychron.processing.tasks.browser.panes import BrowserPane
+from pychron.processing.tasks.browser.util import get_pad
 
 '''
 add toolbar action to open another editor tab
@@ -94,6 +95,32 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     initialize_workspace = True
     _top_level_filter = None
+    _append_replace_analyses_enabled =True
+
+    def load_time_view(self):
+        pad=get_pad()
+        if not pad:
+            return
+
+        db=self.db
+        with db.session_ctx():
+            ss=[si.labnumber for si in self.selected_samples]
+            lp, hp=db.get_labnumber_min_max_date_range(ss)
+            ms = db.get_labnumber_mass_spectrometers(ss)
+
+            td=timedelta(hours=pad)
+
+            lp-=td
+            hp+=td
+            self.use_low_post=True
+            self._set_low_post(lp)
+            self.use_high_post=True
+            self._set_high_post(lp)
+
+            ans = self._retrieve_analyses(low_post=lp,
+                                          high_post=hp,
+                                          mass_spectrometers=ms)
+            self.analysis_table.set_analyses(ans)
 
     def _get_manager(self):
         if self.use_workspace:
@@ -182,6 +209,9 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self._activate_sample_browser()
         else:
             self._activate_query_browser()
+
+        self.irradiation='NM-266'
+        self.level='D'
 
     def _browser_options_hook(self, d):
         d['irradiation_enabled'] = self.irradiation_enabled
@@ -537,7 +567,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self._selector_dclick(new.item)
 
     def _analysis_table_default(self):
-        at = AnalysisTable(db=self.db)
+        at = AnalysisTable(db=self.db,
+                           append_replace_enabled=self._append_replace_analyses_enabled)
         return at
 
     def _data_selector_default(self):

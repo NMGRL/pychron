@@ -779,6 +779,9 @@ class AnalysisEditTask(BaseBrowserTask):
             self._recall_item(new.item)
 
     # @on_trait_change('analysis_table:[append_event,replace_event]')
+    # @on_trait_change('sample_table:context_menu_event')
+    # def _handle_analysis_table_context_menu(self, new):
+
     @on_trait_change('analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
         if new:

@@ -242,7 +242,7 @@ class InterpolationTask(AnalysisEditTask):
         with db.session_ctx():
             ans = db.get_analyses_date_range(sd, ed,
                                              analysis_type=at,
-                                             mass_spectrometer=ms,
+                                             mass_spectrometers=ms,
                                              extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
             # self.danalysis_table.set_analyses(ans)

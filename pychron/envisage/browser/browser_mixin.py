@@ -373,8 +373,7 @@ class BrowserMixin(ColumnSorterMixin):
             sams = progress_loader(ls, func)
         return sams
 
-    def _retrieve_sample_analyses(self, samples,
-                                  limit=500,
+    def _retrieve_analyses(self, samples=None, limit=500,
                                   low_post=None,
                                   high_post=None,
                                   exclude_uuids=None,
@@ -383,24 +382,34 @@ class BrowserMixin(ColumnSorterMixin):
                                   make_records=True):
         db = self.db
         with db.session_ctx():
-            lns = [si.labnumber for si in samples]
-            self.debug('retrieving identifiers={}'.format(','.join(lns)))
-            if low_post is None:
-                lps = [si.low_post for si in samples if si.low_post is not None]
+            if samples:
+                lns = [si.labnumber for si in samples]
+                self.debug('retrieving identifiers={}'.format(','.join(lns)))
+                if low_post is None:
+                    lps = [si.low_post for si in samples if si.low_post is not None]
+                    low_post = min(lps) if lps else None
 
-                low_post = min(lps) if lps else None
-            ans, tc = db.get_labnumber_analyses(lns,
-                                                low_post=low_post,
-                                                high_post=high_post,
-                                                limit=limit,
-                                                exclude_uuids=exclude_uuids,
-                                                include_invalid=include_invalid,
-                                                mass_spectrometers=mass_spectrometers)
-            self.debug('retrieved analyses n={}'.format(tc))
+                ans, tc = db.get_labnumber_analyses(lns,
+                                                    low_post=low_post,
+                                                    high_post=high_post,
+                                                    limit=limit,
+                                                    exclude_uuids=exclude_uuids,
+                                                    include_invalid=include_invalid,
+                                                    mass_spectrometers=mass_spectrometers)
+                self.debug('retrieved analyses n={}'.format(tc))
+            else:
+                ans = db.get_analyses_date_range(low_post, high_post,
+                                                 mass_spectrometers=mass_spectrometers,
+                                                 limit=limit)
+
             if make_records:
                 return self._make_records(ans)
             else:
                 return ans
+
+    def _retrieve_sample_analyses(self, samples,
+                                  **kw):
+        return self._retrieve_analyses(samples=samples, **kw)
 
     def _make_records(self, ans):
         def func(xi, prog, i, n):
