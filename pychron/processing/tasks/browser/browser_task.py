@@ -105,7 +105,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         db=self.db
         with db.session_ctx():
             ss=[si.labnumber for si in self.selected_samples]
-            lp, hp=db.get_labnumber_min_max_date_range(ss)
+            lp, hp=db.get_min_max_analysis_timestamp(ss)
             ms = db.get_labnumber_mass_spectrometers(ss)
 
             td=timedelta(hours=pad)

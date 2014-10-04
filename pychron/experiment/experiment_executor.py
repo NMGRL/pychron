@@ -25,7 +25,6 @@ from pyface.timer.do_later import do_after
 from threading import Thread, Event as Flag, Lock
 import weakref
 import time
-from sqlalchemy.orm.exc import NoResultFound
 import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
@@ -43,10 +42,6 @@ from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
 from pychron.experiment.stats import StatsGroup
 from pychron.pychron_constants import NULL_STR
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-
-from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_MeasurementTable, meas_ExtractionTable
-from pychron.database.orms.isotope.gen import gen_ExtractionDeviceTable, gen_MassSpectrometerTable, \
-    gen_AnalysisTypeTable
 
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -1145,43 +1140,56 @@ Use Last "blank_{}"= {}
         mainstore = self.datahub.mainstore
         db = mainstore.db
         selected = False
-        with db.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
-
+        with db.session_ctx():
             if last:
-                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
-            else:
-                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+                dbr = db.get_blank(kind, ms, ed, last)
 
-            if ms:
-                q = q.join(gen_MassSpectrometerTable)
-                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
-                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
-                q = q.filter(gen_ExtractionDeviceTable.name == ed)
-
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            dbr = None
-            if last:
-                q = q.limit(1)
-                try:
-                    dbr = q.first()
-                except NoResultFound, e:
-                    self.debug('No result found {}'.format(e))
-                except NoResultFound:
-                    dbr = self._select_blank(db, ms)
-
-                if dbr is None:
-                    dbr = self._select_blank(db, ms)
-                    selected = True
-            else:
-                dbr = self._select_blank(db, ms)
+            if dbr is None:
+                dbr=self._select_blank(db, ms)
+                selected = True
 
             if dbr:
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
 
             return dbr, selected
+        #         dbr = self._select_blank(db, ms)
+        # with db.session_ctx() as sess:
+        #     q = sess.query(meas_AnalysisTable)
+        #     q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+        #
+        #     if last:
+        #         q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+        #     else:
+        #         q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+        #
+        #     if ms:
+        #         q = q.join(gen_MassSpectrometerTable)
+        #         q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+        #     if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+        #         q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+        #         q = q.filter(gen_ExtractionDeviceTable.name == ed)
+        #
+        #     q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+        #     dbr = None
+        #     if last:
+        #         q = q.limit(1)
+        #         try:
+        #             dbr = q.first()
+        #         except NoResultFound, e:
+        #             self.debug('No result found {}'.format(e))
+        #         except NoResultFound:
+        #             dbr = self._select_blank(db, ms)
+        #
+        #         if dbr is None:
+        #             dbr = self._select_blank(db, ms)
+        #             selected = True
+        #     else:
+        #         dbr = self._select_blank(db, ms)
+        #
+        #     if dbr:
+        #         dbr = mainstore.make_analysis(dbr, calculate_age=False)
+        #
+        # return dbr, selected
 
     def _select_blank(self, db, ms):
         sel = db.selector_factory(style='single')
@@ -1192,20 +1200,21 @@ Use Last "blank_{}"= {}
         sel.title = 'Select Default Blank'
 
         with db.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable)
-            q = q.join(gen_AnalysisTypeTable)
+            # q = sess.query(meas_AnalysisTable)
+            # q = q.join(meas_MeasurementTable)
+            # q = q.join(gen_AnalysisTypeTable)
+            #
+            # q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
+            # if ms:
+            #     q = q.join(gen_MassSpectrometerTable)
+            #     q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            #
+            # q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            # q = q.limit(100)
+            # dbs = q.all()
+            dbs = db.get_blanks(ms)
 
-            q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
-            if ms:
-                q = q.join(gen_MassSpectrometerTable)
-                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            q = q.limit(100)
-            dbs = q.all()
-
-            sel.load_records(dbs[::-1], load=False)
+            sel.load_records(dbs[::-1])
             sel.selected = sel.records[-1]
             info = sel.edit_traits(kind='livemodal')
             if info.result:

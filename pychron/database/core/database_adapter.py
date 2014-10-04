@@ -393,6 +393,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         distinct_ =False,
                         query_hook = None,
                         reraise=False,
+                        func='all',
                         debug_query=False):
 
         sess = self.sess
@@ -409,10 +410,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = sess.query(distinct(table))
                 else:
                     q = sess.query(distinct(distinct_))
+            elif isinstance(table, tuple):
+                q = sess.query(*table)
             else:
                 q = sess.query(table)
 
             if joins:
+                joins=list(set(joins))
                 try:
                     for ji in joins:
                         if ji != table:
@@ -426,7 +430,10 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = q.filter(fi)
 
             if order is not None:
-                q = q.order_by(order)
+                if isinstance(order, tuple):
+                    q = q.order_by(*order)
+                else:
+                    q = q.order_by(order)
 
             if limit is not None:
                 q = q.limit(limit)
@@ -437,17 +444,18 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             if debug_query:
                 self.debug(compile_query(q))
 
-            r = self._query_all(q, reraise)
-            return r
+            return self._query(q, func, reraise)
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
         if value is not None:
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
 
-        sess = self.get_session()
+        sess = self.sess
         if sess is None:
-            return
+            if self.session_factory:
+                sess = self.session_factory()
+
 
         q = sess.query(table)
         if value is not None:
