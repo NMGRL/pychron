@@ -1350,8 +1350,7 @@ anaylsis_type={}
 
         plot_panel.trait_set(
             plot_title=title,
-            analysis_view=an,
-            refresh_age=self.analysis_type in ('unknown', 'cocktail'))
+            analysis_view=an)
 
         return plot_panel
 
@@ -1527,7 +1526,8 @@ anaylsis_type={}
             period_ms=period * 1000,
             data_generator=get_data,
             data_writer=data_writer,
-            starttime=starttime)
+            starttime=starttime,
+            refresh_age=self.analysis_type in ('unknown','cocktail'))
 
         #m.total_counts += ncounts
         if self.plot_panel:
@@ -1795,7 +1795,7 @@ anaylsis_type={}
 
         m = ast.parse(script.text)
         docstr = ast.get_docstring(m)
-        self.debug('{} {} metadata {}'.format(script.name, key, docstr))
+        self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
         if docstr:
             try:
                 params = yaml.load(docstr)

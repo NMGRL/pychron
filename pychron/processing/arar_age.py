@@ -219,8 +219,13 @@ class ArArAge(Loggable):
         def _append(isotope):
             if kind in ('sniff', 'baseline'):
                 isotope = getattr(isotope, kind)
+
+            if kind=='sniff':
+                isotope._value=signal
+
             isotope.xs = hstack((isotope.xs, (x,)))
             isotope.ys = hstack((isotope.ys, (signal,)))
+            isotope.dirty = True
 
         isotopes = self.isotopes
         if kind == 'baseline':

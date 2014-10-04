@@ -124,7 +124,7 @@ class PlotPanel(Loggable):
     ratios = ['Ar40:Ar36', 'Ar40:Ar39', ]
     info_func = None
 
-    refresh_age = True
+    # refresh_age = True
 
     def set_peak_center_graph(self, graph):
         self.peak_center_graph = graph
@@ -236,7 +236,6 @@ class PlotPanel(Loggable):
     def _update_display(self, obj, name, old, new):
         if new:
             arar_age = self.arar_age
-
             for plot, reg in new:
                 if reg is None:
                     continue
@@ -244,25 +243,25 @@ class PlotPanel(Loggable):
                 iso = plot.y_axis.title
                 if isinstance(reg, float):
                     vv, ee = reg, 0
-                else:
-                    vv = reg.predict(0)
-                    ee = reg.predict_error(0)
+                # else:
+                #     vv = reg.predict(0)
+                #     ee = reg.predict_error(0)
+                #
+                    v = vv, ee
+                    if self.is_baseline:
+                        if self.is_peak_hop:
 
-                v = vv, ee
-                if self.is_baseline:
-                    if self.is_peak_hop:
-
-                        detname = self.arar_age.isotopes[iso].detector
-                        for k, ii in self.arar_age.isotopes.iteritems():
-                            if ii.detector == detname:
-                                arar_age.set_baseline(k, v)
+                            detname = self.arar_age.isotopes[iso].detector
+                            for k, ii in self.arar_age.isotopes.iteritems():
+                                if ii.detector == detname:
+                                    arar_age.set_baseline(k, v)
+                        else:
+                            arar_age.set_baseline(iso, v)
                     else:
-                        arar_age.set_baseline(iso, v)
-                else:
-                    arar_age.set_isotope(iso, v)
+                        arar_age.set_isotope(iso, v)
 
-            if self.refresh_age:
-                arar_age.calculate_age(force=True)
+            # if self.refresh_age:
+            #     arar_age.calculate_age(force=True)
 
             self.analysis_view.load_computed(arar_age, new_list=False)
             self.analysis_view.refresh_needed = True

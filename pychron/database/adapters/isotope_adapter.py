@@ -1054,7 +1054,7 @@ class IsotopeAdapter(DatabaseAdapter):
             order_bys = (proc_AnalysisGroupTable.create_date, proc_AnalysisGroupTable.last_modified)
             return self._retrieve_items(proc_AnalysisGroupTable,
                                         joins=joins,
-                                        filters=filters, order_by=order_bys)
+                                        filters=filters, order=order_bys)
             # with self.session_ctx() as sess:
             #     if projects:
             #
@@ -1105,7 +1105,6 @@ class IsotopeAdapter(DatabaseAdapter):
             q = self._labnumber_join(q, project_names, mass_spectrometers,
                                      analysis_types, filter_non_run, low_post, high_post)
 
-            q = q.filter(gen_ProjectTable.name.in_(project_names))
             q = q.filter(irrad_IrradiationTable.name == irradiation)
 
             if level:
@@ -1164,7 +1163,7 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_items(meas_AnalysisTable,
                                     joins=joins,
                                     filters=filters,
-                                    order_by=meas_AnalysisTable.analysis_timestamp.desc(),
+                                    order=meas_AnalysisTable.analysis_timestamp.desc(),
                                     func='first')
 
         # return self._retrieve_first()
@@ -1266,10 +1265,7 @@ class IsotopeAdapter(DatabaseAdapter):
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
         with self.session_ctx() as sess:
-            # q = sess.query(meas_AnalysisTable.analysis_timestamp)
-            # q = q.join(gen_LabTable)
-
-            q = self._analysis_query(attr='analysis_timestamp')
+            q = self._analysis_query(sess, attr='analysis_timestamp')
             q = q.filter(gen_LabTable.identifier.in_(lns))
 
             qry = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
@@ -2347,7 +2343,7 @@ class IsotopeAdapter(DatabaseAdapter):
             filters.extend(f)
         else:
             filters.append(f)
-        kw[filters]=filters
+        kw['filters']=filters
         return kw
 
     def _append_joins(self, f, kw):

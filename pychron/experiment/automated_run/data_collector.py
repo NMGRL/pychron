@@ -164,6 +164,9 @@ class DataCollector(Loggable):
         else:
             self._update_isotopes(x, keys, signals)
 
+        if self.refresh_age:
+            self.arar_age.calculate_age(force=True)
+
     def _update_baseline_peak_hop(self, x, keys, signals):
         a = self.arar_age
         for iso in self.arar_age.isotopes.itervalues():
@@ -174,7 +177,6 @@ class DataCollector(Loggable):
 
     def _update_isotopes(self, x, keys, signals):
         a = self.arar_age
-
         kind = self.collection_kind
 
         for dn in keys:
