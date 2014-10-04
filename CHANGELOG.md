@@ -41,3 +41,5 @@ CHANGELOG
 * added time view to browser
 * added ability to add event markers to spectrometer scan graph
 * added snapshot to spectrometer scan
+* added bgcolor control for experiment editor
+* optimized plotpanel

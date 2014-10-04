@@ -60,6 +60,7 @@ class DataCollector(Loggable):
     _warned_no_det = None
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
+    refresh_age=False
 
     def wait(self):
         st = time.time()

@@ -111,6 +111,7 @@ END_AFTER_COLOR = 'gray'
 NOT_EXECUTABLE_COLOR = 'red'
 
 LIGHT_RED_COLOR = '#FF7373'
+LIGHT_YELLOW = '#F7F6D0'
 
 DETECTOR_ORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
 DETECTOR_MAP = {o: i for i, o in enumerate(DETECTOR_ORDER)}

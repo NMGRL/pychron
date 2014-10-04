@@ -194,8 +194,8 @@ class PlotPanel(Loggable):
         xmi, xma = self.isotope_graph.get_x_limits()
         xm = max(xma, xma + (v - o) * 1.05)
         self.isotope_graph.set_x_limits(max_=xm)
-        print xma, v, o
-        print 'setting x limits {} '.format(xm)
+        #print xma, v, o
+        #print 'setting x limits {} '.format(xm)
 
     def _get_ncycles(self):
         return self._ncycles
@@ -235,35 +235,7 @@ class PlotPanel(Loggable):
     @on_trait_change('isotope_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
-            arar_age = self.arar_age
-            for plot, reg in new:
-                if reg is None:
-                    continue
-
-                iso = plot.y_axis.title
-                if isinstance(reg, float):
-                    vv, ee = reg, 0
-                # else:
-                #     vv = reg.predict(0)
-                #     ee = reg.predict_error(0)
-                #
-                    v = vv, ee
-                    if self.is_baseline:
-                        if self.is_peak_hop:
-
-                            detname = self.arar_age.isotopes[iso].detector
-                            for k, ii in self.arar_age.isotopes.iteritems():
-                                if ii.detector == detname:
-                                    arar_age.set_baseline(k, v)
-                        else:
-                            arar_age.set_baseline(iso, v)
-                    else:
-                        arar_age.set_isotope(iso, v)
-
-            # if self.refresh_age:
-            #     arar_age.calculate_age(force=True)
-
-            self.analysis_view.load_computed(arar_age, new_list=False)
+            self.analysis_view.load_computed(self.arar_age, new_list=False)
             self.analysis_view.refresh_needed = True
 
     #===============================================================================

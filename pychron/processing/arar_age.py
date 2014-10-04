@@ -218,7 +218,12 @@ class ArArAge(Loggable):
 
         def _append(isotope):
             if kind in ('sniff', 'baseline'):
+                if kind=='sniff':
+                    isotope._value=signal
+                    isotope.dirty = True
+
                 isotope = getattr(isotope, kind)
+
 
             if kind=='sniff':
                 isotope._value=signal

@@ -185,6 +185,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         regs.append((plot, r))
 
             except ValueError, e:
+                #add a float instead of regressor to regs
                 try:
                     si = ps[ks[0]][0]
                     regs.append((plot, si.value.get_data()[-1]))

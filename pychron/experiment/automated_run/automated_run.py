@@ -187,6 +187,7 @@ class AutomatedRun(Loggable):
                 self.warning('No fit for "{}". defaulting to {}. '
                              'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
             iso.set_fit_blocks(fi)
+            self.debug('set "{}" to "{}"'.format(k, fi))
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
@@ -209,6 +210,7 @@ class AutomatedRun(Loggable):
                              'check the measurement script "{}"'.format(iso.detector, fi, self.measurement_script.name))
 
             iso.baseline.set_fit_blocks(fi)
+            self.debug('set "{}" to "{}"'.format(iso.detector, fi))
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -1151,11 +1153,13 @@ anaylsis_type={}
         """
         dfp = self._get_default_fits_file()
         if dfp:
+            self.debug('using default fits file={}'.format(dfp))
             with open(dfp, 'r') as fp:
                 yd = yaml.load(fp)
                 key = 'baseline' if is_baseline else 'signal'
                 fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
         else:
+            self.debug('no default fits file')
             fd = {}
 
         return fd

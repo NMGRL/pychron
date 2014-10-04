@@ -79,7 +79,7 @@ class OLSRegressor(BaseRegressor):
         cys = self.pre_clean_ys
 
         if not self._check_integrity(cxs, cys):
-            logger.debug('A integrity check failed')
+            # logger.debug('A integrity check failed')
             # import traceback
             # traceback.print_stack()
             return
