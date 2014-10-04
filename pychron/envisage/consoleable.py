@@ -20,6 +20,7 @@ from traits.trait_types import Bool, Instance, Event
 #============= local library imports  ==========================
 from pychron.displays.display import DisplayController
 from pychron.loggable import Loggable
+from pychron.pychron_constants import LIGHT_YELLOW
 
 
 class Consoleable(Loggable):
@@ -58,7 +59,7 @@ class Consoleable(Loggable):
 
     def _console_display_default(self):
         return DisplayController(
-            bgcolor='#F7F6D0',
+            bgcolor=LIGHT_YELLOW,
             default_color='limegreen',
             max_blocks=100)
 #============= EOF =============================================

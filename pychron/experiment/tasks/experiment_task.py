@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import on_trait_change, Bool, Instance, Event
+from traits.api import on_trait_change, Bool, Instance, Event, Color
 # from traitsui.api import View, Item
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter, Tabbed
 from pyface.constant import CANCEL, NO
-from apptools.preferences.preference_binding import bind_preference
 #============= standard library imports ========================
 import shutil
 import weakref
 import os
 #============= local library imports  ==========================
 import xlrd
+from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
@@ -58,6 +58,7 @@ class ExperimentEditorTask(EditorTask):
     # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
 
+    bgcolor=Color
     def new_pattern(self):
         pm = PatternMakerView()
         self.window.application.open_view(pm)
@@ -112,6 +113,8 @@ class ExperimentEditorTask(EditorTask):
                         'pychron.use_syslogger')
         if self.use_syslogger:
             self._use_syslogger_changed()
+
+        color_bind_preference(self, 'bgcolor', 'pychron.experiment.bg_color')
 
         super(ExperimentEditorTask, self).activated()
 
@@ -186,7 +189,7 @@ class ExperimentEditorTask(EditorTask):
             txt, is_uv = self._open_txt(path)
 
         klass = UVExperimentEditor if is_uv else ExperimentEditor
-        editor = klass(path=path)
+        editor = klass(path=path, bgcolor=self.bgcolor)
         editor.new_queue(txt)
         self._open_editor(editor)
 

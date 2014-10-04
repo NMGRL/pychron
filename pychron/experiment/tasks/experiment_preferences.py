@@ -52,6 +52,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     sniff_color = Color
     signal_color = Color
 
+    bg_color = Color
+
     min_ms_pumptime = Int
 
     use_memory_check = Bool
@@ -125,6 +127,7 @@ class ExperimentPreferencesPane(PreferencesPane):
         color_group = Group(Item('sniff_color', label='Sniff'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
+                            Item('bg_color',label='Background'),
                             label='Colors')
 
         analysis_grouping_grp = Group(Item('use_analysis_grouping',

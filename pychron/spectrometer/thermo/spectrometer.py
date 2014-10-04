@@ -289,7 +289,6 @@ class Spectrometer(SpectrometerDevice):
             for k, v in zip(keys, signals):
                 det = self.get_detector(k)
                 det.set_intensity(v)
-
         else:
             keys, signals = self._get_simulation_data()
 

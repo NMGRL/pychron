@@ -15,8 +15,9 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from PySide.QtGui import QColor
 
-from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits
+from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color
 from traits.trait_base import SequenceTypes
 from traitsui.api import View, Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
@@ -83,6 +84,7 @@ class _myTableView(_TableView, ConsumerMixin):
         super(_myTableView, self).__init__(*args, **kw)
 
 
+
         self.setup_consumer()
         editor = self._editor
 
@@ -101,6 +103,16 @@ class _myTableView(_TableView, ConsumerMixin):
             #hheader.setStretchLastSection(editor.factory.stretch_last_section)
             vheader.setFont(fnt)
             hheader.setFont(fnt)
+
+    def set_bg_color(self, bgcolor):
+        if isinstance(bgcolor, tuple):
+            if len(bgcolor)==3:
+                bgcolor='rgb({},{},{})'.format(*bgcolor)
+            elif len(bgcolor)==4:
+                bgcolor='rgba({},{},{},{})'.format(*bgcolor)
+        elif isinstance(bgcolor, QColor):
+            bgcolor='rgba({},{},{},{})'.format(*bgcolor.toTuple())
+        self.setStyleSheet('QTableView {{background-color: {}}}'.format(bgcolor))
 
     def set_vertical_header_font(self, fnt):
         fnt = QtGui.QFont(fnt)
@@ -503,6 +515,10 @@ class _TabularEditor(qtTabularEditor):
         self.sync_value(factory.key_pressed, 'key_pressed', 'to')
 
         control = self.control
+
+        if factory.bgcolor:
+            control.set_bg_color(factory.bgcolor)
+
         if hasattr(self.object, factory.paste_function):
             control.paste_func = getattr(self.object, factory.paste_function)
         if hasattr(self.object, factory.drop_factory):
@@ -556,6 +572,8 @@ class myTabularEditor(TabularEditor):
     col_widths = Str
     drag_external = Bool(False)
     drag_enabled = Bool(True)
+
+    bgcolor = Color
 
     def _get_klass(self):
         return _TabularEditor
