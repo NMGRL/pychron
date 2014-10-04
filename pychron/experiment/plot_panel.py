@@ -235,35 +235,8 @@ class PlotPanel(Loggable):
     @on_trait_change('isotope_graph:regression_results')
     def _update_display(self, obj, name, old, new):
         if new:
-            arar_age = self.arar_age
-            refresh=True
-            for plot, reg in new:
-                if reg is None:
-                    continue
-
-                iso = plot.y_axis.title
-                if isinstance(reg, float):
-                    refresh=False
-                    vv, ee = reg, 0
-                    v = vv, ee
-                    arar_age.set_isotope(iso,v)
-                    # if self.is_baseline:
-                    #     if self.is_peak_hop:
-                    #
-                    #         detname = self.arar_age.isotopes[iso].detector
-                    #         for k, ii in self.arar_age.isotopes.iteritems():
-                    #             if ii.detector == detname:
-                    #                 arar_age.set_baseline(k, v)
-                    #     else:
-                    #         arar_age.set_baseline(iso, v)
-                    # else:
-                    #     arar_age.set_isotope(iso, v)
-
-            # if self.refresh_age:
-            #     arar_age.calculate_age(force=True)
-            if refresh:
-                self.analysis_view.load_computed(arar_age, new_list=False)
-                self.analysis_view.refresh_needed = True
+            self.analysis_view.load_computed(self.arar_age, new_list=False)
+            self.analysis_view.refresh_needed = True
 
     #===============================================================================
     # defaults

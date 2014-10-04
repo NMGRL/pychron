@@ -107,6 +107,9 @@ class ArArAge(Loggable):
     #     HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
 
+    def set_j(self, s, e):
+        self.j=ufloat(s, std_dev=e)
+
     def clear_isotopes(self):
         for iso in self.isotopes:
             self.isotopes[iso] = Isotope(name=iso)
@@ -215,9 +218,15 @@ class ArArAge(Loggable):
 
         def _append(isotope):
             if kind in ('sniff', 'baseline'):
+                if kind=='sniff':
+                    isotope._value=signal
+                    isotope.dirty = True
+
                 isotope = getattr(isotope, kind)
+
             isotope.xs = hstack((isotope.xs, (x,)))
             isotope.ys = hstack((isotope.ys, (signal,)))
+            isotope.dirty = True
 
         isotopes = self.isotopes
         if kind == 'baseline':
@@ -493,7 +502,6 @@ class ArArAge(Loggable):
         age = age_equation(j, f, include_decay_error=include_decay_error,
                            arar_constants=arc)
         self.uage = age
-
         self.age = age.nominal_value
         self.age_err = age.std_dev
 

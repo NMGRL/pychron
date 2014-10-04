@@ -187,6 +187,7 @@ class AutomatedRun(Loggable):
                 self.warning('No fit for "{}". defaulting to {}. '
                              'check the measurement script "{}"'.format(k, fi, self.measurement_script.name))
             iso.set_fit_blocks(fi)
+            self.debug('set "{}" to "{}"'.format(k, fi))
 
     def py_set_baseline_fits(self, fits):
         isotopes = self.arar_age.isotopes
@@ -209,6 +210,7 @@ class AutomatedRun(Loggable):
                              'check the measurement script "{}"'.format(iso.detector, fi, self.measurement_script.name))
 
             iso.baseline.set_fit_blocks(fi)
+            self.debug('set "{}" to "{}"'.format(iso.detector, fi))
 
     def py_get_spectrometer_parameter(self, name):
         self.info('getting spectrometer parameter {}'.format(name))
@@ -1151,11 +1153,13 @@ anaylsis_type={}
         """
         dfp = self._get_default_fits_file()
         if dfp:
+            self.debug('using default fits file={}'.format(dfp))
             with open(dfp, 'r') as fp:
                 yd = yaml.load(fp)
                 key = 'baseline' if is_baseline else 'signal'
                 fd = {yi['name']: (yi['fit'], yi['error_type']) for yi in yd[key]}
         else:
+            self.debug('no default fits file')
             fd = {}
 
         return fd
@@ -1350,8 +1354,7 @@ anaylsis_type={}
 
         plot_panel.trait_set(
             plot_title=title,
-            analysis_view=an,
-            refresh_age=self.analysis_type in ('unknown', 'cocktail'))
+            analysis_view=an)
 
         return plot_panel
 
@@ -1527,7 +1530,8 @@ anaylsis_type={}
             period_ms=period * 1000,
             data_generator=get_data,
             data_writer=data_writer,
-            starttime=starttime)
+            starttime=starttime,
+            refresh_age=self.analysis_type in ('unknown','cocktail'))
 
         #m.total_counts += ncounts
         if self.plot_panel:
@@ -1795,7 +1799,7 @@ anaylsis_type={}
 
         m = ast.parse(script.text)
         docstr = ast.get_docstring(m)
-        self.debug('{} {} metadata {}'.format(script.name, key, docstr))
+        self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
         if docstr:
             try:
                 params = yaml.load(docstr)
