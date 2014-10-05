@@ -37,6 +37,12 @@ class Layer(HasTraits):
             else:
                 self.components.pop(idx)
 
+    def remove_klass(self, k):
+        if self.components:
+            for c in self.components:
+                if isinstance(c, k):
+                    self.components.remove(c)
+
     def remove_item(self, v):
         if self.components:
             self.components.remove(v)

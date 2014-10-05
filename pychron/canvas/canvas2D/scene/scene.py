@@ -149,6 +149,15 @@ class Scene(HasTraits):
 
         layer.add_item(v)
 
+    def remove_klass(self, klass, layer=None):
+        if layer is None:
+            layers = self.layers
+        else:
+            layers = (self.layers[layer],)
+
+        for li in layers:
+            li.remove_klass(klass)
+
     def remove_item(self, v, layer=None):
         if layer is None:
             layers = self.layers

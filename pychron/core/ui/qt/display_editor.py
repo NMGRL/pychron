@@ -69,7 +69,6 @@ class _DisplayEditor(Editor):
         fmt.setFontPointSize(self.font_size)
         self.control.setCurrentCharFormat(fmt)
 
-
     def _refresh_fired(self):
         self.update_editor()
 
@@ -126,7 +125,7 @@ class _DisplayEditor(Editor):
 class DisplayEditor(BasicEditorFactory):
     klass = _DisplayEditor
     font_name = Str
-    max_blocks = Int(0)
+    max_blocks = Int(50)
 
     #extended trait names
     bgcolor = Str
