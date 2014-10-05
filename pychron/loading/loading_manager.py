@@ -23,7 +23,7 @@ from traitsui.api import View, Item, EnumEditor
 from itertools import groupby
 #============= local library imports  ==========================
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas
+from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 
 from pychron.database.orms.isotope.loading import loading_LoadTable
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
@@ -40,25 +40,27 @@ def make_bound(st):
 def make_position_str(pos):
     s = ''
     if pos:
-        pos = sorted(pos)
-
-        pp = pos[0]
-        stack = [pp]
-        ss = []
-
-        for pi in pos[1:]:
-            if not pp + 1 == pi:
-                ss.append(make_bound(stack))
-                stack = []
-
-            stack.append(pi)
-            pp = pi
-
-        if stack:
-            ss.append(make_bound(stack))
+        ss = group_position(pos, make_bound)
+        # pos = sorted(pos)
+        #
+        # pp = pos[0]
+        # stack = [pp]
+        # ss = []
+        #
+        # for pi in pos[1:]:
+        #     if not pp + 1 == pi:
+        #         ss.append(make_bound(stack))
+        #         stack = []
+        #
+        #     stack.append(pi)
+        #     pp = pi
+        #
+        # if stack:
+        #     ss.append(make_bound(stack))
 
         s = ','.join(ss)
     return s
+
 
 
 class LoadPosition(HasTraits):
@@ -86,6 +88,7 @@ class LoadPosition(HasTraits):
 
 
 class LoadingManager(IsotopeDatabaseManager):
+    dirty = Bool(False)
     loader_name = Str('Foo')
 
     labnumber = Str
@@ -98,6 +101,7 @@ class LoadingManager(IsotopeDatabaseManager):
         total positions to apply the current information i.e labnumber
     '''
     npositions = Int(1)
+    auto_increment = Bool(False)
     #     irradiation_hole = Str
     #     sample = Str
 
@@ -133,37 +137,15 @@ class LoadingManager(IsotopeDatabaseManager):
     show_labnumbers = Bool(False)
     show_weights = Bool(False)
     show_hole_numbers = Bool(False)
+    show_spans = Bool(False)
 
-    def _add_button_fired(self):
-        ln = self.loads[0]
-        try:
-            self.new_load_name = str(int(ln) + 1)
-        except ValueError:
-            pass
-
-        info = self.edit_traits(
-            view='_new_load_view'
-        )
-
-        if info.result:
-            self.save()
-
-    def _delete_button_fired(self):
-        ln = self.load_name
-        if ln:
-            sess = self.db.sess
-            # delete the load and any associated records
-            dbload = self.db.get_loadtable(name=ln)
-            if dbload:
-                for ps in (dbload.loaded_positions, dbload.measured_positions):
-                    for pos in ps:
-                        sess.delete(pos)
-
-                sess.delete(dbload)
-                sess.commit()
-
-            self.loads = self._get_loads()
-            self.load_name = self.loads[0]
+    def save(self):
+        self.debug('saving load to database')
+        with self.db.session_ctx():
+            self._save_load()
+            self._save_positions(self.load_name)
+            self.dirty=False
+        return True
 
     def setup(self):
         if self.db.connected:
@@ -225,8 +207,7 @@ class LoadingManager(IsotopeDatabaseManager):
         oy = -10 if not self.show_labnumbers else -20
         item.add_weight_label(str(self.weight),
                               visible=self.show_weights,
-                              oy=oy
-        )
+                              oy=oy)
         item.weight = self.weight
         item.note = self.note
         item.sample = self.sample
@@ -261,11 +242,29 @@ class LoadingManager(IsotopeDatabaseManager):
                           sample=self.sample,
                           positions=[pid],
                           weight=self.weight,
-                          note=self.note
-        )
+                          note=self.note)
         self.positions.append(lp)
 
         self._set_canvas_hole_selected(canvas_hole)
+
+    def _auto_increment_labnumber(self):
+        if self.auto_increment:
+            idx=self.labnumbers.index(self.labnumber)
+            try:
+                self.labnumber=self.labnumbers[idx+1]
+            except IndexError:
+                idx=self.levels.index(self.level)
+                try:
+                    self.level=self.levels[idx+1]
+                    self.labnumber=self.labnumbers[0]
+                except IndexError:
+                    idx=self.irradiations.index(self.irradiation)
+                    try:
+                        self.irradiation=self.irradiations[idx+1]
+                        self.level=self.levels[0]
+                        self.labnumber=self.labnumbers[0]
+                    except IndexError:
+                        pass
 
     def _set_position(self, canvas_hole):
 
@@ -287,8 +286,7 @@ class LoadingManager(IsotopeDatabaseManager):
                 c = LoadingCanvas(
                     view_x_range=(-2, 2),
                     view_y_range=(-2, 2),
-                    editable=editable
-                )
+                    editable=editable)
                 self.canvas = c
 
             if lt and lt.holder_:
@@ -373,7 +371,7 @@ class LoadingManager(IsotopeDatabaseManager):
                 else:
                     for pi in pos:
                         self._add_position(ln, [pi])
-
+            self._update_span_indicators()
 
     def _add_position(self, ln, pos):
         pos = map(int, pos)
@@ -389,15 +387,9 @@ class LoadingManager(IsotopeDatabaseManager):
                           irradiation=irrad.name,
                           level=level.name,
                           irrad_position=int(ip.position),
-                          positions=pos,
-        )
+                          positions=pos)
 
         self.positions.append(lp)
-
-    def save(self):
-        with self.db.session() as sess:
-            self._save_load()
-            self._save_positions(self.load_name)
 
     def _save_load(self):
         db = self.db
@@ -409,7 +401,7 @@ class LoadingManager(IsotopeDatabaseManager):
             else:
                 self.info('adding load {} {} to database'.format(nln, self.tray))
                 db.add_load(nln, holder=self.tray)
-                db.sess.commit()
+                # db.sess.commit()
                 #                 sess.commit()
                 #                     db.commit()
 
@@ -440,12 +432,10 @@ class LoadingManager(IsotopeDatabaseManager):
                     i = db.add_load_position(ln,
                                              position=pp,
                                              weight=ip.weight,
-                                             note=ip.note,
-
-                    )
+                                             note=ip.note)
                     lt.loaded_positions.append(i)
 
-            sess.commit()
+            # sess.commit()
 
     @cached_property
     def _get_labnumbers(self):
@@ -454,9 +444,7 @@ class LoadingManager(IsotopeDatabaseManager):
         if db.connected:
             with db.session_ctx():
                 level = db.get_irradiation_level(self.irradiation,
-                                                 self.level,
-                                                 #                                               sess=sess
-                )
+                                                 self.level)
                 if level:
                 #             self._positions = [str(li.position) for li in level.positions]
                     r = sorted([li.labnumber.identifier
@@ -520,42 +508,84 @@ class LoadingManager(IsotopeDatabaseManager):
         v = View(Item('new_load_name', label='Name'),
                  Item('tray', editor=EnumEditor(name='trays')),
                  kind='livemodal',
-                 buttons=['OK', 'Cancel']
-        )
+                 title='New Load Name',
+                 buttons=['OK', 'Cancel'])
         return v
 
+    def _update_span_indicators(self):
+        canvas=self.canvas
+        canvas.clear_spans()
+        for i,p in enumerate(self.positions):
+            pos=p.positions
+            canvas.add_span_indicator(pos, self.show_spans)
 
     #===============================================================================
     # handlers
     #===============================================================================
+    def _add_button_fired(self):
+        ln = self.loads[0]
+        try:
+            self.new_load_name = str(int(ln) + 1)
+        except ValueError:
+            pass
+
+        info = self.edit_traits(view='_new_load_view')
+
+        if info.result:
+            self.save()
+
+    def _delete_button_fired(self):
+        ln = self.load_name
+        if ln:
+            with self.db.session_ctx() as sess:
+                # delete the load and any associated records
+                dbload = self.db.get_loadtable(name=ln)
+                if dbload:
+                    for ps in (dbload.loaded_positions, dbload.measured_positions):
+                        for pos in ps:
+                            sess.delete(pos)
+
+                    sess.delete(dbload)
+                    sess.commit()
+
+            self.loads = self._get_loads()
+            self.load_name = self.loads[0]
+
     def _load_name_changed(self, new):
         if new:
             self.tray = ''
             self.load_load(new)
 
+    def _show_spans_changed(self, new):
+        if self.canvas:
+            self.canvas.set_spans_visibility(new)
+
     def _show_labnumbers_changed(self, new):
-        for lp in self.positions:
-            for pid in lp.positions:
-                item = self.canvas.scene.get_item(str(pid))
+        if self.canvas:
+            for lp in self.positions:
+                for pid in lp.positions:
+                    item = self.canvas.scene.get_item(str(pid))
 
-                item.labnumber_label.visible = new
-                item.weight_label.oy = -20 if new else -10
+                    item.labnumber_label.visible = new
+                    item.weight_label.oy = -20 if new else -10
 
-        self.canvas.request_redraw()
+            self.canvas.request_redraw()
 
     def _show_weights_changed(self, new):
-        for lp in self.positions:
-            for pid in lp.positions:
-                item = self.canvas.scene.get_item(str(pid))
-                item.weight_label.visible = new
+        if self.canvas:
+            for lp in self.positions:
+                for pid in lp.positions:
+                    item = self.canvas.scene.get_item(str(pid))
+                    item.weight_label.visible = new
 
-        self.canvas.request_redraw()
+            self.canvas.request_redraw()
 
     def _show_hole_numbers_changed(self, new):
-        for item in self.canvas.scene.get_items(LoadIndicator):
-            item.name_visible = new
+        if self.canvas:
+            for item in self.canvas.scene.get_items(LoadIndicator):
+                item.name_visible = new
 
-        self.canvas.request_redraw()
+            self.canvas.request_redraw()
 
     @on_trait_change('canvas:selected')
     def _update_selected(self, new):
@@ -572,19 +602,22 @@ class LoadingManager(IsotopeDatabaseManager):
             if not self.irradiation_hole:
                 self.warning_dialog('Select a Labnumber')
             else:
-                for _ in range(self.npositions):
+                for i in range(self.npositions):
                     if not new:
                         continue
 
                     self._set_position(new)
-                    id_ = int(new.name) + 1
-                    new = self.canvas.scene.get_item(str(id_))
+                    new = self.canvas.scene.get_item(str(int(new.name) + 1))
 
                 if not self.retain_weight:
                     self.weight = 0
                 if not self.retain_note:
                     self.note = ''
 
+                self._auto_increment_labnumber()
+                self._update_span_indicators()
+
         self.refresh_table = True
+        self.dirty=True
 
         #============= EOF =============================================

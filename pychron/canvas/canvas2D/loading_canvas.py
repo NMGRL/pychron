@@ -34,8 +34,28 @@
 from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.canvas.canvas2D.scene.primitives.primitives import Line
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
+
+
+def group_position(pos, func=None):
+    pos = sorted(pos)
+    pp = pos[0]
+    stack = [pp]
+    ss = []
+
+    for pi in pos[1:]:
+        if not pp + 1 == pi:
+            ss.append(func(stack) if func else stack)
+            stack = []
+
+        stack.append(pi)
+        pp = pi
+
+    if stack:
+        ss.append(func(stack) if func else stack)
+    return ss
 
 
 class LoadingCanvas(SceneCanvas):
@@ -55,6 +75,18 @@ class LoadingCanvas(SceneCanvas):
     aspect_ratio = 1
     editable = True
     _scene_klass = LoadingScene
+
+    def clear_spans(self):
+        self.scene.remove_klass(Line)
+
+    def set_spans_visibility(self, v):
+        self.scene.set_spans_visibility(v)
+        self.request_redraw()
+
+    def add_span_indicator(self, pos, visible):
+        scene=self.scene
+        for g in group_position(pos):
+            scene.add_span_indicator(g[0],g[-1], visible)
 
     def load_scene(self, t, **kw):
 

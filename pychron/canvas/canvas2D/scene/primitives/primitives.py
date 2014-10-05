@@ -542,7 +542,6 @@ class Circle(QPrimitive):
 
         self._render_name(gc, x, y, r / 4., r / 2.)
 
-
     def is_in(self, sx, sy):
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
@@ -555,6 +554,22 @@ class Circle(QPrimitive):
     def _get_group(self):
         return Item('radius')
 
+
+class Span(Line):
+    hole_dim=1
+    def _render_(self, gc):
+        # super(Span, self)._render_(gc)
+        x,y=self.start_point.get_xy()
+        x1,y1=self.end_point.get_xy()
+
+        # r=3
+        # gc.arc(x, y, r, 0, 360)
+        # gc.arc(x1, y1, r, 0, 360)
+        # gc.fill_path()
+        hd=self.map_dimension(self.hole_dim)
+        w=x1-x+4
+        gc.rect(x-hd-2,y-hd-2,w+2*hd,2*hd+4)
+        gc.stroke_path()
 
 class LoadIndicator(Circle):
     degas_indicator = False

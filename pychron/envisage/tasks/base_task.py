@@ -394,6 +394,7 @@ class BaseManagerTask(BaseTask):
     def _on_close(self, event):
         """ Prompt the user to save when exiting.
         """
+
         close = self._prompt_for_save()
         event.veto = not close
 

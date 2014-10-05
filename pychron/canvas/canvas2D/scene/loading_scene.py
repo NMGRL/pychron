@@ -24,10 +24,47 @@ from numpy import Inf
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.paths import paths
 from pychron.lasers.stage_managers.stage_map import StageMap
-from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator, Span
 
 
 class LoadingScene(Scene):
+    def set_spans_visibility(self, v):
+        for i in self.iteritems(klass=Span):
+            i.visible=v
+
+    def add_span_indicator(self, low, high, visible):
+        low,high=self.get_item(low), self.get_item(high)
+
+        hole_dim=low.radius
+        offset=0
+
+        p1=(low.x, low.y-offset)
+        if high.y==low.y:
+            p2=(high.x, high.y-offset)
+            s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
+            self.add_item(s)
+
+        else:
+            c=int(low.name)+1
+            pitem=low
+            y2=low.y
+            while 1:
+                item = self.get_item(str(c))
+                if item.y<y2:
+                    p2=(pitem.x, y2-offset)
+                    s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
+                    self.add_item(s)
+                    if item.y==high.y:
+                        p1,p2=(item.x, item.y), (high.x, high.y-offset)
+                        s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
+                        self.add_item(s)
+                        break
+                    else:
+                        p1=(item.x, item.y-offset)
+                        y2=item.y
+                pitem=item
+                c+=1
+
     def load(self, t, show_hole_numbers=True):
         self.reset_layers()
         holes = self._get_holes(t)
@@ -55,8 +92,7 @@ class LoadingScene(Scene):
                 radius=r,
                 name_visible=show_hole_numbers,
                 name=n,
-                font='modern 10'
-            )
+                font='modern 10')
             self.add_item(v)
 
         w = (xma + mr - (xmi - mr)) * 1.2
