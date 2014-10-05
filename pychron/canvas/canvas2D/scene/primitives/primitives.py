@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Float, Any, Dict, Bool, Str, Property, List, Int, \
@@ -156,13 +156,17 @@ class Primitive(HasTraits):
         self.x += dx
         self.y += dy
 
-    def get_xy(self):
-        x, y = self.x, self.y
+    def get_xy(self, x=None, y=None):
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        # x, y = self.x, self.y
         offset = 0
         if self.space == 'data':
             #            if self.canvas is None:
             #                print self
-            x, y = self.canvas.map_screen([(self.x, self.y)])[0]
+            x, y = self.canvas.map_screen([(x, y)])[0]
             #        offset = self.canvas.offset
             offset = 1
             x += self.offset_x
@@ -556,20 +560,69 @@ class Circle(QPrimitive):
 
 
 class Span(Line):
-    hole_dim=1
-    def _render_(self, gc):
-        # super(Span, self)._render_(gc)
-        x,y=self.start_point.get_xy()
-        x1,y1=self.end_point.get_xy()
+    hole_dim = 1
+    hole_spacing=1
+    continued_line = False
+    # fill = (0.78,0.78, 0.78,1)
+    fill = None#(0.78,0.78, 0.78,1)
 
-        # r=3
-        # gc.arc(x, y, r, 0, 360)
-        # gc.arc(x1, y1, r, 0, 360)
-        # gc.fill_path()
-        hd=self.map_dimension(self.hole_dim)
-        w=x1-x+4
-        gc.rect(x-hd-2,y-hd-2,w+2*hd,2*hd+4)
+    def _render_(self, gc):
+        x, y = self.start_point.get_xy()
+        x1, y1 = self.end_point.get_xy()
+        hd = self.map_dimension(self.hole_dim)
+        hs = self.map_dimension(self.hole_spacing/2.0)
+        w = x1 - x + 4
+        x0 = x - hd
+        y0 = y - hd
+        with gc:
+            if self.fill:
+                self._render_boxes(gc, x0, y0, w, hd, hs)
+            else:
+                self._render_lines(gc, x0, y0, w, hd)
+
+    def _render_boxes(self, gc, x, y, w, hd, hs):
+        x-=2
+        gc.set_stroke_color(self.fill)
+        gc.set_fill_color(self.fill)
+        # v=(hs-hd)/2.0
+        if self.continued_line==1:
+            gc.rect(x, y-hd, w + 2 * hd, 2*hs)
+        elif self.continued_line==2:
+            gc.rect(x, y-hd, w + 2 * hd, 2*hs)
+        elif self.continued_line==3:
+            gc.rect(x, y-hd+4, w + 2 * hd, 2*hs-2)
+        else:
+            gc.rect(x, y-hd+4, w + 2 * hd, 2*hs-4)
+
+        gc.draw_path()
+
+        # gc.set_stroke_color((1,0,0,1))
+        # gc.move_to(x, y-hd)
+        # gc.line_to(x+10, y-hd)
+        # gc.stroke_path()
+    def _render_lines(self, gc, x, y, w, hd):
+        x-=2
+        y-=2
+        if self.continued_line:
+            if self.continued_line == 1:
+                gc.move_to(x + w + 2 * hd, y + 2 * hd + 4)
+                gc.line_to(x, y + 2 * hd + 4)
+                gc.line_to(x, y)
+                gc.line_to(x + w + 2 * hd, y)
+            elif self.continued_line == 2:
+                gc.move_to(x, y + 2 * hd + 4)
+                gc.line_to(x + w + 2 * hd, y + 2 * hd + 4)
+                gc.line_to(x + w + 2 * hd, y)
+                gc.line_to(x, y)
+            elif self.continued_line == 3:
+                gc.move_to(x, y + 2 * hd + 4)
+                gc.line_to(x + w + 2 * hd, y + 2 * hd + 4)
+                gc.move_to(x + w + 2 * hd, y)
+                gc.line_to(x, y)
+        else:
+            gc.rect(x, y, w + 2 * hd, 2 * hd + 4)
         gc.stroke_path()
+
 
 class LoadIndicator(Circle):
     degas_indicator = False

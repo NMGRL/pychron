@@ -34,34 +34,48 @@ class LoadingScene(Scene):
 
     def add_span_indicator(self, low, high, visible):
         low,high=self.get_item(low), self.get_item(high)
+        a,b=self.get_item('1'), self.get_item('2')
+        hole_spacing=((a.x-b.x)**2+(a.y-b.y)**2)**0.5
 
         hole_dim=low.radius
         offset=0
 
         p1=(low.x, low.y-offset)
+        print high.name, high.y, low.name,low.y
         if high.y==low.y:
             p2=(high.x, high.y-offset)
-            s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
-            self.add_item(s)
-
+            s = Span(p1=p1, p2=p2,
+                     hole_spacing=hole_spacing,
+                     hole_dim=hole_dim,
+                     visible=visible)
+            self.add_item(s, layer=0)
         else:
             c=int(low.name)+1
             pitem=low
             y2=low.y
+            ct=1
             while 1:
                 item = self.get_item(str(c))
                 if item.y<y2:
                     p2=(pitem.x, y2-offset)
-                    s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
-                    self.add_item(s)
+                    s = Span(p1=p1, p2=p2,
+                             hole_dim=hole_dim,
+                             hole_spacing=hole_spacing,
+                             visible=visible,
+                             continued_line=ct)
+                    self.add_item(s,layer=0)
                     if item.y==high.y:
                         p1,p2=(item.x, item.y), (high.x, high.y-offset)
-                        s = Span(p1=p1, p2=p2, hole_dim=hole_dim, visible=visible)
-                        self.add_item(s)
+                        s = Span(p1=p1, p2=p2, hole_dim=hole_dim,
+                                 visible=visible,
+                                 hole_spacing=hole_spacing,
+                                 continued_line=2)
+                        self.add_item(s, layer=0)
                         break
                     else:
                         p1=(item.x, item.y-offset)
                         y2=item.y
+                        ct=3
                 pitem=item
                 c+=1
 

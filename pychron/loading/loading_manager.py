@@ -137,7 +137,7 @@ class LoadingManager(IsotopeDatabaseManager):
     show_labnumbers = Bool(False)
     show_weights = Bool(False)
     show_hole_numbers = Bool(False)
-    show_spans = Bool(False)
+    show_spans = Bool(True)
 
     def save(self):
         self.debug('saving load to database')
@@ -515,7 +515,9 @@ class LoadingManager(IsotopeDatabaseManager):
     def _update_span_indicators(self):
         canvas=self.canvas
         canvas.clear_spans()
-        for i,p in enumerate(self.positions):
+        # for i,p in enumerate(self.positions[:1]):
+        for p in self.positions[:1]:
+        # for p in self.positions:
             pos=p.positions
             canvas.add_span_indicator(pos, self.show_spans)
 

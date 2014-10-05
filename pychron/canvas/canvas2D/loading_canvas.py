@@ -34,7 +34,7 @@
 from traits.api import Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.primitives import Line
+from pychron.canvas.canvas2D.scene.primitives.primitives import Span
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
 
@@ -77,7 +77,7 @@ class LoadingCanvas(SceneCanvas):
     _scene_klass = LoadingScene
 
     def clear_spans(self):
-        self.scene.remove_klass(Line)
+        self.scene.remove_klass(Span)
 
     def set_spans_visibility(self, v):
         self.scene.set_spans_visibility(v)
@@ -85,8 +85,9 @@ class LoadingCanvas(SceneCanvas):
 
     def add_span_indicator(self, pos, visible):
         scene=self.scene
-        for g in group_position(pos):
-            scene.add_span_indicator(g[0],g[-1], visible)
+        if len(pos)>1:
+            for g in group_position(pos):
+                scene.add_span_indicator(g[0], g[-1], visible)
 
     def load_scene(self, t, **kw):
 
