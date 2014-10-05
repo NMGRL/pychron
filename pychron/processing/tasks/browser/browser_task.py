@@ -95,86 +95,40 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     initialize_workspace = True
     _top_level_filter = None
-    _append_replace_analyses_enabled =True
+    _append_replace_analyses_enabled = True
+
+    bin_tol_hrs=Int
+    def refresh_samples(self):
+        self.set_samples(self._retrieve_samples())
 
     def load_time_view(self):
-        pad=get_pad()
-        if not pad:
-            return
-
-        db=self.db
+        db = self.db
         with db.session_ctx():
-            ss=[si.labnumber for si in self.selected_samples]
-            lp, hp=db.get_min_max_analysis_timestamp(ss)
+            ss = [si.labnumber for si in self.selected_samples]
+            ts = db.get_analysis_timestamps(ss, binned=self.bin_tol_hrs*3600)
             ms = db.get_labnumber_mass_spectrometers(ss)
+            n = len(ts)
+            if n > 1:
+                if not self.confirmation_dialog('The date range you selected is to large. It will be'
+                                                'broken into {} subranges.\nDo you want to Continue?'.format(n)):
+                    return
 
-            td=timedelta(hours=pad)
+                xx = []
+                for ti in ts:
+                    lp, hp = ti[0], ti[-1]
+                    pad = get_pad(lp, hp)
+                    if not pad:
+                        break
+                    ans = self._get_analysis_series(pad.low_post, pad.high_post, ms)
+                    xx.extend(ans)
+            else:
+                lp, hp = db.get_min_max_analysis_timestamp(ss)
+                pad = get_pad(lp, hp)
+                if not pad:
+                    return
+                xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
 
-            lp-=td
-            hp+=td
-            self.use_low_post=True
-            self._set_low_post(lp)
-            self.use_high_post=True
-            self._set_high_post(lp)
-
-            ans = self._retrieve_analyses(low_post=lp,
-                                          high_post=hp,
-                                          mass_spectrometers=ms)
-            self.analysis_table.set_analyses(ans)
-
-    def _get_manager(self):
-        if self.use_workspace:
-            obj = self.workspace.index_db
-        else:
-            obj = self.manager
-        return obj
-
-    def _irradiation_enabled_changed(self, new):
-        if not new:
-            self._top_level_filter = None
-            self.projects = self.oprojects
-        else:
-            self._load_projects_for_irradiation()
-
-    def _project_enabled_changed(self, new):
-        if not new:
-            self._top_level_filter = None
-            obj = self._get_manager()
-            self.irradiations = obj.irradiations
-
-    def _load_projects_for_irradiation(self):
-        if self.irradiation:
-            db = self.db
-            with db.session_ctx():
-                ps = db.get_projects_irradiation(self.irradiation,
-                                                 self.level)
-                ps = self._make_project_records(ps, include_recent_first=False)
-                self.projects = ps
-
-    @on_trait_change('irradiation,level')
-    def _handle_irradiation_change(self, name, new):
-        obj = self._get_manager()
-        setattr(obj, name, new)
-
-        if not self._top_level_filter:
-            self._top_level_filter = 'irradiation'
-
-        if self._top_level_filter == 'irradiation':
-            self._load_projects_for_irradiation()
-
-        if name == 'irradiation':
-            self.levels = obj.levels
-        elif name == 'level':
-            self.set_samples(self._retrieve_samples())
-
-    def _toggle_view_fired(self):
-        self.sample_view_active = not self.sample_view_active
-        if not self.sample_view_active:
-            self._activate_query_browser()
-        else:
-            self._activate_sample_browser()
-
-        self.dump_browser_options()
+            self.analysis_table.set_analyses(xx)
 
     def prepare_destroy(self):
         self.dump_browser()
@@ -210,11 +164,35 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             self._activate_query_browser()
 
-        self.irradiation='NM-266'
-        self.level='D'
+        self.irradiation = 'NM-266'
+        self.level = 'D'
 
-    def _browser_options_hook(self, d):
-        d['irradiation_enabled'] = self.irradiation_enabled
+    def _get_analysis_series(self, lp, hp, ms):
+        self.use_low_post = True
+        self._set_low_post(lp)
+        self.use_high_post = True
+        self._set_high_post(hp)
+
+        ans = self._retrieve_analyses(low_post=lp,
+                                      high_post=hp,
+                                      mass_spectrometers=ms)
+        return ans
+
+    def _get_manager(self):
+        if self.use_workspace:
+            obj = self.workspace.index_db
+        else:
+            obj = self.manager
+        return obj
+
+    def _load_projects_for_irradiation(self):
+        if self.irradiation:
+            db = self.db
+            with db.session_ctx():
+                ps = db.get_projects_irradiation(self.irradiation,
+                                                 self.level)
+                ps = self._make_project_records(ps, include_recent_first=False)
+                self.projects = ps
 
     def _activate_query_browser(self):
         psel = self.data_selector
@@ -256,8 +234,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             self.datasource_url = db.datasource_url
 
-            bind_preference(self.search_criteria, 'recent_hours', 'pychron.processing.recent_hours')
-            bind_preference(self, 'graphical_filtering_max_days', 'pychron.processing.graphical_filtering_max_days')
+            pid='pychron.browsing'
+            bind_preference(self.search_criteria, 'recent_hours', '{}.recent_hours'.format(pid))
+            bind_preference(self, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
+            bind_preference(self, 'bin_tol_hrs', '{}.bin_tol_hrs'.format(pid))
             self.load_browser_selection()
 
         self.browser_pane.name = 'Browser/Sample'
@@ -323,6 +303,19 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _graphical_filter_hook(self, ans, is_append):
         pass
 
+    def _browser_options_hook(self, d):
+        d['irradiation_enabled'] = self.irradiation_enabled
+
+    def _selected_projects_change_hook(self, names):
+        if not self._top_level_filter:
+            self._top_level_filter = 'project'
+        if names:
+            if self._top_level_filter == 'project':
+                db = self.db
+                with db.session_ctx():
+                    irrads = db.get_irradiations(project_names=names)
+                    self.irradiations = [i.name for i in irrads]
+
     def _retrieve_samples_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
@@ -332,6 +325,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                      low_post=low_post,
                                      high_post=high_post,
                                      filter_non_run=self.filter_non_run_samples)
+
         def atypes_func(obj, func):
             func = getattr(man, func)
             refs, unks = func(obj)
@@ -383,10 +377,27 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         elif low_post or high_post:
             ls = get_labnumbers()
             ans = db.get_analyses_date_range(low_post, high_post)
-            ans =self._make_records(ans)
+            ans = self._make_records(ans)
             self.analysis_table.set_analyses(ans)
 
         return ls
+
+    #handlers
+    def _filter_by_button_fired(self):
+        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
+        if self.sample_view_active:
+            self._filter_by_hook()
+        else:
+            self.data_selector.execute_query()
+
+    def _toggle_view_fired(self):
+        self.sample_view_active = not self.sample_view_active
+        if not self.sample_view_active:
+            self._activate_query_browser()
+        else:
+            self._activate_sample_browser()
+
+        self.dump_browser_options()
 
     def _graphical_filter_button_fired(self):
         self.debug('doing graphical filter')
@@ -447,8 +458,34 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
 
-    def refresh_samples(self):
-        self.set_samples(self._retrieve_samples())
+    def _irradiation_enabled_changed(self, new):
+        if not new:
+            self._top_level_filter = None
+            self.projects = self.oprojects
+        else:
+            self._load_projects_for_irradiation()
+
+    def _project_enabled_changed(self, new):
+        if not new:
+            self._top_level_filter = None
+            obj = self._get_manager()
+            self.irradiations = obj.irradiations
+
+    @on_trait_change('irradiation,level')
+    def _handle_irradiation_change(self, name, new):
+        obj = self._get_manager()
+        setattr(obj, name, new)
+
+        if not self._top_level_filter:
+            self._top_level_filter = 'irradiation'
+
+        if self._top_level_filter == 'irradiation':
+            self._load_projects_for_irradiation()
+
+        if name == 'irradiation':
+            self.levels = obj.levels
+        elif name == 'level':
+            self.set_samples(self._retrieve_samples())
 
     def _use_analysis_type_filtering_changed(self):
         self.refresh_samples()
@@ -466,13 +503,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             self.samples = []
 
-    def _filter_by_button_fired(self):
-        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
-        if self.sample_view_active:
-            self._filter_by_hook()
-        else:
-            self.data_selector.execute_query()
-
             # def _find_by_irradiation_fired(self):
             # if not (self.level and self._activated):
             # return
@@ -483,13 +513,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             # self.information_dialog('Select analysis types to include')
             # return
             # if not atypes:
-            #     atypes =('monitors','unknown')
+            # atypes =('monitors','unknown')
             #
             # sam = []
             # man = self.manager
             # db = self.db
             # with db.session_ctx():
-            #     level = man.get_level(self.level)
+            # level = man.get_level(self.level)
             #     if level:
             #         refs, unks = man.group_level(level)
             #         xs = []
@@ -514,7 +544,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     # if is_open:
     # win.activate()
     # else:
-    #         win.open()
+    # win.open()
 
     @on_trait_change('analysis_table:selected')
     def _selected_analysis_changed(self, new):
@@ -529,16 +559,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ans = self.analysis_table.analyses
             self.active_editor.set_items(ans)
 
-    def _selected_projects_change_hook(self, names):
-        if not self._top_level_filter:
-            self._top_level_filter = 'project'
-        if names:
-            if self._top_level_filter == 'project':
-                db = self.db
-                with db.session_ctx():
-                    irrads = db.get_irradiations(project_names=names)
-                    self.irradiations = [i.name for i in irrads]
-
     def _selected_samples_changed(self, new):
         if new:
             at = self.analysis_table
@@ -546,7 +566,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             lp, hp, lim = self.low_post, self.high_post, at.limit
             # if self._recent_low_post:
             # lp = self._recent_low_post
-            #     hp = None
+            # hp = None
 
             # lp = self.low_post if self.use_low_post else None
             # hp = self.high_post if self.use_high_post else None

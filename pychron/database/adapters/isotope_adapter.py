@@ -1257,6 +1257,44 @@ class IsotopeAdapter(DatabaseAdapter):
         #
         # return [r for r, in q.all()]
 
+    def get_analysis_timestamps(self, lns, binned=False):
+        """
+            lns: list of labnumbers/identifiers
+        """
+        with self.session_ctx() as sess:
+            q = self._analysis_query(sess,attr='analysis_timestamp')
+
+            q = q.filter(gen_LabTable.identifier.in_(lns))
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            ans = self._query_all(q)
+            ans=[ai[0] for ai in ans]
+            # n = len(ans)
+            if binned:
+                if not isinstance(binned, int):
+                    binned=7200
+
+                gans = []
+                t1=ans[0]#[1]
+                xx=[ans[0]]
+                # for u,t2 in ans[1:]:
+                for t2 in ans[1:]:
+                    if abs((t2-t1).total_seconds())>binned:
+                        gans.append(xx)
+                        xx=[t2]
+                    else:
+                        xx.append(t2)
+                    t1=t2
+
+                if xx:
+                    gans.append(xx)
+
+                s=sum([len(g) for g in gans])
+                # print 'n={}, gans={}'.format(n, s)
+                assert [ai for ai in ans]==[ai for gi in gans for ai in gi]
+                ans =gans
+
+            return ans
+
     def get_min_max_analysis_timestamp(self, lns):
         """
             lns: list of labnumbers/identifiers
@@ -1268,11 +1306,11 @@ class IsotopeAdapter(DatabaseAdapter):
             q = self._analysis_query(sess, attr='analysis_timestamp')
             q = q.filter(gen_LabTable.identifier.in_(lns))
 
-            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            hpost = qry.first()
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            hpost = q.first()
 
-            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            lpost = qry.first()
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            lpost = q.first()
 
             return lpost[0], hpost[0]
 
@@ -2023,7 +2061,7 @@ class IsotopeAdapter(DatabaseAdapter):
             # fs = kw.get('filters', [])
             # fs.append(gen_ProjectTable.name.in_(project_names))
             # kw['filters'] = fs
-            kw=self._append_filters(gen_ProjectTable.name.in_(project_names))
+            kw=self._append_filters(gen_ProjectTable.name.in_(project_names), kw)
             kw=self._append_joins([irrad_LevelTable, irrad_PositionTable,
                        gen_LabTable, gen_SampleTable, gen_ProjectTable], kw)
             # js = kw.get('joins', [])

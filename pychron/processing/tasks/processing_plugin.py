@@ -51,7 +51,7 @@ from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeG
 from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
-from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane, EasyPreferencesPane
+from pychron.processing.tasks.preferences.processing_preferences import BrowsingPreferencesPane, EasyPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
 
@@ -358,7 +358,7 @@ Install to enable MS Excel export''')
 
     def _preferences_panes_default(self):
         return [
-            ProcessingPreferencesPane,
+            BrowsingPreferencesPane,
             # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
 
