@@ -40,7 +40,7 @@ ANALYSIS_ATTRS = ('labnumber',
                   'ar39decayfactor', 'ar37decayfactor',)
 
 
-class YamlAnalysisExporter(Exporter):
+class YAMLAnalysisExporter(Exporter):
     destination = Instance(YamlDestination, ())
     _ctx = None
 

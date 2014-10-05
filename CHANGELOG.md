@@ -5,6 +5,11 @@ CHANGELOG
 * added switching between blank histories
 * added BlankDiffView
 * started Workspace
+* added switching between sample_view(Jake) and query_view(Al) in browser
+* added "Time View" to sample table context menu. Use to display list of analyses based on
+    date ranges defined by the selected labnumbers
+* added project, irradiation enabled toggles
+* if high or low post only filters defined load the analysis table with the date range
 
 2.0.4
 ------------------

@@ -24,8 +24,7 @@ from traits.api import Instance
 #============= local library imports  ==========================
 import yaml
 from pychron.core.progress import progress_iterator
-from pychron.paths import paths
-from pychron.processing.export.yaml_analysis_exporter import YamlAnalysisExporter
+from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 from pychron.workspace.tasks.actions import NewWorkspaceAction, OpenWorkspaceAction, CheckoutAnalysesAction, \
     AddBranchAction, TestModificationAction, TagBranchAction, PullAction, PushAction, CommitChangesAction
@@ -140,7 +139,7 @@ class WorkspaceTask(BaseBrowserTask):
         ans = self.manager.make_analyses(ans, unpack=True, calculate_age=True)
 
         #export to yaml files
-        exp=YamlAnalysisExporter()
+        exp=YAMLAnalysisExporter()
         def func(ai, prog, i, n):
             exp.add(ai)
             p= os.path.join(self.workspace.path,'{}.yaml'.format(ai.record_id))

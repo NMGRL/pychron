@@ -22,11 +22,9 @@ from traits.api import List, Button, Instance
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.envisage.browser.browser_mixin import BrowserMixin
 from pychron.envisage.resources import icon
 from pychron.processing.export.export_manager import ExportManager
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
-from pychron.processing.tasks.browser.panes import BrowserPane
 from pychron.processing.tasks.export.panes import ExportCentralPane, DestinationPane
 
 
@@ -36,7 +34,7 @@ class ExportAction(TaskAction):
     name = 'Export'
 
 
-class ExportTask(AnalysisEditTask, BrowserMixin):
+class ExportTask(AnalysisEditTask):
     id = 'pychron.export'
     export_analyses = List
     name = 'Export'
@@ -46,6 +44,25 @@ class ExportTask(AnalysisEditTask, BrowserMixin):
     export_button = Button
     export_manager=Instance(ExportManager)
     tool_bars = [SToolBar(ExportAction())]
+
+    def _dclicked_sample_changed(self):
+        ans = [ai for ai in self.analysis_table.analyses if ai not in self.export_analyses]
+        self.export_analyses.extend(ans)
+
+    def _append_replace_unknowns(self, is_append, items=None):
+        if not items:
+            ans=None
+            if is_append:
+                ans=self.export_analyses
+            items=self._get_selected_analyses(ans)
+
+        if items:
+            if is_append:
+                items = [ai for ai in items
+                       if ai not in self.export_analyses]
+                self.export_analyses.extend(items)
+            else:
+                self.export_analyses=items
 
     def _export_manager_default(self):
         return ExportManager(manager=self.manager)
@@ -65,9 +82,10 @@ class ExportTask(AnalysisEditTask, BrowserMixin):
             self.export_analyses = s
 
     def create_dock_panes(self):
-        self.browser_pane = BrowserPane(model=self)
-        return [self.browser_pane,
-                DestinationPane(model=self)]
+        bp=self._create_browser_pane()
+        # self.browser_pane = BrowserPane(model=self)
+        return [bp,
+                DestinationPane(model=self.export_manager)]
 
     def create_central_pane(self):
         return ExportCentralPane(model=self)
