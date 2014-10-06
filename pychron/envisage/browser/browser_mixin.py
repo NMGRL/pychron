@@ -22,7 +22,7 @@ import apptools.sweet_pickle as pickle
 from datetime import timedelta, datetime
 import os
 import re
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.codetools.inspection import caller
 from pychron.core.progress import progress_loader
@@ -128,7 +128,7 @@ class BrowserMixin(ColumnSorterMixin):
     available_analysis_types = List(['Unknown', 'Blank', 'Air', 'Cocktail', 'Monitors'])
 
     sample_view_active = Bool(True)
-    
+
     use_workspace = False
     workspace = None
     db = Property
@@ -138,7 +138,7 @@ class BrowserMixin(ColumnSorterMixin):
             return self.workspace.index_db
         else:
             return self.manager.db
-        
+
     def dump_browser(self):
         self.dump_browser_selection()
         self.dump_browser_options()
@@ -149,10 +149,10 @@ class BrowserMixin(ColumnSorterMixin):
 
     def dump_browser_options(self):
         d = {
-             # 'include_monitors': self.include_monitors,
-             # 'include_unknowns': self.include_unknowns,
-             'project_enabled' : self.project_enabled,
-             'sample_view_active': self.sample_view_active}
+            # 'include_monitors': self.include_monitors,
+            # 'include_unknowns': self.include_unknowns,
+            'project_enabled': self.project_enabled,
+            'sample_view_active': self.sample_view_active}
         self._browser_options_hook(d)
 
         p = os.path.join(paths.hidden_dir, 'browser_options')
@@ -217,7 +217,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     def set_projects(self, ps, sel=None):
         if sel is None:
-            sel=[]
+            sel = []
 
         self.oprojects = ps
         self.projects = ps
@@ -225,7 +225,7 @@ class BrowserMixin(ColumnSorterMixin):
 
     def set_samples(self, s, sel=None):
         if sel is None:
-            sel=[]
+            sel = []
 
         self.samples = s
         self.osamples = s
@@ -246,9 +246,9 @@ class BrowserMixin(ColumnSorterMixin):
                 pss.insert(0, rp)
 
             if include_recent_first:
-                return recents+pss
+                return recents + pss
             else:
-                return pss+recents
+                return pss + recents
 
     def load_projects(self):
         db = self.db
@@ -259,7 +259,7 @@ class BrowserMixin(ColumnSorterMixin):
             self.oprojects = ad
 
     def get_analysis_groups(self, names):
-        if not isinstance(names[0], (str,unicode)):
+        if not isinstance(names[0], (str, unicode)):
             names = [ni.name for ni in names]
 
         db = self.db
@@ -347,12 +347,19 @@ class BrowserMixin(ColumnSorterMixin):
 
         mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
         mass_spectrometers = [ms for ms in mass_spectrometers if ms]
+        projects = [p.name for p in projects if not p.name.startswith('RECENT')]
+        atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
 
-        ls = db.get_project_labnumbers([p.name for p in projects if not p.name.startswith('RECENT')],
+        lp, hp = self.low_post, self.high_post
+        if atypes:
+            lp, hp = db.get_min_max_analysis_timestamp(projects=[projects], delta=1)
+            print lp, hp
+        ls = db.get_project_labnumbers(projects,
                                        self.filter_non_run_samples,
-                                       self.low_post,
-                                       self.high_post,
-                                       self.analysis_include_types,
+                                       lp, hp,
+                                       #self.low_post,
+                                       #self.high_post,
+                                       analysis_types=atypes,
                                        mass_spectrometers=mass_spectrometers)
         return ls
 
@@ -367,6 +374,7 @@ class BrowserMixin(ColumnSorterMixin):
         with db.session_ctx():
             ls = self._retrieve_samples_hook(db)
             self.debug('_retrieve_samples n={}'.format(len(ls)))
+
             def func(li, prog, i, n):
                 if prog:
                     prog.change_message('Loading Labnumber {}'.format(li.identifier))
@@ -376,12 +384,12 @@ class BrowserMixin(ColumnSorterMixin):
         return sams
 
     def _retrieve_analyses(self, samples=None, limit=500,
-                                  low_post=None,
-                                  high_post=None,
-                                  exclude_uuids=None,
-                                  include_invalid=False,
-                                  mass_spectrometers=None,
-                                  make_records=True):
+                           low_post=None,
+                           high_post=None,
+                           exclude_uuids=None,
+                           include_invalid=False,
+                           mass_spectrometers=None,
+                           make_records=True):
         db = self.db
         with db.session_ctx():
             if samples:
