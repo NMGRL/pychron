@@ -46,7 +46,6 @@ class RatioEditorAction(TaskAction):
     name='Ratio'
     method = 'open_ratio_editor'
     image = icon('window-new')
-#============= EOF =============================================
 class SummaryLabnumberAction(myTaskAction):
     name = 'Summary L# View'
     method = 'new_summary_labnumber_editor'
@@ -66,3 +65,11 @@ class SummaryProjectAction(myTaskAction):
     method = 'new_summary_project_editor'
     task_ids = ['pychron.recall']
     image = icon('window-new')
+
+
+class ContextViewAction(myTaskAction):
+    name = 'Context View'
+    method = 'new_context_editor'
+    task_ids = ['pychron.recall']
+    image = icon('window-new')
+#============= EOF =============================================

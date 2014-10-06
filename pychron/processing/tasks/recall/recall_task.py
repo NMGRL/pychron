@@ -15,15 +15,19 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from datetime import timedelta
+
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, HSplitter
 from pyface.tasks.action.schema import SToolBar
+
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.tasks.actions.processing_actions import ConfigureRecallAction
 from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction, AddDiffAction, EditDataAction, RatioEditorAction, \
-    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction
+    SummaryLabnumberAction, CalculationViewAction, SummaryProjectAction, ContextViewAction
+from pychron.processing.tasks.recall.context_editor import ContextEditor
 from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
@@ -44,6 +48,7 @@ class RecallTask(AnalysisEditTask):
                  RatioEditorAction(),
                  SummaryProjectAction(),
                  SummaryLabnumberAction(),
+                 ContextViewAction(),
                  image_size=(16, 16))]
     auto_select_analysis = False
     _append_replace_analyses_enabled = False
@@ -68,6 +73,25 @@ class RecallTask(AnalysisEditTask):
             cv = CalculationView()
             cv.load_view(self.active_editor.model)
             cv.edit_traits()
+
+    def new_context_editor(self):
+        if self.has_active_editor():
+            db = self.manager.db
+            with db.session_ctx():
+
+                an=self.active_editor.model
+                a=an.analysis_timestamp
+                pad=timedelta(hours=2)
+                lp=a-pad
+                hp=a+pad
+
+                print lp, a, hp
+                ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
+                ans = self.manager.make_analyses(ans)
+                ans = sorted(ans, key=lambda x: x.timestamp)
+                editor = ContextEditor(analyses=ans,
+                                       root_analysis=an)
+                self._open_editor(editor)
 
     def new_summary_project_editor(self):
         from pychron.processing.tasks.recall.summary_project_editor import SummaryProjectEditor
@@ -155,6 +179,15 @@ class RecallTask(AnalysisEditTask):
             self._create_browser_pane()]
 
         return panes
+
+    def activated(self):
+        super(RecallTask, self).activated()
+        try:
+            a=self.analysis_table.analyses[3]
+            self.recall([a])
+            # self.new_context_editor()
+        except IndexError:
+            pass
 
     def _dclicked_sample_changed(self):
         pass

@@ -24,6 +24,7 @@ import os
 import re
 #============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.codetools.inspection import caller
 from pychron.core.progress import progress_loader
 from pychron.database.orms.isotope.gen import gen_ProjectTable
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -355,6 +356,7 @@ class BrowserMixin(ColumnSorterMixin):
                                        mass_spectrometers=mass_spectrometers)
         return ls
 
+    @caller
     def _retrieve_samples(self):
         db = self.db
         # dont query if analysis_types enabled but not analysis type specified

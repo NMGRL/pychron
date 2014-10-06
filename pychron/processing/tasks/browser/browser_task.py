@@ -164,9 +164,6 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         else:
             self._activate_query_browser()
 
-        self.irradiation = 'NM-266'
-        self.level = 'D'
-
     def _get_analysis_series(self, lp, hp, ms):
         self.use_low_post = True
         self._set_low_post(lp)
