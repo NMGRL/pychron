@@ -17,12 +17,12 @@
 #============= enthought library imports =======================
 import re
 
-from traits.api import Str, Either, Int, Callable, Bool
+from traits.api import Str, Either, Int, Callable, Bool, Float
 
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from uncertainties import nominal_value
+from uncertainties import nominal_value, std_dev
 from pychron.loggable import Loggable
 
 
@@ -36,6 +36,8 @@ class AutomatedRunCondition(Loggable):
     message = Str
 
     _key = Str
+
+    value = Float
 
     def __init__(self, attr, comp,
                  start_count=0,
@@ -68,11 +70,17 @@ class AutomatedRunCondition(Loggable):
             return self._check(obj)
 
     def _check(self, obj):
-        v = nominal_value(obj.get_value(self.attr))
+        attr=self.attr
+        if not self.attr:
+            attr=self._key
+
+        v = obj.get_value(attr)
+        self.value=std_dev(v) if '.std_dev' in self.comp else nominal_value(v)
+
         cmd = self.comp
         self.debug('testing {} key={} attr={} value={}'.format(cmd, self._key, self.attr, v))
         if eval(cmd, {self._key: v}):
-            self.message = '{},value= {} {} is True'.format(self.attr, v, cmd)
+            self.message = 'attr={},value= {} {} is True'.format(self.attr, v, cmd)
             return True
 
 

@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float
-from traitsui.api import View, Item, Group, VGroup
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 
@@ -86,6 +87,7 @@ class UserNotifierPreferences(BasePreferencesHelper):
 class ConsolePreferences(BaseConsolePreferences):
     preferences_path = 'pychron.experiment'
     use_message_colormapping = Bool
+
 
 class SysLoggerPreferences(BasePreferencesHelper):
     use_syslogger = Bool
@@ -181,7 +183,19 @@ class UserNotifierPreferencesPane(PreferencesPane):
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'Experiment'
+    def traits_view(self):
+        preview = CustomLabel('preview',
+                              size_name='fontsize',
+                              color_name='textcolor',
+                              bgcolor_name='bgcolor')
 
+        v = View(VGroup(HGroup(UItem('fontsize'),
+                               UItem('textcolor'),
+                               UItem('bgcolor')),
+                        preview,
+                        Item('use_message_colormapping'),
+                        label=self.label))
+        return v
 
 class SysLoggerPreferencesPane(PreferencesPane):
     model_factory = SysLoggerPreferences

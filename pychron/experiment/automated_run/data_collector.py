@@ -121,7 +121,9 @@ class DataCollector(Loggable):
         self.debug('measurement finished')
 
     def _iter(self, con, evt, i, prev=0):
-        if not self._check_iteration(evt, i):
+        result =self._check_iteration(evt, i)
+
+        if not result:
             if not self._iter_hook(con, i):
                 evt.set()
                 return
@@ -140,6 +142,9 @@ class DataCollector(Loggable):
             t.start()
 
         else:
+            if result=='cancel':
+                self.canceled=True
+
             #self.debug('no more iter')
             evt.set()
 

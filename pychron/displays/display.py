@@ -37,8 +37,8 @@ class DisplayModel(HasTraits):
     clear_event = Event
     refresh = Event
 
-    font_size = Int(12)
-    bgcolor = Color('white')
+    # font_size = Int(12)
+    # bgcolor = Color('white')
     text_width = Int(10)
 
     #    message = Queue
@@ -61,9 +61,9 @@ class DisplayController(ApplicationController):
 
     default_color = Color('black')
     #    default_size = Int
-    #bg_color = Color
+    bgcolor = Color
     font_name = Str
-    #font_size = Int(12)
+    font_size = Int(12)
     max_blocks = Int(0)
 
     editor_klass = DisplayEditor
@@ -74,11 +74,12 @@ class DisplayController(ApplicationController):
     was_closed = Bool(False)
     text_added = Event
 
-    def __init__(self, font_size=12, bgcolor='white', *args, **kw):
-        super(DisplayController, self).__init__(model=DisplayModel(font_size=font_size,
-                                                                   bgcolor=bgcolor),
+    def __init__(self,  *args, **kw):
+        super(DisplayController, self).__init__(model=DisplayModel(),
                                                 *args, **kw)
         self._lock = Lock()
+        self.model.font_size=self.font_size
+        self.model.bgcolor=self.bgcolor
 
     def init(self, info):
         self.opened = True
@@ -116,7 +117,7 @@ class DisplayController(ApplicationController):
             kw['color'] = q
 
         rgba = kw['color'].toTuple()
-        b_rgba = self.model.bgcolor.toTuple()
+        b_rgba = self.bgcolor.toTuple()
         for a, b in zip(rgba, b_rgba):
             if abs(a - b) > tol:
                 break
@@ -136,9 +137,7 @@ class DisplayController(ApplicationController):
             refresh='refresh',
             font_size='font_size',
             bgcolor='bgcolor',
-            font_name=self.font_name,
             text_width='text_width',
-            #font_size=self.font_size,
             max_blocks=self.max_blocks)
 
         v = View(UItem('qmessage', editor=editor),
@@ -155,6 +154,14 @@ class DisplayController(ApplicationController):
     def closed(self, info, result):
         self.opened = False
         self.was_closed = True
+
+    def _bgcolor_changed(self, new):
+        if self.model:
+            self.model.bgcolor=new
+
+    def _font_size_changed(self, new):
+        if self.model:
+            self.model.font_size=new
 
 
 #    def show(self):
