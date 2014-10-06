@@ -64,10 +64,11 @@ class _DisplayEditor(Editor):
         p.setColor(QPalette.Base, self.bgcolor)
         self.control.setPalette(p)
 
-    def _font_size_changed(self):
-        fmt = self.control.currentCharFormat()
-        fmt.setFontPointSize(self.font_size)
-        self.control.setCurrentCharFormat(fmt)
+    # def _font_size_changed(self):
+    #     print 'asdfasdf', self.font_size
+        # fmt = self.control.currentCharFormat()
+        # fmt.setFontPointSize(self.font_size)
+        # self.control.setCurrentCharFormat(fmt)
 
     def _refresh_fired(self):
         self.update_editor()
@@ -104,6 +105,7 @@ class _DisplayEditor(Editor):
                     return
                 fmt = ctrl.currentCharFormat()
                 fmt.setForeground(QColor(c))
+                fmt.setFontPointSize(self.font_size)
                 ctrl.setCurrentCharFormat(fmt)
 
                 if is_marker:

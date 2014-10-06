@@ -281,38 +281,6 @@ class AutomatedRun(Loggable):
             t.start()
             return True
 
-    def _sniff(self, ncounts, starttime, starttime_offset, series):
-        self.debug('py_sniff')
-
-        if not self._alive:
-            return
-        p = self.plot_panel
-        if p:
-            p._ncounts = ncounts
-            p.is_baseline = False
-            p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
-
-        gn = 'sniff'
-
-        self.persister.build_tables(gn, self._active_detectors)
-        mem_log('build tables')
-
-        check_conditions = False
-        writer = self.persister.get_data_writer(gn)
-
-        if self.experiment_executor:
-            sc = self.experiment_executor.sniff_color
-        else:
-            sc = 'black'
-
-        result = self._measure(gn,
-                               writer,
-                               ncounts, starttime, starttime_offset,
-                               series,
-                               check_conditions, sc)
-
-        return result
-
     def py_baselines(self, ncounts, starttime, starttime_offset, mass, detector,
                      series=0, fit_series=0, settling_time=4):
 
@@ -610,23 +578,10 @@ class AutomatedRun(Loggable):
             self.collector.set_truncated()
             self.truncated = True
             self.state = 'truncated'
-            #===============================================================================
-            #
-            #===============================================================================
-
+    #===============================================================================
+    #
+    #===============================================================================
     def teardown(self):
-        #         gc.collect()
-        #         return
-
-        #         if self.plot_panel:
-        #             self.plot_panel.automated_run = None
-        #         self.plot_panel = None
-        #             self.plot_panel.arar_age = None
-        #             self.plot_panel.info_func = None
-
-        #         if self.monitor:
-        #             self.monitor.automated_run = None
-        #
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -646,11 +601,24 @@ class AutomatedRun(Loggable):
         self._alive = False
         self.collector.stop()
 
-    def wait(self, t, msg=''):
-        if self.experiment_executor:
-            self.experiment_executor.wait(t, msg)
+    def start(self):
+        self.set_integration_time(DEFAULT_INTEGRATION_TIME)
+        #add default terminations
+        self._add_default_terminations()
+
+        if self.monitor is None:
+            return self._start()
+
+        if self.monitor.monitor():
+            try:
+                return self._start()
+            except AttributeError, e:
+                self.warning('failed starting run: {}'.format(e))
         else:
-            time.sleep(t / 10.)
+            self.warning('failed to start monitor')
+
+    def isAlive(self):
+        return self._alive
 
     def info(self, msg, color=None, *args, **kw):
         super(AutomatedRun, self).info(msg, *args, **kw)
@@ -662,9 +630,6 @@ class AutomatedRun(Loggable):
                 color = 'light green'
 
             self.experiment_executor.info(msg, color=color, log=False)
-
-    def isAlive(self):
-        return self._alive
 
     def get_detector(self, det):
         return self.spectrometer_manager.spectrometer.get_detector(det)
@@ -680,19 +645,11 @@ class AutomatedRun(Loggable):
     def set_deflection(self, det, defl):
         self.py_set_spectrometer_parameter('SetDeflection', '{},{}'.format(det, defl))
 
-    def start(self):
-        self.set_integration_time(DEFAULT_INTEGRATION_TIME)
-
-        if self.monitor is None:
-            return self._start()
-
-        if self.monitor.monitor():
-            try:
-                return self._start()
-            except AttributeError, e:
-                self.warning('failed starting run: {}'.format(e))
+    def wait(self, t, msg=''):
+        if self.experiment_executor:
+            self.experiment_executor.wait(t, msg)
         else:
-            self.warning('failed to start monitor')
+            time.sleep(t / 10.)
 
     def wait_for_overlap(self):
         """
@@ -1058,10 +1015,8 @@ anaylsis_type={}
             d[k] = iso.get_baseline_corrected_value()
         return d
 
-
     def setup_context(self, *args, **kw):
         self._setup_context(*args, **kw)
-
 
     #===============================================================================
     # private
@@ -1071,6 +1026,22 @@ anaylsis_type={}
     #             from pychron.core.ui.thread import Thread as mThread
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
+    def _add_default_terminations(self):
+        p=os.path.join(paths.spectrometer_dir, 'default_terminations.yml')
+        if os.path.isfile(p):
+            with open(p, 'r') as fp:
+                yl=yaml.load(fp)
+                for ti in yl:
+                    comp=ti.get('check', None)
+                    if not comp:
+                        continue
+
+                    attr=ti.get('attr', '')
+                    start=ti.get('start', 30)
+                    freq = ti.get('frequency', 5)
+
+                    self.py_add_termination(attr, comp, start, freq)
+
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:
@@ -1489,6 +1460,38 @@ anaylsis_type={}
 
         return gen()
 
+    def _sniff(self, ncounts, starttime, starttime_offset, series):
+        self.debug('py_sniff')
+
+        if not self._alive:
+            return
+        p = self.plot_panel
+        if p:
+            p._ncounts = ncounts
+            p.is_baseline = False
+            p.isotope_graph.set_x_limits(min_=0, max_=1, plotid=0)
+
+        gn = 'sniff'
+
+        self.persister.build_tables(gn, self._active_detectors)
+        mem_log('build tables')
+
+        check_conditions = False
+        writer = self.persister.get_data_writer(gn)
+
+        if self.experiment_executor:
+            sc = self.experiment_executor.sniff_color
+        else:
+            sc = 'black'
+
+        result = self._measure(gn,
+                               writer,
+                               ncounts, starttime, starttime_offset,
+                               series,
+                               check_conditions, sc)
+
+        return result
+
     def _measure(self, grpname, data_writer,
                  ncounts, starttime, starttime_offset,
                  series, check_conditions, color, script=None):
@@ -1545,7 +1548,7 @@ anaylsis_type={}
             m.measure()
 
         mem_log('post measure')
-        return True
+        return not m.canceled
 
     def _setup_isotope_graph(self, starttime_offset, color, grpname):
         """

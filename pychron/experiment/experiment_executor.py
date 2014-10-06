@@ -59,9 +59,12 @@ class ExperimentExecutor(Consoleable):
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
     connectables = List
+
+    console_bgcolor = 'black'
     #===========================================================================
     # control
     #===========================================================================
+    show_conditions_button = Button('Show Conditions')
     start_button = Event
     stop_button = Event
     can_start = Property(depends_on='executable, _alive')
@@ -169,10 +172,10 @@ class ExperimentExecutor(Consoleable):
 
     def bind_preferences(self):
         # super(ExperimentExecutor, self).bind_preferences()
-
         self.datahub.bind_preferences()
 
         prefid = 'pychron.experiment'
+
         #auto save
         bind_preference(self, 'use_auto_save',
                         '{}.use_auto_save'.format(prefid))
@@ -199,6 +202,7 @@ class ExperimentExecutor(Consoleable):
         bind_preference(self, 'memory_threshold', '{}.memory_threshold'.format(prefid))
 
         #console
+        self.console_bind_preferences(prefid)
         bind_preference(self, 'use_message_colormapping', '{}.use_message_colormapping'.format(prefid))
 
     def isAlive(self):
@@ -797,8 +801,8 @@ class ExperimentExecutor(Consoleable):
         wc.start(wtime=delay)
         wg.pop(wc)
 
-        if wc.is_continued():
-            self.stats.continue_clock()
+        # if wc.is_continued():
+        #     self.stats.continue_clock()
 
     def _set_extract_state(self, state, *args):
         """
@@ -1333,6 +1337,14 @@ Use Last "blank_{}"= {}
         if self.measuring_run:
             self.measuring_run.truncate_run(self.truncate_style)
 
+    def _show_conditions_button_fired(self):
+        from pychron.experiment.conditions_view import ConditionsView
+
+        if self.measuring_run:
+            v=ConditionsView(truncation_conditions=self.measuring_run.truncation_conditions,
+                             termination_conditions=self.measuring_run.termination_conditions,
+                             action_condtions=self.measuring_run.action_conditions)
+            self.application.open_view(v)
     #===============================================================================
     # property get/set
     #===============================================================================
