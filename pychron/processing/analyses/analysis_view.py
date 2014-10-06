@@ -76,7 +76,6 @@ class AnalysisView(HasTraits):
                 v.fontsize=size
 
     def load(self, an):
-        print an
         analysis_type = an.analysis_type
         analysis_id = an.record_id
 

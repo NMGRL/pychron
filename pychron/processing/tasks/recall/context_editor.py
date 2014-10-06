@@ -56,6 +56,8 @@ class ContextAdapter(TabularAdapter):
 
 
 class ContextEditor(BaseTraitsEditor):
+    basename='context'
+
     graph = Instance(ContextGraph)
     analyses = List
     selected = List

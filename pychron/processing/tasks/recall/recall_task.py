@@ -32,6 +32,7 @@ from pychron.processing.tasks.recall.diff_editor import DiffEditor
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tasks.analysis_edit.panes import ControlsPane
 from pychron.processing.tasks.analysis_edit.plot_editor_pane import PlotEditorPane
+from pychron.processing.tasks.recall.recall_editor import RecallEditor
 from pychron.processing.utils.grouping import group_analyses_by_key
 
 
@@ -74,8 +75,19 @@ class RecallTask(AnalysisEditTask):
             cv.load_view(self.active_editor.model)
             cv.edit_traits()
 
+    def open_existing_context_editor(self):
+        an=self.active_editor.model.record_id
+        name='Context {}'.format(an)
+        for e in self.editor_area.editors:
+            if e.name==name:
+                self.activate_editor(e)
+                return True
+
     def new_context_editor(self):
-        if self.has_active_editor():
+        if self.has_active_editor(RecallEditor):
+            if self.open_existing_context_editor():
+                return
+
             db = self.manager.db
             with db.session_ctx():
 
@@ -85,11 +97,11 @@ class RecallTask(AnalysisEditTask):
                 lp=a-pad
                 hp=a+pad
 
-                print lp, a, hp
                 ans = db.get_analyses_date_range(lp, hp, mass_spectrometers=an.mass_spectrometer)
                 ans = self.manager.make_analyses(ans)
                 ans = sorted(ans, key=lambda x: x.timestamp)
                 editor = ContextEditor(analyses=ans,
+                                       name='Context {}'.format(an.record_id),
                                        root_analysis=an)
                 self._open_editor(editor)
 
