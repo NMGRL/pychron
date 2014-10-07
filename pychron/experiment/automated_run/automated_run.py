@@ -30,7 +30,7 @@ from numpy import Inf
 # from memory_profiler import profile
 import weakref
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
@@ -1035,23 +1035,25 @@ anaylsis_type={}
             load default conditions (truncations, actions, terminations)
             from spectrometer/default_conditions.yaml
         """
+        name=self.spec.default_conditions_name
+        if self.spec.use_default_conditions and name:
+            p = get_path(paths.default_conditions_dir, name, ('.yaml','.yml'))
+            if p is not None:
+                # clear the conditions for good measure.
+                # conditions should be cleared during teardown.
+                self.py_clear_conditions()
 
-        p=os.path.join(paths.spectrometer_dir, 'default_conditions.yml')
-        if not os.path.isfile(p):
-            p=os.path.join(paths.spectrometer_dir, 'default_conditions.yaml')
+                with open(p, 'r') as fp:
+                    yd=yaml.load(fp)
+                    cs=yd.get('terminations')
+                    self._add_default_terminations(cs)
+                    cs=yd.get('truncations')
+                    self._add_default_truncations(cs)
+                    cs=yd.get('actions')
+                    self._add_default_actions(cs)
 
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                yd=yaml.load(fp)
-                cs=yd.get('terminations')
-                self._add_default_terminations(cs)
-                cs=yd.get('truncations')
-                self._add_default_truncations(cs)
-                cs=yd.get('actions')
-                self._add_default_actions(cs)
-
-        else:
-            self.warning('no Default Conditions file. {}'.format(p))
+            else:
+                self.warning('no Default Conditions file. {}'.format(p))
 
     def _add_default_truncations(self, yl):
         """

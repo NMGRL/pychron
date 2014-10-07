@@ -84,8 +84,8 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         qf = self.queue_factory
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'load_name',
-                  'delay_before_analyses', 'delay_between_analyses'):
-
+                  'delay_before_analyses','delay_between_analyses',
+                  'use_default_conditions','default_conditions_name'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)

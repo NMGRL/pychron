@@ -53,6 +53,9 @@ class BaseExperimentQueue(ExperimentBlock):
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
 
+    default_conditions_name = Str
+    use_default_conditions = Bool
+
     stats = Instance(ExperimentStats, ())
 
     update_needed = Event
@@ -165,11 +168,13 @@ class BaseExperimentQueue(ExperimentBlock):
 
             return runs
 
-    def _setup_params(self, params):
+    def _add_queue_meta(self, params):
         params['extract_device'] = self.extract_device
         params['tray'] = self.tray
         params['username'] = self.username
         params['email'] = self.email
+        params['use_default_conditions']=self.use_default_conditions
+        params['default_conditions_name']=self.default_conditions_name
 
     def _extract_meta(self, f):
         meta, metastr = extract_meta(f)
@@ -189,7 +194,7 @@ class BaseExperimentQueue(ExperimentBlock):
         self.stats.delay_before_analyses = self.delay_before_analyses
 
         line_gen=self._get_line_generator(txt)
-        meta = self._extract_meta(line_gen)
+        self._extract_meta(line_gen)
         aruns = self._load_runs(line_gen)
         if aruns:
             # set frequency_added_counter
@@ -252,6 +257,7 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
+        self._set_meta_param('default_conditions_name')
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap

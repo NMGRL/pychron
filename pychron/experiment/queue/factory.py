@@ -19,9 +19,11 @@ import os
 from ConfigParser import ConfigParser
 
 from traits.api import Str, Property, cached_property, Int, \
-    Any, String, Event, Bool, Dict
+    Any, String, Event, Bool, Dict, List
+
 
 #============= standard library imports ========================
+from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
 from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, LINE_STR
@@ -51,6 +53,10 @@ class ExperimentQueueFactory(PersistenceLoggable):
     extract_device = String('Extract Device')
     extract_devices = Property
 
+    use_default_conditions = Bool
+    default_conditions_name = Str
+    available_conditions=List
+
     delay_between_analyses = Int(30)
     delay_before_analyses = Int(5)
     tray = Str
@@ -71,6 +77,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         """
             called by ExperimentFactory
         """
+        self._load_default_conditions()
         self.load()
 
     def deactivate(self):
@@ -79,11 +86,31 @@ class ExperimentQueueFactory(PersistenceLoggable):
         """
         self.dump()
 
+    def edit_default_conditions(self):
+        from pychron.experiment.conditions_edit_view import ConditionsEditView
+        cev=ConditionsEditView()
+        self.application.open_view(cev)
+
+    def _load_default_conditions(self):
+        root=paths.default_conditions_dir
+        cs=list_directory2(root, remove_extension=True)
+        self.available_conditions=cs
+
+    def _edit_user_fired(self):
+        a = UserEntry()
+        nuser = a.add_user(self.username)
+        if nuser:
+            self.users_dirty = True
+            self.username = nuser
+
     #persistence
     @property
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, 'queue_factory')
 
+    #===============================================================================
+    # property get/set
+    #===============================================================================
     def _get_email(self):
         email = ''
         if self.use_email_notifier:
@@ -97,16 +124,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _set_email(self, v):
         self._email = v
 
-    def _edit_user_fired(self):
-        a = UserEntry()
-        nuser = a.add_user(self.username)
-        if nuser:
-            self.users_dirty = True
-            self.username = nuser
-
-    #===============================================================================
-    # property get/set
-    #===============================================================================
     @cached_property
     def _get_usernames(self):
         db = self.db

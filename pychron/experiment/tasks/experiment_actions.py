@@ -116,6 +116,11 @@ class UndoAction(TaskAction):
     accelerator = 'Ctrl+Z'
 
 
+class DefaultConditionsAction(TaskAction):
+    name = 'Edit Default Conditions'
+    method = 'edit_default_conditions'
+
+
 class QueueAction(ExperimentAction):
     def _open_experiment(self, event, path=None):
 

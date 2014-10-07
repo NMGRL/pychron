@@ -1,5 +1,5 @@
-from traits.has_traits import HasTraits
 from traits.trait_types import String
+
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
@@ -10,13 +10,12 @@ class ExperimentBlock(Loggable):
     extract_device = String
     mass_spectrometer = String
 
-    def _setup_params(self,params):
+    def _add_queue_meta(self, params):
         pass
 
     def extract_runs(self, path):
         with open(path,'r') as fp:
             line_gen=self._get_line_generator(fp)
-            # meta = self._extract_meta(line_gen)
             return self._load_runs(line_gen)
 
     def _get_line_generator(self, txt):
@@ -51,7 +50,7 @@ class ExperimentBlock(Loggable):
 
             try:
                 script_info, params = parser.parse(header, line)
-                self._setup_params(params)
+                self._add_queue_meta(params)
                 params['skip'] = skip
                 params['mass_spectrometer'] = self.mass_spectrometer
 
