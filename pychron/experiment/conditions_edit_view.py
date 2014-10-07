@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-# from pychron.core.ui import set_qt
-# set_qt()
+from pychron.core.ui import set_qt
+
+set_qt()
 # ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Any, \
-    Bool, Enum, Float, on_trait_change, Str, Int
+    Enum, Float, on_trait_change, Str, Int
 
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.api import View, Tabbed, Group, UItem, \
@@ -32,7 +33,7 @@ import yaml
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.automated_run.condition import condition_from_dict, CONDITION_ATTRS, MAX_REGEX, STD_REGEX, \
-    CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition
+    CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX
 from pychron.paths import paths
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
@@ -50,17 +51,23 @@ class ConditionsAdapter(TabularAdapter):
     frequency_width = Int(100)
 
 
+MOD_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})',
+            'Current': '{}.cur',
+            'StdDev': '{}.std'}
+
+
 class ConditionGroup(HasTraits):
     conditions = List
     selected = Any
 
     attr = Str
-    use_max = Bool
-    use_min = Bool
-    use_current = Bool
     comparator = Enum('>', '<', '>=', '<=', '==')
-    use_current = Bool
-    use_std_dev = Bool
+    # use_max = Bool
+    # use_min = Bool
+    # use_current = Bool
+    # use_std_dev = Bool
+    # use_slope = Bool
+    modifier = Str
     window = Int
     mapper = Str
     value = Float
@@ -69,51 +76,23 @@ class ConditionGroup(HasTraits):
     _no_update = False
 
     def dump(self):
-        cs=[]
+        cs = []
         for ci in self.conditions:
-            d={k:getattr(ci, k) for k in ('attr','frequency','window','mapper')}
-            d['start']=ci.start_count
-            d['check']=ci.comp
+            d = {k: getattr(ci, k) for k in ('attr', 'frequency', 'window', 'mapper')}
+            d['start'] = ci.start_count
+            d['check'] = ci.comp
             cs.append(d)
         return cs
 
-    def _use_current_changed(self, new):
-        if new:
-            self.use_std_dev = False
-            self.use_max = False
-            self.use_min = False
-
-    def _use_std_dev_changed(self, new):
-        if new:
-            self.use_current = False
-            self.use_max = False
-            self.use_min = False
-
-    def _use_max_changed(self, new):
-        if new:
-            self.use_min = False
-            self.use_current = False
-            self.use_std_dev = False
-
-    def _use_min_changed(self, new):
-        if new:
-            self.use_max = False
-            self.use_current = False
-            self.use_std_dev = False
-
-    @on_trait_change('use_max, use_min, use_current, use_std_dev, comparator, value')
+    @on_trait_change('modifier, comparator, value')
     def _refresh_comp(self):
         if not self._no_update:
             attr = self.attr
-            if self.use_current:
-                attr = '{}.cur'.format(attr)
-            elif self.use_std_dev:
-                attr = '{}.std'.format(attr)
-
-            if self.use_max:
-                attr = 'max({})'.format(attr)
-            elif self.use_min:
-                attr = 'min({})'.format(attr)
+            try:
+                s = MOD_DICT[self.modifier]
+                attr = s.format(attr)
+            except KeyError:
+                pass
 
             self.selected.comp = '{}{}{}'.format(attr, self.comparator, self.value)
 
@@ -127,9 +106,12 @@ class ConditionGroup(HasTraits):
                 for a in ('start_count', 'frequency', 'attr', 'window', 'mapper'):
                     setattr(self, a, getattr(new, a))
 
-                for r, a in ((MAX_REGEX, 'use_max'), (MIN_REGEX, 'use_min'),
-                             (STD_REGEX, 'use_std_dev'), (CP_REGEX, 'use_current')):
-                    setattr(self, a, bool(r.findall(new.comp)))
+                for r, a in ((MAX_REGEX, 'Max'), (MIN_REGEX, 'Min'),
+                             (STD_REGEX, 'StdDev'), (CP_REGEX, 'Current'),
+                             (SLOPE_REGEX, 'Slope')):
+                    if r.findall(new.comp):
+                        setattr(self, 'modifier', a)
+                        break
 
                 # extract comparator
                 m = COMP_REGEX.findall(new.comp)
@@ -154,15 +136,14 @@ class ConditionGroup(HasTraits):
         super(ConditionGroup, self).__init__(*args, **kw)
 
     def traits_view(self):
-        edit_grp = VGroup(HGroup(UItem('attr',
-                                       editor=EnumEditor(values=CONDITION_ATTRS), ),
-                                 Item('use_max', enabled_when='attr'),
-                                 Item('use_min', enabled_when='attr'),
-                                 Item('use_current', enabled_when='attr'),
-                                 Item('use_std_dev', enabled_when='attr')),
+        edit_grp = VGroup(HGroup(spring,UItem('object.selected.comp', style='readonly'),spring),
+                          HGroup(UItem('attr',
+                                       editor=EnumEditor(values=CONDITION_ATTRS)),
+                                 Item('modifier',
+                                      editor=EnumEditor(values=['Max', 'Min',
+                                                                'StdDev', 'Current', 'Slope']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr')),
-                          UItem('object.selected.comp', style='readonly'),
                           Item('start_count', label='Start'),
                           Item('frequency'))
 
@@ -241,36 +222,38 @@ class ConditionsEditView(HasTraits):
         v = View(Tabbed(agrp, trgrp, tegrp),
                  width=800,
                  resizable=True,
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  title='Edit Default Conditions')
         return v
 
 
 def edit_conditions(name, app=None):
     if not name:
-        dlg=FileDialog(action='open',
-                       wildcard=FileDialog.create_wildcard('YAML','*.yaml *.yml'),
-                       default_directory=paths.default_conditions_dir)
+        dlg = FileDialog(action='open',
+                         wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
+                         default_directory=paths.default_conditions_dir)
         if dlg.open():
             if dlg.path:
-                name=os.path.basename(dlg.path)
+                name = os.path.basename(dlg.path)
 
     if name:
-        cev=ConditionsEditView()
+        cev = ConditionsEditView()
         cev.open(name)
         if app:
-            info=app.open_view(cev, kind='livemodal')
+            info = app.open_view(cev, kind='livemodal')
         else:
-            info=cev.edit_traits(kind='livemodal')
+            info = cev.edit_traits(kind='livemodal')
             # info=cev.configure_traits(kind='livemodal')
         if info.result:
             cev.dump()
 
-# if __name__ == '__main__':
-#     # c = ConditionsEditView()
-#     # c.open('default_conditions')
-#     # c.configure_traits()
-#     edit_conditions(None)
+
+if __name__ == '__main__':
+    c = ConditionsEditView()
+    c.open('default_conditions')
+    c.configure_traits()
+    c.dump()
+    # edit_conditions(None)
 # ============= EOF =============================================
 
 

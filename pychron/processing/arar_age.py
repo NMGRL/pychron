@@ -141,6 +141,13 @@ class ArArAge(Loggable):
             except ZeroDivisionError:
                 pass
 
+    def get_slope(self, attr, n=-1):
+        try:
+            r=self.isotopes[attr].get_slope(n)
+        except KeyError:
+            r=None
+        return r
+
     def get_current_intensity(self, attr):
         try:
             r=self.isotopes[attr].ys[-1]
