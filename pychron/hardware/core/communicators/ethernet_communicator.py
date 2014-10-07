@@ -223,6 +223,7 @@ class EthernetCommunicator(Communicator):
         """
 
         def _ask():
+            handler = self.get_handler()
             if handler.send_packet(cmd):
                 return handler.get_packet(cmd)
 
@@ -234,7 +235,6 @@ class EthernetCommunicator(Communicator):
         r = None
         with self._lock:
             re = 'ERROR: Connection refused {}:{}'.format(self.host, self.port)
-            handler = self.get_handler()
             if self.simulation:
                 return 'simulation'
 
@@ -249,6 +249,7 @@ class EthernetCommunicator(Communicator):
             re = self.process_response(r)
 
         if self.use_end:
+            handler = self.get_handler()
             handler.end()
             self._reset_connection()
 

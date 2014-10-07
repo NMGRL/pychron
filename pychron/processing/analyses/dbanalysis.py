@@ -32,6 +32,7 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable
 from pychron.processing.analyses.analysis import Analysis, Fit
 from pychron.processing.analyses.analysis_view import DBAnalysisView
 from pychron.processing.analyses.changes import BlankChange, FitChange
+from pychron.processing.analyses.exceptions import NoProductionError
 from pychron.processing.analyses.view.snapshot_view import Snapshot
 from pychron.processing.isotope import Blank, Baseline, Sniff, Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS
@@ -414,9 +415,11 @@ class DBAnalysis(Analysis):
 
     def _sync_production_ratios(self, level):
         pr = level.production
-        cak, clk = pr.Ca_K, pr.Cl_K
-
-        self.production_ratios = dict(Ca_K=cak, Cl_K=clk)
+        if pr:
+            cak, clk = pr.Ca_K, pr.Cl_K
+            self.production_ratios = dict(Ca_K=cak, Cl_K=clk)
+        else:
+            raise NoProductionError()
 
     def _sync_chron_segments(self, irradiation):
         chron = irradiation.chronology

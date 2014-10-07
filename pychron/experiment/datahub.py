@@ -34,6 +34,7 @@ from traits.api import Instance
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
@@ -44,6 +45,7 @@ from pychron.loggable import Loggable
 
 # http://stackoverflow.com/q/3844931/
 from pychron.processing.analyses.dbanalysis import DBAnalysis
+from pychron.processing.analyses.exceptions import NoProductionError
 
 
 def checkEqual6502(lst):
@@ -134,7 +136,13 @@ class Datahub(Loggable):
                 x = datetime.now()
                 now = time.mktime(x.timetuple())
                 an.timestamp = now
-                an.sync_irradiation(ln)
+                try:
+                    an.sync_irradiation(ln)
+                except NoProductionError:
+                    self.information_dialog('Irradiation={} Level={} has '
+                                            'no Correction/Production Ratio set defined'.format(an.irradiation,
+                                                                                                an.irradiation_level))
+                    return False
 
                 arar_age.trait_set(j=an.j,
                                    production_ratios=an.production_ratios,

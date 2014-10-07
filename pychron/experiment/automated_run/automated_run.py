@@ -1056,7 +1056,8 @@ anaylsis_type={}
 
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
-            self.persister.datahub.load_analysis_backend(ln, self.arar_age)
+            if not self.persister.datahub.load_analysis_backend(ln, self.arar_age):
+                return
 
         self.info('Start automated run {}'.format(self.runid))
 
