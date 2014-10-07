@@ -292,7 +292,7 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
-    image = icon('edit-clear')
+    image = icon('clear')
 
     def perform(self, event=None):
         from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT

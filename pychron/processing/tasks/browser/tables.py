@@ -122,7 +122,7 @@ class TableTools(PaneModelView):
                                        'cog',
                                        tooltip='Configure Sample Table'),
                     icon_button_editor('clear_sample_table',
-                                       'edit-clear',
+                                       'clear',
                                        tooltip='Clear Sample Table'))
         g2 = HGroup(UItem('sample_filter',
                           width=-125),

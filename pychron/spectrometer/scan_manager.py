@@ -18,7 +18,7 @@
 from pyface.timer.do_later import do_later
 from traits.api import Instance, Enum, Any, DelegatesTo, List, Property, \
     Bool, Button, String, cached_property, \
-    HasTraits, Range, Float
+    HasTraits, Range, Float, Event
 #============= standard library imports ========================
 import random
 import os
@@ -27,8 +27,8 @@ import time
 from numpy import Inf
 from threading import Thread
 from Queue import Queue
-#============= local library imports  ==========================
 import yaml
+#============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.core.ui.toggle_button import ToggleButton
 from pychron.envisage.resources import icon
@@ -72,7 +72,7 @@ class ScanManager(Manager):
     _graph_ymin = Float
     _graph_ymax = Float
     graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
-
+    clear_button = Event
     # record_button = Event
     record_button = ToggleButton(image_on=icon('media-record'),
                                  image_off=icon('media-playback-stop'),
@@ -149,10 +149,7 @@ class ScanManager(Manager):
         bind_preference(self, 'use_vertical_markers', '{}.use_vertical_markers'.format(pref_id))
 
     def setup_scan(self):
-        self.graph = self._graph_factory()
-
-        #trigger a timer reset. set to 0 then default
-        self.reset_scan_timer()
+        self._reset_graph()
 
         # listen to detector for enabling
         self.on_trait_change(self._toggle_detector, 'detectors:active')
@@ -229,6 +226,12 @@ class ScanManager(Manager):
             self.graph.add_visual_marker(msg, bgcolor)
 
     #private
+    def _reset_graph(self):
+        self.graph = self._graph_factory()
+
+        #trigger a timer reset. set to 0 then default
+        self.reset_scan_timer()
+
     def _update_graph_limits(self, name, new):
         if 'high' in name:
             self._graph_ymax = max(new, self._graph_ymin)
@@ -352,6 +355,8 @@ class ScanManager(Manager):
     #===============================================================================
     # handlers
     #===============================================================================
+    def _clear_button_fired(self):
+        self._reset_graph()
 
     def _graph_changed(self):
         self.rise_rate.graph = self.graph
