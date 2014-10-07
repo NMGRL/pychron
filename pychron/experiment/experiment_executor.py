@@ -485,7 +485,7 @@ class ExperimentExecutor(Consoleable):
                 break
 
             if self.monitor and self.monitor.has_fatal_error():
-                run.cancel()
+                run.cancel_run()
                 run.state = 'failed'
                 break
 
@@ -899,19 +899,31 @@ class ExperimentExecutor(Consoleable):
     #===============================================================================
     def _check_run_at_end(self, run):
         """
-            check to see if an action should be taken
+            1. check post run termination conditions.
+                e.i termination conditions where start_count==-1
+            2. check to see if an action should be taken
 
             if runs  are overlapping this will be a problem.
-
-            dont overlay onto blanks
-
+            dont overlap onto blanks
             execute the action and continue the queue
         """
+
+        if run.termination_conditions:
+            conditions=[ci for ci in run.termination_conditions if ci.start_count==-1]
+            if conditions:
+                self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
+                for ci in run.termination_conditions:
+                    if ci.end_check(run.arar_age):
+                        self.cancel(confirm=False)
+                        return
+
         exp = self.experiment_queue
-        for action in exp.queue_actions:
-            if action.check_run(run):
-                self._do_action(action)
-                break
+        if exp.queue_actions:
+            self.debug('Checking queue actions n={}'.format(len(exp.queue_actions)))
+            for action in exp.queue_actions:
+                if action.check_run(run):
+                    self._do_action(action)
+                    break
 
     def _do_action(self, action):
         self.info('Do queue action {}'.format(action.action))
