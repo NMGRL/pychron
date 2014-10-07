@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,47 +15,71 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import re
 
 from traits.api import Str, Either, Int, Callable, Bool, Float
-
-
 #============= standard library imports ========================
+import re
+from uncertainties import nominal_value, std_dev, ufloat
 #============= local library imports  ==========================
-from uncertainties import nominal_value, std_dev
 from pychron.loggable import Loggable
 
+#match .current_point
+CP_REGEX = re.compile(r'\.(current|cur)')
+#match .std_dev
+STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
+
+#match max(ar##)
+MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
+#match min(ar##)
+MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
+
+#match x in x**2+3x+1
+MAPPER_KEY_REGEX=re.compile(r'[A-Za-z]+')
+
+#match kca, ar40, etc..
+KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
 
 class AutomatedRunCondition(Loggable):
     attr = Str
     comp = Str
-    # value = Either(Float, Int)
 
     start_count = Int
     frequency = Int
     message = Str
 
-    _key = Str
+    # used to specify a window (in counts) of data to average, etc.
+    window = Int
+    mapper = Str
+
+    _key = ''
+    _mapper_key=''
 
     value = Float
+    active = True
 
     def __init__(self, attr, comp,
                  start_count=0,
                  frequency=10,
                  *args, **kw):
 
+        self.active = True
         self.attr = attr
         self.comp = comp
+        self.start_count = start_count
+        self.frequency = frequency
+        super(AutomatedRunCondition, self).__init__(*args, **kw)
 
-        m = re.findall(r'[A-Za-z]+\d*', comp)
+        # m = re.findall(r'[A-Za-z]+\d*', comp)
+        m=KEY_REGEX.findall(comp)
         if m:
             self._key = m[0]
         else:
             self._key = self.attr
 
-        self.start_count = start_count
-        self.frequency = frequency
-        super(AutomatedRunCondition, self).__init__(*args, **kw)
+        if self.mapper:
+            m=MAPPER_KEY_REGEX.findall(self.mapper)
+            if m:
+                self._mapper_key=m[0]
 
     def check(self, obj, cnt):
         """
@@ -64,25 +88,55 @@ class AutomatedRunCondition(Loggable):
              and cnt-start count is divisable by frequency
         """
 
-        if cnt > self.start_count and \
-                        (cnt - self.start_count) > 0 and \
-                                (cnt - self.start_count) % self.frequency == 0:
+        if self.active and cnt > self.start_count and \
+            (cnt - self.start_count) > 0 and \
+            (cnt - self.start_count) % self.frequency == 0:
             return self._check(obj)
 
     def _check(self, obj):
-        attr=self.attr
+        attr = self.attr
         if not self.attr:
-            attr=self._key
+            attr = self._key
 
-        v = obj.get_value(attr)
-        self.value=std_dev(v) if '.std_dev' in self.comp else nominal_value(v)
+        comp = self.comp
+        if CP_REGEX.match(comp):
+            v = obj.get_current_intensity(attr)
+        elif MAX_REGEX.match(comp):
+            n = self.window or -1
+            vs = obj.get_values(attr, n)
+            v = vs.max()
+        elif MIN_REGEX.match(comp):
+            n = self.window or -1
+            vs = obj.get_values(attr, n)
+            v = vs.min()
+        else:
+            try:
+                if self.window:
+                    vs = obj.get_values(attr, self.window)
+                    if not vs:
+                        self.warning('Deactivating check. check attr invalid for use with window')
+                        self.active = False
+                        return
+                    v = ufloat(vs.mean(), vs.std())
+                else:
+                    v = obj.get_value(attr)
+            except Exception, e:
+                self.warning('Deactivating check. Check Exception "{}."'.format(e))
+                self.active = False
 
-        cmd = self.comp
-        self.debug('testing {} key={} attr={} value={}'.format(cmd, self._key, self.attr, v))
-        if eval(cmd, {self._key: v}):
-            self.message = 'attr={},value= {} {} is True'.format(self.attr, v, cmd)
+        vv = std_dev(v) if STD_REGEX(comp) else nominal_value(v)
+        vv=self._map_value(vv)
+        self.value=vv
+
+        self.debug('testing {} key={} attr={} value={}'.format(comp, self._key, self.attr, v))
+        if eval(comp, {self._key: v}):
+            self.message = 'attr={},value= {} {} is True'.format(self.attr, v, comp)
             return True
 
+    def _map_value(self, vv):
+        if self.mapper and self._mapper_key:
+            vv=eval(self.mapper, {self._mapper_key:vv})
+        return vv
 
 class TruncationCondition(AutomatedRunCondition):
     abbreviated_count_ratio = 1.0

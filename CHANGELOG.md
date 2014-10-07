@@ -48,3 +48,5 @@ CHANGELOG
 * added snapshot to spectrometer scan
 * added bgcolor control for experiment editor
 * optimized plotpanel
+* added "window" to AutomatedRunCondition. use to take a mean or std of "window" points
+* added more options for AutomatedRunConditions

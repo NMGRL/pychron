@@ -33,3 +33,13 @@ Write and run a set of automated analyses. Allows NMGRL to operate continously. 
 pyView
 -------
 Display, process and publish Ar-Ar geochronology and thermochonology data. Export publication ready PDF tables and figures. Export Excel, CSV, and XML data tables. Store and search for figures in database.  
+
+
+Mac OSX 10.9
+--------------------
+Mac OSX 10.9 (Mavericks) includes a memory management tool called App Nap. It is necessary to 
+turn off App Nap for pychron. 
+To turn off App Nap system wide use
+
+    
+    defaults write NSGlobalDomain NSAppSleepDisabled -bool YES
