@@ -607,7 +607,7 @@ class AutomatedRun(Loggable):
     def start(self):
         self.set_integration_time(DEFAULT_INTEGRATION_TIME)
         #add default terminations
-        self._add_default_terminations()
+        self._add_default_conditions()
 
         if self.monitor is None:
             return self._start()
@@ -1030,30 +1030,69 @@ anaylsis_type={}
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
 
-    def _add_default_terminations(self):
-        p=os.path.join(paths.spectrometer_dir, 'default_terminations.yml')
+    def _add_default_conditions(self):
+        """
+            load default conditions (truncations, actions, terminations)
+            from spectrometer/default_conditions.yaml
+        """
+
+        p=os.path.join(paths.spectrometer_dir, 'default_conditions.yml')
         if not os.path.isfile(p):
-            p=os.path.join(paths.spectrometer_dir, 'default_terminations.yaml')
+            p=os.path.join(paths.spectrometer_dir, 'default_conditions.yaml')
 
         if os.path.isfile(p):
             with open(p, 'r') as fp:
-                yl=yaml.load(fp)
-                for ti in yl:
-                    comp=ti.get('check', None)
-                    if not comp:
-                        continue
+                yd=yaml.load(fp)
+                cs=yd.get('terminations')
+                self._add_default_terminations(cs)
+                cs=yd.get('truncations')
+                self._add_default_truncations(cs)
+                cs=yd.get('actions')
+                self._add_default_actions(cs)
 
-                    attr=ti.get('attr', '')
-                    start=ti.get('start', 30)
-                    freq = ti.get('frequency', 5)
-                    win = ti.get('window', 0)
-                    mapper = ti.get('mapper', '')
-
-                    self.py_add_termination(attr, comp, start,
-                                            freq, win, mapper)
         else:
-            self.warning('no Default Terminations file. {}'.format(p))
+            self.warning('no Default Conditions file. {}'.format(p))
 
+    def _add_default_truncations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            pass
+
+    def _add_default_actions(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            pass
+
+    def _add_default_terminations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            comp=ti.get('check', None)
+            if not comp:
+                continue
+
+            attr=ti.get('attr', '')
+            start=ti.get('start', 30)
+            freq = ti.get('frequency', 5)
+            win = ti.get('window', 0)
+            mapper = ti.get('mapper', '')
+
+            self.py_add_termination(attr, comp, start,
+                                    freq, win, mapper)
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:
