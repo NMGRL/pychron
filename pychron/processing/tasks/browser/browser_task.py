@@ -97,7 +97,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     _top_level_filter = None
     _append_replace_analyses_enabled = True
 
-    bin_tol_hrs=Int
+    bin_tol_hrs = Int
+
     def refresh_samples(self):
         self.set_samples(self._retrieve_samples())
 
@@ -105,11 +106,16 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         db = self.db
         with db.session_ctx():
             ss = [si.labnumber for si in self.selected_samples]
-            ts = db.get_analysis_timestamps(ss, binned=self.bin_tol_hrs*3600)
+            bt = self.bin_tol_hrs
+            if not bt:
+                self.information_dialog('Set "Analysis Series Binning" in Preferences defaulting to 2hrs')
+                bt = 2
+
+            ts = db.get_analysis_timestamps(ss, binned=bt * 3600)
             ms = db.get_labnumber_mass_spectrometers(ss)
             n = len(ts)
             if n > 1:
-                if not self.confirmation_dialog('The date range you selected is to large. It will be'
+                if not self.confirmation_dialog('The date range you selected is to large. It will be '
                                                 'broken into {} subranges.\nDo you want to Continue?'.format(n)):
                     return
 
@@ -231,7 +237,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
             self.datasource_url = db.datasource_url
 
-            pid='pychron.browsing'
+            pid = 'pychron.browsing'
             bind_preference(self.search_criteria, 'recent_hours', '{}.recent_hours'.format(pid))
             bind_preference(self, 'graphical_filtering_max_days', '{}.graphical_filtering_max_days'.format(pid))
             bind_preference(self, 'bin_tol_hrs', '{}.bin_tol_hrs'.format(pid))
@@ -379,7 +385,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         return ls
 
-    #handlers
+    # handlers
     def _filter_by_button_fired(self):
         self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
         if self.sample_view_active:

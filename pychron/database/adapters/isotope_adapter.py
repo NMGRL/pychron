@@ -1124,7 +1124,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                      analysis_types, filter_non_run, low_post, high_post)
 
             q = self._labnumber_filter(q, project_names, mass_spectrometers,
-                                       analysis_types, filter_non_run, low_post, high_post)
+                                       analysis_types, filter_non_run, low_post, high_post, cast_date=False)
             self.debug(compile_query(q))
             return self._query_all(q)
 
@@ -1295,24 +1295,29 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return ans
 
-    def get_min_max_analysis_timestamp(self, lns):
+    def get_min_max_analysis_timestamp(self, lns=None, projects=None, delta=0):
         """
             lns: list of labnumbers/identifiers
             return: datetime, datetime
 
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
+        if not lns and not projects:
+            raise NotImplementedError
+
         with self.session_ctx() as sess:
             q = self._analysis_query(sess, attr='analysis_timestamp')
-            q = q.filter(gen_LabTable.identifier.in_(lns))
+            if lns:
+                q = q.filter(gen_LabTable.identifier.in_(lns))
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            hpost = q.first()
+            elif projects:
+                q = q.join(gen_SampleTable, gen_ProjectTable)
+                q = q.filter(gen_ProjectTable.name.in_(projects))
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            lpost = q.first()
-
-            return lpost[0], hpost[0]
+            hpost = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
+            lpost = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
+            td=timedelta(hours=delta)
+            return lpost[0]-td, hpost[0]+td
 
     def get_labnumber_mass_spectrometers(self, lns):
         """
@@ -2218,13 +2223,13 @@ class IsotopeAdapter(DatabaseAdapter):
         return q
 
     def _labnumber_filter(self, q, project_names, mass_spectrometers,
-                          analysis_types, filter_non_run, low_post, high_post):
+                          analysis_types, filter_non_run, low_post, high_post, cast_date=True):
         if low_post:
             # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
-            q = q.filter(self._get_post_filter(low_post, '__le__'))
+            q = q.filter(self._get_post_filter(low_post, '__ge__', cast=cast_date))
         if high_post:
             # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
-            q = q.filter(self._get_post_filter(high_post, '__ge__'))
+            q = q.filter(self._get_post_filter(high_post, '__le__', cast=cast_date))
 
         if analysis_types:
             f = gen_AnalysisTypeTable.name.in_(analysis_types)

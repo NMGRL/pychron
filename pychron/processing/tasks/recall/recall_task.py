@@ -192,14 +192,14 @@ class RecallTask(AnalysisEditTask):
 
         return panes
 
-    def activated(self):
-        super(RecallTask, self).activated()
-        try:
-            a=self.analysis_table.analyses[3]
-            self.recall([a])
-            # self.new_context_editor()
-        except IndexError:
-            pass
+    # def activated(self):
+    #     super(RecallTask, self).activated()
+    #     try:
+    #         a=self.analysis_table.analyses[3]
+    #         self.recall([a])
+    #         # self.new_context_editor()
+    #     except IndexError:
+    #         pass
 
     def _dclicked_sample_changed(self):
         pass
