@@ -15,26 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime
-import time
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
+from datetime import datetime
+import time
 #============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -44,9 +30,14 @@ from pychron.loggable import Loggable
 
 # http://stackoverflow.com/q/3844931/
 from pychron.processing.analyses.dbanalysis import DBAnalysis
+from pychron.processing.analyses.exceptions import NoProductionError
 
 
-def checkEqual6502(lst):
+def check_list(lst):
+    """
+        return True if list is empty or
+        all elements equal e.g [1,1,1,1,1]
+    """
     return not lst or [lst[0]] * len(lst) == lst
 
 
@@ -106,7 +97,7 @@ class Datahub(Loggable):
                 return 'secondary db analyses missing aliquot_pychron'
 
         self.debug('{} conflict args. precedence={}, names={}, values={}'.format(k, ps, ns, vs))
-        if not checkEqual6502(list(vs)):
+        if not check_list(list(vs)):
             hn, hv = ns[0], vs[0]
             txt = []
             for ln, lv in zip(ns[1:], vs[1:]):
@@ -134,7 +125,13 @@ class Datahub(Loggable):
                 x = datetime.now()
                 now = time.mktime(x.timetuple())
                 an.timestamp = now
-                an.sync_irradiation(ln)
+                try:
+                    an.sync_irradiation(ln)
+                except NoProductionError:
+                    self.information_dialog('Irradiation={} Level={} has '
+                                            'no Correction/Production Ratio set defined'.format(an.irradiation,
+                                                                                                an.irradiation_level))
+                    return False
 
                 arar_age.trait_set(j=an.j,
                                    production_ratios=an.production_ratios,
