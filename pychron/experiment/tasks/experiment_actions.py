@@ -16,16 +16,14 @@
 
 
 #============= enthought library imports =======================
-import os
 
 from pyface.message_dialog import warning
 from pyface.action.api import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from pyface.tasks.action.task_action import TaskAction
 
-
 #============= standard library imports ========================
-
+import os
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
@@ -116,6 +114,17 @@ class UndoAction(TaskAction):
     accelerator = 'Ctrl+Z'
 
 
+class DefaultConditionsAction(Action):
+    name = 'Edit Default Conditions'
+    def perform(self, event):
+        task=event.task
+        if hasattr(task, 'edit_default_conditions'):
+            task.edit_default_conditions()
+        else:
+            from pychron.experiment.conditions_edit_view import edit_conditions
+            edit_conditions(None, app=task.application)
+
+
 class QueueAction(ExperimentAction):
     def _open_experiment(self, event, path=None):
 
@@ -171,7 +180,8 @@ class OpenExperimentQueueAction(QueueAction):
     image = icon('project-open')
 
     def perform(self, event):
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        # path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 
 

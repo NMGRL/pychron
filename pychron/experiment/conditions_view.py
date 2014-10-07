@@ -30,7 +30,7 @@ class ConditionsAdapter(TabularAdapter):
                ('Value', 'value')]
 
     attr_width=Int(100)
-    check_width=Int(120)
+    check_width=Int(200)
     start_width=Int(50)
     frequency_width=Int(100)
     value_width=Int(120)
@@ -40,6 +40,7 @@ class ConditionsView(HasTraits):
 
     def traits_view(self):
         editor = TabularEditor(adapter=ConditionsAdapter(),
+                               editable=False,
                                auto_update=True)
 
         v = View(UItem('termination_conditions',

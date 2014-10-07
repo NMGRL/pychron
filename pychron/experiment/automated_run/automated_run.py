@@ -30,7 +30,7 @@ from numpy import Inf
 # from memory_profiler import profile
 import weakref
 #============= local library imports  ==========================
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.experiment.automated_run.peak_hop_collector import PeakHopCollector
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
@@ -47,7 +47,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
 from pychron.experiment.automated_run.condition import TruncationCondition, \
-    ActionCondition, TerminationCondition
+    ActionCondition, TerminationCondition, condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -607,7 +607,7 @@ class AutomatedRun(Loggable):
     def start(self):
         self.set_integration_time(DEFAULT_INTEGRATION_TIME)
         #add default terminations
-        self._add_default_terminations()
+        self._add_default_conditions()
 
         if self.monitor is None:
             return self._start()
@@ -1030,30 +1030,76 @@ anaylsis_type={}
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
 
-    def _add_default_terminations(self):
-        p=os.path.join(paths.spectrometer_dir, 'default_terminations.yml')
-        if not os.path.isfile(p):
-            p=os.path.join(paths.spectrometer_dir, 'default_terminations.yaml')
+    def _add_default_conditions(self):
+        """
+            load default conditions (truncations, actions, terminations)
+            from spectrometer/default_conditions.yaml
+        """
+        name=self.spec.default_conditions_name
+        if self.spec.use_default_conditions and name:
+            p = get_path(paths.default_conditions_dir, name, ('.yaml','.yml'))
+            if p is not None:
+                # clear the conditions for good measure.
+                # conditions should be cleared during teardown.
+                self.py_clear_conditions()
 
-        if os.path.isfile(p):
-            with open(p, 'r') as fp:
-                yl=yaml.load(fp)
-                for ti in yl:
-                    comp=ti.get('check', None)
-                    if not comp:
-                        continue
+                with open(p, 'r') as fp:
+                    yd=yaml.load(fp)
+                    cs=yd.get('terminations')
+                    self._add_default_terminations(cs)
+                    cs=yd.get('truncations')
+                    self._add_default_truncations(cs)
+                    cs=yd.get('actions')
+                    self._add_default_actions(cs)
 
-                    attr=ti.get('attr', '')
-                    start=ti.get('start', 30)
-                    freq = ti.get('frequency', 5)
-                    win = ti.get('window', 0)
-                    mapper = ti.get('mapper', '')
+            else:
+                self.warning('no Default Conditions file. {}'.format(p))
 
-                    self.py_add_termination(attr, comp, start,
-                                            freq, win, mapper)
-        else:
-            self.warning('no Default Terminations file. {}'.format(p))
+    def _add_default_truncations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
 
+        for ti in yl:
+            cx=condition_from_dict(ti, 'TruncationCondition')
+            self.truncation_conditions.append(cx)
+
+    def _add_default_actions(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx=condition_from_dict(ti, 'ActionCondition')
+            self.action_conditions.append(cx)
+
+    def _add_default_terminations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx=condition_from_dict(ti, 'TerminationCondition')
+            self.termination_conditions.append(cx)
+
+            # comp=ti.get('check', None)
+            # if not comp:
+            #     continue
+            #
+            # attr=ti.get('attr', '')
+            # start=ti.get('start', 30)
+            # freq = ti.get('frequency', 5)
+            # win = ti.get('window', 0)
+            # mapper = ti.get('mapper', '')
+
+            # self.py_add_termination(attr, comp, start,
+            #                         freq, win, mapper)
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:

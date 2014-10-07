@@ -61,6 +61,8 @@ class ExperimentEditor(BaseTraitsEditor):
         if txt:
             if queue.load(txt):
                 self.queue = queue
+            else:
+                self.warning('failed to load queue')
         else:
             self.queue = queue
 

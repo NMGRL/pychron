@@ -330,3 +330,19 @@ def fileiter(fp, commentchar='#', strip=False):
                 line = line.strip()
             yield line
 
+
+def get_path(root, name, extensions):
+    """
+        return a valid file path ``p``
+        where ``p`` == root/name.extension
+
+        root: str. directory path
+        name: str. basename for file
+        extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
+
+    """
+    for ext in extensions:
+        p=os.path.join(root, add_extension(name, ext))
+        if os.path.isfile(p):
+            return p
+

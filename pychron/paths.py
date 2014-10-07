@@ -99,6 +99,7 @@ class Paths():
     setup_dir = setup_dir = None
     device_dir = None
     spectrometer_dir = None
+    default_conditions_dir = None
     canvas2D_dir = None
     canvas3D_dir = None
     extraction_line_dir = None
@@ -239,6 +240,8 @@ class Paths():
         #==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
+        self.default_conditions_dir=join(self.spectrometer_dir,
+                                         'default_conditions')
         self.device_dir = device_dir = join(setup_dir, 'devices')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
         self.canvas3D_dir = join(setup_dir, 'canvas3D')

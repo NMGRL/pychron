@@ -1,6 +1,7 @@
-from traits.has_traits import HasTraits
 from traits.trait_types import String
+
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
@@ -10,13 +11,12 @@ class ExperimentBlock(Loggable):
     extract_device = String
     mass_spectrometer = String
 
-    def _setup_params(self,params):
+    def _add_queue_meta(self, params):
         pass
 
     def extract_runs(self, path):
         with open(path,'r') as fp:
             line_gen=self._get_line_generator(fp)
-            # meta = self._extract_meta(line_gen)
             return self._load_runs(line_gen)
 
     def _get_line_generator(self, txt):
@@ -25,8 +25,7 @@ class ExperimentBlock(Loggable):
         else:
             return txt
 
-    def _load_runs(self, line_gen):
-        aruns = []
+    def _runs_gen(self, line_gen):
         delim = '\t'
 
         header = map(str.strip, line_gen.next().split(delim))
@@ -36,6 +35,7 @@ class ExperimentBlock(Loggable):
             pklass = UVRunParser
         parser = pklass()
         for linenum, line in enumerate(line_gen):
+            # self.debug('loading line {}'.format(linenum))
             skip = False
             line = line.rstrip()
 
@@ -51,7 +51,7 @@ class ExperimentBlock(Loggable):
 
             try:
                 script_info, params = parser.parse(header, line)
-                self._setup_params(params)
+                self._add_queue_meta(params)
                 params['skip'] = skip
                 params['mass_spectrometer'] = self.mass_spectrometer
 
@@ -63,7 +63,8 @@ class ExperimentBlock(Loggable):
                 arun.load(script_info, params)
                 #arun = self._automated_run_factory(script_info, params, klass)
 
-                aruns.append(arun)
+                yield arun
+                # aruns.append(arun)
 
             except Exception, e:
                 import traceback
@@ -71,7 +72,11 @@ class ExperimentBlock(Loggable):
                 print traceback.print_exc()
                 self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
 
-                return
+                break
 
+    def _load_runs(self, line_gen):
+        self.debug('loading runs')
+        aruns = list(self._runs_gen(line_gen))
+        self.debug('returning nruns {}'.format(len(aruns)))
         return aruns
 
