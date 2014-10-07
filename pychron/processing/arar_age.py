@@ -173,10 +173,18 @@ class ArArAge(Loggable):
 
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
-        if attr.endswith('bs'):
+        if attr.endswith('.bs'):
+            iso = attr[:-3]
+            if iso in self.isotopes:
+                r = self.isotopes[iso].baseline.value
+        elif attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.value
+        elif attr.endswith('.bs_corrected'):
+            iso = attr[:-13]
+            if iso in self.isotopes:
+                r = self.isotopes[iso].get_baseline_corrected_value()
         elif '/' in attr:
             r = self.get_ratio(attr)
         elif attr in self.computed:

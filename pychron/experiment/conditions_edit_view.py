@@ -19,7 +19,7 @@ set_qt()
 # ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Any, \
-    Enum, Float, on_trait_change, Str, Int
+    Enum, Float, on_trait_change, Str, Int, Bool, Property
 
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.api import View, Tabbed, Group, UItem, \
@@ -51,9 +51,9 @@ class ConditionsAdapter(TabularAdapter):
     frequency_width = Int(100)
 
 
-MOD_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})',
-            'Current': '{}.cur',
-            'StdDev': '{}.std'}
+FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})'}
+MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline':'{}.bs',
+            'BaselineCorrected':'{}.bs_corrected'}
 
 
 class ConditionGroup(HasTraits):
@@ -67,13 +67,21 @@ class ConditionGroup(HasTraits):
     # use_current = Bool
     # use_std_dev = Bool
     # use_slope = Bool
+    use_end_check=Bool
+    modifier_enabled=Property(depends_on='function')
     modifier = Str
+    function = Str
     window = Int
     mapper = Str
     value = Float
     start_count = Int
     frequency = Int
     _no_update = False
+
+    _cached_start_count = Int
+
+    def _get_modifier_enabled(self):
+        return not self.function
 
     def dump(self):
         cs = []
@@ -84,13 +92,33 @@ class ConditionGroup(HasTraits):
             cs.append(d)
         return cs
 
-    @on_trait_change('modifier, comparator, value')
-    def _refresh_comp(self):
+    def _use_end_check_changed(self, new):
+        if new:
+            self._cached_start_count=self.start_count
+            self.start_count=-1
+        else:
+            self.start_count=self._cached_start_count
+
+    @on_trait_change('function, modifier, comparator, value')
+    def _refresh_comp(self, name, new):
         if not self._no_update:
+
+            with no_update(self):
+                if name=='function':
+                    self.modifier=''
+                elif name=='modifier':
+                    self.function=''
+
             attr = self.attr
             try:
                 s = MOD_DICT[self.modifier]
                 attr = s.format(attr)
+            except KeyError:
+                pass
+
+            try:
+                s=FUNC_DICT[self.function]
+                attr=s.format(attr)
             except KeyError:
                 pass
 
@@ -99,6 +127,9 @@ class ConditionGroup(HasTraits):
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
         setattr(self.selected, name, new)
+        if name=='start_count':
+            if new!=-1:
+                self._cached_start_count=new
 
     def _selected_changed(self, new):
         if new:
@@ -107,8 +138,14 @@ class ConditionGroup(HasTraits):
                     setattr(self, a, getattr(new, a))
 
                 for r, a in ((MAX_REGEX, 'Max'), (MIN_REGEX, 'Min'),
-                             (STD_REGEX, 'StdDev'), (CP_REGEX, 'Current'),
+
                              (SLOPE_REGEX, 'Slope')):
+                    if r.findall(new.comp):
+                        setattr(self, 'function', a)
+                        break
+
+                for r, a in ((CP_REGEX, 'Current'),
+                             (STD_REGEX, 'StdDev')):
                     if r.findall(new.comp):
                         setattr(self, 'modifier', a)
                         break
@@ -139,13 +176,23 @@ class ConditionGroup(HasTraits):
         edit_grp = VGroup(HGroup(spring,UItem('object.selected.comp', style='readonly'),spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(values=CONDITION_ATTRS)),
+                                 Item('function',
+                                      editor=EnumEditor(values=['','Max','Min','Slope'])),
                                  Item('modifier',
-                                      editor=EnumEditor(values=['Max', 'Min',
-                                                                'StdDev', 'Current', 'Slope']))),
+                                      enabled_when='modifier_enabled',
+                                      editor=EnumEditor(values=['','StdDev', 'Current',
+                                                                'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr')),
-                          Item('start_count', label='Start'),
-                          Item('frequency'))
+                          HGroup(Item('start_count',
+                                      tooltip='Number of counts to wait until performing check',
+                                      enabled_when='not use_end_check',
+                                      label='Start'),
+                                 Item('use_end_check',
+                                      tooltip='Only check this condition at the end of measurement',
+                                      label='Check @ End')),
+                          Item('frequency',
+                               tooltip='Number of counts between each check'))
 
         v = View(UItem('conditions',
                        editor=TabularEditor(adapter=ConditionsAdapter(),

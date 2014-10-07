@@ -137,11 +137,20 @@ class DataCollector(Loggable):
             t.start()
 
         else:
+            result = self._end_run_condition_check(result)
             if result=='cancel':
                 self.canceled=True
 
             #self.debug('no more iter')
             evt.set()
+
+    def _end_run_condition_check(self, result):
+        for ci in self.terminations_conditions:
+            if ci.end_check(self.arar_age):
+                result='cancel'
+                break
+
+        return result
 
     def _iter_hook(self, con, i):
         return True
