@@ -475,13 +475,16 @@ class AutomatedRun(Loggable):
     #===============================================================================
     # conditions
     #===============================================================================
-    def py_add_termination(self, attr, comp, start_count, frequency):
+    def py_add_termination(self, attr, comp, start_count, frequency,
+                           window=0, mapper=''):
         """
             attr must be an attribute of arar_age
         """
         self.termination_conditions.append(TerminationCondition(attr, comp,
                                                                 start_count,
-                                                                frequency))
+                                                                frequency,
+                                                                window=window,
+                                                                mapper=mapper))
 
     def py_add_truncation(self, attr, comp, start_count, frequency,
                           abbreviated_count_ratio):
@@ -1026,8 +1029,12 @@ anaylsis_type={}
     #             from pychron.core.ui.thread import Thread as mThread
     #             self._term_thread = mThread(target=self.cancel_run)
     #             self._term_thread.start()
+
     def _add_default_terminations(self):
         p=os.path.join(paths.spectrometer_dir, 'default_terminations.yml')
+        if not os.path.isfile(p):
+            p=os.path.join(paths.spectrometer_dir, 'default_terminations.yaml')
+
         if os.path.isfile(p):
             with open(p, 'r') as fp:
                 yl=yaml.load(fp)
@@ -1039,8 +1046,13 @@ anaylsis_type={}
                     attr=ti.get('attr', '')
                     start=ti.get('start', 30)
                     freq = ti.get('frequency', 5)
+                    win = ti.get('window', 0)
+                    mapper = ti.get('mapper', '')
 
-                    self.py_add_termination(attr, comp, start, freq)
+                    self.py_add_termination(attr, comp, start,
+                                            freq, win, mapper)
+        else:
+            self.warning('no Default Terminations file. {}'.format(p))
 
     def _start(self):
         if self._use_arar_age():

@@ -141,6 +141,29 @@ class ArArAge(Loggable):
             except ZeroDivisionError:
                 pass
 
+    def get_current_intensity(self, attr):
+        try:
+            r=self.isotopes[attr].ys[-1]
+        except KeyError:
+            r=None
+        return r
+
+    def get_values(self, attr, n):
+        """
+            return an array of floats
+
+            attr: isotope key
+            n: int, values from the end to slice off. e.g 10 means last 10 items in array
+            return all values if n==-1
+        """
+        try:
+            r=self.isotopes[attr].ys
+            if not n==-1:
+                r=r[-n:]
+        except KeyError:
+            r=None
+        return r
+
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
@@ -155,6 +178,10 @@ class ArArAge(Loggable):
             r = self.isotopes[attr].get_intensity()
         elif hasattr(self, attr):
             r = getattr(self, attr)
+        else:
+            iso=next((i for i in self.isotopes if i.detector==attr), None)
+            if iso:
+                r=ufloat(iso.ys[-1], tag=attr)
 
         return r
 

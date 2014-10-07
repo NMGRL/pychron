@@ -129,13 +129,8 @@ class DataCollector(Loggable):
                 return
 
             ot = time.time()
-
             p = self.period_ms * 0.001
-            p -= prev
-            p = max(0, p)
-
-            #self.debug('period {} {} {}'.format(p,prev, self.period_ms))
-            t = Timer(p, self._iter, args=(con, evt, i + 1,
+            t = Timer(max(0, p-prev), self._iter, args=(con, evt, i + 1,
                                            time.time() - ot))
 
             t.name = 'iter_{}'.format(i + 1)

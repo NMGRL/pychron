@@ -375,10 +375,11 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, start_count=0, frequency=10):
+    def add_termination(self, attr, comp, start_count=0, frequency=10, window=0, mapper=''):
         self._automated_run_call('py_add_termination', attr, comp,
                                  start_count=start_count,
-                                 frequency=frequency)
+                                 frequency=frequency, window=window,
+                                 mapper=mapper)
 
     @verbose_skip
     @command_register
