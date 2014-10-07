@@ -47,7 +47,7 @@ from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
 from pychron.experiment.automated_run.condition import TruncationCondition, \
-    ActionCondition, TerminationCondition
+    ActionCondition, TerminationCondition, condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -1063,7 +1063,8 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            pass
+            cx=condition_from_dict(ti, 'TruncationCondition')
+            self.truncation_conditions.append(cx)
 
     def _add_default_actions(self, yl):
         """
@@ -1073,7 +1074,8 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            pass
+            cx=condition_from_dict(ti, 'ActionCondition')
+            self.action_conditions.append(cx)
 
     def _add_default_terminations(self, yl):
         """
@@ -1083,18 +1085,21 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            comp=ti.get('check', None)
-            if not comp:
-                continue
+            cx=condition_from_dict(ti, 'TerminationCondition')
+            self.termination_conditions.append(cx)
 
-            attr=ti.get('attr', '')
-            start=ti.get('start', 30)
-            freq = ti.get('frequency', 5)
-            win = ti.get('window', 0)
-            mapper = ti.get('mapper', '')
+            # comp=ti.get('check', None)
+            # if not comp:
+            #     continue
+            #
+            # attr=ti.get('attr', '')
+            # start=ti.get('start', 30)
+            # freq = ti.get('frequency', 5)
+            # win = ti.get('window', 0)
+            # mapper = ti.get('mapper', '')
 
-            self.py_add_termination(attr, comp, start,
-                                    freq, win, mapper)
+            # self.py_add_termination(attr, comp, start,
+            #                         freq, win, mapper)
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:

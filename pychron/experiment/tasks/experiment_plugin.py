@@ -42,14 +42,16 @@ class ExperimentPlugin(BaseTaskPlugin):
     def _my_task_extensions_default(self):
         factory = lambda: Group(DeselectAction(),
                                 ResetQueuesAction(),
-                                UndoAction(),
-                                DefaultConditionsAction())
+                                UndoAction())
 
         return [TaskExtension(task_id='pychron.experiment',
                               actions=[SchemaAddition(
                                   factory=factory,
                                   path='MenuBar/Edit')]),
                 TaskExtension(actions=[
+                    SchemaAddition(id='open_default_conditions',
+                                   factory=DefaultConditionsAction,
+                                   path='MenuBar/Edit'),
                     SchemaAddition(id='open_experiment',
                                    factory=OpenExperimentQueueAction,
                                    path='MenuBar/File/Open'),

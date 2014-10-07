@@ -91,7 +91,9 @@ class ExperimentEditorTask(EditorTask):
 
     def edit_default_conditions(self):
         if self.has_active_editor():
-            self.manager.queue_factory.edit_default_conditions()
+            from pychron.experiment.conditions_edit_view import edit_conditions
+            edit_conditions(self.manager.queue_factory.default_conditions_name,
+                            app=self.application)
 
     def prepare_destroy(self):
         super(ExperimentEditorTask, self).prepare_destroy()

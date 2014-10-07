@@ -23,6 +23,7 @@ from traits.api import Str, Property, cached_property, Int, \
 
 
 
+
 #============= standard library imports ========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
@@ -87,11 +88,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
             called by ExperimentFactory.destroy
         """
         self.dump()
-
-    def edit_default_conditions(self):
-        from pychron.experiment.conditions_edit_view import ConditionsEditView
-        cev=ConditionsEditView()
-        self.application.open_view(cev)
 
     def _load_default_conditions(self):
         root=paths.default_conditions_dir

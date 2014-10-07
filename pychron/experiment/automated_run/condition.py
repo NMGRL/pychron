@@ -39,6 +39,26 @@ MAPPER_KEY_REGEX=re.compile(r'[A-Za-z]+')
 #match kca, ar40, etc..
 KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
 
+CONDITION_ATTRS = ['', 'Ar40','Ar39','Ar38','Ar37','Ar36',
+                   'kca','kcl']
+
+def condition_from_dict(cd, klass):
+    if isinstance(klass, str):
+        klass=globals()[klass]
+
+    comp=cd.get('check', None)
+    if not comp:
+        return
+
+    attr=cd.get('attr', '')
+    start=cd.get('start', 30)
+    freq = cd.get('frequency', 5)
+    win = cd.get('window', 0)
+    mapper = cd.get('mapper', '')
+    cx=klass(attr, comp, start_count=start, frequency=freq, window=win, mapper=mapper)
+    return cx
+
+
 class AutomatedRunCondition(Loggable):
     attr = Str
     comp = Str
