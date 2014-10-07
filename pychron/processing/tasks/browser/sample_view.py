@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from traits.api import Instance
-from traitsui.api import View, Item, UItem, VSplit, VGroup, EnumEditor, HGroup, TabularEditor, CheckListEditor
+from traitsui.api import View, UItem, VSplit, VGroup, EnumEditor,\
+    HGroup, TabularEditor, CheckListEditor, spring
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.browser.adapters import ProjectAdapter
@@ -36,35 +37,51 @@ class BrowserSampleView(PaneModelView):
         return TableTools(model=self.model, pane=self.pane)
 
     def traits_view(self):
-        irrad_grp = VGroup(
-            Item('irradiation_enabled'),
-            VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-                   UItem('level', editor=EnumEditor(name='levels')),
-                   # icon_button_editor('find_by_irradiation',
-                   # 'find',
-                   #                    tooltip='Filter Samples by Irradiation/Level', ),
-                   enabled_when='irradiation_enabled',
-                   # enabled_when='not selected_projects',
-                   show_border=True,
-                   label='Irradiations'))
+        # irrad_grp = VGroup(
+        #     UItem('irradiation_enabled', tooltip='Enable Irradiation filter'),
+        #     VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
+        #            UItem('level', editor=EnumEditor(name='levels')),
+        #            enabled_when='irradiation_enabled'),
+        #     show_border=True,
+        #     label='Irradiations')
 
-        project_grp = VGroup(Item('project_enabled'),
-                             VGroup(HGroup(Item('project_filter', label='Filter'),
-                                           icon_button_editor('clear_selection_button',
-                                                              'cross',
-                                                              tooltip='Clear selected')),
-                                    UItem('projects',
-                                          editor=TabularEditor(editable=False,
-                                                               refresh='refresh_needed',
-                                                               selected='selected_projects',
-                                                               adapter=ProjectAdapter(),
-                                                               multi_select=True)),
-                                    enabled_when='project_enabled',
-                                    show_border=True,
-                                    label='Projects'))
+        irrad_grp = VGroup(
+            HGroup(UItem('irradiation_enabled',
+                         tooltip='Enable Irradiation filter'),
+                   UItem('irradiation',
+                         enabled_when='irradiation_enabled',
+                         editor=EnumEditor(name='irradiations'))),
+            UItem('level',
+                  enabled_when='irradiation_enabled',
+                  editor=EnumEditor(name='levels')),
+            show_border=True,
+            label='Irradiations')
+
+        tgrp = HGroup(UItem('project_enabled', label='Enabled',
+                            tooltip='Enable Project filter'),
+                      UItem('project_filter',
+                            tooltip='Filter list of projects',
+                            label='Filter'),
+                      icon_button_editor('clear_selection_button',
+                                         'cross',
+                                         tooltip='Clear selected'))
+        pgrp = UItem('projects',
+                     editor=TabularEditor(editable=False,
+                                          refresh='refresh_needed',
+                                          selected='selected_projects',
+                                          adapter=ProjectAdapter(),
+                                          multi_select=True),
+                     enabled_when='project_enabled')
+
+        project_grp = VGroup(tgrp,pgrp,
+                             show_border=True,
+                             label='Projects')
 
         analysis_type_group = HGroup(
-            Item('use_analysis_type_filtering', label='Enabled'),
+            UItem('use_analysis_type_filtering',
+                  tooltip='Enable Analysis Type filter',
+                  label='Enabled'),
+            spring,
             UItem('_analysis_include_types',
                   enabled_when='use_analysis_type_filtering',
                   style='custom',
@@ -83,7 +100,9 @@ class BrowserSampleView(PaneModelView):
                           label='Date',
                           show_border=True)
 
-        ms_grp = HGroup(UItem('use_mass_spectrometers'),
+        ms_grp = HGroup(UItem('use_mass_spectrometers',
+                              tooltip='Enable Mass Spectrometer filter'),
+                        spring,
                         UItem('mass_spectrometer_includes',
                               style='custom',
                               enabled_when='use_mass_spectrometers',
