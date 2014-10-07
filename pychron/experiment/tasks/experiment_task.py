@@ -251,7 +251,7 @@ class ExperimentEditorTask(EditorTask):
         self.last_experiment_changed = True
 
     def open(self, path=None):
-        self.manager.experiment_factory.activate(load_defaults=False)
+        self.manager.experiment_factory.activate(load_persistence=False)
         #path = '/Users/ross/Pychrondata_dev/experiments/uv.xls'
         #        path = '/Users/ross/Pychrondata_dev/experiments/uv.txt'
         if not os.path.isfile(path):
@@ -317,7 +317,7 @@ class ExperimentEditorTask(EditorTask):
     def new(self):
 
         # ms = self.manager.experiment_factory.queue_factory.mass_spectrometer
-        self.manager.experiment_factory.activate(load_defaults=True)
+        self.manager.experiment_factory.activate(load_persistence=True)
 
         editor = ExperimentEditor()
         editor.new_queue()#mass_spectrometer=ms)

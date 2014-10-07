@@ -196,13 +196,15 @@ class BaseExperimentQueue(ExperimentBlock):
         line_gen=self._get_line_generator(txt)
         self._extract_meta(line_gen)
         aruns = self._load_runs(line_gen)
-        if aruns:
+        if aruns is not None:
             # set frequency_added_counter
-            self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
+            if aruns:
+                self._frequency_group_counter = max([ri.frequency_group for ri in aruns])
 
             with no_update(self):
                 self.automated_runs = aruns
             self.initialized = True
+            self.debug('loading queue successful')
             return True
 
     def dump(self, stream, runs=None, include_meta=True):
@@ -247,6 +249,7 @@ class BaseExperimentQueue(ExperimentBlock):
         #default = lambda x: str(x) if x else ' '
         default_int = lambda x: x if x is not None else 1
         key_default = lambda k: lambda x: str(x) if x else k
+        bool_default = lambda x: bool(x) if x else False
         default = key_default('')
 
         self._set_meta_param('tray', meta, default)
@@ -257,7 +260,8 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
-        self._set_meta_param('default_conditions_name')
+        self._set_meta_param('default_conditions_name', meta, default)
+        self._set_meta_param('use_default_conditions', meta, bool_default)
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -285,8 +289,10 @@ class BaseExperimentQueue(ExperimentBlock):
             v = meta[metaname]
         except KeyError:
             pass
+        v=func(v)
 
-        setattr(self, attr, func(v))
+        self.debug('setting {} to {}'.format(attr, v))
+        setattr(self, attr, v)
 
     def _get_dump_attrs(self):
         seq = ['labnumber', 'sample', 'position',
@@ -327,6 +333,8 @@ class BaseExperimentQueue(ExperimentBlock):
 username: {}
 email: {}
 date: {}
+use_default_conditions: {}
+default_conditions_name: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
 delay_between_analyses: {}
@@ -337,6 +345,8 @@ load: {}
             self.username,
             self.email,
             datetime.datetime.today(),
+            self.use_default_conditions,
+            self.default_conditions_name,
             ms,
             self.delay_before_analyses,
             self.delay_between_analyses,

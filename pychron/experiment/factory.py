@@ -37,9 +37,6 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     queue_factory = Instance(ExperimentQueueFactory)
     undoer = Instance(ExperimentUndoer)
 
-    #     templates = DelegatesTo('run_factory')
-    #     template = DelegatesTo('run_factory')
-
     add_button = Button('Add')
     clear_button = Button('Clear')
     save_button = Button('Save')
@@ -51,7 +48,6 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
     queue = Instance(ExperimentQueue, ())
 
-    #    ok_run = Property(depends_on='_mass_spectrometer, _extract_device')
     ok_add = Property(depends_on='_mass_spectrometer, _extract_device, _labnumber, _username')
 
     _username = String
@@ -62,16 +58,15 @@ class ExperimentFactory(Loggable, ConsumerMixin):
     selected_positions = List
     default_mass_spectrometer = Str
 
-    #     help_label = String('Select Irradiation/Level or Project')
-    _load_defaults_flag = False
+    _load_persistence_flag = False
     #===========================================================================
     # permisions
     #===========================================================================
     #    max_allowable_runs = Int(10000)
     #    can_edit_scripts = Bool(True)
+
     def __init__(self, *args, **kw):
         super(ExperimentFactory, self).__init__(*args, **kw)
-
         self.setup_consumer(self._add_run, main=True)
 
     def undo(self):
@@ -89,6 +84,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
+
         self.debug('run factory set mass spec {}'.format(self._mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 
@@ -96,10 +92,11 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         v = getattr(eq, a)
         if isinstance(v, str):
             v = v.strip()
-            if v:
-                self.debug('sync queue to factory {}>>{}'.format(a,v))
-                setattr(qf, a, v)
-                return True
+
+        if v:
+            self.debug('sync queue to factory {}>>{}'.format(a,v))
+            setattr(qf, a, v)
+            return True
 
     def _sync_factory_to_queue(self, eq, qf, a):
         v = getattr(qf, a)
@@ -109,11 +106,11 @@ class ExperimentFactory(Loggable, ConsumerMixin):
                 self.debug('sync factory to queue {}>>{}'.format(a,v))
                 setattr(eq, a, v)
 
-    def activate(self, load_defaults=True):
-        self._load_defaults_flag=load_defaults
-        if load_defaults:
-            self.run_factory.activate()
-            self.queue_factory.activate()
+    def activate(self, load_persistence=True):
+        self._load_persistence_flag=load_persistence
+
+        self.queue_factory.activate(load_persistence)
+        self.run_factory.activate(load_persistence)
 
     def destroy(self):
         self._should_consume = False
@@ -218,7 +215,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.run_factory.setup_files()
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 
-        if self._load_defaults_flag:
+        if self._load_persistence_flag:
             self.run_factory.load()
 
         if self.queue:
@@ -301,4 +298,5 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self._mass_spectrometer = self.default_mass_spectrometer
+
         #============= EOF =============================================

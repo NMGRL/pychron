@@ -1,6 +1,7 @@
 from traits.trait_types import String
 
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
+
 from pychron.experiment.automated_run.uv.spec import UVAutomatedRunSpec
 from pychron.experiment.queue.parser import RunParser, UVRunParser
 from pychron.loggable import Loggable
@@ -24,8 +25,7 @@ class ExperimentBlock(Loggable):
         else:
             return txt
 
-    def _load_runs(self, line_gen):
-        aruns = []
+    def _runs_gen(self, line_gen):
         delim = '\t'
 
         header = map(str.strip, line_gen.next().split(delim))
@@ -35,6 +35,7 @@ class ExperimentBlock(Loggable):
             pklass = UVRunParser
         parser = pklass()
         for linenum, line in enumerate(line_gen):
+            # self.debug('loading line {}'.format(linenum))
             skip = False
             line = line.rstrip()
 
@@ -62,7 +63,8 @@ class ExperimentBlock(Loggable):
                 arun.load(script_info, params)
                 #arun = self._automated_run_factory(script_info, params, klass)
 
-                aruns.append(arun)
+                yield arun
+                # aruns.append(arun)
 
             except Exception, e:
                 import traceback
@@ -70,7 +72,11 @@ class ExperimentBlock(Loggable):
                 print traceback.print_exc()
                 self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
 
-                return
+                break
 
+    def _load_runs(self, line_gen):
+        self.debug('loading runs')
+        aruns = list(self._runs_gen(line_gen))
+        self.debug('returning nruns {}'.format(len(aruns)))
         return aruns
 

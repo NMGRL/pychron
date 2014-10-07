@@ -176,7 +176,8 @@ class OpenExperimentQueueAction(QueueAction):
     image = icon('project-open')
 
     def perform(self, event):
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        # path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 
 

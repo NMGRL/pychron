@@ -22,6 +22,7 @@ from traits.api import Str, Property, cached_property, Int, \
     Any, String, Event, Bool, Dict, List
 
 
+
 #============= standard library imports ========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
@@ -73,12 +74,13 @@ class ExperimentQueueFactory(PersistenceLoggable):
     #     a=UserEntry()
     #     a.edit_user(self.username)
     #     self.users_dirty=True
-    def activate(self):
+    def activate(self, load_persistence):
         """
             called by ExperimentFactory
         """
         self._load_default_conditions()
-        self.load()
+        if load_persistence:
+            self.load()
 
     def deactivate(self):
         """

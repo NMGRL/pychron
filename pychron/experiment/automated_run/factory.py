@@ -291,10 +291,11 @@ class AutomatedRunFactory(PersistenceLoggable):
         self.remote_patterns = self._get_patterns()
         self.load_patterns()
 
-    def activate(self):
+    def activate(self, load_persistence):
         self.load_truncations()
         self.load_run_blocks()
-        self.load()
+        if load_persistence:
+            self.load()
 
     def deactivate(self):
         self.dump(verbose=True)
