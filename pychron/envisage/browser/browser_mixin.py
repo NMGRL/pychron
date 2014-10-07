@@ -344,9 +344,12 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _retrieve_samples_hook(self, db):
         projects = self.selected_projects
+        if self.use_mass_spectrometers:
+            mass_spectrometers = self.mass_spectrometer_includes
+        else:
+            mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
+            mass_spectrometers = [ms for ms in mass_spectrometers if ms]
 
-        mass_spectrometers = [extract_mass_spectrometer_name(p.name) for p in projects]
-        mass_spectrometers = [ms for ms in mass_spectrometers if ms]
         projects = [p.name for p in projects if not p.name.startswith('RECENT')]
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
 

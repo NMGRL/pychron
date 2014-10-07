@@ -18,7 +18,7 @@
 from traits.api import Instance
 from traitsui.api import View, Item, UItem, VSplit, VGroup, EnumEditor, HGroup, TabularEditor, CheckListEditor
 # ============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.envisage.browser.adapters import ProjectAdapter
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
@@ -41,7 +41,7 @@ class BrowserSampleView(PaneModelView):
             VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
                    UItem('level', editor=EnumEditor(name='levels')),
                    # icon_button_editor('find_by_irradiation',
-                   #                    'find',
+                   # 'find',
                    #                    tooltip='Filter Samples by Irradiation/Level', ),
                    enabled_when='irradiation_enabled',
                    # enabled_when='not selected_projects',
@@ -82,7 +82,17 @@ class BrowserSampleView(PaneModelView):
                           icon_button_editor('date_configure_button', 'view-calendar-month-2.png'),
                           label='Date',
                           show_border=True)
-        top_level_filter_grp = VGroup(HGroup(project_grp, irrad_grp),
+
+        ms_grp = HGroup(UItem('use_mass_spectrometers'),
+                        UItem('mass_spectrometer_includes',
+                              style='custom',
+                              enabled_when='use_mass_spectrometers',
+                              editor=CheckListEditor(name='available_mass_spectrometers',
+                                                     cols=10)),
+                        label='Mass Spectrometer', show_border=True)
+
+        top_level_filter_grp = VGroup(ms_grp,
+                                      HGroup(project_grp, irrad_grp),
                                       analysis_type_group,
                                       date_grp)
 
@@ -92,15 +102,14 @@ class BrowserSampleView(PaneModelView):
                           height=0.6,
                           style='custom'))
 
-        grp = VSplit(top_level_filter_grp,g1)
+        grp = VSplit(top_level_filter_grp, g1)
         return View(grp)
 
     def unselect_projects(self, info, obj):
-        obj.selected_projects=[]
+        obj.selected_projects = []
 
 
-
-#============= EOF =============================================
+# ============= EOF =============================================
 
 
 

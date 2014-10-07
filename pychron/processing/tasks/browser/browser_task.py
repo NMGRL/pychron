@@ -63,19 +63,21 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
     auto_select_analysis = Bool(False)
 
-    mass_spectrometer = Str(DEFAULT_SPEC)
-    mass_spectrometers = List
-    analysis_type = Str(DEFAULT_AT)
-    analysis_types = List
-    extraction_device = Str(DEFAULT_ED)
-    extraction_devices = List
+    use_mass_spectrometers = Bool
+    mass_spectrometer_includes = List
+    available_mass_spectrometers = List
+    # mass_spectrometer = Str(DEFAULT_SPEC)
+    # mass_spectrometers = List
+
+    # analysis_type = Str(DEFAULT_AT)
+    # analysis_types = List
+    # extraction_device = Str(DEFAULT_ED)
+    # extraction_devices = List
     start_date = Date
     start_time = Time
 
     end_date = Date
     end_time = Time
-    days_pad = Int(0)
-    hours_pad = Int(18)
 
     datasource_url = String
     # clear_selection_button = Button
@@ -192,10 +194,24 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         if self.irradiation:
             db = self.db
             with db.session_ctx():
-                ps = db.get_projects_irradiation(self.irradiation,
-                                                 self.level)
+                ps = db.get_projects(irradiation=self.irradiation,
+                                    level=self.level)
                 ps = self._make_project_records(ps, include_recent_first=False)
                 self.projects = ps
+
+    def _load_projects_and_irradiations(self):
+        if self.use_mass_spectrometers:
+            ms=self.mass_spectrometer_includes
+            if ms:
+                db = self.db
+                with db.session_ctx():
+                    ps = db.get_projects(mass_spectrometers=ms)
+                    ps = self._make_project_records(ps, include_recent_first=False)
+                    self.projects = ps
+
+                    irs = db.get_irradiations(mass_spectrometers=ms)
+                    self.irradiations=[i.name for i in irs]
+                    print self.irradiations
 
     def _activate_query_browser(self):
         psel = self.data_selector
@@ -232,8 +248,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             db = self.manager.db
             with db.session_ctx():
                 self._load_mass_spectrometers()
-                self._load_analysis_types()
-                self._load_extraction_devices()
+            #     self._load_analysis_types()
+            #     self._load_extraction_devices()
 
             self.datasource_url = db.datasource_url
 
@@ -271,7 +287,8 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _load_mass_spectrometers(self):
         db = self.db
         ms = [mi.name for mi in db.get_mass_spectrometers()]
-        self.mass_spectrometers = ['Spectrometer', 'None'] + ms
+        self.available_mass_spectrometers=ms
+        # self.mass_spectrometers = ['Spectrometer', 'None'] + ms
 
     def _load_analysis_types(self):
         db = self.db
@@ -289,10 +306,10 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         self.sample_tabular_adapter = self.browser_pane.sample_tabular_adapter
         return self.browser_pane
 
-    def _ok_query(self):
-        ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
-        at = self.analysis_type not in (DEFAULT_AT, 'None')
-        return ms and at
+    # def _ok_query(self):
+    #     ms = self.mass_spectrometer not in (DEFAULT_SPEC, 'None')
+    #     at = self.analysis_type not in (DEFAULT_AT, 'None')
+    #     return ms and at
 
     def _ok_ed(self):
         return self.extraction_device not in (DEFAULT_ED, 'None')
@@ -322,11 +339,15 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     def _retrieve_samples_hook(self, db):
         low_post = self.low_post
         high_post = self.high_post
+        ms=None
+        if self.use_mass_spectrometers:
+            ms = self.mass_spectrometer_includes
 
         def get_labnumbers(ids=None):
             return db.get_labnumbers(identifiers=ids,
                                      low_post=low_post,
                                      high_post=high_post,
+                                     mass_spectrometers=ms,
                                      filter_non_run=self.filter_non_run_samples)
 
         def atypes_func(obj, func):
@@ -342,6 +363,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
         man = self.manager
         ls = []
         atypes = self.analysis_include_types if self.use_analysis_type_filtering else None
+
         if self.project_enabled:
             if not self.irradiation_enabled:
                 ls = super(BaseBrowserTask, self)._retrieve_samples_hook(db)
@@ -352,6 +374,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                                                                self.level,
                                                                low_post=low_post,
                                                                high_post=high_post,
+                                                               mass_spectrometers=ms,
                                                                filter_non_run=self.filter_non_run_samples,
                                                                analysis_types=atypes)
                     if atypes:
@@ -362,11 +385,13 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
                 ls = db.get_irradiation_labnumbers(self.irradiation, self.level,
                                                    low_post=low_post,
                                                    high_post=high_post,
+                                                   mass_spectrometers=ms,
                                                    filter_non_run=self.filter_non_run_samples,
                                                    analysis_types=atypes)
             else:
                 # level = man.get_level(self.level)
-                level = db.get_irradiation_level(self.irradiation, self.level)
+                level = db.get_irradiation_level(self.irradiation,
+                                                 self.level)
                 if level:
                     if atypes:
                         xs = atypes_func(level, 'group_level')
@@ -379,7 +404,7 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
 
         elif low_post or high_post:
             ls = get_labnumbers()
-            ans = db.get_analyses_date_range(low_post, high_post)
+            ans = db.get_analyses_date_range(low_post, high_post, mass_spectrometers=ms)
             ans = self._make_records(ans)
             self.analysis_table.set_analyses(ans)
 
@@ -460,6 +485,14 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
             ans = gm.get_selection()
             self.analysis_table.analyses = ans
             self._graphical_filter_hook(ans, gm.is_append)
+
+    def _use_mass_spectrometer_changed(self):
+        self.refresh_samples()
+
+    def _mass_spectrometer_includes_changed(self):
+        if self.mass_spectrometer_includes:
+            self.refresh_samples()
+            self._load_projects_and_irradiations()
 
     def _irradiation_enabled_changed(self, new):
         if not new:
