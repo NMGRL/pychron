@@ -118,6 +118,9 @@ class ControlsPane(TraitsDockPane):
             Item('graph_y_auto', label='Autoscale Y'),
             Item('graph_ymax', label='Max', format_str='%0.3f'),
             Item('graph_ymin', label='Min', format_str='%0.3f'),
+            HGroup(icon_button_editor('clear_button', 'clear',
+                                      tooltip='Clear and reset graph'),
+                   spring),
             HGroup(
                 UItem('record_button'),
                 icon_button_editor('add_marker_button', 'flag',

@@ -152,7 +152,7 @@ class BaseMaker(HasTraits):
                                 editable=False,
                                 activated='activated')),
                       HGroup(UItem('label'),
-                             icon_button_editor('clear_button', 'edit-clear',
+                             icon_button_editor('clear_button', 'clear',
                                                 tooltip='Clear current label'),
                              icon_button_editor('add_label_button', 'add',
                                                 enabled_when='add_enabled',
