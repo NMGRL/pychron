@@ -93,7 +93,7 @@ class RecallTask(AnalysisEditTask):
 
                 an=self.active_editor.model
                 a=an.analysis_timestamp
-                pad=timedelta(hours=2)
+                pad=timedelta(hours=1)
                 lp=a-pad
                 hp=a+pad
 
@@ -192,14 +192,14 @@ class RecallTask(AnalysisEditTask):
 
         return panes
 
-    # def activated(self):
-    #     super(RecallTask, self).activated()
-    #     try:
-    #         a=self.analysis_table.analyses[3]
-    #         self.recall([a])
-    #         # self.new_context_editor()
-    #     except IndexError:
-    #         pass
+    def activated(self):
+        super(RecallTask, self).activated()
+        try:
+            a=self.analysis_table.analyses[3]
+            self.recall([a])
+            # self.new_context_editor()
+        except IndexError:
+            pass
 
     def _dclicked_sample_changed(self):
         pass
