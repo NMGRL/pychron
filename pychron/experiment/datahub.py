@@ -15,27 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime
-import time
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Instance
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #============= standard library imports ========================
+from datetime import datetime
+import time
 #============= local library imports  ==========================
 from pychron.database.adapters.massspec_database_adapter import MissingAliquotPychronException
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
@@ -48,7 +33,11 @@ from pychron.processing.analyses.dbanalysis import DBAnalysis
 from pychron.processing.analyses.exceptions import NoProductionError
 
 
-def checkEqual6502(lst):
+def check_list(lst):
+    """
+        return True if list is empty or
+        all elements equal e.g [1,1,1,1,1]
+    """
     return not lst or [lst[0]] * len(lst) == lst
 
 
@@ -108,7 +97,7 @@ class Datahub(Loggable):
                 return 'secondary db analyses missing aliquot_pychron'
 
         self.debug('{} conflict args. precedence={}, names={}, values={}'.format(k, ps, ns, vs))
-        if not checkEqual6502(list(vs)):
+        if not check_list(list(vs)):
             hn, hv = ns[0], vs[0]
             txt = []
             for ln, lv in zip(ns[1:], vs[1:]):
