@@ -61,6 +61,7 @@ class DataCollector(Loggable):
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
     refresh_age=False
+    _data = None
 
     def wait(self):
         st = time.time()
@@ -154,7 +155,7 @@ class DataCollector(Loggable):
         if dets:
             data = zip(*[(k, s) for k, s in zip(*data)
                          if k in dets])
-
+        self._data = data
         return data
 
     def _save_data(self, x, keys, signals):
@@ -283,7 +284,7 @@ class DataCollector(Loggable):
     #===============================================================================
     def _check_conditions(self, conditions, cnt):
         for ti in conditions:
-            if ti.check(self.arar_age, cnt):
+            if ti.check(self.arar_age, self._data, cnt):
                 return ti
 
     def _check_iteration(self, evt, i):

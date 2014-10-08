@@ -131,6 +131,10 @@ class Spectrometer(SpectrometerDevice):
             d.microcontroller = m
             d.load()
 
+    @property
+    def detector_names(self):
+        return [di.name for di in self.detectors]
+
     def get_detector(self, name):
         if not isinstance(name, str):
             name = str(name)

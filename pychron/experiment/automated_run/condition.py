@@ -28,6 +28,9 @@ CP_REGEX = re.compile(r'\.(current|cur)')
 #match .std_dev
 STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
 
+#match .active
+ACTIVE_REGEX = re.compile(r'\.active')
+
 #match average(ar##)
 AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
 #match max(ar##)
@@ -50,8 +53,7 @@ BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
 
 PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 
-CONDITION_ATTRS = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                   'kca', 'kcl']
+
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
@@ -77,8 +79,11 @@ def remove_attr(s):
     """
         return >10 where s=Ar40>10
     """
-    c = COMP_REGEX.findall(s)[0]
-    return '{}{}'.format(c, s.split(c)[-1])
+    try:
+        c = COMP_REGEX.findall(s)[0]
+        return '{}{}'.format(c, s.split(c)[-1])
+    except IndexError:
+        return ''
 
 
 class AutomatedRunCondition(Loggable):
@@ -127,19 +132,21 @@ class AutomatedRunCondition(Loggable):
             if m:
                 self._mapper_key = m[0]
 
-    def check(self, obj, cnt):
+    def check(self, obj, data, cnt):
         """
              check condition if cnt is greater than start count
              cnt-start count is greater than 0
              and cnt-start count is divisable by frequency
+
+             data: 2-tuple. (keys, signals) where keys==detector names, signals== measured intensities
         """
 
         if self.active and cnt > self.start_count and \
                         (cnt - self.start_count) > 0 and \
                                 (cnt - self.start_count) % self.frequency == 0:
-            return self._check(obj)
+            return self._check(obj, data)
 
-    def _check(self, obj):
+    def _check(self, obj, data):
         attr = self.attr
         if not self.attr:
             attr = self._key
@@ -148,6 +155,7 @@ class AutomatedRunCondition(Loggable):
         for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
                           (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
                           (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
+                          (ACTIVE_REGEX, lambda: attr in data[0]),
                           (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
                           (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
                           (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),

@@ -32,9 +32,9 @@ import os
 import yaml
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
-from pychron.experiment.automated_run.condition import condition_from_dict, CONDITION_ATTRS, MAX_REGEX, STD_REGEX, \
+from pychron.experiment.automated_run.condition import condition_from_dict, MAX_REGEX, STD_REGEX, \
     CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX, BASELINE_REGEX, \
-    BASELINECOR_REGEX, COMP_REGEX
+    BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX
 from pychron.paths import paths
 
 
@@ -60,6 +60,7 @@ class ConditionsAdapter(TabularAdapter):
 
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
+            'Active':'{}.active',
             'BaselineCorrected': '{}.bs_corrected'}
 
 
@@ -68,7 +69,8 @@ class ConditionGroup(HasTraits):
     selected = Any
 
     attr = Str
-    comparator = Enum('>', '<', '>=', '<=', '==')
+    available_attrs=List
+    comparator = Enum('', '>', '<', '>=', '<=', '==')
     # use_max = Bool
     # use_min = Bool
     # use_current = Bool
@@ -108,7 +110,7 @@ class ConditionGroup(HasTraits):
             cs.append(d)
         return cs
 
-    @on_trait_change('function, modifier, comparator, value')
+    @on_trait_change('function, modifier, comparator, value, attr')
     def _refresh_comp(self, name, new):
         if not self._no_update:
 
@@ -131,7 +133,10 @@ class ConditionGroup(HasTraits):
             except KeyError:
                 pass
 
-            self.selected.comp = '{}{}{}'.format(attr, self.comparator, self.value)
+            if self.comparator:
+                self.selected.comp = '{}{}{}'.format(attr, self.comparator, self.value)
+            else:
+                self.selected.comp = '{}'.format(attr)
 
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
@@ -144,7 +149,7 @@ class ConditionGroup(HasTraits):
                     setattr(self, a, getattr(new, a))
 
                 for r, a in ((MAX_REGEX, 'Max'), (MIN_REGEX, 'Min'),
-
+                             (AVG_REGEX, 'Average'),
                              (SLOPE_REGEX, 'Slope')):
                     if r.findall(new.comp):
                         setattr(self, 'function', a)
@@ -152,6 +157,7 @@ class ConditionGroup(HasTraits):
 
                 for r, a in ((CP_REGEX, 'Current'),
                              (STD_REGEX, 'StdDev'),
+                             (ACTIVE_REGEX, 'Active'),
                              (BASELINECOR_REGEX, 'BaselineCorrected'),
                              (BASELINE_REGEX, 'Baseline')):
                     if r.findall(new.comp):
@@ -183,12 +189,12 @@ class ConditionGroup(HasTraits):
     def traits_view(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
-                                       editor=EnumEditor(values=CONDITION_ATTRS)),
+                                       editor=EnumEditor(name='available_attrs')),
                                  Item('function',
-                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope'])),
+                                      editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'StdDev', 'Current',
+                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Active',
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr')),
@@ -217,7 +223,7 @@ class PostRunGroup(ConditionGroup):
     def traits_view(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
-                                       editor=EnumEditor(values=CONDITION_ATTRS)),
+                                       editor=EnumEditor(name='available_attrs')),
                                  Item('function',
                                       editor=EnumEditor(values=['', 'Max', 'Min', 'Slope'])),
                                  Item('modifier',
@@ -225,7 +231,7 @@ class PostRunGroup(ConditionGroup):
                                       editor=EnumEditor(values=['', 'StdDev', 'Current',
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
-                                 Item('value', enabled_when='attr')))
+                                 Item('value', enabled_when='attr and comparator')))
 
         v = View(UItem('conditions',
                        editor=TabularEditor(adapter=PRConditionsAdapter(),
@@ -249,6 +255,14 @@ class ConditionsEditView(HasTraits):
     post_run_terminations_group = Instance(ConditionGroup)
     path = Str
 
+    def __init__(self, detectors=None, *args, **kw):
+        self.available_attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+                                'kca', 'kcl']
+        if detectors:
+            self.available_attrs.extend(detectors)
+
+        super(ConditionsEditView, self).__init__(*args, **kw)
+
     @property
     def name(self):
         return os.path.relpath(self.path, paths.default_conditions_dir)
@@ -265,19 +279,22 @@ class ConditionsEditView(HasTraits):
                 yd = yaml.load(fp)
                 actions = yd['actions']
                 if actions:
-                    self.actions_group = ConditionGroup(actions, ActionCondition)
+                    self.actions_group = ConditionGroup(actions, ActionCondition, available_attrs=self.available_attrs)
 
                 truncs = yd['truncations']
                 if truncs:
-                    self.truncations_group = ConditionGroup(truncs, TruncationCondition)
+                    self.truncations_group = ConditionGroup(truncs, TruncationCondition,
+                                                            available_attrs=self.available_attrs)
 
                 terms = yd['terminations']
                 if terms:
-                    self.terminations_group = ConditionGroup(terms, TerminationCondition)
+                    self.terminations_group = ConditionGroup(terms, TerminationCondition,
+                                                             available_attrs=self.available_attrs)
 
                 post = yd['post_run_terminations']
                 if post:
-                    self.post_run_terminations_group = PostRunGroup(post, TerminationCondition)
+                    self.post_run_terminations_group = PostRunGroup(post, TerminationCondition,
+                                                                    available_attrs=self.available_attrs)
 
     def dump(self):
         if self.path:
@@ -331,7 +348,7 @@ class ConditionsEditView(HasTraits):
         return v
 
 
-def edit_conditions(name, app=None):
+def edit_conditions(name, detectors=None, app=None):
     if not name:
         dlg = FileDialog(action='open',
                          wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
@@ -341,7 +358,7 @@ def edit_conditions(name, app=None):
                 name = os.path.basename(dlg.path)
 
     if name:
-        cev = ConditionsEditView()
+        cev = ConditionsEditView(detectors)
         cev.open(name)
         if app:
             info = app.open_view(cev, kind='livemodal')
@@ -353,7 +370,7 @@ def edit_conditions(name, app=None):
 
 
 if __name__ == '__main__':
-    c = ConditionsEditView()
+    c = ConditionsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
     c.open('default_conditions')
     c.configure_traits()
     c.dump()

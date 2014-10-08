@@ -122,7 +122,13 @@ class DefaultConditionsAction(Action):
             task.edit_default_conditions()
         else:
             from pychron.experiment.conditions_edit_view import edit_conditions
-            edit_conditions(None, app=task.application)
+
+            dnames=None
+            spec=task.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            if spec:
+                dnames=spec.spectrometer.detector_names
+
+            edit_conditions(None, detectors=dnames, app=task.application)
 
 
 class QueueAction(ExperimentAction):

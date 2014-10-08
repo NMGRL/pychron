@@ -92,7 +92,14 @@ class ExperimentEditorTask(EditorTask):
     def edit_default_conditions(self):
         if self.has_active_editor():
             from pychron.experiment.conditions_edit_view import edit_conditions
+
+            dnames=None
+            spec=self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            if spec:
+                dnames=spec.spectrometer.detector_names
+
             edit_conditions(self.manager.queue_factory.default_conditions_name,
+                            detectors=dnames,
                             app=self.application)
 
     def prepare_destroy(self):

@@ -162,6 +162,11 @@ class ArArAge(Loggable):
             r=None
         return r
 
+    def get_detector_active(self, attr):
+        det = next((i for i in self.isotopes if i.detector==attr), None)
+        if det:
+            pass
+
     def get_values(self, attr, n):
         """
             return an array of floats
