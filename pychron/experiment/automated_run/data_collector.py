@@ -22,6 +22,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum
 import time
 from threading import Event, Timer
 #============= local library imports  ==========================
+from pychron.envisage.consoleable import Consoleable
 from pychron.loggable import Loggable
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.globals import globalv
@@ -30,7 +31,7 @@ from pychron.consumer_mixin import consumable
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-class DataCollector(Loggable):
+class DataCollector(Consoleable):
     measurement_script = Any
     plot_panel = Any
     arar_age = Any
@@ -62,6 +63,7 @@ class DataCollector(Loggable):
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
     refresh_age=False
     _data = None
+
 
     def wait(self):
         st = time.time()

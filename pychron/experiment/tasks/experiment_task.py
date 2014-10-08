@@ -98,7 +98,7 @@ class ExperimentEditorTask(EditorTask):
             if spec:
                 dnames=spec.spectrometer.detector_names
 
-            edit_conditions(self.manager.queue_factory.default_conditions_name,
+            edit_conditions(self.manager.experiment_factory.queue_factory.default_conditions_name,
                             detectors=dnames,
                             app=self.application)
 

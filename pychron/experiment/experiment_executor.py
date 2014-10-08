@@ -493,6 +493,7 @@ class ExperimentExecutor(Consoleable):
 
             f = getattr(self, step)
             if not f(run):
+                self.warning('{} returned false'.format(step))
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -930,7 +931,9 @@ class ExperimentExecutor(Consoleable):
         if conditions:
             self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
             for ci in conditions:
-                if ci.check(run.arar_age):
+                if ci.check(run.arar_age, None, True):
+                    self.info('Post Run Termination. {}'.format(ci.to_string()),
+                              color='red')
                     self.cancel(confirm=False)
                     return
 
@@ -938,7 +941,7 @@ class ExperimentExecutor(Consoleable):
         if exp.queue_actions:
             self.debug('Checking queue actions n={}'.format(len(exp.queue_actions)))
             for action in exp.queue_actions:
-                if action.check_run(run):
+                if action.check_run(run, None, True):
                     self._do_action(action)
                     break
 

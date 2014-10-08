@@ -60,7 +60,7 @@ class ConditionsAdapter(TabularAdapter):
 
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
-            'Active':'{}.active',
+            'Inactive':'{}.inactive',
             'BaselineCorrected': '{}.bs_corrected'}
 
 

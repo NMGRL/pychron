@@ -29,7 +29,7 @@ CP_REGEX = re.compile(r'\.(current|cur)')
 STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
 
 #match .active
-ACTIVE_REGEX = re.compile(r'\.active')
+ACTIVE_REGEX = re.compile(r'\.inactive')
 
 #match average(ar##)
 AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
@@ -50,10 +50,7 @@ KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
 BASELINE_REGEX = re.compile(r'\.bs')
 BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
 
-
 PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
-
-
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
@@ -132,6 +129,10 @@ class AutomatedRunCondition(Loggable):
             if m:
                 self._mapper_key = m[0]
 
+    def to_string(self):
+        s = '{} {}'.format(self.comp, self.message)
+        return s
+
     def check(self, obj, data, cnt):
         """
              check condition if cnt is greater than start count
@@ -140,10 +141,16 @@ class AutomatedRunCondition(Loggable):
 
              data: 2-tuple. (keys, signals) where keys==detector names, signals== measured intensities
         """
+        d = False
+        if isinstance(cnt, bool):
+            d = True
 
-        if self.active and cnt > self.start_count and \
-                        (cnt - self.start_count) > 0 and \
-                                (cnt - self.start_count) % self.frequency == 0:
+        a = cnt > self.start_count
+        b = (cnt - self.start_count) > 0
+        c = (cnt - self.start_count) % self.frequency == 0
+        cnt_flag = a and b and c
+
+        if self.active and (cnt_flag or d):
             return self._check(obj, data)
 
     def _check(self, obj, data):
@@ -155,7 +162,7 @@ class AutomatedRunCondition(Loggable):
         for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
                           (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
                           (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
-                          (ACTIVE_REGEX, lambda: attr in data[0]),
+                          (ACTIVE_REGEX, lambda: not attr in data[0]),
                           (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
                           (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
                           (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
@@ -179,6 +186,7 @@ class AutomatedRunCondition(Loggable):
                 self.warning('Deactivating check. Check Exception "{}."'.format(e))
                 self.active = False
 
+        self.debug('testing {} (eval={}) key={} attr={} value={}'.format(self.comp, comp, self._key, self.attr, v))
         vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
         vv = self._map_value(vv)
         self.value = vv

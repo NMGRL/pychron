@@ -581,6 +581,7 @@ class AutomatedRun(Loggable):
             self.collector.set_truncated()
             self.truncated = True
             self.state = 'truncated'
+
     #===============================================================================
     #
     #===============================================================================
@@ -875,7 +876,7 @@ class AutomatedRun(Loggable):
     def do_measurement(self, script=None, use_post_on_fail=True):
         self.debug('do measurement')
         self.debug('L#={} analysis type={}'.format(self.spec.labnumber,
-                                               self.spec.analysis_type))
+                                                   self.spec.analysis_type))
         if not self._alive:
             self.warning('run is not alive')
             return
@@ -1037,21 +1038,23 @@ anaylsis_type={}
             load default conditions (truncations, actions, terminations)
             from spectrometer/default_conditions.yaml
         """
-        name=self.spec.default_conditions_name
+        self.debug('Add default conditions')
+        name = self.spec.default_conditions_name
         if self.spec.use_default_conditions and name:
-            p = get_path(paths.default_conditions_dir, name, ('.yaml','.yml'))
+            p = get_path(paths.default_conditions_dir, name, ('.yaml', '.yml'))
             if p is not None:
+                self.info('adding default conditions from {}'.format(p))
                 # clear the conditions for good measure.
                 # conditions should be cleared during teardown.
                 self.py_clear_conditions()
 
                 with open(p, 'r') as fp:
-                    yd=yaml.load(fp)
-                    cs=yd.get('terminations')
+                    yd = yaml.load(fp)
+                    cs = yd.get('terminations')
                     self._add_default_terminations(cs)
-                    cs=yd.get('truncations')
+                    cs = yd.get('truncations')
                     self._add_default_truncations(cs)
-                    cs=yd.get('actions')
+                    cs = yd.get('actions')
                     self._add_default_actions(cs)
 
             else:
@@ -1065,7 +1068,7 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx=condition_from_dict(ti, 'TruncationCondition')
+            cx = condition_from_dict(ti, 'TruncationCondition')
             self.truncation_conditions.append(cx)
 
     def _add_default_actions(self, yl):
@@ -1076,7 +1079,7 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx=condition_from_dict(ti, 'ActionCondition')
+            cx = condition_from_dict(ti, 'ActionCondition')
             self.action_conditions.append(cx)
 
     def _add_default_terminations(self, yl):
@@ -1087,21 +1090,9 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx=condition_from_dict(ti, 'TerminationCondition')
+            cx = condition_from_dict(ti, 'TerminationCondition')
             self.termination_conditions.append(cx)
 
-            # comp=ti.get('check', None)
-            # if not comp:
-            #     continue
-            #
-            # attr=ti.get('attr', '')
-            # start=ti.get('start', 30)
-            # freq = ti.get('frequency', 5)
-            # win = ti.get('window', 0)
-            # mapper = ti.get('mapper', '')
-
-            # self.py_add_termination(attr, comp, start,
-            #                         freq, win, mapper)
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:
@@ -1117,6 +1108,7 @@ anaylsis_type={}
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
             if not self.persister.datahub.load_analysis_backend(ln, self.arar_age):
+                self.debug('failed load analysis backend')
                 return
 
         self.info('Start automated run {}'.format(self.runid))
@@ -1291,7 +1283,7 @@ anaylsis_type={}
             #
             #if not blanks:
             #    blanks = dict(Ar40=(0, 0), Ar39=(0, 0), Ar38=(0, 0), Ar37=(0, 0), Ar36=(0, 0))
-            pid,blanks = self.get_previous_blanks()
+            pid, blanks = self.get_previous_blanks()
 
             for iso, v in blanks.iteritems():
                 self.arar_age.set_blank(iso, v)
@@ -1579,6 +1571,7 @@ anaylsis_type={}
         m = self.collector
 
         m.trait_set(
+            console_display=self.experiment_executor.console_display,
             plot_panel=self.plot_panel,
             arar_age=self.arar_age,
             measurement_script=script,
@@ -1595,7 +1588,7 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
-            refresh_age=self.spec.analysis_type in ('unknown','cocktail'))
+            refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         #m.total_counts += ncounts
         if self.plot_panel:
