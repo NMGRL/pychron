@@ -42,6 +42,11 @@ MAPPER_KEY_REGEX=re.compile(r'[A-Za-z]+')
 #match kca, ar40, etc..
 KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
 
+
+BASELINE_REGEX = re.compile(r'\.bs')
+BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
+
+
 CONDITION_ATTRS = ['', 'Ar40','Ar39','Ar38','Ar37','Ar36',
                    'kca','kcl']
 
@@ -104,11 +109,6 @@ class AutomatedRunCondition(Loggable):
             if m:
                 self._mapper_key=m[0]
 
-    def end_check(self, obj):
-        self.debug('Doing end check')
-        if self.start_count==-1:
-            return self._check(obj)
-
     def check(self, obj, cnt):
         """
              check condition if cnt is greater than start count
@@ -116,7 +116,7 @@ class AutomatedRunCondition(Loggable):
              and cnt-start count is divisable by frequency
         """
 
-        if self.active and self.start_count!=-1 and cnt > self.start_count and \
+        if self.active and cnt > self.start_count and \
             (cnt - self.start_count) > 0 and \
             (cnt - self.start_count) % self.frequency == 0:
             return self._check(obj)

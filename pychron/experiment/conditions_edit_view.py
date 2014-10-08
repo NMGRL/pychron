@@ -19,7 +19,7 @@ set_qt()
 # ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Instance, Any, \
-    Enum, Float, on_trait_change, Str, Int, Bool, Property
+    Enum, Float, on_trait_change, Str, Int, Property
 
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.api import View, Tabbed, Group, UItem, \
@@ -33,10 +33,19 @@ import yaml
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.automated_run.condition import condition_from_dict, CONDITION_ATTRS, MAX_REGEX, STD_REGEX, \
-    CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX
+    CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX, BASELINE_REGEX, \
+    BASELINECOR_REGEX
 from pychron.paths import paths
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
+
+
+class PRConditionsAdapter(TabularAdapter):
+    columns = [('Attribute', 'attr'),
+               ('Check', 'comp'), ]
+
+    attr_width = Int(100)
+    check_width = Int(200)
 
 
 class ConditionsAdapter(TabularAdapter):
@@ -52,8 +61,8 @@ class ConditionsAdapter(TabularAdapter):
 
 
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})'}
-MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline':'{}.bs',
-            'BaselineCorrected':'{}.bs_corrected'}
+MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
+            'BaselineCorrected': '{}.bs_corrected'}
 
 
 class ConditionGroup(HasTraits):
@@ -67,8 +76,8 @@ class ConditionGroup(HasTraits):
     # use_current = Bool
     # use_std_dev = Bool
     # use_slope = Bool
-    use_end_check=Bool
-    modifier_enabled=Property(depends_on='function')
+
+    modifier_enabled = Property(depends_on='function')
     modifier = Str
     function = Str
     window = Int
@@ -77,8 +86,6 @@ class ConditionGroup(HasTraits):
     start_count = Int
     frequency = Int
     _no_update = False
-
-    _cached_start_count = Int
 
     def _get_modifier_enabled(self):
         return not self.function
@@ -92,22 +99,15 @@ class ConditionGroup(HasTraits):
             cs.append(d)
         return cs
 
-    def _use_end_check_changed(self, new):
-        if new:
-            self._cached_start_count=self.start_count
-            self.start_count=-1
-        else:
-            self.start_count=self._cached_start_count
-
     @on_trait_change('function, modifier, comparator, value')
     def _refresh_comp(self, name, new):
         if not self._no_update:
 
             with no_update(self):
-                if name=='function':
-                    self.modifier=''
-                elif name=='modifier':
-                    self.function=''
+                if name == 'function':
+                    self.modifier = ''
+                elif name == 'modifier':
+                    self.function = ''
 
             attr = self.attr
             try:
@@ -117,8 +117,8 @@ class ConditionGroup(HasTraits):
                 pass
 
             try:
-                s=FUNC_DICT[self.function]
-                attr=s.format(attr)
+                s = FUNC_DICT[self.function]
+                attr = s.format(attr)
             except KeyError:
                 pass
 
@@ -127,9 +127,6 @@ class ConditionGroup(HasTraits):
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
         setattr(self.selected, name, new)
-        if name=='start_count':
-            if new!=-1:
-                self._cached_start_count=new
 
     def _selected_changed(self, new):
         if new:
@@ -145,7 +142,9 @@ class ConditionGroup(HasTraits):
                         break
 
                 for r, a in ((CP_REGEX, 'Current'),
-                             (STD_REGEX, 'StdDev')):
+                             (STD_REGEX, 'StdDev'),
+                             (BASELINECOR_REGEX, 'BaselineCorrected'),
+                             (BASELINE_REGEX, 'Baseline')):
                     if r.findall(new.comp):
                         setattr(self, 'modifier', a)
                         break
@@ -173,24 +172,20 @@ class ConditionGroup(HasTraits):
         super(ConditionGroup, self).__init__(*args, **kw)
 
     def traits_view(self):
-        edit_grp = VGroup(HGroup(spring,UItem('object.selected.comp', style='readonly'),spring),
+        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(values=CONDITION_ATTRS)),
                                  Item('function',
-                                      editor=EnumEditor(values=['','Max','Min','Slope'])),
+                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['','StdDev', 'Current',
+                                      editor=EnumEditor(values=['', 'StdDev', 'Current',
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr')),
                           HGroup(Item('start_count',
                                       tooltip='Number of counts to wait until performing check',
-                                      enabled_when='not use_end_check',
-                                      label='Start'),
-                                 Item('use_end_check',
-                                      tooltip='Only check this condition at the end of measurement',
-                                      label='Check @ End')),
+                                      label='Start')),
                           Item('frequency',
                                tooltip='Number of counts between each check'))
 
@@ -204,13 +199,35 @@ class ConditionGroup(HasTraits):
         return v
 
 
+class PostRunGroup(ConditionGroup):
+    def traits_view(self):
+        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
+                          HGroup(UItem('attr',
+                                       editor=EnumEditor(values=CONDITION_ATTRS)),
+                                 Item('function',
+                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope'])),
+                                 Item('modifier',
+                                      enabled_when='modifier_enabled',
+                                      editor=EnumEditor(values=['', 'StdDev', 'Current',
+                                                                'Baseline', 'BaselineCorrected']))),
+                          HGroup(UItem('comparator', enabled_when='attr'),
+                                 Item('value', enabled_when='attr')))
+
+        v = View(UItem('conditions',
+                       editor=TabularEditor(adapter=PRConditionsAdapter(),
+                                            editable=False,
+                                            auto_update=True,
+                                            auto_resize=True,
+                                            selected='selected')),
+                 edit_grp)
+        return v
+
+
 class ConditionsEditView(HasTraits):
-    # actions = List
-    # truncations = List
-    # terminations = List
     actions_group = Instance(ConditionGroup)
     terminations_group = Instance(ConditionGroup)
     truncations_group = Instance(ConditionGroup)
+    post_run_terminations_group = Instance(ConditionGroup)
     path = Str
 
     def open(self, name):
@@ -235,12 +252,21 @@ class ConditionsEditView(HasTraits):
                 if terms:
                     self.terminations_group = ConditionGroup(terms, TerminationCondition)
 
+                post = yd['post_run_terminations']
+                if post:
+                    self.post_run_terminations_group = PostRunGroup(post, TerminationCondition)
+
     def dump(self):
         if self.path:
             with open(self.path, 'w') as fp:
-                d = {'terminations': self.terminations_group.dump() if self.terminations_group else [],
-                     'actions': self.actions_group.dump() if self.actions_group else [],
-                     'truncations': self.truncations_group.dump() if self.truncations_group else []}
+                d = dict(post_run_terminations=self.post_run_terminations_group.dump()
+                         if self.post_run_terminations_group else [],
+                         terminations=self.terminations_group.dump()
+                         if self.terminations_group else [],
+                         actions=self.actions_group.dump()
+                         if self.actions_group else [],
+                         truncations=self.truncations_group.dump()
+                         if self.truncations_group else [])
 
                 yaml.dump(d, fp, default_flow_style=False)
 
@@ -266,7 +292,14 @@ class ConditionsEditView(HasTraits):
                       noterm,
                       label='Terminations')
 
-        v = View(Tabbed(agrp, trgrp, tegrp),
+        nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
+                        defined_when='not post_run_terminations_group')
+        prtegrp = Group(UItem('post_run_terminations_group',
+                              defined_when='post_run_terminations_group', style='custom'),
+                        nopterm,
+                        label='Post Run Terminations')
+
+        v = View(Tabbed(agrp, trgrp, tegrp, prtegrp),
                  width=800,
                  resizable=True,
                  buttons=['OK', 'Cancel'],

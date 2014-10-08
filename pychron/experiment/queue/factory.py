@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,22 +15,17 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import os
-from ConfigParser import ConfigParser
-
 from traits.api import Str, Property, cached_property, Int, \
     Any, String, Event, Bool, Dict, List
-
-
-
-
 #============= standard library imports ========================
+import os
+from ConfigParser import ConfigParser
+#============= local library imports  ==========================
 from pychron.core.helpers.filetools import list_directory2
 from pychron.entry.user_entry import UserEntry
 from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR, LINE_STR
 from pychron.paths import paths
-#============= local library imports  ==========================
 
 
 class ExperimentQueueFactory(PersistenceLoggable):
@@ -57,7 +52,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     use_default_conditions = Bool
     default_conditions_name = Str
-    available_conditions=List
+    available_conditions = List
 
     delay_between_analyses = Int(30)
     delay_before_analyses = Int(5)
@@ -70,7 +65,9 @@ class ExperimentQueueFactory(PersistenceLoggable):
     ok_make = Property(depends_on='mass_spectrometer, username')
 
     pattributes = ('username', 'mass_spectrometer', 'extract_device',
-        'delay_between_analyses', 'delay_before_analyses')
+                   'delay_between_analyses',
+                   'delay_before_analyses', 'use_default_conditions',
+                   'default_conditions_name')
     # def _add_user_fired(self):
     #     a=UserEntry()
     #     a.edit_user(self.username)
@@ -90,9 +87,9 @@ class ExperimentQueueFactory(PersistenceLoggable):
         self.dump()
 
     def _load_default_conditions(self):
-        root=paths.default_conditions_dir
-        cs=list_directory2(root, remove_extension=True)
-        self.available_conditions=cs
+        root = paths.default_conditions_dir
+        cs = list_directory2(root, remove_extension=True)
+        self.available_conditions = cs
 
     def _edit_user_fired(self):
         a = UserEntry()
@@ -196,6 +193,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     def _mass_spectrometer_changed(self, new):
         self.debug('mass spectrometer ="{}"'.format(new))
+
+
 if __name__ == '__main__':
     g = ExperimentQueueFactory()
     g.configure_traits()

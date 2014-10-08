@@ -30,7 +30,9 @@ import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
+import yaml
 from pychron.envisage.consoleable import Consoleable
+from pychron.experiment.automated_run.condition import condition_from_dict
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
@@ -53,7 +55,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.globals import globalv
 from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
@@ -505,6 +507,7 @@ class ExperimentExecutor(Consoleable):
             self.run_completed = run
 
         self._remove_backup(run.uuid)
+
         # check to see if action should be taken
         self._check_run_at_end(run)
 
@@ -897,27 +900,41 @@ class ExperimentExecutor(Consoleable):
     #===============================================================================
     # checks
     #===============================================================================
+    def _load_terminations(self):
+        exp = self.experiment_queue
+        name=exp.default_conditions_name
+        if exp.use_default_conditions and name:
+            p = get_path(paths.default_conditions_dir, name, ['.yaml','.yml'])
+            with open(p,'r') as fp:
+                yd=yaml.load(fp)
+                yl=yd.get('post_run_terminations')
+                if not yl:
+                    self.debug('no post_run_terminations')
+                    return
+                else:
+                    return [condition_from_dict(cd, 'TerminationCondition') for cd in yl]
+
     def _check_run_at_end(self, run):
         """
             1. check post run termination conditions.
-                e.i termination conditions where start_count==-1
             2. check to see if an action should be taken
 
             if runs  are overlapping this will be a problem.
             dont overlap onto blanks
             execute the action and continue the queue
         """
+        if not self._alive:
+            return
 
-        if run.termination_conditions:
-            conditions=[ci for ci in run.termination_conditions if ci.start_count==-1]
-            if conditions:
-                self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
-                for ci in run.termination_conditions:
-                    if ci.end_check(run.arar_age):
-                        self.cancel(confirm=False)
-                        return
+        conditions = self._load_terminations()
+        if conditions:
+            self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
+            for ci in conditions:
+                if ci.check(run.arar_age):
+                    self.cancel(confirm=False)
+                    return
 
-        exp = self.experiment_queue
+        exp=self.experiment_queue
         if exp.queue_actions:
             self.debug('Checking queue actions n={}'.format(len(exp.queue_actions)))
             for action in exp.queue_actions:
