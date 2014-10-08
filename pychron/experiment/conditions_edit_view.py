@@ -34,10 +34,8 @@ from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
 from pychron.experiment.automated_run.condition import condition_from_dict, CONDITION_ATTRS, MAX_REGEX, STD_REGEX, \
     CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX, BASELINE_REGEX, \
-    BASELINECOR_REGEX
+    BASELINECOR_REGEX, COMP_REGEX
 from pychron.paths import paths
-
-COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
 
 class PRConditionsAdapter(TabularAdapter):
@@ -60,7 +58,7 @@ class ConditionsAdapter(TabularAdapter):
     frequency_width = Int(100)
 
 
-FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})'}
+FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'BaselineCorrected': '{}.bs_corrected'}
 
@@ -87,15 +85,26 @@ class ConditionGroup(HasTraits):
     frequency = Int
     _no_update = False
 
+    dump_attrs = [('attr', ''), ('frequency', ''),
+                  ('window', ''), ('mapper', ''),
+                  ('start', 'start_count'),
+                  ('check', 'comp')]
+
     def _get_modifier_enabled(self):
         return not self.function
 
     def dump(self):
         cs = []
         for ci in self.conditions:
-            d = {k: getattr(ci, k) for k in ('attr', 'frequency', 'window', 'mapper')}
-            d['start'] = ci.start_count
-            d['check'] = ci.comp
+            d = {}
+            for a, b in self.dump_attrs:
+                if not b:
+                    b = a
+                d[a] = getattr(ci, b)
+
+            # d = {k: getattr(ci, k) for k in ('attr', 'frequency', 'window', 'mapper')}
+            # d['start'] = ci.start_count
+            # d['check'] = ci.comp
             cs.append(d)
         return cs
 
@@ -200,6 +209,11 @@ class ConditionGroup(HasTraits):
 
 
 class PostRunGroup(ConditionGroup):
+    dump_attrs = [('attr', ''),
+                  ('window', ''),
+                  ('mapper', ''),
+                  ('check', 'comp')]
+
     def traits_view(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
@@ -269,7 +283,7 @@ class ConditionsEditView(HasTraits):
         if self.path:
             with open(self.path, 'w') as fp:
                 d = dict(post_run_terminations=self.post_run_terminations_group.dump()
-                         if self.post_run_terminations_group else [],
+                if self.post_run_terminations_group else [],
                          terminations=self.terminations_group.dump()
                          if self.terminations_group else [],
                          actions=self.actions_group.dump()
@@ -302,7 +316,7 @@ class ConditionsEditView(HasTraits):
                       label='Terminations')
 
         nopterm = VGroup(spring, HGroup(spring, Label('No Post Run Terminations Defined'), spring), spring,
-                        defined_when='not post_run_terminations_group')
+                         defined_when='not post_run_terminations_group')
         prtegrp = Group(UItem('post_run_terminations_group',
                               defined_when='post_run_terminations_group', style='custom'),
                         nopterm,

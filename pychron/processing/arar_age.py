@@ -148,6 +148,13 @@ class ArArAge(Loggable):
             r=None
         return r
 
+    def get_baseline_value(self, attr):
+        try:
+            r=self.isotopes[attr].baseline.uvalue
+        except KeyError:
+            r=None
+        return r
+
     def get_current_intensity(self, attr):
         try:
             r=self.isotopes[attr].ys[-1]
@@ -173,18 +180,10 @@ class ArArAge(Loggable):
 
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
-        if attr.endswith('.bs'):
-            iso = attr[:-3]
-            if iso in self.isotopes:
-                r = self.isotopes[iso].baseline.value
-        elif attr.endswith('bs'):
+        if attr.endswith('bs'):
             iso = attr[:-2]
             if iso in self.isotopes:
                 r = self.isotopes[iso].baseline.value
-        elif attr.endswith('.bs_corrected'):
-            iso = attr[:-13]
-            if iso in self.isotopes:
-                r = self.isotopes[iso].get_baseline_corrected_value()
         elif '/' in attr:
             r = self.get_ratio(attr)
         elif attr in self.computed:
@@ -319,9 +318,9 @@ class ArArAge(Loggable):
         iso.ic_factor = self.get_ic_factor(det)
 
     def get_baseline_corrected_value(self, iso):
-        if iso in self.isotopes:
+        try:
             return self.isotopes[iso].get_baseline_corrected_value()
-        else:
+        except KeyError:
             return ufloat(0, 0, tag=iso)
 
     def get_isotopes(self, det):

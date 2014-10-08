@@ -5,14 +5,14 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 
@@ -28,6 +28,8 @@ CP_REGEX = re.compile(r'\.(current|cur)')
 #match .std_dev
 STD_REGEX = re.compile(r'\.(std_dev|sd|stddev)')
 
+#match average(ar##)
+AVG_REGEX = re.compile(r'average\([A-Za-z]+\d*\)')
 #match max(ar##)
 MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
 #match min(ar##)
@@ -37,34 +39,46 @@ MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
 SLOPE_REGEX = re.compile(r'slope\([A-Za-z]+\d*\)')
 
 #match x in x**2+3x+1
-MAPPER_KEY_REGEX=re.compile(r'[A-Za-z]+')
+MAPPER_KEY_REGEX = re.compile(r'[A-Za-z]+')
 
 #match kca, ar40, etc..
 KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
-
 
 BASELINE_REGEX = re.compile(r'\.bs')
 BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
 
 
-CONDITION_ATTRS = ['', 'Ar40','Ar39','Ar38','Ar37','Ar36',
-                   'kca','kcl']
+PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
+
+CONDITION_ATTRS = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+                   'kca', 'kcl']
+
+COMP_REGEX = re.compile(r'<=|>=|>|<|==')
+
 
 def condition_from_dict(cd, klass):
     if isinstance(klass, str):
-        klass=globals()[klass]
+        klass = globals()[klass]
 
-    comp=cd.get('check', None)
+    comp = cd.get('check', None)
     if not comp:
         return
 
-    attr=cd.get('attr', '')
-    start=cd.get('start', 30)
+    attr = cd.get('attr', '')
+    start = cd.get('start', 30)
     freq = cd.get('frequency', 5)
     win = cd.get('window', 0)
     mapper = cd.get('mapper', '')
-    cx=klass(attr, comp, start_count=start, frequency=freq, window=win, mapper=mapper)
+    cx = klass(attr, comp, start_count=start, frequency=freq, window=win, mapper=mapper)
     return cx
+
+
+def remove_attr(s):
+    """
+        return >10 where s=Ar40>10
+    """
+    c = COMP_REGEX.findall(s)[0]
+    return '{}{}'.format(c, s.split(c)[-1])
 
 
 class AutomatedRunCondition(Loggable):
@@ -80,7 +94,7 @@ class AutomatedRunCondition(Loggable):
     mapper = Str
 
     _key = ''
-    _mapper_key=''
+    _mapper_key = ''
 
     value = Float
     active = True
@@ -98,16 +112,20 @@ class AutomatedRunCondition(Loggable):
         super(AutomatedRunCondition, self).__init__(*args, **kw)
 
         # m = re.findall(r'[A-Za-z]+\d*', comp)
-        m=KEY_REGEX.findall(comp)
+        m = PARENTHESES_REGEX.findall(comp)
         if m:
-            self._key = m[0]
+            self._key = m[0][1:-1]
         else:
-            self._key = self.attr
+            m = KEY_REGEX.findall(comp)
+            if m:
+                self._key = m[0]
+            else:
+                self._key = self.attr
 
         if self.mapper:
-            m=MAPPER_KEY_REGEX.findall(self.mapper)
+            m = MAPPER_KEY_REGEX.findall(self.mapper)
             if m:
-                self._mapper_key=m[0]
+                self._mapper_key = m[0]
 
     def check(self, obj, cnt):
         """
@@ -117,8 +135,8 @@ class AutomatedRunCondition(Loggable):
         """
 
         if self.active and cnt > self.start_count and \
-            (cnt - self.start_count) > 0 and \
-            (cnt - self.start_count) % self.frequency == 0:
+                        (cnt - self.start_count) > 0 and \
+                                (cnt - self.start_count) % self.frequency == 0:
             return self._check(obj)
 
     def _check(self, obj):
@@ -127,19 +145,17 @@ class AutomatedRunCondition(Loggable):
             attr = self._key
 
         comp = self.comp
-        if CP_REGEX.match(comp):
-            v = obj.get_current_intensity(attr)
-        elif MAX_REGEX.match(comp):
-            n = self.window or -1
-            vs = obj.get_values(attr, n)
-            v = vs.max()
-        elif MIN_REGEX.match(comp):
-            n = self.window or -1
-            vs = obj.get_values(attr, n)
-            v = vs.min()
-        elif SLOPE_REGEX.match(comp):
-            n= self.window or -1
-            v = obj.get_slope(attr, n)
+        for reg, func in ((CP_REGEX, lambda: obj.get_current_intensity(attr)),
+                          (BASELINECOR_REGEX, lambda: obj.get_baseline_corrected_value(attr)),
+                          (BASELINE_REGEX, lambda: obj.get_baseline_value(attr)),
+                          (AVG_REGEX, lambda: obj.get_values(attr, self.window or -1).mean()),
+                          (MAX_REGEX, lambda: obj.get_values(attr, self.window or -1).max()),
+                          (MIN_REGEX, lambda: obj.get_values(attr, self.window or -1).min()),
+                          (SLOPE_REGEX, lambda: obj.get_slope(attr, self.window or -1))):
+            if reg.findall(comp):
+                v = func()
+                comp = '{}{}'.format(self._key, remove_attr(comp))
+                break
         else:
             try:
                 if self.window:
@@ -155,19 +171,21 @@ class AutomatedRunCondition(Loggable):
                 self.warning('Deactivating check. Check Exception "{}."'.format(e))
                 self.active = False
 
-        vv = std_dev(v) if STD_REGEX(comp) else nominal_value(v)
-        vv=self._map_value(vv)
-        self.value=vv
+        vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
+        vv = self._map_value(vv)
+        self.value = vv
 
-        self.debug('testing {} key={} attr={} value={}'.format(comp, self._key, self.attr, v))
-        if eval(comp, {self._key: v}):
-            self.message = 'attr={},value= {} {} is True'.format(self.attr, v, comp)
+        self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
+                                                                                         self._key, self.attr, v, vv))
+        if eval(comp, {self._key: vv}):
+            self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
             return True
 
     def _map_value(self, vv):
         if self.mapper and self._mapper_key:
-            vv=eval(self.mapper, {self._mapper_key:vv})
+            vv = eval(self.mapper, {self._mapper_key: vv})
         return vv
+
 
 class TruncationCondition(AutomatedRunCondition):
     abbreviated_count_ratio = 1.0
