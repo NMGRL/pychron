@@ -8,11 +8,11 @@ import multiprocessing
 #prevent pycharm from remove multiprocessing during import optimization
 multiprocessing
 from setuptools import setup
-
 setup(name='pychron',
       version='2.0.4',
       setup_requires=['nose>=1.0'],
       py_modules=['pychron.pychron_constants',
+                  'pychron.paths',
                   'pychron.processing.plateau',
                   'pychron.processing.ratio',
                   'pychron.core.ui.__init__',
@@ -26,7 +26,9 @@ setup(name='pychron',
                     'pychron.entry.tests': ['data/*.xls']},
       packages=['pychron.core.regression',
                 'pychron.core.stats',
+                'pychron.core.helpers',
                 'pychron.external_pipette',
+
                 'pychron.pyscripts',
 
                 #test packages
@@ -37,3 +39,4 @@ setup(name='pychron',
                 'pychron.pyscripts.tests',
                 'pychron.entry.tests'],
       test_suite='pychron.test_suite.suite')
+
