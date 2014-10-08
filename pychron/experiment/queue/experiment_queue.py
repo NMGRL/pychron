@@ -25,6 +25,7 @@ from pyface.timer.do_later import do_later
 
 
 
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
@@ -178,7 +179,7 @@ class ExperimentQueue(BaseExperimentQueue):
             self.executed_runs.append(run)
             idx = len(self.executed_runs) - 1
             invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
-            self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
+            # self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
         else:
             self.debug('Problem removing {}'.format(aid))
 

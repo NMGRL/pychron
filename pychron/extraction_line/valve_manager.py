@@ -498,7 +498,7 @@ class ValveManager(Manager):
         """
         """
         cv = self.get_valve_by_name(name)
-        self.debug('check software interlocks {} {}'.format(name, cv))
+        self.debug('check software interlocks {}'.format(name))
         if cv is not None:
             interlocks = cv.interlocks
             valves = self.valves

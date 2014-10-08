@@ -1,7 +1,9 @@
 from numpy import linspace
+
 from pychron.experiment.automated_run.condition import condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
+
 
 __author__ = 'argonlab2'
 
@@ -48,7 +50,7 @@ class ConditionsTestCase(unittest.TestCase):
         self.assertTrue(ret)
 
     def test_AverageWindow(self):
-        d={'check':'average(Ar40)==182.63265306122452','attr':'Ar40', 'window':10}
+        d={'check':'average(Ar40)>182','attr':'Ar40', 'window':10}
         c=condition_from_dict(d, 'TerminationCondition')
         ret = c.check(self.arar_age, ([],[]), 1000)
         self.assertTrue(ret)

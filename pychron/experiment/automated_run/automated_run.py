@@ -874,6 +874,8 @@ class AutomatedRun(Loggable):
 
     def do_measurement(self, script=None, use_post_on_fail=True):
         self.debug('do measurement')
+        self.debug('L#={} analysis type={}'.format(self.spec.labnumber,
+                                               self.spec.analysis_type))
         if not self._alive:
             self.warning('run is not alive')
             return
