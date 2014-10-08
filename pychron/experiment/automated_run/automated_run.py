@@ -42,7 +42,7 @@ from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import convert_identifier, \
-    make_runid, get_analysis_type
+    make_runid
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
@@ -99,7 +99,7 @@ class AutomatedRun(Loggable):
     runid = Property
     uuid = Str
     extract_device = Str
-    analysis_type = Property
+    # analysis_type = Property
     analysis_id = Long
     fits = List
     eqtime = Float
@@ -1378,7 +1378,7 @@ anaylsis_type={}
                 info_func=self.info,
                 arar_age=self.arar_age)
 
-        an = AutomatedRunAnalysisView(analysis_type=self.analysis_type,
+        an = AutomatedRunAnalysisView(analysis_type=self.spec.analysis_type,
                                       analysis_id=self.runid)
         an.load(self)
 
@@ -1593,7 +1593,7 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
-            refresh_age=self.analysis_type in ('unknown','cocktail'))
+            refresh_age=self.spec.analysis_type in ('unknown','cocktail'))
 
         #m.total_counts += ncounts
         if self.plot_panel:
@@ -1890,8 +1890,8 @@ anaylsis_type={}
                           self.spec.aliquot,
                           self.spec.step)
 
-    def _get_analysis_type(self):
-        return get_analysis_type(self.spec.labnumber)
+    # def _get_analysis_type(self):
+    #     return get_analysis_type(self.spec.labnumber)
 
     def _get_collector(self):
         return self.peak_hop_collector if self.is_peak_hop else self.multi_collector
