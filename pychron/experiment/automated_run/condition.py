@@ -33,11 +33,19 @@ MAX_REGEX = re.compile(r'max\([A-Za-z]+\d*\)')
 #match min(ar##)
 MIN_REGEX = re.compile(r'min\([A-Za-z]+\d*\)')
 
+#match slope(ar##)
+SLOPE_REGEX = re.compile(r'slope\([A-Za-z]+\d*\)')
+
 #match x in x**2+3x+1
 MAPPER_KEY_REGEX=re.compile(r'[A-Za-z]+')
 
 #match kca, ar40, etc..
 KEY_REGEX = re.compile(r'[A-Za-z]+\d*')
+
+
+BASELINE_REGEX = re.compile(r'\.bs')
+BASELINECOR_REGEX = re.compile(r'\.bs_corrected')
+
 
 CONDITION_ATTRS = ['', 'Ar40','Ar39','Ar38','Ar37','Ar36',
                    'kca','kcl']
@@ -129,6 +137,9 @@ class AutomatedRunCondition(Loggable):
             n = self.window or -1
             vs = obj.get_values(attr, n)
             v = vs.min()
+        elif SLOPE_REGEX.match(comp):
+            n= self.window or -1
+            v = obj.get_slope(attr, n)
         else:
             try:
                 if self.window:
