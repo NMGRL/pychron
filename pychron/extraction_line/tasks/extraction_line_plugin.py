@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ from envisage.ui.tasks.task_extension import TaskExtension
 #============= local library imports  ==========================
 from traitsui.menu import Action
 from pychron.core.helpers.filetools import list_directory2
+from pychron.core.helpers.logger_setup import new_logger
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.extraction_line.extraction_line_manager import ExtractionLineManager
 from pychron.extraction_line.tasks.extraction_line_task import ExtractionLineTask
@@ -54,6 +55,9 @@ def procedure_action(name):
     return lambda: a
 
 
+logger = new_logger('ExtractionLinePlugin')
+
+
 class ExtractionLinePlugin(BaseTaskPlugin):
     id = 'pychron.extraction_line'
 
@@ -69,9 +73,7 @@ class ExtractionLinePlugin(BaseTaskPlugin):
                 actions.append(SchemaAddition(id='procedure.{}'.format(f),
                                               factory=procedure_action(f),
                                               path='MenuBar/procedures.menu'))
-                print f
 
-            print actions
             if actions:
                 actions.insert(0, SchemaAddition(id='procedures.menu',
                                                  before='window.menu',
@@ -80,7 +82,8 @@ class ExtractionLinePlugin(BaseTaskPlugin):
                                                  path='MenuBar'))
 
                 ex.append(TaskExtension(actions=actions))
-
+            else:
+                logger.warning('no procedure scripts located in "{}"'.format(paths.procedures_dir))
         return ex
 
     def _service_offers_default(self):

@@ -23,7 +23,7 @@ from traits.api import HasTraits, List, Instance, Any, \
 
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.api import View, Tabbed, Group, UItem, \
-    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label
+    TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler
 # ============= standard library imports ========================
 import re
 import os
@@ -223,12 +223,21 @@ class PostRunGroup(ConditionGroup):
         return v
 
 
+class CEHandler(Handler):
+    def object_path_changed(self, info):
+        info.ui.title += ' - [{}]'.format(info.object.name)
+
+
 class ConditionsEditView(HasTraits):
     actions_group = Instance(ConditionGroup)
     terminations_group = Instance(ConditionGroup)
     truncations_group = Instance(ConditionGroup)
     post_run_terminations_group = Instance(ConditionGroup)
     path = Str
+
+    @property
+    def name(self):
+        return os.path.relpath(self.path, paths.default_conditions_dir)
 
     def open(self, name):
         self.load(name)
@@ -237,8 +246,8 @@ class ConditionsEditView(HasTraits):
         root = paths.default_conditions_dir
         p = get_path(root, name, ('.yaml', '.yml'))
         if p:
+            self.path = p
             with open(p, 'r') as fp:
-                self.path = p
                 yd = yaml.load(fp)
                 actions = yd['actions']
                 if actions:
@@ -302,6 +311,7 @@ class ConditionsEditView(HasTraits):
         v = View(Tabbed(agrp, trgrp, tegrp, prtegrp),
                  width=800,
                  resizable=True,
+                 handler=CEHandler(),
                  buttons=['OK', 'Cancel'],
                  title='Edit Default Conditions')
         return v
