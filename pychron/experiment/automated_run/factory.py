@@ -1183,7 +1183,7 @@ post_equilibration_script:name''')
                 self.labnumber = ln
                 self._load_extraction_info()
 
-                self._labnumber = NULL_STR
+                # self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:

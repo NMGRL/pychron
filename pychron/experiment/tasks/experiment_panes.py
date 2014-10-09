@@ -42,16 +42,25 @@ def spacer(w):
     return Spring(width=w, springy=False)
 
 
+def queue_factory_name(name):
+    return 'object.queue_factory.{}'.format(name)
+
+
+def run_factory_name(name):
+    return 'object.run_factory.{}'.format(name)
+
+
+def queue_factory_item(name, **kw):
+    return Item(queue_factory_name(name), **kw)
+
+
+def run_factory_item(name, **kw):
+    return Item(run_factory_name(name), **kw)
+
+
 class ExperimentFactoryPane(TraitsDockPane):
     id = 'pychron.experiment.factory'
     name = 'Experiment Editor'
-
-    def trait_context(self):
-        if self.model:
-            return {'object': self.model,
-                    'rfac': self.model.run_factory,
-                    'qfac': self.model.queue_factory,
-                    'pane': self}
 
     def traits_view(self):
         add_button = icon_button_editor('add_button', 'add',
@@ -69,115 +78,111 @@ class ExperimentFactoryPane(TraitsDockPane):
                                           'table_row_delete',
                                           tooltip='Clear all runs added using "frequency"')
 
-        user_grp = HGroup(Item('qfac.username'),
-                          Item('qfac.username',
-                               editor=EnumEditor(name='qfac.usernames'),
-                               width=-25, show_label=False),
-                          icon_button_editor('qfac.edit_user', 'database_edit'),
-                          Spring(width=-5, springy=False),
-                          Item('qfac.use_email_notifier', show_label=False),
-                          Item('qfac.email', enabled_when='qfac.use_email_notifier'))
+        queue_grp = VGroup(
+            HGroup(queue_factory_item('username'),
+                   queue_factory_item('username',
+                                      editor=EnumEditor(name=queue_factory_name('usernames')),
+                                      width=-25, show_label=False),
+                   icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
+                   Spring(width=-5, springy=False),
+                   queue_factory_item('use_email_notifier', show_label=False),
+                   Item(queue_factory_name('email'), enabled_when=queue_factory_name('use_email_notifier'))),
+            HGroup(
+                queue_factory_item('mass_spectrometer',
+                                   show_label=False,
+                                   editor=EnumEditor(name=queue_factory_name('mass_spectrometers'))),
+                queue_factory_item('extract_device',
+                                   show_label=False,
+                                   editor=EnumEditor(name=queue_factory_name('extract_devices')))),
+            queue_factory_item('load_name',
+                               show_label=False,
+                               editor=EnumEditor(name=queue_factory_name('load_names'))),
+            queue_factory_item('delay_before_analyses'),
+            queue_factory_item('delay_between_analyses'))
 
-        meta1 = HGroup(
-            Item('qfac.mass_spectrometer',
-                 show_label=False,
-                 editor=EnumEditor(name='qfac.mass_spectrometers')),
-            Item('qfac.extract_device',
-                 show_label=False,
-                 editor=EnumEditor(name='qfac.extract_devices')))
+        button_bar = HGroup(
+            save_button,
+            add_button,
+            clear_button,
+            edit_button,
+            CustomLabel(run_factory_name('edit_mode_label'),
+                        color='red',
+                        width=40),
+            spring,
+            run_factory_item('end_after', width=30),
+            run_factory_item('skip'))
+        edit_grp = VFold(
+            VGroup(
+                self._get_info_group(),
+                self._get_extract_group(),
+                label='General'),
+            self._get_script_group(),
+            self._get_truncate_group(),
+            enabled_when=queue_factory_name('ok_make'))
 
-        meta2 = HGroup(Item('qfac.use_queue_conditions'),
-                       UItem('qfac.queue_conditions_name',
-                             enabled_when='qfac.use_queue_conditions',
-                             editor=EnumEditor(name='qfac.available_conditions')))
-
-        queue_grp = VGroup(user_grp, meta1, meta2,
-                           Item('qfac.load_name',
-                                # show_label=False,
-                                editor=EnumEditor(name='qfac.load_names')),
-                           Item('qfac.delay_before_analyses'),
-                           Item('qfac.delay_between_analyses'))
-
-        button_bar = HGroup(save_button,
-                            add_button,
-                            clear_button,
-                            edit_button,
-                            CustomLabel('rfac.edit_mode_label',
-                                        color='red',
-                                        width=40),
-                            spring,
-                            Item('rfac.end_after', width=30),
-                            Item('rfac.skip'))
-
-        edit_grp = VFold(VGroup(self._get_info_group(),
-                                Item('rfac.factory_view',
-                                     style='custom',
-                                     show_label=False),
-                                label='General'),
-                         self._get_script_group(),
-                         self._get_truncate_group(),
-                         enabled_when='qfac.ok_make')
-
-        lower_button_bar = HGroup(add_button,
-                                  clear_button,
-                                  Label('Auto Increment'),
-                                  Item('auto_increment_id', label='L#'),
-                                  Item('auto_increment_position', label='Position'))
-        v = View(VGroup(queue_grp,
-                        button_bar,
-                        CustomLabel('rfac.info_label', size=14, color='green'),
-                        edit_grp,
-                        lower_button_bar),
-                 width=225)
+        lower_button_bar = HGroup(
+            add_button,
+            clear_button,
+            Label('Auto Increment'),
+            Item('auto_increment_id', label='L#'),
+            Item('auto_increment_position', label='Position'))
+        v = View(
+            VGroup(
+                queue_grp,
+                button_bar,
+                CustomLabel(run_factory_name('info_label'), size=14, color='green'),
+                edit_grp,
+                lower_button_bar),
+            width=225)
         return v
 
     def _get_info_group(self):
         grp = Group(
             HGroup(
-                Item('rfac.selected_irradiation',
-                     show_label=False,
-                     editor=EnumEditor(name='rfac.irradiations')),
-                Item('rfac.selected_level',
-                     show_label=False,
-                     editor=EnumEditor(name='rfac.levels'))),
+                run_factory_item('selected_irradiation',
+                                 show_label=False,
+                                 editor=EnumEditor(name=run_factory_name('irradiations'))),
+                run_factory_item('selected_level',
+                                 show_label=False,
+                                 editor=EnumEditor(name=run_factory_name('levels')))),
 
-            HGroup(Item('rfac.special_labnumber',
-                        show_label=False,
-                        editor=EnumEditor(values=SPECIAL_NAMES)),
-                   Item('rfac.run_block', show_label=False,
-                        editor=EnumEditor(name='rfac.run_blocks')),
-                   Item('rfac.frequency', width=50),
-                   Item('rfac.freq_before', label='Before'),
-                   Item('rfac.freq_after', label='After'),
+            HGroup(run_factory_item('special_labnumber',
+                                    show_label=False,
+                                    editor=EnumEditor(values=SPECIAL_NAMES)),
+                   run_factory_item('run_block', show_label=False,
+                                    editor=EnumEditor(name=run_factory_name('run_blocks'))),
+                   run_factory_item('frequency', width=50),
+                   run_factory_item('freq_before', label='Before'),
+                   run_factory_item('freq_after', label='After'),
                    spring),
-            HGroup(Item('rfac.labnumber',
-                        tooltip='Enter a Labnumber',
-                        width=100, ),
-                   Item('rfac._labnumber', show_label=False,
-                        editor=CheckListEditor(name='rfac.labnumbers'),
-                        width=-20),
-                   Item('rfac.aliquot',
-                        width=50),
+            HGroup(run_factory_item('labnumber',
+                                    tooltip='Enter a Labnumber',
+                                    width=100, ),
+                   run_factory_item('_labnumber', show_label=False,
+                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
+                                    width=-20),
+                   run_factory_item('aliquot',
+                                    width=50),
                    spring),
 
-            HGroup(Item('rfac.flux'),
+            HGroup(run_factory_item('flux'),
                    Label(u'\u00b1'),
-                   Item('rfac.flux_error', show_label=False),
-                   icon_button_editor('rfac.save_flux_button',
+                   run_factory_item('flux_error', show_label=False),
+                   icon_button_editor(run_factory_name('save_flux_button'),
                                       'database_save',
                                       tooltip='Save flux to database'),
-                   enabled_when='rfac.labnumber'),
+                   enabled_when=run_factory_name('labnumber')),
             HGroup(
-                Item('rfac.weight',
-                     label='Weight (mg)',
-                     tooltip='(Optional) Enter the weight of the sample in mg. '
-                             'Will be saved in Database with analysis'),
-                Item('rfac.comment',
-                     tooltip='(Optional) Enter a comment for this sample. '
-                             'Will be saved in Database with analysis'),
-                Item('rfac.auto_fill_comment',
-                     show_label=False,
-                     tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
+                run_factory_item('weight',
+                                 label='Weight (mg)',
+                                 tooltip='(Optional) Enter the weight of the sample in mg. '
+                                         'Will be saved in Database with analysis'),
+                run_factory_item('comment',
+                                 tooltip='(Optional) Enter a comment for this sample. '
+                                         'Will be saved in Database with analysis'),
+                run_factory_item('auto_fill_comment',
+                                 show_label=False,
+                                 tooltip='Auto fill "Comment" with IrradiationLevel:Hole, e.g A:9')),
             show_border=True,
             label='Sample Info')
         return grp
@@ -185,27 +190,27 @@ class ExperimentFactoryPane(TraitsDockPane):
     def _get_truncate_group(self):
         grp = VGroup(
             HGroup(
-                Item('rfac.trunc_attr',
-                     editor=EnumEditor(name='rfac.trunc_attrs'),
-                     show_label=False),
-                Item('rfac.trunc_comp', show_label=False),
-                Item('rfac.trunc_crit', show_label=False),
+                run_factory_item('trunc_attr',
+                                 editor=EnumEditor(name=run_factory_name('trunc_attrs')),
+                                 show_label=False),
+                run_factory_item('trunc_comp', show_label=False),
+                run_factory_item('trunc_crit', show_label=False),
                 spacer(-10),
-                Item('rfac.trunc_start', label='Start Count'),
-                icon_button_editor('rfac.clear_truncation',
+                run_factory_item('trunc_start', label='Start Count'),
+                icon_button_editor(run_factory_name('clear_truncation'),
                                    'delete',
-                                   enabled_when='rfac.edit_mode'),
+                                   enabled_when=run_factory_name('edit_mode')),
                 show_border=True,
                 label='Simple'),
             HGroup(
-                Item('rfac.truncation_path',
-                     editor=EnumEditor(name='rfac.truncations'),
-                     label='Path'),
+                run_factory_item('truncation_path',
+                                 editor=EnumEditor(name=run_factory_name('truncations')),
+                                 label='Path'),
 
-                icon_button_editor('rfac.edit_truncation_button', 'table_edit',
-                                   enabled_when='rfac.truncation_path',
+                icon_button_editor(run_factory_name('edit_truncation_button'), 'table_edit',
+                                   enabled_when=run_factory_name('truncation_path'),
                                    tooltip='Edit the selected action file'),
-                icon_button_editor('rfac.new_truncation_button', 'table_add',
+                icon_button_editor(run_factory_name('new_truncation_button'), 'table_add',
                                    tooltip='Add a new action file. Duplicated currently selected file if applicable'),
                 show_border=True,
                 label='File'),
@@ -214,23 +219,26 @@ class ExperimentFactoryPane(TraitsDockPane):
 
     def _get_script_group(self):
         script_grp = VGroup(
-            Item('rfac.extraction_script', style='custom', show_label=False),
-            Item('rfac.measurement_script', style='custom', show_label=False),
-            Item('rfac.post_equilibration_script', style='custom', show_label=False),
-            Item('rfac.post_measurement_script', style='custom', show_label=False),
-            Item('rfac.script_options', style='custom', show_label=False),
+            run_factory_item('extraction_script', style='custom', show_label=False),
+            run_factory_item('measurement_script', style='custom', show_label=False),
+            run_factory_item('post_equilibration_script', style='custom', show_label=False),
+            run_factory_item('post_measurement_script', style='custom', show_label=False),
+            run_factory_item('script_options', style='custom', show_label=False),
             HGroup(spring,
-                   Item('rfac.default_fits_button',
-                        show_label=False,
-                        enabled_when='rfac.default_fits_enabled',
-                        label='Default Fits'),
-                   Item('rfac.load_defaults_button',
-                        tooltip='load the default scripts for this analysis type',
-                        show_label=False,
-                        enabled_when='rfac.labnumber')),
+                   run_factory_item('default_fits_button',
+                                    show_label=False,
+                                    enabled_when=run_factory_name('default_fits_enabled'),
+                                    label='Default Fits'),
+                   run_factory_item('load_defaults_button',
+                                    tooltip='load the default scripts for this analysis type',
+                                    show_label=False,
+                                    enabled_when=run_factory_name('labnumber'))),
             show_border=True,
             label='Scripts')
         return script_grp
+
+    def _get_extract_group(self):
+        return run_factory_item('factory_view', style='custom', show_label=False)
 
 
 #===============================================================================

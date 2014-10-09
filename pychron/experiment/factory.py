@@ -132,6 +132,10 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
+
+        print new_runs, freq
+
+
         if new_runs:
             aruns = q.automated_runs
             if q.selected:
@@ -211,7 +215,7 @@ extract_device, delay_+, tray, username, load_name, email, use_queue_conditions,
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
-        #         self.run_factory.update_templates_needed = True
+
         self.run_factory.setup_files()
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 
