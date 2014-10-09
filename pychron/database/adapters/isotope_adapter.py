@@ -75,9 +75,10 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
-    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
+    proc_BlanksSetTable
 
-from pychron.pychron_constants import ALPHAS, alpha_to_int
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 class InterpretedAge(HasTraits):
@@ -950,6 +951,39 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # getters
     #===========================================================================
+    def get_blanks(self, ms=None, limit=100):
+        joins = (meas_AnalysisTable, gen_AnalysisTypeTable)
+        filters = (gen_AnalysisTypeTable.name.like('blank%'),)
+        if ms:
+            joins.append(gen_MassSpectrometerTable)
+            filters.append(gen_MassSpectrometerTable.name == ms.lower())
+
+        return self._retrieve_items(meas_AnalysisTable,
+                                    joins=joins, filters=filters,
+                                    order=meas_AnalysisTable.analysis_timestamp.desc(),
+                                    limit=limit)
+        # with db.session_ctx() as sess:
+        #     q = sess.query(meas_AnalysisTable)
+        #     q = q.join(meas_MeasurementTable)
+        #     q = q.join(gen_AnalysisTypeTable)
+        #
+        #     q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
+        #     if ms:
+        #         q = q.join(gen_MassSpectrometerTable)
+        #         q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+        #
+        #     q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+        #     q = q.limit(100)
+        #     dbs = q.all()
+
+    def get_session_blank_histories(self, s):
+        with self.session_ctx() as sess:
+            q = sess.query(proc_BlanksHistoryTable)
+            q = q.filter(proc_BlanksHistoryTable.session == s)
+            return self._query_all(q)
+
+    def get_blanks_history(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksHistoryTable, value, key=key)
 
     def get_mftables(self, spec, **kw):
         return self._retrieve_items(spec_MFTableTable,
@@ -1602,8 +1636,31 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
 
-    def get_blank(self, value):
-        return self._retrieve_item(proc_BlanksTable, value)
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
+
+    def retrieve_blank(self, kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.filter(gen_ExtractionDeviceTable.name == ed)
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return self._query_one(q)
+
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
 
     def get_blanks_history(self, value):
         return self._retrieve_item(proc_BlanksHistoryTable, value)
