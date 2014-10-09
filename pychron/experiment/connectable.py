@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Int, Bool, Str
+from traits.api import HasTraits, Int, Bool, Str, Any
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -25,7 +25,7 @@ class Connectable(HasTraits):
     port = Int
     kind = Str
     connected = Bool
-    protocol = Str
+    protocol = Any
 
     # can this connection be used by the AutomatedRunMonitor
     monitorable = False

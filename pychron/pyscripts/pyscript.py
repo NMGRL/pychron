@@ -733,6 +733,7 @@ class PyScript(Loggable):
                 func = [(func, args, kw)]
             rs = []
             for f, a, k in func:
+
                 r = None
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)

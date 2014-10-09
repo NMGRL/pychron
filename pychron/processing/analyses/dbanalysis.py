@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 import os
 
-from traits.trait_types import Str, Float, Either, Date, Any, Dict, List
+from traits.trait_types import Str, Float, Either, Date, Any, Dict, List, Long
 
 
 #============= standard library imports ========================
@@ -62,6 +62,7 @@ def get_position(extraction):
 
 
 class DBAnalysis(Analysis):
+    meas_analysis_id = Long
     #analysis_summary_klass = DBAnalysisSummary
     analysis_view_klass = DBAnalysisView
     #     status = Int
@@ -360,6 +361,7 @@ class DBAnalysis(Analysis):
             ('step', 'step', str),
             ('comment', 'comment', str),
             ('uuid', 'uuid', str),
+            ('meas_analysis_id', 'id', nocast),
             ('rundate', 'analysis_timestamp', nocast),
             ('timestamp', 'analysis_timestamp',
              lambda x: time.mktime(x.timetuple()))]
