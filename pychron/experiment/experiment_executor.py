@@ -1177,7 +1177,7 @@ class ExperimentExecutor(Consoleable):
     def _load_default_conditions(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditions', ['.yaml', '.yml'])
         if p:
-            return self._extract_conditions(term_name, **kw)
+            return self._extract_conditions(p, term_name, **kw)
         else:
             pp = os.path.join(paths.spectrometer_dir, 'default_condtions.yaml')
             self.warning('no default conditions file located at {}'.format(pp))

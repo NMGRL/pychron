@@ -167,17 +167,30 @@ class OpenLastExperimentQueueAction(QueueAction):
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
-        self.enabled = os.path.isfile(paths.last_experiment)
+        self.enabled = bool(self._get_last_experiment())
 
     def perform(self, event):
+        path = self._get_last_experiment()
+        if path:
+            self._open_experiment(event, path)
+        else:
+            warning(None, 'No last experiment available')
+        # if os.path.isfile(paths.last_experiment):
+        #     with open(paths.last_experiment, 'r') as fp:
+        #         path = fp.readline()
+        #         if os.path.isfile(path):
+        #             self._open_experiment(event, path)
+        #         else:
+        #             print 'asdfasdf', path
+        # else:
+        #     warning(None, 'No last experiment available')
+
+    def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
             with open(paths.last_experiment, 'r') as fp:
                 path = fp.readline()
                 if os.path.isfile(path):
-                    self._open_experiment(event, path)
-        else:
-            warning(None, 'No last experiment available')
-
+                    return path
 
 class OpenExperimentQueueAction(QueueAction):
     description = 'Open experiment'
