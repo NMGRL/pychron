@@ -14,7 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+#============= enthought library imports =======================
+from datetime import datetime, timedelta, date
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
@@ -1361,9 +1362,16 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier == lns)
 
             if low_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
+                if isinstance(low_post, date):
+                    q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+                else:
+                    q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
             if high_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
+                if isinstance(low_post, date):
+                    q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+                else:
+                    q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
+
 
             if omit_key:
                 q = q.filter(not_(getattr(proc_TagTable, omit_key)))

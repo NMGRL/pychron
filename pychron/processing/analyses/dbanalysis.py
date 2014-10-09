@@ -59,6 +59,7 @@ def get_position(extraction):
 
 
 class DBAnalysis(Analysis):
+    meas_analysis_id = Long
     analysis_view_klass = DBAnalysisView
 
     uuid = Str
@@ -344,6 +345,7 @@ class DBAnalysis(Analysis):
             ('step', 'step', str),
             ('comment', 'comment', str),
             ('uuid', 'uuid', str),
+            ('meas_analysis_id', 'id', nocast),
             ('rundate', 'analysis_timestamp', nocast),
             ('analysis_timestamp', 'analysis_timestamp', nocast),
             ('timestamp', 'analysis_timestamp',

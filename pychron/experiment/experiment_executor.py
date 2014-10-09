@@ -570,14 +570,14 @@ class ExperimentExecutor(Consoleable):
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True):
         # arun = self.current_run
-        arun = self.measuring_run
+        aruns = (self.measuring_run, self.extracting_run)
 
         #        arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
             name, _ = os.path.splitext(name)
         else:
-            name = arun.runid
+            name = aruns[0].runid
 
         if name:
             ret = YES
@@ -599,21 +599,23 @@ class ExperimentExecutor(Consoleable):
                 self.set_extract_state(False)
                 self.wait_group.stop()
                 self._canceled = True
-                if arun:
-                    if style == 'queue':
-                        state = None
-                        if cancel_run:
+                for arun in aruns:
+                    if arun:
+                        if style == 'queue':
+                            state = None
+                            if cancel_run:
+                                state = 'canceled'
+                        else:
                             state = 'canceled'
-                    else:
-                        state = 'canceled'
-                        arun.aliquot = 0
+                            arun.aliquot = 0
 
-                    arun.cancel_run(state=state)
-                    if self.extracting_run:
-                        self.extracting_run.cancel_run(state=state)
+                        arun.cancel_run(state=state)
+                        # if self.extracting_run:
+                        #     self.extracting_run.cancel_run(state=state)
 
                     # self.non_clear_update_needed = True
-                    self.measuring_run = None
+                self.measuring_run = None
+                self.extracting_run = None
 
                     # self.current_run = None
 
@@ -666,7 +668,7 @@ class ExperimentExecutor(Consoleable):
             ai: AutomatedRun
             extraction step
         """
-        if not self._pre_extraction_check():
+        if self._pre_extraction_check(ai):
             return
 
         self.extracting_run = ai
@@ -1014,6 +1016,7 @@ class ExperimentExecutor(Consoleable):
         if not self._alive:
             return
 
+        self.info('Pre extraction check')
         conditions = self._load_conditions('pre_run_terminations')
         default_conditions=self._load_default_conditions('pre_run_terminations')
         if default_conditions or conditions:
@@ -1028,11 +1031,14 @@ class ExperimentExecutor(Consoleable):
                                       'Checking user defined pre extraction terminations',
                                       'Pre Extraction Termination',
                                       data=data)
+                return True
+
             if default_conditions:
                 self._test_conditions(run, conditions,
                                       'Checking default pre extraction terminations',
                                       'Pre Extraction Termination',
                                       data=data)
+                return True
 
     def _pre_queue_check(self, exp):
         """
@@ -1107,16 +1113,16 @@ class ExperimentExecutor(Consoleable):
                 return
 
         with self.datahub.mainstore.db.session_ctx():
-            dbr = self._get_preceding_blank_or_background(inform=inform)
-            if not dbr is True:
-                if dbr is None:
+            an = self._get_preceding_blank_or_background(inform=inform)
+            if not an is True:
+                if an is None:
                     return
                 else:
-                    self.info('using {} as the previous blank'.format(dbr.record_id))
+                    self.info('using {} as the previous blank'.format(an.record_id))
                     try:
-                        self._prev_blank_id = dbr.id
-                        self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = dbr.get_baseline_dict()
+                        self._prev_blank_id = an.meas_analysis_id
+                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
+                        self._prev_baselines = an.get_baseline_dict()
                     except TraitError:
                         self.debug_exception()
                         self.warning('failed loading previous blank')
@@ -1452,6 +1458,12 @@ Use Last "blank_{}"= {}
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
 
             self.extracting_run.is_last = is_last
+
+    def _stop_button_fired(self):
+        self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.isAlive()))
+        if self.isAlive():
+            self.info('stop execution')
+            self.stop()
 
     def _cancel_run_button_fired(self):
         self.debug('cancel run {}'.format(self.isAlive()))
