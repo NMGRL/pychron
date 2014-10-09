@@ -76,8 +76,6 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
     proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
-    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
-    proc_BlanksSetTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
