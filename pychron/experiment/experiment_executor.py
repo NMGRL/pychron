@@ -25,6 +25,7 @@ from threading import Thread, Event as Flag, Lock
 import weakref
 import time
 import os
+from traits.trait_errors import TraitError
 import yaml
 #============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
@@ -1112,9 +1113,14 @@ class ExperimentExecutor(Consoleable):
                     return
                 else:
                     self.info('using {} as the previous blank'.format(dbr.record_id))
-                    self._prev_blank_id = dbr.id
-                    self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
-                    self._prev_baselines = dbr.get_baseline_dict()
+                    try:
+                        self._prev_blank_id = dbr.id
+                        self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
+                        self._prev_baselines = dbr.get_baseline_dict()
+                    except TraitError:
+                        self.debug_exception()
+                        self.warning('failed loading previous blank')
+                        return
 
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
@@ -1236,29 +1242,34 @@ class ExperimentExecutor(Consoleable):
             self.cancel(confirm=False)
 
     def _get_preceding_blank_or_background(self, inform=True):
-        msg = '''First "{}" not preceded by a blank.
-Use Last "blank_{}"= {}
-'''
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
         # get first air, unknown or cocktail
         aruns = exp.cleaned_automated_runs
 
-        an = next((a for a in aruns if a.analysis_type in types), None)
+        if aruns[0].analysis_type.startswith('blank'):
+            return True
 
+        msg = '''First "{}" not preceded by a blank.
+Use Last "blank_{}"= {}
+'''
+        an = next((a for a in aruns if a.analysis_type in types), None)
         if an:
             anidx = aruns.index(an)
+
             #find first blank_
             #if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
+
             if ban:
                 nopreceding = aruns.index(ban) > anidx
-            else:
-                #if first run is a blank_... just use it
-                if aruns[0].analysis_type.startswith('blank'):
-                    return True
+
+            if nopreceding:
+                self.debug('no preceding blank')
+            if anidx==0:
+                self.debug('first analysis is not a blank')
 
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
@@ -1266,6 +1277,7 @@ Use Last "blank_{}"= {}
                                                  last=True)
                 if pdbr:
                     if selected:
+                        self.debug('use user selected blank {}'.format(pdbr.record_id))
                         return pdbr
                     else:
                         msg = msg.format(an.analysis_type,
@@ -1282,8 +1294,10 @@ Use Last "blank_{}"= {}
                         if retval == CANCEL:
                             return
                         elif retval == YES:
+                            self.debug('use default blank {}'.format(pdbr.record_id))
                             return pdbr
                         else:
+                            self.debug('get blank from database')
                             pdbr, _ = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                       exp.extract_device)
                             return pdbr
