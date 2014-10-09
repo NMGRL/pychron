@@ -14,13 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
+#============= enthought library imports =======================
+from datetime import datetime, timedelta, date
 
 from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from cStringIO import StringIO
 import hashlib
 from sqlalchemy import Date, distinct
@@ -1361,9 +1362,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier == lns)
 
             if low_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
+                q = q.filter(self._get_post_filter(low_post, '__ge__'))
+
             if high_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
+                q = q.filter(self._get_post_filter(high_post, '__le__'))
 
             if omit_key:
                 q = q.filter(not_(getattr(proc_TagTable, omit_key)))
@@ -1668,6 +1670,31 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
 
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
+
+    def retrieve_blank(self, kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.filter(gen_ExtractionDeviceTable.name == ed)
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return self._query_one(q)
+
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
     def get_blanks_set(self, value, key='set_id'):
         return self._retrieve_item(proc_BlanksSetTable, value, key=key)
 
@@ -2197,8 +2224,9 @@ class IsotopeAdapter(DatabaseAdapter):
     #===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast:
+        if cast or isinstance(post, date):
             t = sql_cast(t, Date)
+
         return getattr(t, comp)(post)
 
     def _irrad_level(self, q, irrad, level):

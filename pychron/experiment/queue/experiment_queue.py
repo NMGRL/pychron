@@ -25,6 +25,10 @@ from pyface.timer.do_later import do_later
 
 
 
+
+
+
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
@@ -33,7 +37,7 @@ from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.experiment.queue.experiment_queue_action import ExperimentQueueAction
+from pychron.experiment.condition.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths
@@ -178,7 +182,7 @@ class ExperimentQueue(BaseExperimentQueue):
             self.executed_runs.append(run)
             idx = len(self.executed_runs) - 1
             invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
-            self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
+            # self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
         else:
             self.debug('Problem removing {}'.format(aid))
 
@@ -222,7 +226,6 @@ class ExperimentQueue(BaseExperimentQueue):
         if 'actions' in meta:
             self.queue_actions = [ExperimentQueueAction(astr)
                                   for astr in meta['actions']]
-
         else:
             self.debug('no actions provided for this queue')
 

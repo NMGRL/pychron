@@ -50,8 +50,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
     extract_device = String('Extract Device')
     extract_devices = Property
 
-    use_default_conditions = Bool
-    default_conditions_name = Str
+    use_queue_conditions = Bool
+    queue_conditions_name = Str
     available_conditions = List
 
     delay_between_analyses = Int(30)
@@ -66,8 +66,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     pattributes = ('username', 'mass_spectrometer', 'extract_device',
                    'delay_between_analyses',
-                   'delay_before_analyses', 'use_default_conditions',
-                   'default_conditions_name')
+                   'delay_before_analyses', 'use_queue_conditions',
+                   'queue_conditions_name')
     # def _add_user_fired(self):
     #     a=UserEntry()
     #     a.edit_user(self.username)
@@ -76,7 +76,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
         """
             called by ExperimentFactory
         """
-        self._load_default_conditions()
+        self._load_queue_conditions()
         if load_persistence:
             self.load()
 
@@ -86,8 +86,8 @@ class ExperimentQueueFactory(PersistenceLoggable):
         """
         self.dump()
 
-    def _load_default_conditions(self):
-        root = paths.default_conditions_dir
+    def _load_queue_conditions(self):
+        root = paths.queue_conditions_dir
         cs = list_directory2(root, remove_extension=True)
         self.available_conditions = cs
 

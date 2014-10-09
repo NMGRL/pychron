@@ -34,8 +34,6 @@ class Consoleable(Loggable):
     console_default_color = Color
 
     def console_bind_preferences(self, prefid):
-        # color_bind_preference(self.console_display, 'bgcolor', '{}.bgcolor'.format(prefid))
-        # color_bind_preference(self.console_display, 'font_size', '{}.fontsize'.format(prefid))
         color_bind_preference(self, 'console_bgcolor', '{}.bgcolor'.format(prefid))
         color_bind_preference(self, 'console_default_color', '{}.textcolor'.format(prefid))
         bind_preference(self, 'console_fontsize', '{}.fontsize'.format(prefid))

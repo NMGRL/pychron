@@ -231,16 +231,16 @@ class Experimentor(IsotopeDatabaseManager):
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
 
-    @on_trait_change('executor:stop_button')
-    def _stop(self):
-        self.debug('%%%%%%%%%%%%%%%%%% Stop fired')
-        if self.executor.isAlive():
-            self.info('stop execution')
-            '''
-                if the executor is delaying then stop but dont cancel
-                otherwise cancel
-            '''
-            self.executor.stop()
+    # @on_trait_change('executor:stop_button')
+    # def _stop(self):
+    #     self.debug('%%%%%%%%%%%%%%%%%% Stop fired {}'.format(self.executor.isAlive()))
+    #     if self.executor.isAlive():
+    #         self.info('stop execution')
+    #         '''
+    #             if the executor is delaying then stop but dont cancel
+    #             otherwise cancel
+    #         '''
+    #         self.executor.stop()
 
     @on_trait_change('executor:start_button')
     def _execute(self):

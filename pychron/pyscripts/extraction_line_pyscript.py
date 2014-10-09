@@ -684,8 +684,10 @@ class ExtractionPyScript(ValvePyScript):
         if not 'name' in kw:
             kw['name'] = self.extract_device
 
-        if not 'protocol' in kw:
-            kw['protocol'] = ILaserManager
+        kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        # if not 'protocol' in kw:
+        #     kw['protocol'] = ILaserManager
+        kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager
 
         return self._manager_action(*args, **kw)
 

@@ -12,12 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change, Long
-# from traitsui.api import View, Item
-# from apptools.preferences.preference_binding import bind_preference
+# ============= enthought library imports =======================
+from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
+    on_trait_change, Long
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 
@@ -26,12 +25,11 @@ from threading import Thread, Event as Flag, Lock
 import weakref
 import time
 import os
-#============= local library imports  ==========================
-# from pychron.core.ui.thread import Thread as uThread
-# from pychron.loggable import Loggable
+from traits.trait_errors import TraitError
 import yaml
+#============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
-from pychron.experiment.automated_run.condition import condition_from_dict
+from pychron.experiment.condition.condition import condition_from_dict
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
@@ -70,9 +68,7 @@ class ExperimentExecutor(Consoleable):
     start_button = Event
     stop_button = Event
     can_start = Property(depends_on='executable, _alive')
-    #     execute_button = Event
-    #     resume_button = Button('Resume')
-    #     delay_between_runs_readback = Float
+
     delaying_between_runs = Bool
 
     extraction_state_label = String
@@ -80,7 +76,6 @@ class ExperimentExecutor(Consoleable):
 
     end_at_run_completion = Bool(False)
     cancel_run_button = Button('Cancel Run')
-    #     execute_label = Property(depends_on='_alive')
 
     truncate_button = Button('Truncate Run')
     truncate_style = Enum('Normal', 'Quick')
@@ -106,7 +101,6 @@ class ExperimentExecutor(Consoleable):
 
     pyscript_runner = Instance(PyScriptRunner)
     monitor = Instance(AutomatedRunMonitor)
-    # current_run = Instance(AutomatedRun)
 
     measuring_run = Instance(AutomatedRun)
     extracting_run = Instance(AutomatedRun)
@@ -154,26 +148,7 @@ class ExperimentExecutor(Consoleable):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
-        # self.monitor = self._monitor_factory()
-
-    def set_queue_modified(self):
-        self.queue_modified = True
-
-    def get_prev_baselines(self):
-        return self._prev_baselines
-
-    def get_prev_blanks(self):
-        return self._prev_blank_id, self._prev_blanks
-
-    def info_heading(self, msg):
-        self.info('')
-        self.info_marker('=')
-        self.info(msg)
-        self.info_marker('=')
-        self.info('')
-
     def bind_preferences(self):
-        # super(ExperimentExecutor, self).bind_preferences()
         self.datahub.bind_preferences()
 
         prefid = 'pychron.experiment'
@@ -207,21 +182,7 @@ class ExperimentExecutor(Consoleable):
         self.console_bind_preferences(prefid)
         bind_preference(self, 'use_message_colormapping', '{}.use_message_colormapping'.format(prefid))
 
-    def isAlive(self):
-        return self._alive
-
-    def reset(self):
-        pass
-
-    def cancel(self, *args, **kw):
-        self._cancel(*args, **kw)
-
-    def set_extract_state(self, state, flash=0.75, color='green', period=1.5):
-        self._set_extract_state(state, flash, color, period)
-
-
     def execute(self):
-
         if self.use_automated_run_monitor:
             self.monitor = self._monitor_factory()
 
@@ -232,7 +193,7 @@ class ExperimentExecutor(Consoleable):
             name = self.experiment_queue.name
 
             msg = 'Starting Execution "{}"'.format(name)
-            self.info_heading(msg)
+            self._info_heading(msg)
 
             if self.stats:
                 self.stats.reset()
@@ -248,6 +209,30 @@ class ExperimentExecutor(Consoleable):
             return t
         else:
             self._alive = False
+
+    def set_queue_modified(self):
+        self.queue_modified = True
+
+    def get_prev_baselines(self):
+        return self._prev_baselines
+
+    def get_prev_blanks(self):
+        return self._prev_blank_id, self._prev_blanks
+
+    def isAlive(self):
+        return self._alive
+
+    def reset(self):
+        pass
+
+    def continued(self):
+        self.stats.continue_run()
+
+    def cancel(self, *args, **kw):
+        self._cancel(*args, **kw)
+
+    def set_extract_state(self, state, flash=0.75, color='green', period=1.5):
+        self._set_extract_state(state, flash, color, period)
 
     def wait(self, t, msg=''):
         self._wait(t, msg)
@@ -273,12 +258,6 @@ class ExperimentExecutor(Consoleable):
         else:
             self.cancel()
 
-    def _set_message(self, msg, color='black'):
-
-        self.info_heading(msg)
-        invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
-                              extraction_state_color=color)
-
     def experiment_blob(self):
         path = self.experiment_queue.path
         path = add_extension(path, '.txt')
@@ -292,8 +271,47 @@ class ExperimentExecutor(Consoleable):
     #===============================================================================
     # private
     #===============================================================================
-    def _execute(self):
+    def _wait_for_save(self):
+        """
+            wait for experiment queue to be saved.
 
+            actually wait until time out or self.executable==True
+            executable set higher up by the Experimentor
+
+            if timed out auto save or cancel
+
+        """
+        st = time.time()
+        delay = self.auto_save_delay
+        auto_save = self.use_auto_save
+
+        if not self.executable:
+            self.info('Waiting for save')
+            cnt = 0
+
+            while not self.executable:
+                time.sleep(1)
+                if time.time() - st < delay:
+                    self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
+                                           flash=False)
+                    cnt += 1
+                else:
+                    break
+
+            if not self.executable:
+                self.info('Timed out waiting for user input')
+                if auto_save:
+                    self.info('autosaving experiment queues')
+                    self.set_extract_state('')
+                    self.auto_save_event = True
+                else:
+                    self.info('canceling experiment queues')
+                    self.cancel(confirm=False)
+
+    def _execute(self):
+        """
+            execute opened experiment queues
+        """
         # delay before starting
         exp = self.experiment_queue
         delay = exp.delay_before_analyses
@@ -315,6 +333,12 @@ class ExperimentExecutor(Consoleable):
         self._alive = False
 
     def _execute_queue(self, i, exp):
+        """
+            i: int
+            exp: ExperimentQueue
+
+            execute experiment queue ``exp``
+        """
         self.experiment_queue = exp
         self.info('Starting automated runs set={:02n} {}'.format(i, exp.name))
 
@@ -424,16 +448,27 @@ class ExperimentExecutor(Consoleable):
         if last_runid:
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
-        self.info_heading('experiment queue {} finished'.format(exp.name))
+        self._info_heading('experiment queue {} finished'.format(exp.name))
         self.user_notifier.notify(exp, last_runid, self._err_message)
 
-    def _wait_for(self, pred, period=1):
+    def _wait_for(self, predicate, period=1, invert=False):
+        """
+            predicate: callable. func(x)
+            period: evaluate predicate every ``period`` seconds
+            invert: bool invert predicate logic
+
+            wait until predicate evaluates to False
+            if invert is True wait until predicate evaluates to True
+        """
         st = time.time()
+        if invert:
+            predicate = lambda x: not predicate(x)
+
         while 1:
             et = time.time() - st
             if not self._alive:
                 break
-            if not pred(et):
+            if not predicate(et):
                 break
             time.sleep(period)
 
@@ -488,6 +523,7 @@ class ExperimentExecutor(Consoleable):
 
             f = getattr(self, step)
             if not f(run):
+                self.warning('{} returned false'.format(step))
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -504,7 +540,7 @@ class ExperimentExecutor(Consoleable):
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        self._check_run_at_end(run)
+        self._post_run_check(run)
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -534,14 +570,14 @@ class ExperimentExecutor(Consoleable):
 
     def _cancel(self, style='queue', cancel_run=False, msg=None, confirm=True):
         # arun = self.current_run
-        arun = self.measuring_run
+        aruns = (self.measuring_run, self.extracting_run)
 
         #        arun = self.experiment_queue.current_run
         if style == 'queue':
             name = os.path.basename(self.experiment_queue.path)
             name, _ = os.path.splitext(name)
         else:
-            name = arun.runid
+            name = aruns[0].runid
 
         if name:
             ret = YES
@@ -563,21 +599,23 @@ class ExperimentExecutor(Consoleable):
                 self.set_extract_state(False)
                 self.wait_group.stop()
                 self._canceled = True
-                if arun:
-                    if style == 'queue':
-                        state = None
-                        if cancel_run:
+                for arun in aruns:
+                    if arun:
+                        if style == 'queue':
+                            state = None
+                            if cancel_run:
+                                state = 'canceled'
+                        else:
                             state = 'canceled'
-                    else:
-                        state = 'canceled'
-                        arun.aliquot = 0
+                            arun.aliquot = 0
 
-                    arun.cancel_run(state=state)
-                    if self.extracting_run:
-                        self.extracting_run.cancel_run(state=state)
+                        arun.cancel_run(state=state)
+                        # if self.extracting_run:
+                        #     self.extracting_run.cancel_run(state=state)
 
                     # self.non_clear_update_needed = True
-                    self.measuring_run = None
+                self.measuring_run = None
+                self.extracting_run = None
 
                     # self.current_run = None
 
@@ -626,6 +664,13 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _extraction(self, ai):
+        """
+            ai: AutomatedRun
+            extraction step
+        """
+        if self._pre_extraction_check(ai):
+            return
+
         self.extracting_run = ai
         ret = True
         if ai.start_extraction():
@@ -640,6 +685,10 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _measurement(self, ai):
+        """
+            ai: AutomatedRun
+            measurement step
+        """
         ret = True
         self.measuring_run = ai
         if ai.start_measurement():
@@ -657,6 +706,10 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _post_measurement(self, ai):
+        """
+            ai: AutomatedRun
+            post measurement step
+        """
         if not ai.do_post_measurement():
             self._failed_execution_step('Post Measurement Failed')
         else:
@@ -675,7 +728,13 @@ class ExperimentExecutor(Consoleable):
         pass
 
     def _make_run(self, spec):
+        """
+            spec: AutomatedRunSpec
+            return AutomatedRun
 
+            generate an AutomatedRun for this ``spec``.
+
+        """
         exp = self.experiment_queue
 
         if not self._set_run_aliquot(spec):
@@ -725,6 +784,14 @@ class ExperimentExecutor(Consoleable):
         return arun
 
     def _set_run_aliquot(self, spec):
+        """
+            spec: AutomatedRunSpec
+
+            set the aliquot/step for this ``spec``
+            check for conflicts between primary and secondary databases
+
+        """
+
         if spec.conflicts_checked:
             return True
 
@@ -761,6 +828,9 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _in_conflict(self, spec, conflict, aoffset=0, soffset=0):
+        """
+            handle databases in conflict
+        """
         dh = self.datahub
         self._canceled = True
         self._err_message = 'Databases are in conflict. {}'.format(conflict)
@@ -787,16 +857,25 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _delay(self, delay, message='between'):
+        """
+            delay: float
+            message: str
+
+            sleep for ``delay`` seconds
+        """
         #        self.delaying_between_runs = True
         msg = 'Delay {} runs {} sec'.format(message, delay)
         self.info(msg)
         self._wait(delay, msg)
         self.delaying_between_runs = False
 
-    def continued(self):
-        self.stats.continue_run()
-
     def _wait(self, delay, msg):
+        """
+            delay: float
+            message: str
+
+            sleep for ``delay`` seconds using a WaitControl
+        """
         wg = self.wait_group
         wc = self.get_wait_control()
 
@@ -861,12 +940,19 @@ class ExperimentExecutor(Consoleable):
                                   extraction_state_color=color)
 
     def _extraction_state_off(self):
+        """
+            clear extraction state label
+        """
         if self._end_flag:
             self._end_flag.set()
 
         invoke_in_main_thread(self.trait_set, extraction_state_label='')
 
     def _extraction_state_iter(self, gen, label, color):
+        """
+            iterator for extraction state label.
+            used to flash label
+        """
         t, state = gen.next()
         if state:
             self.trait_set(extraction_state_label=label,
@@ -881,10 +967,17 @@ class ExperimentExecutor(Consoleable):
             self.trait_set(extraction_state_label='')
 
     def _add_backup(self, uuid_str):
+        """
+            add uuid to backup recovery file
+        """
+
         with open(paths.backup_recovery_file, 'a') as fp:
             fp.write('{}\n'.format(uuid_str))
 
     def _remove_backup(self, uuid_str):
+        """
+            remove uuid from backup recovery file
+        """
         with open(paths.backup_recovery_file, 'r') as fp:
             r = fp.read()
 
@@ -895,71 +988,6 @@ class ExperimentExecutor(Consoleable):
     #===============================================================================
     # checks
     #===============================================================================
-    def _load_terminations(self):
-        exp = self.experiment_queue
-        name=exp.default_conditions_name
-        if exp.use_default_conditions and name:
-            p = get_path(paths.default_conditions_dir, name, ['.yaml','.yml'])
-            with open(p,'r') as fp:
-                yd=yaml.load(fp)
-                yl=yd.get('post_run_terminations')
-                if not yl:
-                    self.debug('no post_run_terminations')
-                    return
-                else:
-                    return [condition_from_dict(cd, 'TerminationCondition') for cd in yl]
-
-    def _check_run_at_end(self, run):
-        """
-            1. check post run termination conditions.
-            2. check to see if an action should be taken
-
-            if runs  are overlapping this will be a problem.
-            dont overlap onto blanks
-            execute the action and continue the queue
-        """
-        if not self._alive:
-            return
-
-        conditions = self._load_terminations()
-        if conditions:
-            self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
-            for ci in conditions:
-                if ci.check(run.arar_age):
-                    self.cancel(confirm=False)
-                    return
-
-        exp=self.experiment_queue
-        if exp.queue_actions:
-            self.debug('Checking queue actions n={}'.format(len(exp.queue_actions)))
-            for action in exp.queue_actions:
-                if action.check_run(run):
-                    self._do_action(action)
-                    break
-
-    def _do_action(self, action):
-        self.info('Do queue action {}'.format(action.action))
-        if action.action == 'repeat':
-            if action.count < action.nrepeat:
-                self.debug('repeating last run')
-                action.count += 1
-                exp = self.experiment_queue
-
-                run = exp.executed_runs[0]
-                exp.automated_runs.insert(0, run)
-
-                # experimentor handles the queue modified
-                # resets the database and updates info
-                self.queue_modified = True
-
-            else:
-                self.info('executed N {} {}s'.format(action.count + 1,
-                                                     action.action))
-                self.cancel(confirm=False)
-
-        elif action.action == 'cancel':
-            self.cancel(confirm=False)
-
     def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
@@ -981,52 +1009,51 @@ class ExperimentExecutor(Consoleable):
                 invoke_in_main_thread(self.warning_dialog, msg)
                 return True
 
-    def _wait_for_save(self):
+    def _pre_extraction_check(self, run):
         """
-            wait for experiment queue to be saved.
-
-            actually wait until time out or self.executable==True
-            executable set higher up by the Experimentor
-
-            if timed out auto save or cancel
-
+            do pre_run_terminations
         """
-        st = time.time()
-        delay = self.auto_save_delay
-        auto_save = self.use_auto_save
+        if not self._alive:
+            return
 
-        if not self.executable:
-            self.info('Waiting for save')
-            cnt = 0
+        self.info('Pre extraction check')
+        conditions = self._load_conditions('pre_run_terminations')
+        default_conditions=self._load_default_conditions('pre_run_terminations')
+        if default_conditions or conditions:
+            self.debug('Get a measurement from the spectrometer')
+            data = self.spectrometer_manager.spectrometer.get_intensities()
+            ks = ','.join(data[0])
+            ss = ','.join(['{:0.5f}'.format(d) for d in data[1]])
+            self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
-            while not self.executable:
-                time.sleep(1)
-                if time.time() - st < delay:
-                    self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
-                                           flash=False)
-                    cnt += 1
-                else:
-                    break
+            if conditions:
+                self._test_conditions(run, conditions,
+                                      'Checking user defined pre extraction terminations',
+                                      'Pre Extraction Termination',
+                                      data=data)
+                return True
 
-            if not self.executable:
-                self.info('Timed out waiting for user input')
-                if auto_save:
-                    self.info('autosaving experiment queues')
-                    self.set_extract_state('')
-                    self.auto_save_event = True
-                else:
-                    self.info('canceling experiment queues')
-                    self.cancel(confirm=False)
+            if default_conditions:
+                self._test_conditions(run, conditions,
+                                      'Checking default pre extraction terminations',
+                                      'Pre Extraction Termination',
+                                      data=data)
+                return True
 
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
         """
         if exp.tray:
-            ed = next((ci for ci in self.connectables if ci.name==exp.extract_device), None)
-            if ed:
-                ed_tray = ed.get_tray()
-                return ed_tray!=exp.tray
+            ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
+            if ed and ed.connected:
+                name=convert_extract_device(ed.name)
+                man = self.application.get_service(ed.protocol, 'name=="{}"'.format(name))
+                self.debug('Get service {}. name=="{}"'.format(ed.protocol, name))
+                if man:
+                    self.debug('{} service found {}'.format(name, man))
+                    ed_tray = man.get_tray()
+                    return ed_tray != exp.tray
 
     def _pre_run_check(self):
         """
@@ -1086,15 +1113,20 @@ class ExperimentExecutor(Consoleable):
                 return
 
         with self.datahub.mainstore.db.session_ctx():
-            dbr = self._get_preceding_blank_or_background(inform=inform)
-            if not dbr is True:
-                if dbr is None:
+            an = self._get_preceding_blank_or_background(inform=inform)
+            if not an is True:
+                if an is None:
                     return
                 else:
-                    self.info('using {} as the previous blank'.format(dbr.record_id))
-                    self._prev_blank_id = dbr.id
-                    self._prev_blanks = dbr.get_baseline_corrected_signal_dict()
-                    self._prev_baselines = dbr.get_baseline_dict()
+                    self.info('using {} as the previous blank'.format(an.record_id))
+                    try:
+                        self._prev_blank_id = an.meas_analysis_id
+                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
+                        self._prev_baselines = an.get_baseline_dict()
+                    except TraitError:
+                        self.debug_exception()
+                        self.warning('failed loading previous blank')
+                        return
 
         if not self.pyscript_runner.connect():
             self.info('Failed connecting to pyscript_runner')
@@ -1105,36 +1137,145 @@ class ExperimentExecutor(Consoleable):
         self.debug('pre check complete')
         return True
 
+    def _post_run_check(self, run):
+        """
+            1. check post run termination conditions.
+            2. check to see if an action should be taken
+
+            if runs  are overlapping this will be a problem.
+            dont overlap onto blanks
+            execute the action and continue the queue
+        """
+        if not self._alive:
+            return
+
+        #check user defined terminations
+        conditions = self._load_conditions('post_run_terminations')
+        self._test_conditions(run, conditions, 'Checking user defined post run terminations',
+                              'Post Run Termination')
+
+        #check default terminations
+        conditions = self._load_default_conditions('post_run_terminations')
+        self._test_conditions(run, conditions, 'Checking default post run terminations',
+                              'Post Run Termination')
+
+        #check user defined post run actions
+        conditions = self._load_conditions('post_run_actions', klass='ActionCondition')
+        self._action_conditions(run, conditions, 'Checking user defined post run actions',
+                                'Post Run Action')
+
+        #check default post run actions
+        conditions = self._load_default_conditions('post_run_actions', klass='ActionCondition')
+        self._action_conditions(run, conditions, 'Checking default post run actions',
+                                'Post Run Action')
+
+        #check queue actions
+        exp = self.experiment_queue
+        self._action_conditions(run, exp.queue_actions, 'Checking queue actions',
+                                'Queue Action')
+
+    def _load_default_conditions(self, term_name, **kw):
+        p = get_path(paths.spectrometer_dir, 'default_conditions', ['.yaml', '.yml'])
+        if p:
+            return self._extract_conditions(term_name, **kw)
+        else:
+            pp = os.path.join(paths.spectrometer_dir, 'default_condtions.yaml')
+            self.warning('no default conditions file located at {}'.format(pp))
+
+    def _load_conditions(self, term_name, **kw):
+        exp = self.experiment_queue
+        name = exp.queue_conditions_name
+        if exp.use_queue_conditions and name:
+            p = get_path(paths.queue_conditions_dir, name, ['.yaml', '.yml'])
+            return self._extract_conditions(p, term_name, **kw)
+
+    def _extract_conditions(self, p, term_name, klass='TerminationCondition'):
+        if p and os.path.isfile(p):
+            self.debug('loading condiitons from {}'.format(p))
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                yl = yd.get(term_name)
+                if not yl:
+                    self.debug('no {}'.format(term_name))
+                    return
+                else:
+                    return [condition_from_dict(cd, klass) for cd in yl]
+
+    def _action_conditions(self, run, conditions, message1, message2):
+        if conditions:
+            self.debug('{} n={}'.format(message1, len(conditions)))
+            for ci in conditions:
+                if ci.check(run, None, True):
+                    self.info('{}. {}'.format(message2, ci.to_string()))
+                    self._do_action(ci)
+                    return
+
+    def _test_conditions(self, run, conditions, message1, message2,
+                         data=None, cnt=True):
+        if not self._alive:
+            return
+
+        if conditions:
+            self.debug('{} n={}'.format(message1, len(conditions)))
+            for ci in conditions:
+                if ci.check(run.arar_age, data, cnt):
+                    self.info('{}. {}'.format(message2, ci.to_string()),
+                              color='red')
+                    self.cancel(confirm=False)
+                    return
+
+    def _do_action(self, action):
+        self.info('Do queue action {}'.format(action.action))
+        if action.action == 'repeat':
+            if action.count < action.nrepeat:
+                self.debug('repeating last run')
+                action.count += 1
+                exp = self.experiment_queue
+
+                run = exp.executed_runs[0]
+                exp.automated_runs.insert(0, run)
+
+                # experimentor handles the queue modified
+                # resets the database and updates info
+                self.queue_modified = True
+
+            else:
+                self.info('executed N {} {}s'.format(action.count + 1,
+                                                     action.action))
+                self.cancel(confirm=False)
+
+        elif action.action == 'cancel':
+            self.cancel(confirm=False)
+
     def _get_preceding_blank_or_background(self, inform=True):
-        #         msg = '''First "{}" not preceded by a blank.
-        # If "Yes" use last "blank_{}"
-        # Last Run= {}
-        #
-        # If "No" select from database
-        # '''
-        msg = '''First "{}" not preceded by a blank.
-Use Last "blank_{}"= {}
-'''
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
         # get first air, unknown or cocktail
         aruns = exp.cleaned_automated_runs
 
-        an = next((a for a in aruns if a.analysis_type in types), None)
+        if aruns[0].analysis_type.startswith('blank'):
+            return True
 
+        msg = '''First "{}" not preceded by a blank.
+Use Last "blank_{}"= {}
+'''
+        an = next((a for a in aruns if a.analysis_type in types), None)
         if an:
             anidx = aruns.index(an)
+
             #find first blank_
             #if idx > than an idx need a blank
             nopreceding = True
             ban = next((a for a in aruns if a.analysis_type == 'blank_{}'.format(an.analysis_type)), None)
+
             if ban:
                 nopreceding = aruns.index(ban) > anidx
-            else:
-                #if first run is a blank_... just use it
-                if aruns[0].analysis_type.startswith('blank'):
-                    return True
+
+            if nopreceding:
+                self.debug('no preceding blank')
+            if anidx==0:
+                self.debug('first analysis is not a blank')
 
             if anidx == 0 or nopreceding:
                 pdbr, selected = self._get_blank(an.analysis_type, exp.mass_spectrometer,
@@ -1142,6 +1283,7 @@ Use Last "blank_{}"= {}
                                                  last=True)
                 if pdbr:
                     if selected:
+                        self.debug('use user selected blank {}'.format(pdbr.record_id))
                         return pdbr
                     else:
                         msg = msg.format(an.analysis_type,
@@ -1158,8 +1300,10 @@ Use Last "blank_{}"= {}
                         if retval == CANCEL:
                             return
                         elif retval == YES:
+                            self.debug('use default blank {}'.format(pdbr.record_id))
                             return pdbr
                         else:
+                            self.debug('get blank from database')
                             pdbr, _ = self._get_blank(an.analysis_type, exp.mass_spectrometer,
                                                       exp.extract_device)
                             return pdbr
@@ -1175,7 +1319,7 @@ Use Last "blank_{}"= {}
         selected = False
         with db.session_ctx():
             if last:
-                dbr = db.get_blank(kind, ms, ed, last)
+                dbr = db.retrieve_blank(kind, ms, ed, last)
 
             if dbr is None:
                 dbr=self._select_blank(db, ms)
@@ -1185,44 +1329,6 @@ Use Last "blank_{}"= {}
                 dbr = mainstore.make_analysis(dbr, calculate_age=False)
 
             return dbr, selected
-        #         dbr = self._select_blank(db, ms)
-        # with db.session_ctx() as sess:
-        #     q = sess.query(meas_AnalysisTable)
-        #     q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
-        #
-        #     if last:
-        #         q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
-        #     else:
-        #         q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
-        #
-        #     if ms:
-        #         q = q.join(gen_MassSpectrometerTable)
-        #         q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-        #     if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
-        #         q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
-        #         q = q.filter(gen_ExtractionDeviceTable.name == ed)
-        #
-        #     q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-        #     dbr = None
-        #     if last:
-        #         q = q.limit(1)
-        #         try:
-        #             dbr = q.first()
-        #         except NoResultFound, e:
-        #             self.debug('No result found {}'.format(e))
-        #         except NoResultFound:
-        #             dbr = self._select_blank(db, ms)
-        #
-        #         if dbr is None:
-        #             dbr = self._select_blank(db, ms)
-        #             selected = True
-        #     else:
-        #         dbr = self._select_blank(db, ms)
-        #
-        #     if dbr:
-        #         dbr = mainstore.make_analysis(dbr, calculate_age=False)
-        #
-        # return dbr, selected
 
     def _select_blank(self, db, ms):
         sel = db.selector_factory(style='single')
@@ -1232,19 +1338,7 @@ Use Last "blank_{}"= {}
         sel.window_width = 750
         sel.title = 'Select Default Blank'
 
-        with db.session_ctx() as sess:
-            # q = sess.query(meas_AnalysisTable)
-            # q = q.join(meas_MeasurementTable)
-            # q = q.join(gen_AnalysisTypeTable)
-            #
-            # q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
-            # if ms:
-            #     q = q.join(gen_MassSpectrometerTable)
-            #     q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
-            #
-            # q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            # q = q.limit(100)
-            # dbs = q.all()
+        with db.session_ctx():
             dbs = db.get_blanks(ms)
 
             sel.load_records(dbs[::-1])
@@ -1259,11 +1353,6 @@ Use Last "blank_{}"= {}
             self.debug('********************** NOT DOING  managers check')
             return True
 
-        # exp = self.experiment_queue
-        # for i in range(n):
-        #     nonfound = self._check_for_managers(exp)
-        #     if not nonfound:
-        #         break
         nonfound = self._check_for_managers()
         if nonfound:
             self.info('experiment canceled because could connect to managers {}'.format(nonfound))
@@ -1276,6 +1365,10 @@ Use Last "blank_{}"= {}
         return True
 
     def _check_for_managers(self):
+        """
+            determine the necessary managers based on the ExperimentQueue and
+            check that they exist and are connectable
+        """
         exp = self.experiment_queue
         nonfound = []
         elm_connectable = Connectable(name='Extraction Line')
@@ -1292,13 +1385,15 @@ Use Last "blank_{}"= {}
         if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
             extract_device = convert_extract_device(exp.extract_device)
             ed_connectable = Connectable(name=exp.extract_device)
-            self.connectables.append(ed_connectable)
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
+                ed_connectable.protocol=ILaserManager
                 if man is None:
+                    ed_connectable.protocol=IPipetteManager
                     man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
+            self.connectables.append(ed_connectable)
             if not man:
                 nonfound.append(extract_device)
             else:
@@ -1324,6 +1419,18 @@ Use Last "blank_{}"= {}
                     s_connectable.connected = True
 
         return nonfound
+
+    def _info_heading(self, msg):
+        self.info('')
+        self.info_marker('=')
+        self.info(msg)
+        self.info_marker('=')
+        self.info('')
+
+    def _set_message(self, msg, color='black'):
+        self._info_heading(msg)
+        invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
+                              extraction_state_color=color)
 
     #===============================================================================
     # handlers
@@ -1352,6 +1459,12 @@ Use Last "blank_{}"= {}
 
             self.extracting_run.is_last = is_last
 
+    def _stop_button_fired(self):
+        self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.isAlive()))
+        if self.isAlive():
+            self.info('stop execution')
+            self.stop()
+
     def _cancel_run_button_fired(self):
         self.debug('cancel run {}'.format(self.isAlive()))
         if self.isAlive():
@@ -1368,12 +1481,25 @@ Use Last "blank_{}"= {}
 
     def _show_conditions_button_fired(self):
         from pychron.experiment.conditions_view import ConditionsView
+        try:
+            if self.measuring_run:
+                postt, pret = [], []
+                for name, l in (('post_run_terminations', postt),
+                                ('pre_run_terminations', pret)):
+                    c1 = self._load_conditions(name)
+                    if c1:
+                        l.extend(c1)
+                    c2 = self._load_default_conditions(name)
+                    if c2:
+                        l.extend(c2)
 
-        if self.measuring_run:
-            v=ConditionsView(truncation_conditions=self.measuring_run.truncation_conditions,
-                             termination_conditions=self.measuring_run.termination_conditions,
-                             action_condtions=self.measuring_run.action_conditions)
-            self.application.open_view(v)
+                v = ConditionsView(self.measuring_run, postt, pret)
+                self.application.open_view(v)
+        except BaseException:
+            import traceback
+            self.warning('******** Exception trying to open conditions. Notify developer ********')
+            self.debug(traceback.format_exc())
+
     #===============================================================================
     # property get/set
     #===============================================================================

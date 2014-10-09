@@ -42,11 +42,11 @@ from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.identifier import convert_identifier, \
-    make_runid, get_analysis_type
+    make_runid
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
-from pychron.experiment.automated_run.condition import TruncationCondition, \
+from pychron.experiment.condition.condition import TruncationCondition, \
     ActionCondition, TerminationCondition, condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
@@ -99,7 +99,7 @@ class AutomatedRun(Loggable):
     runid = Property
     uuid = Str
     extract_device = Str
-    analysis_type = Property
+    # analysis_type = Property
     analysis_id = Long
     fits = List
     eqtime = Float
@@ -581,6 +581,7 @@ class AutomatedRun(Loggable):
             self.collector.set_truncated()
             self.truncated = True
             self.state = 'truncated'
+
     #===============================================================================
     #
     #===============================================================================
@@ -606,8 +607,6 @@ class AutomatedRun(Loggable):
 
     def start(self):
         self.set_integration_time(DEFAULT_INTEGRATION_TIME)
-        #add default terminations
-        self._add_default_conditions()
 
         if self.monitor is None:
             return self._start()
@@ -874,6 +873,8 @@ class AutomatedRun(Loggable):
 
     def do_measurement(self, script=None, use_post_on_fail=True):
         self.debug('do measurement')
+        self.debug('L#={} analysis type={}'.format(self.spec.labnumber,
+                                                   self.spec.analysis_type))
         if not self._alive:
             self.warning('run is not alive')
             return
@@ -1024,82 +1025,6 @@ anaylsis_type={}
     #===============================================================================
     # private
     #===============================================================================
-    #     def _plot_panel_closed(self):
-    #         if self.measuring:
-    #             from pychron.core.ui.thread import Thread as mThread
-    #             self._term_thread = mThread(target=self.cancel_run)
-    #             self._term_thread.start()
-
-    def _add_default_conditions(self):
-        """
-            load default conditions (truncations, actions, terminations)
-            from spectrometer/default_conditions.yaml
-        """
-        name=self.spec.default_conditions_name
-        if self.spec.use_default_conditions and name:
-            p = get_path(paths.default_conditions_dir, name, ('.yaml','.yml'))
-            if p is not None:
-                # clear the conditions for good measure.
-                # conditions should be cleared during teardown.
-                self.py_clear_conditions()
-
-                with open(p, 'r') as fp:
-                    yd=yaml.load(fp)
-                    cs=yd.get('terminations')
-                    self._add_default_terminations(cs)
-                    cs=yd.get('truncations')
-                    self._add_default_truncations(cs)
-                    cs=yd.get('actions')
-                    self._add_default_actions(cs)
-
-            else:
-                self.warning('no Default Conditions file. {}'.format(p))
-
-    def _add_default_truncations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx=condition_from_dict(ti, 'TruncationCondition')
-            self.truncation_conditions.append(cx)
-
-    def _add_default_actions(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx=condition_from_dict(ti, 'ActionCondition')
-            self.action_conditions.append(cx)
-
-    def _add_default_terminations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx=condition_from_dict(ti, 'TerminationCondition')
-            self.termination_conditions.append(cx)
-
-            # comp=ti.get('check', None)
-            # if not comp:
-            #     continue
-            #
-            # attr=ti.get('attr', '')
-            # start=ti.get('start', 30)
-            # freq = ti.get('frequency', 5)
-            # win = ti.get('window', 0)
-            # mapper = ti.get('mapper', '')
-
-            # self.py_add_termination(attr, comp, start,
-            #                         freq, win, mapper)
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:
@@ -1115,6 +1040,7 @@ anaylsis_type={}
             ln = self.spec.labnumber
             ln = convert_identifier(ln)
             if not self.persister.datahub.load_analysis_backend(ln, self.arar_age):
+                self.debug('failed load analysis backend')
                 return
 
         self.info('Start automated run {}'.format(self.runid))
@@ -1161,7 +1087,85 @@ anaylsis_type={}
         #setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
 
+        #setup default/queue conditions
+        # clear the conditions for good measure.
+        # conditions should be cleared during teardown.
+        self.py_clear_conditions()
+
+        #add default conditions
+        self._add_default_conditions()
+
+        #add queue conditions
+        self._add_queue_conditions()
+
         return True
+
+    def _add_default_conditions(self):
+        self.debug('add default conditions')
+        p = get_path(paths.spectrometer_dir, 'default_conditions', ('.yaml', '.yml'))
+        if p is not None:
+            self.info('adding default conditions from {}'.format(p))
+            self._add_conditions_from_file(p)
+        else:
+            self.warning('no Default Conditions file. {}'.format(p))
+
+    def _add_queue_conditions(self):
+        """
+            load queue global conditions (truncations, actions, terminations)
+        """
+        self.debug('Add queue conditions')
+        name = self.spec.queue_conditions_name
+        if self.spec.use_queue_conditions and name:
+            p = get_path(paths.queue_conditions_dir, name, ('.yaml', '.yml'))
+            if p is not None:
+                self.info('adding queue conditions from {}'.format(p))
+                self._add_conditions_from_file(p)
+
+            else:
+                self.warning('Invalid Conditions file. {}'.format(p))
+
+    def _add_conditions_from_file(self, p):
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+            cs = yd.get('terminations')
+            self._add_default_terminations(cs)
+            cs = yd.get('truncations')
+            self._add_default_truncations(cs)
+            cs = yd.get('actions')
+            self._add_default_actions(cs)
+
+    def _add_default_truncations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'TruncationCondition')
+            self.truncation_conditions.append(cx)
+
+    def _add_default_actions(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'ActionCondition')
+            self.action_conditions.append(cx)
+
+    def _add_default_terminations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'TerminationCondition')
+            self.termination_conditions.append(cx)
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1289,7 +1293,7 @@ anaylsis_type={}
             #
             #if not blanks:
             #    blanks = dict(Ar40=(0, 0), Ar39=(0, 0), Ar38=(0, 0), Ar37=(0, 0), Ar36=(0, 0))
-            pid,blanks = self.get_previous_blanks()
+            pid, blanks = self.get_previous_blanks()
 
             for iso, v in blanks.iteritems():
                 self.arar_age.set_blank(iso, v)
@@ -1316,7 +1320,7 @@ anaylsis_type={}
         t = self.spec.truncate_condition
         self.debug('adding truncate condition {}'.format(t))
         if t:
-            p = os.path.join(paths.truncation_dir, add_extension(t, '.yaml'))
+            p = os.path.join(paths.conditions_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract truncations from file. {}'.format(p))
                 with open(p, 'r') as fp:
@@ -1378,7 +1382,7 @@ anaylsis_type={}
                 info_func=self.info,
                 arar_age=self.arar_age)
 
-        an = AutomatedRunAnalysisView(analysis_type=self.analysis_type,
+        an = AutomatedRunAnalysisView(analysis_type=self.spec.analysis_type,
                                       analysis_id=self.runid)
         an.load(self)
 
@@ -1577,6 +1581,7 @@ anaylsis_type={}
         m = self.collector
 
         m.trait_set(
+            console_display=self.experiment_executor.console_display,
             plot_panel=self.plot_panel,
             arar_age=self.arar_age,
             measurement_script=script,
@@ -1593,7 +1598,7 @@ anaylsis_type={}
             data_generator=get_data,
             data_writer=data_writer,
             starttime=starttime,
-            refresh_age=self.analysis_type in ('unknown','cocktail'))
+            refresh_age=self.spec.analysis_type in ('unknown', 'cocktail'))
 
         #m.total_counts += ncounts
         if self.plot_panel:
@@ -1890,8 +1895,8 @@ anaylsis_type={}
                           self.spec.aliquot,
                           self.spec.step)
 
-    def _get_analysis_type(self):
-        return get_analysis_type(self.spec.labnumber)
+    # def _get_analysis_type(self):
+    #     return get_analysis_type(self.spec.labnumber)
 
     def _get_collector(self):
         return self.peak_hop_collector if self.is_peak_hop else self.multi_collector

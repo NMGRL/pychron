@@ -67,7 +67,7 @@ class OpenPyScriptAction(FileOpenAction):
     name = 'Open Script...'
     accelerator = 'Ctrl+Shift+O'
     image = icon('document-open')
-    task_id = 'pychron.pyscript'
+    task_id = 'pychron.pyscript.task'
     # test_path = '/Users/ross/Pychrondata_dev/scripts/extraction/jan_pause.py'
     test_path = '/Users/ross/Pychrondata_dev/scripts/measurement/jan_unknown.py'
 
@@ -77,7 +77,7 @@ class NewPyScriptAction(NewAction):
     """
     description = 'New pyscript'
     name = 'New Script'
-    task_id = 'pychron.pyscript'
+    task_id = 'pychron.pyscript/task'
     #    accelerator = 'Shift+Ctrl+O'
     #     image = icon('script-new')
     # def perform(self, event):

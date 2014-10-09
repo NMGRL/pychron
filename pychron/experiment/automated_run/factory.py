@@ -947,7 +947,7 @@ class AutomatedRunFactory(PersistenceLoggable):
         return ['Step Heat Template', 'None', ''] + temps
 
     def _get_truncations(self):
-        p = paths.truncation_dir
+        p = paths.conditions_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
         return ['', ] + temps
@@ -1046,7 +1046,7 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     def _new_truncation_button_fired(self):
 
-        p = os.path.join(paths.truncation_dir,
+        p = os.path.join(paths.conditions_dir,
                          add_extension(self.truncation_path, '.yaml'))
 
         e = ActionEditor()
@@ -1065,7 +1065,7 @@ class AutomatedRunFactory(PersistenceLoggable):
             self.truncation_path = d
 
     def _edit_truncation_button_fired(self):
-        p = os.path.join(paths.truncation_dir,
+        p = os.path.join(paths.conditions_dir,
                          add_extension(self.truncation_path, '.yaml'))
 
         if os.path.isfile(p):
@@ -1183,7 +1183,7 @@ post_equilibration_script:name''')
                 self.labnumber = ln
                 self._load_extraction_info()
 
-                self._labnumber = NULL_STR
+                # self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:

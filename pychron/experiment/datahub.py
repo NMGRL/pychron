@@ -131,7 +131,7 @@ class Datahub(Loggable):
                     self.information_dialog('Irradiation={} Level={} has '
                                             'no Correction/Production Ratio set defined'.format(an.irradiation,
                                                                                                 an.irradiation_level))
-                    return False
+                    return
 
                 arar_age.trait_set(j=an.j,
                                    production_ratios=an.production_ratios,
@@ -141,6 +141,7 @@ class Datahub(Loggable):
                                    timestamp=now)
 
                 arar_age.calculate_decay_factors()
+            return True
 
     def add_experiment(self, exp):
         db = self.mainstore.db

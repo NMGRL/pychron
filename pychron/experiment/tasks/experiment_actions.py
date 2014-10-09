@@ -114,15 +114,21 @@ class UndoAction(TaskAction):
     accelerator = 'Ctrl+Z'
 
 
-class DefaultConditionsAction(Action):
-    name = 'Edit Default Conditions'
+class QueueConditionsAction(Action):
+    name = 'Edit Queue Conditions'
     def perform(self, event):
         task=event.task
-        if hasattr(task, 'edit_default_conditions'):
-            task.edit_default_conditions()
+        if hasattr(task, 'edit_queue_conditions'):
+            task.edit_queue_conditions()
         else:
-            from pychron.experiment.conditions_edit_view import edit_conditions
-            edit_conditions(None, app=task.application)
+            from pychron.experiment.condition.conditions_edit_view import edit_conditions
+
+            dnames=None
+            spec=task.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            if spec:
+                dnames=spec.spectrometer.detector_names
+
+            edit_conditions(None, detectors=dnames, app=task.application)
 
 
 class QueueAction(ExperimentAction):

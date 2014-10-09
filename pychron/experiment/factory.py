@@ -80,7 +80,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'load_name',
                   'delay_before_analyses','delay_between_analyses',
-                  'use_default_conditions','default_conditions_name'):
+                  'use_queue_conditions','queue_conditions_name'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
@@ -132,6 +132,10 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
+
+        print new_runs, freq
+
+
         if new_runs:
             aruns = q.automated_runs
             if q.selected:
@@ -183,7 +187,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, email]''')
+extract_device, delay_+, tray, username, load_name, email, use_queue_conditions, queue_conditions_name]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name,new))
         if name == 'mass_spectrometer':
@@ -211,7 +215,7 @@ extract_device, delay_+, tray, username, load_name, email]''')
         self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self._mass_spectrometer))
         self.extract_device = ed
         self.run_factory = self._run_factory_factory()
-        #         self.run_factory.update_templates_needed = True
+
         self.run_factory.setup_files()
         self.run_factory.set_mass_spectrometer(self._mass_spectrometer)
 

@@ -38,7 +38,7 @@ class PyScriptPlugin(BaseTaskPlugin):
 
         exts = [
             TaskExtension(
-                task_id='pychron.pyscript',
+                task_id='pychron.pyscript.task',
                 actions=[SchemaAddition(
                     id='Edit',
                     factory=lambda: SMenu(id='Edit', name='Edit'),
