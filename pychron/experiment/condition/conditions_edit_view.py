@@ -77,6 +77,7 @@ class ConditionGroup(HasTraits):
     secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
     secondary_value=Float
     use_between = Bool
+    use_invert = Bool
     # use_max = Bool
     # use_min = Bool
     # use_current = Bool
@@ -156,7 +157,7 @@ class ConditionGroup(HasTraits):
             cs.append(d)
         return cs
 
-    @on_trait_change('function, modifier, comparator, value, attr, '
+    @on_trait_change('function, modifier, comparator, value, attr, use_invert',
                      'use_between, secondary_comparator, secondary_value')
     def _refresh_comp(self, name, new):
         if not self._no_update:
@@ -193,6 +194,9 @@ class ConditionGroup(HasTraits):
                 else:
                     comp = '{}'.format(attr)
 
+            if self.use_invert:
+                comp='not {}'.format(comp)
+
             self.selected.comp=comp
 
     @on_trait_change('start_count, frequency, attr, window, mapper')
@@ -224,8 +228,19 @@ class ConditionGroup(HasTraits):
                 # extract comparator
                 m = COMP_REGEX.findall(new.comp)
                 if m:
-                    self.comparator = c = m[0]
+                    m1=m[0]
+                    if len(m)==2:
+                        self.use_between=True
+                        self.secondary_comparator = c =m[0]
+                        self.secondary_value = float(new.comp.split(c)[0])
+                        m1=m[1]
+
+                    self.comparator = c = m1
                     self.value = float(new.comp.split(c)[-1])
+
+                # extract use invert
+                if new.comp.startswith('not '):
+                    self.use_invert=True
 
     def _get_modifier_enabled(self):
         return not self.function
@@ -256,9 +271,10 @@ class ConditionGroup(HasTraits):
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator'),
                                  Item('value'),
-                                 Item('use_between'),
+                                 Item('use_between', label='Between'),
                                  UItem('secondary_value', enabled_when='use_between'),
                                  UItem('secondary_comparator', enabled_when='use_between'),
+                                 Item('use_invert', label='Invert'),
                                  enabled_when='attr'),
                           HGroup(Item('start_count',
                                       tooltip='Number of counts to wait until performing check',
