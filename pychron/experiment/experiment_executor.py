@@ -1294,7 +1294,7 @@ Use Last "blank_{}"= {}
         selected = False
         with db.session_ctx():
             if last:
-                dbr = db.get_blank(kind, ms, ed, last)
+                dbr = db.retrieve_blank(kind, ms, ed, last)
 
             if dbr is None:
                 dbr=self._select_blank(db, ms)

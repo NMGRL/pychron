@@ -76,6 +76,8 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
     proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
     proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
+    proc_BlanksSetTable
 
 from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
@@ -1668,6 +1670,31 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
 
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
+
+    def retrieve_blank(self, kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.filter(gen_ExtractionDeviceTable.name == ed)
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return self._query_one(q)
+
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
     def get_blanks_set(self, value, key='set_id'):
         return self._retrieve_item(proc_BlanksSetTable, value, key=key)
 
