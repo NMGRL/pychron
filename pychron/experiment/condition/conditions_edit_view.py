@@ -19,7 +19,7 @@ set_qt()
 # ============= enthought library imports =======================
 from traitsui.menu import Action
 from traits.api import HasTraits, List, Instance, Any, \
-    Enum, Float, on_trait_change, Str, Int, Property, Button
+    Enum, Float, on_trait_change, Str, Int, Property, Button, Bool
 
 from pyface.file_dialog import FileDialog
 from traitsui.api import View, Tabbed, Group, UItem, \
@@ -67,12 +67,16 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
 class ConditionGroup(HasTraits):
     editable=True
 
+
     conditions = List
     selected = Any
 
     attr = Str
     available_attrs = List
     comparator = Enum('', '>', '<', '>=', '<=', '==')
+    secondary_comparator = Enum('', '>', '<', '>=', '<=', '==')
+    secondary_value=Float
+    use_between = Bool
     # use_max = Bool
     # use_min = Bool
     # use_current = Bool
@@ -152,7 +156,8 @@ class ConditionGroup(HasTraits):
             cs.append(d)
         return cs
 
-    @on_trait_change('function, modifier, comparator, value, attr')
+    @on_trait_change('function, modifier, comparator, value, attr, '
+                     'use_between, secondary_comparator, secondary_value')
     def _refresh_comp(self, name, new):
         if not self._no_update:
 
@@ -175,10 +180,20 @@ class ConditionGroup(HasTraits):
             except KeyError:
                 pass
 
-            if self.comparator:
-                self.selected.comp = '{}{}{}'.format(attr, self.comparator, self.value)
+            if self.use_between:
+                if self.comparator and self.secondary_comparator:
+                    comp = '{}{}{}{}{}'.format(self.secondary_value, self.secondary_comparator,
+                                               attr,
+                                               self.comparator, self.value)
+                else:
+                    comp = '{}'.format(attr)
             else:
-                self.selected.comp = '{}'.format(attr)
+                if self.comparator:
+                    comp = '{}{}{}'.format(attr, self.comparator, self.value)
+                else:
+                    comp = '{}'.format(attr)
+
+            self.selected.comp=comp
 
     @on_trait_change('start_count, frequency, attr, window, mapper')
     def _update_selected(self, name, new):
@@ -239,8 +254,12 @@ class ConditionGroup(HasTraits):
                                       enabled_when='modifier_enabled',
                                       editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                                 'Baseline', 'BaselineCorrected']))),
-                          HGroup(UItem('comparator', enabled_when='attr'),
-                                 Item('value', enabled_when='attr')),
+                          HGroup(UItem('comparator'),
+                                 Item('value'),
+                                 Item('use_between'),
+                                 UItem('secondary_value', enabled_when='use_between'),
+                                 UItem('secondary_comparator', enabled_when='use_between'),
+                                 enabled_when='attr'),
                           HGroup(Item('start_count',
                                       tooltip='Number of counts to wait until performing check',
                                       label='Start')),
@@ -441,7 +460,7 @@ def edit_conditions(name, detectors=None, app=None):
 
 if __name__ == '__main__':
     c = ConditionsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
-    c.open('default_conditions')
+    c.open('normal')
     c.configure_traits()
     c.dump()
     # edit_conditions(None)

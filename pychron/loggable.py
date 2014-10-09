@@ -170,7 +170,7 @@ class Loggable(HasTraits):
 
         self.info(msg)
 
-    def warning(self, msg, decorate=True):
+    def warning(self, msg):
         """
         """
 
@@ -179,17 +179,12 @@ class Loggable(HasTraits):
                 from pychron.displays.gdisplays import gWarningDisplay
 
                 if globalv.show_warnings:
-                    #if not gWarningDisplay.opened and not gWarningDisplay.was_closed:
-                    #invoke_in_main_thread(gWarningDisplay.edit_traits)
-                    #gWarningDisplay.opened = True
                     gWarningDisplay.add_text(
                         '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
 
-            # if decorate:
-            #     msg = '****** {}'.format(msg)
             self._log_('warning', msg)
 
-    def info(self, msg, decorate=True, dolater=False, color=None):
+    def info(self, msg, dolater=False, color=None):
         """
 
         """
@@ -198,16 +193,9 @@ class Loggable(HasTraits):
                 from pychron.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:
-                    #                     if not gLoggerDisplay.opened and not gLoggerDisplay.was_closed:
-                    #                         invoke_in_main_thread(gLoggerDisplay.edit_traits)
-
-
                     args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
                                                                           msg))
                     gLoggerDisplay.add_text(args, color=color)
-
-            # if decorate:
-            #     msg = '====== {}'.format(msg)
 
             self._log_('info', msg)
 
@@ -218,15 +206,12 @@ class Loggable(HasTraits):
         gWarningDisplay.close_ui()
         gMessageDisplay.close_ui()
 
-    def debug(self, msg, decorate=True):
-        # '''
-        # '''
-        #
-        # if decorate:
-        #     msg = '++++++ {}'.format(msg)
+    def debug_exception(self):
+        import traceback
+        self.debug(traceback.format_exc())
 
+    def debug(self, msg):
         self._log_('debug', msg)
-
 
     def _log_(self, func, msg):
 
