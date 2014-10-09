@@ -21,7 +21,7 @@ from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Pr
 from traitsui.api import View, Item, HGroup
 
 # ============= standard library imports ========================
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from cStringIO import StringIO
 import hashlib
 from sqlalchemy import Date, distinct
@@ -1362,16 +1362,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier == lns)
 
             if low_post:
-                if isinstance(low_post, date):
-                    q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
-                else:
-                    q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
-            if high_post:
-                if isinstance(low_post, date):
-                    q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
-                else:
-                    q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
+                q = q.filter(self._get_post_filter(low_post, '__ge__'))
 
+            if high_post:
+                q = q.filter(self._get_post_filter(high_post, '__le__'))
 
             if omit_key:
                 q = q.filter(not_(getattr(proc_TagTable, omit_key)))
@@ -2230,8 +2224,9 @@ class IsotopeAdapter(DatabaseAdapter):
     #===============================================================================
     def _get_post_filter(self, post, comp, cast=True):
         t = meas_AnalysisTable.analysis_timestamp
-        if cast:
+        if cast or isinstance(post, date):
             t = sql_cast(t, Date)
+
         return getattr(t, comp)(post)
 
     def _irrad_level(self, q, irrad, level):
