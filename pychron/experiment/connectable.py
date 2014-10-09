@@ -25,6 +25,7 @@ class Connectable(HasTraits):
     port = Int
     kind = Str
     connected = Bool
+    protocol = Str
 
     # can this connection be used by the AutomatedRunMonitor
     monitorable = False

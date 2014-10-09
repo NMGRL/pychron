@@ -1039,9 +1039,14 @@ class ExperimentExecutor(Consoleable):
         """
         if exp.tray:
             ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
-            if ed:
-                ed_tray = ed.get_tray()
-                return ed_tray != exp.tray
+            if ed and ed.connected:
+                name=convert_extract_device(ed.name)
+                man = self.application.get_service(ed.protocol, 'name=="{}"'.format(name))
+                self.debug('Get service {}. name=="{}"'.format(ed.protocol, name))
+                if man:
+                    self.debug('{} service found {}'.format(name, man))
+                    ed_tray = man.get_tray()
+                    return ed_tray != exp.tray
 
     def _pre_run_check(self):
         """
@@ -1360,13 +1365,15 @@ Use Last "blank_{}"= {}
         if exp.extract_device and exp.extract_device not in (NULL_STR, 'Extract Device'):
             extract_device = convert_extract_device(exp.extract_device)
             ed_connectable = Connectable(name=exp.extract_device)
-            self.connectables.append(ed_connectable)
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
+                ed_connectable.protocol=ILaserManager
                 if man is None:
+                    ed_connectable.protocol=IPipetteManager
                     man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
+            self.connectables.append(ed_connectable)
             if not man:
                 nonfound.append(extract_device)
             else:
