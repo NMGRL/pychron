@@ -4,6 +4,29 @@ Experiments
 This section describes how to write an experiment with Pychron. A Pychron ``experiment``
 in Mass Spec parlance is a ``Multiple Runs Sequence``.
 
+Conditions
+~~~~~~~~~~~~~~~
+Conditions are conditional actions that are executed are various times throughout an automated analysis
+Multiple types of conditions exist
+
+#. Truncation - truncate the current run and continue experiment.
+#. Termination - immediately terminate run and stop experiment.
+#. Action - do a specified action.
+#. QueueAction - used to run blanks, airs, etc. based on a condition
+
+There are also multiple levels at which conditions may be specified.
+
+#. System - use these conditions for every experiment and run.
+#. Queue - use these conditions for every run in the queue.
+#. Run - use these conditions for this run.
+
+System conditions are specified in ``spectrometer/default_conditions.yml``
+Queue condition files are located in ``queue_conditions``
+Run condition file are located in ``scripts/conditions``
+
+.. note:: QueueActions may only be specified at the Queue level
+
+
 Position Rules
 ~~~~~~~~~~~~~~~
 

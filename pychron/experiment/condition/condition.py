@@ -54,6 +54,8 @@ PARENTHESES_REGEX = re.compile(r'\([\w\d\s]+\)')
 
 COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 
+#todo: add between ability
+
 
 def condition_from_dict(cd, klass):
     if isinstance(klass, str):
@@ -82,11 +84,34 @@ def remove_attr(s):
     except IndexError:
         return ''
 
-
-class AutomatedRunCondition(Loggable):
+class BaseCondition(Loggable):
     attr = Str
     comp = Str
 
+    def to_string(self):
+        raise NotImplementedError
+
+    def check(self, run, data, cnt):
+        """
+             check condition if cnt is greater than start count
+             cnt-start count is greater than 0
+             and cnt-start count is divisable by frequency
+
+             data: 2-tuple. (keys, signals) where keys==detector names, signals== measured intensities
+
+             return True if check passes. e.i. Write checks to trip on success. to terminate
+             if Ar36 intensity is less than x use Ar36<x
+        """
+        if self._should_check(run, data, cnt):
+            return self._check(run, data)
+
+    def _check(self, run, data):
+        raise NotImplementedError
+
+    def _should_check(self, run, data, cnt):
+        return True
+
+class AutomatedRunCondition(BaseCondition):
     start_count = Int
     frequency = Int
     message = Str
@@ -98,8 +123,8 @@ class AutomatedRunCondition(Loggable):
     _key = ''
     _mapper_key = ''
 
-    value = Float
     active = True
+    value = Float
 
     def __init__(self, attr, comp,
                  start_count=0,
@@ -133,14 +158,7 @@ class AutomatedRunCondition(Loggable):
         s = '{} {}'.format(self.comp, self.message)
         return s
 
-    def check(self, obj, data, cnt):
-        """
-             check condition if cnt is greater than start count
-             cnt-start count is greater than 0
-             and cnt-start count is divisable by frequency
-
-             data: 2-tuple. (keys, signals) where keys==detector names, signals== measured intensities
-        """
+    def _should_check(self, run, data, cnt):
         d = False
         if isinstance(cnt, bool):
             d = True
@@ -150,8 +168,7 @@ class AutomatedRunCondition(Loggable):
         c = (cnt - self.start_count) % self.frequency == 0
         cnt_flag = a and b and c
 
-        if self.active and (cnt_flag or d):
-            return self._check(obj, data)
+        return self.active and (cnt_flag or d)
 
     def _check(self, obj, data):
         attr = self.attr
@@ -187,15 +204,16 @@ class AutomatedRunCondition(Loggable):
                 self.active = False
 
         self.debug('testing {} (eval={}) key={} attr={} value={}'.format(self.comp, comp, self._key, self.attr, v))
-        vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
-        vv = self._map_value(vv)
-        self.value = vv
+        if v is not None:
+            vv = std_dev(v) if STD_REGEX.match(comp) else nominal_value(v)
+            vv = self._map_value(vv)
+            self.value = vv
 
-        self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
-                                                                                         self._key, self.attr, v, vv))
-        if eval(comp, {self._key: vv}):
-            self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
-            return True
+            self.debug('testing {} (eval={}) key={} attr={} value={} mapped_value={}'.format(self.comp, comp,
+                                                                                             self._key, self.attr, v, vv))
+            if eval(comp, {self._key: vv}):
+                self.message = 'attr={}, value= {} {} is True'.format(self.attr, vv, self.comp)
+                return True
 
     def _map_value(self, vv):
         if self.mapper and self._mapper_key:

@@ -46,7 +46,7 @@ from pychron.experiment.utilities.identifier import convert_identifier, \
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
-from pychron.experiment.automated_run.condition import TruncationCondition, \
+from pychron.experiment.condition.condition import TruncationCondition, \
     ActionCondition, TerminationCondition, condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
@@ -607,8 +607,6 @@ class AutomatedRun(Loggable):
 
     def start(self):
         self.set_integration_time(DEFAULT_INTEGRATION_TIME)
-        #add default terminations
-        self._add_default_conditions()
 
         if self.monitor is None:
             return self._start()
@@ -1027,72 +1025,6 @@ anaylsis_type={}
     #===============================================================================
     # private
     #===============================================================================
-    #     def _plot_panel_closed(self):
-    #         if self.measuring:
-    #             from pychron.core.ui.thread import Thread as mThread
-    #             self._term_thread = mThread(target=self.cancel_run)
-    #             self._term_thread.start()
-
-    def _add_default_conditions(self):
-        """
-            load default conditions (truncations, actions, terminations)
-            from spectrometer/default_conditions.yaml
-        """
-        self.debug('Add default conditions')
-        name = self.spec.default_conditions_name
-        if self.spec.use_default_conditions and name:
-            p = get_path(paths.default_conditions_dir, name, ('.yaml', '.yml'))
-            if p is not None:
-                self.info('adding default conditions from {}'.format(p))
-                # clear the conditions for good measure.
-                # conditions should be cleared during teardown.
-                self.py_clear_conditions()
-
-                with open(p, 'r') as fp:
-                    yd = yaml.load(fp)
-                    cs = yd.get('terminations')
-                    self._add_default_terminations(cs)
-                    cs = yd.get('truncations')
-                    self._add_default_truncations(cs)
-                    cs = yd.get('actions')
-                    self._add_default_actions(cs)
-
-            else:
-                self.warning('no Default Conditions file. {}'.format(p))
-
-    def _add_default_truncations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx = condition_from_dict(ti, 'TruncationCondition')
-            self.truncation_conditions.append(cx)
-
-    def _add_default_actions(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx = condition_from_dict(ti, 'ActionCondition')
-            self.action_conditions.append(cx)
-
-    def _add_default_terminations(self, yl):
-        """
-            yl: list of dicts
-        """
-        if not yl:
-            return
-
-        for ti in yl:
-            cx = condition_from_dict(ti, 'TerminationCondition')
-            self.termination_conditions.append(cx)
-
     def _start(self):
         if self._use_arar_age():
             if self.arar_age is None:
@@ -1155,7 +1087,85 @@ anaylsis_type={}
         #setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
 
+        #setup default/queue conditions
+        # clear the conditions for good measure.
+        # conditions should be cleared during teardown.
+        self.py_clear_conditions()
+
+        #add default conditions
+        self._add_default_conditions()
+
+        #add queue conditions
+        self._add_queue_conditions()
+
         return True
+
+    def _add_default_conditions(self):
+        self.debug('add default conditions')
+        p = get_path(paths.spectrometer_dir, 'default_conditions', ('.yaml', '.yml'))
+        if p is not None:
+            self.info('adding default conditions from {}'.format(p))
+            self._add_conditions_from_file(p)
+        else:
+            self.warning('no Default Conditions file. {}'.format(p))
+
+    def _add_queue_conditions(self):
+        """
+            load queue global conditions (truncations, actions, terminations)
+        """
+        self.debug('Add queue conditions')
+        name = self.spec.queue_conditions_name
+        if self.spec.use_queue_conditions and name:
+            p = get_path(paths.queue_conditions_dir, name, ('.yaml', '.yml'))
+            if p is not None:
+                self.info('adding queue conditions from {}'.format(p))
+                self._add_conditions_from_file(p)
+
+            else:
+                self.warning('Invalid Conditions file. {}'.format(p))
+
+    def _add_conditions_from_file(self, p):
+        with open(p, 'r') as fp:
+            yd = yaml.load(fp)
+            cs = yd.get('terminations')
+            self._add_default_terminations(cs)
+            cs = yd.get('truncations')
+            self._add_default_truncations(cs)
+            cs = yd.get('actions')
+            self._add_default_actions(cs)
+
+    def _add_default_truncations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'TruncationCondition')
+            self.truncation_conditions.append(cx)
+
+    def _add_default_actions(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'ActionCondition')
+            self.action_conditions.append(cx)
+
+    def _add_default_terminations(self, yl):
+        """
+            yl: list of dicts
+        """
+        if not yl:
+            return
+
+        for ti in yl:
+            cx = condition_from_dict(ti, 'TerminationCondition')
+            self.termination_conditions.append(cx)
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1310,7 +1320,7 @@ anaylsis_type={}
         t = self.spec.truncate_condition
         self.debug('adding truncate condition {}'.format(t))
         if t:
-            p = os.path.join(paths.truncation_dir, add_extension(t, '.yaml'))
+            p = os.path.join(paths.conditions_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract truncations from file. {}'.format(p))
                 with open(p, 'r') as fp:

@@ -15,54 +15,48 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, Str, Float, Int
-from traitsui.api import View, Item
+from traits.api import Str, Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.experiment.condition.condition import BaseCondition
 
-class ExperimentQueueAction(HasTraits):
+
+class ExperimentQueueAction(BaseCondition):
     analysis_type = Str
-    criterion = Str
-    comparator = Str
-    threshold_value = Float
     action = Str
 
     nrepeat = Int(1)
     count = Int(0)
     def __init__(self, aparams, *args, **kw):
         super(ExperimentQueueAction, self).__init__(*args, **kw)
-
         self._parse(aparams)
 
     def _parse(self, params):
-
-#         print params, type(params)
         params = eval(params)
         n = len(params)
         nr = 1
-        if n == 6:
-            at, a, c, v, ac, nr = params
-        elif n == 5:
-            at, a, c, v, ac = params
+        if n == 5:
+            at, a, c, ac, nr = params
+        elif n == 4:
+            at, a, c, ac = params
 
         self.analysis_type = at
-        self.attribute = a
-        self.comparator = c
-        self.threshold_value = float(v)
+        self.attr = a
+        self.comp = c
         self.action = ac
         self.nrepeat = int(nr)
 
-    def check_run(self, run):
-        if run.spec.analysis_type == self.analysis_type:
-            if hasattr(run, self.attribute):
+    def to_string(self):
+        return '{}{}{}'.format(self.attr, self.comp)
 
-                run_value = getattr(run, self.attribute)
-                comp = self.comparator
-                tvalue = self.threshold_value
+    def _should_check(self, run, data, cnt):
+        if run.spec.analysis_type==self.analysis_type:
+            return hasattr(run, self.attr)
 
-                cmd = '{}{}{}'.format(run_value, comp, tvalue)
-                if eval(cmd):
-                    return True
-
+    def _check(self, run, data):
+        run_value = getattr(run, self.attr)
+        comp = self.comparator
+        cmd = '{}{}'.format(run_value, comp)
+        return eval(cmd)
 
 #============= EOF =============================================

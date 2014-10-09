@@ -1,6 +1,6 @@
 from numpy import linspace
 
-from pychron.experiment.automated_run.condition import condition_from_dict
+from pychron.experiment.condition.condition import condition_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.isotope import Isotope
 
@@ -79,10 +79,16 @@ class ConditionsTestCase(unittest.TestCase):
         ret = c.check(self.arar_age, ([],[]), 1000)
         self.assertTrue(ret)
 
-    def test_Active(self):
-        d={'check':'CDD.active', 'attr':'CDD'}
+    def test_Inactive1(self):
+        d={'check':'CDD.inactive', 'attr':'CDD'}
         c=condition_from_dict(d, 'TerminationCondition')
         ret = c.check(self.arar_age, (['H1','AX','CDD'],[]), 1000)
+        self.assertIsNone(ret)
+
+    def test_Inactive2(self):
+        d={'check':'CDD.inactive', 'attr':'CDD'}
+        c=condition_from_dict(d, 'TerminationCondition')
+        ret = c.check(self.arar_age, (['H1','AX'],[]), 1000)
         self.assertTrue(ret)
 
 if __name__ == '__main__':

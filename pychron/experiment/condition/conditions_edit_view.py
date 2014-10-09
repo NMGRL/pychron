@@ -17,22 +17,22 @@ from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
-from pyface.file_dialog import FileDialog
+from traitsui.menu import Action
 from traits.api import HasTraits, List, Instance, Any, \
-    Enum, Float, on_trait_change, Str, Int, Property
+    Enum, Float, on_trait_change, Str, Int, Property, Button
 
-from traitsui.tabular_adapter import TabularAdapter
+from pyface.file_dialog import FileDialog
 from traitsui.api import View, Tabbed, Group, UItem, \
     TabularEditor, VGroup, EnumEditor, Item, HGroup, spring, Label, Handler
+from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
-import re
 import os
-# ============= local library imports  ==========================
-
 import yaml
+# ============= local library imports  ==========================
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
-from pychron.experiment.automated_run.condition import condition_from_dict, MAX_REGEX, STD_REGEX, \
+from pychron.experiment.condition.condition import condition_from_dict, MAX_REGEX, STD_REGEX, \
     CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX, BASELINE_REGEX, \
     BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX
 from pychron.paths import paths
@@ -60,16 +60,18 @@ class ConditionsAdapter(TabularAdapter):
 
 FUNC_DICT = {'Slope': 'slope({})', 'Max': 'max({})', 'Min': 'min({})', 'Averge': 'average({})'}
 MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
-            'Inactive':'{}.inactive',
+            'Inactive': '{}.inactive',
             'BaselineCorrected': '{}.bs_corrected'}
 
 
 class ConditionGroup(HasTraits):
+    editable=True
+
     conditions = List
     selected = Any
 
     attr = Str
-    available_attrs=List
+    available_attrs = List
     comparator = Enum('', '>', '<', '>=', '<=', '==')
     # use_max = Bool
     # use_min = Bool
@@ -87,13 +89,53 @@ class ConditionGroup(HasTraits):
     frequency = Int
     _no_update = False
 
+    add_button = Button
+    delete_button = Button
+
     dump_attrs = [('attr', ''), ('frequency', ''),
                   ('window', ''), ('mapper', ''),
                   ('start', 'start_count'),
                   ('check', 'comp')]
+    tabular_adapter_klass = ConditionsAdapter
 
-    def _get_modifier_enabled(self):
-        return not self.function
+    _condition_klass=None
+    def _add_button_fired(self):
+        if self.selected:
+            idx=self.conditions.index(self.selected)
+
+            k=self.selected.clone_traits()
+            self.conditions.insert(idx, k)
+        else:
+            k=self._condition_klass('','')
+            self.conditions.append()
+
+    def _delete_button_fired(self):
+        idx=self.conditions.index(self.selected)
+        self.conditions.remove(self.selected)
+        if not self.conditions:
+            sel=self._condition_klass('','')
+        else:
+            sel = self.conditions[idx-1]
+        self.selected=sel
+
+    def __init__(self, conditions, klass, *args, **kw):
+        if not klass:
+            raise NotImplementedError
+
+        if conditions:
+            for ci in conditions:
+                cx = condition_from_dict(ci, klass)
+                if cx:
+                    self.conditions.append(cx)
+
+            self.selected = self.conditions[0]
+        else:
+            self.selected = klass('', '')
+            self.conditions=[self.selected]
+
+        self._condition_klass= klass
+        super(ConditionGroup, self).__init__(*args, **kw)
+
 
     def dump(self):
         cs = []
@@ -157,7 +199,7 @@ class ConditionGroup(HasTraits):
 
                 for r, a in ((CP_REGEX, 'Current'),
                              (STD_REGEX, 'StdDev'),
-                             (ACTIVE_REGEX, 'Active'),
+                             (ACTIVE_REGEX, 'Inactive'),
                              (BASELINECOR_REGEX, 'BaselineCorrected'),
                              (BASELINE_REGEX, 'Baseline')):
                     if r.findall(new.comp):
@@ -170,23 +212,24 @@ class ConditionGroup(HasTraits):
                     self.comparator = c = m[0]
                     self.value = float(new.comp.split(c)[-1])
 
-    def __init__(self, conditions, klass, *args, **kw):
-        if not klass:
-            raise NotImplementedError
+    def _get_modifier_enabled(self):
+        return not self.function
 
-        if conditions:
-            for ci in conditions:
-                cx = condition_from_dict(ci, klass)
-                if cx:
-                    self.conditions.append(cx)
+    def _get_tool_group(self):
+        g=HGroup(icon_button_editor('add_button', 'add'),
+                 icon_button_editor('delete_button', 'delete'))
+        return g
 
-            self.selected = self.conditions[0]
-        else:
-            self.selected = klass('', '')
+    def _get_conditions_grp(self):
+        item = UItem('conditions',
+                     editor=TabularEditor(adapter=self.tabular_adapter_klass(),
+                                          editable=False,
+                                          auto_update=True,
+                                          auto_resize=True,
+                                          selected='selected'))
+        return item
 
-        super(ConditionGroup, self).__init__(*args, **kw)
-
-    def traits_view(self):
+    def _get_edit_group(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
@@ -194,7 +237,7 @@ class ConditionGroup(HasTraits):
                                       editor=EnumEditor(values=['', 'Average', 'Max', 'Min', 'Slope'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Active',
+                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr')),
@@ -203,14 +246,15 @@ class ConditionGroup(HasTraits):
                                       label='Start')),
                           Item('frequency',
                                tooltip='Number of counts between each check'))
+        return edit_grp
 
-        v = View(UItem('conditions',
-                       editor=TabularEditor(adapter=ConditionsAdapter(),
-                                            editable=False,
-                                            auto_update=True,
-                                            auto_resize=True,
-                                            selected='selected')),
-                 edit_grp)
+    def traits_view(self):
+        if self.editable:
+            v = View(self._get_conditions_grp(),
+                     self._get_tool_group(),
+                     self._get_edit_group())
+        else:
+            v=View(self._get_conditions_grp())
         return v
 
 
@@ -219,96 +263,58 @@ class PostRunGroup(ConditionGroup):
                   ('window', ''),
                   ('mapper', ''),
                   ('check', 'comp')]
+    tabular_adapter_klass = PRConditionsAdapter
 
-    def traits_view(self):
+    def _get_edit_group(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
                           HGroup(UItem('attr',
                                        editor=EnumEditor(name='available_attrs')),
                                  Item('function',
-                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope'])),
+                                      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
                                  Item('modifier',
                                       enabled_when='modifier_enabled',
-                                      editor=EnumEditor(values=['', 'StdDev', 'Current',
+                                      editor=EnumEditor(values=['', 'StdDev', 'Current', 'Inactive',
                                                                 'Baseline', 'BaselineCorrected']))),
                           HGroup(UItem('comparator', enabled_when='attr'),
                                  Item('value', enabled_when='attr and comparator')))
+        return edit_grp
 
-        v = View(UItem('conditions',
-                       editor=TabularEditor(adapter=PRConditionsAdapter(),
-                                            editable=False,
-                                            auto_update=True,
-                                            auto_resize=True,
-                                            selected='selected')),
-                 edit_grp)
-        return v
+
+class PreRunGroup(ConditionGroup):
+    dump_attrs = [('attr', ''), ('check', 'comp')]
+    tabular_adapter_klass = PRConditionsAdapter
+    # def traits_view(self):
+    def _get_edit_group(self):
+        edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
+                          HGroup(UItem('attr',
+                                       editor=EnumEditor(name='available_attrs')),
+                                 # Item('function',
+                                 #      editor=EnumEditor(values=['', 'Max', 'Min', 'Slope', 'Average'])),
+                                 Item('modifier',
+                                      enabled_when='modifier_enabled',
+                                      editor=EnumEditor(values=['', 'Inactive']))),
+                          # HGroup(UItem('comparator', enabled_when='attr'),
+                          #        Item('value', enabled_when='attr and comparator'))
+                        )
+        return edit_grp
 
 
 class CEHandler(Handler):
     def object_path_changed(self, info):
-        info.ui.title += ' - [{}]'.format(info.object.name)
+        info.ui.title = 'Edit Default Conditions - [{}]'.format(info.object.name)
 
+    def save_as(self, info):
+        dlg=FileDialog(default_directory=paths.queue_conditions_dir, action='save as')
+        if dlg.open():
+            if dlg.path:
+                info.object.dump(dlg.path)
 
-class ConditionsEditView(HasTraits):
+class ConditionsViewable(HasTraits):
     actions_group = Instance(ConditionGroup)
     terminations_group = Instance(ConditionGroup)
     truncations_group = Instance(ConditionGroup)
     post_run_terminations_group = Instance(ConditionGroup)
-    path = Str
-
-    def __init__(self, detectors=None, *args, **kw):
-        self.available_attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                                'kca', 'kcl']
-        if detectors:
-            self.available_attrs.extend(detectors)
-
-        super(ConditionsEditView, self).__init__(*args, **kw)
-
-    @property
-    def name(self):
-        return os.path.relpath(self.path, paths.default_conditions_dir)
-
-    def open(self, name):
-        self.load(name)
-
-    def load(self, name):
-        root = paths.default_conditions_dir
-        p = get_path(root, name, ('.yaml', '.yml'))
-        if p:
-            self.path = p
-            with open(p, 'r') as fp:
-                yd = yaml.load(fp)
-                actions = yd['actions']
-                if actions:
-                    self.actions_group = ConditionGroup(actions, ActionCondition, available_attrs=self.available_attrs)
-
-                truncs = yd['truncations']
-                if truncs:
-                    self.truncations_group = ConditionGroup(truncs, TruncationCondition,
-                                                            available_attrs=self.available_attrs)
-
-                terms = yd['terminations']
-                if terms:
-                    self.terminations_group = ConditionGroup(terms, TerminationCondition,
-                                                             available_attrs=self.available_attrs)
-
-                post = yd['post_run_terminations']
-                if post:
-                    self.post_run_terminations_group = PostRunGroup(post, TerminationCondition,
-                                                                    available_attrs=self.available_attrs)
-
-    def dump(self):
-        if self.path:
-            with open(self.path, 'w') as fp:
-                d = dict(post_run_terminations=self.post_run_terminations_group.dump()
-                if self.post_run_terminations_group else [],
-                         terminations=self.terminations_group.dump()
-                         if self.terminations_group else [],
-                         actions=self.actions_group.dump()
-                         if self.actions_group else [],
-                         truncations=self.truncations_group.dump()
-                         if self.truncations_group else [])
-
-                yaml.dump(d, fp, default_flow_style=False)
+    pre_run_terminations_group = Instance(ConditionGroup)
 
     def traits_view(self):
         noact = VGroup(spring, HGroup(spring, Label('No Actions Defined'), spring), spring,
@@ -338,21 +344,85 @@ class ConditionsEditView(HasTraits):
                               defined_when='post_run_terminations_group', style='custom'),
                         nopterm,
                         label='Post Run Terminations')
+        prertegrp = Group(UItem('pre_run_terminations_group',
+                                defined_when='pre_run_terminations_group', style='custom'),
+                          nopterm,
+                          label='Pre Run Terminations')
 
-        v = View(Tabbed(agrp, trgrp, tegrp, prtegrp),
+        v = View(Tabbed(prertegrp, agrp, trgrp, tegrp, prtegrp),
                  width=800,
                  resizable=True,
                  handler=CEHandler(),
-                 buttons=['OK', 'Cancel'],
+                 buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
                  title='Edit Default Conditions')
         return v
+
+
+class ConditionsEditView(ConditionsViewable):
+    path = Str
+
+    def __init__(self, detectors=None, *args, **kw):
+        self.available_attrs = ['', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+                                'kca', 'kcl']
+        if detectors:
+            self.available_attrs.extend(detectors)
+            self.detectors = detectors
+
+        super(ConditionsEditView, self).__init__(*args, **kw)
+
+    @property
+    def name(self):
+        return os.path.relpath(self.path, paths.queue_conditions_dir)
+
+    def open(self, name):
+        self.load(name)
+
+    def load(self, name):
+        root = paths.queue_conditions_dir
+        p = get_path(root, name, ('.yaml', '.yml'))
+        if p:
+            self.path = p
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                for name, klass, cklass in (('actions', ConditionGroup, ActionCondition),
+                                            ('truncations', ConditionGroup, TruncationCondition),
+                                            ('terminations', ConditionGroup, TerminationCondition),
+                                            ('post_run_terminations', PostRunGroup, TerminationCondition)):
+                    grp = self._group_factory(yd, name, klass, cklass)
+                    setattr(self, '{}_group'.format(name), grp)
+
+                grp = self._group_factory(yd, 'pre_run_terminations', PreRunGroup)
+                grp.available_attrs = self.detectors
+                self.pre_run_terminations_group = grp
+
+    def _group_factory(self, yd, name, klass, condition_klass=None):
+        if condition_klass is None:
+            condition_klass = TerminationCondition
+
+        items = yd.get(name, [])
+        group = klass(items, condition_klass, available_attrs=self.available_attrs)
+        return group
+
+    def dump(self, path=None):
+        if path is None:
+            path = self.path
+        else:
+            self.path=path
+
+        if path:
+            with open(path, 'w') as fp:
+                d = {k: getattr(self, '{}_group'.format(k)).dump() for k in ('actions', 'terminations', 'truncations',
+                                                                             'post_run_terminations',
+                                                                             'pre_run_terminations')}
+
+                yaml.dump(d, fp, default_flow_style=False)
 
 
 def edit_conditions(name, detectors=None, app=None):
     if not name:
         dlg = FileDialog(action='open',
                          wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
-                         default_directory=paths.default_conditions_dir)
+                         default_directory=paths.queue_conditions_dir)
         if dlg.open():
             if dlg.path:
                 name = os.path.basename(dlg.path)

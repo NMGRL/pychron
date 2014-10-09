@@ -15,40 +15,68 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, List, Int
-from traitsui.api import View, UItem, TabularEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.tabular_adapter import TabularAdapter
+from pychron.experiment.condition.condition import ActionCondition, TruncationCondition, TerminationCondition
+from pychron.experiment.condition.conditions_edit_view import ConditionsViewable, ConditionGroup, PostRunGroup, \
+    PreRunGroup
 
 
-class ConditionsAdapter(TabularAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Check', 'comp'),
-               ('Start', 'start_count'),
-               ('Frequency', 'frequency'),
-               ('Value', 'value')]
+# class ConditionsAdapter(TabularAdapter):
+#     columns = [('Attribute', 'attr'),
+#                ('Check', 'comp'),
+#                ('Start', 'start_count'),
+#                ('Frequency', 'frequency'),
+#                ('Value', 'value')]
+#
+#     attr_width=Int(100)
+#     check_width=Int(200)
+#     start_width=Int(50)
+#     frequency_width=Int(100)
+#     value_width=Int(120)
 
-    attr_width=Int(100)
-    check_width=Int(200)
-    start_width=Int(50)
-    frequency_width=Int(100)
-    value_width=Int(120)
 
-class ConditionsView(HasTraits):
-    termination_conditions = List
+class ConditionsView(ConditionsViewable):
+    def __init__(self, run, pret, postt, *args, **kw):
+        super(ConditionsView, self).__init__(*args, **kw)
+        self._load(run, pret, postt)
 
-    def traits_view(self):
-        editor = TabularEditor(adapter=ConditionsAdapter(),
-                               editable=False,
-                               auto_update=True)
+    def _load(self, run, pret, postt):
+        for name, items, klass, cklass in (('actions', ConditionGroup, ActionCondition),
+                                    ('truncations', ConditionGroup, TruncationCondition),
+                                    ('terminations', ConditionGroup, TerminationCondition)):
+            items=getattr(run, '{}_conditions'.format(name[:-1]))
+            grp = self._group_factory(items, klass, cklass)
+            setattr(self, '{}_group'.format(name), grp)
 
-        v = View(UItem('termination_conditions',
-                       editor=editor),
-                 title='Current Conditions',
-                 width=800,
-                 resizable=True)
-        return v
+
+            grp = self._group_factory(pret, 'pre_run_terminations', PreRunGroup)
+            self.pre_run_terminations_group=grp
+
+            grp = self._group_factory(postt, 'post_run_terminations', PostRunGroup)
+            self.post_run_terminations_group=grp
+
+    def _group_factory(self, items, klass, condition_klass=None):
+        if condition_klass is None:
+            condition_klass = TerminationCondition
+
+        group = klass(items, condition_klass,
+                      editable=False)
+        return group
+
+    # termination_conditions = List
+    #
+    # def traits_view(self):
+    #     editor = TabularEditor(adapter=ConditionsAdapter(),
+    #                            editable=False,
+    #                            auto_update=True)
+    #
+    #     v = View(UItem('termination_conditions',
+    #                    editor=editor),
+    #              title='Current Conditions',
+    #              width=800,
+    #              resizable=True)
+    #     return v
 
 #============= EOF =============================================
 
