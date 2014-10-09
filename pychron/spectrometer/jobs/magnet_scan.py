@@ -162,19 +162,19 @@ class MagnetScan(SpectrometerTask):
 
         # debug
         # if globalv.experiment_debug:
-        from numpy import array, ones
-
-        v = self._peak_generator.next()
-        v = array([v])
-
-        r = ones(len(ds))
-        r = r * v
-        if len(r) > 1:
-            r[1] *= 0.5
-            if len(r) > 2:
-                r[2] *= 0.1
-
-        intensity = r
+        # from numpy import array, ones
+        #
+        # v = self._peak_generator.next()
+        # v = array([v])
+        #
+        # r = ones(len(ds))
+        # r = r * v
+        # if len(r) > 1:
+        #     r[1] *= 0.5
+        #     if len(r) > 2:
+        #         r[2] *= 0.1
+        #
+        # intensity = r
         # intensity=[random.random()]
         return intensity
 

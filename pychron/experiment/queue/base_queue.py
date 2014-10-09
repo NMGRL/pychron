@@ -53,8 +53,8 @@ class BaseExperimentQueue(ExperimentBlock):
     delay_before_analyses = CInt(5)
     delay_between_analyses = CInt(30)
 
-    default_conditions_name = Str
-    use_default_conditions = Bool
+    queue_conditions_name = Str
+    use_queue_conditions = Bool
 
     stats = Instance(ExperimentStats, ())
 
@@ -173,8 +173,8 @@ class BaseExperimentQueue(ExperimentBlock):
         params['tray'] = self.tray
         params['username'] = self.username
         params['email'] = self.email
-        params['use_default_conditions']=self.use_default_conditions
-        params['default_conditions_name']=self.default_conditions_name
+        params['use_queue_conditions']=self.use_queue_conditions
+        params['queue_conditions_name']=self.queue_conditions_name
 
     def _extract_meta(self, f):
         meta, metastr = extract_meta(f)
@@ -184,6 +184,7 @@ class BaseExperimentQueue(ExperimentBlock):
             return
         self._load_meta(meta)
         return meta
+
 
     #===============================================================================
     # persistence
@@ -260,8 +261,8 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('username', meta, default)
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
-        self._set_meta_param('default_conditions_name', meta, default)
-        self._set_meta_param('use_default_conditions', meta, bool_default)
+        self._set_meta_param('queue_conditions_name', meta, default)
+        self._set_meta_param('use_queue_conditions', meta, bool_default)
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -333,8 +334,8 @@ class BaseExperimentQueue(ExperimentBlock):
 username: {}
 email: {}
 date: {}
-use_default_conditions: {}
-default_conditions_name: {}
+use_queue_conditions: {}
+queue_conditions_name: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
 delay_between_analyses: {}
@@ -345,8 +346,8 @@ load: {}
             self.username,
             self.email,
             datetime.datetime.today(),
-            self.use_default_conditions,
-            self.default_conditions_name,
+            self.use_queue_conditions,
+            self.queue_conditions_name,
             ms,
             self.delay_before_analyses,
             self.delay_between_analyses,

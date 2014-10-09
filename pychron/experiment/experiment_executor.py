@@ -12,10 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
-from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, on_trait_change, Long
+# ============= enthought library imports =======================
+from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
+    on_trait_change, Long
 # from traitsui.api import View, Item
 # from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import CANCEL, YES, NO
@@ -29,7 +30,9 @@ import os
 #============= local library imports  ==========================
 # from pychron.core.ui.thread import Thread as uThread
 # from pychron.loggable import Loggable
+import yaml
 from pychron.envisage.consoleable import Consoleable
+from pychron.experiment.condition.condition import condition_from_dict
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
@@ -48,7 +51,7 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.consumer_mixin import consumable
 from pychron.paths import paths
 from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.globals import globalv
 from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
 from pychron.wait.wait_group import WaitGroup
@@ -480,12 +483,13 @@ class ExperimentExecutor(Consoleable):
                 break
 
             if self.monitor and self.monitor.has_fatal_error():
-                run.cancel()
+                run.cancel_run()
                 run.state = 'failed'
                 break
 
             f = getattr(self, step)
             if not f(run):
+                self.warning('{} returned false'.format(step))
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
@@ -500,8 +504,9 @@ class ExperimentExecutor(Consoleable):
             self.run_completed = run
 
         self._remove_backup(run.uuid)
+
         # check to see if action should be taken
-        self._check_run_at_end(run)
+        self._post_run_check(run)
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -623,6 +628,10 @@ class ExperimentExecutor(Consoleable):
         return ret
 
     def _extraction(self, ai):
+
+        if not self._pre_extraction_check():
+            return
+
         self.extracting_run = ai
         ret = True
         if ai.start_extraction():
@@ -892,45 +901,6 @@ class ExperimentExecutor(Consoleable):
     #===============================================================================
     # checks
     #===============================================================================
-    def _check_run_at_end(self, run):
-        """
-            check to see if an action should be taken
-
-            if runs  are overlapping this will be a problem.
-
-            dont overlay onto blanks
-
-            execute the action and continue the queue
-        """
-        exp = self.experiment_queue
-        for action in exp.queue_actions:
-            if action.check_run(run):
-                self._do_action(action)
-                break
-
-    def _do_action(self, action):
-        self.info('Do queue action {}'.format(action.action))
-        if action.action == 'repeat':
-            if action.count < action.nrepeat:
-                self.debug('repeating last run')
-                action.count += 1
-                exp = self.experiment_queue
-
-                run = exp.executed_runs[0]
-                exp.automated_runs.insert(0, run)
-
-                # experimentor handles the queue modified
-                # resets the database and updates info
-                self.queue_modified = True
-
-            else:
-                self.info('executed N {} {}s'.format(action.count + 1,
-                                                     action.action))
-                self.cancel(confirm=False)
-
-        elif action.action == 'cancel':
-            self.cancel(confirm=False)
-
     def _check_memory(self, threshold=None):
         """
             if avaliable memory is less than threshold  (MB)
@@ -952,52 +922,36 @@ class ExperimentExecutor(Consoleable):
                 invoke_in_main_thread(self.warning_dialog, msg)
                 return True
 
-    def _wait_for_save(self):
-        """
-            wait for experiment queue to be saved.
+    def _pre_extraction_check(self, run):
+        if not self._alive:
+            return
 
-            actually wait until time out or self.executable==True
-            executable set higher up by the Experimentor
+        conditions = self._load_conditions('pre_run_terminations')
+        if conditions:
+            self.debug('Checking post run termination conditions n={}'.format(len(conditions)))
 
-            if timed out auto save or cancel
+            self.debug('Get a measurement from the spectrometer')
+            data = self.spectrometer_manager.spectrometer.get_intensities()
+            ks = ','.join(data[0])
+            ss = ','.join(['{:0.5f}'.format(d) for d in data[1]])
 
-        """
-        st = time.time()
-        delay = self.auto_save_delay
-        auto_save = self.use_auto_save
-
-        if not self.executable:
-            self.info('Waiting for save')
-            cnt = 0
-
-            while not self.executable:
-                time.sleep(1)
-                if time.time() - st < delay:
-                    self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
-                                           flash=False)
-                    cnt += 1
-                else:
-                    break
-
-            if not self.executable:
-                self.info('Timed out waiting for user input')
-                if auto_save:
-                    self.info('autosaving experiment queues')
-                    self.set_extract_state('')
-                    self.auto_save_event = True
-                else:
-                    self.info('canceling experiment queues')
+            self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
+            for ci in conditions:
+                if ci.check(run.arar_age, data, True):
+                    self.info('Pre Extraction Termination. {}'.format(ci.to_string()),
+                              color='red')
                     self.cancel(confirm=False)
+                    return
 
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
         """
         if exp.tray:
-            ed = next((ci for ci in self.connectables if ci.name==exp.extract_device), None)
+            ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
             if ed:
                 ed_tray = ed.get_tray()
-                return ed_tray!=exp.tray
+                return ed_tray != exp.tray
 
     def _pre_run_check(self):
         """
@@ -1075,6 +1029,154 @@ class ExperimentExecutor(Consoleable):
 
         self.debug('pre check complete')
         return True
+
+    def _post_run_check(self, run):
+        """
+            1. check post run termination conditions.
+            2. check to see if an action should be taken
+
+            if runs  are overlapping this will be a problem.
+            dont overlap onto blanks
+            execute the action and continue the queue
+        """
+        if not self._alive:
+            return
+
+        #check user defined terminations
+        conditions = self._load_conditions('post_run_terminations')
+        self._test_conditions(run, conditions, 'Checking user defined post run terminations',
+                              'Post Run Termination')
+
+        #check default terminations
+        conditions = self._load_default_conditions('post_run_terminations')
+        self._test_conditions(run, conditions, 'Checking default post run terminations',
+                              'Post Run Termination')
+
+        #check user defined post run actions
+        conditions = self._load_conditions('post_run_actions')
+        if conditions:
+            self.debug('Checking post run action conditions n={}'.format(len(conditions)))
+            for ci in conditions:
+                if ci.check(run.arar_age, None, True):
+                    self.debug('doing action. {}'.format(ci.to_string()))
+                    self._do_action(ci)
+                    return
+
+        #check default post run actions
+        conditions = self._load_conditions('post_run_actions')
+        self._action_conditions(run, conditions, 'Checking post run actions',
+                                'Post Run Action')
+
+        #check queue actions
+        exp = self.experiment_queue
+        self._action_conditions(run, exp.queue_actions, 'Checking queue actions',
+                                'Queue Action')
+
+    def _action_conditions(self, run, conditions, message1, message2):
+        if conditions:
+            self.debug('{} n={}'.format(message1, len(conditions)))
+            for ci in conditions:
+                if ci.check(run, None, True):
+                    self.info('{}. {}'.format(message2, ci.to_string()))
+                    self._do_action(ci)
+                    break
+
+    def _test_conditions(self, run, conditions, message1, message2):
+        if conditions:
+            self.debug('{} n={}'.format(message1, len(conditions)))
+            for ci in conditions:
+                if ci.check(run.arar_age, None, True):
+                    self.info('{}. {}'.format(message2, ci.to_string()),
+                              color='red')
+                    self.cancel(confirm=False)
+                    return
+
+    def _load_default_conditions(self, term_name, **kw):
+        p = get_path(paths.spectrometer_dir, 'default_conditions', ['.yaml', '.yml'])
+        if p:
+            return self._extract_conditions(term_name, **kw)
+        else:
+            pp = os.path.join(paths.spectrometer_dir, 'default_condtions.yaml')
+            self.warning('no default conditions file located at {}'.format(pp))
+
+    def _load_conditions(self, term_name, **kw):
+        exp = self.experiment_queue
+        name = exp.queue_conditions_name
+        if exp.use_queue_conditions and name:
+            p = get_path(paths.queue_conditions_dir, name, ['.yaml', '.yml'])
+            return self._extract_conditions(p, term_name, **kw)
+
+    def _extract_conditions(self, p, term_name, klass='TerminationContion'):
+        if p and os.path.isfile(p):
+            self.debug('loading condiitons from {}'.format(p))
+            with open(p, 'r') as fp:
+                yd = yaml.load(fp)
+                yl = yd.get(term_name)
+                if not yl:
+                    self.debug('no {}'.format(term_name))
+                    return
+                else:
+                    return [condition_from_dict(cd, klass) for cd in yl]
+
+    def _do_action(self, action):
+        self.info('Do queue action {}'.format(action.action))
+        if action.action == 'repeat':
+            if action.count < action.nrepeat:
+                self.debug('repeating last run')
+                action.count += 1
+                exp = self.experiment_queue
+
+                run = exp.executed_runs[0]
+                exp.automated_runs.insert(0, run)
+
+                # experimentor handles the queue modified
+                # resets the database and updates info
+                self.queue_modified = True
+
+            else:
+                self.info('executed N {} {}s'.format(action.count + 1,
+                                                     action.action))
+                self.cancel(confirm=False)
+
+        elif action.action == 'cancel':
+            self.cancel(confirm=False)
+
+    def _wait_for_save(self):
+        """
+            wait for experiment queue to be saved.
+
+            actually wait until time out or self.executable==True
+            executable set higher up by the Experimentor
+
+            if timed out auto save or cancel
+
+        """
+        st = time.time()
+        delay = self.auto_save_delay
+        auto_save = self.use_auto_save
+
+        if not self.executable:
+            self.info('Waiting for save')
+            cnt = 0
+
+            while not self.executable:
+                time.sleep(1)
+                if time.time() - st < delay:
+                    self.set_extract_state('Waiting for save. Autosave in {} s'.format(delay - cnt),
+                                           flash=False)
+                    cnt += 1
+                else:
+                    break
+
+            if not self.executable:
+                self.info('Timed out waiting for user input')
+                if auto_save:
+                    self.info('autosaving experiment queues')
+                    self.set_extract_state('')
+                    self.auto_save_event = True
+                else:
+                    self.info('canceling experiment queues')
+                    self.cancel(confirm=False)
 
     def _get_preceding_blank_or_background(self, inform=True):
         #         msg = '''First "{}" not preceded by a blank.
@@ -1341,10 +1443,19 @@ Use Last "blank_{}"= {}
         from pychron.experiment.conditions_view import ConditionsView
 
         if self.measuring_run:
-            v=ConditionsView(truncation_conditions=self.measuring_run.truncation_conditions,
-                             termination_conditions=self.measuring_run.termination_conditions,
-                             action_condtions=self.measuring_run.action_conditions)
+            postt, pret = [], []
+            for name, l in (('post_run_terminations', postt),
+                            ('pre_run_terminations', pret)):
+                c1 = self._load_conditions(name)
+                if c1:
+                    l.extend(c1)
+                c2 = self._load_default_conditions(name)
+                if c2:
+                    l.extend(c2)
+
+            v = ConditionsView(self.measuring_run, postt, pret)
             self.application.open_view(v)
+
     #===============================================================================
     # property get/set
     #===============================================================================

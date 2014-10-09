@@ -55,8 +55,8 @@ class AutomatedRunSpec(Loggable):
     extract_device = Str
     username = Str
     tray = Str
-    use_default_conditions = Bool
-    default_conditions_name = Str
+    use_queue_conditions = Bool
+    queue_conditions_name = Str
     #===========================================================================
     # run id
     #===========================================================================

@@ -141,12 +141,31 @@ class ArArAge(Loggable):
             except ZeroDivisionError:
                 pass
 
+    def get_slope(self, attr, n=-1):
+        try:
+            r=self.isotopes[attr].get_slope(n)
+        except KeyError:
+            r=None
+        return r
+
+    def get_baseline_value(self, attr):
+        try:
+            r=self.isotopes[attr].baseline.uvalue
+        except KeyError:
+            r=None
+        return r
+
     def get_current_intensity(self, attr):
         try:
             r=self.isotopes[attr].ys[-1]
         except KeyError:
             r=None
         return r
+
+    def get_detector_active(self, attr):
+        det = next((i for i in self.isotopes if i.detector==attr), None)
+        if det:
+            pass
 
     def get_values(self, attr, n):
         """
@@ -308,9 +327,9 @@ class ArArAge(Loggable):
         iso.ic_factor = self.get_ic_factor(det)
 
     def get_baseline_corrected_value(self, iso):
-        if iso in self.isotopes:
+        try:
             return self.isotopes[iso].get_baseline_corrected_value()
-        else:
+        except KeyError:
             return ufloat(0, 0, tag=iso)
 
     def get_isotopes(self, det):

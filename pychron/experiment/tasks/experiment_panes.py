@@ -86,9 +86,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                  show_label=False,
                  editor=EnumEditor(name='qfac.extract_devices')))
 
-        meta2 = HGroup(Item('qfac.use_default_conditions'),
-                       UItem('qfac.default_conditions_name',
-                             enabled_when='qfac.use_default_conditions',
+        meta2 = HGroup(Item('qfac.use_queue_conditions'),
+                       UItem('qfac.queue_conditions_name',
+                             enabled_when='qfac.use_queue_conditions',
                              editor=EnumEditor(name='qfac.available_conditions')))
 
         queue_grp = VGroup(user_grp, meta1, meta2,

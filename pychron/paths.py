@@ -90,7 +90,7 @@ class Paths():
     post_measurement_dir = None
     extraction_dir = None
     post_equilibration_dir = None
-    truncation_dir = None
+    conditions_dir = None
     hops_dir = None
     fits_dir = None
     #==============================================================================
@@ -99,7 +99,7 @@ class Paths():
     setup_dir = setup_dir = None
     device_dir = None
     spectrometer_dir = None
-    default_conditions_dir = None
+    queue_conditions_dir = None
     canvas2D_dir = None
     canvas3D_dir = None
     extraction_line_dir = None
@@ -220,7 +220,7 @@ class Paths():
         self.post_measurement_dir = join(scripts_dir, 'post_measurement')
         self.extraction_dir = join(scripts_dir, 'extraction')
         self.post_equilibration_dir = join(scripts_dir, 'post_equilibration')
-        self.truncation_dir = join(scripts_dir, 'truncation')
+        self.conditions_dir = join(scripts_dir, 'conditions')
         self.hops_dir = join(self.measurement_dir, 'hops')
         self.fits_dir = join(self.measurement_dir, 'fits')
 
@@ -235,13 +235,13 @@ class Paths():
         self.custom_queries_dir = join(root, 'custom_queries')
         self.template_dir = join(root, 'templates')
 
+        self.queue_conditions_dir = join(root, 'queue_conditions')
         #==============================================================================
         # setup
         #==============================================================================
         self.setup_dir = setup_dir = join(root, 'setupfiles')
         self.spectrometer_dir = join(setup_dir, 'spectrometer')
-        self.default_conditions_dir=join(self.spectrometer_dir,
-                                         'default_conditions')
+
         self.device_dir = device_dir = join(setup_dir, 'devices')
         self.canvas2D_dir = join(setup_dir, 'canvas2D')
         self.canvas3D_dir = join(setup_dir, 'canvas3D')
