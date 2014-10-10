@@ -15,7 +15,7 @@ def suite():
     from pychron.processing.tests.ratio import RatioTestCase
     from pychron.pyscripts.tests.extraction_script import WaitForTestCase
     from pychron.pyscripts.tests.measurement_pyscript import InterpolationTestCase, DocstrContextTestCase
-    from pychron.experiment.tests.conditions import ConditionsTestCase
+    from pychron.experiment.tests.conditionals import ConditionalsTestCase
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -33,7 +33,7 @@ def suite():
     suite.addTest(loader.loadTestsFromTestCase(XYTestCase))
     suite.addTest(loader.loadTestsFromTestCase(FrequencyTestCase))
     suite.addTest(loader.loadTestsFromTestCase(RenumberAliquotTestCase))
-    suite.addTest(loader.loadTestsFromTestCase(ConditionsTestCase))
+    suite.addTest(loader.loadTestsFromTestCase(ConditionalsTestCase))
 
     return suite
 

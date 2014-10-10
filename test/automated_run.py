@@ -140,7 +140,7 @@ class FitBlockTest(unittest.TestCase):
     #     start_count = 0
     #     frequency = 1
     #
-    #     conditions = [
+    #     conditionals = [
     #         TruncationCondition(attr, comp, value,
     #                             start_count,
     #                             frequency)
@@ -151,7 +151,7 @@ class FitBlockTest(unittest.TestCase):
     #     arun.analysis_type = 'unknown'
     #     arun.start()
     #
-    #     result = arun._check_conditions(conditions, cnt)
+    #     result = arun._check_conditions(conditionals, cnt)
     #     self.assertEqual(result, True)
 
 #     def testTermination(self):

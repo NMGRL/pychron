@@ -421,7 +421,7 @@ class PychronLaserManager(BaseLaserManager):
         return state
 
     def _ask(self, cmd, **kw):
-        self.communicator.get_handler()
+        # self.communicator.get_handler()
         return self.communicator.ask(cmd, **kw)
 
     def _enable_fired(self):

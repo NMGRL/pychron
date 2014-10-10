@@ -58,7 +58,8 @@ class ExperimentEditorTask(EditorTask):
     # analysis_health = Instance(AnalysisHealth)
     last_experiment_changed = Event
 
-    bgcolor=Color
+    bgcolor = Color
+
     def new_pattern(self):
         pm = PatternMakerView()
         self.window.application.open_view(pm)
@@ -89,16 +90,17 @@ class ExperimentEditorTask(EditorTask):
         if self.has_active_editor():
             self.manager.experiment_factory.undo()
 
-    def edit_queue_conditions(self):
+    def edit_queue_conditionals(self):
         if self.has_active_editor():
-            from pychron.experiment.condition.conditions_edit_view import edit_conditions
+            from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
 
-            dnames=None
-            spec=self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            dnames = None
+            spec = self.application.get_service(
+                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
             if spec:
-                dnames=spec.spectrometer.detector_names
+                dnames = spec.spectrometer.detector_names
 
-            edit_conditions(self.manager.experiment_factory.queue_factory.queue_conditions_name,
+            edit_conditionals(self.manager.experiment_factory.queue_factory.queue_conditionals_name,
                             detectors=dnames,
                             app=self.application)
 
@@ -195,22 +197,30 @@ class ExperimentEditorTask(EditorTask):
     # generic actions
     #===============================================================================
     def _open_experiment(self, path, **kw):
+        name=os.path.basename(path)
+        self.info('------------------------------ Open Experiment {} -------------------------------'.format(name))
+        editor = self._check_opened(path)
+        if not editor:
+            if path.endswith('.xls'):
+                txt, is_uv = self._open_xls(path)
+            else:
+                txt, is_uv = self._open_txt(path)
 
-        if path.endswith('.xls'):
-            txt, is_uv = self._open_xls(path)
+            klass = UVExperimentEditor if is_uv else ExperimentEditor
+            editor = klass(path=path, bgcolor=self.bgcolor)
+            editor.new_queue(txt)
+            self._open_editor(editor)
         else:
-            txt, is_uv = self._open_txt(path)
-
-        klass = UVExperimentEditor if is_uv else ExperimentEditor
-        editor = klass(path=path, bgcolor=self.bgcolor)
-        editor.new_queue(txt)
-        self._open_editor(editor)
+            self.debug('{} already open. using existing editor'.format(name))
+            self.activate_editor(editor)
 
         # loading queue editor set dirty
         # clear dirty flag
         editor.dirty = False
-
         self._show_pane(self.experiment_factory_pane)
+
+    def _check_opened(self, path):
+        return next((e for e in self.editor_area.editors if e.path == path), None)
 
     def _open_xls(self, path):
         """
@@ -329,7 +339,7 @@ class ExperimentEditorTask(EditorTask):
         self.manager.experiment_factory.activate(load_persistence=True)
 
         editor = ExperimentEditor()
-        editor.new_queue()#mass_spectrometer=ms)
+        editor.new_queue()  #mass_spectrometer=ms)
 
         self._open_editor(editor)
         # self._show_pane(self.experiment_factory_pane)

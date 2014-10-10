@@ -21,6 +21,7 @@ Pychron Develop Guide
   database_analysis
   automated_analysis
   experiment_construction
+  communications
 
 
 

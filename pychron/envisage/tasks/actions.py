@@ -47,7 +47,7 @@ class WebAction(Action):
 
 class IssueAction(WebAction):
     name = 'Add Request/Report Bug'
-    image = icon('bug.png')
+    image = icon('bug')
 
     def perform(self, event):
         """
@@ -59,13 +59,25 @@ class IssueAction(WebAction):
 
 class NoteAction(WebAction):
     name = 'Add Laboratory Note'
-    image = icon('insert-comment.png')
+    image = icon('insert-comment')
 
     def perform(self, event):
         """
             goto issues page add an request or report bug
         """
         url = 'https://github.com/NMGRL/Laboratory/issues/new'
+        self._open_url(url)
+
+
+class DocumentationAction(WebAction):
+    name = 'View Documentation'
+    # image = icon('insert-comment')
+
+    def perform(self, event):
+        """
+            goto issues page add an request or report bug
+        """
+        url = 'http://pychron.readthedocs.org/en/latest/index.html'
         self._open_url(url)
 
 
@@ -163,7 +175,7 @@ class RaiseUIAction(TaskAction):
 class GenericSaveAction(TaskAction):
     name = 'Save'
     accelerator = 'Ctrl+S'
-    image = icon('document-save.png')
+    image = icon('document-save')
 
     def perform(self, event):
         task = self.task
@@ -174,7 +186,7 @@ class GenericSaveAction(TaskAction):
 class GenericSaveAsAction(TaskAction):
     name = 'Save As...'
     accelerator = 'Ctrl+Shift+S'
-    image = icon('document-save-as.png')
+    image = icon('document-save-as')
 
     def perform(self, event):
         task = self.task
