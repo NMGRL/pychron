@@ -15,21 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
-
-
-
-
-
-
-
 #============= standard library imports ========================
+from itertools import groupby
+import os
+import weakref
 #============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
@@ -44,21 +38,18 @@ from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction
-
-import weakref
-
-from .editors.spectrum_editor import SpectrumEditor
-from .editors.isochron_editor import InverseIsochronEditor
-from .editors.ideogram_editor import IdeogramEditor
+    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction, NewIsochronAction
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
+from .editors.spectrum_editor import SpectrumEditor
+from .editors.isochron_editor import InverseIsochronEditor
+from .editors.ideogram_editor import IdeogramEditor
+
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
-
 
 
 class FigureTask(AnalysisEditTask):
@@ -75,7 +66,8 @@ class FigureTask(AnalysisEditTask):
             SaveAsFigureAction(),
             name='Figure'),
         SToolBar(NewIdeogramAction(),
-                 NewSpectrumAction(), ),
+                 NewSpectrumAction(),
+                 NewIsochronAction()),
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
         SToolBar(GroupSelectedAction(name='Selected'),
@@ -332,6 +324,8 @@ class FigureTask(AnalysisEditTask):
     def tb_new_xy_scatter(self):
         self.new_xy_scatter()
 
+    def tb_new_isochron(self):
+        self.new_inverse_isochron()
     #===============================================================================
     #
     #===============================================================================
