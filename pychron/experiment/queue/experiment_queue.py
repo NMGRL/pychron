@@ -29,6 +29,7 @@ from pyface.timer.do_later import do_later
 
 
 
+
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
@@ -37,7 +38,7 @@ from pychron.core.ui.qt.tabular_editor import MoveToRow
 from pychron.experiment.queue.base_queue import BaseExperimentQueue
 from pychron.experiment.utilities.identifier import make_runid
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
-from pychron.experiment.condition.experiment_queue_action import ExperimentQueueAction
+from pychron.experiment.conditional.experiment_queue_action import ExperimentQueueAction
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.paths import paths

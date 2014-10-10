@@ -18,10 +18,10 @@
 from traits.api import Str, Int
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.experiment.condition.condition import BaseCondition
+from pychron.experiment.conditional.conditional import BaseConditional
 
 
-class ExperimentQueueAction(BaseCondition):
+class ExperimentQueueAction(BaseConditional):
     analysis_type = Str
     action = Str
 

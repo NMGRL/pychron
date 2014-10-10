@@ -55,8 +55,8 @@ class AutomatedRunSpec(Loggable):
     extract_device = Str
     username = Str
     tray = Str
-    use_queue_conditions = Bool
-    queue_conditions_name = Str
+    use_queue_conditionals = Bool
+    queue_conditionals_name = Str
     #===========================================================================
     # run id
     #===========================================================================
@@ -100,7 +100,7 @@ class AutomatedRunSpec(Loggable):
     overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
-    truncate_condition = Str
+    truncate_conditional = Str
     syn_extraction = Str
 
     collection_time_zero_offset = Float

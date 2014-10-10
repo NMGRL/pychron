@@ -46,8 +46,8 @@ from pychron.experiment.utilities.identifier import convert_identifier, \
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
-from pychron.experiment.condition.condition import TruncationCondition, \
-    ActionCondition, TerminationCondition, condition_from_dict
+from pychron.experiment.conditional.conditional import TruncationConditional, \
+    ActionConditional, TerminationConditional, conditional_from_dict
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.export.export_spec import assemble_script_blob
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -120,9 +120,9 @@ class AutomatedRun(Loggable):
     post_equilibration_script = Instance(ExtractionPyScript)
     extraction_script = Instance(ExtractionPyScript)
 
-    termination_conditions = List
-    truncation_conditions = List
-    action_conditions = List
+    termination_conditionals = List
+    truncation_conditionals = List
+    action_conditionals = List
 
     peak_center = None
     coincidence_scan = None
@@ -233,7 +233,7 @@ class AutomatedRun(Loggable):
 
         self.persister.build_tables(gn, self._active_detectors)
 
-        self._add_truncate_condition()
+        self._add_truncate_conditionals()
 
         self.multi_collector.is_baseline = False
         self.multi_collector.fit_series_idx = fit_series
@@ -243,13 +243,13 @@ class AutomatedRun(Loggable):
         else:
             sc = 'red'
 
-        check_conditions = obj == self.measurement_script
+        check_conditionals = obj == self.measurement_script
 
         result = self._measure(gn,
                                self.persister.get_data_writer(gn),
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions, sc, obj)
+                               check_conditionals, sc, obj)
         return result
 
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
@@ -313,7 +313,7 @@ class AutomatedRun(Loggable):
 
         self.multi_collector.is_baseline = True
         self.multi_collector.fit_series_idx = fit_series
-        check_conditions = True
+        check_conditionals = True
 
         self.collector.for_peak_hop = self.plot_panel.is_peak_hop
         self.plot_panel.is_peak_hop = False
@@ -326,7 +326,7 @@ class AutomatedRun(Loggable):
                                ncounts, starttime,
                                starttime_offset,
                                series,
-                               check_conditions, sc)
+                               check_conditionals, sc)
 
         if self.plot_panel:
             bs = dict([(iso.name, iso.baseline.uvalue) for iso in
@@ -431,12 +431,12 @@ class AutomatedRun(Loggable):
         self.persister.build_peak_hop_tables(group, hops)
         writer = self.persister.get_data_writer(group)
 
-        check_conditions = True
-        self._add_truncate_condition()
+        check_conditionals = True
+        self._add_truncate_conditionals()
 
         ret = self._peak_hop(cycles, counts, hops, group, writer,
                              starttime, starttime_offset, series,
-                             check_conditions)
+                             check_conditionals)
 
         self.is_peak_hop = False
         return ret
@@ -473,14 +473,14 @@ class AutomatedRun(Loggable):
         t.join()
 
     #===============================================================================
-    # conditions
+    # conditionals
     #===============================================================================
     def py_add_termination(self, attr, comp, start_count, frequency,
                            window=0, mapper=''):
         """
             attr must be an attribute of arar_age
         """
-        self.termination_conditions.append(TerminationCondition(attr, comp,
+        self.termination_conditionals.append(TerminationConditional(attr, comp,
                                                                 start_count,
                                                                 frequency,
                                                                 window=window,
@@ -496,7 +496,7 @@ class AutomatedRun(Loggable):
         if not self.arar_age.has_attr(attr):
             self.warning('invalid truncation attribute "{}"'.format(attr))
         else:
-            self.truncation_conditions.append(TruncationCondition(attr, comp,
+            self.truncation_conditionals.append(TruncationConditional(attr, comp,
                                                                   start_count,
                                                                   frequency,
                                                                   abbreviated_count_ratio=abbreviated_count_ratio))
@@ -505,25 +505,25 @@ class AutomatedRun(Loggable):
         """
             attr must be an attribute of arar_age
         """
-        self.action_conditions.append(ActionCondition(attr, comp,
+        self.action_conditionals.append(ActionConditional(attr, comp,
                                                       start_count,
                                                       frequency,
                                                       action=action,
                                                       resume=resume))
 
-    def py_clear_conditions(self):
+    def py_clear_conditionals(self):
         self.py_clear_terminations()
         self.py_clear_truncations()
         self.py_clear_actions()
 
     def py_clear_terminations(self):
-        self.termination_conditions = []
+        self.termination_conditionals = []
 
     def py_clear_truncations(self):
-        self.truncation_conditions = []
+        self.truncation_conditionals = []
 
     def py_clear_actions(self):
-        self.action_conditions = []
+        self.action_conditionals = []
 
     #===============================================================================
     # run termination
@@ -589,7 +589,7 @@ class AutomatedRun(Loggable):
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
-        self.py_clear_conditions()
+        self.py_clear_conditionals()
 
     def finish(self):
 
@@ -1087,44 +1087,44 @@ anaylsis_type={}
         #setup persister. mirror a few of AutomatedRunsAttributes
         self.setup_persister()
 
-        #setup default/queue conditions
-        # clear the conditions for good measure.
-        # conditions should be cleared during teardown.
-        self.py_clear_conditions()
+        #setup default/queue conditionals
+        # clear the conditionals for good measure.
+        # conditionals should be cleared during teardown.
+        self.py_clear_conditionals()
 
-        #add default conditions
-        self._add_default_conditions()
+        #add default conditionals
+        self._add_default_conditionals()
 
-        #add queue conditions
-        self._add_queue_conditions()
+        #add queue conditionals
+        self._add_queue_conditionals()
 
         return True
 
-    def _add_default_conditions(self):
-        self.debug('add default conditions')
-        p = get_path(paths.spectrometer_dir, 'default_conditions', ('.yaml', '.yml'))
+    def _add_default_conditionals(self):
+        self.debug('add default conditionals')
+        p = get_path(paths.spectrometer_dir, 'default_conditionals', ('.yaml', '.yml'))
         if p is not None:
-            self.info('adding default conditions from {}'.format(p))
-            self._add_conditions_from_file(p)
+            self.info('adding default conditionals from {}'.format(p))
+            self._add_conditionals_from_file(p)
         else:
-            self.warning('no Default Conditions file. {}'.format(p))
+            self.warning('no Default Conditionals file. {}'.format(p))
 
-    def _add_queue_conditions(self):
+    def _add_queue_conditionals(self):
         """
-            load queue global conditions (truncations, actions, terminations)
+            load queue global conditionals (truncations, actions, terminations)
         """
-        self.debug('Add queue conditions')
-        name = self.spec.queue_conditions_name
-        if self.spec.use_queue_conditions and name:
-            p = get_path(paths.queue_conditions_dir, name, ('.yaml', '.yml'))
+        self.debug('Add queue conditionals')
+        name = self.spec.queue_conditionals_name
+        if self.spec.use_queue_conditionals and name:
+            p = get_path(paths.queue_conditionals_dir, name, ('.yaml', '.yml'))
             if p is not None:
-                self.info('adding queue conditions from {}'.format(p))
-                self._add_conditions_from_file(p)
+                self.info('adding queue conditionals from {}'.format(p))
+                self._add_conditionals_from_file(p)
 
             else:
-                self.warning('Invalid Conditions file. {}'.format(p))
+                self.warning('Invalid Conditionals file. {}'.format(p))
 
-    def _add_conditions_from_file(self, p):
+    def _add_conditionals_from_file(self, p):
         with open(p, 'r') as fp:
             yd = yaml.load(fp)
             cs = yd.get('terminations')
@@ -1142,8 +1142,8 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx = condition_from_dict(ti, 'TruncationCondition')
-            self.truncation_conditions.append(cx)
+            cx = conditional_from_dict(ti, 'TruncationConditional')
+            self.truncation_conditionals.append(cx)
 
     def _add_default_actions(self, yl):
         """
@@ -1153,8 +1153,8 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx = condition_from_dict(ti, 'ActionCondition')
-            self.action_conditions.append(cx)
+            cx = conditional_from_dict(ti, 'ActionConditional')
+            self.action_conditionals.append(cx)
 
     def _add_default_terminations(self, yl):
         """
@@ -1164,8 +1164,8 @@ anaylsis_type={}
             return
 
         for ti in yl:
-            cx = condition_from_dict(ti, 'TerminationCondition')
-            self.termination_conditions.append(cx)
+            cx = conditional_from_dict(ti, 'TerminationConditional')
+            self.termination_conditionals.append(cx)
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
@@ -1316,11 +1316,11 @@ anaylsis_type={}
 
         p.analysis_view.load(self)
 
-    def _add_truncate_condition(self):
-        t = self.spec.truncate_condition
-        self.debug('adding truncate condition {}'.format(t))
+    def _add_truncate_conditionals(self):
+        t = self.spec.truncate_conditional
+        self.debug('adding truncate conditional {}'.format(t))
         if t:
-            p = os.path.join(paths.conditions_dir, add_extension(t, '.yaml'))
+            p = os.path.join(paths.conditionals_dir, add_extension(t, '.yaml'))
             if os.path.isfile(p):
                 self.debug('extract truncations from file. {}'.format(p))
                 with open(p, 'r') as fp:
@@ -1346,7 +1346,7 @@ anaylsis_type={}
                     freq = 1
                     acr = 0.5
                 except Exception, e:
-                    self.debug('truncate_condition parse failed {} {}'.format(e, t))
+                    self.debug('truncate_conditional parse failed {} {}'.format(e, t))
                     return
 
                 self.py_add_truncation(attr, c, int(start), freq, acr)
@@ -1485,7 +1485,7 @@ anaylsis_type={}
 
     def _peak_hop(self, ncycles, ncounts, hops, grpname, data_writer,
                   starttime, starttime_offset, series,
-                  check_conditions):
+                  check_conditionals):
         """
             ncycles: int
             hops: list of tuples
@@ -1513,7 +1513,7 @@ anaylsis_type={}
                              data_writer,
                              ncounts,
                              starttime, starttime_offset,
-                             series, check_conditions, sc)
+                             series, check_conditionals, sc)
 
     def _get_data_generator(self):
         def gen():
@@ -1539,7 +1539,7 @@ anaylsis_type={}
         self.persister.build_tables(gn, self._active_detectors)
         mem_log('build tables')
 
-        check_conditions = False
+        check_conditionals = False
         writer = self.persister.get_data_writer(gn)
 
         if self.experiment_executor:
@@ -1551,13 +1551,13 @@ anaylsis_type={}
                                writer,
                                ncounts, starttime, starttime_offset,
                                series,
-                               check_conditions, sc)
+                               check_conditionals, sc)
 
         return result
 
     def _measure(self, grpname, data_writer,
                  ncounts, starttime, starttime_offset,
-                 series, check_conditions, color, script=None):
+                 series, check_conditionals, color, script=None):
 
         if script is None:
             script = self.measurement_script
@@ -1586,13 +1586,14 @@ anaylsis_type={}
             arar_age=self.arar_age,
             measurement_script=script,
             detectors=self._active_detectors,
-            truncation_conditions=self.truncation_conditions,
-            termination_conditions=self.termination_conditions,
-            action_conditions=self.action_conditions,
+
+            truncation_conditionals=self.truncation_conditionals,
+            termination_conditionals=self.termination_conditionals,
+            action_conditionals=self.action_conditionals,
 
             collection_kind=grpname,
             series_idx=series,
-            check_conditions=check_conditions,
+            check_conditionals=check_conditionals,
             ncounts=ncounts,
             period_ms=period * 1000,
             data_generator=get_data,
@@ -1936,397 +1937,4 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
-                #============= EOF =============================================
-
-                # def _time_save(self, func, name, *args, **kw):
-                #     st = time.time()
-                #     r = func(*args, **kw)
-                #     self.debug('save {} time= {:0.3f}'.format(name, time.time() - st))
-                #     return r
-
-                # def _is_peak_hop_changed(self, new):
-                #     if self.plot_panel:
-
-#         self.debug('Setting is_peak_hop {}'.format(new))
-#         self.plot_panel.is_peak_hop = new
-#===============================================================================
-# defaults
-#===============================================================================
-
-#def _multi_collector_default(self):
-#    return MultiCollector()
-
-
-
-# for kind in ('sniff','signal','baseline'):
-#     dbiso = db.add_isotope(analysis, iso.name, det,
-#                            kind=kind)
-#     if kind in ('sniff', 'baseline'):
-#         m=getattr(iso, kind)
-#     else:
-#         m=iso
-#
-#     self.debug('saving signal {} xs={}'.format(iso.name, len(m.xs)))
-#     data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
-#     db.add_signal(dbiso, data)
-#     if m.fit:
-#         # add fit
-#         db.add_fit(dbhist, dbiso, fit=m.fit)
-#
-#     if kind in ('signal', 'baseline'):
-#         # add isotope result
-#         db.add_isotope_result(dbiso,
-#                               dbhist,
-#                               signal_=float(m.value), signal_err=float(m.error))
-
-# def _save_isotope_info(self, analysis, signals):
-#     self.info('saving isotope info')
-#     # def func_peak_hop():
-#     #     db = self.db
-#     #
-#     #     # add fit history
-#     #     dbhist = db.add_fit_history(analysis,
-#     #                                 user=self.spec.username)
-#     #     for iso in self.arar_age.isotopes.itervalues():
-#     #         detname=iso.detector
-#     #         det = db.get_detector(detname)
-#     #         if det is None:
-#     #             det = db.add_detector(detname)
-#     #             db.sess.flush()
-#
-#
-#
-#     def func():
-#         db = self.db
-#
-#         # add fit history
-#         dbhist = db.add_fit_history(analysis,
-#                                     user=self.spec.username)
-#
-#         key = lambda x: x[1]
-#         si = sorted(self._save_isotopes, key=key)
-#
-#         for detname, isos in groupby(si, key=key):
-#             det = db.get_detector(detname)
-#             if det is None:
-#                 det = db.add_detector(detname)
-#                 db.sess.flush()
-#
-#             for iso, detname, kind in isos:
-#                 # add isotope
-#                 dbiso = db.add_isotope(analysis, iso, det,
-#                                        kind=kind)
-#                 db.sess.flush()
-#
-#                 s = signals['{}{}'.format(iso, kind)]
-#
-#                 # add signal data
-#                 data = ''.join([struct.pack('>ff', x, y)
-#                                 for x, y in zip(s.xs, s.ys)])
-#                 db.add_signal(dbiso, data)
-#
-#                 if s.fit:
-#                     # add fit
-#                     db.add_fit(dbhist, dbiso, fit=s.fit)
-#
-#                 if kind in ['signal', 'baseline']:
-#                     # add isotope result
-#                     db.add_isotope_result(dbiso,
-#                                           dbhist,
-#                                           signal_=float(s.value), signal_err=float(s.error))
-#
-#     if self.is_peak_hop:
-#         func()
-#     else:
-#         func()
-# return self._time_save(func, 'isotope info')
-
-# def _preliminary_processing(self, p):
-#     self.info('organizing data for database save')
-#     dm = self.data_manager
-#     dm.open_data(p)
-#     signals = [(iso, detname)
-#                for (iso, detname, kind) in self._save_isotopes
-#                if kind == 'signal']
-#     baselines = [(iso, detname)
-#                  for (iso, detname, kind) in self._save_isotopes
-#                  if kind == 'baseline']
-#     sniffs = [(iso, detname)
-#               for (iso, detname, kind) in self._save_isotopes
-#               if kind == 'sniff']
-#
-#     rsignals = dict()
-#
-#     def extract_xy(tb):
-#         try:
-#             x, y = zip(*[(r['time'], r['value']) for r in tb.iterrows()])
-#         except ValueError:
-#             x, y = [], []
-#         return x, y
-#
-#     #fits = self.plot_panel.fits
-#     #for fit, (iso, detname) in zip(fits, signals):
-#     for iso, detname in signals:
-#         try:
-#             fit = self.arar_age.isotopes[iso].fit
-#         except (AttributeError, KeyError):
-#             fit = 'linear'
-#
-#         tab = dm.get_table(detname, '/signal/{}'.format(iso))
-#         x, y = extract_xy(tab)
-#
-#         #            if iso=='Ar40':
-#         #                print 'prelim signal,',len(x), x[0], x[-1]
-#         s = IsotopicMeasurement(xs=x, ys=y, fit=fit)
-#         #            print 'signal',iso, s.value, y
-#         rsignals['{}signal'.format(iso)] = s
-#
-#
-#     #baseline_fits = ['average_SEM', ] * len(baselines)
-#     #for fit, (iso, detname) in zip(baseline_fits, baselines):
-#     for iso, detname in baselines:
-#         try:
-#             fit = self.arar_age.isotopes[iso].baseline.fit
-#         except (AttributeError, KeyError):
-#             fit = 'average_SEM'
-#
-#         tab = dm.get_table(detname, '/baseline/{}'.format(iso))
-#         x, y = extract_xy(tab)
-#
-#         bs = IsotopicMeasurement(xs=x, ys=y, fit=fit)
-#         #            print 'baseline',iso, bs.value, y
-#
-#         rsignals['{}baseline'.format(iso)] = bs
-#
-#     for (iso, detname) in sniffs:
-#         tab = dm.get_table(detname, '/sniff/{}'.format(iso))
-#
-#         x, y = extract_xy(tab)
-#         sn = IsotopicMeasurement(xs=x, ys=y)
-#
-#         rsignals['{}sniff'.format(iso)] = sn
-#
-#     #         peak_center = dm.get_table('peak_center', '/')
-#     dm.close_file()
-#     return rsignals
-
-#     def _get_fit_block(self, iter_cnt, fits):
-#         for sli, fs in fits:
-#             if sli:
-#
-#                 s, e = sli
-#                 if s is None:
-#                     s = 0
-#                 if e is None:
-#                     e = Inf
-#
-#                 if iter_cnt > s and iter_cnt < e:
-#                     break
-#         return fs
-
-#     def _make_write_iteration(self, grpname, data_write_hook,
-#                          series, fits, refresh, graph):
-#         def _write(data):
-#             dets = self._active_detectors
-#             i, x, intensities = data
-#             nfs = self._get_fit_block(i, fits)
-#             keys, signals = intensities
-#             if graph:
-#                 if grpname == 'signal':
-#                     self.plot_panel.fits = nfs
-#
-#     #             self.signals = weakref.ref(dict(zip(keys, signals)))()
-#                 for pi, (fi, dn) in enumerate(zip(nfs, dets)):
-#                     signal = signals[keys.index(dn.name)]
-#                     graph.add_datum((x, signal),
-#                                     series=series,
-#                                     plotid=pi,
-#                                     update_y_limits=True,
-#                                     ypadding='0.1'
-#                                     )
-#                     if fi:
-#                         graph.set_fit(fi, plotid=pi, series=0)
-#
-#             data_write_hook(dets, x, keys, signals)
-#
-#             if refresh and graph:
-# #                 pass
-#                 # only refresh regression every 5th iteration
-# #                 test if graph.refresh is consuming memory
-# #                 if i % 5 == 0 or i < 10:
-#                 graph.refresh()
-#
-#         return _write
-#     def _measure2(self, grpname, data_write_hook,
-#                            ncounts, starttime, starttime_offset,
-#                             series, fits, check_conditions, refresh):
-# #         print '------------------------{}----------------------------'.format(grpname)
-# #         before = measure_type()
-#
-#         mem_log('pre measure {}'.format(grpname))
-# #         st = time.time()
-#
-#         if not self.spectrometer_manager:
-#             self.warning('no spectrometer manager')
-#             return True
-#
-#         self.info('measuring {}. ncounts={}'.format(grpname, ncounts),
-#                   color=MEASUREMENT_COLOR)
-#
-#         self._total_counts += ncounts
-#
-# #         spectrometer = self.spectrometer_manager.spectrometer
-# #         get_data = lambda: self.spectrometer_manager.spectrometer.get_intensities(tagged=True)
-# #         get_data = self._get_data_generator()
-#
-#         ncounts = int(ncounts)
-# #         iter_cnt = 1
-#         graph = None
-#         if self.plot_panel:
-#             graph = self.plot_panel.isotope_graph
-#             mi, ma = graph.get_x_limits()
-#             dev = (ma - mi) * 0.05
-#             if (self._total_counts + dev) > ma:
-#                 graph.set_x_limits(-starttime_offset, self._total_counts + (ma - mi) * 0.25)
-#             elif starttime_offset > mi:
-#                 graph.set_x_limits(min_=-starttime_offset)
-#             nfs = self._get_fit_block(0, fits)
-#     #         for pi, (fi, dn) in enumerate(zip(nfs, dets)):
-#             for pi, fi in enumerate(nfs):
-#                 graph.new_series(marker='circle', type='scatter',
-#                                  marker_size=1.25,
-#                                  fit=fi,
-#                                  plotid=pi
-#                                  )
-#
-#         func = self._make_write_iteration(grpname, data_write_hook,
-#                                                     series, fits, refresh,
-#                                                     graph)
-#         dm = self.data_manager
-#         with dm.open_file(self._current_data_frame):
-#             with consumable(func) as con:
-#                 self._iteration(con, ncounts, check_conditions, starttime)
-#
-#         if graph:
-#             graph.refresh()
-#
-#         mem_log('post measure {}'.format(grpname))
-#
-#         return True
-#
-#     def _iteration(self, con, ncounts, check_conditions, starttime):
-#         st = time.time()
-#         if starttime is None:
-#             starttime = time.time()
-#
-#         iter_cnt = 1
-#         iter_step = self._iter_step
-#         get_data = self._get_data_generator()
-#
-#         debug = globalv.experiment_debug
-#         if debug:
-#             m = 0.2
-#         else:
-#             m = self.integration_time
-#
-#         check = lambda x: self._check_iteration(x, ncounts, check_conditions)
-#         while 1:
-# #             if iter_cnt > ncounts:
-# #                 break
-#             ck = check(iter_cnt)
-#             if ck == 'break':
-#                 break
-#             elif ck == 'cancel':
-#                 return False
-#
-#             data = get_data.next()
-#             iter_step(iter_cnt, con, data, starttime, m, debug)
-#             iter_cnt += 1
-#
-#         t = time.time() - st
-#         iter_cnt -= 1
-#         et = iter_cnt * self.integration_time
-#         self.debug('%%%%%%%%%%%%%%%%%%%%%%%% counts: {} {} {}'.format(iter_cnt, et, t))
-
-#     @profile
-#     def _iter_step(self, iter_cnt, con, data, starttime, period, debug=False):
-#
-#         x = time.time() - starttime  # if not self._debug else iter_cnt + starttime
-#         if debug:
-#             x *= period ** -1
-#         con.add_consumable((iter_cnt, x, data))
-#
-#         if iter_cnt % 50 == 0:
-#             self.info('collecting point {}'.format(iter_cnt))
-# #             mem_log('collecting point {}'.format(iter_cnt))
-#
-#         iter_cnt += 1
-#         time.sleep(period)
-
-#     def _check_conditions(self, conditions, cnt):
-#         for ti in conditions:
-#             if ti.check(self.arar_age, cnt):
-#                 return ti
-#
-#     def _check_iteration(self, i, ncounts, check_conditions):
-#
-# #         if self.plot_panel is None:
-# #             return 'break'
-#
-#         j = i - 1
-#         # exit the while loop if counts greater than max of original counts and the plot_panel counts
-#         pc = 0
-#         if self.plot_panel:
-#             pc = self.plot_panel.ncounts
-#
-#         maxcounts = max(ncounts, pc)
-#         if i > maxcounts:
-#             return 'break'
-#
-#         if check_conditions:
-#             termination_condition = self._check_conditions(self.termination_conditions, i)
-#             if termination_condition:
-#                 self.info('termination condition {}. measurement iteration executed {}/{} counts'.format(termination_condition.message, j, ncounts),
-#                           color='red'
-#                           )
-#                 return 'cancel'
-#
-#             truncation_condition = self._check_conditions(self.truncation_conditions, i)
-#             if truncation_condition:
-#                 self.info('truncation condition {}. measurement iteration executed {}/{} counts'.format(truncation_condition.message, j, ncounts),
-#                           color='red'
-#                           )
-#                 self.state = 'truncated'
-#                 self.measurement_script.abbreviated_count_ratio = truncation_condition.abbreviated_count_ratio
-#
-# #                self.condition_truncated = True
-#                 return 'break'
-#
-#             action_condition = self._check_conditions(self.action_conditions, i)
-#             if action_condition:
-#                 self.info('action condition {}. measurement iteration executed {}/{} counts'.format(action_condition.message, j, ncounts),
-#                           color='red'
-#                           )
-#                 action_condition.perform(self.measurement_script)
-#                 if not action_condition.resume:
-#                     return 'break'
-#
-#         if i > self.measurement_script.ncounts:
-#             self.info('script termination. measurement iteration executed {}/{} counts'.format(j, ncounts))
-#             return 'break'
-#
-#         if pc:
-#             if i > pc:
-#                 self.info('user termination. measurement iteration executed {}/{} counts'.format(j, ncounts))
-#                 self._total_counts -= (ncounts - i)
-#                 return 'break'
-#
-#         if self._truncate_signal:
-#             self.info('measurement iteration executed {}/{} counts'.format(j, ncounts))
-#             self._truncate_signal = False
-#
-#             return 'break'
-#
-#         if not self._alive:
-#             self.info('measurement iteration executed {}/{} counts'.format(j, ncounts))
-#             return 'cancel'
+#============= EOF =============================================

@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.experiment.condition.condition import ActionCondition, TruncationCondition, TerminationCondition
-from pychron.experiment.condition.conditions_edit_view import ConditionsViewable, ConditionGroup, PostRunGroup, \
+from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, TerminationConditional
+from pychron.experiment.conditional.conditionals_edit_view import ConditionalsViewable, ConditionalGroup, PostRunGroup, \
     PreRunGroup
 
 
@@ -36,16 +36,16 @@ from pychron.experiment.condition.conditions_edit_view import ConditionsViewable
 #     value_width=Int(120)
 
 
-class ConditionsView(ConditionsViewable):
+class ConditionalsView(ConditionalsViewable):
     def __init__(self, run, pret, postt, *args, **kw):
-        super(ConditionsView, self).__init__(*args, **kw)
+        super(ConditionalsView, self).__init__(*args, **kw)
         self._load(run, pret, postt)
 
     def _load(self, run, pret, postt):
-        for name, items, klass, cklass in (('actions', ConditionGroup, ActionCondition),
-                                    ('truncations', ConditionGroup, TruncationCondition),
-                                    ('terminations', ConditionGroup, TerminationCondition)):
-            items=getattr(run, '{}_conditions'.format(name[:-1]))
+        for name, items, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                    ('truncations', ConditionalGroup, TruncationConditional),
+                                    ('terminations', ConditionalGroup, TerminationConditional)):
+            items=getattr(run, '{}_conditionals'.format(name[:-1]))
             grp = self._group_factory(items, klass, cklass)
             setattr(self, '{}_group'.format(name), grp)
 
@@ -56,11 +56,11 @@ class ConditionsView(ConditionsViewable):
             grp = self._group_factory(postt, 'post_run_terminations', PostRunGroup)
             self.post_run_terminations_group=grp
 
-    def _group_factory(self, items, klass, condition_klass=None):
-        if condition_klass is None:
-            condition_klass = TerminationCondition
+    def _group_factory(self, items, klass, conditional_klass=None):
+        if conditional_klass is None:
+            conditional_klass = TerminationConditional
 
-        group = klass(items, condition_klass,
+        group = klass(items, conditional_klass,
                       editable=False)
         return group
 

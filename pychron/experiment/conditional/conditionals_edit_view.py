@@ -32,13 +32,13 @@ import yaml
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import get_path
-from pychron.experiment.condition.condition import condition_from_dict, MAX_REGEX, STD_REGEX, \
-    CP_REGEX, MIN_REGEX, TruncationCondition, TerminationCondition, ActionCondition, SLOPE_REGEX, BASELINE_REGEX, \
+from pychron.experiment.conditional.conditional import conditional_from_dict, MAX_REGEX, STD_REGEX, \
+    CP_REGEX, MIN_REGEX, TruncationConditional, TerminationConditional, ActionConditional, SLOPE_REGEX, BASELINE_REGEX, \
     BASELINECOR_REGEX, COMP_REGEX, AVG_REGEX, ACTIVE_REGEX
 from pychron.paths import paths
 
 
-class PRConditionsAdapter(TabularAdapter):
+class PRConditionalsAdapter(TabularAdapter):
     columns = [('Attribute', 'attr'),
                ('Check', 'comp'), ]
 
@@ -46,7 +46,7 @@ class PRConditionsAdapter(TabularAdapter):
     check_width = Int(200)
 
 
-class ConditionsAdapter(TabularAdapter):
+class ConditionalsAdapter(TabularAdapter):
     columns = [('Attribute', 'attr'),
                ('Start', 'start_count'),
                ('Frequency', 'frequency'),
@@ -64,11 +64,11 @@ MOD_DICT = {'Current': '{}.cur', 'StdDev': '{}.std', 'Baseline': '{}.bs',
             'BaselineCorrected': '{}.bs_corrected'}
 
 
-class ConditionGroup(HasTraits):
+class ConditionalGroup(HasTraits):
     editable=True
 
 
-    conditions = List
+    conditionals = List
     selected = Any
 
     attr = Str
@@ -101,50 +101,50 @@ class ConditionGroup(HasTraits):
                   ('window', ''), ('mapper', ''),
                   ('start', 'start_count'),
                   ('check', 'comp')]
-    tabular_adapter_klass = ConditionsAdapter
+    tabular_adapter_klass = ConditionalsAdapter
 
-    _condition_klass=None
+    _conditional_klass=None
+
     def _add_button_fired(self):
         if self.selected:
-            idx=self.conditions.index(self.selected)
+            idx=self.conditionals.index(self.selected)
 
             k=self.selected.clone_traits()
-            self.conditions.insert(idx, k)
+            self.conditionals.insert(idx, k)
         else:
-            k=self._condition_klass('','')
-            self.conditions.append()
+            k=self._conditional_klass('','')
+            self.conditionals.append()
 
     def _delete_button_fired(self):
-        idx=self.conditions.index(self.selected)
-        self.conditions.remove(self.selected)
-        if not self.conditions:
-            sel=self._condition_klass('','')
+        idx=self.conditionals.index(self.selected)
+        self.conditionals.remove(self.selected)
+        if not self.conditionals:
+            sel=self._conditional_klass('','')
         else:
-            sel = self.conditions[idx-1]
+            sel = self.conditionals[idx-1]
         self.selected=sel
 
-    def __init__(self, conditions, klass, *args, **kw):
+    def __init__(self, conditionals, klass, *args, **kw):
         if not klass:
             raise NotImplementedError
 
-        if conditions:
-            for ci in conditions:
-                cx = condition_from_dict(ci, klass)
+        if conditionals:
+            for ci in conditionals:
+                cx = conditional_from_dict(ci, klass)
                 if cx:
-                    self.conditions.append(cx)
+                    self.conditionals.append(cx)
 
-            self.selected = self.conditions[0]
+            self.selected = self.conditionals[0]
         else:
             self.selected = klass('', '')
-            self.conditions=[self.selected]
+            self.conditionals=[self.selected]
 
-        self._condition_klass= klass
-        super(ConditionGroup, self).__init__(*args, **kw)
-
+        self._conditional_klass= klass
+        super(ConditionalGroup, self).__init__(*args, **kw)
 
     def dump(self):
         cs = []
-        for ci in self.conditions:
+        for ci in self.conditionals:
             d = {}
             for a, b in self.dump_attrs:
                 if not b:
@@ -250,8 +250,8 @@ class ConditionGroup(HasTraits):
                  icon_button_editor('delete_button', 'delete'))
         return g
 
-    def _get_conditions_grp(self):
-        item = UItem('conditions',
+    def _get_conditionals_grp(self):
+        item = UItem('conditionals',
                      editor=TabularEditor(adapter=self.tabular_adapter_klass(),
                                           editable=False,
                                           auto_update=True,
@@ -285,20 +285,20 @@ class ConditionGroup(HasTraits):
 
     def traits_view(self):
         if self.editable:
-            v = View(self._get_conditions_grp(),
+            v = View(self._get_conditionals_grp(),
                      self._get_tool_group(),
                      self._get_edit_group())
         else:
-            v=View(self._get_conditions_grp())
+            v=View(self._get_conditionals_grp())
         return v
 
 
-class PostRunGroup(ConditionGroup):
+class PostRunGroup(ConditionalGroup):
     dump_attrs = [('attr', ''),
                   ('window', ''),
                   ('mapper', ''),
                   ('check', 'comp')]
-    tabular_adapter_klass = PRConditionsAdapter
+    tabular_adapter_klass = PRConditionalsAdapter
 
     def _get_edit_group(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
@@ -315,9 +315,9 @@ class PostRunGroup(ConditionGroup):
         return edit_grp
 
 
-class PreRunGroup(ConditionGroup):
+class PreRunGroup(ConditionalGroup):
     dump_attrs = [('attr', ''), ('check', 'comp')]
-    tabular_adapter_klass = PRConditionsAdapter
+    tabular_adapter_klass = PRConditionalsAdapter
     # def traits_view(self):
     def _get_edit_group(self):
         edit_grp = VGroup(HGroup(spring, UItem('object.selected.comp', style='readonly'), spring),
@@ -336,20 +336,20 @@ class PreRunGroup(ConditionGroup):
 
 class CEHandler(Handler):
     def object_path_changed(self, info):
-        info.ui.title = 'Edit Default Conditions - [{}]'.format(info.object.name)
+        info.ui.title = 'Edit Default Conditionals - [{}]'.format(info.object.name)
 
     def save_as(self, info):
-        dlg=FileDialog(default_directory=paths.queue_conditions_dir, action='save as')
+        dlg=FileDialog(default_directory=paths.queue_conditionals_dir, action='save as')
         if dlg.open():
             if dlg.path:
                 info.object.dump(dlg.path)
 
-class ConditionsViewable(HasTraits):
-    actions_group = Instance(ConditionGroup)
-    terminations_group = Instance(ConditionGroup)
-    truncations_group = Instance(ConditionGroup)
-    post_run_terminations_group = Instance(ConditionGroup)
-    pre_run_terminations_group = Instance(ConditionGroup)
+class ConditionalsViewable(HasTraits):
+    actions_group = Instance(ConditionalGroup)
+    terminations_group = Instance(ConditionalGroup)
+    truncations_group = Instance(ConditionalGroup)
+    post_run_terminations_group = Instance(ConditionalGroup)
+    pre_run_terminations_group = Instance(ConditionalGroup)
 
     def traits_view(self):
         noact = VGroup(spring, HGroup(spring, Label('No Actions Defined'), spring), spring,
@@ -389,11 +389,11 @@ class ConditionsViewable(HasTraits):
                  resizable=True,
                  handler=CEHandler(),
                  buttons=['OK', 'Cancel', Action(name='Save As', action='save_as')],
-                 title='Edit Default Conditions')
+                 title='Edit Default Conditionals')
         return v
 
 
-class ConditionsEditView(ConditionsViewable):
+class ConditionalsEditView(ConditionalsViewable):
     path = Str
 
     def __init__(self, detectors=None, *args, **kw):
@@ -403,26 +403,26 @@ class ConditionsEditView(ConditionsViewable):
             self.available_attrs.extend(detectors)
             self.detectors = detectors
 
-        super(ConditionsEditView, self).__init__(*args, **kw)
+        super(ConditionalsEditView, self).__init__(*args, **kw)
 
     @property
     def name(self):
-        return os.path.relpath(self.path, paths.queue_conditions_dir)
+        return os.path.relpath(self.path, paths.queue_conditionals_dir)
 
     def open(self, name):
         self.load(name)
 
     def load(self, name):
-        root = paths.queue_conditions_dir
+        root = paths.queue_conditionals_dir
         p = get_path(root, name, ('.yaml', '.yml'))
         if p:
             self.path = p
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
-                for name, klass, cklass in (('actions', ConditionGroup, ActionCondition),
-                                            ('truncations', ConditionGroup, TruncationCondition),
-                                            ('terminations', ConditionGroup, TerminationCondition),
-                                            ('post_run_terminations', PostRunGroup, TerminationCondition)):
+                for name, klass, cklass in (('actions', ConditionalGroup, ActionConditional),
+                                            ('truncations', ConditionalGroup, TruncationConditional),
+                                            ('terminations', ConditionalGroup, TerminationConditional),
+                                            ('post_run_terminations', PostRunGroup, TerminationConditional)):
                     grp = self._group_factory(yd, name, klass, cklass)
                     setattr(self, '{}_group'.format(name), grp)
 
@@ -430,12 +430,12 @@ class ConditionsEditView(ConditionsViewable):
                 grp.available_attrs = self.detectors
                 self.pre_run_terminations_group = grp
 
-    def _group_factory(self, yd, name, klass, condition_klass=None):
-        if condition_klass is None:
-            condition_klass = TerminationCondition
+    def _group_factory(self, yd, name, klass, conditional_klass=None):
+        if conditional_klass is None:
+            conditional_klass = TerminationConditional
 
         items = yd.get(name, [])
-        group = klass(items, condition_klass, available_attrs=self.available_attrs)
+        group = klass(items, conditional_klass, available_attrs=self.available_attrs)
         return group
 
     def dump(self, path=None):
@@ -453,17 +453,17 @@ class ConditionsEditView(ConditionsViewable):
                 yaml.dump(d, fp, default_flow_style=False)
 
 
-def edit_conditions(name, detectors=None, app=None):
+def edit_conditionals(name, detectors=None, app=None):
     if not name:
         dlg = FileDialog(action='open',
                          wildcard=FileDialog.create_wildcard('YAML', '*.yaml *.yml'),
-                         default_directory=paths.queue_conditions_dir)
+                         default_directory=paths.queue_conditionals_dir)
         if dlg.open():
             if dlg.path:
                 name = os.path.basename(dlg.path)
 
     if name:
-        cev = ConditionsEditView(detectors)
+        cev = ConditionalsEditView(detectors)
         cev.open(name)
         if app:
             info = app.open_view(cev, kind='livemodal')
@@ -475,7 +475,7 @@ def edit_conditions(name, detectors=None, app=None):
 
 
 if __name__ == '__main__':
-    c = ConditionsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
+    c = ConditionalsEditView(detectors=['H2', 'H1', 'AX', 'L1', 'L2', 'CDD'])
     c.open('normal')
     c.configure_traits()
     c.dump()
