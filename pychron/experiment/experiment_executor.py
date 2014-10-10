@@ -1456,8 +1456,8 @@ Use Last "blank_{}"= {}
     def _update_automated_runs(self):
         if self.isAlive():
             is_last = len(self.experiment_queue.cleaned_automated_runs) == 0
-
-            self.extracting_run.is_last = is_last
+            if self.extracting_run:
+                self.extracting_run.is_last = is_last
 
     def _stop_button_fired(self):
         self.debug('%%%%%%%%%%%%%%%%%% Stop fired alive={}'.format(self.isAlive()))
@@ -1466,14 +1466,14 @@ Use Last "blank_{}"= {}
             self.stop()
 
     def _cancel_run_button_fired(self):
-        self.debug('cancel run {}'.format(self.isAlive()))
+        self.debug('cancel run. Executor.isAlive={}'.format(self.isAlive()))
         if self.isAlive():
-            crun = self.measuring_run
-            self.debug('cancel run {}'.format(crun))
-            if crun:
-                t = Thread(target=self.cancel, kwargs={'style': 'run'})
-                t.start()
-                #                 self._cancel_thread = t
+            for crun, kind in ((self.measuring_run, 'measuring'),
+                               (self.extracting_run, 'extracting')):
+                if crun:
+                    self.debug('cancel {} run {}'.format(kind, crun.runid))
+                    t = Thread(target=self.cancel, kwargs={'style': 'run'})
+                    t.start()
 
     def _truncate_button_fired(self):
         if self.measuring_run:
