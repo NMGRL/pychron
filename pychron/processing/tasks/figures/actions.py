@@ -57,6 +57,11 @@ class NewXYScatterAction(TaskAction):
     method = 'tb_xy_scatter'
 
 
+class NewIsochronAction(TaskAction):
+    name = 'New Isochron'
+    method = 'tb_new_isochron'
+
+
 class NewIdeogramAction(TaskAction):
     name = 'New Ideogram'
     method = 'tb_new_ideogram'
