@@ -394,6 +394,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                         query_hook = None,
                         reraise=False,
                         func='all',
+                        group_by=None,
                         debug_query=False):
 
         sess = self.sess
@@ -430,10 +431,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = q.filter(fi)
 
             if order is not None:
-                if isinstance(order, tuple):
-                    q = q.order_by(*order)
-                else:
-                    q = q.order_by(order)
+                if not isinstance(order, tuple):
+                    order=(order, )
+                q = q.order_by(*order)
+
+            if group_by is not None:
+                if not isinstance(order, tuple):
+                    group_by=(group_by, )
+                q = q.group_by(*group_by)
 
             if limit is not None:
                 q = q.limit(limit)
