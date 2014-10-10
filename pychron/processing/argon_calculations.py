@@ -33,6 +33,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 
 
 
+
 #============= local library imports  ==========================
 
 
@@ -91,10 +92,18 @@ def calculate_isochron(analyses, reg='NewYork'):
     xds, xdes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a40])
     yns, ynes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a36])
     xns, xnes = zip(*[(xi.nominal_value, xi.std_dev) for xi in a39])
+
+
+
+    regx = isochron_regressor(ys, yerrs, xs, xerrs,
+                              xds,xdes, yns, ynes, xns, xnes)
+
     reg = isochron_regressor(xs, xerrs, ys, yerrs,
                              xds, xdes, xns, xnes, yns, ynes,
                              reg)
-    xint = ufloat(reg.x_intercept, reg.x_intercept_error)
+
+    xint = ufloat(regx.get_intercept(), regx.get_intercept_error())
+    # xint = ufloat(reg.x_intercept, reg.x_intercept_error)
     try:
         R = xint ** -1
     except ZeroDivisionError:

@@ -253,7 +253,7 @@ class PlotterOptions(FigurePlotterOptions):
                                   tooltip='Auto generate a title based on the analysis list'),
                              icon_button_editor('edit_title_format', 'cog',
                                                 enabled_when='auto_generate_title')),
-                      Item('title', springy=True,
+                      Item('title', springy=False,
                            enabled_when='not auto_generate_title',
                            tooltip='User specified plot title'),
                       label='Title', show_border=True)
