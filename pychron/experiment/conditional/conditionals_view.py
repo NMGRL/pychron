@@ -22,20 +22,6 @@ from pychron.experiment.conditional.conditionals_edit_view import ConditionalsVi
     PreRunGroup
 
 
-# class ConditionsAdapter(TabularAdapter):
-#     columns = [('Attribute', 'attr'),
-#                ('Check', 'comp'),
-#                ('Start', 'start_count'),
-#                ('Frequency', 'frequency'),
-#                ('Value', 'value')]
-#
-#     attr_width=Int(100)
-#     check_width=Int(200)
-#     start_width=Int(50)
-#     frequency_width=Int(100)
-#     value_width=Int(120)
-
-
 class ConditionalsView(ConditionalsViewable):
     def __init__(self, run, pret, postt, *args, **kw):
         super(ConditionalsView, self).__init__(*args, **kw)
@@ -63,20 +49,6 @@ class ConditionalsView(ConditionalsViewable):
         group = klass(items, conditional_klass,
                       editable=False)
         return group
-
-    # termination_conditions = List
-    #
-    # def traits_view(self):
-    #     editor = TabularEditor(adapter=ConditionsAdapter(),
-    #                            editable=False,
-    #                            auto_update=True)
-    #
-    #     v = View(UItem('termination_conditions',
-    #                    editor=editor),
-    #              title='Current Conditions',
-    #              width=800,
-    #              resizable=True)
-    #     return v
 
 #============= EOF =============================================
 
