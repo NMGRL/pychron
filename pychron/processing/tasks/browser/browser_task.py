@@ -102,9 +102,11 @@ class BaseBrowserTask(BaseEditorTask, BrowserMixin):
     bin_tol_hrs = Int
 
     def refresh_samples(self):
+        self.debug('refresh samples')
         self.set_samples(self._retrieve_samples())
 
     def load_time_view(self):
+        self.debug('load time view')
         db = self.db
         with db.session_ctx():
             ss = [si.labnumber for si in self.selected_samples]

@@ -87,10 +87,10 @@ class FigureTask(AnalysisEditTask):
 
     selected_figures = Any
     dclicked_figure = Event
-    #
+
     # ===============================================================================
     # task protocol
-    #===============================================================================
+    # ===============================================================================
     def prepare_destroy(self):
         for ed in self.editor_area.editors:
             if isinstance(ed, FigureEditor):
@@ -106,9 +106,16 @@ class FigureTask(AnalysisEditTask):
         return panes + [self.plotter_options_pane,
                         self.figure_selector_pane]
 
-    #===============================================================================
+    # ===============================================================================
+    # context menu handler
+    # ===============================================================================
+    def plot_selected(self):
+        self.debug('plot selected')
+        self.information_dialog('Plot selected samples not yet implemented')
+
+    # ===============================================================================
     # graph grouping
-    #===============================================================================
+    # ===============================================================================
     def graph_group_selected(self):
         if self.unknowns_pane.selected:
             idxs = self._get_selected_indices()
@@ -255,8 +262,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
-
-
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()
@@ -439,25 +444,40 @@ class FigureTask(AnalysisEditTask):
 
     def _load_sample_figures(self, new):
         if new:
+            lns = [p.labnumber for p in new]
+            self.debug('loading sample figures for {}'.format(','.join(lns)))
             db = self.manager.db
             with db.session_ctx():
-                lns = [p.labnumber for p in new]
+
                 figs = db.get_labnumber_figures(lns)
-                figs = [self._dbfigure_factory(f) for f in figs]
-                figs = [f for f in figs if f]
-                self.ofigures = figs
-                self.figures = self.ofigures
+
+                # figs = [self._dbfigure_factory(f) for f in figs]
+
+                def gen():
+                    for f in figs:
+                        fig=self._dbfigure_factory(f)
+                        if fig:
+                            yield fig
+
+                figs = list(gen())
+
+                self.ofigures = figs[:]
+                self.figures = figs
                 self._figure_kind_changed()
 
     def _dbfigure_factory(self, f):
         if f.preference:
-            dbf = DBFigure(name=f.name or '',
-                           project=f.project.name,
-                           identifiers=[s.labnumber.identifier for s in f.labnumbers],
-                           samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
-                           kind=f.preference.kind,
-                           id=f.id)
-            return dbf
+            try:
+                dbf = DBFigure(name=f.name or '',
+                               project=f.project.name if f.project else '',
+                               identifiers=[s.labnumber.identifier for s in f.labnumbers],
+                               samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
+                               kind=f.preference.kind,
+                               id=f.id)
+                return dbf
+            except AttributeError:
+                self.debug_exception()
+                self.debug('failed making dbfigure {}'.format(f.name))
 
     def _get_sample_obj(self, s):
         return next((sr for sr in self.samples if sr.labnumber == s), None)

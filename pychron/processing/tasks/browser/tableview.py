@@ -105,6 +105,8 @@ class TableView(PaneModelView):
     def on_time_view(self, info, obj):
         obj.load_time_view()
 
+    def plot_selected(self, info, obj):
+        obj.plot_selected()
 
 class TableTools(PaneModelView):
     def traits_view(self):

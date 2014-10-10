@@ -64,6 +64,10 @@ class SampleAdapter(BrowserAdapter):
     material_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
+        from pychron.processing.tasks.figures.figure_task import FigureTask
         if obj.selected_samples:
             return MenuManager(Action(name='Unselect', action='unselect_samples'),
-                               Action(name='Time View', action='on_time_view'))
+                               Action(name='Time View', action='on_time_view'),
+                               Action(name='Plot Selected',
+                                      enabled=isinstance(obj, FigureTask),
+                                      action='plot_selected'))
