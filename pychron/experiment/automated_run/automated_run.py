@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Any, Str, List, Property, \
@@ -481,10 +481,10 @@ class AutomatedRun(Loggable):
             attr must be an attribute of arar_age
         """
         self.termination_conditionals.append(TerminationConditional(attr, comp,
-                                                                start_count,
-                                                                frequency,
-                                                                window=window,
-                                                                mapper=mapper))
+                                                                    start_count,
+                                                                    frequency,
+                                                                    window=window,
+                                                                    mapper=mapper))
 
     def py_add_truncation(self, attr, comp, start_count, frequency,
                           abbreviated_count_ratio):
@@ -497,19 +497,19 @@ class AutomatedRun(Loggable):
             self.warning('invalid truncation attribute "{}"'.format(attr))
         else:
             self.truncation_conditionals.append(TruncationConditional(attr, comp,
-                                                                  start_count,
-                                                                  frequency,
-                                                                  abbreviated_count_ratio=abbreviated_count_ratio))
+                                                                      start_count,
+                                                                      frequency,
+                                                                      abbreviated_count_ratio=abbreviated_count_ratio))
 
     def py_add_action(self, attr, comp, start_count, frequency, action, resume):
         """
             attr must be an attribute of arar_age
         """
         self.action_conditionals.append(ActionConditional(attr, comp,
-                                                      start_count,
-                                                      frequency,
-                                                      action=action,
-                                                      resume=resume))
+                                                          start_count,
+                                                          frequency,
+                                                          action=action,
+                                                          resume=resume))
 
     def py_clear_conditionals(self):
         self.py_clear_terminations()
@@ -1866,16 +1866,19 @@ anaylsis_type={}
             return default
 
         m = ast.parse(script.text)
-        docstr = ast.get_docstring(m)
-        self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
+        docstr = ast.get_docstring(m).strip()
         if docstr:
+            self.debug('{} {} metadata\n{}'.format(script.name, key, docstr))
             try:
                 params = yaml.load(docstr)
                 return params[key]
             except KeyError:
                 self.warning('No value "{}" in metadata'.format(key))
             except TypeError:
-                self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(script.name, key))
+                self.warning('Invalid yaml docstring in "{}". Could not retrieve "{}"'.format(script.name, key))
+        else:
+            self.debug('No metadata section in "{}". Using default "{}" value for "{}"'.format(script.name,
+                                                                                               default, key))
 
         return default
 
@@ -1937,4 +1940,5 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
+
 #============= EOF =============================================
