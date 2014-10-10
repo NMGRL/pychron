@@ -15,24 +15,18 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import math
-
 from traits.api import HasTraits, Instance, on_trait_change, Float, Str, \
     Dict, Property, Event, Int, Bool, List, cached_property, Button, Any
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, InstanceEditor, TableEditor, \
     VSplit, HGroup, VGroup, spring, Item
-
-# from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-# from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 #============= standard library imports ========================
 from numpy import linspace, array, min, max, zeros, meshgrid, \
     vstack, arctan2, sin, cos, unravel_index
-
+import math
 #============= local library imports  ==========================
-from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
 from pychron.envisage.browser.record_views import RecordView
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.graph.contour_graph import ContourGraph
@@ -42,7 +36,10 @@ from pychron.core.helpers.formatting import floatfmt, calc_percent_error
 from pychron.core.helpers.iterfuncs import partition
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 from pychron.processing.tasks.flux.irradiation_tray_overlay import IrradiationTrayOverlay
+
+# st=time.time()
 from pychron.core.regression.flux_regressor import BowlFluxRegressor, PlaneFluxRegressor
+# st = report_extime('reg', st)
 from pychron.processing.tasks.flux.tool import FluxTool
 
 
@@ -205,6 +202,7 @@ class FluxEditor(GraphEditor):
         reg = self._regressor
         if reg:
             if self.tool.use_monte_carlo:
+                from pychron.core.stats.monte_carlo import monte_carlo_error_estimation
                 pts = array([[p.x, p.y] for p in self.positions])
                 nominals = reg.predict(pts)
                 errors = monte_carlo_error_estimation(reg, nominals, pts,
@@ -260,6 +258,8 @@ class FluxEditor(GraphEditor):
                 self._rebuild_contour(x, y, z, r, reg)
             else:
                 self._rebuild_hole_vs_j(x, y, r, reg)
+        else:
+            self.warning_dialog('At least 4 monitor positions required')
 
     def _rebuild_hole_vs_j(self, x, y, r, reg):
         g = Graph()
@@ -342,8 +342,10 @@ class FluxEditor(GraphEditor):
 
     def _regressor_factory(self, x, y, z, ze):
         if self.tool.model_kind == 'Bowl':
+            # from pychron.core.regression.flux_regressor import BowlFluxRegressor
             klass = BowlFluxRegressor
         else:
+            # from pychron.core.regression.flux_regressor import PlaneFluxRegressor
             klass = PlaneFluxRegressor
 
         x = array(x)
@@ -511,12 +513,12 @@ class FluxEditor(GraphEditor):
                   style='custom',
                   editor=InstanceEditor(), height=0.72),
             VGroup(HGroup(UItem('recalculate_button'),
-                          Item('min_j', format_func=jfloatfmt,
+                          Item('min_j', format_str='%0.4e',
                                style='readonly',
                                label='Min. J'),
                           Item('max_j',
                                style='readonly',
-                               format_func=jfloatfmt, label='Max. J'),
+                               format_str='%0.4e', label='Max. J'),
                           Item('percent_j_change',
                                style='readonly',
                                format_func=floatfmt,

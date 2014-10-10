@@ -66,7 +66,7 @@ class Ideogram(BaseArArFigure):
             self.xs, self.xes = array([(ai.nominal_value, ai.std_dev)
                                        for ai in self._get_xs(key=index_attr)]).T
         except (ValueError, AttributeError), e:
-            print 'asdfasdf', e
+            print 'asdfasdf', e, index_attr
             return
 
         omit = self._get_omitted(self.sorted_analyses,
@@ -123,7 +123,7 @@ class Ideogram(BaseArArFigure):
             age_units = ref.arar_constants.age_units
             t = 'Age ({})'.format(age_units)
 
-        graph.set_x_title(t)
+        graph.set_x_title(t, plotid=0)
 
         #turn off ticks for prob plot by default
         plot = graph.plots[0]
@@ -239,7 +239,7 @@ class Ideogram(BaseArArFigure):
         # ly, uh = po.ylimits
         # if uh < my:
         self._set_y_limits(0, my, min_=0, max_=my, pid=pid)
-        print 'settting ylimits {}'.format(my)
+        # print 'settting ylimits {}'.format(my)
         omits = self._get_aux_plot_omits(po, ys)
         ia = self.options.index_attr
 

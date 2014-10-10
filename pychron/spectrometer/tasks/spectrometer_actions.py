@@ -17,9 +17,11 @@
 
 #============= enthought library imports =======================
 from pyface.action.api import Action
+from traits.api import Property
 #============= standard library imports ========================
 
 #============= local library imports  ==========================
+from pyface.tasks.action.task_action import TaskAction
 
 
 SPECTROMETER_PROTOCOL = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
@@ -52,6 +54,29 @@ def get_manager(event, protocol):
 #        manager = app.get_service(SPECTROMETER_PROTOCOL)
 #        manager.peak_center(update_mftable=True)
 #
+
+class ToggleSpectrometerTask(TaskAction):
+    name = Property(depends_on='task')
+
+    def _get_name(self):
+        if self.task:
+            return 'Switch to Scan' if self.task.id=='pychron.spectrometer.scan_inspector' \
+                else 'Switch to Inspector'
+        else:
+            return ''
+
+    def perform(self, event):
+        window = event.task.window
+        if event.task.id=='pychron.spectrometer':
+            tid = 'pychron.spectrometer.scan_inspector'
+        else:
+            tid = 'pychron.spectrometer'
+
+        task = window.application.create_task(tid)
+        window.add_task(task)
+        window.activate_task(task)
+
+
 class SpectrometerParametersAction(Action):
     name = 'Spectrometer Parameters...'
     description = 'View/Set spectrometer parameters'
@@ -69,7 +94,7 @@ class PeakCenterAction(Action):
     def perform(self, event):
         man = get_manager(event, ION_OPTICS_PROTOCOL)
         if man.setup_peak_center():
-            man.do_peak_center(confirm_save=True, warn=True)
+            man.do_peak_center(confirm_save=True, warn=True, message='manual peakcenter')
 
 
 class CoincidenceScanAction(Action):
@@ -111,15 +136,16 @@ class MagnetFieldTableHistoryAction(Action):
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
-            from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
             import os
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
             if os.path.isfile(os.path.join(archive_root, os.path.basename(mft.mftable_path))):
-                gh = GitArchiveHistory(archive_root, mft.mftable_path)
+                # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
+                from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
+                gh = LocalMFTableHistory(archive_root, mft.mftable_path)
                 gh.load_history(os.path.basename(mft.mftable_path))
-                ghv = GitArchiveHistoryView(model=gh, title='MFTable Archive')
+                ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
                 ghv.edit_traits(kind='livemodal')
             else:
                 man.warning_dialog('No MFTable History')

@@ -53,7 +53,7 @@ class IntercalibrationFactorEditor(InterpolationEditor):
                 else:
                     progress.increase_max(n)
 
-            set_id = self.processor.add_predictor_set(self._clean_references())
+            set_id = self.processor.add_predictor_set(self._clean_references(), 'detector_intercalibration')
 
             for unk in self.analyses:
                 if progress:
@@ -73,8 +73,8 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             self.rebuild_graph()
 
             fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits))
-            self.processor.update_vcs_analyses(self.analyses,
-                                               'Update detector intercalibration fits={}'.format(fits))
+            # self.processor.update_vcs_analyses(self.analyses,
+            #                                    'Update detector intercalibration fits={}'.format(fits))
             if progress:
                 progress.soft_close()
 

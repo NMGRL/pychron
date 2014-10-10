@@ -15,16 +15,20 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Int, on_trait_change, Str, Property, cached_property, Float, Bool, HasTraits, Instance
-from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
+from traits.api import Int, on_trait_change, Str, Property, cached_property, \
+    Float, Bool, HasTraits, Instance, TraitError, Button
+from traitsui.api import View, Item, EnumEditor, VGroup, HGroup, VFold
 # ============= standard library imports ========================
+import os
 import ast
 import yaml
 # ============= local library imports  ==========================
 from pychron.core.helpers.ctx_managers import no_update
 from pychron.core.helpers.filetools import list_directory2
+from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.paths import paths
 from pychron.pyscripts.context_editors.context_editor import ContextEditor
+from pychron.pyscripts.hops_editor import HopEditorModel, HopEditorView
 
 
 class YamlObject(HasTraits):
@@ -34,7 +38,7 @@ class YamlObject(HasTraits):
         try:
             for k, v in ctx[self.name].items():
                 setattr(self, k, v)
-        except KeyError:
+        except (KeyError, TraitError):
             pass
 
     def dump(self):
@@ -77,6 +81,14 @@ class Equilibration(YamlObject):
     inlet = Str(enter_set=True, auto_set=False)
     outlet = Str(enter_set=True, auto_set=False)
     inlet_delay = Int(enter_set=True, auto_set=False)
+    use_extraction_eqtime = Bool
+    eqtime = Float(enter_set=True, auto_set=False)
+
+
+class PeakHop(YamlObject):
+    name = 'peakhop'
+    use_peak_hop = Bool
+    hops_name = Str
 
 
 class MeasurementContextEditor(ContextEditor):
@@ -85,12 +97,17 @@ class MeasurementContextEditor(ContextEditor):
     baseline = Instance(Baseline, ())
     peakcenter = Instance(PeakCenter, ())
     equilibration = Instance(Equilibration, ())
+    peakhop = Instance(PeakHop, ())
 
     # general
     default_fits = Str(enter_set=True, auto_set=False)
     available_default_fits = Property
 
-    #persistence
+    available_hops = Property
+
+    edit_peakhop_button = Button
+
+    # persistence
     def load(self, s):
         with no_update(self):
 
@@ -105,6 +122,7 @@ class MeasurementContextEditor(ContextEditor):
                 self.baseline.load(ctx)
                 self.peakcenter.load(ctx)
                 self.equilibration.load(ctx)
+                self.peakhop.load(ctx)
 
                 self.default_fits = ctx.get('default_fits', '')
 
@@ -113,7 +131,8 @@ class MeasurementContextEditor(ContextEditor):
                    multicollect=self.multicollect.dump(),
                    baseline=self.baseline.dump(),
                    peakcenter=self.peakcenter.dump(),
-                   equilibration=self.equilibration.dump())
+                   equilibration=self.equilibration.dump(),
+                   peakhop=self.peakhop.dump())
 
         return yaml.dump(ctx, default_flow_style=False)
 
@@ -131,7 +150,23 @@ class MeasurementContextEditor(ContextEditor):
         m = ast.parse(s)
         return ast.get_docstring(m)
 
-    @on_trait_change('multicollect:+, baseline:+, peakcenter:+, equilibration:+, default_fits')
+    def _edit_peakhop_button_fired(self):
+        name = self.peakhop.hops_name
+        if name:
+            p = os.path.join(paths.measurement_dir, 'hops', '{}.txt'.format(name))
+
+            pem = HopEditorModel()
+            pem.open(p)
+            pev = HopEditorView(model=pem)
+            pev.edit_traits(kind='livemodal')
+
+    def _use_extraction_eqtime_changed(self, new):
+        if new:
+            self.equilibration.eqtime = 'eqtime'
+        else:
+            self.equilibration.eqtime = 15
+
+    @on_trait_change('peakhop:+, multicollect:+, baseline:+, peakcenter:+, equilibration:+, default_fits')
     def request_update(self):
         if self._no_update:
             return
@@ -141,6 +176,11 @@ class MeasurementContextEditor(ContextEditor):
     @cached_property
     def _get_available_default_fits(self):
         return list_directory2(paths.fits_dir, extension='.yaml', remove_extension=True)
+
+    @cached_property
+    def _get_available_hops(self):
+        return list_directory2(os.path.join(paths.measurement_dir, 'hops'),
+                               extension='.txt', remove_extension=True)
 
     def traits_view(self):
         mc_grp = VGroup(
@@ -165,13 +205,27 @@ class MeasurementContextEditor(ContextEditor):
 
         eq_grp = VGroup(Item('object.equilibration.inlet'),
                         Item('object.equilibration.outlet'),
-                        Item('object.equilibration.inlet_delay'))
+                        Item('object.equilibration.inlet_delay'),
+                        Item('object.equilibration.use_extraction_eqtime'),
+                        Item('object.equilibration.eqtime',
+                             enabled_when='not object.equilibration.use_extraction_eqtime',
+                             label='Duration'),
+                        show_border=True, label='Equilibration')
+        ph_grp = VGroup(Item('object.peakhop.use_peak_hop'),
+                        HGroup(Item('object.peakhop.hops_name',
+                                    label='Hops',
+                                    editor=EnumEditor(name='available_hops')),
+                               icon_button_editor('edit_peakhop_button', 'cog',
+                                                  enabled_when='object.peakhop.hops_name',
+                                                  tooltip='Edit selected "Hops" file')),
+                        label='Peak Hop')
+
         gen_grp = VGroup(Item('default_fits',
                               editor=EnumEditor(name='available_default_fits')),
                          show_border=True,
                          label='General')
 
-        v = View(VGroup(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp))
+        v = View(VFold(gen_grp, mc_grp, bs_grp, pc_grp, eq_grp, ph_grp))
         return v
 
 # ============= EOF =============================================

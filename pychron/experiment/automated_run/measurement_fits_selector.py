@@ -69,7 +69,7 @@ class MeasurementFitsSelector(FilterFitSelector):
         return ys
 
     def save(self):
-        sfs, bfs = partition(self.fits, lambda x: x.is_baseline)
+        bfs, sfs = partition(self.fits, lambda x: x.is_baseline)
         yd = {'signal': self._dump(sfs),
               'baseline': self._dump(bfs)}
 
@@ -141,6 +141,7 @@ class MeasurementFitsSelectorView(Controller):
                         self._get_toggle_group(),
                         self._get_auto_group(),
                         self._get_fit_group()),
+                 height=400,
                  title='Edit Default Fits',
                  buttons=['OK', 'Cancel'],
                  resizable=True)

@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2014 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,24 @@
 # limitations under the License.
 #===============================================================================
 from pychron.core.ui import set_qt
-from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.paths import paths
-
 set_qt()
+
+from pyface.confirmation_dialog import ConfirmationDialog
 
 #============= enthought library imports =======================
 from traitsui.handler import Controller
 from traitsui.table_column import ObjectColumn
-from pyface.constant import OK
+from pyface.constant import OK, CANCEL, YES
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, List, Int, Any, Button, Bool
-from traitsui.menu import ToolBar, Action
-from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor
+from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_change
+from traitsui.menu import Action
+from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor, Tabbed
 
 #============= standard library imports ========================
 import os
 #============= local library imports  ==========================
+from pychron.core.ui.text_editor import myTextEditor
+from pychron.paths import paths
 from pychron.envisage.resources import icon
 from pychron.core.helpers.filetools import fileiter, add_extension
 from pychron.experiment.automated_run.hop_util import split_hopstr
@@ -65,6 +66,7 @@ class Hop(HasTraits):
     positions = List
     counts = Int
     settle = Int
+    isotope_label = Str
     name = Str
     detectors = List(['A, B'])
     add_position_button = Button
@@ -85,6 +87,8 @@ class Hop(HasTraits):
                          detector=det,
                          deflection=int(defl) if defl else 0)
             self.positions.append(p)
+
+        self._handle_position_change()
 
     def validate_hop(self):
         """
@@ -122,13 +126,24 @@ class Hop(HasTraits):
         self.positions.append(Position())
 
     def _remove_position_button_fired(self):
+        idx=self.positions.index(self.selected)
+
         self.positions.remove(self.selected)
+
+        if len(self.positions)>0:
+            self.selected=self.positions[idx-1]
+        else:
+            self.selected = None
+
+    @on_trait_change('positions:isotope, positions[]')
+    def _handle_position_change(self):
+        self.isotopes_label = ','.join([i.isotope for i in self.positions])
 
     def traits_view(self):
         from pychron.pychron_constants import ISOTOPES
 
         cols = [
-            ObjectColumn(name='name', label='', editable=False),
+            ObjectColumn(name='name', label='', width=20, editable=False),
             ObjectColumn(name='isotope',
                          editor=EnumEditor(values=ISOTOPES)),
             ObjectColumn(name='detector',
@@ -172,9 +187,15 @@ class HopSequence(HasTraits):
     def _label_hops(self):
         for i, hi in enumerate(self.hops):
             hi.name = str(i + 1)
+            print hi.name
+            for j, pi in enumerate(hi.positions):
+                pi.name = str(j+1)
 
     def remove_hop(self, idx):
         self.hops.pop(idx)
+        self._label_hops()
+
+    def label_hops(self):
         self._label_hops()
 
 
@@ -185,14 +206,18 @@ class HopEditorModel(Loggable):
     detectors = List
     add_hop_button = Button
     remove_hop_button = Button
-    saveable = Bool
-    saveasable = Bool
+    # saveable = Bool
+    # saveasable = Bool
+    text = Str
+    dirty = Bool
 
     def new(self):
         self.hop_sequence = HopSequence()
 
-    def open(self):
-        p = '/Users/ross/Pychrondata_dev/scripts/measurement/hops/hop.txt'
+    def open(self, p=None):
+        if p is None:
+            p = '/Users/ross/Pychrondata_dev/scripts/measurement/hops/hop.txt'
+
         if not os.path.isfile(p):
             p = ''
             dialog = FileDialog(action='open', default_directory=paths.hops_dir)
@@ -201,21 +226,25 @@ class HopEditorModel(Loggable):
 
         if os.path.isfile(p):
             self.path = p
-            self.saveable = True
-            self.saveasable = True
+            # self.saveable = True
+            # self.saveasable = True
             self._load(p)
 
     def save(self):
         if self.path:
             if self._validate_sequence():
                 self._save_file(self.path)
+        else:
+            self.save_as()
 
     def save_as(self):
         if self._validate_sequence():
             dialog = FileDialog(action='save as', default_directory=paths.hops_dir)
             if dialog.open() == OK:
                 p = dialog.path
+                p = add_extension(p, '.txt')
                 self._save_file(p)
+                self.path = p
 
     def _load(self, p):
         with open(p, 'r') as fp:
@@ -226,6 +255,12 @@ class HopEditorModel(Loggable):
                         counts=cnt, settle=settle, detectors=self.detectors)
                 h.parse_hopstr(hopstr)
                 hs.hops.append(h)
+            hs.label_hops()
+
+        self.selected = hs.hops[0]
+
+        with open(p, 'r') as fp:
+            self.text = fp.read()
 
     def _validate_sequence(self):
         hs = []
@@ -238,7 +273,7 @@ class HopEditorModel(Loggable):
             return True
 
     def _save_file(self, p):
-        p = add_extension(p, '.txt')
+
         header = '#hopstr e.i iso:det[:defl][,iso:det....], count, settle\n'
         txt = self.hop_sequence.to_string()
         self.info('saving hop to {}'.format(p))
@@ -246,7 +281,11 @@ class HopEditorModel(Loggable):
             fp.write(header)
             fp.write(txt)
 
-        self.saveable = True
+        # self.saveable = True
+
+        with open(p, 'r') as fp:
+            self.text = fp.read()
+        self.dirty=False
 
     def _add_hop_button_fired(self):
         idx = None
@@ -254,17 +293,59 @@ class HopEditorModel(Loggable):
             idx = self.hop_sequence.hops.index(self.selected)
 
         self.hop_sequence.add_hop(idx)
-        self.saveasable = True
+        # self.saveasable = True
+        self.dirty = True
 
     def _remove_hop_button_fired(self):
-        idx = self.hop_sequence.hops.index(self.selected)
+        hops = self.hop_sequence.hops
+        idx = hops.index(self.selected)
+        if len(hops)>1:
+            self.selected=hops[0]
+        else:
+            self.selected=None
+
         self.hop_sequence.remove_hop(idx)
-        if not self.hop_sequence.hops:
-            self.saveasable = False
+        self.dirty = True
+        # if not self.hop_sequence.hops:
+        #     self.saveasable = False
+        #     self.saveable = False
 
 
 class HopEditorView(Controller):
     model = HopEditorModel
+    title = Str('Peak Hops Editor')
+
+    def close( self, info, is_ok ):
+        if self.model.dirty:
+            dlg=ConfirmationDialog( message='Save changes to Hops file', cancel=True,
+                                    default=CANCEL, title='Save Changes?')
+            ret=dlg.open()
+            if ret==CANCEL:
+                return False
+            elif ret==YES:
+                self.model.save()
+        return True
+
+    @on_trait_change('model:hop_sequence:hops:[counts,settle, positions:[isotope,detector,deflection]]')
+    def _handle_edit(self):
+        self.model.dirty=True
+
+    @on_trait_change('model.[path,dirty]')
+    def _handle_path_change(self):
+        print 'pascd', self.model.dirty
+        p = self.model.path
+
+        n = os.path.basename(p)
+        if self.model.dirty:
+            n='*{}'.format(n)
+
+        d = os.path.dirname(p)
+        d = d.replace(os.path.expanduser('~'), '')
+        t = '{} - PeakHop Editor - {}'.format(n, d)
+        if not self.info:
+            self.title = t
+        else:
+            self.info.ui.title = t
 
     def save(self, info):
         self.model.save()
@@ -277,7 +358,11 @@ class HopEditorView(Controller):
                              label='',
                              editable=False),
                 ObjectColumn(name='counts'),
-                ObjectColumn(name='settle')]
+                ObjectColumn(name='settle', label='Settle (s)'),
+                ObjectColumn(name='isotopes_label',
+                             editable=False,
+                             width=175,
+                             label='Isotopes')]
 
         hgrp = VGroup(
             UItem('object.hop_sequence.hops',
@@ -294,27 +379,39 @@ class HopEditorView(Controller):
         sgrp = UItem('selected', style='custom', editor=InstanceEditor())
 
         grp = HSplit(hgrp, sgrp)
-        v = View(VGroup(CustomLabel('object.path'), grp, ),
-                 toolbar=ToolBar(Action(name='Save',
-                                        image=icon('document-save'),
-                                        enabled_when='object.saveable',
-                                        action='save'),
-                                 Action(name='Save As',
-                                        image=icon('document-save-as'),
-                                        action='save_as',
-                                        enabled_when='object.saveasable', )),
-                 width=600,
-                 title='Peak Hops Editor',
-                 buttons=['OK', ],
+        save_action = Action(name='Save',
+                             image=icon('document-save'),
+                             enabled_when='object.saveable',
+                             action='save')
+        save_as_acion = Action(name='Save As',
+                               image=icon('document-save-as'),
+                               action='save_as',
+                               enabled_when='object.saveasable', )
+
+        teditor = myTextEditor(bgcolor='#F7F6D0',
+                               fontsize=12,
+                               fontsize_name='fontsize',
+                               wrap=False,
+                               tab_width=15)
+
+        v = View(Tabbed(VGroup(grp, label='Editor'),
+                        VGroup(UItem('object.text',
+                                     editor=teditor,
+                                     style='custom'), label='Text')),
+                 # toolbar=ToolBar(),
+                 width=690,
+                 title=self.title,
+                 buttons=['OK', save_action, save_as_acion],
                  resizable=True)
         return v
 
 
 if __name__ == '__main__':
     m = HopEditorModel()
+    m.detectors=['H2','H1','CDD']
+    m.open()
     h = HopEditorView(model=m)
     # m.new()
-    m.open()
     h.configure_traits()
 
 

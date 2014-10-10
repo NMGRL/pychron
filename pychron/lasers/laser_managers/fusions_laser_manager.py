@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2011 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,25 +151,23 @@ class FusionsLaserManager(LaserManager):
                         '{}.record_brightness'.format(pref_id))
         self.debug('preferences bound')
 
-    def set_light(self, state):
+    def set_light(self, value):
+        self.set_light_state(value > 0)
+        self.set_light_intensity(value)
+
+    def set_light_state(self, state):
         if state:
             self.fiber_light.power_off()
         else:
             self.fiber_light.power_on()
 
     def set_light_intensity(self, v):
-        self.fiber_light.intensity = v
-
-    #    def kill(self, **kw):
-    #        if self.step_heat_manager is not None:
-    #            self.step_heat_manager.kill(**kw)
-
-    #        super(FusionsLaserManager, self).kill(**kw)
+        self.fiber_light.intensity = min(max(0, v), 100)
 
     @on_trait_change('pointer')
     def pointer_ononff(self):
-        '''
-        '''
+        """
+        """
         self.pointer_state = not self.pointer_state
         self.laser_controller.set_pointer_onoff(self.pointer_state)
 
@@ -177,8 +175,8 @@ class FusionsLaserManager(LaserManager):
         return self._requested_power
 
     def get_coolant_temperature(self, **kw):
-        '''
-        '''
+        """
+        """
         chiller = self.chiller
         if chiller is not None:
             return chiller.get_coolant_out_temperature(**kw)
@@ -399,7 +397,7 @@ class FusionsLaserManager(LaserManager):
 
         ps = self.get_power_slider()
         if ps:
-        #            ps.springy = True
+            #            ps.springy = True
             power_grp.content.append(ps)
         return power_grp
 

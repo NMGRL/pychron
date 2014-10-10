@@ -29,7 +29,8 @@ import os
 #============= local library imports  ==========================
 
 from pychron.graph.graph import Graph
-from pychron.graph.regression_graph import StackedRegressionGraph, RegressionGraph
+from pychron.graph.regression_graph import RegressionGraph
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.pychron_constants import FIT_TYPES, NULL_STR, DELIMITERS
 from pychron.paths import paths
 from pychron.loggable import Loggable

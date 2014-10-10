@@ -1,20 +1,20 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Color, Instance, DelegatesTo
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
@@ -24,8 +24,8 @@ from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
-#============= standard library imports ========================
-#============= local library imports  ==========================
+# ============= standard library imports ========================
+# ============= local library imports  ==========================
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
@@ -34,11 +34,10 @@ from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
+
 #===============================================================================
 # editing
 #===============================================================================
-
-
 def spacer(w):
     return Spring(width=w, springy=False)
 
@@ -57,12 +56,6 @@ def queue_factory_item(name, **kw):
 
 def run_factory_item(name, **kw):
     return Item(run_factory_name(name), **kw)
-
-
-# def runs_table_name(name):
-#     return 'object.experiment_queue.runs_table.{}'.format(name)
-# def run_table_item(name, **kw):
-#     return Item(make_rt_name(name), **kw)
 
 
 class ExperimentFactoryPane(TraitsDockPane):
@@ -156,6 +149,8 @@ class ExperimentFactoryPane(TraitsDockPane):
             HGroup(run_factory_item('special_labnumber',
                                     show_label=False,
                                     editor=EnumEditor(values=SPECIAL_NAMES)),
+                   run_factory_item('run_block', show_label=False,
+                                    editor=EnumEditor(name=run_factory_name('run_blocks'))),
                    run_factory_item('frequency', width=50),
                    run_factory_item('freq_before', label='Before'),
                    run_factory_item('freq_after', label='After'),
@@ -169,17 +164,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                    run_factory_item('aliquot',
                                     width=50),
                    spring),
-            # HGroup(
-            # run_factory_item('irradiation',
-            #                      tooltip='Irradiation info retreived from Database',
-            #                      style='readonly',
-            #                      width=90),
-            #     run_factory_item('sample',
-            #                      tooltip='Sample info retreived from Database',
-            #                      style='readonly',
-            #                      width=100,
-            #                      show_label=False),
-            #     spring),
+
             HGroup(run_factory_item('flux'),
                    Label(u'\u00b1'),
                    run_factory_item('flux_error', show_label=False),
@@ -342,6 +327,7 @@ Quick=   measure_iteration stopped at current step
                 UItem('truncate_style',
                       enabled_when='measuring',
                       tooltip=truncate_style_tt),
+                UItem('show_conditionals_button', enabled_when='measuring'),
                 spacer(-75),
                 CustomLabel('extraction_state_label',
                             color_name='extraction_state_color',

@@ -15,18 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from itertools import groupby
-import os
 
 from traits.api import on_trait_change, Instance, List, Event, Any, Enum, Button
 from pyface.tasks.task_layout import TaskLayout, PaneItem, Tabbed, \
     HSplitter
 from pyface.tasks.action.schema import SToolBar
-
-
-
-
 #============= standard library imports ========================
+from itertools import groupby
+import os
+import weakref
 #============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.processing.plotters.xy.xy_scatter import XYScatterEditor
@@ -35,26 +32,24 @@ from pychron.processing.tasks.actions.processing_actions import SetInterpretedAg
     GroupSelectedAction, GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, GroupbySampleAction
 from pychron.processing.tasks.analysis_edit.analysis_edit_task import AnalysisEditTask
 from pychron.processing.tagging.analysis_tags import Tag
+from pychron.processing.tasks.browser.util import browser_pane_item
 from pychron.processing.tasks.figures.db_figure import DBFigure
 from pychron.processing.tasks.figures.panes import PlotterOptionsPane, \
     FigureSelectorPane
 from pychron.processing.tasks.figures.actions import SaveFigureAction, \
     NewIdeogramAction, NewSpectrumAction, \
-    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction
-
-import weakref
-
-from .editors.spectrum_editor import SpectrumEditor
-from .editors.isochron_editor import InverseIsochronEditor
-from .editors.ideogram_editor import IdeogramEditor
+    SavePDFFigureAction, SaveAsFigureAction, RefreshActiveEditorAction, NewIsochronAction
 from pychron.processing.tasks.figures.figure_editor import FigureEditor
 from pychron.processing.tasks.figures.save_figure_dialog import SaveFigureDialog
 from pychron.processing.tasks.recall.actions import AddIsoEvoAction
 from pychron.processing.tasks.recall.recall_editor import RecallEditor
 
+from .editors.spectrum_editor import SpectrumEditor
+from .editors.isochron_editor import InverseIsochronEditor
+from .editors.ideogram_editor import IdeogramEditor
+
 #@todo: add layout editing.
 #@todo: add vertical stack. link x-axes
-
 
 
 class FigureTask(AnalysisEditTask):
@@ -71,7 +66,8 @@ class FigureTask(AnalysisEditTask):
             SaveAsFigureAction(),
             name='Figure'),
         SToolBar(NewIdeogramAction(),
-                 NewSpectrumAction(), ),
+                 NewSpectrumAction(),
+                 NewIsochronAction()),
         SToolBar(SetInterpretedAgeTBAction(),
                  BrowseInterpretedAgeTBAction()),
         SToolBar(GroupSelectedAction(name='Selected'),
@@ -91,10 +87,10 @@ class FigureTask(AnalysisEditTask):
 
     selected_figures = Any
     dclicked_figure = Event
-    #
+
     # ===============================================================================
     # task protocol
-    #===============================================================================
+    # ===============================================================================
     def prepare_destroy(self):
         for ed in self.editor_area.editors:
             if isinstance(ed, FigureEditor):
@@ -110,9 +106,16 @@ class FigureTask(AnalysisEditTask):
         return panes + [self.plotter_options_pane,
                         self.figure_selector_pane]
 
-    #===============================================================================
+    # ===============================================================================
+    # context menu handler
+    # ===============================================================================
+    def plot_selected(self):
+        self.debug('plot selected')
+        self.information_dialog('Plot selected samples not yet implemented')
+
+    # ===============================================================================
     # graph grouping
-    #===============================================================================
+    # ===============================================================================
     def graph_group_selected(self):
         if self.unknowns_pane.selected:
             idxs = self._get_selected_indices()
@@ -259,8 +262,6 @@ class FigureTask(AnalysisEditTask):
     #===============================================================================
     # actions
     #===============================================================================
-
-
     def refresh_active_editor(self):
         if self.has_active_editor():
             self.active_editor.rebuild()
@@ -328,6 +329,8 @@ class FigureTask(AnalysisEditTask):
     def tb_new_xy_scatter(self):
         self.new_xy_scatter()
 
+    def tb_new_isochron(self):
+        self.new_inverse_isochron()
     #===============================================================================
     #
     #===============================================================================
@@ -441,25 +444,40 @@ class FigureTask(AnalysisEditTask):
 
     def _load_sample_figures(self, new):
         if new:
+            lns = [p.labnumber for p in new]
+            self.debug('loading sample figures for {}'.format(','.join(lns)))
             db = self.manager.db
             with db.session_ctx():
-                lns = [p.labnumber for p in new]
+
                 figs = db.get_labnumber_figures(lns)
-                figs = [self._dbfigure_factory(f) for f in figs]
-                figs = [f for f in figs if f]
-                self.ofigures = figs
-                self.figures = self.ofigures
+
+                # figs = [self._dbfigure_factory(f) for f in figs]
+
+                def gen():
+                    for f in figs:
+                        fig=self._dbfigure_factory(f)
+                        if fig:
+                            yield fig
+
+                figs = list(gen())
+
+                self.ofigures = figs[:]
+                self.figures = figs
                 self._figure_kind_changed()
 
     def _dbfigure_factory(self, f):
         if f.preference:
-            dbf = DBFigure(name=f.name or '',
-                           project=f.project.name,
-                           identifiers=[s.labnumber.identifier for s in f.labnumbers],
-                           samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
-                           kind=f.preference.kind,
-                           id=f.id)
-            return dbf
+            try:
+                dbf = DBFigure(name=f.name or '',
+                               project=f.project.name if f.project else '',
+                               identifiers=[s.labnumber.identifier for s in f.labnumbers],
+                               samples=list(set([s.labnumber.sample.name for s in f.labnumbers])),
+                               kind=f.preference.kind,
+                               id=f.id)
+                return dbf
+            except AttributeError:
+                self.debug_exception()
+                self.debug('failed making dbfigure {}'.format(f.name))
 
     def _get_sample_obj(self, s):
         return next((sr for sr in self.samples if sr.labnumber == s), None)
@@ -659,7 +677,7 @@ class FigureTask(AnalysisEditTask):
         if self.has_active_editor():
             if name == 'refresh_plot_needed':
                 # if self.plotter_options_pane.pom.plotter_options.auto_refresh or name == 'refresh_plot_needed':
-                print 'plotter options rebuild'
+                # print 'plotter options rebuild'
                 if not isinstance(self.active_editor, RecallEditor):
                     self.active_editor.rebuild()
                     self.active_editor.dump_tool()
@@ -699,7 +717,7 @@ class FigureTask(AnalysisEditTask):
         return TaskLayout(
             id='pychron.processing',
             left=HSplitter(
-                PaneItem('pychron.browser'),
+                browser_pane_item(),
                 Tabbed(
                     PaneItem('pychron.processing.figures.saved_figures'),
                     PaneItem('pychron.processing.unknowns'),

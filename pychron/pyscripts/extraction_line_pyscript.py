@@ -23,6 +23,12 @@ from traits.api import List
 
 
 
+
+
+
+
+
+
 #============= standard library imports ========================
 import time
 #============= local library imports  ==========================
@@ -98,7 +104,7 @@ class Ramper(object):
 class ExtractionPyScript(ValvePyScript):
     _resource_flag = None
     info_color = EXTRACTION_COLOR
-    snapshot_paths = List
+    snapshots = List
 
     _extraction_positions = List
 
@@ -236,11 +242,24 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def snapshot(self, name=''):
-        ps = self._extraction_action([('take_snapshot', (), {'name': name})])
+    def set_light(self, value=''):
+        self._extraction_action([('set_light', (value,), {})])
+
+    @verbose_skip
+    @command_register
+    def snapshot(self, name='', prefix='', view_snapshot=False, pic_format='.jpg'):
+        """
+            if name not specified use RID_Position e.g 12345-01A_3
+        """
+        if not name:
+            pos = '_'.join(self.position)
+            name = '{}_{}'.format(self.run_identifier, pos)
+
+        name = '{}{}'.format(prefix, name)
+        ps = self._extraction_action([('take_snapshot', (name, pic_format),
+                                       {'view_snapshot':view_snapshot})])
         if ps:
-            ps = ps[0]
-            self.snapshot_paths.append(ps[1])
+            self.snapshots.append(ps)
 
     @command_register
     def video_recording(self, name='video'):
@@ -430,7 +449,9 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def ramp(self, start=0, end=0, duration=0, rate=0, period=1):
+    def ramp(self, start=0, setpoint=0, duration=0, rate=0, period=1):
+        self.debug('ramp parameters start={}, '
+                   'setpoint={}, duration={}, rate={}, period={}'.format(start, setpoint, duration, rate, period))
         def func(i, ramp_step):
             if self._cancel:
                 return
@@ -446,7 +467,7 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         rmp = Ramper()
-        rmp.ramp(func, start, end, duration, rate, period)
+        rmp.ramp(func, start, setpoint, duration, rate, period)
         return time.time() - st
 
     @verbose_skip
@@ -570,7 +591,6 @@ class ExtractionPyScript(ValvePyScript):
     @command_register
     def prepare(self):
         return self._extraction_action([('prepare', (), {})])
-
     #===============================================================================
     # properties
     #===============================================================================
@@ -664,8 +684,10 @@ class ExtractionPyScript(ValvePyScript):
         if not 'name' in kw:
             kw['name'] = self.extract_device
 
-        if not 'protocol' in kw:
-            kw['protocol'] = ILaserManager
+        kw['name'] = kw.get('name', self.extract_device) or self.extract_device
+        # if not 'protocol' in kw:
+        #     kw['protocol'] = ILaserManager
+        kw['protocol']=kw.get('protocol', ILaserManager) or ILaserManager
 
         return self._manager_action(*args, **kw)
 

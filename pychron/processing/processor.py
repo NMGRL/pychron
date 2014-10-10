@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,15 @@
 #============= enthought library imports =======================
 #============= standard library imports ========================
 from datetime import datetime, timedelta
+from hashlib import sha1
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import and_, not_
 from traits.api import HasTraits, Int, Str
+from uncertainties import ufloat
+
 
 #============= local library imports  ==========================
-from uncertainties import ufloat
-from pychron.database.core.query import compile_query
 from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.database.orms.isotope.gen import gen_AnalysisTypeTable, gen_MassSpectrometerTable, \
     gen_ExtractionDeviceTable
@@ -39,6 +40,11 @@ from pychron.database.orms.isotope.meas import meas_AnalysisTable, meas_Measurem
 from pychron.core.helpers.iterfuncs import partition
 # from pychron.processing.plotters import plotter_options
 
+def unique_id(vs, *args):
+    h=sha1()
+    for ai in vs+list(args):
+        h.update(str(ai))
+    return h.hexdigest()
 
 class IrradiationPositionRecord(HasTraits):
     position = Int
@@ -54,6 +60,10 @@ class IrradiationPositionRecord(HasTraits):
 
 
 class Processor(IsotopeDatabaseManager):
+
+    def unique_id(self,vs, *args):
+        return unique_id(vs, *args)
+
     def find_associated_analyses(self, analysis, delta=12, limit=10, atype=None, **kw):
         """
             find atype analyses +/- delta hours (12 hours default)
@@ -80,11 +90,16 @@ class Processor(IsotopeDatabaseManager):
         # ar = self._find_analyses(ms, post, delta, atype, **kw)
         # return br + ar
 
+    def group_labnumbers(self, ls):
+        def monitor_filter(pos):
+            return pos.sample.name == 'FC-2'
+
+        return partition(ls, monitor_filter)
+
     def group_level(self, level, irradiation=None, monitor_filter=None, ret_dbrecord=False):
         if monitor_filter is None:
             def monitor_filter(pos):
-                if pos.sample == 'FC-2':
-                    return True
+                return pos.sample == 'FC-2'
 
         db = self.db
         with db.session_ctx():
@@ -146,48 +161,48 @@ class Processor(IsotopeDatabaseManager):
                 q = q.limit(limit)
 
             return self._make_analyses_from_query(q)
-
-    def save_arar(self, analysis, meas_analysis):
-        with self.db.session_ctx():
-            hist = meas_analysis.selected_histories.selected_arar
-            if not hist:
-                hist = self.db.add_arar_history(meas_analysis)
-                arar = self.db.add_arar(hist)
-            else:
-                arar = hist.arar_result
-
-            #force analysis to recalculate age
-            #potentially redundant
-            analysis.calculate_age(force=True)
-
-            units = analysis.arar_constants.age_scalar
-
-            attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                    'rad40', 'cl36', 'ca37', 'k39')
-            for ai in attr:
-                a = getattr(analysis, ai)
-                v, e = float(a.nominal_value), float(a.std_dev)
-                setattr(arar, ai, v)
-                setattr(arar, '{}_err'.format(ai), e)
-
-            age = analysis.age * units
-            v, e = age.nominal_value, age.std_dev
-
-            je = analysis.age_error_wo_j * units
-
-            arar.age = float(v)
-            arar.age_err = float(e)
-            arar.age_err_wo_j = je
-
-            #update arar_history timestamp
-            arar.history.create_date = datetime.now()
+    #
+    # def save_arar(self, analysis, meas_analysis):
+    #     with self.db.session_ctx():
+    #         hist = meas_analysis.selected_histories.selected_arar
+    #         if not hist:
+    #             hist = self.db.add_arar_history(meas_analysis)
+    #             arar = self.db.add_arar(hist)
+    #         else:
+    #             arar = hist.arar_result
+    #
+    #         #force analysis to recalculate age
+    #         #potentially redundant
+    #         analysis.calculate_age(force=True)
+    #
+    #         units = analysis.arar_constants.age_scalar
+    #
+    #         attr = ('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
+    #                 'rad40', 'cl36', 'ca37', 'k39')
+    #         for ai in attr:
+    #             a = getattr(analysis, ai)
+    #             v, e = float(a.nominal_value), float(a.std_dev)
+    #             setattr(arar, ai, v)
+    #             setattr(arar, '{}_err'.format(ai), e)
+    #
+    #         age = analysis.age * units
+    #         v, e = age.nominal_value, age.std_dev
+    #
+    #         je = analysis.age_error_wo_j * units
+    #
+    #         arar.age = float(v)
+    #         arar.age_err = float(e)
+    #         arar.age_err_wo_j = je
+    #
+    #         #update arar_history timestamp
+    #         arar.history.create_date = datetime.now()
 
     #===============================================================================
     # corrections
     #===============================================================================
-    def add_history(self, dbrecord, kind):
+    def add_history(self, dbrecord, kind, **kw):
         db = self.db
-        return db.add_history(dbrecord, kind)
+        return db.add_history(dbrecord, kind, **kw)
 
     def apply_fixed_correction(self, history, isotope, value, error, correction_name):
         func = getattr(self.db, 'add_{}'.format(correction_name))
@@ -209,6 +224,41 @@ class Processor(IsotopeDatabaseManager):
                      fit=prev.fit,
                      user_value=uv,
                      user_error=ue)
+
+    def apply_session_blank_history(self, analysis, hist_id):
+        db=self.db
+        with db.session_ctx():
+            hist = db.get_blank_history(hist_id)
+            if hist.action:
+                session=hist.action.session
+                if session:
+                    histories = db.get_session_blank_histories(session)
+                    if histories:
+                        for hi in histories:
+                            an=hi.analysis
+                            an.selected_histories.selected_blanks_id=hi
+                            self.remove_from_cache(an)
+
+    def apply_blank_history(self, analysis, hist_id):
+        db=self.db
+        with db.session_ctx():
+            an = db.get_analysis_uuid(analysis.uuid)
+            self.debug('setting {} blank history_id to {}. '
+                       'table=proc_BlanksHistoryTable'.format(an.record_id, hist_id))
+            cid =an.selected_histories.selected_blanks_id
+            self.debug('current blank id={} >> {}'.format(cid, hist_id))
+            an.selected_histories.selected_blanks_id=hist_id
+
+            analysis.sync_blanks(an)
+
+    def add_predictor_valueset(self, refs, ss, es, dbblank):
+        db = self.db
+        # with db.session_ctx():
+        # refs = [db.get_analysis_uuid(ri.uuid) for ri in refs]
+        refs = db.get_analyses_uuid([ri.uuid for ri in refs],
+                                    attr='id')
+        for ri, vi, ei in zip(refs,ss, es):
+            db.add_blank_set_value_table(vi, ei, dbblank, ri[0])
 
     def apply_correction(self, history, analysis, fit_obj, set_id, kind):
         #meas_analysis = self.db.get_analysis_uuid(analysis.uuid)
@@ -244,16 +294,22 @@ class Processor(IsotopeDatabaseManager):
                                          fit=fit_obj.fit,
                                          set_id=set_id)
 
-    def add_predictor_set(self, predictors):
-        set_id = 0
+    def add_predictor_set(self, predictors, kind):
+        set_id = None
         if predictors:
             db = self.db
-            #make set_id
-            dbrs = [db.get_analysis_uuid(p.uuid) for p in predictors]
-            set_id = hash(tuple((ai.id for ai in dbrs)))
 
-            for dbr in dbrs:
-                db.add_detector_intercalibration_set(dbr, set_id=set_id)
+            #make set_id
+            dbrs = db.get_analyses_uuid([p.uuid for p in predictors], analysis_only=True)
+
+            # set_id = hash(tuple((ai.id for ai in dbrs)))
+            set_id = self.unique_id([ai.id for ai in dbrs])
+
+            gfunc=getattr(db, 'get_{}_set'.format(kind))
+            if not gfunc(set_id):
+                func = getattr(db, 'add_{}_set'.format(kind))
+                for dbr in dbrs:
+                    func(dbr, set_id=set_id)
 
         return set_id
 

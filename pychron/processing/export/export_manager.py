@@ -21,11 +21,16 @@ from traits.api import Instance, Enum, Any
 #============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.processing.export.export_spec import ExportSpec
-from pychron.processing.export.exporter import MassSpecExporter, XMLExporter, Exporter
+from pychron.processing.export.exporter import MassSpecExporter, Exporter
+from pychron.processing.export.xml_analysis_exporter import XMLAnalysisExporter
+from pychron.processing.export.yaml_analysis_exporter import YAMLAnalysisExporter
 
+EX_KLASS_DICT={'MassSpec':MassSpecExporter,
+               'XML':XMLAnalysisExporter,
+               'YAML':YAMLAnalysisExporter}
 
 class ExportManager(Loggable):
-    kind = Enum('MassSpec', 'XML')
+    kind = Enum('MassSpec', 'XML', 'YAML')
     exporter = Instance(Exporter)
     manager=Any
 
@@ -35,6 +40,7 @@ class ExportManager(Loggable):
             prog = self.manager.open_progress(n)
             for ei in ans:
                 self._export_analysis(ei, prog)
+            self.exporter.export()
             prog.close()
 
     def _make_export_spec(self, ai):
@@ -57,10 +63,18 @@ class ExportManager(Loggable):
         return MassSpecExporter()
 
     def _kind_changed(self):
-        if self.kind == 'MassSpec':
-            self.exporter = MassSpecExporter()
-        else:
-            self.exporter = XMLExporter()
+
+        try:
+            klass=EX_KLASS_DICT[self.kind]
+            self.exporter=klass()
+        except KeyError:
+            self.warning_dialog('invalid kind {}. available={}'.format(self.kind,
+                                                                       ','.join(EX_KLASS_DICT.keys())))
+        # if self.kind == 'MassSpec':
+        #     self.exporter = MassSpecExporter()
+        # elif
+        # else:
+        #     self.exporter = XMLAnalysisExporter()
 
     def _export_analysis(self, ai, prog):
         # db=self.manager.db

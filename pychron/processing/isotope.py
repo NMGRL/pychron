@@ -26,9 +26,10 @@ from traits.api import HasTraits, Str, Float, Property, Instance, \
 
 
 
+
 #============= standard library imports ========================
 from uncertainties import ufloat, Variable, AffineScalarFunc
-from numpy import array, Inf
+from numpy import array, Inf, polyfit
 from pychron.core.helpers.fits import natural_name_fit
 
 import struct
@@ -108,6 +109,16 @@ class BaseMeasurement(HasTraits):
 
     def _get_offset_xs(self):
         return self.xs - self.time_zero_offset
+
+    def get_slope(self, n):
+        if len(self.xs) and len(self.ys) and len(self.xs)==len(self.ys):
+            xs=self.xs
+            ys=self.ys
+            if n!=-1:
+                xs=xs[-n:]
+                ys=ys[-n:]
+
+            return polyfit(xs, ys, 1)[0]
 
 
 class IsotopicMeasurement(BaseMeasurement):

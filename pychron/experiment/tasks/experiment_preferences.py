@@ -17,12 +17,13 @@
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float
-from traitsui.api import View, Item, Group, VGroup
+from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
 
@@ -52,6 +53,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     sniff_color = Color
     signal_color = Color
 
+    bg_color = Color
+
     min_ms_pumptime = Int
 
     use_memory_check = Bool
@@ -62,6 +65,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_analysis_grouping = Bool
     grouping_threshold = Float
     grouping_suffix = Str
+
+    use_automated_run_monitor = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -81,6 +86,7 @@ class UserNotifierPreferences(BasePreferencesHelper):
 
 class ConsolePreferences(BaseConsolePreferences):
     preferences_path = 'pychron.experiment'
+    use_message_colormapping = Bool
 
 
 class SysLoggerPreferences(BasePreferencesHelper):
@@ -123,6 +129,7 @@ class ExperimentPreferencesPane(PreferencesPane):
         color_group = Group(Item('sniff_color', label='Sniff'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
+                            Item('bg_color',label='Background'),
                             label='Colors')
 
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
@@ -147,11 +154,15 @@ class ExperimentPreferencesPane(PreferencesPane):
                                 enabled_when='use_memory_check',
                                 tooltip='Do not continue experiment if available memory less than "Threshold"'),
                            label='Memory')
+        monitor_grp = Group(Item('use_automated_run_monitor',
+                                 label='Use AutomatedRun Monitor',
+                                 tooltip='Use the automated run monitor'),
+                            label='Monitor')
 
         return View(color_group, notification_grp,
                     editor_grp, irradiation_grp,
                     analysis_grouping_grp,
-                    overlap_grp, memory_grp)
+                    overlap_grp, memory_grp, monitor_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):
@@ -172,7 +183,19 @@ class UserNotifierPreferencesPane(PreferencesPane):
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'Experiment'
+    def traits_view(self):
+        preview = CustomLabel('preview',
+                              size_name='fontsize',
+                              color_name='textcolor',
+                              bgcolor_name='bgcolor')
 
+        v = View(VGroup(HGroup(UItem('fontsize'),
+                               UItem('textcolor'),
+                               UItem('bgcolor')),
+                        preview,
+                        Item('use_message_colormapping'),
+                        label=self.label))
+        return v
 
 class SysLoggerPreferencesPane(PreferencesPane):
     model_factory = SysLoggerPreferences

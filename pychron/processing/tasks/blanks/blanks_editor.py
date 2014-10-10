@@ -15,22 +15,20 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+import time
+
 from chaco.legend import Legend
 from traits.api import Str
-# from chaco.array_data_source import ArrayDataSource
 
 #============= standard library imports ========================
 from numpy import where
 #============= local library imports  ==========================
-# from pychron.pychron_constants import FIT_TYPES
-# from pychron.processing.tasks.analysis_edit.ianalysis_edit_tool import IAnalysisEditTool
-from pychron.graph.regression_graph import StackedRegressionGraph
-# from pychron.core.regression.interpolation_regressor import InterpolationRegressor
-# from pychron.core.regression.ols_regressor import OLSRegressor
-# from pychron.core.regression.mean_regressor import MeanRegressor
-# from pychron.core.helpers.datetime_tools import convert_timestamp
-# from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
+from uncertainties import std_dev, nominal_value
+from pychron.core.regression.interpolation_regressor import InterpolationRegressor
+from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.tasks.analysis_edit.interpolation_editor import InterpolationEditor
+
 
 
 class BlanksEditor(InterpolationEditor):
@@ -59,46 +57,100 @@ class BlanksEditor(InterpolationEditor):
             n = len(self.analyses)
             if n > 1:
                 if progress is None:
-                    progress = self.processor.open_progress(n)
+                    progress = self.processor.open_progress(n*len(self.tool.fits))
                 else:
-                    progress.increase_max(n)
+                    progress.increase_max(n+1)
 
             refs = self._clean_references()
-            set_id = self.processor.add_predictor_set(refs)
+            set_id = self.processor.add_predictor_set(refs, 'blanks')
 
-            for unk in self.analyses:
+            for si in self.tool.fits:
+                if si.use:
+                    ys,es = self._get_reference_values(si.name, ans=refs)
+                    xs = [ri.timestamp for ri in refs]
+
+                    reg = self._get_regressor(si.fit, si.error_type, xs, ys, es)
+                    self.set_interpolated_values(si.name, reg, None)
+
+            ans = self.analyses
+            ms = db.get_analyses_uuid([unk.uuid for unk in ans], analysis_only=True)
+
+            args = [mi.id for mi in ms]
+            sid = self.processor.unique_id(args, time.time())
+
+            fit_summary = ','.join(['{}{}'.format(si.name,si.fit)
+                                    for si in self.tool.fits if si.use])
+
+            dbaction = db.add_proc_action('Set Blanks for {} to {}. Fits={}'.format(ans[0].record_id,
+                                                                                    ans[-1].record_id,
+                                                                                    fit_summary),
+                                          session=sid)
+            for unk, meas_analysis in zip(ans, ms):
                 if progress:
                     progress.change_message('Saving blanks for {}'.format(unk.record_id))
 
-                meas_analysis = db.get_analysis_uuid(unk.uuid)
+                # meas_analysis = db.get_analysis_uuid(unk.uuid)
 
                 histories = getattr(meas_analysis, '{}_histories'.format(cname))
                 phistory = histories[-1] if histories else None
+
                 history = self.processor.add_history(meas_analysis, cname)
+                history.action = dbaction
+
                 for si in self.tool.fits:
+                    if not si.fit:
+                        msg = 'Skipping {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
+
                     if not si.use:
-                        self.debug('using previous value {} {}'.format(unk.record_id, si.name))
+                        msg = 'Using previous value {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
                         self.processor.apply_fixed_value_correction(phistory, history, si, cname)
                     else:
-                        self.debug('saving {} {}'.format(unk.record_id, si.name))
+                        msg ='Saving {} {}'.format(unk.record_id, si.name)
+                        self.debug(msg)
+                        if progress:
+                            progress.change_message(msg)
 
                         dbblank = self.processor.apply_correction(history, unk, si, set_id, cname)
+                        self.processor.add_predictor_valueset(refs, ys, es, dbblank)
+
                         if si.fit == 'preceding':
                             dbid = self._get_preceding_analysis(db, unk, refs)
                             if dbid:
                                 dbblank.preceding_id = dbid.id
 
                                 # unk.sync(meas_analysis)
-
+                unk.sync_blanks(meas_analysis)
+                unk.calculate_age(force=True)
+                
             # if self.auto_plot:
             self.rebuild_graph()
 
-            fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
-            self.processor.update_vcs_analyses(self.analyses,
-                                               'Update blanks fits={}'.format(fits))
+            # fits = ','.join(('{} {}'.format(fi.name, fi.fit) for fi in self.tool.fits if fi.use))
+            # self.processor.update_vcs_analyses(self.analyses,
+            #                                    'Update blanks fits={}'.format(fits))
 
             if progress:
                 progress.soft_close()
+
+    def _get_regressor(self, fit, error_type, xs, ys, es):
+        if fit in ('linear','parabolic','cubic'):
+            reg = WeightedPolynomialRegressor(fit=fit)
+        efit = fit[0]
+        if efit in ['preceding', 'bracketing interpolate', 'bracketing average']:
+            reg = InterpolationRegressor(kind=efit)
+
+        mi= min(xs)
+        xs=[xi-mi for xi in xs]
+        reg.trait_set(error_type=error_type,
+                             xs=xs, ys=ys, yserr=es)
+        reg.calculate()
+        return reg
 
     def _get_preceding_analysis(self, db, unk, refs):
         xs = [ri.timestamp for ri in refs]
@@ -125,7 +177,7 @@ class BlanksEditor(InterpolationEditor):
         if k in analysis.isotopes:
             iso = analysis.isotopes[k]
             v = iso.get_baseline_corrected_value()
-            return v.nominal_value, v.std_dev
+            return nominal_value(v), std_dev(v)
         else:
             return 0, 0
 

@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,15 +18,15 @@
 import binascii
 
 from traits.api import Instance, Bool, Int, Float, Str, \
-    Dict, List, Time, Date, Any
+    Dict, List, Time, Date, Any, Long
 
 #============= standard library imports ========================
 import os
 import struct
 import time
 import math
-#============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
+#============= local library imports  ==========================
 from pychron.core.codetools.file_log import file_log
 from pychron.core.codetools.memory_usage import mem_log
 from pychron.core.helpers.datetime_tools import get_datetime
@@ -82,6 +82,7 @@ class AutomatedRunPersister(Loggable):
     defl_dict = Dict
     active_detectors = List
 
+    previous_blank_id = Long
     previous_blanks = Dict
     secondary_database_fail = False
     use_secondary_database = True
@@ -211,7 +212,12 @@ class AutomatedRunPersister(Loggable):
         self.rundate = d.date()
         self.info('Analysis started at {}'.format(self.runtime))
 
-    def post_extraction_save(self, rblob, oblob):
+    def post_extraction_save(self, rblob, oblob, snapshots):
+        """
+            rblob: response blob. binary time, value. time versus measured output
+            oblob: output blob. binary time, value. time versus requested output
+            snapshots: list of snapshot paths
+        """
         if DEBUG:
             self.debug('Not saving extraction to database')
             return
@@ -226,7 +232,8 @@ class AutomatedRunPersister(Loggable):
 
                 ext = self._save_extraction(db, loadtable=loadtable,
                                             response_blob=rblob,
-                                            output_blob=oblob)
+                                            output_blob=oblob,
+                                            snapshots=snapshots)
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:
@@ -297,6 +304,10 @@ class AutomatedRunPersister(Loggable):
                     self.debug('user= {} does not existing. adding to database now'.format(un))
                     dbuser = db.add_user(un)
 
+                self.debug('adding analysis identifier={}, aliquot={}, '
+                           'step={}, increment={}'.format(ln, aliquot,
+                                                       self.run_spec.step,
+                                                       self.run_spec.increment))
                 a = db.add_analysis(lab,
                                     user=dbuser,
                                     uuid=self.uuid,
@@ -306,6 +317,8 @@ class AutomatedRunPersister(Loggable):
                                     increment=self.run_spec.increment,
                                     comment=self.run_spec.comment)
                 sess.flush()
+                self.run_spec.analysis_dbid = a.id
+
                 experiment = db.get_experiment(self.experiment_identifier, key='id')
                 if experiment is not None:
                     # added analysis to experiment
@@ -412,7 +425,7 @@ class AutomatedRunPersister(Loggable):
 
             if self._temp_analysis_buffer:
                 for p, uuid in self._temp_analysis_buffer:
-                    if p!=prj:
+                    if p != prj:
                         analysis = db.get_analysis_uuid(uuid)
                         self._add_to_project_group(db, prj, analysis)
 
@@ -535,7 +548,11 @@ class AutomatedRunPersister(Loggable):
 
         return meas
 
-    def _save_extraction(self, db, analysis=None, loadtable=None, output_blob=None, response_blob=None):
+    def _save_extraction(self, db, analysis=None, loadtable=None,
+                         output_blob=None, response_blob=None, snapshots=None):
+        """
+            snapshots: list of tuples, (local_path, remote_path, imageblob)
+        """
         self.info('saving extraction')
 
         spec = self.run_spec
@@ -589,6 +606,11 @@ class AutomatedRunPersister(Loggable):
             if loadtable and dbpos:
                 dbpos.load_identifier = loadtable.name
 
+        if snapshots:
+            for lpath, rpath, image in snapshots:
+                dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
+                                              image=image)
+                ext.snapshots.append(dbsnap)
         return ext
 
     def _save_spectrometer_info(self, db, meas):
@@ -630,9 +652,12 @@ class AutomatedRunPersister(Loggable):
 
     def _save_blank_info(self, db, analysis):
         self.info('saving blank info')
-        self._save_history_info(db, analysis, 'blanks', self.previous_blanks)
+        self.debug('preceding blank id={}'.format(self.previous_blank_id))
 
-    def _save_history_info(self, db, analysis, name, values):
+        self._save_history_info(db, analysis, 'blanks', self.previous_blanks,
+                                preceding_id=self.previous_blank_id)
+
+    def _save_history_info(self, db, analysis, name, values, preceding_id=None):
         if not values:
             self.debug('no previous {} to save {}'.format(name, values))
             return
@@ -656,8 +681,12 @@ class AutomatedRunPersister(Loggable):
         for isotope, v in values.iteritems():
             uv = v.nominal_value
             ue = float(v.std_dev)
-            func(history, user_value=uv, user_error=ue,
-                 isotope=isotope)
+            if preceding_id:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope, preceding_id=preceding_id)
+            else:
+                func(history, user_value=uv, user_error=ue,
+                     isotope=isotope)
 
     def _save_monitor_info(self, db, analysis):
         if self.monitor:

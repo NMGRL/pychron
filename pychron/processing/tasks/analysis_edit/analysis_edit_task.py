@@ -67,6 +67,25 @@ class AnalysisEditTask(BaseBrowserTask):
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
     recall_configurer = Instance(RecallTableConfigurer)
 
+    def activate_blank_task(self):
+        tid ='pychron.processing.blanks'
+        self._activate_task(tid)
+
+    def activate_recall_task(self):
+        tid = 'pychron.recall'
+        self._activate_task(tid)
+
+    def activate_ideogram_task(self):
+        tid = 'pychron.processing.figures'
+        task = self._activate_task(tid)
+        task.new_ideogram()
+
+    def _activate_task(self, tid):
+        task = self.application.create_task(tid)
+        self.window.add_task(task)
+        self.window.activate_task(task)
+        return task
+
     def split_editor_area_hor(self):
         """
             horizontal splitting not currently working
@@ -155,14 +174,21 @@ class AnalysisEditTask(BaseBrowserTask):
         if pane:
             pane.items = ans
 
+    def get_recall_editors(self):
+        es=self.editor_area.editors
+        return [e for e in es if isinstance(e, RecallEditor)]
+
     def configure_recall(self):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
-            for e in self.editor_area.editors[:]:
+            for e in self.get_recall_editors()[:]:
                 if tc.show_intermediate != e.analysis_view.main_view.show_intermediate:
                     e.close()
                     self.recall(e.model)
+
+            for e in self.editor_area.editors:
+                tc.set_fonts(e.analysis_view)
 
     def recall(self, records, open_copy=False):
         """
@@ -181,11 +207,18 @@ class AnalysisEditTask(BaseBrowserTask):
         if not open_copy:
             records = self._open_existing_recall_editors(records)
             if records:
-                ans = self.manager.make_analyses(records, calculate_age=True, load_changes=True)
+                if self.use_workspace:
+                    ans = self.workspace.make_analyses(records)
+                else:
+                    ans = self.manager.make_analyses(records, calculate_age=True, load_aux=True)
                 self._open_recall_editors(ans)
         else:
-            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_changes=True)
+            ans = self.manager.make_analyses(records, use_cache=False, calculate_age=True, load_aux=True)
             self._open_recall_editors(ans)
+
+    def _selector_dclick(self, new):
+        self.debug('selector {}'.format(new))
+        self.recall(new)
 
     def _open_existing_recall_editors(self, records):
         editor = None
@@ -201,7 +234,9 @@ class AnalysisEditTask(BaseBrowserTask):
         return records
 
     def _open_recall_editors(self, ans):
-        existing = [e.basename for e in self.editor_area.editors]
+        # existing = [e.basename for e in self.editor_area.editors if isinstance(e, RecallEditor)]
+        # existing = [e.basename for e in self.editor_area.editors if isinstance(e, RecallEditor)]
+        existing = [e.basename for e in self.get_recall_editors()]
         if ans:
             for rec in ans:
                 av = rec.analysis_view
@@ -210,8 +245,11 @@ class AnalysisEditTask(BaseBrowserTask):
                 mv.intermediate_adapter = self.intermediate_adapter
                 mv.show_intermediate = self.recall_configurer.show_intermediate
 
+                self.recall_configurer.set_fonts(av)
+
                 editor = RecallEditor(analysis_view=av,
-                                      model=rec)
+                                      model=rec,
+                                      manager=self.manager)
                 if existing and editor.basename in existing:
                     editor.instance_id = existing.count(editor.basename)
 
@@ -530,7 +568,6 @@ class AnalysisEditTask(BaseBrowserTask):
             self.active_editor.save_file(path)
             return True
 
-
     def _recall_item(self, item, open_copy=False):
         if not self.external_recall_window:
             self.recall(item, open_copy=open_copy)
@@ -742,9 +779,11 @@ class AnalysisEditTask(BaseBrowserTask):
             self._recall_item(new.item)
 
     # @on_trait_change('analysis_table:[append_event,replace_event]')
+    # @on_trait_change('sample_table:context_menu_event')
+    # def _handle_analysis_table_context_menu(self, new):
+
     @on_trait_change('analysis_table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
-        print new
         if new:
             action, modifiers = new
             if action in ('append', 'replace'):
@@ -758,13 +797,12 @@ class AnalysisEditTask(BaseBrowserTask):
                     for it in self.analysis_table.selected:
                         self._recall_item(it, open_copy=open_copy)
 
-
     @on_trait_change('unknowns_pane:previous_selection')
     def _update_up_previous_selection(self, obj, name, old, new):
         self._set_previous_selection(obj, new)
 
     @on_trait_change('unknowns_pane:[append_button, replace_button]')
-    def _handle_unknowns_events(self, obj, name, old, new):
+    def _handle_unknowns_events(self, name, new):
         is_append = name == 'append_button'
         self._append_replace_unknowns(is_append)
 

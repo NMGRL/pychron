@@ -18,6 +18,11 @@ Pychron Develop Guide
 
   running_pychron
   hardware
+  database_analysis
+  automated_analysis
+  experiment_construction
+  communications
+
 
 
 

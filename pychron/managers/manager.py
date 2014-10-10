@@ -29,7 +29,6 @@ from pychron.viewable import Viewable, ViewableHandler
 from pychron.rpc.rpcable import RPCable
 # from pychron.envisage.core.action_helper import MANAGERS
 from pychron.saveable import SaveableHandler
-from pychron.hardware.core.i_core_device import ICoreDevice
 
 
 class MassSpecParam(object):
@@ -231,6 +230,8 @@ class Manager(Viewable, RPCable):
     def get_device(self, device_name):
         """
         """
+        from pychron.hardware.core.i_core_device import ICoreDevice
+
         dev = None
         if hasattr(self, device_name):
             dev = getattr(self, device_name)

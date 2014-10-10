@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,31 +15,24 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-import hashlib
-
 from traits.api import Str, Any, Bool, Property, Int, Dict
 from pyface.confirmation_dialog import confirm
 
 #============= standard library imports ========================
+from threading import Event, Thread, Lock
+from Queue import Empty, LifoQueue
+import hashlib
 import time
 import os
 import inspect
-from threading import Event, Thread, Lock
 import traceback
-#============= local library imports  ==========================
 import yaml
-
-from pychron.loggable import Loggable
-
-from Queue import Empty, LifoQueue
-# from pychron.globals import globalv
-# from pychron.core.ui.gui import invoke_in_main_thread
 import sys
-# import bdb
-# from pychron.core.ui.thread import Thread
 import weakref
+#============= local library imports  ==========================
+from pychron.paths import paths
+from pychron.loggable import Loggable
 from pychron.globals import globalv
-
 from pychron.pyscripts.error import PyscriptError, IntervalError, GosubError, \
     KlassError, MainError
 
@@ -71,7 +64,6 @@ class IntervalContext(object):
 
 def verbose_skip(func):
     def decorator(obj, *args, **kw):
-
 
         fname = func.__name__
         #        print fname, obj.testing_syntax, obj._cancel
@@ -129,7 +121,7 @@ def count_verbose_skip(func):
                                                                                            args, kw))
             #        if obj._cancel:
         if obj.testing_syntax:
-        #             print func.func_name, obj._estimated_duration
+            #             print func.func_name, obj._estimated_duration
             func(obj, calc_time=True, *args, **kw)
             #             print func.func_name, obj._estimated_duration
             return
@@ -170,6 +162,8 @@ named_register = makeNamedRegistry(command_register)
 '''
 @todo: cancel script if action fails. eg fatal comm. error
 '''
+
+__CACHED_DURATIONS__ = {}
 
 
 class PyScript(Loggable):
@@ -222,6 +216,23 @@ class PyScript(Loggable):
     def console_info(self, *args, **kw):
         self._m_info(*args, **kw)
 
+    def _generate_ctx_hash(self, ctx):
+        """
+            generate a sha1 hash from self.__class__, duration, cleanup and len(position)
+
+            need to add __class__ to the hash because the durations of a MeasurementScript
+            and a ExtractionScript will be different for the same context
+        """
+        sha1 = hashlib.sha1()
+        for v in (self.__class__,
+                  ctx['duration'],
+                  ctx['cleanup'],
+                  len(ctx['position'])):
+
+            sha1.update(str(v))
+        h = sha1.hexdigest()
+        return h
+
     def calculate_estimated_duration(self, ctx=None, force=False):
         """
             maintain a dictionary of previous calculated durations.
@@ -240,19 +251,33 @@ class PyScript(Loggable):
             calc_dur()
             return self.get_estimated_duration()
 
-        h = hashlib.sha1(repr(sorted(ctx.items()))).hexdigest()
+        h = self._generate_ctx_hash(ctx)
+
+        self.debug('calculate estimated duration force={}, syntax_checked={}'.format(force, self.syntax_checked))
+
         if force or not self.syntax_checked:
             calc_dur()
         else:
             try:
-                d = self._estimated_durations[h]
-                self._estimated_duration = d
+                self._get_cached_duration(h)
+                self.debug('current context in the cached durations')
             except KeyError:
                 calc_dur()
 
         d = self.get_estimated_duration()
-        self._estimated_durations[h] = d
+        self._update_cache_duration(h, d)
         return d
+
+    def _update_cached_duration(self, h, d):
+        global __CACHED_DURATIONS__
+        if len(__CACHED_DURATIONS__) > 100:
+            self.debug('clearing global cached durations dict')
+            __CACHED_DURATIONS__ = {}
+
+        __CACHED_DURATIONS__[h] = d
+
+    def _get_cached_duration(self, h):
+        return __CACHED_DURATIONS__[h]
 
     def traceit(self, frame, event, arg):
         if event == "line":
@@ -265,7 +290,7 @@ class PyScript(Loggable):
 
     def execute(self, new_thread=False, bootstrap=True,
                 trace=False,
-                finished_callback=None, 
+                finished_callback=None,
                 argv=None):
         if bootstrap:
             self.bootstrap()
@@ -348,7 +373,7 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-        #         sys.settrace(self._tracer)
+            #         sys.settrace(self._tracer)
             code_or_err = self.compile_snippet(snippet)
             if not isinstance(code_or_err, Exception):
                 try:
@@ -404,7 +429,7 @@ class PyScript(Loggable):
 
         self._exp_obj.update(kw)
         # self._exp_obj.__dict__.update(**kw)
-        self._ctx['exp'] = self._exp_obj
+        self._ctx['ex'] = self._exp_obj
 
         #for backwards compatiblity add kw to main context
         self._ctx.update(**kw)
@@ -428,7 +453,7 @@ class PyScript(Loggable):
 
         if self._exp_obj:
             self._exp_obj.update(exp_ctx)
-            ctx['exp'] = self._exp_obj
+            ctx['ex'] = self._exp_obj
 
         if self._ctx:
             ctx.update(self._ctx)
@@ -487,11 +512,13 @@ class PyScript(Loggable):
     def load_interpolation_context(self):
         ctx = self._get_interpolation_context()
         return ctx.keys()
+
     #==============================================================================
     # commands
     #==============================================================================
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, **kw):
+
         if not name.endswith('.py'):
             name += '.py'
 
@@ -503,6 +530,7 @@ class PyScript(Loggable):
                 d = ':'
 
             if d:
+                # name = name.split(d)[-1]
                 dirs = name.split(d)
                 name = dirs[0]
                 for di in dirs[1:]:
@@ -519,8 +547,7 @@ class PyScript(Loggable):
         #             break
         #     else:
         #         raise GosubError(p)
-
-        root = self._find_root(root, name)
+        root, name = self._find_root(root, name)
 
         if klass is None:
             klass = self.__class__
@@ -673,12 +700,11 @@ class PyScript(Loggable):
                         p = os.path.join(d, name)
                         if os.path.isfile(p):
                             break
-
                 if os.path.isfile(p):
                     break
             else:
                 raise GosubError(name)
-        return os.path.dirname(p)
+        return os.path.dirname(p), os.path.basename(p)
 
     def _cancel_flag_changed(self, v):
         if v:
@@ -741,6 +767,7 @@ class PyScript(Loggable):
                 func = [(func, args, kw)]
             rs = []
             for f, a, k in func:
+
                 r = None
                 if hasattr(man, f):
                     r = getattr(man, f)(*a, **k)
@@ -895,6 +922,7 @@ class PyScript(Loggable):
 
         return v
 
+
 if __name__ == '__main__':
     class DummyManager(Loggable):
         def open_valve(self, *args, **kw):
@@ -907,11 +935,11 @@ if __name__ == '__main__':
 
     logging_setup('pscript')
     #    execute_script(t)
-    from pychron.paths import paths
+    # from pychron.paths import paths
 
     ps = PyScript(root=os.path.join(paths.scripts_dir, 'pyscripts'),
-                 path='test.py',
-                 _manager=DummyManager())
+                  path='test.py',
+                  _manager=DummyManager())
 
     ps.execute()
 #============= EOF =============================================

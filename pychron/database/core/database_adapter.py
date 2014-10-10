@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #=============enthought library imports=======================
 from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property
 #=============standard library imports ========================
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, distinct
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
     DBAPIError
 import os
 #=============local library imports  ==========================
+from pychron.database.core.query import compile_query
 
 from pychron.loggable import Loggable
 from pychron.database.core.base_orm import AlembicVersionTable
@@ -227,7 +228,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
     @cached_property
     def _get_datasource_url(self):
-        return '{}:{}'.format(self.host, self.name)
+        if self.kind == 'sqlite':
+            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
+                                 os.path.basename(self.path))
+        else:
+            url = '{}:{}'.format(self.host, self.name)
+        return url
 
     @cached_property
     def _get_url(self):
@@ -383,7 +389,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
     def _retrieve_items(self, table,
                         joins=None,
                         filters=None,
-                        limit=None, order=None, reraise=False):
+                        limit=None, order=None,
+                        distinct_ =False,
+                        query_hook = None,
+                        reraise=False,
+                        func='all',
+                        group_by=None,
+                        debug_query=False):
 
         sess = self.sess
         if sess is None:
@@ -394,9 +406,18 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
             #         print 'get items', sess, self.session_factory
             #         sess = self.get_session()
             #    if sess is not None:
-            q = sess.query(table)
+            if distinct_:
+                if isinstance(distinct_, bool):
+                    q = sess.query(distinct(table))
+                else:
+                    q = sess.query(distinct(distinct_))
+            elif isinstance(table, tuple):
+                q = sess.query(*table)
+            else:
+                q = sess.query(table)
 
             if joins:
+                joins=list(set(joins))
                 try:
                     for ji in joins:
                         if ji != table:
@@ -410,22 +431,36 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
                     q = q.filter(fi)
 
             if order is not None:
-                q = q.order_by(order)
+                if not isinstance(order, tuple):
+                    order=(order, )
+                q = q.order_by(*order)
+
+            if group_by is not None:
+                if not isinstance(order, tuple):
+                    group_by=(group_by, )
+                q = q.group_by(*group_by)
 
             if limit is not None:
                 q = q.limit(limit)
 
-            r = self._query_all(q, reraise)
-            return r
+            if query_hook:
+                q =query_hook(q)
+
+            if debug_query:
+                self.debug(compile_query(q))
+
+            return self._query(q, func, reraise)
 
     def _retrieve_first(self, table, value=None, key='name', order_by=None):
         if value is not None:
             if not isinstance(value, (str, int, unicode, long, float)):
                 return value
 
-        sess = self.get_session()
+        sess = self.sess
         if sess is None:
-            return
+            if self.session_factory:
+                sess = self.session_factory()
+
 
         q = sess.query(table)
         if value is not None:
@@ -501,6 +536,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.url))
 
             ntries = 3
             import traceback
+
             for i in range(ntries):
                 try:
                     return q.one()

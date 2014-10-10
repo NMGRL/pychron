@@ -15,7 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import Instance, Unicode, Property, DelegatesTo
+from traits.api import Instance, Unicode, Property, DelegatesTo, Color
 from traitsui.api import View, UItem
 
 #============= standard library imports ========================
@@ -32,6 +32,11 @@ from pychron.core.helpers.filetools import add_extension
 
 class ExperimentEditorHandler(TabularEditorHandler):
     refresh_name = 'refresh_table_needed'
+    def make_block(self, info, obj):
+        obj.make_run_block()
+
+    def repeat_block(self, info, obj):
+        obj.repeat_block()
 
 
 class ExperimentEditor(BaseTraitsEditor):
@@ -44,12 +49,20 @@ class ExperimentEditor(BaseTraitsEditor):
     executed = DelegatesTo('queue')
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
+    bgcolor = Color
+
+    def set_bgcolor(self, c):
+        self.bgcolor=c
+        self.tabular_adapter_klass.odd_bg_color=c
+        self.executed_tabular_adapter_klass.odd_bg_color=c
 
     def new_queue(self, txt=None, **kw):
         queue = self.queue_factory(**kw)
         if txt:
             if queue.load(txt):
                 self.queue = queue
+            else:
+                self.warning('failed to load queue')
         else:
             self.queue = queue
 
@@ -73,6 +86,7 @@ class ExperimentEditor(BaseTraitsEditor):
                          editor=myTabularEditor(adapter=self.tabular_adapter_klass(),
                                                 operations=['delete',
                                                             'move', 'edit'],
+                                                bgcolor=self.bgcolor,
                                                 editable=True,
                                                 show_row_titles=True,
                                                 dclicked='dclicked',
@@ -86,6 +100,7 @@ class ExperimentEditor(BaseTraitsEditor):
 
         executed_grp = UItem('executed_runs',
                              editor=myTabularEditor(adapter=self.executed_tabular_adapter_klass(),
+                                                    bgcolor=self.bgcolor,
                                                     editable=False,
                                                     auto_update=True,
                                                     selectable=True,

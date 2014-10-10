@@ -13,32 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #===============================================================================
-from threading import Lock
-
-from pychron.core.ui import set_toolkit
-
-set_toolkit('qt4')
 #============= enthought library imports =======================
 from traits.api import List, Any, Event, Callable
 #============= standard library imports ========================
 from numpy import linspace
-
 #============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
-from pychron.graph.time_series_graph import TimeSeriesGraph
-from pychron.graph.stacked_graph import StackedGraph
 from pychron.core.helpers.fits import convert_fit
-from pychron.core.regression.ols_regressor import PolynomialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
+
 from pychron.graph.context_menu_mixin import RegressionContextMenuMixin
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay
 from pychron.graph.tools.point_inspector import PointInspector, \
     PointInspectorOverlay
-from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
-from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
+
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 
@@ -70,9 +60,9 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     use_point_inspector = True
     convert_index_func = Callable
 
-    def __init__(self, *args, **kw):
-        super(RegressionGraph, self).__init__(*args, **kw)
-        self._regression_lock = Lock()
+    # def __init__(self, *args, **kw):
+    #     super(RegressionGraph, self).__init__(*args, **kw)
+    #     self._regression_lock = Lock()
 
     #===============================================================================
     # context menu handlers
@@ -195,6 +185,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                         regs.append((plot, r))
 
             except ValueError, e:
+                #add a float instead of regressor to regs
                 try:
                     si = ps[ks[0]][0]
                     regs.append((plot, si.value.get_data()[-1]))
@@ -313,7 +304,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         scatter.no_regression = False
 
     def _poly_regress(self, scatter, r, fit):
-
+        from pychron.core.regression.ols_regressor import PolynomialRegressor
+        from pychron.core.regression.wls_regressor import WeightedPolynomialRegressor
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedPolynomialRegressor):
                 r = WeightedPolynomialRegressor()
@@ -333,6 +325,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _least_square_regress(self, scatter, r, fit):
+        from pychron.core.regression.least_squares_regressor import LeastSquaresRegressor
         func, initial_guess = fit
         if r is None or not isinstance(r, LeastSquaresRegressor):
             r = LeastSquaresRegressor()
@@ -346,6 +339,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _mean_regress(self, scatter, r, fit):
+        from pychron.core.regression.mean_regressor import MeanRegressor, WeightedMeanRegressor
         if hasattr(scatter, 'yerror'):
             if r is None or not isinstance(r, WeightedMeanRegressor):
                 r = WeightedMeanRegressor()
@@ -512,67 +506,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         # def _bind_index(self, *args, **kw):
         #     pass
 
-
-class RegressionTimeSeriesGraph(RegressionGraph, TimeSeriesGraph):
-    pass
-
-
-class StackedRegressionGraph(RegressionGraph, StackedGraph):
-    pass
-
-
-class StackedRegressionTimeSeriesGraph(StackedRegressionGraph, TimeSeriesGraph):
-    pass
-
-
-if __name__ == '__main__':
-    rg = StackedRegressionGraph(bind_index=False)
-    rg.new_plot()
-    rg.new_plot()
-    # rg.new_plot()
-    n = 50
-    x = linspace(0, 10, n)
-    from numpy.random import RandomState
-
-    rs = RandomState(123456)
-
-    # print rs.randn(10)
-    # print rs.randn(10)
-    y = 5 + rs.rand(n)
-    y[[1, 2, 3, 4]] = [1, 2, 3, 4]
-    y2 = 10 + rs.rand(n)
-    y2[[-1, -2, -3, -4]] = [6, 5, 6, 7]
-
-    # y = 2 * x + random.rand(n)
-
-    # d = np.zeros(n)
-    # d[::10] = random.rand() + 5
-    # d[::15] = random.rand() + 2
-
-    # y += d
-
-    fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
-    rg.new_series(x, y,
-                  #yerror=random.rand(n)*5,
-                  fit='linear_SD',
-                  # truncate='x<1',
-                  filter_outliers_dict=fod)
-    # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
-    # rg.new_series(x, y,
-    #               #yerror=random.rand(n)*5,
-    #               fit='linear_SD',
-    #               # truncate='x<1',
-    #               filter_outliers_dict=fod, plotid=1)
-    # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
-    rg.new_series(x, y2,
-                  #yerror=random.rand(n)*5,
-                  fit='average_SD',
-                  # truncate='x<1',
-                  filter_outliers_dict=fod, plotid=1)
-    rg.set_y_limits(0, 20, plotid=0)
-    rg.set_y_limits(0, 20, plotid=1)
-    # rg.set_y_limits(0,20, plotid=2)
-    rg.configure_traits()
     #============= EOF =============================================
     # @classmethod
     #     def _apply_block_filter(cls, xs, ys):

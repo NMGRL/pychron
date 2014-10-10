@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,29 +66,46 @@ class myTaskAction(TaskAction):
             self.enabled = bool(self.object)
 
 
+class ActivateBlankAction(myTaskAction):
+    name= 'Activate Blanks'
+    task_ids = ['pychron.processing.figures', 'pychron.recall']
+    method = 'activate_blank_task'
+
+
+class ActivateRecallAction(myTaskAction):
+    name= 'Activate Recall'
+    task_ids = ['pychron.processing.figures', 'pychron.processing.blanks']
+    method = 'activate_recall_task'
+
+
+class ActivateIdeogramAction(myTaskAction):
+    name= 'Activate Ideogram'
+    task_ids = ['pychron.processing.blanks','pychron.recall']
+    method = 'activate_ideogram_task'
+
+
 class FigureTaskAction(myTaskAction):
     task_ids = List(['pychron.processing.figures', ])
 
 
+class GraphGroupSelectedAction(FigureTaskAction):
+    name = 'Graph Group Selected'
+    method = 'graph_group_selected'
+
+
+class GraphGroupbySampleAction(FigureTaskAction):
+    name = 'Graph Group by Sample'
+    method = 'graph_group_by_sample'
+
+
 class GroupAction(FigureTaskAction):
-    pass
+    image = icon('blockdevice-3')
 
 
 class GroupSelectedAction(GroupAction):
     name = 'Group Selected'
     method = 'group_selected'
-    image = icon('placeholder')
-
-
-class GraphGroupSelectedAction(GroupAction):
-    name = 'Graph Group Selected'
-    method = 'graph_group_selected'
-
-
-class GraphGroupbySampleAction(GroupAction):
-    name = 'Graph Group by Sample'
-    method = 'graph_group_by_sample'
-
+    # image = icon('placeholder')
 
 #     def perform(self, event):
 #         task = event.task
@@ -98,25 +115,25 @@ class GraphGroupbySampleAction(GroupAction):
 class GroupbySampleAction(GroupAction):
     name = 'Group by Sample'
     method = 'group_by_sample'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class GroupbyLabnumberAction(GroupAction):
     name = 'Group by Labnumber'
     method = 'group_by_labnumber'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class GroupbyAliquotAction(GroupAction):
     name = 'Group by Aliquot'
     method = 'group_by_aliquot'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class ClearGroupAction(GroupAction):
     name = 'Clear Grouping'
     method = 'clear_grouping'
-    image = icon('placeholder')
+    # image = icon('placeholder')
 
 
 class AnalysisAction(myTaskAction):
@@ -228,7 +245,7 @@ class ConfigureRecallAction(myTaskAction):
     name = 'Configure Recall'
     method = 'configure_recall'
     image = icon('cog.png')
-    task_ids = List(['pychron.recall','pychron.processing.figures',
+    task_ids = List(['pychron.recall', 'pychron.processing.figures',
                      'pychron.processing.blanks',
                      'pychron.processing.isotope_evolution',
                      'pychron.processing.ic_factor',
@@ -263,19 +280,19 @@ class BrowseInterpretedAgeTBAction(FigureTaskAction):
     image = icon('application_view_list.png')
 
 
-class OpenAdvancedQueryAction(Action):
-    name = 'Find Analysis...'
-    image = icon('edit-find.png')
-
-    def perform(self, event):
-        app = event.task.window.application
-        task = app.open_task('pychron.advanced_query')
-        task.set_append_replace_enabled(False)
+# class OpenAdvancedQueryAction(Action):
+#     name = 'Find Analysis...'
+#     image = icon('find.png')
+#
+#     def perform(self, event):
+#         app = event.task.window.application
+#         task = app.open_task('pychron.advanced_query')
+#         task.set_append_replace_enabled(False)
 
 
 class ClearAnalysisCacheAction(Action):
     name = 'Clear Analysis Cache'
-    image = icon('edit-clear')
+    image = icon('clear')
 
     def perform(self, event=None):
         from pychron.database.isotope_database_manager import ANALYSIS_CACHE, ANALYSIS_CACHE_COUNT
@@ -309,12 +326,6 @@ class SplitEditorActionVert(myTaskAction):
     task_ids = List(['pychron.processing.figures', 'pychron.recall'])
     method = 'split_editor_area_vert'
     image = icon('split_vertical')
-
-
-class CalculationViewAction(myTaskAction):
-    name='Calculation View'
-    task_ids = ['pychron.recall',]
-    method = 'open_calculation_view'
 
 
 #============= EOF =============================================

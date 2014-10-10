@@ -26,6 +26,7 @@ from pychron.loggable import Loggable
 
 
 
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -82,6 +83,7 @@ class ExportSpec(Loggable):
         attrs = [('labnumber', 'labnumber'),
                  ('aliquot', 'aliquot'),
                  ('step', 'step'),
+                 ('uuid','uuid'),
                  ('irradpos', 'labnumber'),
                  ('timestamp', 'timestamp'),
                  ('extract_device', 'extract_device'), ('tray', 'tray'),
@@ -127,7 +129,7 @@ class ExportSpec(Loggable):
             if hasattr(record, a):
                 setattr(self, a, getattr(record, a))
             else:
-                print a
+                self.debug('no attribute {}'.format(a))
 
     # def open_file(self):
     #     return self.data_manager.open_file(self.data_path)

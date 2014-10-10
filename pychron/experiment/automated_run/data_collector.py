@@ -22,7 +22,7 @@ from traits.api import Any, List, CInt, Int, Bool, Enum
 import time
 from threading import Event, Timer
 #============= local library imports  ==========================
-from pychron.loggable import Loggable
+from pychron.envisage.consoleable import Consoleable
 # from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.globals import globalv
 from pychron.consumer_mixin import consumable
@@ -30,16 +30,16 @@ from pychron.consumer_mixin import consumable
 from pychron.core.ui.gui import invoke_in_main_thread
 
 
-class DataCollector(Loggable):
+class DataCollector(Consoleable):
     measurement_script = Any
     plot_panel = Any
     arar_age = Any
 
     detectors = List
-    check_conditions = Bool(True)
-    truncation_conditions = List
-    terminations_conditions = List
-    action_conditions = List
+    check_conditionals = Bool(True)
+    truncation_conditionals = List
+    termination_conditionals = List
+    action_conditionals = List
     ncounts = CInt
     #grpname = Str
 
@@ -60,6 +60,8 @@ class DataCollector(Loggable):
     _warned_no_det = None
 
     collection_kind = Enum(('sniff', 'signal', 'baseline'))
+    refresh_age=False
+    _data = None
 
     def wait(self):
         st = time.time()
@@ -120,25 +122,25 @@ class DataCollector(Loggable):
         self.debug('measurement finished')
 
     def _iter(self, con, evt, i, prev=0):
-        if not self._check_iteration(evt, i):
+        result =self._check_iteration(evt, i)
+
+        if not result:
             if not self._iter_hook(con, i):
                 evt.set()
                 return
 
             ot = time.time()
-
             p = self.period_ms * 0.001
-            p -= prev
-            p = max(0, p)
-
-            #self.debug('period {} {} {}'.format(p,prev, self.period_ms))
-            t = Timer(p, self._iter, args=(con, evt, i + 1,
+            t = Timer(max(0, p-prev), self._iter, args=(con, evt, i + 1,
                                            time.time() - ot))
 
             t.name = 'iter_{}'.format(i + 1)
             t.start()
 
         else:
+            if result=='cancel':
+                self.canceled=True
+
             #self.debug('no more iter')
             evt.set()
 
@@ -153,7 +155,7 @@ class DataCollector(Loggable):
         if dets:
             data = zip(*[(k, s) for k, s in zip(*data)
                          if k in dets])
-
+        self._data = data
         return data
 
     def _save_data(self, x, keys, signals):
@@ -163,6 +165,9 @@ class DataCollector(Loggable):
             self._update_baseline_peak_hop(x, keys, signals)
         else:
             self._update_isotopes(x, keys, signals)
+
+        if self.refresh_age:
+            self.arar_age.calculate_age(force=True)
 
     def _update_baseline_peak_hop(self, x, keys, signals):
         a = self.arar_age
@@ -174,7 +179,6 @@ class DataCollector(Loggable):
 
     def _update_isotopes(self, x, keys, signals):
         a = self.arar_age
-
         kind = self.collection_kind
 
         for dn in keys:
@@ -278,9 +282,9 @@ class DataCollector(Loggable):
     #===============================================================================
     # checks
     #===============================================================================
-    def _check_conditions(self, conditions, cnt):
-        for ti in conditions:
-            if ti.check(self.arar_age, cnt):
+    def _check_conditionals(self, conditionals, cnt):
+        for ti in conditionals:
+            if ti.check(self.arar_age, self._data, cnt):
                 return ti
 
     def _check_iteration(self, evt, i):
@@ -317,33 +321,33 @@ class DataCollector(Loggable):
 
             return 'break'
 
-        if self.check_conditions:
-            termination_condition = self._check_conditions(self.termination_conditions, i)
-            if termination_condition:
-                self.info('termination condition {}. measurement iteration executed {}/{} counts'.format(
-                    termination_condition.message, j, original_counts),
+        if self.check_conditionals:
+            termination_conditional = self._check_conditionals(self.termination_conditionals, i)
+            if termination_conditional:
+                self.info('termination conditional {}. measurement iteration executed {}/{} counts'.format(
+                    termination_conditional.message, j, original_counts),
                           color='red')
                 return 'cancel'
 
-            truncation_condition = self._check_conditions(self.truncation_conditions, i)
-            if truncation_condition:
-                self.info('truncation condition {}. measurement iteration executed {}/{} counts'.format(
-                    truncation_condition.message, j, original_counts),
+            truncation_conditional = self._check_conditionals(self.truncation_conditionals, i)
+            if truncation_conditional:
+                self.info('truncation conditional {}. measurement iteration executed {}/{} counts'.format(
+                    truncation_conditional.message, j, original_counts),
                           color='red')
                 self.state = 'truncated'
-                self.measurement_script.abbreviated_count_ratio = truncation_condition.abbreviated_count_ratio
+                self.measurement_script.abbreviated_count_ratio = truncation_conditional.abbreviated_count_ratio
 
                 #                self.condition_truncated = True
                 return 'break'
 
-            action_condition = self._check_conditions(self.action_conditions, i)
-            if action_condition:
+            action_conditional = self._check_conditionals(self.action_conditionals, i)
+            if action_conditional:
                 self.info(
-                    'action condition {}. measurement iteration executed {}/{} counts'.format(action_condition.message,
+                    'action conditional {}. measurement iteration executed {}/{} counts'.format(action_conditional.message,
                                                                                               j, original_counts),
                     color='red')
-                action_condition.perform(self.measurement_script)
-                if not action_condition.resume:
+                action_conditional.perform(self.measurement_script)
+                if not action_conditional.resume:
                     return 'break'
 
         #============= EOF =============================================

@@ -57,5 +57,9 @@ class XMLDestination(HasTraits):
     def url(self):
         return self.destination
 
+
+class YamlDestination(HasTraits):
+    destination = Str
+
 #============= EOF =============================================
 

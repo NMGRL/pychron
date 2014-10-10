@@ -77,7 +77,61 @@ class Commands(HasTraits):
         return klass(**kw)
 
 
-class PyScriptEditor(Editor):
+class PyScriptEdit(HasTraits):
+    text = ''
+    path = ''
+    context_editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
+    _cached_text = ''
+
+    def open_script(self, p):
+        self.path = p
+        with open(p, 'r') as fp:
+            self.text = fp.read()
+        self.context_editor.load(self.get_text())
+
+    def update_docstr(self):
+        docstr = self.context_editor.generate_docstr()
+        self._set_docstr(docstr)
+        with open(self.path, 'w') as fp:
+            fp.write(self.get_text())
+
+    def get_text(self):
+        return self.text
+
+    def set_text(self, s):
+        self.text=s
+
+    def _set_docstr(self, ds):
+        to = list(self._remove_docstr())
+
+        idx = 0
+        if to[0].startswith('#!'):
+            idx = 1
+
+        for di in ds:
+            to.insert(idx, di)
+
+        to = '\n'.join(to)
+        self.set_text(to)
+        self._cached_text = to
+
+    def _remove_docstr(self):
+        docstr_started = False
+        check_docstr = True
+        for i, t in enumerate(self.get_text().split('\n')):
+            if check_docstr:
+                if not docstr_started and t in ('"""', "'''"):
+                    docstr_started = True
+                    continue
+                elif docstr_started:
+                    if t in ('"""', "'''"):
+                        check_docstr = False
+                    continue
+
+            yield t
+
+
+class PyScriptEditor(Editor, PyScriptEdit):
     dirty = Bool(False)
     changed = Event
     show_line_numbers = Bool(True)
@@ -87,7 +141,6 @@ class PyScriptEditor(Editor):
     tooltip = Property(Unicode, depends_on='path')
 
     # context_editor = Any#Instance('pychron.pyscripts.context_editor.ContextEditor')
-    context_editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
 
     suppress_change = False
     kind = String
@@ -98,7 +151,7 @@ class PyScriptEditor(Editor):
     trace_delay = Int  # ms
     selected_gosub = String
     selected_command = String
-    _cached_text = ''
+
     _no_update = False
 
     def get_scroll(self):
@@ -112,11 +165,11 @@ class PyScriptEditor(Editor):
         cmd.load_commands(self.kind)
         return cmd
 
-    def setText(self, txt):
+    def set_text(self, txt):
         if self.control:
             self.control.code.setPlainText(txt)
 
-    def getText(self):
+    def get_text(self):
         if self.control:
             return self.control.code.document().toPlainText()
 
@@ -182,21 +235,16 @@ class PyScriptEditor(Editor):
 
     def _on_dirty_changed(self, dirty):
         if dirty:
-            dirty = str(self.getText()) != str(self._cached_text)
+            dirty = str(self.get_text()) != str(self._cached_text)
 
         self.dirty = dirty
-        self._cached_text = self.getText()
+        self._cached_text = self.get_text()
 
     def _on_text_changed(self):
-        # print len(self.getText()), len(self._cached_text)
-        if str(self.getText()) != str(self._cached_text):
-            # print self.getText()
-            # print self._cached_text
-            #        if not self.suppress_change:
-            #     self.editor.parse(self.getText())
+        if str(self.get_text()) != str(self._cached_text):
             self.changed = True
             self.dirty = True
-            self._cached_text = txt = self.getText()
+            self._cached_text = txt = self.get_text()
             if not self._no_update:
                 if self.context_editor:
                     self.context_editor.load(txt)
@@ -246,7 +294,7 @@ class PyScriptEditor(Editor):
 
     def dump(self, path, txt=None):
         if txt is None:
-            txt = self.getText()
+            txt = self.get_text()
         if txt:
             with open(path, 'w') as fp:
                 fp.write(txt)
@@ -255,35 +303,6 @@ class PyScriptEditor(Editor):
 
     def _detab(self, txt):
         return txt.replace('\t', ' ' * 4)
-
-    def _set_docstr(self, ds):
-        to = list(self._remove_docstr())
-
-        idx = 0
-        if to[0].startswith('#!'):
-            idx = 1
-
-        for di in ds:
-            to.insert(idx, di)
-
-        to = '\n'.join(to)
-        self.setText(to)
-        self._cached_text = to
-
-    def _remove_docstr(self):
-        docstr_started = False
-        check_docstr = True
-        for i, t in enumerate(self.getText().split('\n')):
-            if check_docstr:
-                if not docstr_started and t in ('"""', "'''"):
-                    docstr_started = True
-                    continue
-                elif docstr_started:
-                    if t in ('"""', "'''"):
-                        check_docstr = False
-                    continue
-
-            yield t
 
 
 class MeasurementEditor(PyScriptEditor):

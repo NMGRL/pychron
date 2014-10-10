@@ -23,7 +23,6 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.ion_optics_manager import IonOpticsManager
 from pychron.spectrometer.scan_manager import ScanManager
-from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
 from pychron.spectrometer.tasks.spectrometer_task import SpectrometerTask
 
 
@@ -34,7 +33,13 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     scan_manager = Any
     ion_optics_manager = Any
 
+    def _inspector_task_factory(self):
+        from pychron.spectrometer.tasks.inspector.scan_inspector_task import ScanInspectorTask
+        t= ScanInspectorTask()
+        return t
+
     def _mass_cal_task_factory(self):
+        from pychron.spectrometer.tasks.mass_cal.mass_calibration_task import MassCalibrationTask
         t = MassCalibrationTask(spectrometer_manager=self.spectrometer_manager)
         return t
 
@@ -49,6 +54,9 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
     def _factory_ion_optics(self):
         return self.ion_optics_manager
 
+    def _factory_scan_manager(self):
+        return self.scan_manager
+
     def _tasks_default(self):
         ts = [TaskFactory(id='pychron.spectrometer',
                           task_group='hardware',
@@ -58,7 +66,10 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
               TaskFactory(id='pychron.mass_calibration',
                           factory=self._mass_cal_task_factory,
                           name='Mass Calibration',
-                          accelerator='Ctrl+Shift+M')]
+                          accelerator='Ctrl+Shift+M'),
+              TaskFactory(id='pychron.spectrometer.scan_inspector',
+                          factory=self._inspector_task_factory,
+                          name='Scan Inspector')]
         return ts
 
     def _service_offers_default(self):
@@ -72,7 +83,11 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
             protocol=IonOpticsManager,
             factory=self._factory_ion_optics)
 
-        return [so, so1]
+        so2 = self.service_offer_factory(
+            protocol=ScanManager,
+            factory=self._factory_scan_manager)
+
+        return [so, so1, so2]
 
     def _managers_default(self):
         """

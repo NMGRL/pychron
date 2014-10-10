@@ -247,7 +247,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def _show_menu(self, event, obj):
         actions = []
-        if self.manager.mode == 'normal':
+        if self.manager.mode != 'client':
             if isinstance(self.active_item, BaseValve):
                 t = 'Lock'
                 if obj.soft_lock:

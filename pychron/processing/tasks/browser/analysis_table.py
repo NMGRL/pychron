@@ -56,63 +56,33 @@ class AnalysisTable(HasTraits):
     # npages = Property(depends_on='n_all_analyses,page_width')
 
     limit = DelegatesTo('table_configurer')
-    low_post = DelegatesTo('table_configurer')
-    high_post = DelegatesTo('table_configurer')
+    # low_post = DelegatesTo('table_configurer')
+    # high_post = DelegatesTo('table_configurer')
     no_update = False
     scroll_to_row = Event
     refresh_needed = Event
     tabular_adapter = Any
+    append_replace_enabled = Bool(True)
 
     def set_analyses(self, ans, tc=None, page=None, reset_page=False):
         self.analyses = ans
         self.oanalyses = ans
-        if tc is None:
-            tc = len(ans)
-
-        # self.n_all_analyses = tc
-        # if reset_page:
-        #     self.no_update = True
-        #     if page<0:
-        #         self.page=self.npages
-        #         self.scroll_to_row=self.page_width
-        #     else:
-        #         self.page = 1
-        #     self.no_update = False
-        # self.analysis_filter_values = vs
         self._analysis_filter_parameter_changed(True)
-
-        #self.selected = ans[-1:]
-        #invoke_in_main_thread(do_later, self.trait_set, scroll_to_row=tc - 1)
 
     #handlers
     def _tabular_adapter_changed(self):
         self.table_configurer.adapter = self.tabular_adapter
         self.table_configurer.load()
 
-    @cached_property
-    def _get_analysis_filter_parameters(self):
-        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
-
     def _analysis_filter_changed(self, new):
         if new:
-            # self.analyses=[]
             name = self.analysis_filter_parameter
-            # comp = self.analysis_filter_comparator
-            # if name == 'Step':
-            #     new = new.upper()
-
             self.analyses = filter(filter_func(new, name), self.oanalyses)
         else:
             self.analyses = self.oanalyses
 
     def _configure_analysis_table_fired(self):
         self.table_configurer.edit_traits()
-
-    # def _get_npages(self):
-    #     try:
-    #         return int(math.ceil(self.n_all_analyses / float(self.page_width)))
-    #     except ZeroDivisionError:
-    #         return 0
 
     def _analysis_filter_comparator_changed(self):
         self._analysis_filter_changed(self.analysis_filter)
@@ -131,6 +101,10 @@ class AnalysisTable(HasTraits):
     def _get_analysis_filter_parameter(self):
         p = self.analysis_filter_parameter
         return p.lower()
+
+    @cached_property
+    def _get_analysis_filter_parameters(self):
+        return dict([(ci[1], ci[0]) for ci in self.tabular_adapter.columns])
 
     #defaults
     def _table_configurer_default(self):

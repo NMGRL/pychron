@@ -61,6 +61,8 @@ class MeasurementPyScript(ValvePyScript):
     abbreviated_count_ratio = None
     _fit_series_count = 0
 
+    use_cdd_warming = False
+
     def gosub(self, *args, **kw):
         kw['automated_run'] = self.automated_run
         super(MeasurementPyScript, self).gosub(*args, **kw)
@@ -94,7 +96,7 @@ class MeasurementPyScript(ValvePyScript):
     #        return cmds
 
     def get_variables(self):
-        return ['truncated', 'eqtime']
+        return ['truncated', 'eqtime', 'use_cdd_warming']
 
     #===============================================================================
     # commands
@@ -353,8 +355,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def clear_conditions(self):
-        self._automated_run_call('py_clear_conditions')
+    def clear_conditionals(self):
+        self._automated_run_call('py_clear_conditionals')
 
     @verbose_skip
     @command_register
@@ -373,10 +375,11 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def add_termination(self, attr, comp, start_count=0, frequency=10):
+    def add_termination(self, attr, comp, start_count=0, frequency=10, window=0, mapper=''):
         self._automated_run_call('py_add_termination', attr, comp,
                                  start_count=start_count,
-                                 frequency=frequency)
+                                 frequency=frequency, window=window,
+                                 mapper=mapper)
 
     @verbose_skip
     @command_register
@@ -576,18 +579,19 @@ class MeasurementPyScript(ValvePyScript):
             mx.counts
 
         """
-        m = ast.parse(self.text)
         try:
-            yd = yaml.load(ast.get_docstring(m))
-            mx = MeasurementCTXObject()
-            mx.create(yd)
-            self._ctx['mx'] = mx
+            m = ast.parse(self.text)
+            try:
+                yd = yaml.load(ast.get_docstring(m))
+                if yd:
+                    mx = MeasurementCTXObject()
+                    mx.create(yd)
+                    self._ctx['mx'] = mx
 
-        except yaml.YAMLError, e:
-            self.debug('failed loading docstring context. {}'.format(e))
-
-
-
+            except yaml.YAMLError, e:
+                self.debug('failed loading docstring context. {}'.format(e))
+        except AttributeError:
+            pass
 
     @property
     def truncated(self):

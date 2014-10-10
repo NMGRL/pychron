@@ -15,10 +15,14 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from math import isnan
+
 from traits.api import Array
+
 #============= standard library imports ========================
 from numpy import hstack, array
 #============= local library imports  ==========================
+from uncertainties import nominal_value
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.processing.plotters.arar_figure import BaseArArFigure
 from pychron.processing.plotters.flow_label import FlowPlotLabel
@@ -124,30 +128,25 @@ class Spectrum(BaseArArFigure):
         tga = ag.integrated_age
         mswd = ag.get_mswd_tuple()
         text = self._build_integrated_age_label(tga, *mswd)
-        # text = self._build_integrated_age_label(tga, *self._get_mswd(ys[::2], es[::2]))
-
-        # ys, es = array(ys), array(es)
 
         #filter ys,es if 39Ar < 1% of total
         ps = s39 / s39.sum()
         ps = ps > 0.01
-        # print ps
         vs = vs[ps]
-        vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
-        vs, es = array(vs), array(es)
-        # es=ves[ps]
-        # ys=ys[ps]
-        # es=es[ps]
-        nes = es * op.step_nsigma
-        yl = vs - nes
-        yu = vs + nes
-        # yl = (ys - es * ns)#[::-1]
-        # yu = ys + es * ns
+        try:
+            vs, es = zip(*[(vi.nominal_value, vi.std_dev) for vi in vs])
+            vs, es = array(vs), array(es)
+            nes = es * op.step_nsigma
+            yl = vs - nes
+            yu = vs + nes
 
-        _mi = min(yl)
-        _ma = max(yu)
-        if pma:
-            _ma = max(pma, _ma)
+            _mi = min(yl)
+            _ma = max(yu)
+            if pma:
+                _ma = max(pma, _ma)
+        except ValueError:
+            _mi=0
+            _ma=1
 
         if op.display_integrated_info:
             fs = op.integrated_font_size
@@ -281,7 +280,6 @@ class Spectrum(BaseArArFigure):
     def update_graph_metadata(self, group_id, obj, name, old, new):
         pass
 
-
     #===============================================================================
     # utils
     #===============================================================================
@@ -330,8 +328,10 @@ class Spectrum(BaseArArFigure):
 
             ys.append(ai)
             es.append(ei)
-
-            s = 100 * ar / sar + prev
+            try:
+                s = 100 * ar / sar + prev
+            except ZeroDivisionError:
+                s=0
             c39s.append(s)
             xs.append(s)
             ys.append(ai)
@@ -355,10 +355,12 @@ class Spectrum(BaseArArFigure):
     # labels
     #===============================================================================
     def _build_integrated_age_label(self, tga, *args):
-        age, error = tga.nominal_value, tga.std_dev
-        error *= self.options.nsigma
+        txt='NaN'
+        if not isnan(nominal_value(tga)):
+            age, error = tga.nominal_value, tga.std_dev
+            error *= self.options.nsigma
+            txt = self._build_label_text(age, error, *args, sig_figs=2)
 
-        txt = self._build_label_text(age, error, *args, sig_figs=2)
         return 'Integrated Age= {}'.format(txt)
         #============= EOF =============================================
         # def _get_plateau(self, analyses, exclude=None):

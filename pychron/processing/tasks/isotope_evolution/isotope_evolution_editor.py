@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,11 @@
 
 #============= enthought library imports =======================
 #from chaco.label import Label
+import time
+
 from traits.api import Instance, Bool, Any
 from traitsui.api import View, UItem, InstanceEditor
+
 #============= standard library imports ========================
 from numpy import Inf, polyfit
 
@@ -71,33 +74,43 @@ class IsotopeEvolutionEditor(GraphEditor):
 
     def _save(self, fits, filters, progress):
         proc = self.processor
-        n = len(self.analyses)
+
+        ans = self.analyses
+        n = len(ans)
         if progress is None:
             progress = proc.open_progress(n=n)
         else:
             progress.increase_max(n)
 
         db = proc.db
-        for unk in self.analyses:
-            progress.change_message('Saving Fits {}'.format(unk.record_id))
+        with db.session_ctx():
+            ms = db.get_analyses_uuid([unk.uuid for unk in ans], analysis_only=True)
+            args = [mi.id for mi in ms]
 
-            meas_analysis = db.get_analysis_uuid(unk.uuid)
-            if fits and filters:
-                self._save_fit_dict(unk, meas_analysis, fits, filters)
-            else:
-                self._save_fit(unk, meas_analysis)
+            sid = self.processor.unique_id(args, time.time())
+            fit_summary = ','.join(['{}{}'.format(si.name, si.fit)
+                                    for si in self.tool.fits if si.use])
 
-                #prog.change_message('{} Saving ArAr age'.format(unk.record_id))
-                #proc.save_arar(unk, meas_analysis)
+            dbaction = db.add_proc_action('Set Fits for {} to {}. Fits={}'.format(ans[0].record_id,
+                                                                                  ans[-1].record_id,
+                                                                                  fit_summary),
+                                          session=sid)
 
-            proc.remove_from_cache(unk)
+            for unk, meas_analysis in zip(ans, ms):
+                progress.change_message('Saving Fits {}'.format(unk.record_id))
+                if fits and filters:
+                    self._save_fit_dict(unk, meas_analysis, fits, filters, dbaction)
+                else:
+                    self._save_fit(unk, meas_analysis)
+
+                proc.remove_from_cache(unk)
 
         progress.soft_close()
 
     def save_fits(self, fits, filters, progress=None):
         self._save(fits, filters, progress)
 
-    def _save_fit_dict(self, unk, meas_analysis, fits, filters):
+    def _save_fit_dict(self, unk, meas_analysis, fits, filters, dbaction):
         fit_hist = None
         include_baseline_error = True
         for fit_d, filter_d in zip(fits, filters):
@@ -127,10 +140,11 @@ class IsotopeEvolutionEditor(GraphEditor):
 
                 fit_hist = self._save_db_fit(unk, meas_analysis, fit_hist,
                                              name, fit, 'SEM', filter_d, include_baseline_error)
+                fit_hist.action = dbaction
             else:
                 self.warning('no isotope {} for analysis {}'.format(fname, unk.record_id))
 
-    def _save_fit(self, unk, meas_analysis):
+    def _save_fit(self, unk, meas_analysis, dbaction):
 
         tool_fits = [fi for fi in self.tool.fits
                      if fi.save and '/' not in fi.name]
@@ -171,6 +185,9 @@ class IsotopeEvolutionEditor(GraphEditor):
                         sess = db.get_session()
                         sess.rollback()
                         break
+                    else:
+                        fit_hist.action = dbaction
+
                 else:
                     fd = dict(filter_outliers=dbfi.filter_outliers,
                               iterations=dbfi.filter_outlier_iterations,
@@ -199,6 +216,8 @@ class IsotopeEvolutionEditor(GraphEditor):
                 sess = db.get_session()
                 sess.rollback()
                 break
+            else:
+                fit_hist.action = dbaction
 
     def _save_db_fit(self, unk, meas_analysis, fit_hist, name, fit, et, filter_dict,
                      include_baseline_error, time_zero_offset):
@@ -226,7 +245,7 @@ class IsotopeEvolutionEditor(GraphEditor):
 
         dbiso = next((i for i in meas_analysis.isotopes
                       if i.molecular_weight.name == name and
-                         i.kind == kind), None)
+                      i.kind == kind), None)
 
         if fit_hist is None:
             self.warning('Failed added fit history for {}'.format(unk.record_id))
@@ -271,12 +290,12 @@ class IsotopeEvolutionEditor(GraphEditor):
             niso, diso = unk.isotopes[n], unk.isotopes[d]
             nsniff, dsniff = niso.sniff, diso.sniff
 
-            nbs,dbs = niso.baseline.value, diso.baseline.value
+            nbs, dbs = niso.baseline.value, diso.baseline.value
 
             if nsniff and dsniff:
                 offset = niso.time_zero_offset
                 nxs = nsniff.xs - offset
-                ys = (nsniff.ys-nbs) / (dsniff.ys-dbs)
+                ys = (nsniff.ys - nbs) / (dsniff.ys - dbs)
 
                 g.new_series(nxs, ys,
                              plotid=i,
@@ -284,7 +303,7 @@ class IsotopeEvolutionEditor(GraphEditor):
                              fit=False)
 
             xs = niso.offset_xs
-            ys = (niso.ys-nbs) / (diso.ys-dbs)
+            ys = (niso.ys - nbs) / (diso.ys - dbs)
             g.new_series(xs, ys,
                          fit=(fit.fit, fit.error_type),
                          filter_outliers_dict=fd,

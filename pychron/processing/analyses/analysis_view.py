@@ -15,15 +15,15 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from traits.api import HasTraits, List, Property, Any, Instance, Event
+from traits.api import HasTraits, List, Property, Any, Instance, Event, Str
 from traitsui.api import View, UItem, InstanceEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
-
-from pychron.processing.analyses.view.experiment_view import ExperimentView, ExtractionView, MeasurementView
+from pychron.processing.analyses.view.snapshot_view import SnapshotView
+from pychron.processing.analyses.view.text_view import ExperimentView, ExtractionView, MeasurementView
 from pychron.processing.analyses.view.history_view import HistoryView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
@@ -54,13 +54,26 @@ class AnalysisView(HasTraits):
     selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
 
     refresh_needed = Event
+    analysis_id = Str
 
-    main_view = None
+    main_view = Instance('pychron.processing.analyses.view.main_view.MainView')
+    history_view = Instance('pychron.processing.analyses.view.history_view.HistoryView')
     _experiment_view = None
-    _history_view = None
     _interference_view = None
     _measurement_view = None
     _extraction_view = None
+    _snapshot_view = None
+
+    def update_fontsize(self, view, size):
+        if 'main' in view:
+            v=self.main_view
+            view=view.split('.')[-1]
+            adapter = getattr(v, '{}_adapter'.format(view))
+            adapter.font = 'arial {}'.format(size)
+        else:
+            v=getattr(self,'_{}_view'.format(view))
+            if v is not None:
+                v.fontsize=size
 
     def load(self, an):
         analysis_type = an.analysis_type
@@ -68,11 +81,12 @@ class AnalysisView(HasTraits):
 
         self.analysis_id = analysis_id
 
-        history_view = self._history_view
+        history_view = self.history_view
         if history_view is None:
             history_view = HistoryView(an)
-            self._history_view = history_view
-        
+            self.history_view = history_view
+            history_view.on_trait_change(self.handle_blank_right_clicked, 'blank_right_clicked')
+
         experiment_view = self._experiment_view
         if experiment_view is None:
             experiment_view = ExperimentView(an)
@@ -82,6 +96,11 @@ class AnalysisView(HasTraits):
         if extraction_view is None:
             extraction_view = ExtractionView(an)
             self._extraction_view = extraction_view
+
+        snapshot_view=self._snapshot_view
+        if snapshot_view is None and an.snapshots:
+            snapshot_view = SnapshotView(an.snapshots)
+            self._snapshot_view=snapshot_view
 
         measurement_view = self._measurement_view
         if measurement_view is None:
@@ -105,8 +124,7 @@ class AnalysisView(HasTraits):
                     interference_view,
                     experiment_view,
                     measurement_view,
-                    extraction_view,
-                    ]
+                    extraction_view]
 
         if analysis_type in ('unknown', 'cocktail'):
             subviews.append(ErrorComponentsView(an))
@@ -115,6 +133,9 @@ class AnalysisView(HasTraits):
         if pch.load(an):
             subviews.append(pch)
 
+        if snapshot_view:
+            subviews.append(snapshot_view)
+
         self.selection_tool = ViewSelection(subviews=subviews,
                                             selected_view=main_view)
 
@@ -122,6 +143,9 @@ class AnalysisView(HasTraits):
         v = View(UItem('object.selection_tool.selected_view', style='custom',
                        editor=InstanceEditor()))
         return v
+
+    def handle_blank_right_clicked(self, new):
+        print 'asdf', new
 
 
 class DBAnalysisView(AnalysisView):

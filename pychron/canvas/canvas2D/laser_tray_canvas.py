@@ -155,7 +155,7 @@ class LaserTrayCanvas(MapCanvas):
     prev_x_val = 0
     prev_y_val = 0
 
-    parent = Any
+    stage_manager = Any
 
     show_desired_position = Bool(True)
 
@@ -366,8 +366,8 @@ class LaserTrayCanvas(MapCanvas):
         """
         between = lambda mi, v, ma: mi < v <= ma
         if between(self.x, x, self.x2) and between(self.y, y, self.y2):
-            if self.parent is not None:
-                p = self.parent.stage_controller
+            if self.stage_manager is not None:
+                p = self.stage_manager.stage_controller
                 x, y = self.map_data((x, y))
 
                 try:
@@ -457,18 +457,17 @@ class LaserTrayCanvas(MapCanvas):
     def normal_left_down(self, event):
         """
         """
-        #        if self.calibrate or self.markup:
-        #            super(LaserTrayCanvas, self).normal_left_down(event)
-        #
-        #        else:
+
         x = event.x - self.crosshairs_offsetx
         y = event.y - self.crosshairs_offsety
 
         pos = self.valid_position(x, y)
         if pos:
-            if not self._frozen:
-                self.parent.linear_move(*pos, use_calibration=False)
+            self.stage_manager.linear_move(*pos,
+                                           check_moving=True,
+                                           use_calibration=False)
             event.handled = True
+
 
             #    def normal_mouse_wheel(self, event):
             #        enable_mouse_wheel_zoom = False
@@ -481,26 +480,24 @@ class LaserTrayCanvas(MapCanvas):
 
     def normal_key_pressed(self, event):
         c = event.character
-        if not self._frozen:
-            if c in ['Left', 'Right', 'Up', 'Down']:
-                ax_key, direction = DIRECTIONS[c]
-                direction = self._calc_relative_move_direction(c, direction)
-                self.parent.relative_move(ax_key, direction)
-                event.handled = True
-            elif c in ('a', 'A'):
-                self.parent.accept_point()
+        if c in ['Left', 'Right', 'Up', 'Down']:
+            ax_key, direction = DIRECTIONS[c]
+            direction = self._calc_relative_move_direction(c, direction)
+            self.stage_manager.relative_move(ax_key, direction)
+            event.handled = True
+        elif c in ('a', 'A'):
+            self.stage_manager.accept_point()
 
     def key_released(self, char):
         """
             called from outside by StageCompnentEditor
         """
-        if not self._frozen:
-            if char in ('left', 'right'):
-                self.parent.stop(ax_key='x', verbose=False)
-                self.parent.update_axes()
-            elif char in ('up', 'down'):
-                self.parent.stop(ax_key='y', verbose=False)
-                self.parent.update_axes()
+        if char in ('left', 'right'):
+            self.stage_manager.stop(ax_key='x', verbose=False)
+            self.stage_manager.update_axes()
+        elif char in ('up', 'down'):
+            self.stage_manager.stop(ax_key='y', verbose=False)
+            self.stage_manager.update_axes()
 
     def normal_mouse_move(self, event):
         """

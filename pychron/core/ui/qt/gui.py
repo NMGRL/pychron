@@ -48,8 +48,10 @@ _invoker = Invoker()
 
 
 def invoke_in_main_thread(fn, *args, **kwargs):
-    QtCore.QCoreApplication.postEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
-    QtCore.QCoreApplication.processEvents()
+#     invoker = Invoker()
+    QtCore.QCoreApplication.postEvent(_invoker,
+                                      InvokeEvent(fn, *args, **kwargs))
+    # QtCore.QCoreApplication.processEvents()
     # does this resolve the GUI responsiveness issue during when screen goes to sleep/screen saver
     # QtCore.QCoreApplication.sendEvent(_invoker, InvokeEvent(fn, *args, **kwargs))
 

@@ -1,11 +1,11 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2012 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,16 +17,15 @@
 #============= enthought library imports =======================
 from traits.api import String, Str, Property, Any, Float, Instance, Int, List, \
     cached_property, on_trait_change, Bool, Button, Event, Enum
-import apptools.sweet_pickle as pickle
 #============= standard library imports ========================
 from traits.trait_errors import TraitError
 import yaml
 import os
 #============= local library imports  ==========================
 from pychron.experiment.action_editor import ActionEditor, ActionModel
-from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
-    MeasurementFitsSelectorView
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.queue.experiment_block import ExperimentBlock
+from pychron.experiment.utilities.persistence_loggable import PersistenceLoggable
 from pychron.experiment.utilities.position_regex import SLICE_REGEX, PSLICE_REGEX, \
     SSLICE_REGEX, TRANSECT_REGEX, POSITION_REGEX, CSLICE_REGEX, XY_REGEX
 from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_STR
@@ -37,7 +36,6 @@ from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.paths import paths
 from pychron.experiment.script.script import Script, ScriptOptions
 from pychron.experiment.queue.increment_heat_template import IncrementalHeatTemplate
-from pychron.loggable import Loggable
 from pychron.experiment.utilities.human_error_checker import HumanErrorChecker
 from pychron.core.helpers.filetools import list_directory, add_extension
 from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
@@ -106,16 +104,16 @@ def increment_position(pos):
 
 def generate_positions(pos):
     for regex, func, ifunc, name in (SLICE_REGEX, SSLICE_REGEX,
-                               PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+                                     PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
         if regex.match(pos):
             return func(pos)
     else:
         return [pos]
 
 
-class AutomatedRunFactory(Loggable):
+class AutomatedRunFactory(PersistenceLoggable):
     db = Any
-    datahub=Instance(Datahub)
+    datahub = Instance(Datahub)
     undoer = Any
     edit_event = Event
 
@@ -174,7 +172,12 @@ class AutomatedRunFactory(Loggable):
     position = Property(depends_on='_position')
     _position = String
 
+    #===========================================================================
+    # measurement
+    #===========================================================================
+    use_cdd_warming = Bool
     collection_time_zero_offset = Float(0)
+
     #===========================================================================
     # extract
     #===========================================================================
@@ -234,6 +237,12 @@ class AutomatedRunFactory(Loggable):
     new_truncation_button = Button
 
     #===========================================================================
+    # blocks
+    #===========================================================================
+    run_block = Str('RunBlock')
+    run_blocks = List
+
+    #===========================================================================
     # frequency
     #===========================================================================
     frequency = Int
@@ -267,15 +276,29 @@ class AutomatedRunFactory(Loggable):
     mass_spectrometer = String
     extract_device = Str
 
-    _default_attrs = ('collection_time_zero_offset',)
+    pattributes = ('collection_time_zero_offset',
+                   'selected_irradiation', 'selected_level',
+                   'extract_value', 'extract_units','cleanup',
+                   'duration', 'beam_diameter','ramp_duration','overlap',
+                   'pattern', 'labnumber', 'position',
+                   'weight', 'comment', 'template')
+
     _no_clear_labnumber = False
 
-    def activate(self):
+    def setup_files(self):
+        self.load_templates()
+        self.load_run_blocks()
+        self.remote_patterns = self._get_patterns()
+        self.load_patterns()
+
+    def activate(self, load_persistence):
         self.load_truncations()
-        self.load_defaults()
+        self.load_run_blocks()
+        if load_persistence:
+            self.load()
 
     def deactivate(self):
-        self.dump_defaults()
+        self.dump(verbose=True)
 
     def set_end_after(self, v):
         self._update_run_values('end_after', v)
@@ -299,6 +322,9 @@ class AutomatedRunFactory(Loggable):
 
         return True
 
+    def load_run_blocks(self):
+        self.run_blocks = self._get_run_blocks()
+
     def load_templates(self):
         self.templates = self._get_templates()
 
@@ -308,33 +334,33 @@ class AutomatedRunFactory(Loggable):
     def load_truncations(self):
         self.truncations = self._get_truncations()
 
-    def load_defaults(self):
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        if os.path.isfile(p):
-            d = None
-            with open(p, 'r') as fp:
-                try:
-                    d = pickle.load(fp)
-                except BaseException, e:
-                    self.debug('could not load defaults Exception: {}'.format(e))
-            if d:
-                for attr in self._default_attrs:
-                    try:
-                        setattr(self, attr, d.get(attr))
-                    except (KeyError, TraitError), e:
-                        self.debug('load automated run factory defaults err={}'.format(e))
-
-    def dump_defaults(self):
-        d = {}
-        for attr in self._default_attrs:
-            d[attr] = getattr(self, attr)
-
-        p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
-        with open(p, 'w') as fp:
-            try:
-                pickle.dump(d, fp)
-            except BaseException, e:
-                self.debug('failed dumping defaults Exception: {}'.format(e))
+    # def load_defaults(self):
+    #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+    #     if os.path.isfile(p):
+    #         d = None
+    #         with open(p, 'r') as fp:
+    #             try:
+    #                 d = pickle.load(fp)
+    #             except BaseException, e:
+    #                 self.debug('could not load defaults Exception: {}'.format(e))
+    #         if d:
+    #             for attr in self._default_attrs:
+    #                 try:
+    #                     setattr(self, attr, d.get(attr))
+    #                 except (KeyError, TraitError), e:
+    #                     self.debug('load automated run factory defaults err={}'.format(e))
+    #
+    # def dump_defaults(self):
+    #     d = {}
+    #     for attr in self._default_attrs:
+    #         d[attr] = getattr(self, attr)
+    #
+    #     p = os.path.join(paths.hidden_dir, 'run_factory_defaults')
+    #     with open(p, 'w') as fp:
+    #         try:
+    #             pickle.dump(d, fp)
+    #         except BaseException, e:
+    #             self.debug('failed dumping defaults Exception: {}'.format(e))
 
     def use_frequency(self):
         return self.labnumber in ANALYSIS_MAPPING and self.frequency
@@ -367,9 +393,6 @@ class AutomatedRunFactory(Loggable):
     def set_mass_spectrometer(self, new):
         new = new.lower()
         self.mass_spectrometer = new
-        for s in SCRIPT_NAMES:
-            sc = getattr(self, s)
-            sc.mass_spectrometer = new
 
     def set_extract_device(self, new):
         new = new.lower()
@@ -384,8 +407,10 @@ class AutomatedRunFactory(Loggable):
             returns a list of runs even if its only one run
             also returns self.frequency if using special labnumber else None
         """
-
-        arvs, freq = self._new_runs(exp_queue, positions=positions)
+        if self.run_block not in ('RunBlock', LINE_STR):
+            arvs, freq = self._new_run_block()
+        else:
+            arvs, freq = self._new_runs(exp_queue, positions=positions)
 
         if auto_increment_id:
             v = increment_value(self.labnumber)
@@ -402,6 +427,12 @@ class AutomatedRunFactory(Loggable):
     # private
     #===============================================================================
     # def _new_runs(self, positions, extract_group_cnt=0):
+    def _new_run_block(self):
+        p = os.path.join(paths.run_block_dir, self.run_block)
+        block = ExperimentBlock(extract_device=self.extract_device,
+                                mass_spectrometer=self.mass_spectrometer)
+        return block.extract_runs(p), self.frequency
+
     def _new_runs(self, exp_queue, positions):
         _ln, special = self._make_short_labnumber()
         freq = self.frequency if special else None
@@ -525,6 +556,7 @@ class AutomatedRunFactory(Loggable):
                      'pattern', 'beam_diameter',
                      'position',
                      'collection_time_zero_offset',
+                     'use_cdd_warming',
                      'weight', 'comment'):
 
             if attr in excludes:
@@ -576,16 +608,19 @@ class AutomatedRunFactory(Loggable):
         self.debug('rendering template {}'.format(template.name))
 
         al = self.datahub.get_greatest_aliquot(self.labnumber)
-        c = exp_queue.count_labnumber(self.labnumber)
+        if al is not None:
+            c = exp_queue.count_labnumber(self.labnumber)
+            for st in template.steps:
+                if st.value or st.duration or st.cleanup:
+                    arv = self._new_run(position=position,
+                                        excludes=['position'])
 
-        for st in template.steps:
-            if st.value or st.duration or st.cleanup:
-                arv = self._new_run(position=position,
-                                    excludes=['position'])
-
-                arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
-                              **st.make_dict(self.duration, self.cleanup))
-                arvs.append(arv)
+                    arv.trait_set(user_defined_aliquot=al + 1 + offset + c,
+                                  **st.make_dict(self.duration, self.cleanup))
+                    arvs.append(arv)
+        else:
+            self.debug('missing aliquot_pychron in mass spec secondary db')
+            self.warning_dialog('Missing aliquot_pychron in mass spec secondary db. seek help')
 
         return arvs
 
@@ -729,7 +764,7 @@ class AutomatedRunFactory(Loggable):
 
                     new_script_name = self._remove_file_extension(new_script_name)
                     if labnumber in ('u', 'bu') and \
-                        not self.extract_device in (NULL_STR, 'ExternalPipette'):
+                            not self.extract_device in (NULL_STR, 'ExternalPipette'):
 
                         # the default value trumps pychron's
                         if self.extract_device:
@@ -888,6 +923,11 @@ class AutomatedRunFactory(Loggable):
     def _get_edit_template_label(self):
         return 'Edit' if self._use_template() else 'New'
 
+    def _get_run_blocks(self):
+        p = paths.run_block_dir
+        blocks = list_directory(p, '.txt')
+        return ['RunBlock', LINE_STR] + blocks
+
     def _get_patterns(self):
         p = paths.pattern_dir
         extension = '.lp'
@@ -907,7 +947,7 @@ class AutomatedRunFactory(Loggable):
         return ['Step Heat Template', 'None', ''] + temps
 
     def _get_truncations(self):
-        p = paths.truncation_dir
+        p = paths.conditionals_dir
         extension = '.yaml'
         temps = list_directory(p, extension, remove_extension=True)
         return ['', ] + temps
@@ -986,14 +1026,27 @@ class AutomatedRunFactory(Loggable):
             self._load_default_scripts(self.labnumber)
 
     def _default_fits_button_fired(self):
+        from pychron.experiment.automated_run.measurement_fits_selector import MeasurementFitsSelector, \
+            MeasurementFitsSelectorView
+        from pychron.pyscripts.tasks.pyscript_editor import PyScriptEdit
+        from pychron.pyscripts.context_editors.measurement_context_editor import MeasurementContextEditor
+
         m = MeasurementFitsSelector()
-        m.open(self.measurement_script.script_path())
+        sp = self.measurement_script.script_path()
+        m.open(sp)
         f = MeasurementFitsSelectorView(model=m)
-        f.edit_traits()
+        info = f.edit_traits(kind='livemodal')
+        if info.result:
+            #update the default_fits entry in the docstr
+            ed = PyScriptEdit()
+            ed.context_editor = MeasurementContextEditor()
+            ed.open_script(sp)
+            ed.context_editor.default_fits = str(m.name)
+            ed.update_docstr()
 
     def _new_truncation_button_fired(self):
 
-        p = os.path.join(paths.truncation_dir,
+        p = os.path.join(paths.conditionals_dir,
                          add_extension(self.truncation_path, '.yaml'))
 
         e = ActionEditor()
@@ -1012,7 +1065,7 @@ class AutomatedRunFactory(Loggable):
             self.truncation_path = d
 
     def _edit_truncation_button_fired(self):
-        p = os.path.join(paths.truncation_dir,
+        p = os.path.join(paths.conditionals_dir,
                          add_extension(self.truncation_path, '.yaml'))
 
         if os.path.isfile(p):
@@ -1036,7 +1089,7 @@ class AutomatedRunFactory(Loggable):
 
     def _set_truncation(self, t):
         for s in self._selected_runs:
-            s.truncate_condition = t
+            s.truncate_conditional = t
 
         self.changed = True
         self.refresh_table_needed = True
@@ -1045,7 +1098,9 @@ class AutomatedRunFactory(Loggable):
         self.changed = True
         self.refresh_table_needed = True
 
-    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,collection_time_zero_offset,
+    @on_trait_change('''cleanup, duration, extract_value,ramp_duration,
+collection_time_zero_offset,
+use_cdd_warming,
 extract_units,
 pattern,
 position,
@@ -1128,7 +1183,7 @@ post_equilibration_script:name''')
                 self.labnumber = ln
                 self._load_extraction_info()
 
-                self._labnumber = NULL_STR
+                # self._labnumber = NULL_STR
             self._frequency_enabled = True
 
             if not self._selected_runs:
@@ -1305,10 +1360,18 @@ post_equilibration_script:name''')
         return self.factory_view_klass(model=self)
 
     def _datahub_default(self):
-        dh=Datahub()
+        dh = Datahub()
         dh.bind_preferences()
         dh.secondary_connect()
         return dh
+
+    @property
+    def run_block_enabled(self):
+        return self.run_block not in ('RunBlock', LINE_STR)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(paths.hidden_dir, 'run_factory')
 
 #============= EOF =============================================
 #

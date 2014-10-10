@@ -18,7 +18,6 @@
 import glob
 import os
 import subprocess
-import time
 from datetime import datetime
 
 
@@ -67,7 +66,7 @@ def ilist_directory2(root, extension=None, filtername=None, remove_extension=Fal
             for yi in gen(gfilter):
                 yield yi
     else:
-        for yi in gen(gfilter):
+        for yi in gen('{}/*'.format(gfilter)):
             yield yi
 
 
@@ -129,9 +128,9 @@ def unique_dir(root, base):
 def unique_date_path(root, base, extension='.txt'):
     """
         make a unique path with the a timestamp appended
-        e.g foo_11-01-2012_12:00
+        e.g foo_11-01-2012-001
     """
-    base = '{}_{}'.format(base, datetime.strptime(time.time(), '%m-%d-Y_%H:%M'))
+    base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
     p, _ = unique_path2(root, base, extension)
     return p
 
@@ -330,4 +329,20 @@ def fileiter(fp, commentchar='#', strip=False):
             if strip:
                 line = line.strip()
             yield line
+
+
+def get_path(root, name, extensions):
+    """
+        return a valid file path ``p``
+        where ``p`` == root/name.extension
+
+        root: str. directory path
+        name: str. basename for file
+        extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
+
+    """
+    for ext in extensions:
+        p=os.path.join(root, add_extension(name, ext))
+        if os.path.isfile(p):
+            return p
 

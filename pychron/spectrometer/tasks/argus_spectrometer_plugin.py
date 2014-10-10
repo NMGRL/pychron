@@ -24,7 +24,7 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 from pychron.spectrometer.thermo.spectrometer_manager import ArgusSpectrometerManager
 from pychron.spectrometer.tasks.spectrometer_actions import PeakCenterAction, \
     CoincidenceScanAction, SpectrometerParametersAction, MagnetFieldTableAction, MagnetFieldTableHistoryAction, \
-    DBMagnetFieldTableHistoryAction
+    DBMagnetFieldTableHistoryAction, ToggleSpectrometerTask
 from pychron.spectrometer.tasks.spectrometer_preferences import SpectrometerPreferencesPane
 
 
@@ -58,8 +58,17 @@ class ArgusSpectrometerPlugin(BaseSpectrometerPlugin):
                                    factory=DBMagnetFieldTableHistoryAction,
                                    path='MenuBar/spectrometer.menu')]),
             TaskExtension(
+                task_id='pychron.spectrometer.scan_inspector',
+                actions=[
+                    SchemaAddition(id='toggle_spectrometer_task',
+                                   factory=ToggleSpectrometerTask,
+                                   path='MenuBar/spectrometer.menu')]),
+            TaskExtension(
                 task_id='pychron.spectrometer',
                 actions=[
+                    SchemaAddition(id='toggle_spectrometer_task',
+                                   factory=ToggleSpectrometerTask,
+                                   path='MenuBar/spectrometer.menu'),
                     SchemaAddition(id='peak_center',
                                    factory=PeakCenterAction,
                                    path='MenuBar/spectrometer.menu'),

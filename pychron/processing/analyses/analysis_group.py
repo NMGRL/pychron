@@ -17,7 +17,7 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, List, Property, cached_property, Str, Bool, Int, Event
 #============= standard library imports ========================
-from numpy import array
+from numpy import array, nan
 #============= local library imports  ==========================
 from uncertainties import ufloat
 # from pychron.processing.analysis import Marker
@@ -35,7 +35,7 @@ def AGProperty(*depends):
 
 
 class AnalysisGroup(HasTraits):
-    sample = Str
+
     analyses = List
     nanalyses = AGProperty()
 
@@ -56,6 +56,7 @@ class AnalysisGroup(HasTraits):
     isochron_age = AGProperty()
     isochron_age_error_kind = Str
     identifier = Property
+    sample = Property
     age_scalar = Property
     age_units = Property
 
@@ -100,7 +101,7 @@ class AnalysisGroup(HasTraits):
         try:
             e = (j.std_dev / j.nominal_value) if j is not None else 0
         except ZeroDivisionError:
-            e = 0
+            e = nan
         return e
 
     @cached_property
@@ -110,6 +111,10 @@ class AnalysisGroup(HasTraits):
     @cached_property
     def _get_identifier(self):
         return self.analyses[0].labnumber
+
+    @cached_property
+    def _get_sample(self):
+        return self.analyses[0].sample
 
     # @cached_property
     def _get_weighted_age(self):
@@ -137,7 +142,10 @@ class AnalysisGroup(HasTraits):
             include_j_error = self.include_j_error_in_mean
 
         if include_j_error:
-            e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+            try:
+                e = ((e / v) ** 2 + self.j_err ** 2) ** 0.5 * v
+            except ZeroDivisionError:
+                return nan
         return e
 
     # @cached_property
@@ -242,7 +250,10 @@ class StepHeatAnalysisGroup(AnalysisGroup):
         k39 = sum(k39)
 
         j = a.j
-        return age_equation(rad40 / k39, j, a.arar_constants)
+        try:
+            return age_equation(rad40 / k39, j, a.arar_constants)
+        except ZeroDivisionError:
+            return nan
 
     def _get_steps(self):
 

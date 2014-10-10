@@ -498,7 +498,7 @@ class ValveManager(Manager):
         """
         """
         cv = self.get_valve_by_name(name)
-        self.debug('check software interlocks {} {}'.format(name, cv))
+        self.debug('check software interlocks {}'.format(name))
         if cv is not None:
             interlocks = cv.interlocks
             valves = self.valves
@@ -636,25 +636,28 @@ class ValveManager(Manager):
             self.valves[name] = hv
             return hv
 
-        parser = ValveParser(path)
-        for g in parser.get_groups():
-            for v in parser.get_valves(group=g):
+        parser = ValveParser()
+        if not parser.load(path):
+            self.warning_dialog('No valves.xml file located in "{}"'.format(os.path.dirname(path)))
+        else:
+            for g in parser.get_groups():
+                for v in parser.get_valves(group=g):
+                    factory(v)
+
+            for v in parser.get_valves():
                 factory(v)
 
-        for v in parser.get_valves():
-            factory(v)
+            for s in parser.get_switches():
+                name, sw = self._switch_factory(s, klass=Switch)
+                self.valves[name] = sw
 
-        for s in parser.get_switches():
-            name, sw = self._switch_factory(s, klass=Switch)
-            self.valves[name] = sw
+            ps = []
+            for p in parser.get_pipettes():
+                pip = self._pipette_factory(p)
+                if pip:
+                    ps.append(pip)
 
-        ps = []
-        for p in parser.get_pipettes():
-            pip = self._pipette_factory(p)
-            if pip:
-                ps.append(pip)
-
-        self.pipette_trackers = ps
+            self.pipette_trackers = ps
 
     def _pipette_factory(self, p):
         inner = p.find('inner')

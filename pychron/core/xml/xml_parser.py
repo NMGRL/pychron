@@ -68,9 +68,11 @@ class XMLParser(object):
         if path:
             txt = path.read()
             self._root = XML(txt)
+            path.close()
+            return True
 
     def load(self, fp):
-        self._parse_file(fp)
+        return self._parse_file(fp)
 
     def add(self, tag, value, root, **kw):
         if root is None:

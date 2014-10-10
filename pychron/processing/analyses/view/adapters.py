@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.action.menu_manager import MenuManager
 from traits.trait_types import Int, Str
 from traits.traits import Property
 
@@ -24,10 +25,11 @@ from traits.traits import Property
 
 
 #============= EOF =============================================
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import format_percent_error
 from uncertainties import nominal_value, std_dev
-from pychron.core.helpers.formatting import floatfmt, calc_percent_error
+from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.browser.adapters import ConfigurableAdapterMixin
 
 SIGMA_1 = u'\u00b11\u03c3'
@@ -286,7 +288,24 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
                    ('IC', 'ic_factor'),
                    ('Disc', 'discrimination'),
                    ('Error Comp.', 'age_error_component')]
-    columns = [('Iso.', 'name')]
+    columns = [('Iso.', 'name'),
+               ('Det.', 'detector'),
+               ('Fit', 'fit_abbreviation'),
+               ('Int.', 'value'),
+               (SIGMA_1, 'error'),
+               ('%', 'value_percent_error'),
+               # ('I. BsEr', 'include_baseline_error'),
+               ('Fit(Bs)', 'baseline_fit_abbreviation'),
+               ('Bs', 'base_value'),
+               (sigmaf('Bs'), 'base_error'),
+               ('%(Bs)', 'baseline_percent_error'),
+               ('Bk', 'blank_value'),
+               (sigmaf('Bk'), 'blank_error'),
+               ('%(Bk)', 'blank_percent_error'),
+               ('IC', 'ic_factor'),
+               # ('Disc', 'discrimination'),
+               # ('Error Comp.', 'age_error_component')
+                ]
 
     value_tooltip = Str('Baseline, Blank, IC and/or Discrimination corrected')
     value_text = Property
@@ -324,6 +343,9 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     ic_factor_width = Int(50)
     discrimination_width = Int(50)
+
+    def get_menu(self, object, trait, row, column):
+        return MenuManager(Action(name='Show Isotope Evolution', action='show_isotope_evolution'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
@@ -380,3 +402,4 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableAdapterMixin):
 
     def _get_include_baseline_error_text(self):
         return 'Yes' if self.item.include_baseline_error else 'No'
+

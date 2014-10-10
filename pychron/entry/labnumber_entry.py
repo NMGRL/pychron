@@ -493,6 +493,7 @@ THIS CHANGE CANNOT BE UNDONE')
     def _level_changed(self):
         self.debug('level changed')
         self.irradiated_positions = []
+        self.canvas = IrradiationCanvas()
         if self.level:
             self._update_level(debug=True)
 

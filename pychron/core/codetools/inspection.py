@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,13 @@ import traceback
 def caller(func):
     def dec(*args, **kw):
         stack = inspect.stack()
-        print '{} called by {}'.format(func.func_name, stack[1][3])
+
+        cstack = stack[0]
+        rstack = stack[1]
+
+        print '{} called by {}. parent call={} {}'.format(func.func_name, rstack[3],
+                                                          cstack[0].f_back.f_locals['self'],
+                                                          ''.join(map(str.strip, rstack[4])))
         return func(*args, **kw)
 
     return dec
@@ -39,9 +45,6 @@ def caller_stack(func):
         return func(*args, **kw)
 
     return dec
-
-
-
 
 
 #============= EOF =============================================

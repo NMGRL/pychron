@@ -15,12 +15,12 @@
 #===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime
 
 from traits.api import Str, Int, Bool, Float, Property, \
-    Enum, on_trait_change, CStr
+    Enum, on_trait_change, CStr, Long
 
 #============= standard library imports ========================
+from datetime import datetime
 import uuid
 import weakref
 #============= local library imports  ==========================
@@ -55,7 +55,8 @@ class AutomatedRunSpec(Loggable):
     extract_device = Str
     username = Str
     tray = Str
-
+    use_queue_conditionals = Bool
+    queue_conditionals_name = Str
     #===========================================================================
     # run id
     #===========================================================================
@@ -70,6 +71,7 @@ class AutomatedRunSpec(Loggable):
     step = Property(depends_on='_step')
     _step = Int(-1)
 
+    analysis_dbid = Long
     #===========================================================================
     # scripts
     #===========================================================================
@@ -78,6 +80,7 @@ class AutomatedRunSpec(Loggable):
     post_equilibration_script = Str
     extraction_script = Str
     script_options = Str
+    use_cdd_warming = Bool
 
     #===========================================================================
     # extraction
@@ -97,7 +100,7 @@ class AutomatedRunSpec(Loggable):
     overlap = Property
     _overlap = Int
     _min_ms_pumptime = Int
-    truncate_condition = Str
+    truncate_conditional = Str
     syn_extraction = Str
 
     collection_time_zero_offset = Float
@@ -115,6 +118,7 @@ class AutomatedRunSpec(Loggable):
     sample = Str
     irradiation = Str
     material = Str
+    data_reduction_tag = ''
 
     analysis_type = Property(depends_on='labnumber')
     run_klass = AutomatedRun
@@ -132,7 +136,6 @@ class AutomatedRunSpec(Loggable):
     rundate = Property
     _step_heat = False
     conflicts_checked = False
-
 
     def is_step_heat(self):
         return bool(self.user_defined_aliquot) and not self.is_special()
@@ -401,7 +404,7 @@ class AutomatedRunSpec(Loggable):
         if isinstance(v, str):
             v = v.upper()
             if v in ALPHAS:
-                self._step = list(ALPHAS).index(v)
+                self._step = ALPHAS.index(v)
         else:
             self._step = v
 

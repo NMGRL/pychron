@@ -18,7 +18,7 @@
 import datetime
 import time
 
-from traits.api import Property, String, Float, Any, Int, List, Instance
+from traits.api import Property, String, Float, Any, Int, List, Instance, Bool
 from traitsui.api import View, Item, VGroup, UItem
 
 from pychron.core.helpers.timer import Timer
@@ -53,6 +53,7 @@ class ExperimentStats(Loggable):
     delay_before_analyses = Float
     _start_time = None
 
+    use_clock = Bool(False)
     clock = Instance(PieClockModel, ())
     #    experiment_queue = Any
 
@@ -113,7 +114,7 @@ class ExperimentStats(Loggable):
             Item('etf', style='readonly', label='Est. finish'),
             Item('elapsed',
                  style='readonly')),
-                 UItem('clock', style='custom', width=100, height=100))
+                 UItem('clock', style='custom', width=100, height=100, defined_when='use_clock'))
         return v
 
     def start_timer(self):
@@ -142,27 +143,30 @@ class ExperimentStats(Loggable):
 
     def finish_run(self):
         self.nruns_finished += 1
-        self.clock.stop()
+        if self.clock:
+            self.clock.stop()
 
     def continue_run(self):
-        self.clock.finish_slice()
+        if self.clock:
+            self.clock.finish_slice()
 
     def setup_run_clock(self, run):
-        ctx = run.spec.make_script_context()
-        extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
-        measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
+        if self.use_clock:
+            ctx = run.spec.make_script_context()
+            extraction_slice = run.extraction_script.calculate_estimated_duration(ctx)
+            measurement_slice = run.measurement_script.calculate_estimated_duration(ctx)
 
-        def convert_hexcolor_to_int(c):
-            c = c[1:]
-            func = lambda i: int(c[i:i + 2], 16)
-            return map(func, (0, 2, 4))
+            def convert_hexcolor_to_int(c):
+                c = c[1:]
+                func = lambda i: int(c[i:i + 2], 16)
+                return map(func, (0, 2, 4))
 
-        ec, mc = map(convert_hexcolor_to_int,
-                     (EXTRACTION_COLOR, MEASUREMENT_COLOR))
+            ec, mc = map(convert_hexcolor_to_int,
+                         (EXTRACTION_COLOR, MEASUREMENT_COLOR))
 
-        self.clock.set_slices([extraction_slice, measurement_slice],
-                              [ec, mc])
-        self.clock.start()
+            self.clock.set_slices([extraction_slice, measurement_slice],
+                                  [ec, mc])
+            self.clock.start()
 
 
 class StatsGroup(ExperimentStats):

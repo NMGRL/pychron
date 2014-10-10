@@ -131,12 +131,13 @@ class DataSelector(Loggable):
 
     selector = Any
     kind = Enum('Database', 'File')
-    open_button = Button('open')
-    append_button=Button
-    replace_button=Button
-    append_enabled=Bool(True)
-    replace_enabled=Bool(True)
+    # open_button = Button('open')
+    # append_button=Button
+    # replace_button=Button
+    # append_enabled=Bool(True)
+    # replace_enabled=Bool(True)
 
+    active = Bool(False)
     #def _append_button_fired(self):
     #    print 'append'
     #    print self.selector.selected
@@ -144,6 +145,12 @@ class DataSelector(Loggable):
     #def _replace_button_fired(self):
     #    print 'replace'
     #    print self.selector.selected
+    def __getattr__(self, item):
+        if self.selector:
+            try:
+                return getattr(self.selector, item)
+            except AttributeError:
+                pass
 
     def _kind_changed(self):
         if self.kind == 'Database':

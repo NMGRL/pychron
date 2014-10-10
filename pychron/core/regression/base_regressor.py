@@ -76,7 +76,7 @@ class BaseRegressor(HasTraits):
     clean_yserr = Property(depends_on='dirty, xs, ys')
 
     degrees_of_freedom = Property
-
+    integrity_warning=False
 
     def calculate_filtered_data(self):
         fod = self.filter_outliers_dict
@@ -321,17 +321,20 @@ class BaseRegressor(HasTraits):
         exc = set(self.user_excluded) ^ set(self.truncate_excluded) ^ set(self.outlier_excluded)
         return delete(v, list(exc), 0)
 
-    def _check_integrity(self, x, y):
+    def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)
         if not nx or not ny:
-            logger.warning('not x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('not x={} y={}'.format(nx, ny))
             return
         if nx != ny:
-            logger.warning('x!=y x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('x!=y x={} y={}'.format(nx, ny))
             return
 
         if nx == 1 or ny == 1:
-            logger.warning('==1 x={} y={}'.format(nx, ny))
+            if self.integrity_warning or verbose:
+                logger.warning('==1 x={} y={}'.format(nx, ny))
             return
 
         return True

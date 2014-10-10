@@ -33,6 +33,7 @@ from pychron.paths import paths
 
 
 
+
 #from pychron.processing.entry.sensitivity_entry import SensitivityEntry
 #from pychron.processing.tasks.entry.sensitivity_entry_panes import SensitivityPane
 from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
@@ -40,6 +41,7 @@ from pychron.processing.tasks.browser.browser_task import BaseBrowserTask
 #============= standard library imports ========================
 #============= local library imports  ==========================
 # from pychron.processing.tasks.smart_selection.panes import SmartSelection
+from pychron.processing.tasks.browser.util import browser_pane_item
 
 
 class BatchEditTask(AnalysisEditTask):
@@ -252,7 +254,7 @@ class BatchEditTask(AnalysisEditTask):
     #===============================================================================
     def _default_layout_default(self):
         #c=PaneItem('pychron.smart_selection.configure')
-        search = Tabbed(PaneItem('pychron.browser'))
+        search = Tabbed(browser_pane_item())
         #PaneItem('pychron.search.query'))
 
         #a=Splitter(d,orientation='vertical')

@@ -167,7 +167,7 @@ class ActionEditor(Controller):
 
         if not os.path.isfile(p):
             p = None
-            dlg = FileDialog(action='save as', default_directory=paths.truncation_dir)
+            dlg = FileDialog(action='save as', default_directory=paths.conditionals_dir)
             if dlg.open():
                 p = dlg.path.strip()
                 if p:

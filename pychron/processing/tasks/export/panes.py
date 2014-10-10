@@ -17,11 +17,12 @@
 #============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traitsui.api import View, UItem, TabularEditor, HGroup
+from traitsui.api import View, UItem, HGroup
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 
 
@@ -32,7 +33,8 @@ class ExportAnalysisAdapter(TabularAdapter):
 
 class ExportCentralPane(TraitsTaskPane):
     def traits_view(self):
-        editor = TabularEditor(adapter=ExportAnalysisAdapter(),
+        editor = myTabularEditor(adapter=ExportAnalysisAdapter(),
+                                 drag_external=True,
                                operations=['delete'],
                                multi_select=True)
         v = View(

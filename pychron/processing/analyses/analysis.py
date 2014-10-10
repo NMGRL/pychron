@@ -16,7 +16,8 @@
 
 #============= enthought library imports =======================
 
-from traits.api import Instance, Int, Str, Bool, Event, Property
+from traits.api import Instance, Int, Str, Bool, \
+    Event, Property, Float, Date
 
 #============= standard library imports ========================
 from collections import namedtuple
@@ -53,6 +54,14 @@ class Analysis(ArArAge):
     project = Str
     comment = Str
     mass_spectrometer = Str
+    analysis_type = Str
+    extract_value = Float
+    extract_units = Str
+    cleanup_duration = Float
+    extract_duration = Float
+    extract_device = Str
+    position = Str
+    rundate = Date
 
     is_plateau_step = False
     temp_status = Int
@@ -69,7 +78,9 @@ class Analysis(ArArAge):
     omit_spec = False
     omit_iso = False
     omit_series = False
+
     has_raw_data = False
+    has_changes = False
 
     recall_event = Event
     tag_event = Event
@@ -124,8 +135,8 @@ class Analysis(ArArAge):
         """
         return
 
-    def _analysis_summary_default(self):
-        return self.analysis_summary_klass(model=self)
+    # def _analysis_summary_default(self):
+    #     return self.analysis_summary_klass(model=self)
 
     def _analysis_view_default(self):
         v = self.analysis_view_klass()
@@ -135,8 +146,15 @@ class Analysis(ArArAge):
     def sync_view(self, **kw):
         self._sync_view(**kw)
 
-    def _sync_view(self, v=None, **kw):
-        pass
+    def _sync_view(self, av=None, **kw):
+        if av is None:
+            av = self.analysis_view
+        try:
+            av.load(self)
+        except BaseException, e:
+            import traceback
+            traceback.print_exc()
+            print 'sync view {}'.format(e)
 
     def _get_record_id(self):
         return make_runid(self.labnumber, self.aliquot, self.step)

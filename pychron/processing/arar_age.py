@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -107,6 +107,9 @@ class ArArAge(Loggable):
     #     HasTraits.__init__(self, *args, **kw)
     #     self.logger = logger
 
+    def set_j(self, s, e):
+        self.j=ufloat(s, std_dev=e)
+
     def clear_isotopes(self):
         for iso in self.isotopes:
             self.isotopes[iso] = Isotope(name=iso)
@@ -138,6 +141,48 @@ class ArArAge(Loggable):
             except ZeroDivisionError:
                 pass
 
+    def get_slope(self, attr, n=-1):
+        try:
+            r=self.isotopes[attr].get_slope(n)
+        except KeyError:
+            r=None
+        return r
+
+    def get_baseline_value(self, attr):
+        try:
+            r=self.isotopes[attr].baseline.uvalue
+        except KeyError:
+            r=None
+        return r
+
+    def get_current_intensity(self, attr):
+        try:
+            r=self.isotopes[attr].ys[-1]
+        except KeyError:
+            r=None
+        return r
+
+    def get_detector_active(self, attr):
+        det = next((i for i in self.isotopes if i.detector==attr), None)
+        if det:
+            pass
+
+    def get_values(self, attr, n):
+        """
+            return an array of floats
+
+            attr: isotope key
+            n: int, values from the end to slice off. e.g 10 means last 10 items in array
+            return all values if n==-1
+        """
+        try:
+            r=self.isotopes[attr].ys
+            if not n==-1:
+                r=r[-n:]
+        except KeyError:
+            r=None
+        return r
+
     def get_value(self, attr):
         r = ufloat(0, 0, tag=attr)
         if attr.endswith('bs'):
@@ -152,6 +197,10 @@ class ArArAge(Loggable):
             r = self.isotopes[attr].get_intensity()
         elif hasattr(self, attr):
             r = getattr(self, attr)
+        else:
+            iso=next((i for i in self.isotopes if i.detector==attr), None)
+            if iso:
+                r=ufloat(iso.ys[-1], tag=attr)
 
         return r
 
@@ -215,9 +264,19 @@ class ArArAge(Loggable):
 
         def _append(isotope):
             if kind in ('sniff', 'baseline'):
+                if kind=='sniff':
+                    isotope._value=signal
+                    isotope.dirty = True
+
                 isotope = getattr(isotope, kind)
+
+
+            if kind=='sniff':
+                isotope._value=signal
+
             isotope.xs = hstack((isotope.xs, (x,)))
             isotope.ys = hstack((isotope.ys, (signal,)))
+            isotope.dirty = True
 
         isotopes = self.isotopes
         if kind == 'baseline':
@@ -268,9 +327,9 @@ class ArArAge(Loggable):
         iso.ic_factor = self.get_ic_factor(det)
 
     def get_baseline_corrected_value(self, iso):
-        if iso in self.isotopes:
+        try:
             return self.isotopes[iso].get_baseline_corrected_value()
-        else:
+        except KeyError:
             return ufloat(0, 0, tag=iso)
 
     def get_isotopes(self, det):
@@ -325,6 +384,10 @@ class ArArAge(Loggable):
             self.isotopes[iso] = niso
 
         self.isotopes[iso].baseline.set_uvalue(v)
+
+    def calculate_F(self):
+        self.calculate_decay_factors()
+        self._calculate_F()
 
     # @caller
     def calculate_age(self, force=False, **kw):
@@ -405,9 +468,10 @@ class ArArAge(Loggable):
 
     def _assemble_ar_ar_isotopes(self):
         isotopes = self.isotopes
-
         for ik in ARGON_KEYS:
-            if not ik in isotopes:
+            try:
+                isotopes[ik]
+            except KeyError:
                 if not self._missing_isotope_warned:
                     self.warning('No isotope= "{}". Required for age calculation'.format(ik))
                 self._missing_isotope_warned = True
@@ -415,16 +479,26 @@ class ArArAge(Loggable):
         else:
             self._missing_isotope_warned = False
 
-        isos = [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
+        return [isotopes[ik].get_intensity() for ik in ARGON_KEYS]
 
-        return isos
+    def _calculate_F(self, iso_intensities=None):
+        if iso_intensities is None:
+            iso_intensities = self._assemble_isotope_intensities()
 
-    def _calculate_age(self, include_decay_error=None):
-        """
-            approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
-            Isotope.get_intensity takes about 5ms.
-        """
-        # self.debug('calculate age')
+        if iso_intensities:
+            ifc = self.interference_corrections
+            f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
+                                                                                  decay_time=self.decay_days,
+                                                                                  interferences=ifc,
+                                                                                  arar_constants=self.arar_constants,
+                                                                                  fixed_k3739=self.fixed_k3739)
+            self.uF = f
+            self.F = f.nominal_value
+            self.F_err = f.std_dev
+            self.F_err_wo_irrad = f_wo_irrad.std_dev
+            return f, f_wo_irrad, non_ar, computed, interference_corrected
+
+    def _assemble_isotope_intensities(self):
         iso_intensities = self._assemble_ar_ar_isotopes()
         if not iso_intensities:
             self.debug('failed assembling isotopes')
@@ -432,8 +506,20 @@ class ArArAge(Loggable):
 
         arc = self.arar_constants
         iso_intensities = abundance_sensitivity_correction(iso_intensities, arc.abundance_sensitivity)
+
+        #assuming all m/z(39) and m/z(37) is radioactive argon
+        #non gettered hydrocarbons will have a multiplicative systematic influence
         iso_intensities[1] *= self.ar39decayfactor
         iso_intensities[3] *= self.ar37decayfactor
+        return iso_intensities
+
+    def _calculate_age(self, include_decay_error=None):
+        """
+            approx 2/3 of the calculation time is in _assemble_ar_ar_isotopes.
+            Isotope.get_intensity takes about 5ms.
+        """
+        # self.debug('calculate age')
+        iso_intensities = self._assemble_isotope_intensities()
         self.Ar39_decay_corrected = iso_intensities[1]
         self.Ar37_decay_corrected = iso_intensities[3]
 
@@ -441,42 +527,33 @@ class ArArAge(Loggable):
         self.isotopes['Ar39'].decay_corrected = self.Ar39_decay_corrected
 
         # self.debug('allow_negative ca correction {}'.format(arc.allow_negative_ca_correction))
-        # print isos[4]
-        # print 'ifc',self.interference_corrections
-        self.corrected_intensities= dict(Ar40=iso_intensities[0],
-                                         Ar39=iso_intensities[1],
-                                         Ar38=iso_intensities[2],
-                                         Ar37=iso_intensities[3],
-                                         Ar36=iso_intensities[4],)
-        f, f_wo_irrad, non_ar, computed, interference_corrected = calculate_F(iso_intensities,
-                                                                              decay_time=self.decay_days,
-                                                                              interferences=self.interference_corrections,
-                                                                              arar_constants=self.arar_constants,
-                                                                              fixed_k3739=self.fixed_k3739)
-        # print 'c',interference_corrected['Ar36']
+        self.corrected_intensities = dict(Ar40=iso_intensities[0],
+                                          Ar39=iso_intensities[1],
+                                          Ar38=iso_intensities[2],
+                                          Ar37=iso_intensities[3],
+                                          Ar36=iso_intensities[4])
+
+        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_F(iso_intensities)
+
         self.non_ar_isotopes = non_ar
         self.computed = computed
         self.rad40_percent = computed['rad40_percent']
+
         isotopes = self.isotopes
         for k, v in interference_corrected.iteritems():
             isotopes[k].interference_corrected_value = v
-
-        self.uF = f
-        self.F = f.nominal_value
-        self.F_err = f.std_dev
-        self.F_err_wo_irrad = f_wo_irrad.std_dev
 
         if self.j is not None:
             j = copy(self.j)
         else:
             j = ufloat(1e-4, 1e-7)
 
+        arc = self.arar_constants
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
         self.uage = age
-
-        self.age = float(age.nominal_value)
-        self.age_err = float(age.std_dev)
+        self.age = age.nominal_value
+        self.age_err = age.std_dev
 
         if self.j is not None:
             j = copy(self.j)
@@ -485,7 +562,7 @@ class ArArAge(Loggable):
 
         j.std_dev = 0
         age = age_equation(j, f, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
 
         self.age_err_wo_j = float(age.std_dev)
         self.uage_wo_j_err = ufloat(self.age, self.age_err_wo_j)
@@ -496,11 +573,11 @@ class ArArAge(Loggable):
             j = ufloat(1e-4, 1e-7)
 
         age = age_equation(j, f_wo_irrad, include_decay_error=include_decay_error,
-                           arar_constants=self.arar_constants)
+                           arar_constants=arc)
 
-        self.age_err_wo_irrad = float(age.std_dev)
+        self.age_err_wo_irrad = age.std_dev
         j.std_dev = 0
-        self.age_err_wo_j_irrad = float(age.std_dev)
+        self.age_err_wo_j_irrad = age.std_dev
 
         for iso in isotopes.itervalues():
             iso.age_error_component = self.get_error_component(iso.name)
@@ -532,34 +609,34 @@ class ArArAge(Loggable):
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 1e-20)
-            #===============================================================================
-            #
-            #===============================================================================
+                #===============================================================================
+                #
+                #===============================================================================
 
-            # def _arar_constants_default(self):
-            #     """
-            #         use a global shared arar_constants
-            #     """
-            #
-            #     global arar_constants
-            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-            #     #print 'asdf', arar_constants
-            #     if arar_constants is None:
-            #         arar_constants = ArArConstants()
-            #         #return ArArConstants()
-            #     return arar_constants
+                # def _arar_constants_default(self):
+                #     """
+                #         use a global shared arar_constants
+                #     """
+                #
+                #     global arar_constants
+                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+                #     #print 'asdf', arar_constants
+                #     if arar_constants is None:
+                #         arar_constants = ArArConstants()
+                #         #return ArArConstants()
+                #     return arar_constants
 
-            # def _arar_constants_default(self):
-            #     """
-            #         use a global shared arar_constants
-            #     """
-            #
-            #     global arar_constants
-            #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
-            #     #print 'asdf', arar_constants
-            #     if arar_constants is None:
-            #         arar_constants = ArArConstants()
-            #         #return ArArConstants()
-            #     return arar_constants
+                # def _arar_constants_default(self):
+                #     """
+                #         use a global shared arar_constants
+                #     """
+                #
+                #     global arar_constants
+                #     #self.debug('$$$$$$$$$$$$$$$$ {}'.format(arar_constants))
+                #     #print 'asdf', arar_constants
+                #     if arar_constants is None:
+                #         arar_constants = ArArConstants()
+                #         #return ArArConstants()
+                #     return arar_constants
 
-            #============= EOF =============================================
+                #============= EOF =============================================

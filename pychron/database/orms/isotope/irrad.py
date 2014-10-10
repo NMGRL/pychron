@@ -19,7 +19,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, BLOB, Float
+from sqlalchemy import Column, Integer, BLOB, Float, DateTime
 from sqlalchemy.orm import relationship
 
 #============= local library imports  ==========================
@@ -76,6 +76,8 @@ class irrad_ProductionTable(Base, NameMixin):
     Cl_K = Column(Float)
     Cl_K_err = Column(Float)
 
+    note = Column(BLOB)
+    last_modified=Column(DateTime)
     # irradiations = relationship('irrad_IrradiationTable', backref='production')
     levels = relationship('irrad_LevelTable', backref='production')
 

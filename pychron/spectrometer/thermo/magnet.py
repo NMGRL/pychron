@@ -24,7 +24,7 @@ from pychron.spectrometer.base_magnet import BaseMagnet, get_float
 from pychron.spectrometer.thermo.spectrometer_device import SpectrometerDevice
 
 
-class ArgusMagnet(SpectrometerDevice, BaseMagnet):
+class ArgusMagnet(BaseMagnet, SpectrometerDevice):
     protected_detectors=List
 
     use_detector_protection=Bool
@@ -37,6 +37,7 @@ class ArgusMagnet(SpectrometerDevice, BaseMagnet):
     # ##positioning
     #===============================================================================
     def set_dac(self, v, verbose=False):
+        self.debug('setting dac {}'.format(v))
         micro = self.microcontroller
         unprotect = False
         unblank=False
@@ -69,9 +70,11 @@ class ArgusMagnet(SpectrometerDevice, BaseMagnet):
                         micro.ask('ProtectDetector {},Off'.format(pd), verbose=verbose)
                 if unblank:
                     micro.ask('BlankBeam False', verbose=verbose)
+
         change = v != self._dac
-        self._dac = v
-        self.dac_changed = True
+        if change:
+            self._dac = v
+            self.dac_changed = True
         return change
 
     @get_float

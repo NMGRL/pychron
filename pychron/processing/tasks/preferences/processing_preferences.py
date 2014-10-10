@@ -24,12 +24,13 @@ from traitsui.api import View, Item, Group
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
-class ProcessingPreferences(BasePreferencesHelper):
+class BrowsingPreferences(BasePreferencesHelper):
     recent_hours = Property(Int, depends_on='_recent_hours')
-    preferences_path = 'pychron.processing'
+    preferences_path = 'pychron.browsing'
     _recent_hours=Int
 
     graphical_filtering_max_days = Int
+    bin_tol_hrs = Int
 
     def _get_recent_hours(self):
         return self._recent_hours
@@ -44,8 +45,8 @@ class ProcessingPreferences(BasePreferencesHelper):
         else:
             return v
 
-class ProcessingPreferencesPane(PreferencesPane):
-    model_factory = ProcessingPreferences
+class BrowsingPreferencesPane(PreferencesPane):
+    model_factory = BrowsingPreferences
     category = 'Processing'
 
     def traits_view(self):
@@ -55,7 +56,12 @@ class ProcessingPreferencesPane(PreferencesPane):
             label='Recent', )
         graphical_filter_grp = Group(Item('graphical_filtering_max_days', label='Max. Days'),
                                      label='Graphical Filter')
-        v = View(recent_grp, graphical_filter_grp)
+        time_view_grp=Group(Item('bin_tol_hrs',
+                                 label='Analysis Series Binning',
+                                 tooltip='Split analysis series when consecutive analyses are greater than X hours'
+                                 ),
+                            label='Time View')
+        v = View(recent_grp, graphical_filter_grp, time_view_grp)
         return v
 
 

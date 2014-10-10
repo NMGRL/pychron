@@ -15,6 +15,7 @@
 #===============================================================================
 
 #============= enthought library imports =======================
+from pyface.directory_dialog import DirectoryDialog
 
 from pyface.tasks.action.dock_pane_toggle_group import DockPaneToggleGroup
 from pyface.timer.do_later import do_later
@@ -34,7 +35,7 @@ from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
     GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
     MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction
+    NoteAction, RestartAction, DocumentationAction
 from pyface.file_dialog import FileDialog
 from pyface.constant import OK, CANCEL, YES
 from itertools import groupby
@@ -233,7 +234,7 @@ class BaseTask(Task, Loggable):
             ctrl.raise_()
 
         if p:
-            self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
+            # self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
             invoke_in_main_thread(do_later, _show)
 
     def _menu_bar_factory(self, menus=None):
@@ -372,6 +373,8 @@ class BaseTask(Task, Loggable):
             IssueAction(),
             NoteAction(),
             AboutAction(),
+            DocumentationAction(),
+            RestartAction(),
             id='help.menu',
             name='Help')
         return menu
@@ -393,6 +396,7 @@ class BaseManagerTask(BaseTask):
     def _on_close(self, event):
         """ Prompt the user to save when exiting.
         """
+
         close = self._prompt_for_save()
         event.veto = not close
 
@@ -433,6 +437,24 @@ class BaseManagerTask(BaseTask):
         # except OSError:
         #     self.debug('failed opening {} using {}'.format(p, app_path))
         #     subprocess.call(['open', p])
+
+    def open_directory_dialog(self, **kw):
+        if 'default_directory' not in kw:
+            kw['default_directory'] = self.default_directory
+
+        if 'wildcard' not in kw:
+            if self.wildcard:
+                kw['wildcard'] = self.wildcard
+
+        dialog = DirectoryDialog(
+            #parent=self.window.control,
+            action='open',
+            **kw)
+        if dialog.open() == OK:
+            r = dialog.path
+            # if action == 'open files':
+            #     r = dialog.paths
+            return r
 
     def open_file_dialog(self, action='open', **kw):
         if 'default_directory' not in kw:

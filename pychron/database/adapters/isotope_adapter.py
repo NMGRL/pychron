@@ -5,38 +5,38 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
-from sqlalchemy import Date, distinct
-from sqlalchemy.sql.functions import count
-from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property
+from traits.api import Long, HasTraits, Date as TDate, Float, Str, Int, Bool, Property, provides
 from traitsui.api import View, Item, HGroup
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
+from datetime import datetime, timedelta, date
 from cStringIO import StringIO
 import hashlib
-
-from sqlalchemy.sql.expression import and_, func, not_, cast
+from sqlalchemy import Date, distinct
+from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.expression import and_, func, not_, cast as sql_cast
 from sqlalchemy.orm.exc import NoResultFound
-
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.database.core.functions import delete_one
 from pychron.database.core.database_adapter import DatabaseAdapter
 from pychron.database.core.query import compile_query
+from pychron.database.i_browser import IBrowser
 from pychron.database.selectors.isotope_selector import IsotopeAnalysisSelector
 
-#spec_
+# spec_
 from pychron.database.orms.isotope.spec import spec_MassCalHistoryTable, spec_MassCalScanTable, spec_MFTableTable
 
 # med_
@@ -75,9 +75,10 @@ from pychron.database.orms.isotope.proc import proc_DetectorIntercalibrationHist
     proc_FigurePrefTable, proc_TagTable, proc_ArArTable, proc_InterpretedAgeHistoryTable, proc_InterpretedAgeSetTable, \
     proc_InterpretedAgeGroupHistoryTable, proc_InterpretedAgeGroupSetTable, proc_FigureLabTable, \
     proc_SensitivityHistoryTable, proc_SensitivityTable, \
-    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable
+    proc_AnalysisGroupTable, proc_AnalysisGroupSetTable, proc_DataReductionTagTable, proc_DataReductionTagSetTable, \
+    proc_BlanksSetValueTable, proc_ActionTable, proc_BlanksSetTable
 
-from pychron.pychron_constants import ALPHAS, alpha_to_int
+from pychron.pychron_constants import ALPHAS, alpha_to_int, NULL_STR
 
 
 class InterpretedAge(HasTraits):
@@ -142,6 +143,7 @@ class InterpretedAge(HasTraits):
                                 style='readonly', label='MSWD')))
 
 
+@provides(IBrowser)
 class IsotopeAdapter(DatabaseAdapter):
     """
         new style adapter
@@ -226,14 +228,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return it
 
-    def clone_record(self, a):
-        sess = self.new_session()
-        q = sess.query(meas_AnalysisTable)
-        q = q.filter(meas_AnalysisTable.id == a.id)
-        r = q.one()
-
-        return r
-
     #===========================================================================
     # adders
     #===========================================================================
@@ -249,6 +243,10 @@ class IsotopeAdapter(DatabaseAdapter):
         obj.tag = dbtag
         obj.analysis = an
         obj.selected_histories_id = sh_id
+
+    def add_proc_action(self, msg, **kw):
+        obj = proc_ActionTable(action=msg, **kw)
+        return self._add_item(obj)
 
     def add_mftable(self, specname, blob):
         spec = self.get_mass_spectrometer(specname)
@@ -290,9 +288,9 @@ class IsotopeAdapter(DatabaseAdapter):
         self._add_item(obj)
         return obj
 
-    def add_history(self, dbrecord, kind):
+    def add_history(self, dbrecord, kind, **kw):
         func = getattr(self, 'add_{}_history'.format(kind))
-        history = func(dbrecord, user=self.save_username)
+        history = func(dbrecord, user=self.save_username, **kw)
         #        history = db.add_blanks_history(dbrecord, user=db.save_username)
 
         # set analysis' selected history
@@ -432,8 +430,19 @@ class IsotopeAdapter(DatabaseAdapter):
     def add_blanks(self, history, **kw):
         return self._add_series_item('Blanks', 'blanks', history, **kw)
 
-    def add_blanks_set(self, blank, analysis, **kw):
-        return self._add_set('Blanks', 'blank', blank, analysis, **kw)
+    def add_blanks_set(self, analysis, **kw):
+        return self._add_set('Blanks', 'blank', analysis, **kw)
+
+    def add_blank_set_value_table(self, v, e, blank, analysis):
+        item = proc_BlanksSetValueTable(value=float(v), error=float(e))
+        dbitem = self._add_item(item)
+        dbitem.blank = blank
+        if isinstance(analysis, (int, long)):
+            dbitem.analysis_id = analysis
+        else:
+            dbitem.analysis = analysis
+
+        return dbitem
 
     def add_backgrounds_history(self, analysis, **kw):
         return self._add_history('Backgrounds', analysis, **kw)
@@ -629,7 +638,7 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_irradiation_production(self, **kw):
         ip = irrad_ProductionTable(**kw)
-        self._add_item(ip, )
+        self._add_item(ip)
         return ip
 
     def add_irradiation_position(self, pos, labnumber, irrad, level, **kw):
@@ -950,6 +959,39 @@ class IsotopeAdapter(DatabaseAdapter):
     #===========================================================================
     # getters
     #===========================================================================
+    def get_blanks(self, ms=None, limit=100):
+        joins = (meas_AnalysisTable, gen_AnalysisTypeTable)
+        filters = (gen_AnalysisTypeTable.name.like('blank%'),)
+        if ms:
+            joins.append(gen_MassSpectrometerTable)
+            filters.append(gen_MassSpectrometerTable.name == ms.lower())
+
+        return self._retrieve_items(meas_AnalysisTable,
+                                    joins=joins, filters=filters,
+                                    order=meas_AnalysisTable.analysis_timestamp.desc(),
+                                    limit=limit)
+        # with db.session_ctx() as sess:
+        #     q = sess.query(meas_AnalysisTable)
+        #     q = q.join(meas_MeasurementTable)
+        #     q = q.join(gen_AnalysisTypeTable)
+        #
+        #     q = q.filter(gen_AnalysisTypeTable.name.like('blank%'))
+        #     if ms:
+        #         q = q.join(gen_MassSpectrometerTable)
+        #         q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+        #
+        #     q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+        #     q = q.limit(100)
+        #     dbs = q.all()
+
+    def get_session_blank_histories(self, s):
+        with self.session_ctx() as sess:
+            q = sess.query(proc_BlanksHistoryTable)
+            q = q.filter(proc_BlanksHistoryTable.session == s)
+            return self._query_all(q)
+
+    def get_blanks_history(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksHistoryTable, value, key=key)
 
     def get_mftables(self, spec, **kw):
         return self._retrieve_items(spec_MFTableTable,
@@ -965,51 +1007,71 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(proc_InterpretedAgeGroupHistoryTable,
                                    gid, key='id')
 
+
     def get_interpreted_age_groups(self, project):
         with self.session_ctx() as sess:
-            q = sess.query(proc_InterpretedAgeGroupHistoryTable)
-            q = q.join(gen_ProjectTable)
+            # q = sess.query(proc_InterpretedAgeGroupHistoryTable)
+            # q = q.join(gen_ProjectTable)
 
-            q = q.filter(gen_ProjectTable.name == project)
-
-            try:
-                return q.all()
-            except NoResultFound:
-                pass
+            # q = q.filter(gen_ProjectTable.name == project)
+            # return self._query_all(q)
+            return self._retrieve_items(proc_InterpretedAgeGroupHistoryTable,
+                                        joins=(gen_ProjectTable,),
+                                        filters=(gen_ProjectTable.name == project))
 
     def get_analyzed_positions(self, level):
-        with self.session_ctx() as sess:
-            q = sess.query(irrad_PositionTable.position,
-                           # gen_LabTable.identifier,
-                           func.count(meas_AnalysisTable.id))
-            q = q.join(irrad_LevelTable)
-            q = q.join(irrad_IrradiationTable)
-            q = q.join(gen_LabTable)
-            q = q.join(meas_AnalysisTable)
+        table = (irrad_PositionTable.position, func.count(meas_AnalysisTable.id))
+        joins = (irrad_LevelTable, irrad_IrradiationTable, gen_LabTable,
+                 meas_AnalysisTable)
+        filters = (irrad_IrradiationTable.name == level.irradiation.name,
+                   irrad_LevelTable.name == level.name)
+        group_by = irrad_PositionTable.position
 
-            q = q.filter(irrad_IrradiationTable.name == level.irradiation.name)
-            q = q.filter(irrad_LevelTable.name == level.name)
-            q = q.group_by(irrad_PositionTable.position)
-            return self._query_all(q)
+        return self._retrieve_items(table,
+                                    joins=joins,
+                                    filters=filters,
+                                    group_by=group_by)
+        # q = sess.query(irrad_PositionTable.position,
+        #                # gen_LabTable.identifier,
+        #                func.count(meas_AnalysisTable.id))
+        # q = q.join(irrad_LevelTable)
+        # q = q.join(irrad_IrradiationTable)
+        # q = q.join(gen_LabTable)
+        # q = q.join(meas_AnalysisTable)
+        #
+        # q = q.filter(irrad_IrradiationTable.name == level.irradiation.name)
+        # q = q.filter(irrad_LevelTable.name == level.name)
+        # q = q.group_by(irrad_PositionTable.position)
+        # return self._query_all(q)
 
     def get_analysis_group(self, v, key='id', **kw):
         return self._retrieve_item(proc_AnalysisGroupTable, v, key, **kw)
 
     def get_analysis_groups(self, projects=None):
-        with self.session_ctx() as sess:
-            if projects:
-                q = sess.query(proc_AnalysisGroupTable)
-                q = q.join(proc_AnalysisGroupSetTable)
-                q = q.join(meas_AnalysisTable)
-                q = q.join(gen_LabTable)
-                q = q.join(gen_SampleTable)
-                q = q.join(gen_ProjectTable)
-
-                q = q.filter(gen_ProjectTable.name.in_(projects))
-                q = q.order_by(proc_AnalysisGroupTable.create_date)
-                q = q.order_by(proc_AnalysisGroupTable.last_modified)
-
-                return self._query_all(q)
+        if projects:
+            joins = (proc_AnalysisGroupSetTable, meas_AnalysisTable, gen_LabTable, gen_SampleTable,
+                     gen_ProjectTable)
+            filters = (gen_ProjectTable.name.in_(projects),)
+            order_bys = (proc_AnalysisGroupTable.create_date, proc_AnalysisGroupTable.last_modified)
+            return self._retrieve_items(proc_AnalysisGroupTable,
+                                        joins=joins,
+                                        filters=filters, order=order_bys)
+            # with self.session_ctx() as sess:
+            #     if projects:
+            #
+            #
+            #         q = sess.query(proc_AnalysisGroupTable)
+            #         q = q.join(proc_AnalysisGroupSetTable)
+            #         q = q.join(meas_AnalysisTable)
+            #         q = q.join(gen_LabTable)
+            #         q = q.join(gen_SampleTable)
+            #         q = q.join(gen_ProjectTable)
+            #
+            #         q = q.filter(gen_ProjectTable.name.in_(projects))
+            #         q = q.order_by(proc_AnalysisGroupTable.create_date)
+            #         q = q.order_by(proc_AnalysisGroupTable.last_modified)
+            #
+            #         return self._query_all(q)
 
     def get_latest_interpreted_age_history(self, value, key='identifier'):
         with self.session_ctx() as sess:
@@ -1018,11 +1080,7 @@ class IsotopeAdapter(DatabaseAdapter):
             attr = getattr(proc_InterpretedAgeHistoryTable, key)
             q = q.filter(attr.__eq__(value))
             q = q.order_by(proc_InterpretedAgeHistoryTable.create_date.desc())
-
-            try:
-                return q.first()
-            except NoResultFound:
-                pass
+            return self._query(q, 'first')
 
     def get_interpreted_age_histories(self, values, key='identifier'):
         with self.session_ctx() as sess:
@@ -1032,69 +1090,50 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.filter(attr.in_(values))
             q = q.order_by(proc_InterpretedAgeHistoryTable.create_date.desc())
 
-            try:
-                return q.all()
-            except NoResultFound:
-                pass
+            return self._query_all(q)
+
+    def get_project_irradiation_labnumbers(self, project_names, irradiation, level,
+                                           mass_spectrometers=None,
+                                           analysis_types=None,
+                                           filter_non_run=None,
+                                           low_post=None,
+                                           high_post=None):
+
+        with self.session_ctx() as sess:
+            q = self._simple_query(sess, gen_LabTable, irrad_PositionTable, irrad_LevelTable,
+                                   irrad_IrradiationTable, gen_SampleTable, gen_ProjectTable)
+
+            q = self._labnumber_join(q, project_names, mass_spectrometers,
+                                     analysis_types, filter_non_run, low_post, high_post)
+
+            q = q.filter(irrad_IrradiationTable.name == irradiation)
+
+            if level:
+                q = q.filter(irrad_LevelTable.name == level)
+
+            q = self._labnumber_filter(q, project_names, mass_spectrometers,
+                                       analysis_types, filter_non_run, low_post, high_post)
+            self.debug(compile_query(q))
+            return self._query_all(q)
 
     def get_project_labnumbers(self, project_names, filter_non_run, low_post=None, high_post=None,
                                analysis_types=None, mass_spectrometers=None):
         with self.session_ctx() as sess:
-            q = sess.query(gen_LabTable)
-            q = q.join(gen_SampleTable)
-            q = q.join(gen_ProjectTable)
+            q = self._simple_query(sess, gen_LabTable, gen_SampleTable, gen_ProjectTable)
 
-            if filter_non_run or low_post or high_post or analysis_types or mass_spectrometers:
-                q = q.join(meas_AnalysisTable)
+            q = self._labnumber_join(q, project_names, mass_spectrometers,
+                                     analysis_types, filter_non_run, low_post, high_post)
 
-            if mass_spectrometers or analysis_types:
-                q = q.join(meas_MeasurementTable)
-
-            if mass_spectrometers:
-                q = q.join(gen_MassSpectrometerTable)
-
-            if analysis_types:
-                if project_names:
-                    project_names.append('references')
-                q = q.join(gen_AnalysisTypeTable)
-
-            if low_post:
-                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
-            if high_post:
-                q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
-
-            if analysis_types:
-                f = gen_AnalysisTypeTable.name.in_(analysis_types)
-                if 'blank' in analysis_types:
-                    f = f | gen_AnalysisTypeTable.name.like('blank%')
-
-                q = q.filter(f)
-
-            if mass_spectrometers:
-                q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
-
-            if filter_non_run:
-                if project_names:
-                    q = q.filter(gen_ProjectTable.name.in_(project_names))
-                q = q.group_by(gen_LabTable)
-                q = q.having(count(meas_AnalysisTable.id) > 0)
-            else:
-                if project_names:
-                    q = q.filter(gen_ProjectTable.name.in_(project_names))
-
-            try:
-                return q.all()
-            except NoResultFound:
-                pass
+            q = self._labnumber_filter(q, project_names, mass_spectrometers,
+                                       analysis_types, filter_non_run, low_post, high_post, cast_date=False)
+            self.debug(compile_query(q))
+            return self._query_all(q)
 
     def get_project_analysis_count(self, projects):
         if not hasattr(projects, '__iter__'):
             projects = (projects,)
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
-            q = q.join(gen_SampleTable)
-            q = q.join(gen_ProjectTable)
+            q = self._analysis_query(sess, gen_SampleTable, gen_ProjectTable)
             q = q.filter(gen_ProjectTable.name.in_(projects))
             try:
                 return int(q.count())
@@ -1104,47 +1143,47 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_project_figures(self, projects):
         if not hasattr(projects, '__iter__'):
             projects = (projects,)
-
-        with self.session_ctx() as sess:
-            q = sess.query(proc_FigureTable)
-            q = q.join(gen_ProjectTable)
-            q = q.filter(gen_ProjectTable.name.in_(projects))
-            try:
-                return q.all()
-            except NoResultFound:
-                pass
+        return self._retrieve_items(proc_FigureTable,
+                                    joins=(gen_ProjectTable,),
+                                    filters=(gen_ProjectTable.name.in_(projects),))
 
     def get_labnumber_figures(self, identifiers):
         if not hasattr(identifiers, '__iter__'):
             identifiers = (identifiers,)
 
-        with self.session_ctx() as sess:
-            q = sess.query(proc_FigureTable)
-            q = q.join(proc_FigureLabTable)
-            q = q.join(gen_LabTable)
-            q = q.filter(gen_LabTable.identifier.in_(identifiers))
-            try:
-                return q.all()
-            except NoResultFound:
-                pass
+        return self._retrieve_items(proc_FigureTable,
+                                    joins=(proc_FigureLabTable, gen_LabTable),
+                                    filters=(gen_LabTable.identifier.in_(identifiers),))
 
     def get_preceding(self, post, ms, atype='blank_unknown'):
-        with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable)
-            q = q.join(gen_AnalysisTypeTable)
-            q = q.join(gen_MassSpectrometerTable)
+        joins = (meas_MeasurementTable, gen_AnalysisTypeTable, gen_MassSpectrometerTable)
+        filters = (gen_AnalysisTypeTable.name == atype,
+                   gen_MassSpectrometerTable.name == ms,
+                   meas_AnalysisTable.analysis_timestamp < post)
 
-            q = q.filter(and_(
-                gen_AnalysisTypeTable.name == atype,
-                gen_MassSpectrometerTable.name == ms,
-                meas_AnalysisTable.analysis_timestamp < post))
+        return self._retrieve_items(meas_AnalysisTable,
+                                    joins=joins,
+                                    filters=filters,
+                                    order=meas_AnalysisTable.analysis_timestamp.desc(),
+                                    func='first')
 
-            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            try:
-                return q.first()
-            except NoResultFound:
-                pass
+        # return self._retrieve_first()
+        # with self.session_ctx() as sess:
+        # q = sess.query(meas_AnalysisTable)
+        # q = q.join(meas_MeasurementTable)
+        # q = q.join(gen_AnalysisTypeTable)
+        # q = q.join(gen_MassSpectrometerTable)
+        #
+        # q = q.filter(and_(
+        #     gen_AnalysisTypeTable.name == atype,
+        #     gen_MassSpectrometerTable.name == ms,
+        #     meas_AnalysisTable.analysis_timestamp < post))
+        #
+        # q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+        # try:
+        #     return q.first()
+        # except NoResultFound:
+        #     pass
 
     def get_date_range_analyses(self, start, end,
                                 labnumber=None,
@@ -1157,9 +1196,7 @@ class IsotopeAdapter(DatabaseAdapter):
                                 ordering='desc'):
 
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(meas_MeasurementTable)
-
+            q = self._simple_query(sess, meas_AnalysisTable, meas_MeasurementTable)
             if atype:
                 q = q.join(gen_AnalysisTypeTable)
             if labnumber:
@@ -1201,8 +1238,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
             return self._query_all(q)
 
-    #def count_sample_analyses(self, *args, **kw):
-    #    return self._get_sample_analyses('count', *args, **kw)
     def get_analysis_mass_spectrometers(self, lns):
         """
             lns: list of labnumbers/identifiers
@@ -1210,36 +1245,95 @@ class IsotopeAdapter(DatabaseAdapter):
 
             returns all mass spectrometer used to analyze labnumbers in lns
         """
+        items = self._retrieve_items(distinct(gen_MassSpectrometerTable.name),
+                                     joins=(meas_MeasurementTable, meas_AnalysisTable, gen_LabTable),
+                                     filters=(gen_LabTable.identifier.in_(lns),))
+        return [r for r, in items]
+        # q = sess.query(distinct(gen_MassSpectrometerTable.name))
+        # q = q.join(meas_MeasurementTable)
+        # q = q.join(meas_AnalysisTable)
+        #
+        # q = q.join(gen_LabTable)
+        # q = q.filter(gen_LabTable.identifier.in_(lns))
+        #
+        # return [r for r, in q.all()]
+
+    def get_analysis_timestamps(self, lns, binned=False):
+        """
+            lns: list of labnumbers/identifiers
+        """
         with self.session_ctx() as sess:
-            q = sess.query(distinct(gen_MassSpectrometerTable.name))
-            q = q.join(meas_MeasurementTable)
-            q = q.join(meas_AnalysisTable)
+            q = self._analysis_query(sess, attr='analysis_timestamp')
 
-            q = q.join(gen_LabTable)
             q = q.filter(gen_LabTable.identifier.in_(lns))
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            ans = self._query_all(q)
+            ans = [ai[0] for ai in ans]
+            # n = len(ans)
+            if binned:
+                if not isinstance(binned, int):
+                    binned = 7200
 
-            return [r for r, in q.all()]
+                gans = []
+                t1 = ans[0]  #[1]
+                xx = [ans[0]]
+                # for u,t2 in ans[1:]:
+                for t2 in ans[1:]:
+                    if abs((t2 - t1).total_seconds()) > binned:
+                        gans.append(xx)
+                        xx = [t2]
+                    else:
+                        xx.append(t2)
+                    t1 = t2
 
-    def get_min_max_analysis_timestamp(self, lns):
+                if xx:
+                    gans.append(xx)
+
+                s = sum([len(g) for g in gans])
+                # print 'n={}, gans={}'.format(n, s)
+                assert [ai for ai in ans] == [ai for gi in gans for ai in gi]
+                ans = gans
+
+            return ans
+
+    def get_min_max_analysis_timestamp(self, lns=None, projects=None, delta=0):
         """
             lns: list of labnumbers/identifiers
             return: datetime, datetime
 
             get the min and max analysis_timestamps for all analyses with labnumbers in lns
         """
+        if not lns and not projects:
+            raise NotImplementedError
+
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable.analysis_timestamp)
-            q = q.join(gen_LabTable)
+            q = self._analysis_query(sess, attr='analysis_timestamp')
+            if lns:
+                q = q.filter(gen_LabTable.identifier.in_(lns))
+
+            elif projects:
+                q = q.join(gen_SampleTable, gen_ProjectTable)
+                q = q.filter(gen_ProjectTable.name.in_(projects))
+
+            hpost = q.order_by(meas_AnalysisTable.analysis_timestamp.desc()).first()
+            lpost = q.order_by(meas_AnalysisTable.analysis_timestamp.asc()).first()
+            td = timedelta(hours=delta)
+            return lpost[0] - td, hpost[0] + td
+
+    def get_labnumber_mass_spectrometers(self, lns):
+        """
+            return all the mass spectrometers use to measure these labnumbers analyses
+
+            returns (str, str,...)
+        """
+        with self.session_ctx() as sess:
+            q = self._analysis_query(sess,
+                                     meas_MeasurementTable, meas_AnalysisTable,
+                                     before=True,
+                                     cols=(distinct(gen_MassSpectrometerTable.name),))
+
             q = q.filter(gen_LabTable.identifier.in_(lns))
-
-            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
-            hpost = qry.first()
-
-            qry = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-            lpost = qry.first()
-
-            return lpost[0], hpost[0]
-
+            return q.one()
 
     def get_labnumber_analyses(self, lns, low_post=None, high_post=None,
                                omit_key=None, exclude_uuids=None, mass_spectrometers=None, **kw):
@@ -1255,8 +1349,7 @@ class IsotopeAdapter(DatabaseAdapter):
         """
 
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
+            q = self._analysis_query(sess)
             if mass_spectrometers:
                 q = q.join(meas_MeasurementTable, gen_MassSpectrometerTable)
 
@@ -1269,9 +1362,10 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_LabTable.identifier == lns)
 
             if low_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp >= low_post)
+                q = q.filter(self._get_post_filter(low_post, '__ge__'))
+
             if high_post:
-                q = q.filter(meas_AnalysisTable.analysis_timestamp <= high_post)
+                q = q.filter(self._get_post_filter(high_post, '__le__'))
 
             if omit_key:
                 q = q.filter(not_(getattr(proc_TagTable, omit_key)))
@@ -1289,63 +1383,27 @@ class IsotopeAdapter(DatabaseAdapter):
             samples = (samples,)
 
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
-            q = q.join(gen_SampleTable)
-            q = q.join(gen_ProjectTable)
-
+            q = self._analysis_query(sess, gen_SampleTable, gen_ProjectTable)
             q = q.filter(gen_SampleTable.name.in_(samples))
             q = q.filter(gen_ProjectTable.name.in_(projects))
 
             return self._get_paginated_analyses(q, **kw)
 
-            #return self._get_sample_analyses('all', *args, **kw)
-
-    #def _get_sample_analyses(self, f, samples, projects, limit=None, offset=None,
-    #                         include_invalid=False):
-    #    if not isinstance(samples, (list, tuple)):
-    #        samples = (samples,)
-    #
-    #    with self.session_ctx() as sess:
-    #        q = sess.query(meas_AnalysisTable)
-    #        q = q.join(gen_LabTable)
-    #        q = q.join(gen_SampleTable)
-    #        q = q.join(gen_ProjectTable)
-    #
-    #        if not include_invalid:
-    #            q = q.filter(meas_AnalysisTable.tag != 'invalid')
-    #
-    #        q = q.filter(gen_SampleTable.name.in_(samples))
-    #        q = q.filter(gen_ProjectTable.name.in_(projects))
-    #        q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
-    #
-    #        tc = int(q.count())
-    #
-    #        if limit:
-    #            q = q.limit(limit)
-    #        if offset:
-    #            q = q.offset(offset)
-    #
-    #        return getattr(q, f)(), tc
-
     def get_analyses_date_range(self, mi, ma,
+                                limit=None,
                                 analysis_type=None,
-                                mass_spectrometer=None,
+                                mass_spectrometers=None,
                                 extract_device=None,
                                 project=None,
                                 exclude_invalid=True):
         ed = extract_device
-        ms = mass_spectrometer
+        ms = mass_spectrometers
         at = analysis_type
         pr = project
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
-            q = q.join(meas_MeasurementTable)
-
+            q = self._analysis_query(sess, meas_MeasurementTable)
             if ms:
                 q = q.join(gen_MassSpectrometerTable)
-
             if ed:
                 q = q.join(meas_ExtractionTable)
                 q = q.join(gen_ExtractionDeviceTable)
@@ -1356,20 +1414,28 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.join(gen_ProjectTable)
 
             if ms:
-                q = q.filter(gen_MassSpectrometerTable.name == ms)
+                if hasattr(ms, '__iter__'):
+                    q = q.filter(gen_MassSpectrometerTable.name.in_(ms))
+                else:
+                    q = q.filter(gen_MassSpectrometerTable.name == ms)
             if ed:
                 q = q.filter(gen_ExtractionDeviceTable.name == ed)
             if at:
                 q = q.filter(gen_AnalysisTypeTable.name == at)
             if pr:
                 q = q.filter(gen_ProjectTable.name == pr)
-
-            q = q.filter(and_(meas_AnalysisTable.analysis_timestamp >= mi,
-                              meas_AnalysisTable.analysis_timestamp <= ma))
+            if mi:
+                q = q.filter(self._get_post_filter(mi, '__ge__', cast=False))
+            if ma:
+                q = q.filter(self._get_post_filter(ma, '__le__', cast=False))
 
             if exclude_invalid:
                 q = q.filter(meas_AnalysisTable.tag != 'invalid')
-            return q.all()
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
+            if limit:
+                q = q.limit(limit)
+            return self._query_all(q)
 
     #===========================================================================
     # getters single
@@ -1481,8 +1547,8 @@ class IsotopeAdapter(DatabaseAdapter):
                 q = q.filter(gen_AnalysisTypeTable.name == analysis_type)
 
             if hours_limit:
-                lpost = datetime.now()-timedelta(hours=hours_limit)
-                q = q.filter(meas_AnalysisTable.analysis_timestamp>=lpost)
+                lpost = datetime.now() - timedelta(hours=hours_limit)
+                q = q.filter(meas_AnalysisTable.analysis_timestamp >= lpost)
 
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
             q = q.limit(1)
@@ -1510,9 +1576,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if not dbln:
                 self.debug('get_unique_analysis, no labnumber {}'.format(ln))
                 return
-
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
+            q = self._analysis_query(sess)
             q = q.filter(meas_AnalysisTable.labnumber == dbln)
 
             try:
@@ -1528,30 +1592,37 @@ class IsotopeAdapter(DatabaseAdapter):
 
                 q = q.filter(meas_AnalysisTable.increment == step)
 
-            q = q.limit(1)
+            # q = q.limit(1)
             try:
                 return q.one()
             except NoResultFound:
                 return
 
-    def get_analyses_uuid(self, uuids):
+    def get_analyses_uuid(self, uuids, attr=None, analysis_only=False):
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable,
-                           gen_LabTable,
-                           meas_IsotopeTable,
-                           gen_SampleTable.name,
-                           gen_ProjectTable.name,
-                           gen_MaterialTable.name)
-            q = q.join(meas_IsotopeTable)
-            q = q.join(gen_LabTable)
-            q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+
+            if analysis_only or attr:
+                if attr is None:
+                    attr = meas_AnalysisTable
+                else:
+                    attr = getattr(meas_AnalysisTable, attr)
+
+                q = sess.query(attr)
+            else:
+                q = sess.query(meas_AnalysisTable,
+                               gen_LabTable,
+                               meas_IsotopeTable,
+                               gen_SampleTable.name,
+                               gen_ProjectTable.name,
+                               gen_MaterialTable.name)
+                q = q.join(meas_IsotopeTable)
+                q = q.join(gen_LabTable)
+                q = q.join(gen_SampleTable, gen_ProjectTable, gen_MaterialTable)
+
             q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
             q = q.order_by(meas_AnalysisTable.analysis_timestamp.asc())
 
-            try:
-                return q.all()
-            except NoResultFound:
-                return []
+            return self._query_all(q)
 
     def get_analysis_isotopes(self, uuid):
         """
@@ -1563,10 +1634,7 @@ class IsotopeAdapter(DatabaseAdapter):
             q = q.join(gen_MolecularWeightTable)
             q = q.filter(meas_AnalysisTable.uuid == uuid)
             print compile_query(q)
-            try:
-                return q.all()
-            except NoResultFound:
-                return []
+            return self._query_all(q)
 
     def get_analysis_isotope(self, uuid, iso, kind):
         """
@@ -1602,8 +1670,56 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_analysis_type(self, value):
         return self._retrieve_item(gen_AnalysisTypeTable, value)
 
-    def get_blank(self, value):
-        return self._retrieve_item(proc_BlanksTable, value)
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
+
+    def retrieve_blank(self, kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.filter(gen_ExtractionDeviceTable.name == ed)
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return self._query_one(q)
+
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
+    def get_blanks_set(self, value, key='set_id'):
+        return self._retrieve_item(proc_BlanksSetTable, value, key=key)
+
+    def retrieve_blank(self, kind, ms, ed, last):
+        with self.session_ctx() as sess:
+            q = sess.query(meas_AnalysisTable)
+            q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+
+            if last:
+                q = q.filter(gen_AnalysisTypeTable.name == 'blank_{}'.format(kind))
+            else:
+                q = q.filter(gen_AnalysisTypeTable.name.startswith('blank'))
+
+            if ms:
+                q = q.join(gen_MassSpectrometerTable)
+                q = q.filter(gen_MassSpectrometerTable.name == ms.lower())
+            if ed and not ed in ('Extract Device', NULL_STR) and kind == 'unknown':
+                q = q.join(meas_ExtractionTable, gen_ExtractionDeviceTable)
+                q = q.filter(gen_ExtractionDeviceTable.name == ed)
+
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return self._query_one(q)
+
+    def get_blank(self, value, key='id'):
+        return self._retrieve_item(proc_BlanksTable, value, key=key)
 
     def get_blanks_history(self, value):
         return self._retrieve_item(proc_BlanksHistoryTable, value)
@@ -1659,28 +1775,31 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_irradiation_level_byid(self, lid):
         return self._retrieve_item(irrad_LevelTable, lid, key='id')
 
-    def get_irradiation_level(self, irrad, level):
-        with self.session_ctx() as s:
-            #         with session(sess) as s:
-            #         sess = self.get_session()
-            q = s.query(irrad_LevelTable)
-            q = q.join(irrad_IrradiationTable)
-            q = q.filter(irrad_IrradiationTable.name == irrad)
-            q = q.filter(irrad_LevelTable.name == level)
-            try:
-                return q.one()
-            except Exception, _:
-                pass
+    def get_irradiation_level(self, irrad, level, mass_spectrometers=None):
+
+
+        return self._retrieve_items(irrad_LevelTable,
+                                    joins=(irrad_IrradiationTable,),
+                                    filters=(irrad_IrradiationTable.name == irrad,
+                                             irrad_LevelTable.name == level),
+                                    func='one')
+        # with self.session_ctx() as s:
+        #     #         with session(sess) as s:
+        #     #         sess = self.get_session()
+        #     q = s.query(irrad_LevelTable)
+        #     q = q.join(irrad_IrradiationTable)
+        #     q = q.filter(irrad_IrradiationTable.name == irrad)
+        #     q = q.filter(irrad_LevelTable.name == level)
+        #     try:
+        #         return q.one()
+
+    #     except Exception, _:
+    #         pass
 
     def get_irradiation_position(self, irrad, level, pos):
-        with self.session_ctx() as s:
-            #         with session(sess) as s:
-            #         sess = self.get_session()
-            q = s.query(irrad_PositionTable)
-            q = q.join(irrad_LevelTable)
-            q = q.join(irrad_IrradiationTable)
-            q = q.filter(irrad_IrradiationTable.name == irrad)
-            q = q.filter(irrad_LevelTable.name == level)
+        with self.session_ctx() as sess:
+            q = sess.query(irrad_PositionTable)
+            q = self._irrad_level(q, irrad, level)
 
             if isinstance(pos, (list, tuple)):
                 q = q.filter(irrad_PositionTable.position.in_(pos))
@@ -1692,6 +1811,40 @@ class IsotopeAdapter(DatabaseAdapter):
                 return getattr(q, func)()
             except Exception, _:
                 pass
+
+    def get_irradiation_labnumbers(self, irrad, level, low_post=None,
+                                   high_post=None,
+                                   mass_spectrometers=None,
+                                   analysis_types=None, filter_non_run=False):
+        with self.session_ctx() as sess:
+            q = sess.query(gen_LabTable)
+            q = q.join(irrad_PositionTable)
+            q = q.join(irrad_LevelTable)
+            q = q.join(irrad_IrradiationTable)
+            q = self._labnumber_join(q, None, mass_spectrometers, analysis_types,
+                                     filter_non_run, low_post, high_post)
+            # if filter_non_run or low_post or high_post:
+            #     q = q.join(meas_AnalysisTable)
+            #     if analysis_types:
+            #         q = q.join(meas_MeasurementTable, gen_AnalysisTypeTable)
+            # elif analysis_types:
+            #     q = q.join(meas_AnalysisTable, meas_MeasurementTable, gen_AnalysisTypeTable)
+            #
+            # q = self._irrad_level(q, irrad, level)
+            # if analysis_types:
+            #     q = q.filter(gen_AnalysisTypeTable.name.in_(analysis_types))
+            #
+            # if filter_non_run:
+            #     q = q.group_by(gen_LabTable.id)
+            #     q = q.having(count(meas_AnalysisTable.id) > 0)
+            q = self._labnumber_filter(q, None, mass_spectrometers, analysis_types,
+                                       filter_non_run, low_post, high_post)
+
+            q = q.filter(irrad_IrradiationTable.name == irrad)
+            if level:
+                q = q.filter(irrad_LevelTable.name == level)
+            self.debug(compile_query(q))
+            return self._query_all(q)
 
     def get_labnumber(self, labnum, **kw):
         return self._retrieve_item(gen_LabTable, labnum,
@@ -1733,18 +1886,13 @@ class IsotopeAdapter(DatabaseAdapter):
         return self._retrieve_item(meas_ScriptTable, value, key='hash', )
 
     def get_sample(self, value, project=None, material=None, **kw):
-        if 'joins' not in kw:
-            kw['joins'] = []
-        if 'filters' not in kw:
-            kw['filters'] = []
-
         if project:
-            kw['joins'] += [gen_ProjectTable]
-            kw['filters'] += [gen_ProjectTable.name == project]
+            kw = self._append_joins(gen_ProjectTable, kw)
+            kw = self._append_filters(gen_ProjectTable.name == project, kw)
 
         if material:
-            kw['joins'] += [gen_MaterialTable]
-            kw['filters'] += [gen_MaterialTable.name == material]
+            kw = self._append_joins(gen_MaterialTable, kw)
+            kw = self._append_filters(gen_MaterialTable.name == material, kw)
 
         return self._retrieve_item(gen_SampleTable, value, **kw)
 
@@ -1770,9 +1918,9 @@ class IsotopeAdapter(DatabaseAdapter):
     #         return self._get_items(meas_AnalysisTable, globals(), **kw)
 
     '''
-        new style using _retrieve_items, _get_items is deprecated. 
-        rewrite functionality if required
-    '''
+    new style using _retrieve_items, _get_items is deprecated.
+    rewrite functionality if required
+'''
 
     def get_data_reduction_tags(self, uuids=None):
         with self.session_ctx() as sess:
@@ -1780,7 +1928,7 @@ class IsotopeAdapter(DatabaseAdapter):
             if uuids:
                 q = q.join(proc_DataReductionTagSetTable)
                 q = q.join(meas_AnalysisTable)
-                q= q.filter(meas_AnalysisTable.uuid.in_(uuids))
+                q = q.filter(meas_AnalysisTable.uuid.in_(uuids))
 
             q = q.order_by(proc_DataReductionTagTable.create_date.desc())
             return q.all()
@@ -1791,12 +1939,11 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def get_analyses(self, limit=None, **kw):
         """
-            kw: meas_Analysis attributes
-                or callable predicate that accepts "meas_AnalysisTable" and "gen_LabTable"
-        """
+        kw: meas_Analysis attributes
+            or callable predicate that accepts "meas_AnalysisTable" and "gen_LabTable"
+    """
         with self.session_ctx() as sess:
-            q = sess.query(meas_AnalysisTable)
-            q = q.join(gen_LabTable)
+            q = self._analysis_query(sess)
             for k, v in kw.iteritems():
                 if hasattr(v, '__call__'):
                     ff = v(meas_AnalysisTable, gen_LabTable)
@@ -1834,6 +1981,12 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_materials(self, **kw):
         return self._retrieve_items(gen_MaterialTable, **kw)
 
+    def get_years_active(self):
+        with self.session_ctx() as sess:
+            q = sess.query(distinct(func.year(meas_AnalysisTable.analysis_timestamp)))
+            q = q.order_by(meas_AnalysisTable.analysis_timestamp.desc())
+            return [i[0] for i in self._query_all(q)]
+
     def get_recent_labnumbers(self, lpost, spectrometer=None):
         with self.session_ctx() as sess:
             q = sess.query(gen_LabTable)
@@ -1865,65 +2018,84 @@ class IsotopeAdapter(DatabaseAdapter):
             return self._query_all(q)
 
     def get_samples(self, project=None, **kw):
-
         if project:
-            f = []
-            if 'filters' in kw:
-                f = kw['filters']
-            f.append(gen_ProjectTable.name == project)
-            kw['filters'] = f
-
-            j = []
-            if 'joins' in kw:
-                j = kw['joins']
-            j.append(gen_ProjectTable)
-            kw['joins'] = j
-
+            kw = self._append_filters(gen_ProjectTable.name == project, kw)
+            kw = self._append_joins(gen_ProjectTable, kw)
         return self._retrieve_items(gen_SampleTable, **kw)
 
     def get_users(self, **kw):
         return self._retrieve_items(gen_UserTable, **kw)
 
-    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None, **kw):
+    def get_labnumbers(self, identifiers=None, low_post=None, high_post=None,
+                       mass_spectrometers=None,
+                       filter_non_run=False, **kw):
+
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
-            if 'filters' in kw:
-                kw['filters'].append(f)
-            else:
-                kw['filters'] = [f]
+            kw = self._append_filters(f, kw)
 
         if low_post or high_post:
-            kw['joins'] = [meas_AnalysisTable]
+            kw = self._append_joins(meas_AnalysisTable, kw)
+            # joins=kw.get('joins',[])
+            # joins.append(meas_AnalysisTable)
+            # kw[joins]=joins
 
         if low_post:
-            if 'filters' in kw:
-                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
-            else:
-                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post]
+            f = self._get_post_filter(low_post, '__ge__')
+            kw = self._append_filters(f, kw)
 
         if high_post:
-            if 'filters' in kw:
-                kw['filters'].append(cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post)
-            else:
-                kw['filters'] = [cast(meas_AnalysisTable.analysis_timestamp, Date) >= high_post]
+            f = self._get_post_filter(high_post, '__le__')
+            kw = self._append_filters(f, kw)
 
-        # if low_post:
-        # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
-        # if high_post:
-        #     q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+        if filter_non_run or mass_spectrometers:
+            kw = self._append_joins(meas_AnalysisTable, kw)
 
-        # print self.name, identifiers
-        # with self.session_ctx() as sess:
-        #     q=sess.query(gen_LabTable)
-        #     # q=q.filter(gen_LabTable.identifier=='61551')
-        #     return q.all()
-        # print identifiers, kw, self.name
-        return self._retrieve_items(gen_LabTable, **kw)
+            if mass_spectrometers:
+                kw = self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
+
+            if filter_non_run:
+                def func(q):
+                    q = q.group_by(gen_LabTable.id)
+                    q = q.having(count(meas_AnalysisTable.id) > 0)
+                    return q
+
+                kw['query_hook'] = func
+
+        return self._retrieve_items(gen_LabTable, debug_query=True, **kw)
 
     def get_flux_monitors(self, **kw):
         return self._retrieve_items(flux_MonitorTable, **kw)
 
-    def get_irradiations(self, names=None, order_func='desc', **kw):
+    def get_labnumbers_join_analysis(self, **kw):
+        joins = kw['joins']
+
+        if not joins:
+            joins.append(meas_AnalysisTable)
+        elif irrad_IrradiationTable in joins:
+            joins.extend([j for j in [irrad_LevelTable, irrad_PositionTable, meas_AnalysisTable] if not j in joins])
+
+        return self.get_labnumbers(
+            order=gen_LabTable.identifier.desc(),
+            distinct_=gen_LabTable.identifier,
+            **kw)
+
+    def get_irradiations_join_analysis(self, order_func='desc', **kw):
+        # joins=kw.get('joins') or []
+        # print joins
+        # # joins.append(meas_AnalysisTable)
+        # joins.insert(0, meas_AnalysisTable)
+        # joins.reverse()
+        kw['joins'] = [irrad_LevelTable, irrad_PositionTable, gen_LabTable, meas_AnalysisTable]
+
+        return self._retrieve_items(irrad_IrradiationTable,
+                                    order=getattr(irrad_IrradiationTable.name, order_func)(),
+                                    distinct_=irrad_IrradiationTable.name,
+                                    **kw)
+
+    def get_irradiations(self, names=None, order_func='desc',
+                         project_names=None,
+                         mass_spectrometers=None, **kw):
         """
             if names is callable should take from of F(irradiationTable)
             returns list of filters
@@ -1933,18 +2105,48 @@ class IsotopeAdapter(DatabaseAdapter):
                 f = names(irrad_IrradiationTable)
             else:
                 f = (irrad_IrradiationTable.name.in_(names),)
-            kw['filters'] = f
+            kw = self._append_filters(f, kw)
+            # kw['filters'] = f
 
+        if project_names:
+            # fs = kw.get('filters', [])
+            # fs.append(gen_ProjectTable.name.in_(project_names))
+            # kw['filters'] = fs
+            kw = self._append_filters(gen_ProjectTable.name.in_(project_names), kw)
+            kw = self._append_joins([irrad_LevelTable, irrad_PositionTable,
+                                     gen_LabTable, gen_SampleTable, gen_ProjectTable], kw)
+            # js = kw.get('joins', [])
+            # js.extend()
+            # kw['joins'] = js
             #        return self._retrieve_items(irrad_IrradiationTable, order=irrad_IrradiationTable.name, ** kw)
+
+        if mass_spectrometers:
+            kw = self._append_filters(gen_MassSpectrometerTable.name.in_(mass_spectrometers), kw)
+            kw = self._append_joins([irrad_LevelTable, irrad_PositionTable,
+                                     gen_LabTable, meas_AnalysisTable, meas_MeasurementTable,
+                                     gen_MassSpectrometerTable], kw)
+
         return self._retrieve_items(irrad_IrradiationTable,
                                     order=getattr(irrad_IrradiationTable.name, order_func)(),
+                                    debug_query=True,
                                     **kw)
 
     def get_irradiation_productions(self, **kw):
         return self._retrieve_items(irrad_ProductionTable, **kw)
 
-    def get_projects(self, **kw):
-        return self._retrieve_items(gen_ProjectTable, **kw)
+    def get_projects(self, irradiation=None, level=None, mass_spectrometers=None, **kw):
+        if irradiation or mass_spectrometers:
+            with self.session_ctx() as sess:
+                if irradiation:
+                    q = self._simple_query(sess, gen_ProjectTable, gen_SampleTable, gen_LabTable, irrad_PositionTable)
+                    q = self._irrad_level(q, irradiation, level)
+                elif mass_spectrometers:
+                    q = self._simple_query(sess, gen_ProjectTable, gen_SampleTable, gen_LabTable,
+                                           meas_AnalysisTable, meas_MeasurementTable, gen_MassSpectrometerTable)
+                    q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
+                return self._query_all(q)
+        else:
+            return self._retrieve_items(gen_ProjectTable, **kw)
 
     def get_sensitivities(self, **kw):
         return self._retrieve_items(gen_SensitivityTable, **kw)
@@ -2017,15 +2219,100 @@ class IsotopeAdapter(DatabaseAdapter):
     def delete_labnumber(self, name):
         return gen_LabTable, 'labnumber'
 
-
     #===============================================================================
     # private
     #===============================================================================
-    #    def _get_script(self, name, txt):
-    #        getter = getattr(self, 'get_{}'.format(name))
-    #        m = self._hash_factory()
-    #        m.update(txt)
-    #        return getter(m.hexdigest())
+    def _get_post_filter(self, post, comp, cast=True):
+        t = meas_AnalysisTable.analysis_timestamp
+        if cast or isinstance(post, date):
+            t = sql_cast(t, Date)
+
+        return getattr(t, comp)(post)
+
+    def _irrad_level(self, q, irrad, level):
+        q = q.join(irrad_LevelTable)
+        q = q.join(irrad_IrradiationTable)
+        q = q.filter(irrad_IrradiationTable.name == irrad)
+        if level:
+            q = q.filter(irrad_LevelTable.name == level)
+        return q
+
+    def _analysis_query(self, sess, *args, **kw):
+        """
+            before: join args before (true) or after(false) gen_labtable
+        """
+        attr = kw.get('attr', None)
+        cols = kw.get('cols', None)
+        before = kw.get('before', False)
+
+        if attr and hasattr(meas_AnalysisTable, attr):
+            q = sess.query(getattr(meas_AnalysisTable, attr))
+        elif cols:
+            q = sess.query(*cols)
+        else:
+            q = sess.query(meas_AnalysisTable)
+
+        if before:
+            q = q.join(*args)
+            q = q.join(gen_LabTable)
+        else:
+            q = q.join(gen_LabTable)
+            q = q.join(*args)
+
+        return q
+
+    def _labnumber_join(self, q, project_names, mass_spectrometers,
+                        analysis_types, filter_non_run, low_post, high_post):
+
+        if filter_non_run or low_post or high_post or analysis_types or mass_spectrometers:
+            q = q.join(meas_AnalysisTable)
+
+        if mass_spectrometers or analysis_types:
+            q = q.join(meas_MeasurementTable)
+
+        if mass_spectrometers:
+            q = q.join(gen_MassSpectrometerTable)
+
+        if analysis_types:
+            if project_names:
+                project_names.append('references')
+            q = q.join(gen_AnalysisTypeTable)
+
+        return q
+
+    def _labnumber_filter(self, q, project_names, mass_spectrometers,
+                          analysis_types, filter_non_run, low_post, high_post, cast_date=True):
+        if low_post:
+            # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
+            q = q.filter(self._get_post_filter(low_post, '__ge__', cast=cast_date))
+        if high_post:
+            # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) <= high_post)
+            q = q.filter(self._get_post_filter(high_post, '__le__', cast=cast_date))
+
+        if analysis_types:
+            f = gen_AnalysisTypeTable.name.in_(analysis_types)
+            if 'blank' in analysis_types:
+                f = f | gen_AnalysisTypeTable.name.like('blank%')
+
+            q = q.filter(f)
+
+        if mass_spectrometers:
+            q = q.filter(gen_MassSpectrometerTable.name.in_(mass_spectrometers))
+        if project_names:
+            q = q.filter(gen_ProjectTable.name.in_(project_names))
+        if filter_non_run:
+            q = q.group_by(gen_LabTable.id)
+            q = q.having(count(meas_AnalysisTable.id) > 0)
+        return q
+
+    def _simple_query(self, sess, t, *args):
+        if isinstance(t, tuple):
+            q = sess.query(*t)
+        else:
+            q = sess.query(t)
+        q = q.join(*args)
+        return q
+
     def _add_sample(self, name, project, material):
         sample = gen_SampleTable(name=name)
 
@@ -2150,35 +2437,24 @@ class IsotopeAdapter(DatabaseAdapter):
     def _hash_factory(self, text):
         return hashlib.md5(text)
 
+    def _append_filters(self, f, kw):
 
+        filters = kw.get('filters', [])
+        if isinstance(f, (tuple, list)):
+            filters.extend(f)
+        else:
+            filters.append(f)
+        kw['filters'] = filters
+        return kw
 
-        #def _build_query_and(self, table, name, jtable, attr, q=None):
-        #    '''
-        #        joins table and jtable
-        #        filters using an andclause
-        #
-        #        e.g.
-        #        q=sess.query(Table).join(JTable).filter(and_(Table.name==name, JTable.name==attr.name))
-        #
-        #    '''
-        #
-        #    sess = self.get_session()
-        #    andclause = tuple()
-        #    if q is None:
-        #        q = sess.query(table)
-        #        andclause = (table.name == name,)
-        #
-        #    if attr:
-        #        q = q.join(jtable)
-        #        andclause += (jtable.name == attr.name,)
-        #
-        #    if len(andclause) > 1:
-        #        q = q.filter(and_(*andclause))
-        #
-        #    elif len(andclause) == 1:
-        #        q = q.filter(andclause[0])
-        #
-        #    return q
+    def _append_joins(self, f, kw):
+        joins = kw.get('joins', [])
+        if isinstance(f, (tuple, list)):
+            joins.extend(f)
+        else:
+            joins.append(f)
+        kw['joins'] = joins
+        return kw
 
 
 if __name__ == '__main__':
@@ -2222,5 +2498,5 @@ if __name__ == '__main__':
         #===========================================================================
         # test getting
         #===========================================================================
-#    print ia.get_user('mosuer').id
-#============= EOF =============================================
+        #    print ia.get_user('mosuer').id
+        #============= EOF =============================================

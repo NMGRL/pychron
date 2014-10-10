@@ -25,7 +25,7 @@ from traitsui.api import View, Item, EnumEditor, HGroup, VGroup, UItem
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
-from pychron.core.csv.csv_parser import CSVParser
+from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.plotters.options.base import BasePlotterOptions
 from pychron.pychron_constants import FIT_TYPES, NULL_STR
@@ -95,7 +95,7 @@ class XYScatterOptions(BasePlotterOptions):
     def get_parser(self):
         p = self._parser
         if p is None:
-            p = CSVParser()
+            p = CSVColumnParser()
             p.load(self.file_source_path)
             self._parser = p
         return p

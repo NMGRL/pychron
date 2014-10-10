@@ -66,6 +66,7 @@ class Script(Loggable):
     edit_event = Event
     label = Str
     mass_spectrometer = String
+    extract_device = String
 
     name = Str
     names = Property(depends_on='mass_spectrometer, directory')
@@ -73,7 +74,7 @@ class Script(Loggable):
     kind = 'ExtractionLine'
     shared_logger = True
 
-    directory = Str('None')
+    directory = Str(NULL_STR)
     directories = Property
 
     def get_parameter(self, key, default=None):
@@ -136,7 +137,7 @@ class Script(Loggable):
     def _get_root(self):
         d = self.label.lower().replace(' ', '_')
         p = os.path.join(paths.scripts_dir, d)
-        if self.directory != 'None':
+        if self.directory != NULL_STR:
             p = os.path.join(p, self.directory)
 
         return p
@@ -152,17 +153,16 @@ class Script(Loggable):
     @cached_property
     def _get_directories(self):
         p = self._get_root()
-        return ['None'] + [s for s in os.listdir(p)
+        return [NULL_STR] + [s for s in os.listdir(p)
                            if os.path.isdir(os.path.join(p, s)) and s != 'zobs']
 
     @cached_property
     def _get_names(self):
-        names = ['None']
+        names = [NULL_STR]
         ms = self._load_script_names()
         if ms:
             msn = '{}_'.format(self.mass_spectrometer.lower())
             names.extend([self._clean_script_name(ei) for ei in ms if ei.startswith(msn)])
-
         return names
 
 

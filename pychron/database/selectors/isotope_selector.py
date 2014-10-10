@@ -46,7 +46,8 @@ class IsotopeResultsAdapter(BaseResultsAdapter):
         ('Analysis Time', 'rundate'),
         ('Irradiation', 'irradiation_info'),
         ('Mass Spec.', 'mass_spectrometer'),
-        ('Type', 'analysis_type')]
+        ('Type', 'analysis_type'),
+        ('Project', 'project')]
 
     font = '10'
     #    rid_width = Int(50)
@@ -164,11 +165,9 @@ class IsotopeAnalysisSelector(DatabaseSelector):
 
     def _refresh_results(self):
         import inspect
-
         stack = inspect.stack()
         self.debug('refresh results by {}'.format(stack[1][3]))
-
-        self.execute_query(load=False)
+        self.execute_query()
 
     def _build_filters(self):
         ma = self.mass_spectrometer

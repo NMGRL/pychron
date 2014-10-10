@@ -16,16 +16,14 @@
 
 
 #============= enthought library imports =======================
-import os
 
 from pyface.message_dialog import warning
 from pyface.action.api import Action
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from pyface.tasks.action.task_action import TaskAction
 
-
 #============= standard library imports ========================
-
+import os
 #============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.paths import paths
@@ -116,6 +114,23 @@ class UndoAction(TaskAction):
     accelerator = 'Ctrl+Z'
 
 
+class QueueConditionalsAction(Action):
+    name = 'Edit Queue Conditionals'
+    def perform(self, event):
+        task=event.task
+        if hasattr(task, 'edit_queue_conditionals'):
+            task.edit_queue_conditionals()
+        else:
+            from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
+
+            dnames=None
+            spec=task.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            if spec:
+                dnames=spec.spectrometer.detector_names
+
+            edit_conditionals(None, detectors=dnames, app=task.application)
+
+
 class QueueAction(ExperimentAction):
     def _open_experiment(self, event, path=None):
 
@@ -152,17 +167,30 @@ class OpenLastExperimentQueueAction(QueueAction):
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
-        self.enabled = os.path.isfile(paths.last_experiment)
+        self.enabled = bool(self._get_last_experiment())
 
     def perform(self, event):
+        path = self._get_last_experiment()
+        if path:
+            self._open_experiment(event, path)
+        else:
+            warning(None, 'No last experiment available')
+        # if os.path.isfile(paths.last_experiment):
+        #     with open(paths.last_experiment, 'r') as fp:
+        #         path = fp.readline()
+        #         if os.path.isfile(path):
+        #             self._open_experiment(event, path)
+        #         else:
+        #             print 'asdfasdf', path
+        # else:
+        #     warning(None, 'No last experiment available')
+
+    def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
             with open(paths.last_experiment, 'r') as fp:
                 path = fp.readline()
                 if os.path.isfile(path):
-                    self._open_experiment(event, path)
-        else:
-            warning(None, 'No last experiment available')
-
+                    return path
 
 class OpenExperimentQueueAction(QueueAction):
     description = 'Open experiment'
@@ -171,7 +199,8 @@ class OpenExperimentQueueAction(QueueAction):
     image = icon('project-open')
 
     def perform(self, event):
-        path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        # path = '/Users/ross/Pychrondata_dev/experiments/Current Experiment.txt'
+        path = '/Users/ross/Pychrondata_dev/experiments/test.txt'
         self._open_experiment(event, path)
 
 

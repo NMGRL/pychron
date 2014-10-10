@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -231,16 +231,16 @@ class Experimentor(IsotopeDatabaseManager):
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
 
-    @on_trait_change('executor:stop_button')
-    def _stop(self):
-        self.debug('%%%%%%%%%%%%%%%%%% Stop fired')
-        if self.executor.isAlive():
-            self.info('stop execution')
-            '''
-                if the executor is delaying then stop but dont cancel
-                otherwise cancel
-            '''
-            self.executor.stop()
+    # @on_trait_change('executor:stop_button')
+    # def _stop(self):
+    #     self.debug('%%%%%%%%%%%%%%%%%% Stop fired {}'.format(self.executor.isAlive()))
+    #     if self.executor.isAlive():
+    #         self.info('stop execution')
+    #         '''
+    #             if the executor is delaying then stop but dont cancel
+    #             otherwise cancel
+    #         '''
+    #         self.executor.stop()
 
     @on_trait_change('executor:start_button')
     def _execute(self):
@@ -312,27 +312,6 @@ class Experimentor(IsotopeDatabaseManager):
             self.experiment_factory.queue = eq
             self.experiment_factory.sync_queue_meta()
 
-
-            # for a in ('username', 'mass_spectrometer', 'extract_device',
-            #           'load_name',
-            #           'delay_before_analyses', 'delay_between_analyses'):
-            #     qf.sync_
-            #     if not self._sync_queue_to_factory(eq, qf, a):
-            #         self._sync_factory_to_queue(eq, qf, a)
-            # fv = getattr(eq, a)
-            #sync queue values to experiment factory
-            # if fv is not None:
-            #     if isinstance(v, str):
-            #         v = v.strip()
-            #         if v:
-            #             self._sync_queue_to_factory(qf, a, v)
-            #         else:
-            #             self._sync_factory_to_queue(eq, a, v)
-            # else:
-            #     setattr(qf, a, v)
-            #sync experiment factory values to queue
-            # else:
-
     @on_trait_change('experiment_queue:refresh_info_needed')
     def _handle_refresh(self):
         self.update_info()
@@ -354,7 +333,7 @@ class Experimentor(IsotopeDatabaseManager):
     @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
     def handle_delay_between_analyses(self, new):
         if self.executor.isAlive():
-            self.executor.experiment_queue.delay_between_analyses=new
+            self.executor.experiment_queue.delay_between_analyses = new
 
     def _set_factory_runs(self, new):
         ef = self.experiment_factory
@@ -373,7 +352,7 @@ class Experimentor(IsotopeDatabaseManager):
 
     def _executor_factory(self):
         p1 = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
-        p2 = 'pychron.spectrometer.spectrometer_manager.SpectrometerManager'
+        p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
         p3 = 'pychron.spectrometer.ion_optics_manager.IonOpticsManager'
         kw = dict()
         if self.application:
@@ -403,14 +382,18 @@ class Experimentor(IsotopeDatabaseManager):
     def _experiment_factory_default(self):
         dms = 'Spectrometer'
         if self.application:
-            p2 = 'pychron.spectrometer.spectrometer_manager.SpectrometerManager'
+            p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
             spec = self.application.get_service(p2)
             if spec:
                 dms = spec.name.capitalize()
 
         e = ExperimentFactory(application=self.application,
-                              db=self.db)
-        e.default_mass_spectrometer=dms
+                              db=self.db,
+                              default_mass_spectrometer=dms)
+
+        # e.run_factory.activate()
+        # e.queue_factory.activate()
+        # e.default_mass_spectrometer = dms
 
         return e
 

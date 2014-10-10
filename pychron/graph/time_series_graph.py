@@ -167,9 +167,13 @@ class TimeSeriesGraph(Graph):
     def _remove_bottom(self, plot):
         title = ''
         for i, underlay in enumerate(plot.underlays):
-            if underlay.orientation == 'bottom':
-                title = underlay.title
-                plot.underlays.pop(i)
+            try:
+                if underlay.orientation == 'bottom':
+                    title = underlay.title
+                    plot.underlays.pop(i)
+            except AttributeError:
+                pass
+
         return title
     def _set_bottom_axis(self, plota, plot, plotid, timescale=False):
         # this is a hack to hide the default plotaxis

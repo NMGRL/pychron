@@ -35,11 +35,11 @@ from pychron.processing.tasks.actions.processing_actions import IdeogramAction, 
     RecallAction, SpectrumAction, \
     EquilibrationInspectorAction, InverseIsochronAction, GroupSelectedAction, \
     GroupbyAliquotAction, GroupbyLabnumberAction, ClearGroupAction, \
-    SeriesAction, SetInterpretedAgeAction, OpenAdvancedQueryAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
+    SeriesAction, SetInterpretedAgeAction, OpenInterpretedAgeAction, ClearAnalysisCacheAction, \
     ExportAnalysesAction, \
     GraphGroupSelectedAction, IdeogramFromFile, SpectrumFromFile, MakeAnalysisGroupAction, GraphGroupbySampleAction, \
     DeleteAnalysisGroupAction, XYScatterAction, ModifyK3739Action, GroupbySampleAction, \
-    SplitEditorActionVert, ConfigureRecallAction, CalculationViewAction
+    SplitEditorActionVert, ConfigureRecallAction, ActivateBlankAction, ActivateRecallAction, ActivateIdeogramAction
 
 from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
     FluxAction, IsotopeEvolutionAction, ICFactorAction, \
@@ -48,13 +48,12 @@ from pychron.processing.tasks.actions.edit_actions import BlankEditAction, \
 from pychron.processing.tasks.figures.actions import RefreshActiveEditorAction
 from pychron.processing.tasks.interpreted_age.actions import OpenInterpretedAgeGroupAction, \
     DeleteInterpretedAgeGroupAction, MakeGroupFromFileAction, MakeDataTablesAction, MakeTASAction
-from pychron.processing.tasks.vcs_data.actions import PushVCSAction, PullVCSAction
+from pychron.processing.tasks.recall.actions import SummaryLabnumberAction, CalculationViewAction
 from pychron.processing.tasks.isotope_evolution.actions import CalcOptimalEquilibrationAction
 from pychron.processing.tasks.preferences.offline_preferences import OfflinePreferencesPane
-from pychron.processing.tasks.preferences.processing_preferences import ProcessingPreferencesPane, EasyPreferencesPane
+from pychron.processing.tasks.preferences.processing_preferences import BrowsingPreferencesPane, EasyPreferencesPane
 #from pychron.processing.tasks.browser.browser_task import BrowserTask
 from pyface.message_dialog import warning
-from pychron.processing.tasks.preferences.vcs_preferences import VCSPreferencesPane
 
 
 class ProcessingPlugin(BaseTaskPlugin):
@@ -102,8 +101,8 @@ Install to enable MS Excel export''')
         def data_menu():
             return SMenu(id='data.menu', name='Data')
 
-        def vcs_menu():
-            return SMenu(id='vcs.menu', name='VCS')
+        # def vcs_menu():
+        #     return SMenu(id='vcs.menu', name='VCS')
 
         def grouping_group():
             return SMenu(Group(GroupSelectedAction(),
@@ -138,7 +137,7 @@ Install to enable MS Excel export''')
 
         def recall_group():
             return Group(RecallAction(),
-                         OpenAdvancedQueryAction(),
+                         # OpenAdvancedQueryAction(),
                          ConfigureRecallAction())
 
         def misc_group():
@@ -150,10 +149,16 @@ Install to enable MS Excel export''')
                          MakeTASAction(),
                          ModifyK3739Action(),
                          CalculationViewAction(),
+                         SummaryLabnumberAction(),
                          name='misc')
 
+        def activate_group():
+            return Group(ActivateBlankAction(),
+                         ActivateRecallAction(),
+                         ActivateIdeogramAction())
+
         default_actions = [('recall_action', RecallAction, 'MenuBar/File'),
-                           ('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
+                           #('find_action', OpenAdvancedQueryAction, 'MenuBar/File'),
                            ('export_analyses', ExportAnalysesAction, 'MenuBar/File'),
 
                            ('batch_edit', BatchEditAction, 'MenuBar/Edit'),
@@ -162,6 +167,7 @@ Install to enable MS Excel export''')
                            ('data', data_menu, 'MenuBar', {'before': 'tools.menu', 'after': 'view.menu'}),
 
 
+                           ('activate_group', activate_group, 'MenuBar/view.menu'),
                            ('reduction_group', reduction_group, 'MenuBar/data.menu'),
                            ('figure_group', figure_group, 'MenuBar/data.menu'),
                            ('interpreted_group', interpreted_group, 'MenuBar/data.menu'),
@@ -181,16 +187,15 @@ Install to enable MS Excel export''')
 
                            ('equil_inspector', EquilibrationInspectorAction, 'MenuBar/tools.menu'),
                            # ('split_editor_area', SplitEditorActionHor, 'MenuBar/window.menu'),
-                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')
-        ]
+                           ('split_editor_area', SplitEditorActionVert, 'MenuBar/window.menu')]
 
         exts = [self._make_task_extension(default_actions)]
 
-        use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
-        if use_vcs:
-            exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
-                                                   ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
-                                                   ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
+        # use_vcs = to_bool(self.application.preferences.get('pychron.vcs.use_vcs'))
+        # if use_vcs:
+        #     exts.append(self._make_task_extension([('vcs', vcs_menu, 'MenuBar', {'after': 'view.menu'}),
+        #                                            ('vcs_pull', PullVCSAction, 'MenuBar/vcs.menu'),
+        #                                            ('vcs_push', PushVCSAction, 'MenuBar/vcs.menu')]))
 
         use_easy = to_bool(self.application.preferences.get('pychron.processing.use_easy'))
         if use_easy:
@@ -239,8 +244,8 @@ Install to enable MS Excel export''')
         tasks = [
             ('pychron.recall',
              self._recall_task_factory, 'Recall'),
-            ('pychron.advanced_query',
-             self._advanced_query_task_factory, 'Advanced Query'),
+            # ('pychron.advanced_query',
+            #  self._advanced_query_task_factory, 'Advanced Query'),
 
             ('pychron.processing.blanks',
              self._blanks_edit_task_factory, 'Blanks'),
@@ -268,8 +273,8 @@ Install to enable MS Excel export''')
              self._table_task_factory, 'Table', '', 'Ctrl+t'),
             ('pychron.processing.respository',
              self._repository_task_factory, 'Repository', '', 'Ctrl+Shift+R', '', 'irc-server'),
-            ('pychron.processing.vcs',
-             self._vcs_data_task_factory, 'VCS', '', ''),
+            # ('pychron.processing.vcs',
+            #  self._vcs_data_task_factory, 'VCS', '', ''),
             ('pychron.export',
              self._export_task_factory, 'Export', '', '')]
 
@@ -291,10 +296,10 @@ Install to enable MS Excel export''')
 
         return FluxTask(manager=self._processor_factory())
 
-    def _advanced_query_task_factory(self):
-        from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
-
-        return AdvancedQueryTask(manager=self._processor_factory())
+    # def _advanced_query_task_factory(self):
+    #     from pychron.processing.tasks.query.advanced_query_task import AdvancedQueryTask
+    #
+    #     return AdvancedQueryTask(manager=self._processor_factory())
 
     def _recall_task_factory(self):
         from pychron.processing.tasks.recall.recall_task import RecallTask
@@ -342,10 +347,9 @@ Install to enable MS Excel export''')
 
         return InterpretedAgeTask(manager=self._processor_factory())
 
-    def _vcs_data_task_factory(self):
-        from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
-
-        return VCSDataTask(manager=self._processor_factory())
+    # def _vcs_data_task_factory(self):
+    #     from pychron.processing.tasks.vcs_data.vcs_data_task import VCSDataTask
+    #     return VCSDataTask(manager=self._processor_factory())
 
     def _export_task_factory(self):
         from pychron.processing.tasks.export.export_task import ExportTask
@@ -354,8 +358,8 @@ Install to enable MS Excel export''')
 
     def _preferences_panes_default(self):
         return [
-            ProcessingPreferencesPane,
-            VCSPreferencesPane,
+            BrowsingPreferencesPane,
+            # VCSPreferencesPane,
             OfflinePreferencesPane, EasyPreferencesPane]
 
         #============= EOF =============================================

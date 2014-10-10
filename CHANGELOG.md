@@ -1,5 +1,15 @@
 CHANGELOG
 ============
+2.0.5
+------------------
+* added switching between blank histories
+* added BlankDiffView
+* started Workspace
+* added switching between sample_view(Jake) and query_view(Al) in browser
+* added "Time View" to sample table context menu. Use to display list of analyses based on
+    date ranges defined by the selected labnumbers
+* added project, irradiation enabled toggles
+* if high or low post only filters defined load the analysis table with the date range
 
 2.0.4
 ------------------
@@ -24,3 +34,19 @@ CHANGELOG
 * added data reduction tagging
 * added ability to configure recall view
 * started permutator. use to generate all permutations of a dataset
+* started summary views accessible for recall task
+* added use_cdd_warming to experiment queue
+* added preset decay constants for easy switching
+* added default snapshot name (RunID_Pos) when used from pyscript, e.g. 12345-01A_3
+* added note, last_modified to irrad_ProductionTable
+* updated editing default_fits
+* added snapshot view to recall
+* added fontsize control to recall
+* added task switching
+* added time view to browser
+* added ability to add event markers to spectrometer scan graph
+* added snapshot to spectrometer scan
+* added bgcolor control for experiment editor
+* optimized plotpanel
+* added "window" to AutomatedRunCondition. use to take a mean or std of "window" points
+* added more options for AutomatedRunConditions

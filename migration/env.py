@@ -18,8 +18,13 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 #target_metadata = mymodel.Base.metadata
 #target_metadata = None
-import sys
-sys.path.append('/Users/ross/Programming/git/pychron_dev')
+import sys, os
+
+p = os.path.join(os.path.expanduser('~'),'Programming/git/pychron_dev')
+if not os.path.isdir(p):
+    p = os.path.join(os.path.expanduser('~'),'Programming/git/pychron')
+
+sys.path.append(p)
 
 from pychron.database.orms.isotope.util import Base
 target_metadata=Base.metadata

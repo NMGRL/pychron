@@ -23,7 +23,7 @@ from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-    def parse(self, header, line, meta, delim='\t'):
+    def parse(self, header, line, delim='\t'):
         params = dict()
         if not isinstance(line, list):
             line = line.split(delim)
@@ -83,7 +83,7 @@ class RunParser(Loggable):
             'comment',
             'syn_extraction',
             'overlap',
-            ('truncate_condition', 'truncate'),
+            ('truncate_conditional', 'truncate'),
             ('extract_units', 'e_units')]:
             v = self._get_attr_value(header, args, attr)
             if v is not None:
@@ -107,6 +107,7 @@ class RunParser(Loggable):
 
         for attr in [
             'autocenter',
+            'use_cdd_warming',
             ('disable_between_positions', 'dis_btw_pos')]:
             v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
             if v is not None:
@@ -142,8 +143,8 @@ class RunParser(Loggable):
 
 
 class UVRunParser(RunParser):
-    def parse(self, header, line, meta, delim='\t'):
-        script_info, params = super(UVRunParser, self).parse(header, line, meta, delim)
+    def parse(self, header, line, delim='\t'):
+        script_info, params = super(UVRunParser, self).parse(header, line, delim)
         if not isinstance(line, list):
             line = line.split(delim)
 

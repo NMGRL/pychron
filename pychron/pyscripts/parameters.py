@@ -17,7 +17,9 @@
 #============= enthought library imports =======================
 from traits.api import HasTraits, Bool, Str, Float, Int, Enum
 from traitsui.api import View, HGroup, UItem, EnumEditor
+
 from pychron.pychron_constants import NULL_STR, FIT_TYPES
+
 #============= standard library imports ========================
 #============= local library imports  ==========================
 
@@ -50,7 +52,7 @@ class Detector(HasTraits):
             self.fit = 'linear'
 
 
-class MeasurementCondition(HasTraits):
+class MeasurementConditional(HasTraits):
     name = Str
     use = Bool
     key = Enum('age', )
@@ -65,11 +67,10 @@ class MeasurementCondition(HasTraits):
                                                    self.comparator,
                                                    self.criterion,
                                                    self.start_count,
-                                                   self.frequency,
-        )
+                                                   self.frequency)
 
 
-class MeasurementAction(MeasurementCondition):
+class MeasurementAction(MeasurementConditional):
     action = Str
     resume = Bool(True)
 
@@ -81,15 +82,14 @@ class MeasurementAction(MeasurementCondition):
                                                            self.start_count,
                                                            self.frequency,
                                                            self.action,
-                                                           self.resume
-        )
+                                                           self.resume)
 
 
-class MeasurementTruncation(MeasurementCondition):
+class MeasurementTruncation(MeasurementConditional):
     pass
 
 
-class MeasurementTermination(MeasurementCondition):
+class MeasurementTermination(MeasurementConditional):
     pass
 
 

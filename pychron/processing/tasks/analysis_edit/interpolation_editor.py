@@ -27,6 +27,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelec
 from pychron.processing.tasks.analysis_edit.graph_editor import GraphEditor
 
 
+
 #============= standard library imports ========================
 from numpy import Inf, asarray, array
 from pychron.processing.fits.interpolation_fit_selector import InterpolationFitSelector
@@ -178,7 +179,7 @@ class InterpolationEditor(GraphEditor):
         self.auto_find = f
 
     def _update_analyses_hook(self):
-        print 'update_analyses_hook', self.auto_find
+        self.debug('update analyses hook auto_find={}'.format(self.auto_find))
         if self.auto_find:
             self._find_references()
 

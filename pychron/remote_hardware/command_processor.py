@@ -118,8 +118,8 @@ class CommandProcessor(ConfigLoadable):
         return self._process_request(rtype, data, sender)
 
     def close(self):
-        '''
-        '''
+        """
+        """
         if not globalv.use_ipc:
             return
 
@@ -129,9 +129,8 @@ class CommandProcessor(ConfigLoadable):
             self._sock.close()
 
     def open(self, *args, **kw):
-        '''
-
-        '''
+        """
+        """
         if not globalv.use_ipc:
             return True
 
@@ -165,8 +164,8 @@ class CommandProcessor(ConfigLoadable):
         return True
 
     def _listener(self, *args, **kw):
-        '''
-        '''
+        """
+        """
         _input = [self._sock]
         while self._listen:
             try:
@@ -219,11 +218,11 @@ class CommandProcessor(ConfigLoadable):
     def _read(self, sock):
         data = sock.recv(BUFSIZE)
         if data:
-            mlen = int(data[:2], 16)
-            while len(data) < (mlen + 2):
+            mlen = int(data[:4], 16)
+            while len(data) < (mlen + 4):
                 data += sock.recv(BUFSIZE)
 
-            return data[2:]
+            return data[4:]
 
     def _process(self, sock, data):
         args = data.split('|')
@@ -301,6 +300,9 @@ class CommandProcessor(ConfigLoadable):
         if isinstance(data, ErrorCode):
             data = str(data)
 
+        n = len(data) + 4
+        data = '{:04X}{}'.format(n, data)
+        #self.debug('response len={}'.format(n))
         if globalv.use_ipc:
             try:
                 if globalv.ipc_dgram:
@@ -311,7 +313,11 @@ class CommandProcessor(ConfigLoadable):
                 mlen = len(data)
                 totalsent = 0
                 while totalsent < mlen:
-                    totalsent += func(data[totalsent:])
+                    try:
+                        totalsent += func(data[totalsent:])
+                        #self.debug('totalsent={} n={}'.format(totalsent, mlen))
+                    except socket.error:
+                        continue
 
             except Exception, err:
                 self.debug('End Request Exception: {}'.format(err))

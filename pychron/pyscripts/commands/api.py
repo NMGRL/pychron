@@ -8,7 +8,7 @@ from .extractionline import Disable, DrillPoint, Enable, MovingExtract, Prepare,
     SetResource, GetResourceValue, SetPositionCommand, SetX, SetY, SetZ, SetXy, GetValue, \
     ExtractPipette, LoadPipette, Waitfor
 
-from .measurement import AddTermination, AddAction, AddTruncation, ClearConditions, ClearActions, ClearTruncations, \
+from .measurement import AddTermination, AddAction, AddTruncation, ClearConditionals, ClearActions, ClearTruncations, \
     ClearTerminations, Equilibrate, ExtractionGosub, GetIntensity, Baselines, PositionMagnet, SetTimeZero, PeakCenter, \
     ActivateDetectors, Multicollect, Regress, Sniff, PeakHop, Coincidence, SetDeflection, SetNcounts, SetDeflections, \
     SetSourceOptics, SetSourceParameters, SetCddOperatingVoltage, SetYsymmetry, SetZsymmetry, SetZfocus, \
@@ -23,7 +23,7 @@ __all__ = (Wait, Info, Sleep, Gosub, BeginInterval, CompleteInterval, Interval, 
            ValueCommand, Extract, EndExtract, SetTray, SetResource, GetResourceValue, SetPositionCommand,
            SetX, SetY, SetZ, SetXy, GetValue, ExtractPipette, LoadPipette, Waitfor,
 
-           AddTermination, AddAction, AddTruncation, ClearConditions, ClearActions,
+           AddTermination, AddAction, AddTruncation, ClearConditionals, ClearActions,
            ClearTruncations, ClearTerminations, Equilibrate, ExtractionGosub, GetIntensity, Baselines, PositionMagnet,
            SetTimeZero, PeakCenter, ActivateDetectors, Multicollect, Regress, Sniff, PeakHop, Coincidence,
            SetDeflection, SetNcounts, SetDeflections, SetSourceOptics, SetSourceParameters, SetCddOperatingVoltage,

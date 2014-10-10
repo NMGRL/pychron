@@ -16,7 +16,7 @@
 
 #============= enthought library imports =======================
 from traits.api import HasTraits, Instance, Str, Float, Unicode, Bool, on_trait_change
-from traitsui.api import View, Item, HGroup, VGroup, UCustom
+from traitsui.api import View, Item, HGroup, VGroup, UCustom, Tabbed, UItem, Group
 
 #============= standard library imports ========================
 #============= local library imports  ==========================
@@ -39,6 +39,8 @@ class EUCustom(UCustom):
 
 class IrradiationProduction(HasTraits):
     reactor = Str
+    note = Str
+    last_modified = Str
 
     dirty = Bool
 
@@ -67,7 +69,8 @@ class IrradiationProduction(HasTraits):
         self.__edited__ = dict()
         self.__dirty__ = []
 
-    @on_trait_change('k+:[value,error],ca+:[value,error],cl+:[value,error],Ca_K:[value,error],Cl_K:[value,error]')
+    @on_trait_change('''k+:[value,error],ca+:[value,error],cl+:[value,error],
+Ca_K:[value,error],Cl_K:[value,error],note''')
     def _set_dirty(self, obj, name, old, new):
         # print name, new
 
@@ -128,6 +131,10 @@ class IrradiationProduction(HasTraits):
         self.Cl_K.value = dbrecord.Cl_K if dbrecord.Cl_K else 0
         self.Cl_K.error = dbrecord.Cl_K_err if dbrecord.Cl_K_err else 0
 
+        if dbrecord.last_modified:
+            self.last_modified=dbrecord.last_modified.strftime('%m-%d-%Y %H:%M:%S')
+        self.note = dbrecord.note or ''
+
     def traits_view(self):
         kgrp = VGroup(EUCustom('k4039'),
                       EUCustom('k3839'),
@@ -147,26 +154,15 @@ class IrradiationProduction(HasTraits):
             label='Elemental', show_border=True)
 
         v = View(
-            VGroup(
-                # HGroup(Item('name'),
-                #        Item('db_name',
-                #             show_label=False,
-                #             editor=CheckListEditor(name='names'))
-                # ),
-                VGroup(HGroup(kgrp,
+            Tabbed(VGroup(HGroup(kgrp,
                               cagrp),
                        clgrp,
-                       elem_grp)),
-            width=300,
-            # resizable=True,
-            # buttons=[Action(name='Save', action='save',
-            #                 #                                enabled_when='object.save_enabled'
-            # ),
-            #          'Cancel'
-            # ],
-            # handler=self.handler_klass,
-            # title='Production Ratio Input'
-        )
+                       elem_grp,
+                    label='Ratios'),
+                   Group(UItem('note', enabled_when='editable',
+                               style='custom'),
+                         label='Note')),
+            width=300)
         return v
 
 #============= EOF =============================================

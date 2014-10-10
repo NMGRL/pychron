@@ -18,7 +18,7 @@
 from datetime import timedelta
 
 from pyface.tasks.action.schema import SToolBar
-from traits.api import on_trait_change, Any, HasTraits, Str, List, Property
+from traits.api import on_trait_change, Any, HasTraits, Str, List, Property, Int
 from traitsui.api import View, VGroup, HGroup, Item, UItem, TabularEditor
 
 from pychron.database.records.isotope_record import IsotopeRecordView
@@ -95,6 +95,9 @@ class InterpolationTask(AnalysisEditTask):
                  SToolBar(DatabaseSaveAction(),
                           BinAnalysesAction())]
     analysis_group_edit_klass = InterpolationAnalysisGroupEntry
+
+    days_pad = Int(0)
+    hours_pad = Int(18)
 
     def _dclicked_analysis_group_hook(self, unks, b):
         self.active_editor.set_references([bi.analysis for bi in b
@@ -242,7 +245,7 @@ class InterpolationTask(AnalysisEditTask):
         with db.session_ctx():
             ans = db.get_analyses_date_range(sd, ed,
                                              analysis_type=at,
-                                             mass_spectrometer=ms,
+                                             mass_spectrometers=ms,
                                              extract_device=exd)
             ans = [self._record_view_factory(ai) for ai in ans]
             # self.danalysis_table.set_analyses(ans)

@@ -16,22 +16,21 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Int, Str, Instance, HasTraits, Any
-from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
-    VSplit, TabularEditor, EnumEditor, Heading, HSplit, Group
+from traits.api import Int, Str, Instance
+from traitsui.api import View, UItem, VGroup, HGroup, spring, \
+    Group
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 # from pychron.experiment.utilities.identifier import make_runid
 # from traitsui.table_column import ObjectColumn
 # from traitsui.list_str_adapter import ListStrAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import CheckListEditor
 from traitsui.menu import Action
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
-from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter, ProjectAdapter
+from pychron.envisage.browser.adapters import BrowserAdapter, SampleAdapter
 from pychron.processing.tasks.analysis_edit.panes import icon_button_editor
-from pychron.core.ui.tabular_editor import myTabularEditor
+from pychron.processing.tasks.browser.sample_view import BrowserSampleView
+from pychron.processing.tasks.browser.query_view import BrowserQueryView
 
 
 class AnalysisGroupAdapter(BrowserAdapter):
@@ -64,12 +63,18 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-    def get_menu(self, object, trait, row, column):
-        return MenuManager(Action(name='Unselect', action='unselect'),
-                           Action(name='Replace', action='replace_items'),
-                           Action(name='Append', action='append_items'),
-                           Action(name='Open', action='recall_items'),
-                           Action(name='Open Copy', action='recall_copies'))
+    def get_menu(self, obj, trait, row, column):
+        e=obj.append_replace_enabled
+        actions = [Action(name='Unselect', action='unselect_analyses'),
+                   Action(name='Replace', action='replace_items', enabled=e),
+                   Action(name='Append', action='append_items', enabled=e),
+                   Action(name='Open', action='recall_items'),
+                   Action(name='Open Copy', action='recall_copies')]
+        # if obj.id == 'pychron.recall':
+        #     actions.pop(1)
+        #     actions.pop(1)
+
+        return MenuManager(*actions)
 
     def get_bg_color(self, obj, trait, row, column=0):
         color = 'white'
@@ -77,152 +82,6 @@ class AnalysisAdapter(BrowserAdapter):
             color = 'lightgreen'
 
         return color
-
-
-class TablesHandler(UnselectTabularEditorHandler):
-    def replace_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('replace', None)
-            # obj.replace_event = obj.selected
-
-    def append_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('append', None)
-            # obj.append_event = obj.selected
-
-    def recall_items(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': False})
-
-    def recall_copies(self, info, obj):
-        if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': True})
-
-
-class Tables(HasTraits):
-    model = Any
-    pane = Any
-
-    def trait_context(self):
-        return {'object': self.model}
-
-    def traits_view(self):
-        group_table = UItem('analysis_groups',
-                            label='Groups',
-                            width=0.6,
-                            editor=TabularEditor(
-                                adapter=self.pane.analysis_group_tabular_adapter,
-                                editable=False,
-                                selected='selected_analysis_groups',
-                                multi_select=True,
-                                dclicked='dclicked_analysis_group',
-                                # column_clicked='column_clicked',
-                                # update='update_sample_table',
-                                # refresh='update_sample_table',
-                                stretch_last_section=False))
-
-        sample_table = UItem('samples',
-                             label='Samples',
-                             width=0.6,
-                             editor=TabularEditor(
-                                 adapter=self.pane.sample_tabular_adapter,
-                                 editable=False,
-                                 selected='selected_samples',
-                                 multi_select=True,
-                                 dclicked='dclicked_sample',
-                                 column_clicked='column_clicked',
-                                 # update='update_sample_table',
-                                 # refresh='update_sample_table',
-                                 stretch_last_section=False))
-
-        def make_name(name):
-            return 'object.analysis_table.{}'.format(name)
-
-        analysis_table = VGroup(Heading('Analyses'),
-                                UItem(make_name('analyses'),
-                                      width=0.4,
-                                      editor=myTabularEditor(
-                                          adapter=self.pane.analysis_tabular_adapter,
-                                          operations=['move'],
-                                          refresh=make_name('refresh_needed'),
-                                          selected=make_name('selected'),
-                                          dclicked=make_name('dclicked'),
-                                          multi_select=self.pane.multi_select,
-                                          drag_external=True,
-                                          scroll_to_row=make_name('scroll_to_row'),
-                                          stretch_last_section=False)),
-                                HGroup(spring, Item(make_name('omit_invalid'))),
-                                defined_when=self.pane.analyses_defined)
-
-        v = View(HSplit(Group(sample_table, group_table,
-                              layout='tabbed'), analysis_table),
-                 handler=TablesHandler())
-        return v
-
-
-class TableTools(HasTraits):
-    model = Any
-    pane = Any
-
-    def trait_context(self):
-        return {'object': self.model}
-
-    def traits_view(self):
-        def make_name(name):
-            return 'object.analysis_table.{}'.format(name)
-
-        g1 = HGroup(UItem(make_name('analysis_filter_parameter'),
-                          width=-90,
-                          editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-                    icon_button_editor(make_name('configure_analysis_table'), 'cog',
-                                       tooltip='Configure analysis table'))
-        g2 = HGroup(UItem(make_name('analysis_filter'),
-                          width=-125),
-                    UItem(make_name('analysis_filter'),
-                          width=-25,
-                          editor=EnumEditor(name=make_name('analysis_filter_values'))))
-        analysis_tools = VGroup(g1, g2, defined_when=self.pane.analyses_defined)
-
-        g1 = HGroup(UItem('sample_filter_parameter',
-                          width=-90, editor=EnumEditor(name='sample_filter_parameters')),
-                    icon_button_editor('configure_sample_table',
-                                       'cog',
-                                       tooltip='Configure Sample Table'),
-                    icon_button_editor('clear_sample_table',
-                                       'edit-clear',
-                                       tooltip='Clear Sample Table')
-        )
-        g2 = HGroup(UItem('sample_filter',
-                          width=-125),
-                    UItem('sample_filter',
-                          width=-25,
-                          editor=EnumEditor(name='sample_filter_values')))
-        sample_tools = VGroup(g1, g2)
-        # analysis_tools = VGroup(HGroup(UItem(make_name('analysis_filter_parameter'),
-        # width=-90,
-        # editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-        # UItem(make_name('analysis_filter'),
-        # width=-90),
-        # UItem(make_name('analysis_filter'),
-        # width=-25,
-        #                               editor=EnumEditor(name=make_name('analysis_filter_values'))),
-        #                         # icon_button_editor(make_name('configure_analysis_table'), 'cog',
-        #                         #                    tooltip='Configure analysis table'),
-        #                         defined_when=self.pane.analyses_defined)
-        # sample_tools = HGroup(UItem('sample_filter_parameter',
-        #                             width=-90,
-        #                             editor=EnumEditor(name='sample_filter_parameters')),
-        #                       UItem('sample_filter', width=-90),
-        #                       UItem('sample_filter',
-        #                             width=-25,
-        #                             editor=EnumEditor(name='sample_filter_values')),)
-        #                       # icon_button_editor('configure_sample_table',
-        #                       #                    'cog',
-        #                       #                    tooltip='Configure Sample Table'))
-
-        # v = View(VGroup(sample_tools, analysis_tools))
-        v = View(HGroup(sample_tools, analysis_tools))
-        return v
 
 
 class BrowserPane(TraitsDockPane):
@@ -235,62 +94,16 @@ class BrowserPane(TraitsDockPane):
     analysis_tabular_adapter = Instance(AnalysisAdapter, ())
     analysis_group_tabular_adapter = Instance(AnalysisGroupAdapter, ())
 
-    tableview = Instance(Tables)
-    tabletools = Instance(TableTools)
+    sample_view = Instance(BrowserSampleView)
+    query_view = Instance(BrowserQueryView)
 
     def _get_browser_group(self):
-        irrad_grp = VGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-                           UItem('level', editor=EnumEditor(name='levels')),
-                           # VGroup(
-                           # Item('include_monitors', label='Monitors'),
-                           # Item('include_unknowns', label='Unknowns')),
-                           icon_button_editor('find_by_irradiation',
-                                              'edit-find',
-                                              tooltip='Filter Samples by Irradiation/Level', ),
-                           enabled_when='not selected_projects',
-                           show_border=True,
-                           label='Irradiations')
-
-        project_grp = VGroup(HGroup(Item('project_filter', label='Filter'),
-                                    icon_button_editor('clear_selection_button',
-                                                       'cross',
-                                                       tooltip='Clear selected')),
-                             UItem('projects',
-                                   editor=TabularEditor(editable=False,
-                                                        refresh='refresh_needed',
-                                                        selected='selected_projects',
-                                                        adapter=ProjectAdapter(),
-                                                        multi_select=True)),
-                             show_border=True,
-                             label='Projects')
-        analysis_type_group = HGroup(
-            Item('use_analysis_type_filtering', label='Enabled'),
-            UItem('_analysis_include_types',
-                  enabled_when='use_analysis_type_filtering',
-                  style='custom',
-                  editor=CheckListEditor(cols=5,
-                                         name='available_analysis_types')),
-            show_border=True,
-            label='Analysis Types')
-
-        date_grp = HGroup(UItem('use_low_post'),
-                          UItem('low_post', enabled_when='use_low_post'),
-                          UItem('use_high_post'),
-                          UItem('high_post', enabled_when='use_high_post'),
-                          UItem('use_named_date_range'),
-                          UItem('named_date_range'),
-                          icon_button_editor('date_configure_button', 'view-calendar-month-2.png'),
-                          label='Date',
-                          show_border=True)
-        top_level_filter_grp = VGroup(HGroup(project_grp, irrad_grp),
-                                      analysis_type_group,
-                                      date_grp)
-
-        grp = VSplit(top_level_filter_grp,
-                     UItem('pane.tabletools', style='custom', height=0.1),
-                     UItem('pane.tableview',
-                           height=0.6,
-                           style='custom'))
+        grp = Group(UItem('pane.sample_view',
+                          style='custom',
+                          visible_when='sample_view_active'),
+                    UItem('pane.query_view',
+                          style='custom',
+                          visible_when='not sample_view_active'))
         return grp
 
     def traits_view(self):
@@ -298,30 +111,34 @@ class BrowserPane(TraitsDockPane):
 
         v = View(
             VGroup(
-                HGroup(icon_button_editor('advanced_query', 'application_form_magnify',
-                                          tooltip='Advanced Query'),
-                       icon_button_editor('filter_by_button',
-                                          'edit-find',
-                                          tooltip='Filter analyses using defined criteria'),
-                       icon_button_editor('graphical_filter_button',
-                                          'chart_curve_go',
-                                          # enabled_when='samples',
-                                          tooltip='Filter analyses graphically'),
-                       spring,
-                       CustomLabel('datasource_url', color='maroon'),
-                       spring),
+                HGroup(
+                    # icon_button_editor('advanced_query', 'application_form_magnify',
+                    # tooltip='Advanced Query'),
+                    icon_button_editor('filter_by_button',
+                                       'find',
+                                       tooltip='Filter analyses using defined criteria'),
+                    icon_button_editor('graphical_filter_button',
+                                       'chart_curve_go',
+                                       # enabled_when='samples',
+                                       tooltip='Filter analyses graphically'),
+                    icon_button_editor('toggle_view',
+                                       'arrow_switch',
+                                       tooltip='Toggle between Sample and Time views'),
+                    spring,
+                    CustomLabel('datasource_url', color='maroon'),
+                    spring),
                 main_grp),
-            handler=UnselectTabularEditorHandler(selected_name='selected_projects'))
+            # handler=TablesHandler()
+            # handler=UnselectTabularEditorHandler(selected_name='selected_projects')
+        )
 
         return v
 
-    def _tableview_default(self):
-        return Tables(model=self.model, pane=self)
+    def _sample_view_default(self):
+        return BrowserSampleView(model=self.model, pane=self)
 
-    def _tabletools_default(self):
-        return TableTools(model=self.model, pane=self)
-
-
+    def _query_view_default(self):
+        return BrowserQueryView(model=self.model.data_selector, pane=self)
         # ============= EOF =============================================
         # def _get_browser_group(self):
         # project_grp = VGroup(
@@ -329,7 +146,7 @@ class BrowserPane(TraitsDockPane):
         # UItem('project_filter',
         # width=75),
         # icon_button_editor('clear_selection_button',
-        #                                   'cross',
+        # 'cross',
         #                                   tooltip='Clear selected')),
         #         UItem('projects',
         #               editor=TabularEditor(editable=False,
