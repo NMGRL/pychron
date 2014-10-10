@@ -80,7 +80,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         for a in ('username', 'mass_spectrometer', 'extract_device',
                   'load_name',
                   'delay_before_analyses','delay_between_analyses',
-                  'use_queue_conditions','queue_conditions_name'):
+                  'use_queue_conditionals','queue_conditionals_name'):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
@@ -121,21 +121,15 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.run_factory.set_selected_runs(runs)
 
     def _add_run(self, *args, **kw):
-        # egs = list(set([ai.extract_group for ai in self.queue.automated_runs]))
-        # eg = max(egs) if egs else 0
-        rf = self.run_factory
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
 
         load_name = self.queue_factory.load_name
 
         q = self.queue
+        rf = self.run_factory
         new_runs, freq = rf.new_runs(q, positions=positions,
                                      auto_increment_position=self.auto_increment_position,
                                      auto_increment_id=self.auto_increment_id)
-
-        print new_runs, freq
-
-
         if new_runs:
             aruns = q.automated_runs
             if q.selected:
@@ -187,7 +181,7 @@ class ExperimentFactory(Loggable, ConsumerMixin):
         self.undoer.queue = new
 
     @on_trait_change('''queue_factory:[mass_spectrometer,
-extract_device, delay_+, tray, username, load_name, email, use_queue_conditions, queue_conditions_name]''')
+extract_device, delay_+, tray, username, load_name, email, use_queue_conditionals, queue_conditionals_name]''')
     def _update_queue(self, name, new):
         self.debug('update queue {}={}'.format(name,new))
         if name == 'mass_spectrometer':

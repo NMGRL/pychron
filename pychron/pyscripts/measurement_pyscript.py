@@ -355,8 +355,8 @@ class MeasurementPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def clear_conditions(self):
-        self._automated_run_call('py_clear_conditions')
+    def clear_conditionals(self):
+        self._automated_run_call('py_clear_conditionals')
 
     @verbose_skip
     @command_register

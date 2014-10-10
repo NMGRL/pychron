@@ -20,7 +20,7 @@ from traits.api import Event, Button, String, Bool, Enum, Property, Instance, In
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 
-#============= standard library imports ========================
+# ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock
 import weakref
 import time
@@ -29,7 +29,7 @@ from traits.trait_errors import TraitError
 import yaml
 #============= local library imports  ==========================
 from pychron.envisage.consoleable import Consoleable
-from pychron.experiment.condition.condition import condition_from_dict
+from pychron.experiment.conditional.conditional import conditional_from_dict
 from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
@@ -64,7 +64,7 @@ class ExperimentExecutor(Consoleable):
     #===========================================================================
     # control
     #===========================================================================
-    show_conditions_button = Button('Show Conditions')
+    show_conditionals_button = Button('Show Conditionals')
     start_button = Event
     stop_button = Event
     can_start = Property(depends_on='executable, _alive')
@@ -613,11 +613,11 @@ class ExperimentExecutor(Consoleable):
                         # if self.extracting_run:
                         #     self.extracting_run.cancel_run(state=state)
 
-                    # self.non_clear_update_needed = True
+                        # self.non_clear_update_needed = True
                 self.measuring_run = None
                 self.extracting_run = None
 
-                    # self.current_run = None
+                # self.current_run = None
 
     def _end_runs(self):
         #         self._last_ran = None
@@ -1017,27 +1017,27 @@ class ExperimentExecutor(Consoleable):
             return
 
         self.info('Pre extraction check')
-        conditions = self._load_conditions('pre_run_terminations')
-        default_conditions=self._load_default_conditions('pre_run_terminations')
-        if default_conditions or conditions:
+        conditionals = self._load_conditionals('pre_run_terminations')
+        default_conditionals = self._load_default_conditionals('pre_run_terminations')
+        if default_conditionals or conditionals:
             self.debug('Get a measurement from the spectrometer')
             data = self.spectrometer_manager.spectrometer.get_intensities()
             ks = ','.join(data[0])
             ss = ','.join(['{:0.5f}'.format(d) for d in data[1]])
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
-            if conditions:
-                self._test_conditions(run, conditions,
-                                      'Checking user defined pre extraction terminations',
-                                      'Pre Extraction Termination',
-                                      data=data)
+            if conditionals:
+                self._test_conditionals(run, conditionals,
+                                        'Checking user defined pre extraction terminations',
+                                        'Pre Extraction Termination',
+                                        data=data)
                 return True
 
-            if default_conditions:
-                self._test_conditions(run, conditions,
-                                      'Checking default pre extraction terminations',
-                                      'Pre Extraction Termination',
-                                      data=data)
+            if default_conditionals:
+                self._test_conditionals(run, conditionals,
+                                        'Checking default pre extraction terminations',
+                                        'Pre Extraction Termination',
+                                        data=data)
                 return True
 
     def _pre_queue_check(self, exp):
@@ -1047,7 +1047,7 @@ class ExperimentExecutor(Consoleable):
         if exp.tray:
             ed = next((ci for ci in self.connectables if ci.name == exp.extract_device), None)
             if ed and ed.connected:
-                name=convert_extract_device(ed.name)
+                name = convert_extract_device(ed.name)
                 man = self.application.get_service(ed.protocol, 'name=="{}"'.format(name))
                 self.debug('Get service {}. name=="{}"'.format(ed.protocol, name))
                 if man:
@@ -1139,7 +1139,7 @@ class ExperimentExecutor(Consoleable):
 
     def _post_run_check(self, run):
         """
-            1. check post run termination conditions.
+            1. check post run termination conditionals.
             2. check to see if an action should be taken
 
             if runs  are overlapping this will be a problem.
@@ -1150,48 +1150,48 @@ class ExperimentExecutor(Consoleable):
             return
 
         #check user defined terminations
-        conditions = self._load_conditions('post_run_terminations')
-        self._test_conditions(run, conditions, 'Checking user defined post run terminations',
-                              'Post Run Termination')
+        conditionals = self._load_conditionals('post_run_terminations')
+        self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
+                                'Post Run Termination')
 
         #check default terminations
-        conditions = self._load_default_conditions('post_run_terminations')
-        self._test_conditions(run, conditions, 'Checking default post run terminations',
-                              'Post Run Termination')
+        conditionals = self._load_default_conditionals('post_run_terminations')
+        self._test_conditionals(run, conditionals, 'Checking default post run terminations',
+                                'Post Run Termination')
 
         #check user defined post run actions
-        conditions = self._load_conditions('post_run_actions', klass='ActionCondition')
-        self._action_conditions(run, conditions, 'Checking user defined post run actions',
+        conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
+        self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
                                 'Post Run Action')
 
         #check default post run actions
-        conditions = self._load_default_conditions('post_run_actions', klass='ActionCondition')
-        self._action_conditions(run, conditions, 'Checking default post run actions',
+        conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
+        self._action_conditionals(run, conditionals, 'Checking default post run actions',
                                 'Post Run Action')
 
         #check queue actions
         exp = self.experiment_queue
-        self._action_conditions(run, exp.queue_actions, 'Checking queue actions',
+        self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
                                 'Queue Action')
 
-    def _load_default_conditions(self, term_name, **kw):
-        p = get_path(paths.spectrometer_dir, 'default_conditions', ['.yaml', '.yml'])
+    def _load_default_conditionals(self, term_name, **kw):
+        p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
         if p:
-            return self._extract_conditions(p, term_name, **kw)
+            return self._extract_conditionals(p, term_name, **kw)
         else:
-            pp = os.path.join(paths.spectrometer_dir, 'default_condtions.yaml')
-            self.warning('no default conditions file located at {}'.format(pp))
+            pp = os.path.join(paths.spectrometer_dir, 'default_conditionals.yaml')
+            self.warning('no default conditionals file located at {}'.format(pp))
 
-    def _load_conditions(self, term_name, **kw):
+    def _load_conditionals(self, term_name, **kw):
         exp = self.experiment_queue
-        name = exp.queue_conditions_name
-        if exp.use_queue_conditions and name:
-            p = get_path(paths.queue_conditions_dir, name, ['.yaml', '.yml'])
-            return self._extract_conditions(p, term_name, **kw)
+        name = exp.queue_conditionals_name
+        if exp.use_queue_conditionals and name:
+            p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
+            return self._extract_conditionals(p, term_name, **kw)
 
-    def _extract_conditions(self, p, term_name, klass='TerminationCondition'):
+    def _extract_conditionals(self, p, term_name, klass='TerminationConditional'):
         if p and os.path.isfile(p):
-            self.debug('loading condiitons from {}'.format(p))
+            self.debug('loading condiitonals from {}'.format(p))
             with open(p, 'r') as fp:
                 yd = yaml.load(fp)
                 yl = yd.get(term_name)
@@ -1199,25 +1199,25 @@ class ExperimentExecutor(Consoleable):
                     self.debug('no {}'.format(term_name))
                     return
                 else:
-                    return [condition_from_dict(cd, klass) for cd in yl]
+                    return [conditional_from_dict(cd, klass) for cd in yl]
 
-    def _action_conditions(self, run, conditions, message1, message2):
-        if conditions:
-            self.debug('{} n={}'.format(message1, len(conditions)))
-            for ci in conditions:
+    def _action_conditionals(self, run, conditionals, message1, message2):
+        if conditionals:
+            self.debug('{} n={}'.format(message1, len(conditionals)))
+            for ci in conditionals:
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()))
                     self._do_action(ci)
                     return
 
-    def _test_conditions(self, run, conditions, message1, message2,
-                         data=None, cnt=True):
+    def _test_conditionals(self, run, conditionals, message1, message2,
+                           data=None, cnt=True):
         if not self._alive:
             return
 
-        if conditions:
-            self.debug('{} n={}'.format(message1, len(conditions)))
-            for ci in conditions:
+        if conditionals:
+            self.debug('{} n={}'.format(message1, len(conditionals)))
+            for ci in conditionals:
                 if ci.check(run.arar_age, data, cnt):
                     self.info('{}. {}'.format(message2, ci.to_string()),
                               color='red')
@@ -1274,7 +1274,7 @@ Use Last "blank_{}"= {}
 
             if nopreceding:
                 self.debug('no preceding blank')
-            if anidx==0:
+            if anidx == 0:
                 self.debug('first analysis is not a blank')
 
             if anidx == 0 or nopreceding:
@@ -1322,7 +1322,7 @@ Use Last "blank_{}"= {}
                 dbr = db.retrieve_blank(kind, ms, ed, last)
 
             if dbr is None:
-                dbr=self._select_blank(db, ms)
+                dbr = self._select_blank(db, ms)
                 selected = True
 
             if dbr:
@@ -1388,9 +1388,9 @@ Use Last "blank_{}"= {}
             man = None
             if self.application:
                 man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
-                ed_connectable.protocol=ILaserManager
+                ed_connectable.protocol = ILaserManager
                 if man is None:
-                    ed_connectable.protocol=IPipetteManager
+                    ed_connectable.protocol = IPipetteManager
                     man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
 
             self.connectables.append(ed_connectable)
@@ -1479,25 +1479,27 @@ Use Last "blank_{}"= {}
         if self.measuring_run:
             self.measuring_run.truncate_run(self.truncate_style)
 
-    def _show_conditions_button_fired(self):
-        from pychron.experiment.conditions_view import ConditionsView
+    def _show_conditionals_button_fired(self):
+        from pychron.experiment.conditional.conditionals_view import ConditionalsView
+
         try:
             if self.measuring_run:
                 postt, pret = [], []
                 for name, l in (('post_run_terminations', postt),
                                 ('pre_run_terminations', pret)):
-                    c1 = self._load_conditions(name)
+                    c1 = self._load_conditionals(name)
                     if c1:
                         l.extend(c1)
-                    c2 = self._load_default_conditions(name)
+                    c2 = self._load_default_conditionals(name)
                     if c2:
                         l.extend(c2)
 
-                v = ConditionsView(self.measuring_run, postt, pret)
+                v = ConditionalsView(self.measuring_run, postt, pret)
                 self.application.open_view(v)
         except BaseException:
             import traceback
-            self.warning('******** Exception trying to open conditions. Notify developer ********')
+
+            self.warning('******** Exception trying to open conditionals. Notify developer ********')
             self.debug(traceback.format_exc())
 
     #===============================================================================

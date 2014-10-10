@@ -106,7 +106,7 @@ Multicollect
         #multicollect on active detectors
         multicollect(ncounts=MULTICOLLECT_COUNTS, integration_time=1)
 
-        clear_conditions()
+        clear_conditionals()
 
         if BASELINE_AFTER:
             baselines(ncounts=BASELINE_COUNTS,mass=BASELINE_MASS, detector=BASELINE_DETECTOR)
@@ -375,10 +375,10 @@ Annotated Multicollect
         sleep(1)
 
         '''
-        Set conditions
+        Set conditionals
 
-        order added defines condition precedence.
-        conditions after the first true condition are NOT evaluated
+        order added defines conditional precedence.
+        conditionals after the first true conditional are NOT evaluated
 
         terminate if age < 10000 ma after 5 counts, check every 2 counts
         terminate means do not finish measurement script and immediately execute
@@ -393,7 +393,7 @@ Annotated Multicollect
         add_truncation('age','>',10.6, start_count=20, frequency=10)
 
         '''
-        use add_action to specify an action to take for a given condition
+        use add_action to specify an action to take for a given conditional
 
         action can be a code snippet 'sleep(10)', 'gosub("example_gosub")' or
         a callable such as a function or lambda
@@ -416,10 +416,10 @@ Annotated Multicollect
         multicollect(ncounts=50, integration_time=1)
 
         '''
-        clear the conditions when measuring baseline
-        also have oppurtunity to add new conditions
+        clear the conditionals when measuring baseline
+        also have oppurtunity to add new conditionals
         '''
-        clear_conditions()
+        clear_conditionals()
 
         #multicollect baselines for ncounts
         baselines(ncounts=5,mass=39.5)

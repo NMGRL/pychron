@@ -57,7 +57,7 @@ COMP_REGEX = re.compile(r'<=|>=|>|<|==')
 #todo: add between ability
 
 
-def condition_from_dict(cd, klass):
+def conditional_from_dict(cd, klass):
     if isinstance(klass, str):
         klass = globals()[klass]
 
@@ -84,7 +84,8 @@ def remove_attr(s):
     except IndexError:
         return ''
 
-class BaseCondition(Loggable):
+
+class BaseConditional(Loggable):
     attr = Str
     comp = Str
 
@@ -93,7 +94,7 @@ class BaseCondition(Loggable):
 
     def check(self, run, data, cnt):
         """
-             check condition if cnt is greater than start count
+             check conditional if cnt is greater than start count
              cnt-start count is greater than 0
              and cnt-start count is divisable by frequency
 
@@ -111,7 +112,8 @@ class BaseCondition(Loggable):
     def _should_check(self, run, data, cnt):
         return True
 
-class AutomatedRunCondition(BaseCondition):
+
+class AutomatedRunConditional(BaseConditional):
     start_count = Int
     frequency = Int
     message = Str
@@ -136,7 +138,7 @@ class AutomatedRunCondition(BaseCondition):
         self.comp = comp
         self.start_count = start_count
         self.frequency = frequency
-        super(AutomatedRunCondition, self).__init__(*args, **kw)
+        super(AutomatedRunConditional, self).__init__(*args, **kw)
 
         # m = re.findall(r'[A-Za-z]+\d*', comp)
         m = PARENTHESES_REGEX.findall(comp)
@@ -221,15 +223,15 @@ class AutomatedRunCondition(BaseCondition):
         return vv
 
 
-class TruncationCondition(AutomatedRunCondition):
+class TruncationConditional(AutomatedRunConditional):
     abbreviated_count_ratio = 1.0
 
 
-class TerminationCondition(AutomatedRunCondition):
+class TerminationConditional(AutomatedRunConditional):
     pass
 
 
-class ActionCondition(AutomatedRunCondition):
+class ActionConditional(AutomatedRunConditional):
     action = Either(Str, Callable)
     resume = Bool  # resume==True the script continues execution else break out of measure_iteration
 

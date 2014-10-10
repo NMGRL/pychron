@@ -42,7 +42,7 @@ class ValueCommand(Command):
         return self.value
 
 
-class ConditionCommand(Command):
+class ConditionalCommand(Command):
     attribute = Str
     comparison = Enum('<', '>', '=', '<=', '>=')
     value = Float
@@ -52,8 +52,7 @@ class ConditionCommand(Command):
     def _get_condition_group(self):
         g = HGroup('attribute',
                    'comparison',
-                   'value'
-        )
+                   'value')
         o = HGroup('start_count', 'frequency')
         return VGroup(g, o)
 
@@ -64,22 +63,21 @@ class ConditionCommand(Command):
                                                                      self.start_count,
                                                                      self.frequency)
 
-        #===============================================================================
-
+#===============================================================================
 # condition commands
 #===============================================================================
-class AddTermination(ConditionCommand):
-    description = 'Add termination condition'
+class AddTermination(ConditionalCommand):
+    description = 'Add termination conditional'
     example = ''' '''
 
     def _get_view(self):
         return self._get_condition_group()
 
 
-class AddAction(ConditionCommand):
+class AddAction(ConditionalCommand):
     action = Str
     resume = Bool(False)
-    description = 'Add action condition'
+    description = 'Add action conditional'
     example = ''' '''
 
     def _get_view(self):
@@ -91,13 +89,13 @@ class AddAction(ConditionCommand):
         return '{}, action="{}", resume={}'.format(s, self.action, self.resume)
 
 
-class AddTruncation(ConditionCommand):
-    description = 'Add truncation condition'
+class AddTruncation(ConditionalCommand):
+    description = 'Add truncation conditional'
     example = ''' '''
 
 
-class ClearConditions(Command):
-    description = 'Clear all conditions'
+class ClearConditionals(Command):
+    description = 'Clear all conditionals'
     example = ''' '''
 
 
