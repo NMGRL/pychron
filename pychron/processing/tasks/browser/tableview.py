@@ -107,8 +107,16 @@ class TableView(PaneModelView):
         obj.load_time_view()
 
     def plot_selected(self, info, obj):
-        obj.plot_selected()
+        try:
+            obj.plot_selected()
+        except AttributeError:
+            pass
 
+    def plot_selected_grouped(self, info, obj):
+        try:
+            obj.plot_selected_grouped()
+        except AttributeError:
+            pass
 
 class TableTools(PaneModelView):
     def traits_view(self):

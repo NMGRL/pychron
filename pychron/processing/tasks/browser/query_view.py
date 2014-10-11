@@ -22,6 +22,7 @@ from traitsui.api import View, Item, UItem, VGroup, HGroup, EnumEditor, TableEdi
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
@@ -81,10 +82,10 @@ class BrowserQueryView(PaneModelView):
                   editor=EnumEditor(name='parameters')),
             UItem('comparator',
                   editor=EnumEditor(name='comparisons')),
-            UItem('criterion'),
-            UItem('criterion',
-                  width=-25,
-                  editor=EnumEditor(name='criteria')),
+            UItem('criterion', editor=ComboboxEditor(name='criteria')),
+            # UItem('criterion',
+            #       width=-25,
+            #       editor=EnumEditor(name='criteria')),
             UItem('chain_rule')),
             height=125)
         return v

@@ -18,7 +18,7 @@
 from traits.api import Color, Instance, DelegatesTo
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     EnumEditor, Group, Spring, VFold, Label, InstanceEditor, \
-    CheckListEditor, VSplit, TabularEditor, UReadonly
+    VSplit, TabularEditor, UReadonly
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.editors import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -26,6 +26,7 @@ from traitsui.table_column import ObjectColumn
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.experiment.utilities.identifier import SPECIAL_NAMES
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.pychron_constants import MEASUREMENT_COLOR, EXTRACTION_COLOR, \
@@ -157,10 +158,8 @@ class ExperimentFactoryPane(TraitsDockPane):
                    spring),
             HGroup(run_factory_item('labnumber',
                                     tooltip='Enter a Labnumber',
-                                    width=100, ),
-                   run_factory_item('_labnumber', show_label=False,
-                                    editor=CheckListEditor(name=run_factory_name('labnumbers')),
-                                    width=-20),
+                                    width=100,
+                                    editor=ComboboxEditor(name=run_factory_name('labnumbers'))),
                    run_factory_item('aliquot',
                                     width=50),
                    spring),

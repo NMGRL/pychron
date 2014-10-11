@@ -743,10 +743,10 @@ class AnalysisEditTask(BaseBrowserTask):
                     self.debug('Setting auto find to True')
                     if hasattr(self.active_editor, 'set_auto_find'):
                         self.active_editor.set_auto_find(True)
-                    self.active_editor.set_items(self.unknowns_pane.items)
+                    self.active_editor.set_items(obj.items)
 
                 if self.plot_editor_pane:
-                    self.plot_editor_pane.analyses = self.unknowns_pane.items
+                    self.plot_editor_pane.analyses = obj.items
 
     @on_trait_change('plot_editor_pane:current_editor')
     def _update_current_plot_editor(self, obj, name, new):
