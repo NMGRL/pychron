@@ -561,7 +561,6 @@ class BrowserMixin(ColumnSorterMixin):
 
     def _sample_filter_changed(self, new):
         name = self._get_sample_filter_parameter()
-        # comp=self.sample_filter_comparator
         self.samples = filter(filter_func(new, name), self.osamples)
 
     # proprty get/set

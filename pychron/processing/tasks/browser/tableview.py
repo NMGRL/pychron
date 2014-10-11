@@ -20,6 +20,7 @@ from traitsui.api import View, Item, HGroup, UItem, VGroup, EnumEditor, HSplit, 
 #============= local library imports  ==========================
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
 # from pychron.core.ui.qt.tabular_editor import UnselectTabularEditorHandler
+from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.pane_helpers import icon_button_editor
 from pychron.processing.tasks.browser.pane_model_view import PaneModelView
@@ -108,6 +109,7 @@ class TableView(PaneModelView):
     def plot_selected(self, info, obj):
         obj.plot_selected()
 
+
 class TableTools(PaneModelView):
     def traits_view(self):
         def make_name(name):
@@ -118,11 +120,8 @@ class TableTools(PaneModelView):
                           editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
                     icon_button_editor(make_name('configure_analysis_table'), 'cog',
                                        tooltip='Configure analysis table'))
-        g2 = HGroup(UItem(make_name('analysis_filter'),
-                          width=-125),
-                    UItem(make_name('analysis_filter'),
-                          width=-25,
-                          editor=EnumEditor(name=make_name('analysis_filter_values'))))
+        g2 = UItem(make_name('analysis_filter'),
+                   editor=ComboboxEditor(name=make_name('analysis_filter_values')))
         analysis_tools = VGroup(g1, g2, defined_when=self.pane.analyses_defined)
 
         g1 = HGroup(UItem('sample_filter_parameter',
@@ -133,35 +132,12 @@ class TableTools(PaneModelView):
                     icon_button_editor('clear_sample_table',
                                        'clear',
                                        tooltip='Clear Sample Table'))
-        g2 = HGroup(UItem('sample_filter',
-                          width=-125),
-                    UItem('sample_filter',
-                          width=-25,
-                          editor=EnumEditor(name='sample_filter_values')))
-        sample_tools = VGroup(g1, g2)
-        # analysis_tools = VGroup(HGroup(UItem(make_name('analysis_filter_parameter'),
-        # width=-90,
-        # editor=EnumEditor(name=make_name('analysis_filter_parameters'))),
-        # UItem(make_name('analysis_filter'),
-        # width=-90),
-        # UItem(make_name('analysis_filter'),
-        # width=-25,
-        #                               editor=EnumEditor(name=make_name('analysis_filter_values'))),
-        #                         # icon_button_editor(make_name('configure_analysis_table'), 'cog',
-        #                         #                    tooltip='Configure analysis table'),
-        #                         defined_when=self.pane.analyses_defined)
-        # sample_tools = HGroup(UItem('sample_filter_parameter',
-        #                             width=-90,
-        #                             editor=EnumEditor(name='sample_filter_parameters')),
-        #                       UItem('sample_filter', width=-90),
-        #                       UItem('sample_filter',
-        #                             width=-25,
-        #                             editor=EnumEditor(name='sample_filter_values')),)
-        #                       # icon_button_editor('configure_sample_table',
-        #                       #                    'cog',
-        #                       #                    tooltip='Configure Sample Table'))
 
-        # v = View(VGroup(sample_tools, analysis_tools))
+        g2 = UItem('sample_filter',
+                   editor=ComboboxEditor(name='sample_filter_values'))
+
+        sample_tools = VGroup(g1, g2)
+
         v = View(HGroup(sample_tools, analysis_tools))
         return v
 
