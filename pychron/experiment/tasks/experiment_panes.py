@@ -36,7 +36,7 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.experiment.plot_panel import PlotPanel
 
 
-#===============================================================================
+# ===============================================================================
 # editing
 #===============================================================================
 def spacer(w):
@@ -80,10 +80,9 @@ class ExperimentFactoryPane(TraitsDockPane):
                                           tooltip='Clear all runs added using "frequency"')
 
         queue_grp = VGroup(
-            HGroup(queue_factory_item('username'),
-                   queue_factory_item('username',
-                                      editor=EnumEditor(name=queue_factory_name('usernames')),
-                                      width=-25, show_label=False),
+            HGroup(UItem(queue_factory_name('username'),
+                         show_label=False,
+                         editor=ComboboxEditor(name=queue_factory_name('usernames'))),
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                    Spring(width=-5, springy=False),
                    queue_factory_item('use_email_notifier', show_label=False),

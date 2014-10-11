@@ -19,38 +19,31 @@ from traits.api import Event, Button, String, Bool, Enum, Property, Instance, In
     on_trait_change, Long
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
-
+from traits.trait_errors import TraitError
 # ============= standard library imports ========================
 from threading import Thread, Event as Flag, Lock, currentThread
 import weakref
 import time
 import os
-from traits.trait_errors import TraitError
 import yaml
 #============= local library imports  ==========================
+from pychron.consumer_mixin import consumable
+from pychron.core.codetools.memory_usage import mem_available, mem_log
+from pychron.core.helpers.filetools import add_extension, get_path
+from pychron.core.ui.gui import invoke_in_main_thread
+
 from pychron.envisage.consoleable import Consoleable
-from pychron.experiment.conditional.conditional import conditional_from_dict
-from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
+from pychron.experiment.stats import StatsGroup
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.external_pipette.protocol import IPipetteManager
-from pychron.initialization_parser import InitializationParser
-from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
-from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
-    RemoteAutomatedRunMonitor
-from pychron.experiment.stats import StatsGroup
-from pychron.pychron_constants import NULL_STR
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 
-from pychron.core.codetools.memory_usage import mem_available, mem_log
-from pychron.core.ui.gui import invoke_in_main_thread
-from pychron.consumer_mixin import consumable
-from pychron.paths import paths
-from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.globals import globalv
-from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
+
+from pychron.paths import paths
+from pychron.pychron_constants import NULL_STR
+from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
+
 from pychron.wait.wait_group import WaitGroup
 
 
@@ -100,10 +93,10 @@ class ExperimentExecutor(Consoleable):
     ion_optics_manager = Any
 
     pyscript_runner = Instance(PyScriptRunner)
-    monitor = Instance(AutomatedRunMonitor)
+    monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
 
-    measuring_run = Instance(AutomatedRun)
-    extracting_run = Instance(AutomatedRun)
+    measuring_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
+    extracting_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
 
     datahub = Instance(Datahub)
     #===========================================================================
@@ -127,6 +120,10 @@ class ExperimentExecutor(Consoleable):
     use_memory_check = Bool(True)
     memory_threshold = Int
 
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
+
     _alive = Bool(False)
     _canceled = False
     _state_thread = None
@@ -139,16 +136,12 @@ class ExperimentExecutor(Consoleable):
     _err_message = String
     _prev_blank_id = Long
 
-    baseline_color = Color
-    sniff_color = Color
-    signal_color = Color
-
-
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
 
     def bind_preferences(self):
+        from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
         self.datahub.bind_preferences()
 
         prefid = 'pychron.experiment'
@@ -182,32 +175,35 @@ class ExperimentExecutor(Consoleable):
         self.console_bind_preferences(prefid)
         bind_preference(self, 'use_message_colormapping', '{}.use_message_colormapping'.format(prefid))
 
+    def _reset(self):
+        self._alive = True
+        self._canceled = False
+
+        self.end_at_run_completion = False
+        self.extraction_state_label = ''
+        self.experiment_queue.executed = True
+
+        if self.stats:
+            self.stats.reset()
+            self.stats.start_timer()
+
     def execute(self):
         if self.use_automated_run_monitor:
             self.monitor = self._monitor_factory()
 
         if self._pre_execute_check():
-            self._alive = True
-            self.end_at_run_completion = False
+            #reset executor
+            self._reset()
 
             name = self.experiment_queue.name
+            self.info_heading('Starting Execution "{}"'.format(name))
 
-            msg = 'Starting Execution "{}"'.format(name)
-            self._info_heading(msg)
-
-            if self.stats:
-                self.stats.reset()
-                self.stats.start_timer()
-
-            self._canceled = False
-            self.extraction_state_label = ''
-
-            self.experiment_queue.executed = True
             t = Thread(name='execute_exp',
                        target=self._execute)
             t.start()
             return t
         else:
+            self.info('pre execute check failed')
             self._alive = False
 
     def set_queue_modified(self):
@@ -221,9 +217,6 @@ class ExperimentExecutor(Consoleable):
 
     def isAlive(self):
         return self._alive
-
-    def reset(self):
-        pass
 
     def continued(self):
         self.stats.continue_run()
@@ -449,7 +442,7 @@ class ExperimentExecutor(Consoleable):
         if last_runid:
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
-        self._info_heading('experiment queue {} finished'.format(exp.name))
+        self.info_heading('experiment queue {} finished'.format(exp.name))
         self.user_notifier.notify(exp, last_runid, self._err_message)
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -1195,6 +1188,7 @@ class ExperimentExecutor(Consoleable):
             return self._extract_conditionals(p, term_name, **kw)
 
     def _extract_conditionals(self, p, term_name, klass='TerminationConditional'):
+        from pychron.experiment.conditional.conditional import conditional_from_dict
         if p and os.path.isfile(p):
             self.debug('loading condiitonals from {}'.format(p))
             with open(p, 'r') as fp:
@@ -1374,6 +1368,8 @@ Use Last "blank_{}"= {}
             determine the necessary managers based on the ExperimentQueue and
             check that they exist and are connectable
         """
+        from pychron.experiment.connectable import Connectable
+
         exp = self.experiment_queue
         nonfound = []
         elm_connectable = Connectable(name='Extraction Line')
@@ -1392,11 +1388,13 @@ Use Last "blank_{}"= {}
             ed_connectable = Connectable(name=exp.extract_device)
             man = None
             if self.application:
-                man = self.application.get_service(ILaserManager, 'name=="{}"'.format(extract_device))
-                ed_connectable.protocol = ILaserManager
+                protocol ='pychron.lasers.laser_managers.ilaser_manager.ILaserManager'
+                man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
+
                 if man is None:
-                    ed_connectable.protocol = IPipetteManager
-                    man = self.application.get_service(IPipetteManager, 'name=="{}"'.format(extract_device))
+                    protocol ='pychron.external_pipette.protocol.IPipetteManager'
+                    man = self.application.get_service(protocol, 'name=="{}"'.format(extract_device))
+                ed_connectable.protocol = protocol
 
             self.connectables.append(ed_connectable)
             if not man:
@@ -1425,15 +1423,8 @@ Use Last "blank_{}"= {}
 
         return nonfound
 
-    def _info_heading(self, msg):
-        self.info('')
-        self.info_marker('=')
-        self.info(msg)
-        self.info_marker('=')
-        self.info('')
-
     def _set_message(self, msg, color='black'):
-        self._info_heading(msg)
+        self.info_heading(msg)
         invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
                               extraction_state_color=color)
 
@@ -1522,7 +1513,7 @@ Use Last "blank_{}"= {}
 
     def _pyscript_runner_default(self):
         if self.mode == 'client':
-            #            em = self.extraction_line_manager
+            from pychron.initialization_parser import InitializationParser
             ip = InitializationParser()
             elm = ip.get_plugin('Experiment', category='general')
             runner = elm.find('runner')
@@ -1547,31 +1538,12 @@ Use Last "blank_{}"= {}
         return runner
 
     def _monitor_factory(self):
-        # mon = None
-        # isok = True
         self.debug('Experiment Executor mode={}'.format(self.mode))
         if self.mode == 'client':
-            # self._check_for_managers()
+            from pychron.monitors.automated_run_monitor import RemoteAutomatedRunMonitor
             mon = RemoteAutomatedRunMonitor(name='automated_run_monitor')
-            # ip = InitializationParser()
-            # exp = ip.get_plugin('Experiment', category='general')
-            # monitor = exp.find('monitor')
-            # if monitor is not None:
-            # if to_bool(monitor.get('enabled')):
-            #         host, port, kind = None, None, None
-            #         comms = monitor.find('communications')
-            #         host = comms.find('host')
-            #         port = comms.find('port')
-            #         kind = comms.find('kind')
-            #
-            #         if host is not None:
-            #             host = host.text  # if host else 'localhost'
-            #         if port is not None:
-            #             port = int(port.text)  # if port else 1061
-            #         if kind is not None:
-            #             kind = kind.text
-            #         mon = RemoteAutomatedRunMonitor(host, port, kind, name=monitor.text.strip())
         else:
+            from pychron.monitors.automated_run_monitor import AutomatedRunMonitor
             mon = AutomatedRunMonitor()
 
         self.debug('Automated run monitor {}'.format(mon))

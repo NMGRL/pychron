@@ -388,6 +388,8 @@ class BaseTask(Task, Loggable):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
+    default_open_action = 'open'
+
     _default_extension = ''
     wildcard = None
     manager = Any
@@ -456,7 +458,7 @@ class BaseManagerTask(BaseTask):
             #     r = dialog.paths
             return r
 
-    def open_file_dialog(self, action='open', **kw):
+    def open_file_dialog(self, action=None, **kw):
         if 'default_directory' not in kw:
             kw['default_directory'] = self.default_directory
 
@@ -464,10 +466,10 @@ class BaseManagerTask(BaseTask):
             if self.wildcard:
                 kw['wildcard'] = self.wildcard
 
-        dialog = FileDialog(
-            #parent=self.window.control,
-            action=action,
-            **kw)
+        if action is None:
+            action=self.default_open_action
+
+        dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
             r = dialog.path
             if action == 'open files':

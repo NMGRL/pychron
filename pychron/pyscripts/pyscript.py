@@ -265,7 +265,7 @@ class PyScript(Loggable):
                 calc_dur()
 
         d = self.get_estimated_duration()
-        self._update_cache_duration(h, d)
+        self._update_cached_duration(h, d)
         return d
 
     def _update_cached_duration(self, h, d):

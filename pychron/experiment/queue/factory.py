@@ -39,16 +39,17 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     use_email_notifier = Bool(True)
 
-    usernames = Property(depends_on='users_dirty')
+    usernames = Property(depends_on='users_dirty, db_refresh_needed')
     edit_user = Event
     add_user = Event
     users_dirty = Event
+    db_refresh_needed = Event
 
     mass_spectrometer = String('Spectrometer')
-    mass_spectrometers = Property
+    mass_spectrometers = Property(depends_on='db_refresh_needed')
 
     extract_device = String('Extract Device')
-    extract_devices = Property
+    extract_devices = Property(depends_on='db_refresh_needed')
 
     use_queue_conditionals = Bool
     queue_conditionals_name = Str
@@ -119,20 +120,14 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _set_email(self, v):
         self._email = v
 
-    @cached_property
-    def _get_usernames(self):
-        db = self.db
-        with db.session_ctx():
-            dbus = db.get_users()
-            us = [ui.name for ui in dbus]
-            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
-
-            return [''] + us
-
-    @cached_property
+    # @cached_property
     def _get_load_names(self):
-        with self.db.session_ctx():
-            ts = self.db.get_loads()
+        db=self.db
+        if not db.connected:
+            return []
+
+        with db.session_ctx():
+            ts = db.get_loads()
             names = [ti.name for ti in ts]
             return names
 
@@ -151,14 +146,30 @@ class ExperimentQueueFactory(PersistenceLoggable):
         return [NULL_STR]
 
     @cached_property
+    def _get_usernames(self):
+        db = self.db
+        if not db.connected:
+            return []
+
+        with db.session_ctx():
+            dbus = db.get_users()
+            us = [ui.name for ui in dbus]
+            self._emails = dict([(ui.name, ui.email or '') for ui in dbus])
+
+            return [''] + us
+
+    @cached_property
     def _get_extract_devices(self):
         """
             look in db first
             then look for a config file
             then use hardcorded defaults
         """
+        db=self.db
         cp = os.path.join(paths.setup_dir, 'names')
-        if self.db:
+        if db:
+            if not db.connected:
+                return []
             eds = self.db.get_extraction_devices()
             names = [ei.name for ei in eds]
         elif os.path.isfile(cp):
@@ -174,8 +185,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
             then look for a config file
             then use hardcorded defaults
         """
+        db=self.db
         cp = os.path.join(paths.setup_dir, 'names')
-        if self.db:
+        if db:
+            if not db.connected:
+                return []
             ms = self.db.get_mass_spectrometers()
             names = [mi.name.capitalize() for mi in ms]
         elif os.path.isfile(cp):

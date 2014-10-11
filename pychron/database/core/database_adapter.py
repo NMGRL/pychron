@@ -23,6 +23,7 @@ from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError,
     DBAPIError
 import os
 #=============local library imports  ==========================
+from pychron.core.codetools.inspection import caller
 from pychron.database.core.query import compile_query
 
 from pychron.loggable import Loggable
@@ -146,6 +147,7 @@ class DatabaseAdapter(Loggable):
     def reset_connection(self, obj, name, old, new):
         self.connection_parameters_changed = True
 
+    @caller
     def connect(self, test=True, force=False, warn=True):
         if force:
             self.debug('forcing database connection')

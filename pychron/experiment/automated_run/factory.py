@@ -143,14 +143,16 @@ class AutomatedRunFactory(PersistenceLoggable):
     aliquot = EKlass(Int)
     special_labnumber = Str('Special Labnumber')
 
+    db_refresh_needed = Event
+
     _labnumber = String
     labnumbers = Property(depends_on='project, selected_level')
 
     project = Any
-    projects = Property(depends_on='db')
+    projects = Property(depends_on='db, db_refresh_needed')
 
     selected_irradiation = Str('Irradiation')
-    irradiations = Property(depends_on='db')
+    irradiations = Property(depends_on='db, db_refresh_needed')
     selected_level = Str('Level')
     levels = Property(depends_on='selected_irradiation, db')
 
@@ -814,6 +816,10 @@ class AutomatedRunFactory(PersistenceLoggable):
 
     @cached_property
     def _get_irradiations(self):
+        db=self.db
+        if not db.connected:
+            return []
+
         irradiations = []
         if self.db:
             irradiations = [pi.name for pi in self.db.get_irradiations()]
@@ -823,6 +829,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     @cached_property
     def _get_levels(self):
         levels = []
+        db=self.db
+        if not db.connected:
+            return []
+
         if self.db:
             with self.db.session_ctx():
                 if not self.selected_irradiation in ('IRRADIATION', LINE_STR):
@@ -838,6 +848,10 @@ class AutomatedRunFactory(PersistenceLoggable):
     def _get_projects(self):
 
         if self.db:
+            db=self.db
+            if not db.connected:
+                return dict()
+
             keys = [(pi, pi.name) for pi in self.db.get_projects()]
             keys = [(NULL_STR, NULL_STR)] + keys
             return dict(keys)
@@ -849,6 +863,10 @@ class AutomatedRunFactory(PersistenceLoggable):
         lns = []
         db = self.db
         if db:
+            # db=self.db
+            if not db.connected:
+                return []
+
             with db.session_ctx():
                 if self.selected_level and not self.selected_level in ('Level', LINE_STR):
                     level = db.get_irradiation_level(self.selected_irradiation,

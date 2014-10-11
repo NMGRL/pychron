@@ -74,6 +74,11 @@ class BaseEditorTask(BaseManagerTask):
             except AttributeError:
                 pass
 
+    def create_central_pane(self):
+        # self.editor_area = AdvancedEditorAreaPane()
+        self.editor_area = myAdvancedEditorAreaPane()
+        return self.editor_area
+
     def open(self, path=None, **kw):
         """
             Shows a dialog to open a file.
@@ -84,6 +89,8 @@ class BaseEditorTask(BaseManagerTask):
         if path:
             self._open_file(path, **kw)
             return True
+        else:
+            self._open_abort()
 
     def save(self, path=None):
         """
@@ -118,10 +125,8 @@ class BaseEditorTask(BaseManagerTask):
     def _open_file(self, path, **kw):
         pass
 
-    def create_central_pane(self):
-        # self.editor_area = AdvancedEditorAreaPane()
-        self.editor_area = myAdvancedEditorAreaPane()
-        return self.editor_area
+    def _pre_open_hook(self):
+        pass
 
     def _open_editor(self, editor, **kw):
         if self.editor_area:

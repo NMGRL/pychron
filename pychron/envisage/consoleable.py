@@ -68,6 +68,13 @@ class Consoleable(Loggable):
         if self.console_display:
             self.console_display.add_marker(char, color=color)
 
+    def info_heading(self, msg):
+        self.info('')
+        self.info_marker('=')
+        self.info(msg)
+        self.info_marker('=')
+        self.info('')
+
     def _console_display_default(self):
         return DisplayController(
             bgcolor=self.console_bgcolor,
