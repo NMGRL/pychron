@@ -221,7 +221,7 @@ class EthernetCommunicator(Communicator):
     def _reset_connection(self):
         self.handler = None
 
-    def ask(self, cmd, retries=3, verbose=True, info=None, *args, **kw):
+    def ask(self, cmd, retries=3, verbose=True, quiet=False, info=None, *args, **kw):
         """
 
         """
@@ -257,17 +257,17 @@ class EthernetCommunicator(Communicator):
             handler.end()
             self._reset_connection()
 
-        if verbose or self.verbose:
+        if verbose or self.verbose and not quiet:
             self.log_response(cmd, re, info)
 
         return r
 
-    def tell(self, cmd, verbose=True, info=None):
+    def tell(self, cmd, verbose=True, quiet=False, info=None):
         self._lock.acquire()
         handler = self.get_handler()
 
         if handler.send_packet(cmd):
-            if verbose or self.verbose:
+            if verbose or self.verbose and not quiet:
                 self.log_tell(cmd, info)
         self._lock.release()
 

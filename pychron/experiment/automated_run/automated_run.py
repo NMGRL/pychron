@@ -1906,7 +1906,9 @@ anaylsis_type={}
     #     return get_analysis_type(self.spec.labnumber)
 
     def _get_collector(self):
-        return self.peak_hop_collector if self.is_peak_hop else self.multi_collector
+        c = self.peak_hop_collector if self.is_peak_hop else self.multi_collector
+        c.console_bind_preferences('pychron.experiment')
+        return c
 
     def _assemble_extraction_blob(self):
         _names, txt = self._assemble_script_blob(kinds=('extraction', 'post_equilibration', 'post_measurement'))

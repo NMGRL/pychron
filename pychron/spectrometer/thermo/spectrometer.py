@@ -281,7 +281,7 @@ class Spectrometer(SpectrometerDevice):
             if self.microcontroller.simulation:
                 keys, signals = self._get_simulation_data()
             else:
-                datastr = self.ask('GetData', verbose=False)
+                datastr = self.ask('GetData', verbose=False, quiet=True)
                 keys = []
                 signals = []
                 if datastr:

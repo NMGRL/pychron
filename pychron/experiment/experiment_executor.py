@@ -539,9 +539,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # check to see if action should be taken
         if self._post_run_check(run):
-            self.info('post run check failed')
+            self.warning('post run check failed')
         else:
-            self.info('post run check passed')
+            self.info('========== Post Run Passed ==========')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -1032,16 +1032,16 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if conditionals:
                 if self._test_conditionals(run, conditionals,
-                                        'Checking user defined pre extraction terminations',
-                                        'Pre Extraction Termination',
-                                        data=data):
+                                           'Checking user defined pre extraction terminations',
+                                           'Pre Extraction Termination',
+                                           data=data):
                     return True
 
             if default_conditionals:
                 if self._test_conditionals(run, conditionals,
-                                        'Checking default pre extraction terminations',
-                                        'Pre Extraction Termination',
-                                        data=data):
+                                           'Checking default pre extraction terminations',
+                                           'Pre Extraction Termination',
+                                           data=data):
                     return True
 
     def _pre_queue_check(self, exp):
@@ -1138,7 +1138,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             invoke_in_main_thread(self.warning_dialog, msg)
             return
 
-        self.debug('pre check complete')
+        self.debug('pre execute check complete')
         return True
 
     def _post_run_check(self, run):
@@ -1152,35 +1152,36 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         if not self._alive:
             return
+        self.info('========== Post Run Check ==========')
 
         #check user defined terminations
         conditionals = self._load_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
-                                'Post Run Termination'):
+                                   'Post Run Termination'):
             return True
 
         #check default terminations
         conditionals = self._load_default_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
-                                'Post Run Termination'):
+                                   'Post Run Termination'):
             return True
 
         #check user defined post run actions
         conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
         if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
-                                  'Post Run Action'):
+                                     'Post Run Action'):
             return True
 
         #check default post run actions
         conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
         if self._action_conditionals(run, conditionals, 'Checking default post run actions',
-                                  'Post Run Action'):
+                                     'Post Run Action'):
             return True
 
         #check queue actions
         exp = self.experiment_queue
         if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-                                  'Queue Action'):
+                                     'Queue Action'):
             return True
 
     def _load_default_conditionals(self, term_name, **kw):
