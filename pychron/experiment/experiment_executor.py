@@ -33,20 +33,11 @@ from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.consoleable import Consoleable
 from pychron.envisage.preference_mixin import PreferenceMixin
-from pychron.experiment.automated_run.automated_run import AutomatedRun
-from pychron.experiment.conditional.conditional import conditional_from_dict
-from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
-from pychron.experiment.stats import StatsGroup
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.identifier import convert_extract_device
-from pychron.external_pipette.protocol import IPipetteManager
 from pychron.globals import globalv
-from pychron.initialization_parser import InitializationParser
-from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
-    RemoteAutomatedRunMonitor
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
@@ -154,7 +145,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.wait_control_lock = Lock()
 
     def bind_preferences(self):
-        from pychron.core.ui.preference_binding import bind_preference, color_bind_preference
         self.datahub.bind_preferences()
 
         prefid = 'pychron.experiment'
