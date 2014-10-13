@@ -103,6 +103,7 @@ class Spectrometer(SpectrometerDevice):
     def set_integration_time(self, it, force=False):
         it = normalize_integration_time(it)
         if self.integration_time != it or force:
+            self.debug('setting integration time = {}'.format(it))
             name = 'SetIntegrationTime'
             self.set_parameter(name, it)
             self.trait_setq(integration_time=it)
