@@ -358,7 +358,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     break
 
                 if self._pre_run_check():
-                    self.debug('pre run check failed')
+                    self.warning('pre run check failed')
                     break
 
                 if self.queue_modified:
@@ -538,7 +538,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._remove_backup(run.uuid)
 
         # check to see if action should be taken
-        self._post_run_check(run)
+        if self._post_run_check(run):
+            self.info('post run check failed')
+        else:
+            self.info('post run check passed')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -667,7 +670,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             extraction step
         """
         if self._pre_extraction_check(ai):
+            self.info('pre extraction check failed')
             return
+        else:
+            self.info('pre extraction check passed')
 
         self.extracting_run = ai
         ret = True
@@ -1025,18 +1031,18 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Pre Extraction Termination data. keys={}, signals={}'.format(ks, ss))
 
             if conditionals:
-                self._test_conditionals(run, conditionals,
+                if self._test_conditionals(run, conditionals,
                                         'Checking user defined pre extraction terminations',
                                         'Pre Extraction Termination',
-                                        data=data)
-                return True
+                                        data=data):
+                    return True
 
             if default_conditionals:
-                self._test_conditionals(run, conditionals,
+                if self._test_conditionals(run, conditionals,
                                         'Checking default pre extraction terminations',
                                         'Pre Extraction Termination',
-                                        data=data)
-                return True
+                                        data=data):
+                    return True
 
     def _pre_queue_check(self, exp):
         """
@@ -1149,28 +1155,33 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         #check user defined terminations
         conditionals = self._load_conditionals('post_run_terminations')
-        self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
-                                'Post Run Termination')
+        if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
+                                'Post Run Termination'):
+            return True
 
         #check default terminations
         conditionals = self._load_default_conditionals('post_run_terminations')
-        self._test_conditionals(run, conditionals, 'Checking default post run terminations',
-                                'Post Run Termination')
+        if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
+                                'Post Run Termination'):
+            return True
 
         #check user defined post run actions
         conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
-        self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
-                                  'Post Run Action')
+        if self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
+                                  'Post Run Action'):
+            return True
 
         #check default post run actions
         conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
-        self._action_conditionals(run, conditionals, 'Checking default post run actions',
-                                  'Post Run Action')
+        if self._action_conditionals(run, conditionals, 'Checking default post run actions',
+                                  'Post Run Action'):
+            return True
 
         #check queue actions
         exp = self.experiment_queue
-        self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-                                  'Queue Action')
+        if self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
+                                  'Queue Action'):
+            return True
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
@@ -1206,12 +1217,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if ci.check(run, None, True):
                     self.info('{}. {}'.format(message2, ci.to_string()))
                     self._do_action(ci)
-                    return
+                    return True
 
     def _test_conditionals(self, run, conditionals, message1, message2,
                            data=None, cnt=True):
         if not self._alive:
-            return
+            return True
 
         if conditionals:
             self.debug('{} n={}'.format(message1, len(conditionals)))
@@ -1220,7 +1231,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.info('{}. {}'.format(message2, ci.to_string()),
                               color='red')
                     self.cancel(confirm=False)
-                    return
+                    return True
 
     def _do_action(self, action):
         self.info('Do queue action {}'.format(action.action))

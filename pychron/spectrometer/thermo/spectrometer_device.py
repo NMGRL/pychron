@@ -14,8 +14,6 @@
 # limitations under the License.
 #===============================================================================
 
-
-
 #============= enthought library imports =======================
 from traits.api import Any, Property
 # from traitsui.api import View, Item, Group, HGroup, VGroup
@@ -28,11 +26,8 @@ from pychron.config_loadable import ConfigMixin
 
 class SpectrometerDevice(ConfigMixin):
     microcontroller = Any
-    # spectrometer = Any
-    #    simulation = DelegatesTo('microcontroller')
-
+    spectrometer = Any
     simulation = Property
-    verbose = False
 
     def _get_simulation(self):
         s = True
@@ -45,9 +40,6 @@ class SpectrometerDevice(ConfigMixin):
 
     def ask(self, *args, **kw):
         if self.microcontroller:
-            if self.verbose:
-                kw['verbose']=True
-
             return self.microcontroller.ask(*args, **kw)
 
 

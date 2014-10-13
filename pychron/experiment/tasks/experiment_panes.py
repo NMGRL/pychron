@@ -97,6 +97,11 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item('load_name',
                                show_label=False,
                                editor=EnumEditor(name=queue_factory_name('load_names'))),
+            HGroup(queue_factory_item('use_queue_conditionals'),
+                   queue_factory_item('queue_conditionals_name',
+                                      show_label=False,
+                                      # enabled_when=queue_factory_name('use_queue_conditionals'),
+                                      editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
             queue_factory_item('delay_before_analyses'),
             queue_factory_item('delay_between_analyses'))
 

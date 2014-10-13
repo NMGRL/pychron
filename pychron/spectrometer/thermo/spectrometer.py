@@ -404,16 +404,10 @@ class Spectrometer(SpectrometerDevice):
     # defaults
     #===============================================================================
     def _magnet_default(self):
-        return ArgusMagnet()
+        return ArgusMagnet(spectrometer=self)
 
     def _source_default(self):
-        return ArgusSource()
-
-    # def _magnet_default(self):
-    #     return ArgusMagnet(spectrometer=self)
-    #
-    # def _source_default(self):
-    #     return ArgusSource(spectrometer=self)
+        return ArgusSource(spectrometer=self)
 
     def _integration_time_default(self):
         return DEFAULT_INTEGRATION_TIME
