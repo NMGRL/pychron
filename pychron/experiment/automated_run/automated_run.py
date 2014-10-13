@@ -45,7 +45,7 @@ from pychron.experiment.utilities.identifier import convert_identifier, \
     make_runid
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS, DEFAULT_INTEGRATION_TIME
+    EXTRACTION_COLOR, SCRIPT_KEYS
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict
 from pychron.processing.arar_age import ArArAge
@@ -606,7 +606,10 @@ class AutomatedRun(Loggable):
         self.collector.stop()
 
     def start(self):
-        self.set_integration_time(DEFAULT_INTEGRATION_TIME)
+        if self.experiment_executor.set_integration_time_on_start:
+            dit = self.experiment_executor.default_integration_time
+            self.debug('Setting default integration. t={}'.format(dit))
+            self.set_integration_time(dit)
 
         if self.monitor is None:
             return self._start()

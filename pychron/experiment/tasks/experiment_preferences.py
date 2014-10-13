@@ -1,4 +1,4 @@
-#===============================================================================
+# ===============================================================================
 # Copyright 2013 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,15 @@
 
 #============= enthought library imports =======================
 from traits.api import Str, Int, \
-    Bool, Password, Color, Property, Float
+    Bool, Password, Color, Property, Float, Enum
 from traitsui.api import View, Item, Group, VGroup, HGroup, UItem
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-
-
 #============= standard library imports ========================
 #============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 
 
 class PositiveInteger(Int):
@@ -67,6 +66,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     grouping_suffix = Str
 
     use_automated_run_monitor = Bool
+    set_integration_time_on_start = Bool
+    default_integration_time = Enum(*QTEGRA_INTEGRATION_TIMES)
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -129,40 +130,53 @@ class ExperimentPreferencesPane(PreferencesPane):
         color_group = Group(Item('sniff_color', label='Sniff'),
                             Item('baseline_color', label='Baseline'),
                             Item('signal_color', label='Signal'),
-                            Item('bg_color',label='Background'),
+                            Item('bg_color', label='Background'),
                             label='Colors')
 
         analysis_grouping_grp = Group(Item('use_analysis_grouping',
-                                             label='Auto group analyses',
-                                             tooltip=''),
-                                        Item('grouping_suffix',
-                                             label='Suffix',
-                                             tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
-                                                     'where Suffix=autogen'),
-                                        Item('grouping_threshold',
-                                             label='Grouping Threshold (hrs)',
-                                             tooltip='Associate Reference analyses with the project of an analysis that '
-                                                     'is within X hours of the current run',
-                                             enabled_when='use_analysis_grouping'),
-                                        label='Analysis Grouping'
-                                        )
-        overlap_grp = Group(Item('min_ms_pumptime', label='Min. Mass Spectrometer Pumptime (s)'),
-                            label='Overlap')
+                                           label='Auto group analyses',
+                                           tooltip=''),
+                                      Item('grouping_suffix',
+                                           label='Suffix',
+                                           tooltip='Append "Suffix" to the Project name. e.g. MinnaBluff-autogen '
+                                                   'where Suffix=autogen'),
+                                      Item('grouping_threshold',
+                                           label='Grouping Threshold (hrs)',
+                                           tooltip='Associate Reference analyses with the project of an analysis that '
+                                                   'is within X hours of the current run',
+                                           enabled_when='use_analysis_grouping'),
+                                      label='Analysis Grouping')
+
         memory_grp = Group(Item('use_memory_check', label='Check Memory',
                                 tooltip='Ensure enough memory is available during experiment execution'),
                            Item('memory_threshold', label='Threshold',
                                 enabled_when='use_memory_check',
                                 tooltip='Do not continue experiment if available memory less than "Threshold"'),
                            label='Memory')
+
         monitor_grp = Group(Item('use_automated_run_monitor',
                                  label='Use AutomatedRun Monitor',
                                  tooltip='Use the automated run monitor'),
+                            show_border =True,
                             label='Monitor')
 
-        return View(color_group, notification_grp,
+        overlap_grp = Group(Item('min_ms_pumptime',
+                                 label='Min. Mass Spectrometer Pumptime (s)'),
+                            show_border=True,
+                            label='Overlap')
+
+        automated_grp = Group(VGroup(Item('set_integration_time_on_start',
+                                          tooltip='Set integration time on start of analysis',
+                                          label='Set Integration Time on Start'),
+                                     Item('default_integration_time',
+                                          enabled_when='set_integration_time_on_start'),
+                                     monitor_grp, overlap_grp),
+                              label='Automated Run')
+
+        return View(color_group,
+                    automated_grp, notification_grp,
                     editor_grp, irradiation_grp,
-                    analysis_grouping_grp,
-                    overlap_grp, memory_grp, monitor_grp)
+                    analysis_grouping_grp, memory_grp)
 
 
 class UserNotifierPreferencesPane(PreferencesPane):
@@ -183,6 +197,7 @@ class UserNotifierPreferencesPane(PreferencesPane):
 class ConsolePreferencesPane(BaseConsolePreferencesPane):
     model_factory = ConsolePreferences
     label = 'Experiment'
+
     def traits_view(self):
         preview = CustomLabel('preview',
                               size_name='fontsize',
@@ -196,6 +211,7 @@ class ConsolePreferencesPane(BaseConsolePreferencesPane):
                         Item('use_message_colormapping'),
                         label=self.label))
         return v
+
 
 class SysLoggerPreferencesPane(PreferencesPane):
     model_factory = SysLoggerPreferences

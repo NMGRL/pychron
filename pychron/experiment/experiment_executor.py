@@ -16,7 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Event, Button, String, Bool, Enum, Property, Instance, Int, List, Any, Color, Dict, \
-    on_trait_change, Long
+    on_trait_change, Long, Float
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
 from traits.trait_errors import TraitError
@@ -26,28 +26,34 @@ import weakref
 import time
 import os
 import yaml
-#============= local library imports  ==========================
+# ============= local library imports  ==========================
 from pychron.consumer_mixin import consumable
 from pychron.core.codetools.memory_usage import mem_available, mem_log
 from pychron.core.helpers.filetools import add_extension, get_path
 from pychron.core.ui.gui import invoke_in_main_thread
-
 from pychron.envisage.consoleable import Consoleable
+from pychron.envisage.preference_mixin import PreferenceMixin
+from pychron.experiment.automated_run.automated_run import AutomatedRun
+from pychron.experiment.conditional.conditional import conditional_from_dict
+from pychron.experiment.connectable import Connectable
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.stats import StatsGroup
 from pychron.experiment.user_notifier import UserNotifier
+from pychron.experiment.stats import StatsGroup
 from pychron.experiment.utilities.identifier import convert_extract_device
-
+from pychron.external_pipette.protocol import IPipetteManager
 from pychron.globals import globalv
-
+from pychron.initialization_parser import InitializationParser
+from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+from pychron.monitors.automated_run_monitor import AutomatedRunMonitor, \
+    RemoteAutomatedRunMonitor
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, DEFAULT_INTEGRATION_TIME
 from pychron.pyscripts.pyscript_runner import RemotePyScriptRunner, PyScriptRunner
-
 from pychron.wait.wait_group import WaitGroup
 
 
-class ExperimentExecutor(Consoleable):
+class ExperimentExecutor(Consoleable, PreferenceMixin):
     experiment_queues = List
     experiment_queue = Any
     user_notifier = Instance(UserNotifier, ())
@@ -116,6 +122,8 @@ class ExperimentExecutor(Consoleable):
     use_auto_save = Bool(True)
     min_ms_pumptime = Int(30)
     use_automated_run_monitor = Bool(False)
+    set_integration_time_on_start = Bool(False)
+    default_integration_time = Float(DEFAULT_INTEGRATION_TIME)
 
     use_memory_check = Bool(True)
     memory_threshold = Int
@@ -136,6 +144,11 @@ class ExperimentExecutor(Consoleable):
     _err_message = String
     _prev_blank_id = Long
 
+    baseline_color = Color
+    sniff_color = Color
+    signal_color = Color
+
+
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
@@ -147,33 +160,27 @@ class ExperimentExecutor(Consoleable):
         prefid = 'pychron.experiment'
 
         #auto save
-        bind_preference(self, 'use_auto_save',
-                        '{}.use_auto_save'.format(prefid))
-        bind_preference(self, 'auto_save_delay',
-                        '{}.auto_save_delay'.format(prefid))
-        bind_preference(self, 'min_ms_pumptime', '{}.min_ms_pumptime'.format(prefid))
+        attrs = ('use_auto_save', 'auto_save_delay',
+                 'min_ms_pumptime',
+                 'set_integration_time_on_start',
+                 'default_integration_time')
+        self._preference_binder(prefid, attrs)
 
         #colors
-        color_bind_preference(self, 'signal_color',
-                              '{}.signal_color'.format(prefid))
-        color_bind_preference(self, 'sniff_color',
-                              '{}.sniff_color'.format(prefid))
-        color_bind_preference(self, 'baseline_color',
-                              '{}.baseline_color'.format(prefid))
+        attrs = ('signal_color', 'sniff_color', 'baseline_color')
+        self._preference_binder(prefid, attrs, mod='color')
 
         #user_notifier
-        bind_preference(self.user_notifier.emailer, 'server_username', '{}.server_username'.format(prefid))
-        bind_preference(self.user_notifier.emailer, 'server_password', '{}.server_password'.format(prefid))
-        bind_preference(self.user_notifier.emailer, 'server_host', '{}.server_host'.format(prefid))
-        bind_preference(self.user_notifier.emailer, 'server_port', '{}.server_port'.format(prefid))
+        attrs = ('server_username', 'server_password', 'server_host', 'server_post')
+        self._preference_binder(prefid, attrs, obj=self.user_notifier.emailer)
 
         #memory
-        bind_preference(self, 'use_memory_check', '{}.use_memory_check'.format(prefid))
-        bind_preference(self, 'memory_threshold', '{}.memory_threshold'.format(prefid))
+        attrs = ('use_memory_check', 'memory_threshold')
+        self._preference_binder(prefid, attrs)
 
         #console
         self.console_bind_preferences(prefid)
-        bind_preference(self, 'use_message_colormapping', '{}.use_message_colormapping'.format(prefid))
+        self._preference_binder(prefid, ('use_message_colormapping',))
 
     def _reset(self):
         self._alive = True
@@ -1160,17 +1167,17 @@ class ExperimentExecutor(Consoleable):
         #check user defined post run actions
         conditionals = self._load_conditionals('post_run_actions', klass='ActionConditional')
         self._action_conditionals(run, conditionals, 'Checking user defined post run actions',
-                                'Post Run Action')
+                                  'Post Run Action')
 
         #check default post run actions
         conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
         self._action_conditionals(run, conditionals, 'Checking default post run actions',
-                                'Post Run Action')
+                                  'Post Run Action')
 
         #check queue actions
         exp = self.experiment_queue
         self._action_conditionals(run, exp.queue_actions, 'Checking queue actions',
-                                'Queue Action')
+                                  'Queue Action')
 
     def _load_default_conditionals(self, term_name, **kw):
         p = get_path(paths.spectrometer_dir, 'default_conditionals', ['.yaml', '.yml'])
