@@ -261,7 +261,7 @@ class AutomatedRun(Loggable):
             evt.set()
             return evt
 
-        self.info('====== Equilibration Started ======')
+        self.heading('Equilibration Started')
         t = Thread(name='equilibration', target=self._equilibrate, args=(evt,),
                    kwargs=dict(eqtime=eqtime,
                                inlet=inlet,
@@ -625,6 +625,17 @@ class AutomatedRun(Loggable):
     def isAlive(self):
         return self._alive
 
+    def heading(self, msg, color=None, *args, **kw):
+        super(AutomatedRun, self).info(msg, *args, **kw)
+        if self.experiment_executor:
+            if color is None:
+                color = self.info_color
+
+            if color is None:
+                color = 'light green'
+
+            self.experiment_executor.heading(msg, color=color, log=False)
+
     def info(self, msg, color=None, *args, **kw):
         super(AutomatedRun, self).info(msg, *args, **kw)
         if self.experiment_executor:
@@ -815,7 +826,7 @@ class AutomatedRun(Loggable):
 
         self.info_color = EXTRACTION_COLOR
         msg = 'Extraction Started {}'.format(self.extraction_script.name)
-        self.info('======= {} ======='.format(msg))
+        self.heading('{}'.format(msg))
         self.state = 'extraction'
 
         self.debug('DO EXTRACTION {}'.format(self.runner))
@@ -855,7 +866,7 @@ class AutomatedRun(Loggable):
             snapshots = self.extraction_script.snapshots
 
             self.persister.post_extraction_save(rblob, oblob, snapshots)
-            self.info('======== Extraction Finished ========')
+            self.heading('Extraction Finished')
             self.info_color = None
 
             #if overlapping need to wait for previous runs min mass spec pump time
@@ -870,7 +881,7 @@ class AutomatedRun(Loggable):
             self.do_post_measurement()
             self.finish()
 
-            self.info('======== Extraction Finished unsuccessfully ========', color='red')
+            self.heading('Extraction Finished unsuccessfully', color='red')
             self.info_color = None
             return False
 
@@ -896,7 +907,7 @@ class AutomatedRun(Loggable):
         # measurement sequence
         self.info_color = MEASUREMENT_COLOR
         msg = 'Measurement Started {}'.format(script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         self.state = 'measurement'
 
         self.persister.pre_measurement_save()
@@ -906,7 +917,7 @@ class AutomatedRun(Loggable):
 
         if script.execute():
             mem_log('post measurement execute')
-            self.info('======== Measurement Finished ========')
+            self.heading('Measurement Finished')
             self.measuring = False
             self.info_color = None
 
@@ -919,7 +930,7 @@ class AutomatedRun(Loggable):
                 self.do_post_measurement()
             self.finish()
 
-            self.info('======== Measurement Finished unsuccessfully ========', color='red')
+            self.heading('Measurement Finished unsuccessfully', color='red')
             self.measuring = False
             self.info_color = None
             return False
@@ -935,7 +946,7 @@ class AutomatedRun(Loggable):
             return
 
         msg = 'Post Measurement Started {}'.format(script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         #        self.state = 'extraction'
         script.runner = self.runner
         script.manager = self.experiment_executor
@@ -944,10 +955,10 @@ class AutomatedRun(Loggable):
             self.debug('setting _ms_pumptime')
             self.experiment_executor.ms_pumptime_start = time.time()
 
-            self.info('======== Post Measurement Finished ========')
+            self.heading('Post Measurement Finished')
             return True
         else:
-            self.info('======== Post Measurement Finished unsuccessfully ========')
+            self.heading('Post Measurement Finished unsuccessfully')
             return False
 
     def do_post_equilibration(self):
@@ -962,20 +973,20 @@ class AutomatedRun(Loggable):
         if self.post_equilibration_script is None:
             return
         msg = 'Post Equilibration Started {}'.format(self.post_equilibration_script.name)
-        self.info('======== {} ========'.format(msg))
+        self.heading('{}'.format(msg))
         self.post_equilibration_script.runner = self.runner
         self.post_equilibration_script.manager = self.experiment_executor
 
         #         self.post_equilibration_script.syntax_checked = True
         if self.post_equilibration_script.execute():
-            self.info('======== Post Equilibration Finished ========')
+            self.heading('Post Equilibration Finished')
         else:
-            self.info('======== Post Equilibration Finished unsuccessfully ========')
+            self.heading('Post Equilibration Finished unsuccessfully')
 
     def do_post_termination(self, do_post_equilibration=True):
         oex = self.experiment_executor.executable
         self.experiment_executor.executable = False
-        self.info('========= Post Termination Started ========')
+        self.heading('Post Termination Started')
         if do_post_equilibration:
             self.do_post_equilibration()
 
@@ -983,7 +994,7 @@ class AutomatedRun(Loggable):
 
         self.stop()
 
-        self.info('========= Post Termination Finished ========')
+        self.heading('Post Termination Finished')
         self.experiment_executor.executable = oex
 
     #===============================================================================
@@ -1431,7 +1442,7 @@ anaylsis_type={}
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
         if self._alive:
-            self.info('======== Equilibration Finished ========')
+            self.heading('Equilibration Finished')
             if elm and inlet and close_inlet:
                 for i in inlet:
                     elm.close_valve(i, mode='script')

@@ -541,7 +541,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self._post_run_check(run):
             self.warning('post run check failed')
         else:
-            self.info('========== Post Run Passed ==========')
+            self.heading('Post Run Check Passed')
 
         t = time.time() - st
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.state, t))
@@ -672,8 +672,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if self._pre_extraction_check(ai):
             self.info('pre extraction check failed')
             return
-        else:
-            self.info('pre extraction check passed')
 
         self.extracting_run = ai
         ret = True
@@ -1020,10 +1018,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self._alive:
             return
 
-        self.info('Pre extraction check')
         conditionals = self._load_conditionals('pre_run_terminations')
         default_conditionals = self._load_default_conditionals('pre_run_terminations')
         if default_conditionals or conditionals:
+            self.heading('Pre Extraction Check')
+
             self.debug('Get a measurement from the spectrometer')
             data = self.spectrometer_manager.spectrometer.get_intensities()
             ks = ','.join(data[0])
@@ -1044,6 +1043,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                            data=data):
                     return True
 
+            self.heading('Pre Extraction Check Passed')
+
     def _pre_queue_check(self, exp):
         """
             return True to stop execution loop
@@ -1063,7 +1064,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
             return True to stop execution loop
         """
-        self.debug('pre run check')
+
+        self.heading('Pre Run Check')
         if self._check_memory():
             self._err_message = 'Not enough memory'
             return True
@@ -1081,7 +1083,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # if the experiment queue has been modified wait until saved or
         # timed out. if timed out autosave.
         self._wait_for_save()
-        self.debug('pre run finished')
+        self.heading('Pre Run Check Passed')
 
     def _pre_execute_check(self, inform=True):
         if not self.datahub.secondary_connect():
@@ -1152,7 +1154,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         """
         if not self._alive:
             return
-        self.info('========== Post Run Check ==========')
+        self.heading('Post Run Check')
 
         #check user defined terminations
         conditionals = self._load_conditionals('post_run_terminations')

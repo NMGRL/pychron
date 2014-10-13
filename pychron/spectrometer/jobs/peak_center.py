@@ -149,8 +149,8 @@ class PeakCenter(MagnetScan):
             result = calculate_peak_center(x, y,
                                            min_peak_height=self.min_peak_height)
             return result
-        except PeakCenterError:
-            self.warning(result)
+        except PeakCenterError, e:
+            self.warning('Failed to find a valid peak. {}'.format(e))
 
             # if result is not None:
             #     if isinstance(result, str):
