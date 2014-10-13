@@ -226,7 +226,7 @@ class InverseIsochron(Isochron):
 
         try:
             inv_intercept = intercept ** -1
-            p = calc_percent_error(intercept, err)
+            p = calc_percent_error(intercept, err, scale=1)
 
             err = inv_intercept * p
             mse = err * mswd ** 0.5
