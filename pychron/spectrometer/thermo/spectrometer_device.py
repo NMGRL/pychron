@@ -28,10 +28,11 @@ from pychron.config_loadable import ConfigMixin
 
 class SpectrometerDevice(ConfigMixin):
     microcontroller = Any
-    spectrometer = Any
+    # spectrometer = Any
     #    simulation = DelegatesTo('microcontroller')
 
     simulation = Property
+    verbose = False
 
     def _get_simulation(self):
         s = True
@@ -44,6 +45,9 @@ class SpectrometerDevice(ConfigMixin):
 
     def ask(self, *args, **kw):
         if self.microcontroller:
+            if self.verbose:
+                kw['verbose']=True
+
             return self.microcontroller.ask(*args, **kw)
 
 

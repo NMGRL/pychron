@@ -521,7 +521,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             f = getattr(self, step)
             if not f(run):
-                self.warning('{} returned false'.format(step))
+                self.warning('{} returned false'.format(step[1:]))
                 break
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.state))
