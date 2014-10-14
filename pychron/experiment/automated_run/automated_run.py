@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-#============= enthought library imports =======================
+# ============= enthought library imports =======================
 from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long
-#============= standard library imports ========================
+# ============= standard library imports ========================
 import os
 from itertools import groupby
 import re
@@ -83,8 +83,8 @@ class AutomatedRun(Loggable):
     experiment_executor = Any
     ion_optics_manager = Any
 
-    multi_collector = Instance(MultiCollector, ())
-    peak_hop_collector = Instance(PeakHopCollector, ())
+    multi_collector = Instance(MultiCollector)
+    peak_hop_collector = Instance(PeakHopCollector)
     persister = Instance(AutomatedRunPersister, ())
     collector = Property
 
@@ -646,6 +646,9 @@ class AutomatedRun(Loggable):
                 color = 'light green'
 
             self.experiment_executor.info(msg, color=color, log=False)
+
+    def get_deflection(self, det, current=False):
+        return self.spectrometer_manager.spectrometer.get_deflection(det, current)
 
     def get_detector(self, det):
         return self.spectrometer_manager.spectrometer.get_detector(det)
@@ -1598,6 +1601,7 @@ anaylsis_type={}
             console_display=self.experiment_executor.console_display,
             plot_panel=self.plot_panel,
             arar_age=self.arar_age,
+            automated_run=weakref.ref(self)(),
             measurement_script=script,
             detectors=self._active_detectors,
 
@@ -1896,18 +1900,6 @@ anaylsis_type={}
 
         return default
 
-    def _measurement_script_default(self):
-        return self._load_script('measurement')
-
-    def _post_measurement_script_default(self):
-        return self._load_script('post_measurement')
-
-    def _post_equilibration_script_default(self):
-        return self._load_script('post_equilibration')
-
-    def _extraction_script_default(self):
-        return self._load_script('extraction')
-
     def _get_runid(self):
         return make_runid(self.spec.labnumber,
                           self.spec.aliquot,
@@ -1918,7 +1910,8 @@ anaylsis_type={}
 
     def _get_collector(self):
         c = self.peak_hop_collector if self.is_peak_hop else self.multi_collector
-        c.console_bind_preferences('pychron.experiment')
+        # c.console_bind_preferences('pychron.experiment')
+        # c.spectrometer = self.spectrometer_manager.spectrometer
         return c
 
     def _assemble_extraction_blob(self):
@@ -1956,5 +1949,30 @@ anaylsis_type={}
             sc = getattr(self, '{}_script'.format(s))
             if sc is not None:
                 setattr(sc, 'runner', new)
+
+    #===============================================================================
+    # property get/set
+    #===============================================================================
+    def _measurement_script_default(self):
+        return self._load_script('measurement')
+
+    def _post_measurement_script_default(self):
+        return self._load_script('post_measurement')
+
+    def _post_equilibration_script_default(self):
+        return self._load_script('post_equilibration')
+
+    def _extraction_script_default(self):
+        return self._load_script('extraction')
+
+    def _peak_hop_collector_default(self):
+        c = PeakHopCollector()
+        c.console_bind_preferences('pychron.experiment')
+        return c
+
+    def _multi_collector_default(self):
+        c = MultiCollector()
+        c.console_bind_preferences('pychron.experiment')
+        return c
 
 #============= EOF =============================================

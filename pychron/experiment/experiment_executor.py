@@ -1230,7 +1230,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if conditionals:
             self.debug('{} n={}'.format(message1, len(conditionals)))
             for ci in conditionals:
-                if ci.check(run.arar_age, data, cnt):
+                if ci.check(run, data, cnt):
                     self.info('{}. {}'.format(message2, ci.to_string()),
                               color='red')
                     self.cancel(confirm=False)

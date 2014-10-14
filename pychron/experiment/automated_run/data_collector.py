@@ -34,6 +34,7 @@ class DataCollector(Consoleable):
     measurement_script = Any
     plot_panel = Any
     arar_age = Any
+    automated_run = Any
 
     detectors = List
     check_conditionals = Bool(True)
@@ -284,7 +285,7 @@ class DataCollector(Consoleable):
     #===============================================================================
     def _check_conditionals(self, conditionals, cnt):
         for ti in conditionals:
-            if ti.check(self.arar_age, self._data, cnt):
+            if ti.check(self.automated_run, self._data, cnt):
                 return ti
 
     def _check_iteration(self, evt, i):

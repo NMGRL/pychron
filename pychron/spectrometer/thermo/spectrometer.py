@@ -136,6 +136,16 @@ class Spectrometer(SpectrometerDevice):
     def detector_names(self):
         return [di.name for di in self.detectors]
 
+    def get_deflection(self, name, current=False):
+        deflection = 0
+        det = self.get_detector(name)
+        if det:
+            if current:
+                det.read_deflection()
+            deflection=det.deflection
+
+        return deflection
+
     def get_detector(self, name):
         if not isinstance(name, str):
             name = str(name)
