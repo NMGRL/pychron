@@ -268,7 +268,11 @@ class MagnetFieldTable(Loggable):
                 self.debug('no db instance available for archiving')
 
         if self.use_local_archive:
-            from pychron.git_archive.git_archive import GitArchive
+            try:
+                from pychron.git_archive.git_archive import GitArchive
+            except ImportError:
+                self.warning('GitPython >=0.3.2RC1 required for local MFTable Archiving')
+                return
 
             archive = GitArchive(self.mftable_archive_path)
             archive.add(p, message=message)
