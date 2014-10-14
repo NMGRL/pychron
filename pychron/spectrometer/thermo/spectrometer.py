@@ -235,11 +235,6 @@ class Spectrometer(SpectrometerDevice):
         for d in self.detectors:
             d.load_deflection_coefficients()
 
-        g = 'General'
-        if config.has_section(g):
-            self.set_attribute(config, g, 'verbose', default=False, optional=True)
-
-
     def finish_loading(self):
         if self.microcontroller:
             self.name = self.microcontroller.name

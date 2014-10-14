@@ -188,6 +188,9 @@ class ScanManager(Manager):
                 except (pickle.PickleError, EOFError, KeyError):
                     self.detector = self.detectors[-1]
                     self.isotope = self.isotopes[-1]
+                    self.warning('Failed unpickling scan settings file {}'.format(p))
+        else:
+            self.warning('No scan settings file {}'.format(p))
 
     def dump_settings(self):
         self.info('dump scan settings')
