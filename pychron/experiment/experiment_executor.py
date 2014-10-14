@@ -36,6 +36,7 @@ from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.experiment.datahub import Datahub
 from pychron.experiment.user_notifier import UserNotifier
 from pychron.experiment.stats import StatsGroup
+from pychron.experiment.utilities.conditionals import test_queue_conditionals_name
 from pychron.experiment.utilities.identifier import convert_extract_device
 from pychron.globals import globalv
 from pychron.paths import paths
@@ -439,8 +440,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if last_runid:
             self.info('Automated runs ended at {}, runs executed={}'.format(last_runid, total_cnt))
 
-        self.info_heading('experiment queue {} finished'.format(exp.name))
-        self.user_notifier.notify(exp, last_runid, self._err_message)
+        self._info_heading('experiment queue {} finished'.format(exp.name))
+
+        if exp.email:
+            self.info('Notifying user={} email={}'.format(exp.username, exp.email))
+            self.user_notifier.notify(exp, last_runid, self._err_message)
 
     def _wait_for(self, predicate, period=1, invert=False):
         """
@@ -1194,7 +1198,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _load_conditionals(self, term_name, **kw):
         exp = self.experiment_queue
         name = exp.queue_conditionals_name
-        if exp.use_queue_conditionals and name:
+        if test_queue_conditionals_name(name):
             p = get_path(paths.queue_conditionals_dir, name, ['.yaml', '.yml'])
             return self._extract_conditionals(p, term_name, **kw)
 

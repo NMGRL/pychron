@@ -86,7 +86,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                    icon_button_editor(queue_factory_name('edit_user'), 'database_edit'),
                    Spring(width=-5, springy=False),
                    queue_factory_item('use_email_notifier', show_label=False),
-                   Item(queue_factory_name('email'), enabled_when=queue_factory_name('use_email_notifier'))),
+                   Item(queue_factory_name('email'))),
             HGroup(
                 queue_factory_item('mass_spectrometer',
                                    show_label=False,
@@ -97,10 +97,8 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item('load_name',
                                show_label=False,
                                editor=EnumEditor(name=queue_factory_name('load_names'))),
-            HGroup(queue_factory_item('use_queue_conditionals'),
-                   queue_factory_item('queue_conditionals_name',
-                                      show_label=False,
-                                      # enabled_when=queue_factory_name('use_queue_conditionals'),
+            HGroup(queue_factory_item('queue_conditionals_name',
+                                      label='Queue Conditionals',
                                       editor=EnumEditor(name=queue_factory_name('available_conditionals')))),
             queue_factory_item('delay_before_analyses'),
             queue_factory_item('delay_between_analyses'))

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#===============================================================================
+# ===============================================================================
 
 #============= enthought library imports =======================
 from traits.api import Str, Property, cached_property, Int, \
@@ -51,7 +51,6 @@ class ExperimentQueueFactory(PersistenceLoggable):
     extract_device = String('Extract Device')
     extract_devices = Property(depends_on='db_refresh_needed')
 
-    use_queue_conditionals = Bool
     queue_conditionals_name = Str
     available_conditionals = List
 
@@ -67,7 +66,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
 
     pattributes = ('username', 'mass_spectrometer', 'extract_device',
                    'delay_between_analyses',
-                   'delay_before_analyses', 'use_queue_conditionals',
+                   'delay_before_analyses',
                    'queue_conditionals_name')
     # def _add_user_fired(self):
     #     a=UserEntry()
@@ -90,7 +89,7 @@ class ExperimentQueueFactory(PersistenceLoggable):
     def _load_queue_conditionals(self):
         root = paths.queue_conditionals_dir
         cs = list_directory2(root, remove_extension=True)
-        self.available_conditionals = cs
+        self.available_conditionals = ['Queue Conditional', LINE_STR] + cs
 
     def _edit_user_fired(self):
         a = UserEntry()
@@ -131,15 +130,11 @@ class ExperimentQueueFactory(PersistenceLoggable):
             names = [ti.name for ti in ts]
             return names
 
+    @cached_property
     def _get_ok_make(self):
         ms = self.mass_spectrometer.strip()
         un = self.username.strip()
-        #        ed = self.extract_device.strip()
-
-        return ms and not ms in ('Spectrometer', LINE_STR) and un
-
-    #                ed and ed != NULL_STR and  \
-    #                    un
+        return bool(ms and not ms in ('Spectrometer', LINE_STR) and un)
 
     @cached_property
     def _get_trays(self):

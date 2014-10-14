@@ -44,7 +44,6 @@ __METASTR__='''
 username: {}
 email: {}
 date: {}
-use_queue_conditionals: {}
 queue_conditionals_name: {}
 mass_spectrometer: {}
 delay_before_analyses: {}
@@ -53,7 +52,6 @@ extract_device: {}
 tray: {}
 load: {}
 '''
-
 
 class BaseExperimentQueue(ExperimentBlock):
     selected = List
@@ -69,7 +67,6 @@ class BaseExperimentQueue(ExperimentBlock):
     delay_between_analyses = CInt(30)
 
     queue_conditionals_name = Str
-    use_queue_conditionals = Bool
 
     stats = Instance(ExperimentStats, ())
 
@@ -234,7 +231,6 @@ class BaseExperimentQueue(ExperimentBlock):
         params['tray'] = self.tray
         params['username'] = self.username
         params['email'] = self.email
-        params['use_queue_conditionals'] = self.use_queue_conditionals
         params['queue_conditionals_name'] = self.queue_conditionals_name
 
     def _extract_meta(self, f):
@@ -265,7 +261,6 @@ class BaseExperimentQueue(ExperimentBlock):
         self._set_meta_param('email', meta, default)
         self._set_meta_param('load_name', meta, default, metaname='load')
         self._set_meta_param('queue_conditionals_name', meta, default)
-        self._set_meta_param('use_queue_conditionals', meta, bool_default)
 
     def _load_map(self, meta):
         from pychron.lasers.stage_managers.stage_map import StageMap
@@ -336,7 +331,6 @@ class BaseExperimentQueue(ExperimentBlock):
             self.username,
             self.email,
             datetime.datetime.today(),
-            self.use_queue_conditionals,
             self.queue_conditionals_name,
             ms,
             self.delay_before_analyses,
